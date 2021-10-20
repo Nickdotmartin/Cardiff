@@ -1,5 +1,5 @@
 from __future__ import division  # so that 1/3=0.333 instead of 1/3=0
-from psychopy import visual, core, data, event, logging, sound, gui
+from psychopy import visual, core, data, event, logging, sound, gui, monitors
 from psychopy.constants import *  # things like STARTED, FINISHED
 import numpy  # whole numpy lib is available, prepend 'np.'
 from numpy import sin, cos, tan, log, log10, pi, average, sqrt, std, deg2rad, rad2deg, linspace, asarray
@@ -10,14 +10,20 @@ from psychopy.tools.coordinatetools import pol2cart, cart2pol
 import time
 from psychopy.tools.filetools import fromFile, toFile
 
+
 """
-code taken from 
+original code adapted from 
 https://discourse.psychopy.org/t/speed-difference-in-different-types-of-optic-flow-stimuli/1878
 """
 
 
-win = visual.Window([1680, 1050], units='deg',
-                    monitor='Umram', color='black', fullscr=False)
+# win = visual.Window([1680, 1050], units='deg',
+#                     monitor='Umram', color='black', fullscr=False)
+
+mon = monitors.Monitor('HP 24uh')  # fetch the most recent calib for this monitor
+mon.setDistance(75)  # further away than normal?
+win = visual.Window(size=[1920, 1080], monitor=mon)
+
 
 # experiment details
 refRate = 60  # 1 second
@@ -51,14 +57,15 @@ rotDots = visual.ElementArrayStim(win, nElements=dotsN, sizes=elemSize, elementT
                                   colorSpace='rgb', elementMask='circle', texRes=128, fieldSize=fieldSize, )
 
 fixation = visual.GratingStim(win, size=0.2, pos=[0, 0], sf=0, color='red')
+# fixation = visual.g
 
 condList = (['rotClock', 'rotCounterClock'], ['radialIn', 'radialOut'],
             ['transUp', 'transDown'], ['transRight', 'transLeft'])
 
 for trials in range(nTrials):  # number of blocks
     cond = choice(condList)
-    print
-    cond
+    print(f"{cond}")
+    # 2
 
     for condType in cond:
         # assign parameters according to the condition
@@ -135,3 +142,4 @@ for trials in range(nTrials):  # number of blocks
 
 win.close()
 core.quit()
+
