@@ -1,8 +1,11 @@
 from __future__ import division
 from psychopy import sound, gui, visual, core, data, event, logging, clock, monitors
-from psychopy.visual import ShapeStim, EnvelopeGrating, Circle
-# from psychopy import visual
+# from psychopy.visual import ShapeStim, EnvelopeGrating, Circle
+from psychopy.visual.shape import ShapeStim
+from psychopy.visual.secondorder import EnvelopeGrating
+from psychopy.visual.circle import Circle
 
+import psychopy
 import os
 import numpy
 from numpy import (arcsin, arccos, arctan, sin, cos, tan, pi, average, sqrt, std, deg2rad, rad2deg)
@@ -15,15 +18,19 @@ from math import *
 from scipy.optimize import fsolve
 
 from kestenSTmaxVal import Staircase
+
 logging.console.setLevel(logging.CRITICAL)
+
 # Ensure that relative paths start from the same directory as this script
 _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 
 # Store info about the experiment session
-psychopyVersion = 'v2020.2.10'
+# psychopyVersion = psychopy.__version__
 expName = 'integration-EXP1'  # from the Builder filename that created this script
+
+# todo: change dict keys once I've looked at analysis
 expInfo = {'1. Participant': 'test',
            '2. Probe duration in frames at 240hz': '2',
            # '3. fps':['60'],
@@ -35,7 +42,7 @@ expInfo = {'1. Participant': 'test',
            '8. Red filter': ['no', 'yes']}
 
 
-# GUI
+## GUI
 dlg = gui.DlgFromDict(dictionary=expInfo, title=expName)
 if not dlg.OK:
     core.quit()  # user pressed cancel
@@ -46,8 +53,7 @@ expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
 # GUI SETTINGS
 participant_name = expInfo['1. Participant']
 trial_number = 25
-# todo: check these double parenthesis
-probe_duration = int((expInfo['2. Probe duration in frames at 240hz']))
+probe_duration = int(expInfo['2. Probe duration in frames at 240hz'])
 probe_ecc = 4  # int((expInfo['6. Probe eccentricity in deg']))
 # fps = float(expInfo['3. fps'])
 fps = expInfo['3. fps']
@@ -60,8 +66,7 @@ orientation = expInfo['5. Probe orientation']
 separations = [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0, 99, 99]
 
 # ISI durations, -1 correspond to simultaneous probes
-# todo: remove double bracket?
-ISI = int((expInfo['4. ISI duration in frame']))
+ISI = int(expInfo['4. ISI duration in frame'])
 
 # FILENAME
 # todo: look at filenames - are there any sq brackets?  
@@ -70,11 +75,12 @@ filename = (_thisDir + os.sep + '%s' % (participant_name) +
             os.sep + ('ISI_' + expInfo['4. ISI duration in frame'] + 
             '_probeDur' + expInfo['2. Probe duration in frames at 240hz']) +
             os.sep + participant_name)
+# filename = f'{_thisDir}{os.sep}'
 
 # Experiment Handler
-thisExp = data.ExperimentHandler(name=expName, version='', 
-                                 extraInfo=expInfo, runtimeInfo=None, 
-                                 savePickle=None, saveWideText=True, 
+thisExp = data.ExperimentHandler(name=expName, version='',
+                                 extraInfo=expInfo, runtimeInfo=None,
+                                 savePickle=None, saveWideText=True,
                                  dataFileName=filename)
 
 # COLORS AND LUMINANCE
@@ -83,7 +89,7 @@ LumColor255Factor = 2.39538706913372
 # Color255 to Color1
 Color255Color1Factor = 1/127.5  # Color255 * Color255Color1Factor -1
 # Lum to Color1
-Color1LumFactor = 2.39538706913372 
+Color1LumFactor = 2.39538706913372
 
 maxLum = 106  # 255 RGB
 minLum = 0.12  # 0 RGB
@@ -110,28 +116,35 @@ bgColor255 = bgLum * LumColor255Factor
 
 
 # MONITOR SPEC
-widthPix = 1280
-heightPix = 800
-monitorwidth = 32.512  # monitor width in cm
+widthPix = 1440  # 1280
+heightPix = 900  # 800
+monitorwidth = 30.41  # 32.512  # monitor width in cm
 viewdist = 57.3  # viewing distance in cm
 viewdistPix = widthPix/monitorwidth*viewdist
-monitorname = 'asus_cal'  # gamma set at 2.1
+monitorname = 'NickMac'  # 'asus_cal'  # gamma set at 2.1
 mon = monitors.Monitor(monitorname, width=monitorwidth, distance=viewdist)
 # todo: check these double parenthesis
 mon.setSizePix((widthPix, heightPix))
 mon.save()
 
 # WINDOW SPEC
-win = visual.Window(monitor=mon, size=(widthPix, heightPix), 
+win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     colorSpace='rgb255', color=bgColor255,
                     # I've added winType to make it work on my mac
                     winType='pyglet',
-                    units='pix', screen=1, allowGUI=False, fullscr=None)
+
+                    # pos gives position of top-left of screen
+                    pos=[1, -1],
+                    units='pix',
+                    screen=1,
+                    allowGUI=False,
+                    fullscr=None
+                    )
 
 # ELEMENTS
 # fixation bull eye
 # todo: why don't I have Circle, `envelopeGrating or ShapeSTIM?
-fixation = visual.Circle(win, radius=2, units='pix', 
+fixation = visual.Circle(win, radius=2, units='pix',
                          lineColor='white', fillColor='black')
 
 # PROBEs
@@ -143,19 +156,19 @@ else:
 # probre sizes choice
 # todo: probvert can be undefined - e.g, iuf statements don't capture all possibilities.
 if expInfo['6. Probe size'] == '6pixels':
-    probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -2), 
+    probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -2),
                  (-1, -2), (-1, -1), (0, -1)]  # 6 pixels
 elif expInfo['6. Probe size'] == '5pixels':
-    probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1), 
+    probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
                  (1, -2), (-1, -2), (-1, -1), (0, -1)]  # 5 pixels
 elif expInfo['6. Probe size'] == '3pixels':
-    probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, 0), (1, 0), (1, -1), 
+    probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, 0), (1, 0), (1, -1),
                  (0, -1), (0, -2), (-1, -2), (-1, -2), (-1, -1), (0, -1)]  # 3 pixels
 
-probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, -1.0, 1.0), 
-                          lineWidth=0, opacity=1, size=1, interpolate=False) 
-probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor=[-1.0, 1.0, -1.0], 
-                          lineWidth=0, opacity=1, size=1, interpolate=False) 
+probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, -1.0, 1.0),
+                          lineWidth=0, opacity=1, size=1, interpolate=False)
+probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor=[-1.0, 1.0, -1.0],
+                          lineWidth=0, opacity=1, size=1, interpolate=False)
 
 # MOUSE
 myMouse = event.Mouse(visible=False)
@@ -220,7 +233,7 @@ for trialN in range(expInfo['nTrials']):
         # separation experiment #################################################
         sep = separations[thisStair.extraInfo['thisStart']-1]
         # direction in which the probe jumps : CW or CCW
-        target_jump = random.choice([1, -1])  
+        target_jump = random.choice([1, -1])
         stairNum = thisStair.extraInfo['thisStart']
         probeLum = thisStair.next()
         probeColor255 = probeLum * LumColor255Factor
@@ -308,7 +321,7 @@ for trialN in range(expInfo['nTrials']):
         t_ISI = t_interval_1 + ISI
         t_interval_2 = t_ISI + probe_duration
         # I presume this means almost unlimited time to respond?
-        t_response = t_interval_2 + 10000*fps  
+        t_response = t_interval_2 + 10000*fps
 
 
         # repeat the trial if [r] has been pressed
