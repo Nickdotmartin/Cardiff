@@ -1,29 +1,33 @@
 from __future__ import division
-from psychopy import sound, gui, visual, core, data, event, logging, clock, monitors
-# from psychopy.visual import ShapeStim, EnvelopeGrating, Circle
-from psychopy import visual
+from psychopy import gui, visual, core, data, event, logging, monitors
+from psychopy import __version__ as psychopy_version
+from numpy.random import shuffle
+
 import os
 import numpy as np
-#############from numpy import (arcsin, arccos, arctan, sin, cos, tan, pi, average, sqrt, std, deg2rad, rad2deg)
-###########from numpy.random import shuffle
-###########import random
 import copy
-#####import time
 from datetime import datetime
 from math import *
-#####from scipy.optimize import fsolve
 
 from kestenSTmaxVal import Staircase
 
-#logging.console.setLevel(logging.DEBUG)
+# sets psychoPy to only log critical messages
 logging.console.setLevel(logging.CRITICAL)
+
 # Ensure that relative paths start from the same directory as this script
 _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
+
+# Monitor config from monitor centre
+monitor_name = 'Asus_VG24'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh'
+# gamma set at 2.1  [####### this comment is incorrect, its set above i think ############]
+display_number = 1  # 0 indexed, 1 for external display
+
 # Store info about the experiment session
-psychopyVersion = 'v2020.2.10'
-expName = 'integration-EXP1'  # from the Builder filename that created this script
-expInfo = {'1. Participant': 'test',
+# psychopyVersion = 'v2020.2.10'
+psychopyVersion = psychopy_version
+expName = 'integration-EXP3_bckgrnd_motion_SKR'  # from the Builder filename that created this script
+expInfo = {'1. Participant': 'testnm',
            '2. Probe duration in frames at 240hz': '2',
            '3. fps': ['60'],
            '4. ISI duration in frame': ['9', '2', '3', '4', '5', '6', '9', '12', '24'],
@@ -46,31 +50,30 @@ expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
 # GUI SETTINGS
 participant_name = expInfo['1. Participant']
 trial_number = 25
-probe_duration = int((expInfo['2. Probe duration in frames at 240hz']))
+probe_duration = int(expInfo['2. Probe duration in frames at 240hz'])
 probe_ecc = 4  # int((expInfo['6. Probe eccentricity in deg']))
-fps = float(expInfo['3. fps'])
+fps = int(expInfo['3. fps'])
 orientation = expInfo['5. Probe orientation']
 
 # VARIABLES
 # Distances between probes
 separations = [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]  # 99 values for single probe condition
 # ISI durations, -1 correspond to simultaneous probes
-ISI = int((expInfo['4. ISI duration in frame']))
+ISI = int(expInfo['4. ISI duration in frame'])
 # Background speed in deg.s-1
-speed_deg_BG = int((expInfo['9. Background speed in deg.s-1']))
+speed_deg_BG = int(expInfo['9. Background speed in deg.s-1'])
 speed = np.deg2rad(speed_deg_BG)/fps  # 20 deg/sec
 
 # FILENAME
-filename = (_thisDir + 
-            os.sep + '%s' % (participant_name) +
-            os.sep + '%s' % (expInfo['9. Background direction']) +
-            os.sep + '%s' % (str(speed_deg_BG)) + 
-            os.sep + ('ISI_' + expInfo['4. ISI duration in frame'] + '_probeDur' 
-                      + expInfo['2. Probe duration in frames at 240hz']) + 
-            os.sep + participant_name)
+filename = f'{_thisDir}{os.sep}' \
+           f'{participant_name}{os.sep}' \
+           f'{expInfo["9. Background direction"]}{os.sep}' \
+           f'{speed_deg_BG}{os.sep}' \
+           f'ISI_{ISI}_probeDur{probe_duration}{os.sep}' \
+           f'{participant_name}'
 
 # Experiment Handler
-thisExp = data.ExperimentHandler(name=expName, version='', 
+thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
                                  extraInfo=expInfo, runtimeInfo=None, 
                                  savePickle=None, saveWideText=True, 
                                  dataFileName=filename)
@@ -89,39 +92,81 @@ maxColor255 = 255
 minColor255 = 0
 maxColor1 = 1
 minColor1 = -1
-bgLumP = int((expInfo['7. Background lum in percent of maxLum'])) 
+bgLumP = int(expInfo['7. Background lum in percent of maxLum'])
 bgLum = maxLum * bgLumP / 100
 bgColor255 = bgLum * LumColor255Factor
 
 # MONITOR SPEC
-widthPix = 1920
-heightPix = 1080
-monitorwidth = 59.77  # monitor width in cm
-viewdist = 57.3  # viewing distance in cm
+thisMon = monitors.Monitor(monitor_name)
+this_width = thisMon.getWidth()
+mon_dict = {'mon_name': monitor_name,
+            'width': thisMon.getWidth(),
+            'size': thisMon.getSizePix(),
+            'dist': thisMon.getDistance(),
+            'notes': thisMon.getNotes()
+            }
+print(f"mon_dict: {mon_dict}")
+
+widthPix = mon_dict['size'][0]  # 1440  # 1280
+heightPix = mon_dict['size'][1]  # 900  # 800
+monitorwidth = mon_dict['width']  # 30.41  # 32.512  # monitor width in cm
+viewdist = mon_dict['dist']  # 57.3  # viewing distance in cm
 viewdistPix = widthPix/monitorwidth*viewdist
-monitorname = 'asus_cal'  # gamma set at 2.1  [####### this comment is incorrect, its set above i think ############]
-mon = monitors.Monitor(monitorname, width=monitorwidth, distance=viewdist)
+mon = monitors.Monitor(monitor_name, width=monitorwidth, distance=viewdist)
 mon.setSizePix((widthPix, heightPix))
 mon.save()
 
 # WINDOW SPEC
-win = visual.Window(monitor=mon, size=(widthPix, heightPix), colorSpace='rgb255', 
-                    color=bgColor255,
-                    units='pix', screen=1, allowGUI=False, fullscr=None)
+win = visual.Window(monitor=mon, size=(widthPix, heightPix),
+                    colorSpace='rgb255', color=bgColor255,
+                    winType='pyglet',  # I've added this to make it work on pycharm/mac
+                    pos=[1, -1],  # pos gives position of top-left of screen
+                    units='pix',
+                    screen=display_number,
+                    allowGUI=False,
+                    fullscr=None
+                    )
+
+# check correct monitor details (fps, size) have been accessed.
+print(win.monitor.name, win.monitor.getSizePix())
+actualFrameRate = int(win.getActualFrameRate())
+if fps in list(range(actualFrameRate-2, actualFrameRate+2)):
+    print("fps matches actual frame rate")
+else:
+    # if values don't match, quit experiment
+    print(f"fps ({fps}) does not match actual frame rate ({actualFrameRate})")
+    core.quit()
+
+
+actual_size = win.size
+if list(mon_dict['size']) == list(actual_size):
+    print(f"monitor is expected size")
+elif list(mon_dict['size']) == list(actual_size/2):
+    print(f"actual size is double expected size - Its ok, just a mac retina display bug.")
+else:
+    print(f"Display size does not match expected size from montior centre")
+    # check sizes seems unreliable,
+    # it returns different values for same screen if different mon_names are used!
+    check_sizes = win._checkMatchingSizes(mon_dict['size'], actual_size)
+    print(check_sizes)
+    core.quit()
+
 
 # ELEMENTS
 # fixation bull eye
-fixation = Circle(win, radius=2, units='pix', lineColor='white', fillColor='black')
+fixation = visual.Circle(win, radius=2, units='pix',
+                         lineColor='white', fillColor='black')
 
 # Dots
 nDots = 2000
 dots = visual.ElementArrayStim(win, elementTex=None, elementMask='gauss', 
                                units='pix', nElements=nDots, sizes=30, 
                                colors=[-0.25, -0.25, -0.25])
+
 # rather than use heightpix we use widthpix again as the dot field persists and rotates
 x = np.random.rand(nDots) * widthPix - widthPix/2  
 y = np.random.rand(nDots) * widthPix - widthPix/2  
-# tranform in polar
+# tranform in polar (** is exponential)
 r_dots = np.sqrt(x**2+y**2)
 alpha = np.arctan2(y, x)
 
@@ -154,51 +199,63 @@ if expInfo['8. Red filter'] == 'yes':
     redfilter = -1
 else:
     redfilter = 1
+
 # probe sizes choice
-# todo: probevert does not cover all possible sizes
-if expInfo['6. Probe size'] == '6pixels':
-    probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -2), 
-                 (-1, -2), (-1, -1), (0, -1)]  # 6 pixels
-elif expInfo['6. Probe size'] == '5pixels':
-    probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1), 
-                 (1, -2), (-1, -2), (-1, -1), (0, -1)]  # 5 pixels
-elif expInfo['6. Probe size'] == '3pixels':
-    probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, 0), (1, 0), (1, -1), 
-                 (0, -1), (0, -2), (-1, -2), (-1, -2), (-1, -1), (0, -1)]  # 3 pixels
+if expInfo['6. Probe size'] == '6pixels':  # 6 pixels
+    probeVert = [(0, 0), (1, 0), (1, 1), (2, 1),
+                 (2, -2), (-1, -2), (-1, -1), (0, -1)]
 
-probe1 = ShapeStim(win, vertices=probeVert, fillColor=(1.0, -1.0, 1.0), 
-                   lineWidth=0, opacity=1, size=1, interpolate=False) 
-probe2 = ShapeStim(win, vertices=probeVert, fillColor=[-1.0, 1.0, -1.0], 
-                   lineWidth=0, opacity=1, size=1, interpolate=False) 
+elif expInfo['6. Probe size'] == '3pixels':  # 3 pixels
+    probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, 0), (1, 0), (1, -1),
+                 (0, -1), (0, -2), (-1, -2), (-1, -2), (-1, -1), (0, -1)]
 
-# Hide cursor 
+else:  # 5 pixels
+    # default setting is expInfo['6. Probe size'] == '5pixels':
+    expInfo['6. Probe size'] = '5pixels'
+    probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
+                 (1, -2), (-1, -2), (-1, -1), (0, -1)]
+
+probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, -1.0, 1.0),
+                          lineWidth=0, opacity=1, size=1, interpolate=False)
+probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor=[-1.0, 1.0, -1.0],
+                          lineWidth=0, opacity=1, size=1, interpolate=False)
+
+# Mouse - Hide cursor
 myMouse = event.Mouse(visible=False) 
 
-# ------------------------------------------------------------------- INSTRUCTION
-# ------------------------------------------------------------------- INSTRUCTION
+# INSTRUCTION
 instructions = visual.TextStim(win=win, name='instructions',
                                text="[q] or [4] top-left\n "
                                     "[w] or [5] top-right\n "
                                     "[a] or [1] bottom-left\n "
                                     "[s] or [2] bottom-right \n\n "
-                                    "redo the previous trial \n\n"
+                                    "[r] or [9] to redo the previous trial \n\n"
                                     "[Space bar] to start",
                                font='Arial', pos=[0, 0], height=20, ori=0, 
                                color=[255, 255, 255], colorSpace='rgb255', 
                                opacity=1, languageStyle='LTR', depth=0.0)
 
+# todo: should this script include breaks?
+
 while not event.getKeys():
     instructions.draw()
     win.flip()
-# ------------------------------------------------------------------- STAIRCASE
-# ------------------------------------------------------------------- STAIRCASE
+
+# STAIRCASE
 total_nTrials = 0
+# Martin's original script had range(1, 13) - which corresponds to 12 separation values,
+# Exp1a has 14 separation values
+# so does this mean that there are only 12 staircase conditions?
 expInfo['startPoints'] = list(range(1, 13))  # 14 staircases (14 conditions)
 expInfo['nTrials'] = trial_number
 
 stairStart = maxLum
 miniVal = bgLum
 maxiVal = maxLum
+
+print('\nexpInfo (dict)')
+for k, v in expInfo.items():
+    print(f"{k}: {v}")
 
 stairs = [] 
 for thisStart in expInfo['startPoints']:
@@ -219,15 +276,15 @@ for thisStart in expInfo['startPoints']:
                           )
     stairs.append(thisStair)
 
-# ------------------------------------------------------------------- EXPERIMENT
-# ------------------------------------------------------------------- EXPERIMENT
+# EXPERIMENT
 for trialN in range(expInfo['nTrials']):
     np.random.shuffle(stairs)
     for thisStair in stairs:
 
         # conditions
         # separation experiment #################################################
-        sep = separations[thisStair.extraInfo['thisStart']-1]  
+        sep = separations[thisStair.extraInfo['thisStart']-1]
+
         target_jump = np.random.choice([1, -1])  # direction in which the probe jumps : CW or CCW
         stairNum = thisStair.extraInfo['thisStart']
         probeLum = thisStair.next()
@@ -256,14 +313,14 @@ for trialN in range(expInfo['nTrials']):
                 if target_jump == 1:  # CCW
                     probe1.ori = 0
                     probe2.ori = 180
-                    probe2.pos = [p1_x - (sep)+1, p1_y + (sep)]
+                    probe2.pos = [p1_x - sep+1, p1_y + sep]
                 elif target_jump == -1:  # CW
                     probe1.ori = 180
                     probe2.ori = 0
-                    probe2.pos = [p1_x + (sep)-1, p1_y - (sep)]
-# target jump can only be -1 or 1 (see line 205).
-#                elif target_jump == 9:
-#                    probe1.ori = np.random.choice([0, 180])
+                    probe2.pos = [p1_x + sep-1, p1_y - sep]
+                #  # target jump can only be -1 or 1 (see line 205).
+                # elif target_jump == 9:
+                #     probe1.ori = np.random.choice([0, 180])
         elif corner == 135:
             p1_x = x_prob * -1
             p1_y = y_prob * 1
@@ -271,11 +328,11 @@ for trialN in range(expInfo['nTrials']):
                 if target_jump == 1:  # CCW
                     probe1.ori = 90
                     probe2.ori = 270
-                    probe2.pos = [p1_x + (sep)-1, p1_y + (sep)]
+                    probe2.pos = [p1_x + sep-1, p1_y + sep]
                 elif target_jump == -1:  # CW
                     probe1.ori = 270
                     probe2.ori = 90
-                    probe2.pos = [p1_x - (sep)+1, p1_y - (sep)]
+                    probe2.pos = [p1_x - sep+1, p1_y - sep]
 #                elif target_jump == 9:
 #                    probe1.ori = np.random.choice([90, 270])
         elif corner == 225:
@@ -285,25 +342,26 @@ for trialN in range(expInfo['nTrials']):
                 if target_jump == 1:  # CCW
                     probe1.ori = 180
                     probe2.ori = 0
-                    probe2.pos = [p1_x + (sep)-1, p1_y - (sep)]
+                    probe2.pos = [p1_x + sep-1, p1_y - sep]
                 elif target_jump == -1:  # CW
                     probe1.ori = 0
                     probe2.ori = 180
-                    probe2.pos = [p1_x - (sep)+1, p1_y + (sep)]
+                    probe2.pos = [p1_x - sep+1, p1_y + sep]
 #                elif target_jump == 9:
 #                    probe1.ori = np.random.choice([0, 180])
-        elif corner == 315:
+        else:
+            corner = 315
             p1_x = x_prob * 1
             p1_y = y_prob * -1
             if orientation == 'tangent':
                 if target_jump == 1:  # CCW
                     probe1.ori = 270
                     probe2.ori = 90
-                    probe2.pos = [p1_x - (sep)+1, p1_y - (sep)]
+                    probe2.pos = [p1_x - sep+1, p1_y - sep]
                 elif target_jump == -1:  # CW
                     probe1.ori = 90
                     probe2.ori = 270
-                    probe2.pos = [p1_x + (sep)-1, p1_y + (sep)]
+                    probe2.pos = [p1_x + sep-1, p1_y + sep]
 #                elif target_jump == 9:
 #                    probe1.ori = np.random.choice([90, 270])
                 
@@ -323,14 +381,17 @@ for trialN in range(expInfo['nTrials']):
             target_jump2 = target_jump*-1
             rotSpeed = speed * target_jump2
 
-        # todo: rotSpeed can be undefined, put in else cond.
         if expInfo['9. Background direction'] == 'both':
             if stairNum % 2 == 1:  # impair staircase BG motion opposite to probe direction
                 rotSpeed = rotSpeed * -1
         elif expInfo['9. Background direction'] == 'opposite':
             rotSpeed = rotSpeed * -1
         elif expInfo['9. Background direction'] == 'same':
-            rotSpeed = rotSpeed 
+            rotSpeed = rotSpeed
+        else:
+            raise ValueError(f"expInfo['9. Background direction'] should be "
+                             f"('opposite', 'same', or 'both'), not "
+                             f"{expInfo['9. Background direction']}")
         
         # timing in frames
         # if ISI >= 0:
@@ -338,17 +399,18 @@ for trialN in range(expInfo['nTrials']):
         t_interval_1 = t_fixation + probe_duration
         t_ISI = t_interval_1 + ISI
         t_interval_2 = t_ISI + probe_duration
-        t_response = t_interval_2 + 10000*fps  # I presume this means almost unlimited time to respond?
+        # I presume this means almost unlimited time to respond?
+        t_response = t_interval_2 + 10000*fps
 
+        # repeat the trial if [r] has been pressed
         repeat = True
-
         while repeat:
             frameN = -1
             continueRoutine = True
             while continueRoutine:
                 frameN = frameN + 1
 
-######################################################################## ISI YES
+                # ISI YES
                 # FIXATION
                 if t_fixation >= frameN > 0:
                     new_x = r_dots*np.cos(alpha)
@@ -359,7 +421,6 @@ for trialN in range(expInfo['nTrials']):
                     probeMask2.draw()
                     probeMask3.draw()
                     probeMask4.draw()
-                    
                     fixation.setRadius(3)
                     fixation.draw()
 
@@ -375,7 +436,6 @@ for trialN in range(expInfo['nTrials']):
                     if ISI == -1:
                         if sep <= 18:
                             probe2.draw()
-
                     fixation.setRadius(3)
                     fixation.draw()
 
@@ -384,7 +444,6 @@ for trialN in range(expInfo['nTrials']):
                     alpha = alpha + rotSpeed
                     new_x = r_dots*np.cos(alpha)
                     new_y = r_dots*np.sin(alpha)
-                    
                     dots.xys = np.array([new_x, new_y]).transpose()
                     dots.draw()
                     probeMask1.draw()
@@ -402,7 +461,6 @@ for trialN in range(expInfo['nTrials']):
                         alpha = alpha
                     new_x = r_dots*np.cos(alpha)
                     new_y = r_dots*np.sin(alpha)
-
                     dots.xys = np.array([new_x, new_y]).transpose()
                     dots.draw()
                     probeMask1.draw()
@@ -426,36 +484,37 @@ for trialN in range(expInfo['nTrials']):
                     fixation.draw()
 
                     # ANSWER
-                    # resp can be undifined
+                    # resp can be undefined
                     resp = event.BuilderKeyResponse()
-                    theseKeys = event.getKeys(keyList=['num_5', 'num_4', 'num_1', 'num_2', 'w', 'q', 'a', 's'])
+                    theseKeys = event.getKeys(keyList=['num_5', 'num_4', 'num_1', 
+                                                       'num_2', 'w', 'q', 'a', 's'])
                     if len(theseKeys) > 0:  # at least one key was pressed
                         resp.keys = theseKeys[-1]  # just the last key pressed
                         resp.rt = resp.clock.getTime()
 
                         if corner == 45:
-                            if (resp.keys == str('w')) or (resp.keys == 'w') or (resp.keys == 'num_5'):
+                            if (resp.keys == 'w') or (resp.keys == 'num_5'):
                                 resp.corr = 1
                             else:
                                 resp.corr = 0
                             repeat = False
                             continueRoutine = False
                         elif corner == 135:
-                            if (resp.keys == str('q')) or (resp.keys == 'q') or (resp.keys == 'num_4'):
+                            if (resp.keys == 'q') or (resp.keys == 'num_4'):
                                 resp.corr = 1
                             else:
                                 resp.corr = 0
                             repeat = False
                             continueRoutine = False
                         elif corner == 225:
-                            if (resp.keys == str('a')) or (resp.keys == 'a') or (resp.keys == 'num_1'):
+                            if (resp.keys == 'a') or (resp.keys == 'num_1'):
                                 resp.corr = 1
                             else:
                                 resp.corr = 0
                             repeat = False
                             continueRoutine = False
                         elif corner == 315:
-                            if (resp.keys == str('s')) or (resp.keys == 's') or (resp.keys == 'num_2'):
+                            if (resp.keys == 's') or (resp.keys == 'num_2'):
                                 resp.corr = 1
                             else:
                                 resp.corr = 0
@@ -465,11 +524,13 @@ for trialN in range(expInfo['nTrials']):
                 # check for quit
                 if event.getKeys(keyList=["escape"]):
                     core.quit()
+                    
                 # redo the trial if i think i made a mistake
                 if event.getKeys(keyList=["r"]) or event.getKeys(keyList=['num_9']):
                     repeat = True
                     continueRoutine = False
                     continue
+                    
                 # refresh the screen
                 if continueRoutine:
                     win.flip()

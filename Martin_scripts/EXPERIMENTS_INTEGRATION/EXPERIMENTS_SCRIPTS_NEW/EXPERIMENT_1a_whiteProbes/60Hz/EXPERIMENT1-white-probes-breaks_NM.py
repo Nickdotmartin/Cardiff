@@ -21,7 +21,8 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'HP_24uh'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' # gamma set at 2.1
+monitor_name = 'Asus_VG24'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh'
+# gamma set at 2.1  [####### this comment is incorrect, its set above i think ############]
 display_number = 1  # 0 indexed, 1 for external display
 
 
@@ -69,9 +70,8 @@ separations = [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0, 99, 99]
 # FILENAME
 filename = f'{_thisDir}{os.sep}' \
            f'{participant_name}{os.sep}' \
-           f'ISI_{ISI}' \
-           f'_probeDur{probe_duration}' \
-           f'{os.sep}{participant_name}'
+           f'ISI_{ISI}_probeDur{probe_duration}{os.sep}' \
+           f'{participant_name}'
 
 # Experiment Handler
 thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
@@ -187,11 +187,10 @@ probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, -1.0, 1.0),
 probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor=[-1.0, 1.0, -1.0],
                           lineWidth=0, opacity=1, size=1, interpolate=False)
 
-# MOUSE
+# MOUSE - hide cursor
 myMouse = event.Mouse(visible=False)
 
-# ------------------------------------------------------------------- INSTRUCTION
-# ------------------------------------------------------------------- INSTRUCTION
+# INSTRUCTION
 instructions = visual.TextStim(win=win, name='instructions',
                                text="[q] or [4] top-left\n "
                                     "[w] or [5] top-right\n "
@@ -199,10 +198,11 @@ instructions = visual.TextStim(win=win, name='instructions',
                                     "[s] or [2] bottom-right \n\n "
                                     "[r] or [9] to redo the previous trial \n\n"
                                     "[Space bar] to start",
-                               font='Arial', pos=[0, 0], height=20, ori=0, color=[255, 255, 255],
-                               colorSpace='rgb255', opacity=1, languageStyle='LTR', depth=0.0)
+                               font='Arial', pos=[0, 0], height=20, ori=0,
+                               color=[255, 255, 255], colorSpace='rgb255',
+                               opacity=1, languageStyle='LTR', depth=0.0)
 
-# ------------------------------------------------------------------- BREAKS
+# BREAKS
 breaks = visual.TextStim(win=win, name='breaks',
                          text="turn on the light and  take at least 30-seconds break.",
                          font='Arial', pos=[0, 0], height=20, ori=0, color=[255, 255, 255],
@@ -212,8 +212,7 @@ while not event.getKeys():
     instructions.draw()
     win.flip()
 
-# ------------------------------------------------------------------- STAIRCASE
-# ------------------------------------------------------------------- STAIRCASE
+# STAIRCASE
 total_nTrials = 0
 expInfo['startPoints'] = list(range(1, 15))  # 14 staircases (14 conditions)
 expInfo['nTrials'] = trial_number
@@ -240,8 +239,8 @@ for thisStart in expInfo['startPoints']:
                           extraInfo=thisInfo)
     stairs.append(thisStair)
 
-# ------------------------------------------------------------------- EXPERIMENT
-# ------------------------------------------------------------------- EXPERIMENT
+
+# EXPERIMENT
 for trialN in range(expInfo['nTrials']):
     shuffle(stairs)
     for thisStair in stairs:
@@ -250,6 +249,10 @@ for trialN in range(expInfo['nTrials']):
         # separation experiment #################################################
         sep = separations[thisStair.extraInfo['thisStart']-1]
         # direction in which the probe jumps : CW or CCW
+        '''original script for reset probe orientation has 3 possible values: 1, -1 or 9. 
+        I guess this is useless as there are only two choices here.
+                        elif target_jump == 9:
+                    probe1.ori = random.choice([0, 180])'''
         target_jump = random.choice([1, -1])
         stairNum = thisStair.extraInfo['thisStart']
         probeLum = thisStair.next()
@@ -392,7 +395,8 @@ for trialN in range(expInfo['nTrials']):
 
                     # ANSWER
                     resp = event.BuilderKeyResponse()
-                    theseKeys = event.getKeys(keyList=['num_5', 'num_4', 'num_1', 'num_2', 'w', 'q', 'a', 's'])
+                    theseKeys = event.getKeys(keyList=['num_5', 'num_4', 'num_1',
+                                                       'num_2', 'w', 'q', 'a', 's'])
                     if len(theseKeys) > 0:  # at least one key was pressed
                         resp.keys = theseKeys[-1]  # just the last key pressed
                         resp.rt = resp.clock.getTime()
