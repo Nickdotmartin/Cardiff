@@ -137,7 +137,6 @@ else:
     print(f"fps ({fps}) does not match actual frame rate ({actualFrameRate})")
     core.quit()
 
-
 actual_size = win.size
 if list(mon_dict['size']) == list(actual_size):
     print(f"monitor is expected size")

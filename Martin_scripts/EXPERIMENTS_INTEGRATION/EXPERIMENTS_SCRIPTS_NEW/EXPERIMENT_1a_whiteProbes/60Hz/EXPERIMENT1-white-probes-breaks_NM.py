@@ -249,6 +249,7 @@ for trialN in range(expInfo['nTrials']):
         # separation experiment #################################################
         sep = separations[thisStair.extraInfo['thisStart']-1]
         # direction in which the probe jumps : CW or CCW
+        # todo: should I remove code for if target_jump == 9?
         '''original script for reset probe orientation has 3 possible values: 1, -1 or 9. 
         I guess this is useless as there are only two choices here.
                         elif target_jump == 9:
