@@ -21,7 +21,7 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'Asus_VG24'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh'
+monitor_name = 'HP_24uh'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh'
 # gamma set at 2.1  [####### this comment is incorrect, its set above i think ############]
 display_number = 1  # 0 indexed, 1 for external display
 
@@ -336,6 +336,7 @@ for trialN in range(expInfo['nTrials']):
 
         # timing in frames
         # if ISI >= 0:
+        # todo: change t_interval_1 and 2 to t_probe_1 and 2?
         t_fixation = 1 * fps
         t_interval_1 = t_fixation + probe_duration
         t_ISI = t_interval_1 + ISI
@@ -398,37 +399,29 @@ for trialN in range(expInfo['nTrials']):
                     resp = event.BuilderKeyResponse()
                     theseKeys = event.getKeys(keyList=['num_5', 'num_4', 'num_1',
                                                        'num_2', 'w', 'q', 'a', 's'])
+
                     if len(theseKeys) > 0:  # at least one key was pressed
                         resp.keys = theseKeys[-1]  # just the last key pressed
                         resp.rt = resp.clock.getTime()
+
+                        # default assume response incorrect unless meets criteria below
+                        resp.corr = 0
+
                         if corner == 45:
                             if (resp.keys == 'w') or (resp.keys == 'num_5'):
                                 resp.corr = 1
-                            else:
-                                resp.corr = 0
-                            repeat = False
-                            continueRoutine = False
                         elif corner == 135:
                             if (resp.keys == 'q') or (resp.keys == 'num_4'):
                                 resp.corr = 1
-                            else:
-                                resp.corr = 0
-                            repeat = False
-                            continueRoutine = False
                         elif corner == 225:
                             if (resp.keys == 'a') or (resp.keys == 'num_1'):
                                 resp.corr = 1
-                            else:
-                                resp.corr = 0
-                            repeat = False
-                            continueRoutine = False
                         elif corner == 315:
                             if (resp.keys == 's') or (resp.keys == 'num_2'):
                                 resp.corr = 1
-                            else:
-                                resp.corr = 0
-                            repeat = False
-                            continueRoutine = False
+
+                        repeat = False
+                        continueRoutine = False
 
                 # check for quit
                 if event.getKeys(keyList=["escape"]):

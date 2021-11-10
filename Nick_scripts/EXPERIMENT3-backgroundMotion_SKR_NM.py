@@ -19,7 +19,7 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'Asus_VG24'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh'
+monitor_name = 'HP_24uh'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh'
 # gamma set at 2.1  [####### this comment is incorrect, its set above i think ############]
 display_number = 1  # 0 indexed, 1 for external display
 
@@ -57,7 +57,8 @@ orientation = expInfo['5. Probe orientation']
 
 # VARIABLES
 # Distances between probes
-separations = [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]  # 99 values for single probe condition
+# this study does not include 99 values for single probe condition
+separations = [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]
 # ISI durations, -1 correspond to simultaneous probes
 ISI = int(expInfo['4. ISI duration in frame'])
 # Background speed in deg.s-1
@@ -287,6 +288,7 @@ for trialN in range(expInfo['nTrials']):
         target_jump = np.random.choice([1, -1])  # direction in which the probe jumps : CW or CCW
         stairNum = thisStair.extraInfo['thisStart']
         probeLum = thisStair.next()
+        print(f"probeLum: {probeLum}")
         probeColor255 = probeLum * LumColor255Factor
         probeColor1 = (probeColor255 * Color255Color1Factor) - 1
 
@@ -369,16 +371,13 @@ for trialN in range(expInfo['nTrials']):
         # speed
         if corner == 45:
             target_jump2 = target_jump
-            rotSpeed = speed * target_jump2
         elif corner == 135:
             target_jump2 = target_jump*-1
-            rotSpeed = speed * target_jump2
         elif corner == 225:
             target_jump2 = target_jump
-            rotSpeed = speed * target_jump2
         elif corner == 315:
             target_jump2 = target_jump*-1
-            rotSpeed = speed * target_jump2
+        rotSpeed = speed * target_jump2
 
         if expInfo['9. Background direction'] == 'both':
             if stairNum % 2 == 1:  # impair staircase BG motion opposite to probe direction
@@ -409,6 +408,8 @@ for trialN in range(expInfo['nTrials']):
             while continueRoutine:
                 frameN = frameN + 1
 
+                # todo: will this work if I just have the draw commands once at end,
+                #  rather than in each if statement?
                 # ISI YES
                 # FIXATION
                 if t_fixation >= frameN > 0:
@@ -456,8 +457,6 @@ for trialN in range(expInfo['nTrials']):
                 if t_interval_2 >= frameN > t_ISI:
                     if expInfo['9. Background motion during'] == 'transient&probe2':
                         alpha = alpha + rotSpeed
-                    else: 
-                        alpha = alpha
                     new_x = r_dots*np.cos(alpha)
                     new_y = r_dots*np.sin(alpha)
                     dots.xys = np.array([new_x, new_y]).transpose()
@@ -491,34 +490,24 @@ for trialN in range(expInfo['nTrials']):
                         resp.keys = theseKeys[-1]  # just the last key pressed
                         resp.rt = resp.clock.getTime()
 
+                        # default assume response incorrect unless meets criteria below
+                        resp.corr = 0
+
                         if corner == 45:
                             if (resp.keys == 'w') or (resp.keys == 'num_5'):
                                 resp.corr = 1
-                            else:
-                                resp.corr = 0
-                            repeat = False
-                            continueRoutine = False
                         elif corner == 135:
                             if (resp.keys == 'q') or (resp.keys == 'num_4'):
                                 resp.corr = 1
-                            else:
-                                resp.corr = 0
-                            repeat = False
-                            continueRoutine = False
                         elif corner == 225:
                             if (resp.keys == 'a') or (resp.keys == 'num_1'):
                                 resp.corr = 1
-                            else:
-                                resp.corr = 0
-                            repeat = False
-                            continueRoutine = False
                         elif corner == 315:
                             if (resp.keys == 's') or (resp.keys == 'num_2'):
                                 resp.corr = 1
-                            else:
-                                resp.corr = 0
-                            repeat = False
-                            continueRoutine = False
+
+                        repeat = False
+                        continueRoutine = False
 
                 # check for quit
                 if event.getKeys(keyList=["escape"]):
