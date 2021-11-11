@@ -11,6 +11,17 @@ from math import *
 
 from kestenSTmaxVal import Staircase
 
+"""
+'Ricco’s law holds: threshold intensity multiplied by the area equals a constant. 
+This means that over this area, which embraces several hundred rods, 
+light falling on the individual rods summates, or accumulates, its effects completely, 
+so that 100 quanta falling on a single rod are as effective as one quantum falling simultaneously on 100 rods.' 
+from https://www.britannica.com/science/human-eye/Plexiform-layers#ref531581
+
+Script designed with 2 conditions in minds: ricco's area and ricco's separation.
+Script currently only completed for ricco's area.
+"""
+
 # sets psychoPy to only log critical messages
 logging.console.setLevel(logging.CRITICAL)
 # Ensure that relative paths start from the same directory as this script
@@ -28,7 +39,7 @@ expName = 'RadialDots'  # from the Builder filename that created this script
 expInfo = {'1. Experiment': ['Ricco_separation', 'Ricco_area'],
            '2. Participant': 'testnm',
            '3. Probe duration in frames': '2',
-           '4. fps': ['240', '60'],
+           '4. fps': ['60', '240'],
            '5. Trials counter': ['no', 'yes'],
            '6. Probe eccentricity in deg': ['4', '8', '10'],
            '7. ISI duration in ms': ['0', '8.33', '16.67', '25', '37.5', '50', '100', 'noISI'],
@@ -60,13 +71,15 @@ if orientation == 'tangent':
 elif orientation == 'ray':
     flow_speed = 0.2
 
-# todo: not sure what these lines refer to yet...
-lineW = 1
-lineL = 3
-lineL2 = 3  # 2
-lineL_test = 1
+lineW = 1  # unused
+lineL = 3  # I think this is the lineLength of the probe - e.g., 3 pixels long.
+lineL2 = 3
+lineL_test = 1  # unused
 
-areas = [19, 13, 7, 4, 2, 1, 2, 3, 4, 5, 7]
+# todo: selecting the area of 1 causes problems.
+#  probe_s makes a list from 0 to selectied area value (e.g., list(range(0, 1))
+#  which returns [0], This crashed when it tried to access probeW = probe_s[1]
+areas = [19, 13, 7, 4, 2, 1, 2, 3, 4, 5, 7]  # for area experiement
 
 separations = [18, 18, 18, 18, 6, 6, 6, 6, 3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 0, 0]
 
@@ -78,6 +91,7 @@ flow_direction = [-1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1,
 # flow_direction = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
 # flow_direction = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 
+# todo: make this into a dict to look up ISI value from ms keys
 if expInfo['7. ISI duration in ms'] == '0':
     ISI = 0
 elif expInfo['7. ISI duration in ms'] == '8.33':
@@ -96,24 +110,12 @@ elif expInfo['7. ISI duration in ms'] == 'noISI':
     ISI = -1
 
 # FILENAME
-filename = (_thisDir + os.sep + 'integration_RiccoBloch_new' + 
-            os.sep + (experiment + '_' + orientation + '_' + expInfo['99. Background'] +
-                      '_ISI' + expInfo['7. ISI duration in ms']) +
-            '_ECC' + expInfo['6. Probe eccentricity in deg'] +
-            os.sep + participant_name +
-            os.sep + '%s' % participant_name)
-
-print(f"\nold_filename: {filename}")
-
-# FILENAME
 filename = f'{_thisDir}{os.sep}integration_RiccoBloch_new{os.sep}' \
            f'{experiment}_{orientation}_{expInfo["99. Background"]}' \
            f'_ISI{expInfo["7. ISI duration in ms"]}' \
            f'_ECC{expInfo["6. Probe eccentricity in deg"]}' \
            f'{os.sep}{participant_name}' \
            f'{os.sep}{participant_name}'
-print(f"new_filename: {filename}")
-
 
 
 # Experiment Handler
@@ -184,8 +186,12 @@ trialClock = core.Clock()
 fixation = visual.Circle(win, radius=2, units='pix',
                          lineColor='black', fillColor='black')
 
-# probe
+# PROBES
+# todo: place probes 1&2 outside if statement.
+#  only change is that probe1 is supposed to be blue, but it shows white anyway
 if probe_check == 'yes':
+    # probe_test places a red dot at the location of the first probe that remains
+    # so that it is clear that the second probe is in a different location
     probe1 = visual.Line(win, lineWidth=1.0, units='pix', lineColor='blue',
                          interpolate=False)
     probe2 = visual.Line(win, lineWidth=1.0, units='pix', lineColor='white',
@@ -215,6 +221,7 @@ probeMask3 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
 probeMask4 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
                                 size=(mask_size, mask_size), units='pix', color=bgcolor)
 
+# BACKGROUND
 # flow
 nDots = 10000
 flow = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
@@ -225,7 +232,6 @@ flow = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
 # full screen mask to blend off edges and fade to black
 # Create a raisedCosine mask array and assign it to a Grating stimulus (grey outside, transparent inside)
 # this was useful http://www.cogsci.nl/blog/tutorials/211-a-bit-about-patches-textures-and-masks-in-psychopy
-
 raisedCosTexture2 = visual.filters.makeMask(1080, shape='raisedCosine', fringeWidth=0.6, radius=[1.0, 1.0])
 invRaisedCosTexture = -raisedCosTexture2  # inverts mask to blur edges instead of center
 blankslab = np.ones((1080, 420))  # create blank slabs to put to left and right of image
@@ -235,9 +241,10 @@ dotsMask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0, size=(192
 # changed dotsmask color from grey
 # above fades to black round edges which makes screen edges less visible
 
-# ---------------------------------------------------
 # function for wrapping flow dots back into volume
-def WrapPoints (ii, imin, imax):
+# its is used as WrapPoints(z, minDist, maxDist)
+# Any dots with a z (depth) value out of bounds are transformed to be in bounds
+def WrapPoints(ii, imin, imax):
     lessthanmin = (ii < imin)
     ii[lessthanmin] = ii[lessthanmin] + (imax-imin)
     morethanmax = (ii > imax)
@@ -245,16 +252,14 @@ def WrapPoints (ii, imin, imax):
 
 
 # Trial counter
-# todo: what is this for? the text is '???'
-trials_counter = visual.TextStim(win=win, name='instructions', text="???",
-                                 font='Arial', pos=[550, 450], height=20, ori=0,
-                                 color=[1, 1, 1], colorSpace='rgb', opacity=1,
-                                 languageStyle='LTR', depth=0.0)
-
+trials_counter = visual.TextStim(win=win, name='trials_counter', text="???",
+                                 font='Arial', height=20,
+                                 # default set to black (e.g., invisible)
+                                 color=[-1.0, -1.0, -1.0],
+                                 pos=[-800, -500])
 if expInfo['5. Trials counter'] == 'yes':
     trials_counter.color = [1, 1, 1]
-else:
-    trials_counter.color = [0, 0, 0]
+
 
 
 # MOUSE
@@ -277,10 +282,19 @@ while not event.getKeys():
     win.flip()
 
 # STAIRCASE
+# todo: change names for total_n_trials, and trial number.
+#  Trial number should start at zero and increase for each trial,
+#  total_N_trials should be the limit.
+#  This is the opposite of how they are at the mo
+
 total_nTrials = 0
 # old comments for starpoints: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]
 # 6 window duration conditions
-expInfo['startPoints'] = list(range(1, 23))
+# expInfo['startPoints'] = list(range(1, 23))
+expInfo['startPoints'] = list(range(1, len(separations)))
+if experiment == 'Ricco_area':
+    expInfo['startPoints'] = list(range(1, len(areas)))
+
 expInfo['nTrials'] = trial_number
 
 stairStart = 0.7  # 1.0
@@ -302,6 +316,7 @@ for thisStart in expInfo['startPoints']:
                           )
     stairs.append(thisStair)
 
+
 taille = 5000  # french for 'size', 'cut', 'trim', 'clip' etc
 minDist = 0.5
 maxDist = 5
@@ -312,6 +327,7 @@ for trialN in range(expInfo['nTrials']):
     shuffle(stairs)
     for thisStair in stairs:
 
+
         total_nTrials = total_nTrials + 1
         # staircase varies contrastprobe
         contrastprobe = thisStair.next()
@@ -321,8 +337,9 @@ for trialN in range(expInfo['nTrials']):
         trialClock.reset()
         
         # conditions
-        # todo: put probeww back in for Ricco_area exp
-        # probeWW = areas[thisStair.extraInfo['thisStart']-1] # area experiment
+        # todo: probeWW list index out of range for line 340 on area exp.  fix this
+        if experiment == 'Ricco_area':
+            probeWW = areas[thisStair.extraInfo['thisStart']-1]  # area experiment
         sep = separations[thisStair.extraInfo['thisStart']-1]  # separation experiment
         target_grows = PosOrNeg[thisStair.extraInfo['thisStart']-1]  # direction in which the probe grows - CW or CCW
         flow_dir = flow_direction[thisStair.extraInfo['thisStart']-1]
@@ -347,7 +364,7 @@ for trialN in range(expInfo['nTrials']):
         probeMask4.setPos([x_prob+1, -y_prob-1])
         
         if experiment == 'Ricco_area':
-            # list of all positions between 0 and probeW
+            # list of all positions between 0 and probeWW
             # todo: put probeww back in for Ricco_area exp
             probe_s = list(range(0, probeWW))
         elif experiment == 'Ricco_separation':
@@ -399,6 +416,7 @@ for trialN in range(expInfo['nTrials']):
             vx_dir = +1  # CCW
             vy_dir = +1
 
+
         # timimg in frames
         if ISI >= 0:
             t_fixation = 1 * fps
@@ -414,6 +432,8 @@ for trialN in range(expInfo['nTrials']):
 
         repeat = True
 
+
+
         while repeat:
             resp = event.BuilderKeyResponse()
             frameN = -1
@@ -424,10 +444,7 @@ for trialN in range(expInfo['nTrials']):
                 # ISI YES
                 if ISI >= 0:
                     if t_fixation >= frameN > 0:
-                        trials_counter.text = "%i /120" % total_nTrials
-                        # trials_counter.text = f"{total_nTrials}/120"
-
-                        trials_counter.draw()
+                        trials_counter.text = f"{total_nTrials}/120"
                         if expInfo['99. Background'] == 'flow' or expInfo['99. Background'] == 'static':
                             # flow
                             flow.xys = np.array([x_flow, y_flow]).transpose()
@@ -439,11 +456,12 @@ for trialN in range(expInfo['nTrials']):
                             probeMask4.draw()
 
                         dotsMask.draw()
+                        trials_counter.draw()
+
                         fixation.setRadius(3)
                         fixation.draw()
 
                     if t_interval_1 >= frameN > t_fixation:
-                        trials_counter.draw()
                         if expInfo['99. Background'] == 'flow' or expInfo['99. Background'] == 'static':
                             # flow
                             flow.xys = np.array([x_flow, y_flow]).transpose()
@@ -455,6 +473,8 @@ for trialN in range(expInfo['nTrials']):
                             probeMask4.draw()
 
                         dotsMask.draw()
+                        trials_counter.draw()
+
                         fixation.setRadius(3)
                         fixation.draw()
 
@@ -496,7 +516,6 @@ for trialN in range(expInfo['nTrials']):
                             probe_test.draw()
 
                     if t_ISI >= frameN > t_interval_1:
-                        trials_counter.draw()
                         if expInfo['99. Background'] == 'flow':
                             if orientation == 'tangent':
                                 # translational flow
@@ -529,11 +548,12 @@ for trialN in range(expInfo['nTrials']):
                         probeMask4.draw()
                             
                         dotsMask.draw()
+                        trials_counter.draw()
+
                         fixation.setRadius(3)
                         fixation.draw()                       
                         
                     if t_interval_2 >= frameN > t_ISI:
-                        trials_counter.draw()
                         if expInfo['99. Background'] == 'flow':
                             # flow
                             if orientation == 'tangent':
@@ -563,9 +583,12 @@ for trialN in range(expInfo['nTrials']):
                         probeMask3.draw()
                         probeMask4.draw()
                         dotsMask.draw()
+                        trials_counter.draw()
+
                         fixation.setRadius(3)
                         fixation.draw()                       
 
+                        print(f"\nprobeW: {probeW}, probe_s: {probe_s}")
                         probeW = probe_s[1]
 
                         # floor((probe_s[-1]+1)/2) if we want to center the probe around the meridians
@@ -601,7 +624,6 @@ for trialN in range(expInfo['nTrials']):
                             probe_test.draw()
 
                     if frameN > t_interval_2:
-                        trials_counter.draw()
                         if expInfo['99. Background'] == 'flow' or expInfo['99. Background'] == 'static':
                             # flow
                             flow.draw()
@@ -612,8 +634,12 @@ for trialN in range(expInfo['nTrials']):
                             probeMask4.draw()
 
                         dotsMask.draw()
+                        trials_counter.draw()
+
                         fixation.setRadius(2)
                         fixation.draw()
+
+
 
                         # ANSWER
                         theseKeys = event.getKeys(keyList=['num_5', 'num_4', 'num_1',
@@ -678,9 +704,7 @@ for trialN in range(expInfo['nTrials']):
                 # NO ISI
                 if ISI == -1:
                     if t_fixation >= frameN > 0:
-                        # trials_counter.text = "%i /120" %total_nTrials
                         trials_counter.text = f"{total_nTrials}/120"
-                        trials_counter.draw()
 
                         if expInfo['99. Background'] == 'static':
                             # flow
@@ -692,11 +716,12 @@ for trialN in range(expInfo['nTrials']):
                             probeMask3.draw()
                             probeMask4.draw()
                         dotsMask.draw()
+                        trials_counter.draw()
+
                         fixation.setRadius(3)
                         fixation.draw()
                         
                     if t_interval >= frameN > t_fixation:
-                        trials_counter.draw()
 
                         if expInfo['99. Background'] == 'static':
                             # flow
@@ -793,11 +818,12 @@ for trialN in range(expInfo['nTrials']):
                             probe_test.draw()
                             
                         dotsMask.draw()
+                        trials_counter.draw()
+
                         fixation.draw()
                             
                     if frameN > t_interval:
-                        trials_counter.draw()
-                        
+
                         if expInfo['99. Background'] == 'static':
                             # flow
                             flow.xys = np.array([x_flow, y_flow]).transpose()
@@ -809,6 +835,8 @@ for trialN in range(expInfo['nTrials']):
                             probeMask4.draw()
                         
                         dotsMask.draw()
+                        trials_counter.draw()
+
                         fixation.setRadius(2)
                         fixation.draw()
 

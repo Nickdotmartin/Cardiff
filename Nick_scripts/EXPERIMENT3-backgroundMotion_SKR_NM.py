@@ -157,6 +157,7 @@ else:
 fixation = visual.Circle(win, radius=2, units='pix',
                          lineColor='white', fillColor='black')
 
+# BACKGROUND
 # Dots
 nDots = 2000
 dots = visual.ElementArrayStim(win, elementTex=None, elementMask='gauss', 
@@ -246,6 +247,7 @@ total_nTrials = 0
 # Martin's original script had range(1, 13) - which corresponds to 12 separation values,
 # Exp1a has 14 separation values
 # so does this mean that there are only 12 staircase conditions?
+# todo: change from list(range(1, 13)) to list(range(1, len(separations)))
 expInfo['startPoints'] = list(range(1, 13))  # 14 staircases (14 conditions)
 expInfo['nTrials'] = trial_number
 
@@ -276,6 +278,8 @@ for thisStart in expInfo['startPoints']:
                           )
     stairs.append(thisStair)
 
+
+
 # EXPERIMENT
 for trialN in range(expInfo['nTrials']):
     np.random.shuffle(stairs)
@@ -283,10 +287,12 @@ for trialN in range(expInfo['nTrials']):
 
         # conditions
         # separation experiment #################################################
+        # PROBE
         sep = separations[thisStair.extraInfo['thisStart']-1]
 
         target_jump = np.random.choice([1, -1])  # direction in which the probe jumps : CW or CCW
         stairNum = thisStair.extraInfo['thisStart']
+        # Todo: probeLum doesn't seem to change - always at 106
         probeLum = thisStair.next()
         print(f"probeLum: {probeLum}")
         probeColor255 = probeLum * LumColor255Factor
@@ -299,8 +305,11 @@ for trialN in range(expInfo['nTrials']):
         probe1.color = [probeColor1*redfilter, probeColor1*redfilter, probeColor1*redfilter]
         probe2.color = [probeColor1*redfilter, probeColor1*redfilter, probeColor1*redfilter]
 
-        # PROBE LOCATION
+        # PROBE LOCATIONS
+        # numbers go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
         corner = np.random.choice([45, 135, 225, 315])
+        # x_prob and y_prob are constants, so can be defined outside of loop.
+        # These just set the distance of the probes from fixation
         x_prob = round((tan(np.deg2rad(probe_ecc))*viewdistPix)/sqrt(2))
         y_prob = round((tan(np.deg2rad(probe_ecc))*viewdistPix)/sqrt(2))
 
@@ -308,35 +317,46 @@ for trialN in range(expInfo['nTrials']):
         probe1.ori = 0
         probe2.ori = 0
         if corner == 45:
+            # in top-right corner, both x and y increase (right and up)
             p1_x = x_prob * 1
             p1_y = y_prob * 1
+
+            # todo: script currently only contains option for orientation='tangent'.
+            #  I think 'orientation' here refers to the relationship between probes,
+            #  whereas probe1.ori refers to rotationsal angle of inidividual probe stimulus
             if orientation == 'tangent':
                 if target_jump == 1:  # CCW
                     probe1.ori = 0
                     probe2.ori = 180
+                    # probe2 is left and up from probe1
                     probe2.pos = [p1_x - sep+1, p1_y + sep]
                 elif target_jump == -1:  # CW
                     probe1.ori = 180
                     probe2.ori = 0
+                    # probe2 is right and down from probe1
                     probe2.pos = [p1_x + sep-1, p1_y - sep]
                 #  # target jump can only be -1 or 1 (see line 205).
                 # elif target_jump == 9:
                 #     probe1.ori = np.random.choice([0, 180])
         elif corner == 135:
+            # in top-left corner, x decreases (left) and y increases (up)
             p1_x = x_prob * -1
             p1_y = y_prob * 1
             if orientation == 'tangent':
                 if target_jump == 1:  # CCW
                     probe1.ori = 90
                     probe2.ori = 270
+                    # probe2 is right and up from probe1
                     probe2.pos = [p1_x + sep-1, p1_y + sep]
                 elif target_jump == -1:  # CW
                     probe1.ori = 270
                     probe2.ori = 90
+                    # probe2 is left and down from probe1
                     probe2.pos = [p1_x - sep+1, p1_y - sep]
 #                elif target_jump == 9:
 #                    probe1.ori = np.random.choice([90, 270])
         elif corner == 225:
+            # in bottom left corner, both x and y decrease (left and down)
             p1_x = x_prob * -1
             p1_y = y_prob * -1
             if orientation == 'tangent':
@@ -352,6 +372,7 @@ for trialN in range(expInfo['nTrials']):
 #                    probe1.ori = np.random.choice([0, 180])
         else:
             corner = 315
+            # in bottom-right corner, x increases (right) and y decreases (down)
             p1_x = x_prob * 1
             p1_y = y_prob * -1
             if orientation == 'tangent':
@@ -368,7 +389,16 @@ for trialN in range(expInfo['nTrials']):
                 
         probe1.pos = [p1_x, p1_y]
 
-        # speed
+
+        # BACKGROUND
+        # background rotational speed
+        # this bit sets the direction of background rotation relative to
+        # the direction of probe (target) rotation which can be CW or CCW
+        # target_jump = np.random.choice([1, -1]), direction in which the probe jumps : CW or CCW
+        # todo: rename target_jump2 as it does not relate to targets, but background
+        # target_jump2 equals target_jump for 45 or 225, inverted for 135 and 315
+        # rotSpeed is therefore inverted for 135 and 315 compared to 45 or 225.
+        # todo: ask simon why this might be
         if corner == 45:
             target_jump2 = target_jump
         elif corner == 135:
@@ -380,7 +410,8 @@ for trialN in range(expInfo['nTrials']):
         rotSpeed = speed * target_jump2
 
         if expInfo['9. Background direction'] == 'both':
-            if stairNum % 2 == 1:  # impair staircase BG motion opposite to probe direction
+            if stairNum % 2 == 1:
+                # BG motion opposite to probe direction for odd number trials
                 rotSpeed = rotSpeed * -1
         elif expInfo['9. Background direction'] == 'opposite':
             rotSpeed = rotSpeed * -1
@@ -408,11 +439,11 @@ for trialN in range(expInfo['nTrials']):
             while continueRoutine:
                 frameN = frameN + 1
 
-                # todo: will this work if I just have the draw commands once at end,
-                #  rather than in each if statement?
+
                 # ISI YES
                 # FIXATION
                 if t_fixation >= frameN > 0:
+                    # before fixation has finished
                     new_x = r_dots*np.cos(alpha)
                     new_y = r_dots*np.sin(alpha)
                     dots.xys = np.array([new_x, new_y]).transpose()
@@ -426,6 +457,7 @@ for trialN in range(expInfo['nTrials']):
 
                 # PROBE 1
                 if t_interval_1 >= frameN > t_fixation:
+                    # after fixation, before end of probe1 interval
                     dots.draw()
                     probeMask1.draw()
                     probeMask2.draw()
@@ -441,6 +473,7 @@ for trialN in range(expInfo['nTrials']):
 
                 # ISI
                 if t_ISI >= frameN > t_interval_1:
+                    # after probe1, before end of ISI
                     alpha = alpha + rotSpeed
                     new_x = r_dots*np.cos(alpha)
                     new_y = r_dots*np.sin(alpha)
@@ -455,6 +488,7 @@ for trialN in range(expInfo['nTrials']):
 
                 # PROBE 2
                 if t_interval_2 >= frameN > t_ISI:
+                    # after ISI but before end of probe2 interval
                     if expInfo['9. Background motion during'] == 'transient&probe2':
                         alpha = alpha + rotSpeed
                     new_x = r_dots*np.cos(alpha)
@@ -473,6 +507,7 @@ for trialN in range(expInfo['nTrials']):
 
                 # ANSWER
                 if frameN > t_interval_2:
+                    # after probe 2 interval
                     dots.draw()
                     probeMask1.draw()
                     probeMask2.draw()
@@ -509,6 +544,7 @@ for trialN in range(expInfo['nTrials']):
                         repeat = False
                         continueRoutine = False
 
+                # regardless of frameN
                 # check for quit
                 if event.getKeys(keyList=["escape"]):
                     core.quit()
@@ -523,6 +559,8 @@ for trialN in range(expInfo['nTrials']):
                 if continueRoutine:
                     win.flip()
 
+
+        # add to exp dict
         thisExp.addData('stair', stairNum)
         thisExp.addData('probe_jump', target_jump) 
         thisExp.addData('probeColor1', probeColor1)

@@ -214,6 +214,7 @@ while not event.getKeys():
 
 # STAIRCASE
 total_nTrials = 0
+# todo: change from list(range(1, 15)) to list(range(1, len(separations)))
 expInfo['startPoints'] = list(range(1, 15))  # 14 staircases (14 conditions)
 expInfo['nTrials'] = trial_number
 
