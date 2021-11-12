@@ -255,11 +255,15 @@ for trialN in range(expInfo['nTrials']):
         I guess this is useless as there are only two choices here.
                         elif target_jump == 9:
                     probe1.ori = random.choice([0, 180])'''
+
         target_jump = random.choice([1, -1])
         stairNum = thisStair.extraInfo['thisStart']
+        # staircase varied probeLum
         probeLum = thisStair.next()
         probeColor255 = probeLum * LumColor255Factor
         probeColor1 = (probeColor255 * Color255Color1Factor) - 1
+
+        # print(f"stairNum: {stairNum}\nprobeLum: {probeLum}")
 
         total_nTrials = total_nTrials + 1
 
@@ -268,6 +272,7 @@ for trialN in range(expInfo['nTrials']):
         probe2.color = [probeColor1, probeColor1*redfilter, probeColor1*redfilter]
 
         # PROBE LOCATION
+        # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
         corner = random.choice([45, 135, 225, 315])
         x_prob = round((tan(deg2rad(probe_ecc))*viewdistPix)/sqrt(2))
         y_prob = round((tan(deg2rad(probe_ecc))*viewdistPix)/sqrt(2))

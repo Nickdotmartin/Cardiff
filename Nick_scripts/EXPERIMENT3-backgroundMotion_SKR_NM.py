@@ -288,13 +288,14 @@ for trialN in range(expInfo['nTrials']):
         # conditions
         # separation experiment #################################################
         # PROBE
-        sep = separations[thisStair.extraInfo['thisStart']-1]
+
+        stairNum = thisStair.extraInfo['thisStart']
+        # stairNum is 1 indexed, but accessing items from zero-indexed lists, so -1
+        sep = separations[stairNum-1]
 
         target_jump = np.random.choice([1, -1])  # direction in which the probe jumps : CW or CCW
-        stairNum = thisStair.extraInfo['thisStart']
-        # Todo: probeLum doesn't seem to change - always at 106
+        # staircase varies probeLum
         probeLum = thisStair.next()
-        print(f"probeLum: {probeLum}")
         probeColor255 = probeLum * LumColor255Factor
         probeColor1 = (probeColor255 * Color255Color1Factor) - 1
 
@@ -306,7 +307,7 @@ for trialN in range(expInfo['nTrials']):
         probe2.color = [probeColor1*redfilter, probeColor1*redfilter, probeColor1*redfilter]
 
         # PROBE LOCATIONS
-        # numbers go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
+        # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
         corner = np.random.choice([45, 135, 225, 315])
         # x_prob and y_prob are constants, so can be defined outside of loop.
         # These just set the distance of the probes from fixation
