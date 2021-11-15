@@ -10,6 +10,7 @@ import copy
 from datetime import datetime
 from math import *
 
+from PsychoPy_tools import check_correct_monitor
 from kestenSTmaxVal import Staircase
 
 
@@ -21,7 +22,7 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'HP_24uh'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh'
+monitor_name = 'NickMac'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh'
 # gamma set at 2.1  [####### this comment is incorrect, its set above i think ############]
 display_number = 1  # 0 indexed, 1 for external display
 
@@ -93,7 +94,7 @@ maxColor255 = 255
 minColor255 = 0
 maxColor1 = 1
 minColor1 = -1
-bgLumP = int(expInfo['7. Background lum in percent of maxLum'])
+bgLumP = int(expInfo['7. Background lum in percent of maxLum'])  # 20
 bgLum = maxLum * bgLumP / 100
 bgColor255 = bgLum * LumColor255Factor
 
@@ -126,13 +127,32 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     pos=[1, -1],  # pos gives position of top-left of screen
                     units='pix',
                     screen=display_number,
-                    allowGUI=False,
-                    fullscr=None
+                    # allowGUI=True,
+                    # fullscr=True,
                     )
+
+print(f"check win.size: {win.size}")
+widthPix = widthPix/2
+heightPix = heightPix/2
+print(f"widthPix: {widthPix}, hight: {heightPix}")
+widthPix, heightPix = win.size
+print(f"check win.size: {win.size}")
+
+
+print(f"type(win.getActualFrameRate()): {type(win.getActualFrameRate())} {win.getActualFrameRate()}")
+print(f"check win.size: {win.size}")
+check_correct_monitor(monitor_name=monitor_name,
+                      actual_size=win.size,
+                      actual_fps=win.getActualFrameRate(),
+                      verbose=True)
 
 # check correct monitor details (fps, size) have been accessed.
 print(win.monitor.name, win.monitor.getSizePix())
 actualFrameRate = int(win.getActualFrameRate())
+
+print(f"actual_size: {type(win.monitor.getSizePix())} {win.monitor.getSizePix()}")
+print(f"actual fps: {type(win.getActualFrameRate())} {win.getActualFrameRate()}")
+
 if fps in list(range(actualFrameRate-2, actualFrameRate+2)):
     print("fps matches actual frame rate")
 else:
@@ -141,7 +161,12 @@ else:
     core.quit()
 
 
-actual_size = win.size
+# actual_size = win.size
+actual_size = win.monitor.getSizePix()
+print(f"idiot check. I think I should use win.monitor.getSizePix() {win.monitor.getSizePix()}.\n"
+      f"currently using win.size {win.size}")
+
+
 if list(mon_dict['size']) == list(actual_size):
     print(f"monitor is expected size")
 elif list(mon_dict['size']) == list(actual_size/2):
@@ -153,6 +178,12 @@ else:
     check_sizes = win._checkMatchingSizes(mon_dict['size'], actual_size)
     print(check_sizes)
     core.quit()
+
+# check sizes seems unreliable,
+print(f"double checking win._checkMatchingSizes({mon_dict['size']}, {actual_size})")
+# it returns different values for same screen if different mon_names are used!
+check_sizes = win._checkMatchingSizes(mon_dict['size'], actual_size)
+print(check_sizes)
 
 
 # ELEMENTS

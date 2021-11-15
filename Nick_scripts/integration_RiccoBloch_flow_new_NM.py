@@ -30,7 +30,7 @@ os.chdir(_thisDir)
 
 
 # Monitor config from monitor centre
-monitor_name = 'Asus_VG24'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh'
+monitor_name = 'HP_24uh'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh'
 # gamma set at 2.1  [####### this comment is incorrect, its set above i think ############]
 display_number = 1  # 0 indexed, 1 for external display
 
@@ -155,7 +155,10 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     colorSpace='rgb', color=bgcolor,
                     winType='pyglet',  # I've added this to make it work on pycharm/mac
                     pos=[1, -1],  # pos gives position of top-left of screen
-                    units='pix', screen=1, allowGUI=False, fullscr=None)
+                    units='pix', screen=1,
+                    allowGUI=False,
+                    # fullscr=True
+                    )
 
 # check correct monitor details (fps, size) have been accessed.
 print(win.monitor.name, win.monitor.getSizePix())
@@ -173,7 +176,7 @@ if list(mon_dict['size']) == list(actual_size):
 elif list(mon_dict['size']) == list(actual_size/2):
     print(f"actual size is double expected size - Its ok, just a mac retina display bug.")
 else:
-    print(f"Display size does not match expected size from montior centre")
+    print(f"Display size ({actual_size}) does not match expected size from montior centre ({mon_dict['size']})")
     # check sizes seems unreliable,
     # it returns different values for same screen if different mon_names are used!
     check_sizes = win._checkMatchingSizes(mon_dict['size'], actual_size)
@@ -453,7 +456,7 @@ for trialN in range(expInfo['nTrials']):
 
         # timimg in frames
         if ISI >= 0:
-            # onve count
+            # one count
             t_fixation = 1 * fps
             t_interval_1 = t_fixation + probe_duration
             t_ISI = t_interval_1 + ISI
@@ -476,6 +479,7 @@ for trialN in range(expInfo['nTrials']):
 
                 # ISI YES
                 if ISI >= 0:
+                    # FIXATION
                     if t_fixation >= frameN > 0:
                         trials_counter.text = f"{total_nTrials}/120"
                         # if background in ['flow', 'static']:
@@ -496,6 +500,7 @@ for trialN in range(expInfo['nTrials']):
                         fixation.setRadius(3)
                         fixation.draw()
 
+                    # PROBE1
                     if t_interval_1 >= frameN > t_fixation:
                         if background in ['flow', 'static']:
                             # flow
@@ -550,6 +555,7 @@ for trialN in range(expInfo['nTrials']):
                         if probe_check == 'yes':
                             probe_test.draw()
 
+                    # ISI
                     if t_ISI >= frameN > t_interval_1:
                         if background == 'flow':
                             if orientation == 'tangent':
@@ -576,13 +582,14 @@ for trialN in range(expInfo['nTrials']):
                         probeMask2.draw()
                         probeMask3.draw()
                         probeMask4.draw()
-                            
+
                         dotsMask.draw()
                         trials_counter.draw()
 
                         fixation.setRadius(3)
                         fixation.draw()                       
-                        
+
+                    # PROBE2
                     if t_interval_2 >= frameN > t_ISI:
                         if background == 'flow':
                             # flow
