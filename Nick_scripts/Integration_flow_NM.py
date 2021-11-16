@@ -24,7 +24,7 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'NickMac'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh'
+monitor_name = 'HP_24uh'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh'
 display_number = 1  # 0 indexed, 1 for external display
 
 
@@ -32,9 +32,9 @@ display_number = 1  # 0 indexed, 1 for external display
 expName = 'integration_flow'  # from the Builder filename that created this script
 
 expInfo = {'1_Participant': 'testnm',
-           '2_Probe_dur_in_frames_at_240hz': [50, 2],
+           '2_Probe_dur_in_frames_at_240hz': [2, 50],
            '3_fps': [60, 144, 240],
-           '4_ISI_dur_in_ms': [100, 0, 8.33, 16.67, 25, 37.5, 50, 100],
+           '4_ISI_dur_in_ms': [0, 8.33, 16.67, 25, 37.5, 50, 100],
            '5_Probe_orientation': ['radial', 'tangent'],
            '6_Probe_size': ['5pixels', '6pixels', '3pixels'],
            '7_Trials_counter': [True, False],
@@ -131,10 +131,13 @@ mon_dict = {'mon_name': monitor_name,
             }
 print(f"mon_dict: {mon_dict}")
 
-widthPix = mon_dict['size'][0]  # 1440  # 1280
-heightPix = mon_dict['size'][1]  # 900  # 800
-monitorwidth = mon_dict['width']  # 30.41  # 32.512  # monitor width in cm
-viewdist = mon_dict['dist']  # 57.3  # viewing distance in cm
+use_full_screen = True
+if display_number > 0:
+    use_full_screen = False
+widthPix = mon_dict['size'][0]
+heightPix = mon_dict['size'][1]
+monitorwidth = mon_dict['width']  # monitor width in cm
+viewdist = mon_dict['dist']  # viewing distance in cm
 viewdistPix = widthPix/monitorwidth*viewdist
 mon = monitors.Monitor(monitor_name, width=monitorwidth, distance=viewdist)
 mon.setSizePix((widthPix, heightPix))
@@ -150,6 +153,7 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     units='pix',
                     screen=display_number,
                     allowGUI=False,
+                    fullscr=use_full_screen,
                     )
 
 
@@ -218,15 +222,13 @@ flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
 # full screen mask to blend off edges and fade to black
 # Create a raisedCosine mask array and assign it to a Grating stimulus (grey outside, transparent inside)
 # this was useful http://www.cogsci.nl/blog/tutorials/211-a-bit-about-patches-textures-and-masks-in-psychopy
-# todo: make the mask slightly larger so it closer to top and bottom edge.
-#  Note that the mask seems too big on mac retina and too small on external,
-#  so is the size fixed?
 raisedCosTexture2 = visual.filters.makeMask(1080, shape='raisedCosine', fringeWidth=0.6, radius=[1.0, 1.0])
 invRaisedCosTexture = -raisedCosTexture2  # inverts mask to blur edges instead of center
 blankslab = np.ones((1080, 420))  # create blank slabs to put to left and right of image
 mmask = np.append(blankslab, invRaisedCosTexture, axis=1)  # append blank slab to left
 mmask = np.append(mmask, blankslab, axis=1)  # and right
-dotsMask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0, size=(1920, 1080), units='pix', color='black')
+dotsMask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
+                              size=(widthPix, heightPix), units='pix', color='black')
 # changed dotsmask color from grey
 # above fades to black round edges which makes screen edges less visible
 
@@ -265,13 +267,11 @@ while not event.getKeys():
     win.flip()
 
 # Trial counter
-# todo: check position on external monitor, should be in corner regardless of monitor size
 trials_counter = visual.TextStim(win=win, name='trials_counter', text="???",
                                  font='Arial', height=20,
                                  # default set to black (e.g., invisible)
                                  color=[-1.0, -1.0, -1.0],
-                                 # pos=[-800, -500],
-                                 pos=[-650, -400],  # NickMac position
+                                 pos=[-widthPix*.45, -heightPix*.45]
                                  )
 if trials_counter:
     # if trials counter yes, change colour to white.
@@ -334,14 +334,6 @@ for stair_num in range(n_stair_sets):
         # this_stair_start is 1 indexed, but accessing items from zero-indexed lists, so -1
         sep = separations[this_stair_start - 1]
         flow_dir = flow_direction[this_stair_start-1]
-
-        print(f"n_stair_sets: {n_stair_sets}\n"
-              f"trial_number: {trial_number}\n"
-              f"this_stair_start: {this_stair_start}\n"
-              f"stair_num: {stair_num}\n"
-              f"thisStair.value: {thisStair.value}\n"
-              f"thisStair.trialCount: {thisStair.trialCount}\n"
-              f"this_start: {thisStart}\n")
 
         # flow_dots
         x = np.random.rand(nDots) * taille - taille / 2
