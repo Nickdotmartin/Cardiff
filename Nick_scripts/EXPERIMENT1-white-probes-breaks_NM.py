@@ -386,6 +386,7 @@ for trialN in range(expInfo['nTrials']):
         repeat = True
         while repeat:
             frameN = -1
+
             # display Break before trials 120 and 240
             if total_nTrials == 120+1 or total_nTrials == 240+1:
                 continueRoutine = False
