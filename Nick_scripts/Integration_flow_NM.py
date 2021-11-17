@@ -24,7 +24,7 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'HP_24uh'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh'
+monitor_name = 'HP_24uh'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz'
 display_number = 1  # 0 indexed, 1 for external display
 
 
@@ -69,7 +69,7 @@ ISI_frames = int(ISI_selected_ms * fps / 1000)
 ISI_actual_ms = (1/fps) * ISI_frames * 1000
 ISI = ISI_frames
 print(f"\nSelected {ISI_selected_ms}ms ISI.\n"
-      f"At {fps}Hz this is {ISI_frames} frames which actually takes {ISI_actual_ms}ms.\n")
+      f"At {fps}Hz this is {ISI_frames} frames which each take {ISI_actual_ms}ms.\n")
 
 # VARIABLES
 n_stair_sets = 25
