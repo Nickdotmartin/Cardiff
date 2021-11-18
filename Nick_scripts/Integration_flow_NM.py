@@ -654,6 +654,7 @@ for stair_num in range(n_stair_sets):
         thisExp.addData('trial_response', resp.corr)
         thisExp.addData('BGspeed', flow_speed)
         thisExp.addData('flow_dir', flow_dir)
+        thisExp.addData('separation', sep)
         thisExp.addData('corner', corner)
         thisExp.addData('probe_ecc', probe_ecc)
         thisExp.addData('resp.rt', resp.rt)
