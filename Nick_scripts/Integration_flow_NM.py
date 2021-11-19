@@ -259,9 +259,14 @@ instructions = visual.TextStim(win=win, name='instructions',
                                     "[s] or [2] bottom-right \n\n "
                                     "[r] or [9] to redo the previous trial \n\n"
                                     "[Space bar] to start",
-                               font='Arial', pos=[0, 0], height=20, ori=0,
-                               color=[255, 255, 255], colorSpace='rgb255',
-                               opacity=1, )
+                               font='Arial',
+                               # pos=[0, 0], 
+                               height=20,
+                               # ori=0,
+                               # color=[255, 255, 255], colorSpace='rgb255',
+                               colorSpace='rgb', color=[1, 1, 1],
+                               # opacity=1,
+                               )
 while not event.getKeys():
     instructions.draw()
     win.flip()
@@ -282,8 +287,13 @@ take_break = 120
 breaks = visual.TextStim(win=win, name='breaks',
                          text="turn on the light and take at least 30-seconds break.\n\n"
                               "When you are ready to continue, press any key.",
-                         font='Arial', pos=[0, 0], height=20, ori=0,
-                         color=[255, 255, 255], colorSpace='rgb255', opacity=1,
+                         font='Arial',
+                         # pos=[0, 0],
+                         height=20,
+                         # ori=0,
+                         # color=[255, 255, 255], colorSpace='rgb255',
+                         colorSpace='rgb', color=[1, 1, 1],
+                         # opacity=1,
                          )
 
 
