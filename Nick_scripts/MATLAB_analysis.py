@@ -90,22 +90,6 @@ run_dir = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim/Nick_practice
 
 a_data_extraction(p_name=participant_name, run_dir=run_dir, ISI_list=ISI_list, verbose=True)
 
-
-
-"""
-2. b1_extract_last_values.m: For each ISI there are 14 staircase values,
-    this script gets the last response for each of these values (last_response).
-    It also get the last threshold for each staircase and the
-    mean of the last 4 or 7 thresholds
-    (thresholds-sorted-1last, thresholds-sorted-4last, thresholds-sorted-7last.
-3. b2_lastReversal/m: Computes the threshold for each staircase as an aver§gwe of the last N reversals.
-4. b3_plot_staircase.m:
-5. c_plots.m:
-6. d_averageParticipant.m:
-
-"""
-
-
 def a_data_extraction_all_runs(p_name, p_dir, run_list, ISI_list, save_all_data=True, verbose=True):
     """
     This script is a python version of Martin's six MATLAB analysis scripts, described below.
@@ -199,12 +183,28 @@ def a_data_extraction_all_runs(p_name, p_dir, run_list, ISI_list, save_all_data=
     return all_data_df
 
 
-# # # # # #
-participant_name = 'Kim1'
-ISI_list = [0, 2, 4, 6, 9, 12, 24, -1]
-p_dir = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim'
-run_list = ['P6a-Kim', 'P6b-Kim', 'P6c-Kim', 'P6d-Kim', 'P6e-Kim', 'P6f-Kim']
-a_data_extraction_all_runs(p_name=participant_name, p_dir=p_dir, run_list=run_list,
-                           ISI_list=ISI_list, verbose=True)
+# # # # # # #
+# participant_name = 'Kim1'
+# ISI_list = [0, 2, 4, 6, 9, 12, 24, -1]
+# p_dir = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim'
+# run_list = ['P6a-Kim', 'P6b-Kim', 'P6c-Kim', 'P6d-Kim', 'P6e-Kim', 'P6f-Kim']
+# a_data_extraction_all_runs(p_name=participant_name, p_dir=p_dir, run_list=run_list,
+#                            ISI_list=ISI_list, verbose=True)
+
+
+"""
+2. b1_extract_last_values.m: For each ISI there are 14 staircase values,
+    this script gets the last response for each of these values (last_response).
+    It also get the last threshold for each staircase and the
+    mean of the last 4 or 7 thresholds
+    (thresholds-sorted-1last, thresholds-sorted-4last, thresholds-sorted-7last.
+3. b2_lastReversal/m: Computes the threshold for each staircase as an aver§gwe of the last N reversals.
+4. b3_plot_staircase.m:
+5. c_plots.m:
+6. d_averageParticipant.m:
+
+"""
+
+
 
 
