@@ -258,7 +258,7 @@ instructions = visual.TextStim(win=win, name='instructions',
                                     "[a] or [1] bottom-left\n "
                                     "[s] or [2] bottom-right \n\n "
                                     "[r] or [9] to redo the previous trial \n\n"
-                                    "[Space bar] to start",
+                                    "Press any key to start",
                                font='Arial',
                                # pos=[0, 0], 
                                height=20,
@@ -283,7 +283,7 @@ if trials_counter:
     trials_counter.color = [1, 1, 1]
 
 # BREAKS
-take_break = 120
+take_break = 92
 breaks = visual.TextStim(win=win, name='breaks',
                          text="turn on the light and take at least 30-seconds break.\n\n"
                               "When you are ready to continue, press any key.",
@@ -296,6 +296,15 @@ breaks = visual.TextStim(win=win, name='breaks',
                          # opacity=1,
                          )
 
+# todo: add in end of experiment screen.
+end_of_exp = visual.TextStim(win=win, name='end_of_exp',
+                             text="You have completed this experiment.\n"
+                                  "Thank you for your time.\n\n"
+                                  "Press any key to return to the desktop.",
+                             font='Arial',
+                             height=20,
+                             # colorSpace='rgb', color=[1, 1, 1],
+                             )
 
 # STAIRCASE
 trial_number = 0
@@ -670,6 +679,25 @@ for stair_num in range(n_stair_sets):
         thisExp.addData('resp.rt', resp.rt)
         thisExp.addData('trial_number', trial_number)
         thisExp.addData('orientation', orientation)
+        thisExp.addData('ISI_actual_ms', ISI_actual_ms)
+
         thisExp.nextEntry()
 
         thisStair.newValue(resp.corr)  # so that the staircase adjusts itself
+
+print("end of loop")
+
+# if not continueRoutine:
+while not event.getKeys():
+    end_of_exp.draw()
+    win.flip()
+
+    # # check for quit
+    # if event.getKeys(keyList=["escape"]):
+    #     # core.quit()
+else:
+    # make sure everything is closed down
+    thisExp.abort()  # or data files will save again on exit
+    win.close()
+    core.quit()
+
