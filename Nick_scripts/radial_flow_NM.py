@@ -72,15 +72,22 @@ print(f"\nSelected {ISI_selected_ms}ms ISI.\n"
       f"At {fps}Hz this is {ISI_frames} frames which each take {ISI_actual_ms}ms.\n")
 
 # VARIABLES
-n_stair_sets = 25
+# n_stair_sets is actaully trials per staircase.  
+# However, the output file suggests I only have 23 per stair, not sure why? 
+n_trials_per_stair = 25
 probe_ecc = 4
-# Distances between probes
+
+# Distances between probes & flow direction
+separation_values = [18, 6, 3, 2, 1, 0]
+# each separation value appears in 2 conditions, e.g.,
+# cond1 will be sep=18, flow_dir=inwards; cond2 will be sep=18, flow_dir=outwards etc.
 # this study does not include the two 99 values for single probe condition
-separations = [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]
-# todo: should flow_dir be fixed like this or get rid of this and later
-#  just have flow_dir = np.random.choice([1, -1])
-# flow_direction is a list of [-1, 1...] of same length as separations
-flow_direction = [-1, 1]*int(len(separations)/2)
+# old_separations = [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]
+separations = list(np.repeat(separation_values, 2))
+n_conds = len(separations)
+
+# flow_directions is a list of [-1, 1...] of same length as separations
+flow_directions = [-1, 1]*len(separation_values)
 
 # FILENAME
 filename = f'{_thisDir}{os.sep}' \
@@ -175,6 +182,7 @@ if background == 'flow_rad':
 else:
     fixation = visual.Circle(win, radius=2, units='pix', lineColor='white', fillColor='black')
 
+
 # PROBEs
 # probe sizes choice
 if expInfo['6_Probe_size'] == '6pixels':  # 6 pixels
@@ -208,6 +216,7 @@ probeMask3 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
 probeMask4 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
                                 size=(mask_size, mask_size), units='pix', color=bgcolor)
 
+
 # BACKGROUND
 # flow_dots
 flow_speed = 0.2
@@ -217,7 +226,6 @@ flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
                                     colors=[flow_bgcolor[0]-0.3,
                                             flow_bgcolor[1],
                                             flow_bgcolor[2]-0.3])
-
 
 # full screen mask to blend off edges and fade to black
 # Create a raisedCosine mask array and assign it to a Grating stimulus (grey outside, transparent inside)
@@ -232,7 +240,6 @@ dotsMask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
 # changed dotsmask color from grey
 # above fades to black round edges which makes screen edges less visible
 
-
 # function for wrapping flow_dots back into volume
 # its is used as WrapPoints(z, minDist, maxDist)
 # Any dots with a z (depth) value out of bounds are transformed to be in bounds
@@ -241,7 +248,6 @@ def WrapPoints(ii, imin, imax):
     ii[lessthanmin] = ii[lessthanmin] + (imax-imin)
     morethanmax = (ii > imax)
     ii[morethanmax] = ii[morethanmax] - (imax-imin)
-
 
 taille = 5000  # french for 'size', 'cut', 'trim', 'clip' etc
 minDist = 0.5
@@ -253,19 +259,20 @@ myMouse = event.Mouse(visible=False)
 
 # INSTRUCTION
 instructions = visual.TextStim(win=win, name='instructions',
-                               text="[q] or [4] top-left\n "
-                                    "[w] or [5] top-right\n "
-                                    "[a] or [1] bottom-left\n "
-                                    "[s] or [2] bottom-right \n\n "
-                                    "[r] or [9] to redo the previous trial \n\n"
-                                    "Press any key to start",
-                               font='Arial',
-                               # pos=[0, 0], 
-                               height=20,
-                               # ori=0,
-                               # color=[255, 255, 255], colorSpace='rgb255',
+                               text="Please maintain focus on the black dot at the centre of the screen.\n\n"
+                                    "A small white probe will briefly flash on screen,\n"
+                                    "press the key related to the location of the probe:\n"
+                                    "[4] top-left\n"
+                                    "[5] top-right\n"
+                                    "[1] bottom-left\n"
+                                    "[2] bottom-right.\n\n"
+                                    "Do not rush, aim to be as accurate as possible,\n"
+                                    "but if you did not see the probe, please guess.\n\n"
+                                    "If you pressed a wrong key by mistake, you can continue or\n"
+                                    "press [r] or [9] to redo the previous trial.\n\n"
+                                    "Press any key to start.",
+                               font='Arial', height=20,
                                colorSpace='rgb', color=[1, 1, 1],
-                               # opacity=1,
                                )
 while not event.getKeys():
     instructions.draw()
@@ -283,35 +290,24 @@ if trials_counter:
     trials_counter.color = [1, 1, 1]
 
 # BREAKS
-take_break = 92
+total_n_trials = int(n_trials_per_stair * n_conds)
+take_break = int(total_n_trials/3)
+print(f"take_break every {take_break} trials.")
 breaks = visual.TextStim(win=win, name='breaks',
                          text="turn on the light and take at least 30-seconds break.\n\n"
                               "When you are ready to continue, press any key.",
-                         font='Arial',
-                         # pos=[0, 0],
-                         height=20,
-                         # ori=0,
-                         # color=[255, 255, 255], colorSpace='rgb255',
-                         colorSpace='rgb', color=[1, 1, 1],
-                         # opacity=1,
-                         )
+                         font='Arial', height=20, colorSpace='rgb', color=[1, 1, 1])
 
-# todo: add in end of experiment screen.
 end_of_exp = visual.TextStim(win=win, name='end_of_exp',
                              text="You have completed this experiment.\n"
                                   "Thank you for your time.\n\n"
                                   "Press any key to return to the desktop.",
-                             font='Arial',
-                             height=20,
-                             # colorSpace='rgb', color=[1, 1, 1],
-                             )
+                             font='Arial', height=20)
+
 
 # STAIRCASE
-trial_number = 0
-# number of startpoints will depend on whether the separations list includes 99 (single probe cond)
-expInfo['startPoints'] = list(range(1, len(separations)))
-
-expInfo['n_stair_sets'] = n_stair_sets
+expInfo['condition_list'] = list(range(n_conds))
+expInfo['n_trials_per_stair'] = n_trials_per_stair
 
 stairStart = maxLum
 miniVal = bgLum
@@ -320,39 +316,43 @@ maxiVal = maxLum
 print('\nexpInfo (dict)')
 for k, v in expInfo.items():
     print(f"{k}: {v}")
-print('\n*** exp loop*** \n\n')
+
 
 stairs = []
-for thisStart in expInfo['startPoints']:
+for this_cond in expInfo['condition_list']:
     thisInfo = copy.copy(expInfo)
-    thisInfo['thisStart'] = thisStart
+    thisInfo['this_cond'] = this_cond
 
-    thisStair = Staircase(name='thisStair',
+    thisStair = Staircase(name=f'Stair{this_cond}_sep{separations[this_cond]}_flow_dir{flow_directions[this_cond]}',
                           type='simple',
                           value=stairStart,
-                          C=stairStart * 0.6,  # typically 60% of reference stimulus
+                          C=stairStart * 0.6,  # step_size, typically 60% of reference stimulus
                           minRevs=3,
-                          minTrials=n_stair_sets,
+                          minTrials=n_trials_per_stair,
                           minVal=miniVal,
                           maxVal=maxiVal,
-                          targetThresh=0.75,  # changed this from prev versions
+                          targetThresh=0.75,
                           extraInfo=thisInfo
                           )
     stairs.append(thisStair)
 
 
 # EXPERIMENT
-for stair_num in range(n_stair_sets):
+trial_number = 0
+print('\n*** exp loop*** \n\n')
+
+for step in range(n_trials_per_stair):
     np.random.shuffle(stairs)
     for thisStair in stairs:
+
+        print(f"thisStair: {thisStair}, step: {step}")
 
         trial_number = trial_number + 1
         trialClock.reset()
 
-        this_stair_start = thisStair.extraInfo['thisStart']
-        # this_stair_start is 1 indexed, but accessing items from zero-indexed lists, so -1
-        sep = separations[this_stair_start - 1]
-        flow_dir = flow_direction[this_stair_start-1]
+        this_cond = thisStair.extraInfo['this_cond']
+        sep = separations[this_cond]
+        flow_dir = flow_directions[this_cond]
 
         # flow_dots
         x = np.random.rand(nDots) * taille - taille / 2
@@ -376,7 +376,7 @@ for stair_num in range(n_stair_sets):
         # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
         corner = np.random.choice([45, 135, 225, 315])
 
-        # dist_from_fix is a constant giveing distance form fixation,
+        # dist_from_fix is a constant giving distance form fixation,
         # dist_from_fix was previously 2 identical variables x_prob & y_prob.
         dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
         # x_prob = y_prob = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
@@ -506,7 +506,7 @@ for stair_num in range(n_stair_sets):
         while repeat:
             frameN = -1
 
-            # Break after trials 120 and 240, or whatever set in take_break
+            # Break after trials 100 and 200, or whatever set in take_break
             if (trial_number % take_break == 1) & (trial_number > 1):
                 continueRoutine = False
                 breaks.draw()
@@ -522,7 +522,7 @@ for stair_num in range(n_stair_sets):
                 # FIXATION
                 if t_fixation >= frameN > 0:
                     # before fixation has finished
-                    trials_counter.text = f"{trial_number}/120"
+                    trials_counter.text = f"{trial_number}/{total_n_trials}"
 
                     if background == 'flow_rad':
                         # draw flow_dots but with no motion
@@ -652,6 +652,7 @@ for stair_num in range(n_stair_sets):
                 # regardless of frameN
                 # check for quit
                 if event.getKeys(keyList=["escape"]):
+                    thisExp.close()
                     core.quit()
 
                 # redo the trial if i think i made a mistake
@@ -665,19 +666,21 @@ for stair_num in range(n_stair_sets):
                     win.flip()
 
         # add to exp dict
-        thisExp.addData('stair', this_stair_start)
-        thisExp.addData('probe_jump', target_jump)
-        thisExp.addData('probeColor1', probeColor1)
-        thisExp.addData('probeColor255', probeColor255)
-        thisExp.addData('probeLum', probeLum)
-        thisExp.addData('trial_response', resp.corr)
-        thisExp.addData('BGspeed', flow_speed)
+        thisExp.addData('trial_number', trial_number)
+        thisExp.addData('cond', this_cond)
         thisExp.addData('flow_dir', flow_dir)
         thisExp.addData('separation', sep)
+        thisExp.addData('step', step)
+        thisExp.addData('probeLum', probeLum)
+        thisExp.addData('probe_jump', target_jump)
+        thisExp.addData('trial_response', resp.corr)
         thisExp.addData('corner', corner)
-        thisExp.addData('probe_ecc', probe_ecc)
         thisExp.addData('resp.rt', resp.rt)
-        thisExp.addData('trial_number', trial_number)
+        thisExp.addData('stair_name', thisStair)
+        thisExp.addData('probeColor1', probeColor1)
+        thisExp.addData('probeColor255', probeColor255)
+        thisExp.addData('probe_ecc', probe_ecc)
+        thisExp.addData('BGspeed', flow_speed)
         thisExp.addData('orientation', orientation)
         thisExp.addData('ISI_actual_ms', ISI_actual_ms)
 
@@ -685,19 +688,15 @@ for stair_num in range(n_stair_sets):
 
         thisStair.newValue(resp.corr)  # so that the staircase adjusts itself
 
-print("end of loop")
+print("end of exp loop, saving data")
+thisExp.close()
 
-# if not continueRoutine:
 while not event.getKeys():
+    # display end of experiment screen
     end_of_exp.draw()
     win.flip()
-
-    # # check for quit
-    # if event.getKeys(keyList=["escape"]):
-    #     # core.quit()
 else:
-    # make sure everything is closed down
-    thisExp.abort()  # or data files will save again on exit
+    # close and quit once a key is pressed
     win.close()
     core.quit()
 
