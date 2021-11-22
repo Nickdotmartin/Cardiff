@@ -24,7 +24,7 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'HP_24uh'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz'
+monitor_name = 'NickMac'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz'
 display_number = 1  # 0 indexed, 1 for external display
 
 
@@ -259,22 +259,23 @@ myMouse = event.Mouse(visible=False)
 
 # INSTRUCTION
 instructions = visual.TextStim(win=win, name='instructions',
-                               text="Please maintain focus on the black dot at the centre of the screen.\n\n"
+                               text="\n\n\nPlease maintain focus on the black cross at the centre of the screen.\n\n"
                                     "A small white probe will briefly flash on screen,\n"
-                                    "press the key related to the location of the probe:\n"
-                                    "[4] top-left\n"
-                                    "[5] top-right\n"
-                                    "[1] bottom-left\n"
-                                    "[2] bottom-right.\n\n"
+                                    "press the key related to the location of the probe:\n\n"
+                                    "[4] top-left\t\t\t[5] top-right\n\n\n\n"
+                                    "[1] bottom-left\t\t\t[2] bottom-right.\n\n\n"
                                     "Do not rush, aim to be as accurate as possible,\n"
                                     "but if you did not see the probe, please guess.\n\n"
-                                    "If you pressed a wrong key by mistake, you can continue or\n"
+                                    "If you pressed a wrong key by mistake, you can:\n"
+                                    "continue or\n"
                                     "press [r] or [9] to redo the previous trial.\n\n"
                                     "Press any key to start.",
                                font='Arial', height=20,
                                colorSpace='rgb', color=[1, 1, 1],
                                )
 while not event.getKeys():
+    fixation.setRadius(3)
+    fixation.draw()
     instructions.draw()
     win.flip()
 
