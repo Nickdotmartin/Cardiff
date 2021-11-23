@@ -1,12 +1,17 @@
 import pandas as pd
 import numpy as np
 import os
+import matplotlib.pyplot as plt
+# import seaborn as sns
 
 """
 This page contains python functions to mirror Martin's six MATLAB analysis scripts.
 1. a_data_extraction: put data from one run, multiple ISIs into one array. 
-2. b1_extract_last_values: get the threshold ased on the last values in each staircase for each ISI.
-3. b2_lastReversal/m: Computes the threshold for each staircase as an aver§gwe of the last N reversals.
+2. b1_extract_last_values: get the threshold used on the last values in each 
+    staircase for each ISI.
+3. b2_lastReversal/m: Computes the threshold for each staircase as an average of 
+    the last N reversals (incorrect responses).  Plot these as mean per sep, 
+    and also multiplot for each ISI with different values for -18&+18 etc
 4. b3_plot_staircase.m:
 5. c_plots.m:
 6. d_averageParticipant.m:
@@ -14,8 +19,6 @@ This page contains python functions to mirror Martin's six MATLAB analysis scrip
 So far I have just done the first two scripts.  I have also added:
 a_data_extraction_all_runs: a version of the first script but can get all participant data across multiple runs.  
 """
-
-
 
 
 def a_data_extraction(p_name, run_dir, ISI_list, save_all_data=True, verbose=True):
@@ -242,9 +245,9 @@ def b1_extract_last_values(all_data_path, thr_col='probeLum', resp_col='trial_re
     print("\n***running b1_extract_last_values()***")
 
     # extract path to save files to
-    save_path, xlsx_name = os.path.split(csv_path)
+    save_path, xlsx_name = os.path.split(all_data_path)
 
-    if last_vals_list == None:
+    if last_vals_list is None:
         last_vals_list = [1, 4, 7]
     elif type(last_vals_list) == int:
         last_vals_list = [last_vals_list]
@@ -256,7 +259,7 @@ def b1_extract_last_values(all_data_path, thr_col='probeLum', resp_col='trial_re
 
     # open all_data file.  use engine='openpyxl' for xlsx files.
     # For other experiments it might be easier not to do use cols as they might be different.
-    all_data_df = pd.read_excel(csv_path, engine='openpyxl',
+    all_data_df = pd.read_excel(all_data_path, engine='openpyxl',
                                 usecols=['ISI', 'stair', 'total_nTrials',
                                          'probeLum', 'trial_response', 'resp.rt'])
 
@@ -268,7 +271,8 @@ def b1_extract_last_values(all_data_path, thr_col='probeLum', resp_col='trial_re
     trials, columns = np.shape(all_data_df)
     trials_per_stair = int(trials/len(ISI_list)/len(stair_list))
     if max(last_vals_list) > trials_per_stair:
-        raise ValueError(f'max(last_vals_list) ({max(last_vals_list)}) must be lower than trials_per_stair ({trials_per_stair}).')
+        raise ValueError(f'max(last_vals_list) ({max(last_vals_list)}) must be '
+                         f'lower than trials_per_stair ({trials_per_stair}).')
 
     # get ISI string for column names
     ISI_name_list = [f'ISI{i}' for i in ISI_list]
@@ -352,14 +356,221 @@ def b1_extract_last_values(all_data_path, thr_col='probeLum', resp_col='trial_re
     print("\n***finished b1_extract_last_values()***")
 
 
-
 # # # # # # # # #
-# csv_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim/Nick_practice/P6a-Kim/P6a-Kim_ALLDATA-sorted.xlsx'
-# b1_extract_last_values(all_data_path=csv_path)
+# test_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim/Nick_practice/P6a-Kim/P6a-Kim_ALLDATA-sorted.xlsx'
+# b1_extract_last_values(all_data_path=test_path)
+
+
+# def b2_lastReveral(all_data_path):
+    """
+    b2_lastReversal/m: Computes the threshold for each staircase as an average of
+    the last N reversals (incorrect responses).  Plot these as mean per sep,
+    and also multiplot for each ISI with different values for -18&+18 etc
+
+    However: although each sep values is usd twice (e.g., stairs 1 & 2 are both sep = 18),
+    these do not correspond to any meaningful difference (e.g., target_jump 1 or -1)
+    as target_jump is decided with random.choice, and this variable is not accessed
+    in this analysis.  For plots that show +18 and -18, these are duplicated values.
+    I intend to design the sacript to allow for meaningful differences here -
+    but I also need to copy this script first to check I have the same procedure
+    in case I have missed something.
+
+    :param all_data_path: path to the all_data xlsx file.
+
+    :return: arrays with details of last n reversals.
+            Plot of mean for last reversal - all ISIs shows as different lines.
+            Batplots with pos and neg sep, separate grid for each ISI
+    """
+
+verbose = True
+
+all_data_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim/Nick_practice/P6a-Kim/P6a-Kim_ALLDATA-sorted.xlsx'
+
+# open all_data file.  use engine='openpyxl' for xlsx files.
+# For other experiments it might be easier not to do use cols as they might be different.
+all_data_df = pd.read_excel(all_data_path, engine='openpyxl',
+                            usecols=['ISI', 'stair', 'total_nTrials',
+                                     'probeLum', 'trial_response', 'resp.rt'])
+
+# get list of ISI and stair values to loop through
+ISI_list = all_data_df['ISI'].unique()
+stair_list = all_data_df['stair'].unique()
+if verbose:
+    print(f"ISI_list: {ISI_list}\nstair_list: {stair_list}")
+
+# check last_vals_list are shorted than trials per stair.
+trials, columns = np.shape(all_data_df)
+trials_per_stair = int(trials/len(ISI_list)/len(stair_list))
+
+
+# get ISI string for column names
+ISI_name_list = ['1probe' if i == -1 else f'ISI{i}' for i in ISI_list]
+print(f"ISI_name_list: {ISI_name_list}")
+
+
+
+# if verbose:
+print(f"{len(ISI_list)} ISI values and {len(stair_list)} stair values")
+print(f"all_data_df:\n{all_data_df}")
+
+# get results for n reversals
+reversals_list = [2, 3, 4]
+
+# ISI_list = [-1, 0]  # , 2, 4, 6, 9, 12, 24]
+# stair_list = [1, 2, 3, 4]
+reversals_list = [2]
+
+for reversals in reversals_list:
+
+    # make empty arrays to add results into (rows=stairs, cols=ISIs)
+    mean_rev_lum = np.zeros(shape=[len(stair_list), len(ISI_list)])
+
+    # loop through ISI values
+    for ISI_idx, ISI in enumerate(ISI_list):
+        if verbose:
+            print(f"\n{ISI_idx}: ISI: {ISI}")
+
+        # get df for this ISI only
+        ISI_df = all_data_df[all_data_df['ISI'] == ISI]
+
+        # loop through stairs for this ISI
+        for stair_idx, stair in enumerate(stair_list):
+
+            # get df just for one stair at this ISI
+            stair_df = ISI_df[ISI_df['stair'] == stair]
+            if verbose:
+                print(f'\nstair_df (stair={stair}, ISI={ISI}, reversals={reversals}):\n{stair_df}')
+
+                # get indices of last n incorrect responses
+                incorrect_list = stair_df.index[stair_df['trial_response'] == 0]
+                print(f"\nincorrect_list:\n{incorrect_list}")
+
+                # get probeLum for corresponding trials
+                reversal_probeLum_list = stair_df['probeLum'].loc[incorrect_list]
+                print(f"\nreversal_probeLum_list:\n{reversal_probeLum_list}")
+
+                # just select last n reversals - or whole list if list is shorter than n
+                reversal_probeLum_list = reversal_probeLum_list[-reversals:]
+                print(f"\nlast n of reversal_probeLum_list:\n{reversal_probeLum_list}")
+
+                # get mean of these probeLums
+                mean_lum = np.mean(list(reversal_probeLum_list))
+                print(f"\nmean_lum: {mean_lum}")
+
+                # append to mean_rev_lum array
+                mean_rev_lum[stair_idx, ISI_idx] = mean_lum
+
+    print(f"\nmean_rev_lum:\n{mean_rev_lum}")
+
+    # MAKE SYMMETRICAL
+    # this has got some dodgy stuff going on here - it truely is symmetyrical as
+    # data is copied (e.g, -18 = +18), but presumably there should be different
+    # data for positive and negative separations.
+
+    # MATLAB version uses reversalThresh1sym (&2) then takes the mean of these with reversal_threshMean
+    # reversalThresh1sym is the variable used in the MATLAB scripts - works with 14 stairs
+    reversalThresh1sym = np.array([mean_rev_lum[0, :],
+                                   mean_rev_lum[2, :],
+                                   mean_rev_lum[4, :],
+                                   mean_rev_lum[6, :],
+                                   mean_rev_lum[8, :],
+                                   mean_rev_lum[10, :],
+                                   mean_rev_lum[8, :],
+                                   mean_rev_lum[6, :],
+                                   mean_rev_lum[4, :],
+                                   mean_rev_lum[2, :],
+                                   mean_rev_lum[0, :],
+                                   mean_rev_lum[12, :]])
+
+    reversalThresh2sym = np.array([mean_rev_lum[1, :],
+                                   mean_rev_lum[3, :],
+                                   mean_rev_lum[5, :],
+                                   mean_rev_lum[7, :],
+                                   mean_rev_lum[9, :],
+                                   mean_rev_lum[11, :],
+                                   mean_rev_lum[9, :],
+                                   mean_rev_lum[7, :],
+                                   mean_rev_lum[5, :],
+                                   mean_rev_lum[3, :],
+                                   mean_rev_lum[1, :],
+                                   mean_rev_lum[13, :]])
+
+    reversalThreshMean = np.mean(np.array([reversalThresh1sym, reversalThresh2sym]), axis=0)
+    print(f"\nreversalThreshMean:\n{reversalThreshMean}")
+
+    rev_thr_mean_df = pd.DataFrame(data=reversalThreshMean, columns=ISI_name_list)
+    sym_sep_list = [-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18, 20]
+    rev_thr_mean_df.insert(loc=0, column='Separation', value=sym_sep_list)
+    print(f"\nrev_thr_mean_df:\n{rev_thr_mean_df}")
+
+    # New version should take stairs in this order I think (assuming pos first then neg)
+    # sep: -18, -6, -3, -2, -1, 0 & 0, 1, 2, 3, 6, 18, 99&99
+    # stair: 1,  3,  5,  7,  9, 10&11, 8, 6, 4, 2, 0, 12&13  if 0 indexed
+    # stair: 2,  4,  6,  8, 10, 11&12, 9, 7, 5, 3, 1, 13&14 if 1 indexed
+
+
+    # PLOT FIGURES
+
+    # FIGURE 1 - shows one axis (x=separation (0-18), y=probeLum) with all ISIs added.
+    # it also seems that for ISI=99 there are simple dots added at -1 on the x axis.
+    fig1_df = rev_thr_mean_df[rev_thr_mean_df['Separation'] >= 0]
+    fig1_df = fig1_df.set_index('Separation')
+    print(f"\nfig1_df:\n{fig1_df}")
+
+    # the values listed as separation=20 are actually for the single probe cond.
+    # Chop last row off and add values later.
+    fig1_df, one_probe_df = fig1_df.drop(fig1_df.tail(1).index), fig1_df.tail(1)
+    print(f"\nfig1_df:\n{fig1_df}")
+
+    # change value from 20 to -1 so its on the left of the plot
+    print(f"\none_probe_df:\n{one_probe_df}")
+
+    one_probe_lum_list = one_probe_df.values.tolist()[0]
+
+    one_probe_dict = {'ISIs' : ISI_name_list,
+                      'ProbeLum': one_probe_lum_list,
+                      'x_vals': [-1 for i in ISI_name_list]}
+
+    one_probe_df = pd.DataFrame.from_dict(one_probe_dict)
+    print(f"\none_probe_df:\n{one_probe_df}")
+
+    # colours
+    # todo: figure out how to get the scatter plot to use the same colurs as the lineplot.
+    # could resort to seaborn if needed
+    n_colours = int(len(ISI_name_list))
+    colors = plt.cm.jet(np.linspace(0, 1, n_colours))
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    ax.plot(fig1_df, label=[ISI_name_list])
+    ax.legend(ISI_name_list)
+    # ax.legend(title='ISI', bbox_to_anchor=(1, 1), )
+    ax.set_xticks([-2, -1, 0, 1, 2, 3, 6, 18])
+    ax.scatter(x=one_probe_df['x_vals'], y=one_probe_df['ProbeLum'])
+    plt.show()
+
+
+    # # fig1_df.plot(kind='line', x='Separation', y='ProbeLum', color='red')
+    # # sns.lineplot(data=fig1_df, x='Separation', y='y', hue='color')
+    #
+    #
+    # fig, ax = plt.subplots(figsize=(5, 3))
+
+
+    # ax.stackplot(yrs, rng + rnd, labels=['Eastasia', 'Eurasia', 'Oceania'])
+    # ax.set_title('Combined debt growth over time')
+    # ax.legend(loc='upper left')
+    # ax.set_ylabel('Total debt')
+    # ax.set_xlim(xmin=yrs[0], xmax=yrs[-1])
+    # fig.tight_layout()
+    # FIGURE 2
+
 
 
 """
-3. b2_lastReversal/m: Computes the threshold for each staircase as an aver§gwe of the last N reversals.
+3. b2_lastReversal/m: Computes the threshold for each staircase as an average of 
+    the last N reversals (incorrect responses).  Plot these as mean per sep, 
+    and also multiplot for each ISI with different values for -18&+18 etc
 4. b3_plot_staircase.m:"""
 
 """
@@ -368,6 +579,4 @@ def b1_extract_last_values(all_data_path, thr_col='probeLum', resp_col='trial_re
 
 """
 
-
-
-
+print('\nend of script')

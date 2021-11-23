@@ -4,6 +4,9 @@ import pandas as pd
 
 
 """
+see psignifit instruction here: https://github.com/wichmann-lab/python-psignifit/wiki
+demos at: https://github.com/wichmann-lab/psignifit/wiki/Experiment-Types 
+or:/Users/nickmartin/opt/anaconda3/envs/Cardiff3.6/lib/python3.6/site-packages/psignifit/demos
 This script contains the analysis pipeline for individual participants.
 1. load in CSV file.
 2. convert data into format for analysis: 3 cols [stimulus level | nCorrect | ntotal]

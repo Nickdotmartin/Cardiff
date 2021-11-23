@@ -624,6 +624,7 @@ for step in range(n_trials_per_stair):
 
 
                     # ANSWER
+                    # todo: check if there is a better way to get key responses and RTs
                     resp = event.BuilderKeyResponse()
                     theseKeys = event.getKeys(keyList=['num_5', 'num_4', 'num_1',
                                                        'num_2', 'w', 'q', 'a', 's'])
