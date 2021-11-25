@@ -659,10 +659,186 @@ def b2_lastReversal(all_data_path, reversals_list=[2, 3, 4],
 
 
 """
-3. b2_lastReversal/m: Computes the threshold for each staircase as an average of 
-    the last N reversals (incorrect responses).  Plot these as mean per sep, 
-    and also multiplot for each ISI with different values for -18&+18 etc
-4. b3_plot_staircase.m:"""
+4. b3_plot_staircase.m: staircases-ISIxxx.png: xxx corresponds to ISI conditions. 
+    Eight figure (8 ISI conditions) with seven panels on each (7 probes separation 
+    conditions) showing the Luminance value of two staircases in function of 
+    trial number. 
+"""
+
+
+all_data_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim/' \
+                'Nick_practice/P6a-Kim/P6a-Kim_ALLDATA-sorted.xlsx'
+
+thr_col='probeLum'
+show_plots=True
+save_plots=True
+verbose=True
+
+save_path, xlsx_name = os.path.split(all_data_path)
+
+# open all_data file.  use engine='openpyxl' for xlsx files.
+# For other experiments it might be easier not to do use cols as they might be different.
+all_data_df = pd.read_excel(all_data_path, engine='openpyxl',
+                            usecols=['ISI', 'stair', 'total_nTrials',
+                                     'probeLum', 'trial_response', 'resp.rt'])
+
+# get list of ISI and stair values to loop through
+ISI_list = all_data_df['ISI'].unique()
+stair_list = all_data_df['stair'].unique()
+
+# get ISI string for column names
+ISI_name_list = ['concurrent' if i == -1 else f'ISI{i}' for i in ISI_list]
+
+trials, columns = np.shape(all_data_df)
+trials_per_stair = int(trials/len(ISI_list)/len(stair_list))
+
+separation_title = ['18sep', '06sep', '03sep', '02sep', '01sep', '00sep', 'onePb']
+
+
+if verbose:
+    print(f"all_data_df:\n{all_data_df}")
+    print(f"{len(ISI_list)} ISI values and {len(stair_list)} stair values")
+    print(f"ISI_list: {ISI_list}")
+    print(f"ISI_name_list: {ISI_name_list}")
+    print(f"stair_list: {stair_list}")
+    print(f"trials_per_stair: {trials_per_stair}")
+    print(f"separation_title: {separation_title}")
+
+
+
+x_tick_lab = list(range(trials_per_stair))
+
+ISI_list = [-1]
+
+# loop through ISI values
+for ISI_idx, ISI in enumerate(ISI_list):
+
+    # get df for this ISI only
+    ISI_df = all_data_df[all_data_df['ISI'] == ISI]
+
+    # initialise 8 plot figure
+    # # this is a figure showing reversals per staircase condition.
+    fig, axes = plt.subplots(nrows=2, ncols=4, figsize=(12, 6))
+    ax_counter = 0
+
+    for row_idx, row in enumerate(axes):
+        for col_idx, ax in enumerate(row):
+            print(f'\nrow: {row_idx}, col: {col_idx}: {ax}')
+
+            if ax_counter < 7:
+                # print(row_idx, col_idx, ax)
+
+                # # get pairs of stairs (e.g., [[18, -18], [6, -6], ...etc)
+                # for stair_idx, stair in enumerate(stair_list):
+                # stair = stair_list[ax_counter]
+
+                stair_odd = (ax_counter*2)+1  # 1, 3, 5, 7, 9, 11, 13
+                stair_odd_df = ISI_df[ISI_df['stair'] == stair_odd]
+                stair_odd_df.insert(0, 'step', list(range(trials_per_stair)))
+                final_lum_odd = stair_odd_df.loc[stair_odd_df['step'] == trials_per_stair-1, 'probeLum'].item()
+                n_reversals_odd = trials_per_stair - stair_odd_df['trial_response'].sum()
+
+                stair_even = (ax_counter+1)*2  # 2, 4, 6, 8, 10, 12, 14
+                stair_even_df = ISI_df[ISI_df['stair'] == stair_even]
+                stair_even_df.insert(0, 'step', list(range(trials_per_stair)))
+                final_lum_even = stair_even_df.loc[stair_even_df['step'] == trials_per_stair-1, 'probeLum'].item()
+                n_reversals_even = trials_per_stair - stair_even_df['trial_response'].sum()
+
+                if verbose:
+                    print(f'\nstair_odd_df (stair={stair_odd}, ISI={ISI}:\n{stair_odd_df.head()}')
+                    print(f"final_lum_odd: {final_lum_odd}")
+                    print(f"n_reversals_odd: {n_reversals_odd}")
+
+                    print(f'\nstair_even_df (stair={stair_even}, ISI={ISI}:\n{stair_even_df.tail()}')
+                    print(f"final_lum_even: {final_lum_even}")
+                    print(f"n_reversals_even: {n_reversals_even}")
+
+                '''
+                use multiplot method from figure 2 above.
+                There is also a horizontal line from the last value (step25)
+                There is text showing the number of reversals (incorrect responses)
+                y-axis can be 0:106 (maxLum), x is 1:25.
+                
+                later the 8th panel is added - not sure what this is yet...
+                '''
+
+                fig.suptitle(f'Staircases and reversals for ISI {ISI}')
+
+                # plot thr per step for odd numbered stair
+                sns.lineplot(ax=axes[row_idx, col_idx], data=stair_odd_df,
+                             x='step', y=thr_col,
+                             color='red',
+                             marker="v", markersize=5)
+
+                # line for final probeLum
+                ax.axhline(y=final_lum_odd, color='red')
+
+                # text for n_reversals
+                ax.text(x=0.4, y=0.9, s=f'{n_reversals_odd} reversals',
+                        color='red',
+                        # needs transform to appear with rest of plot.
+                        transform=ax.transAxes, fontsize=12)
+
+                # plot thr per step for even numbered stair
+                sns.lineplot(ax=axes[row_idx, col_idx], data=stair_even_df,
+                             x='step', y=thr_col,
+                             color='blue',
+                             # linewidth=3,
+                             marker="o", markersize=4)
+                ax.axhline(y=final_lum_even, color='blue')
+                ax.text(x=0.4, y=0.7, s=f'{n_reversals_even} reversals',
+                        color='blue',
+                        # needs transform to appear with rest of plot.
+                        transform=ax.transAxes, fontsize=12)
+
+                ax.set_title(f'{ISI_name_list[ISI_idx]} {separation_title[ax_counter]}')
+                ax.set_xticks(np.arange(0, trials_per_stair, 5))
+                ax.set_ylim([0, 110])
+
+                # if row_idx == 1:
+                #     ax.set_xlabel('Probe separation (pixels)')
+                # else:
+                #     ax.xaxis.label.set_visible(False)
+                #
+                # if col_idx == 0:
+                #     ax.set_ylabel('Probe Luminance')
+                # else:
+                #     ax.yaxis.label.set_visible(False)
+                #
+                # ax.text(x=0.4, y=0.8, s=round(diffNext[ax_counter], 2),
+                #         # needs transform to appear with rest of plot.
+                #         transform=ax.transAxes, fontsize=12)
+                #
+                # # artist for legend
+                # st1 = mlines.Line2D([], [], color=my_colours[ax_counter],
+                #                     marker='v', linewidth=.5,
+                #                     markersize=4, label='Stair1')
+                # st2 = mlines.Line2D([], [], color=my_colours[ax_counter],
+                #                     marker='o', linewidth=.5,
+                #                     markersize=4, label='Stair2')
+                # mean_line = mlines.Line2D([], [], color=my_colours[ax_counter],
+                #                           marker=None, linewidth=3, label='mean')
+                # ax.legend(handles=[st1, st2, mean_line], fontsize=6)
+
+            else:
+                print("Eighth plot")
+
+            ax_counter += 1
+
+    plt.tight_layout()
+
+    # save, show and close plots
+    # if save_plots:
+    #     fig2_savename = f'runs_last{reversals}_reversals.png'
+    #     plt.savefig(f'{save_path}{os.sep}{fig2_savename}')
+
+    if show_plots:
+        plt.show()
+    plt.close()
+
+    # for the 8th plot, use threshold_sorted_1last.csv
+
+print("\n***finished b3_plot_staircases()***\n")
 
 """
 5. c_plots.m:
