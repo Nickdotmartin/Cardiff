@@ -960,8 +960,304 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
 #                   show_plots=True, save_plots=True, verbose=True)
 
 
+# # choose colour pallete
+# choose colours
+def fig_colours(n_conditions):
+    """
+    Use this to always get the same colours in the same order with no fuss.
+    :param n_conditions: number of different colours
+    :return: a colour pallet
+    """
+    n_conditions = int(len(ISI_name_list))
+    use_colours = 'tab10'
+
+    if 10 < n_conditions < 21:
+        use_colours = 'tab20'
+    elif n_conditions > 20:
+        print("\tERROR - more classes than colours!?!?!?")
+    sns.set_palette(palette=use_colours, n_colors=n_conditions)
+    my_colours = sns.color_palette()
+
+    return my_colours
+
+# # # all ISIs on one axis - pos sep only, plus single probe
+
+# # # all ISIs on one axis - pos sep only, NO single probe
+
+# # # 8 batman plots
+
+
+
+
 """
-5. c_plots.m:
+5. c_plots.m: uses thresholds-sorted-Nlast and output 1 spreadsheet (P-next-thresholds) and six plots. 
+
+use: thresholds-sorted-Nlast.mat: with N = the number of last values of 
+                                 each staircase used to compute the
+                                 threshold.
+outputs:
+        P-next-thresholds.mat: computed next values of the staircases
+figures:
+        data-NlastValues.png: threshold luminance in function of probe
+                              separation.
+                              with N = the number of last values of 
+                              each staircase used to compute the
+                              threshold.
+        runs-lastNlastValues.png: threshold luminance in function of
+                                  probe separation, one panel one ISI 
+                                  condition.
+                                  with N = the number of last values of 
+                                  each staircase used to compute the
+                                  threshold.
+        dataDivOneProbe-1lastValues.png: threshold luminance divided by 
+                                         one probe condition for each ISI
+                                         condition in function of probe
+                                         separation.
+        runs-nextValues.png: computed next value of each staircase.
+                             threshold luminance in function of probe 
+                             separation, one panel one ISI condition.
+        data-nextValues.png: computed next value of each staircase.
+                             threshold luminance in function of probe 
+                             separation.
+        dataDivOneProbe-nextValues.png: computed next value of each staircase.
+                                 threshold luminance divided by 
+                                 one probe condition for each ISI
+                                 condition in function of probe
+                                 separation.
+
+"""
+
+save_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim/Nick_practice/P6a-Kim'
+thr_col='probeLum'
+resp_col='trial_response'
+show_plots=True
+save_plots=True
+verbose=True
+# last_vals_list = [1, 4, 7]
+last_vals_list = [1]
+
+ISI_list = [-1, 0, 2, 4, 6, 9, 12, 24]
+ISI_name_list = ['concurrent', 'ISI0', 'ISI2', 'ISI4', 'ISI6', 'ISI9', 'ISI12', 'ISI24']
+stair_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+separation_title = ['18sep', '06sep', '03sep', '02sep', '01sep', '00sep', 'onePb']
+sym_sep_list = [-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18, 20]
+sym_sep_tick_labels = [-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18, '1\nprobe']
+pos_sep_list = [0, 1, 2, 3, 6, 18, 20]
+
+# choose colours
+use_colours = 'tab10'
+n_conditions = int(len(ISI_name_list))
+if 10 < n_conditions < 21:
+    use_colours = 'tab20'
+elif n_conditions > 20:
+    print("\tERROR - more classes than colours!?!?!?")
+sns.set_palette(palette=use_colours, n_colors=n_conditions)
+my_colours = sns.color_palette()
+
+for last_n_values in last_vals_list:
+    print(f'last {last_n_values} values')
+    thr_sorted_df = pd.read_csv(f'{save_path}{os.sep}threshold_sorted_{last_n_values}last.csv')
+    print(f'thr_sorted_df:\n{thr_sorted_df}')
+
+    thr_sorted_df = thr_sorted_df.drop(['stair'], axis=1)
+
+    thr_srtd_np = thr_sorted_df.to_numpy()
+
+    Thresh1sym = np.array([thr_srtd_np[0, :], thr_srtd_np[2, :],
+                           thr_srtd_np[4, :], thr_srtd_np[6, :],
+                           thr_srtd_np[8, :], thr_srtd_np[10, :],
+                           thr_srtd_np[8, :], thr_srtd_np[6, :],
+                           thr_srtd_np[4, :], thr_srtd_np[2, :],
+                           thr_srtd_np[0, :], thr_srtd_np[12, :]])
+
+    Thresh2sym = np.array([thr_srtd_np[1, :], thr_srtd_np[3, :],
+                           thr_srtd_np[5, :], thr_srtd_np[7, :],
+                           thr_srtd_np[9, :], thr_srtd_np[11, :],
+                           thr_srtd_np[9, :], thr_srtd_np[7, :],
+                           thr_srtd_np[5, :], thr_srtd_np[3, :],
+                           thr_srtd_np[1, :], thr_srtd_np[13, :]])
+
+    ThreshSymMean_np = np.mean(np.array([Thresh1sym, Thresh2sym]), axis=0)
+
+    # make df for thr1, thr2 and mean thr
+    thr_mean_df = pd.DataFrame(ThreshSymMean_np, columns=ISI_name_list)
+    thr1_df = pd.DataFrame(Thresh1sym, columns=ISI_name_list)
+    thr2_df = pd.DataFrame(Thresh2sym, columns=ISI_name_list)
+
+    # add sep column in
+    thr_mean_df.insert(0, 'sep', sym_sep_list)
+    thr1_df.insert(0, 'sep', sym_sep_list)
+    thr2_df.insert(0, 'sep', sym_sep_list)
+    print(f'\nthr_mean_df:\n{thr_mean_df}')
+    print(f'\nthr1_df:\n{thr1_df}')
+
+    diffVal = np.sum(abs(Thresh1sym - Thresh2sym), axis=0)
+    # take the mean of these across all ISIs to get single value
+    meandiffVal = np.mean(diffVal)
+
+    print(f'diffVal:\n{diffVal}')
+    print(f'meandiffVal: {meandiffVal}')
+
+    # # Figure1 - runs-{n}lastValues
+    # this is a figure with one axis per ISI, showing neg and pos sep
+    # (e.g., -18:18)
+    fig, axes = plt.subplots(nrows=2, ncols=4, figsize=(12, 6))
+    fig.suptitle(f'Last {last_n_values} values per ISI. '
+                 f'(mean diff: {round(meandiffVal, 2)})')
+
+    ax_counter = 0
+    for row_idx, row in enumerate(axes):
+        for col_idx, ax in enumerate(row):
+            print(row_idx, col_idx, ax)
+
+            # mean threshold from CW and CCW prode jump direction
+            sns.lineplot(ax=axes[row_idx, col_idx], data=thr_mean_df,
+                         x='sep', y=ISI_name_list[ax_counter],
+                         color=my_colours[ax_counter],
+                         linewidth=3, markers=True)
+
+            # stair1: CW probe jumps only
+            sns.lineplot(ax=axes[row_idx, col_idx], data=thr1_df,
+                         x='sep', y=ISI_name_list[ax_counter],
+                         color=my_colours[ax_counter],
+                         linewidth=.5, marker="v")
+
+            # stair2: CCW probe jumps only
+            sns.lineplot(ax=axes[row_idx, col_idx], data=thr2_df,
+                         x='sep', y=ISI_name_list[ax_counter],
+                         color=my_colours[ax_counter],
+                         linewidth=.5, marker="o")
+
+            ax.set_title(ISI_name_list[ax_counter])
+            ax.set_xticks(sym_sep_list)
+            ax.set_xticklabels(sym_sep_tick_labels)
+            ax.xaxis.set_tick_params(labelsize=6)
+            ax.set_ylim([40, 90])
+
+            if row_idx == 1:
+                ax.set_xlabel('Probe separation (pixels)')
+            else:
+                ax.xaxis.label.set_visible(False)
+
+            if col_idx == 0:
+                ax.set_ylabel('Probe Luminance')
+            else:
+                ax.yaxis.label.set_visible(False)
+
+            ax.text(x=0.4, y=0.8, s=round(diffVal[ax_counter], 2),
+                    # needs transform to appear with rest of plot.
+                    transform=ax.transAxes, fontsize=12)
+
+            # artist for legend
+            st1 = mlines.Line2D([], [], color=my_colours[ax_counter],
+                                marker='v', linewidth=.5,
+                                markersize=4, label='Stair1')
+            st2 = mlines.Line2D([], [], color=my_colours[ax_counter],
+                                marker='o', linewidth=.5,
+                                markersize=4, label='Stair2')
+            mean_line = mlines.Line2D([], [], color=my_colours[ax_counter],
+                                marker=None, linewidth=3, label='mean')
+            ax.legend(handles=[st1, st2, mean_line], fontsize=6)
+
+            ax_counter += 1
+
+    plt.tight_layout()
+
+    # save, show and close plots
+    if save_plots:
+        fig1_savename = f'runs-{last_n_values}lastValues.png'
+        # plt.savefig(f'{save_path}{os.sep}{fig1_savename}')
+
+    if show_plots:
+        plt.show()
+    plt.close()
+
+    # # FIGURE2 - doesn't exist in script - but I'll keep their numbers
+
+    # # FIGURE3 - 'data-{n}lastValues.png' - all ISIs on same axis, pos sep only, plus single
+
+    # # FIGURE4 - 'dataDivOneProbe-{n}lastValues.png' - all ISIs on same axis, pos sep only.
+            # does not include single probe
+
+    # # FIGURE5 - 'data-nextValues.png' - all ISIs on same axis, pos sep only, plus single.
+
+    # # FIGURE6 - 'runs-nextValues.png' - 8 batman plots
+    # fig, axes = plt.subplots(nrows=2, ncols=4, figsize=(12, 6))
+    # fig.suptitle(f'Last {last_n_values} values per ISI. '
+    #              f'(mean diff: {round(meandiffVal, 2)})')
+    #
+    # ax_counter = 0
+    # for row_idx, row in enumerate(axes):
+    #     for col_idx, ax in enumerate(row):
+    #         print(row_idx, col_idx, ax)
+    #
+    #         # mean threshold from CW and CCW prode jump direction
+    #         sns.lineplot(ax=axes[row_idx, col_idx], data=thr_mean_df,
+    #                      x='sep', y=ISI_name_list[ax_counter],
+    #                      color=my_colours[ax_counter],
+    #                      linewidth=3, markers=True)
+    #
+    #         # stair1: CW probe jumps only
+    #         sns.lineplot(ax=axes[row_idx, col_idx], data=thr1_df,
+    #                      x='sep', y=ISI_name_list[ax_counter],
+    #                      color=my_colours[ax_counter],
+    #                      linewidth=.5, marker="v")
+    #
+    #         # stair2: CCW probe jumps only
+    #         sns.lineplot(ax=axes[row_idx, col_idx], data=thr2_df,
+    #                      x='sep', y=ISI_name_list[ax_counter],
+    #                      color=my_colours[ax_counter],
+    #                      linewidth=.5, marker="o")
+    #
+    #         ax.set_title(ISI_name_list[ax_counter])
+    #         ax.set_xticks(sym_sep_list)
+    #         ax.set_xticklabels(sym_sep_tick_labels)
+    #         ax.xaxis.set_tick_params(labelsize=6)
+    #         ax.set_ylim([40, 90])
+    #
+    #         if row_idx == 1:
+    #             ax.set_xlabel('Probe separation (pixels)')
+    #         else:
+    #             ax.xaxis.label.set_visible(False)
+    #
+    #         if col_idx == 0:
+    #             ax.set_ylabel('Probe Luminance')
+    #         else:
+    #             ax.yaxis.label.set_visible(False)
+    #
+    #         ax.text(x=0.4, y=0.8, s=round(diffVal[ax_counter], 2),
+    #                 # needs transform to appear with rest of plot.
+    #                 transform=ax.transAxes, fontsize=12)
+    #
+    #         # artist for legend
+    #         st1 = mlines.Line2D([], [], color=my_colours[ax_counter],
+    #                             marker='v', linewidth=.5,
+    #                             markersize=4, label='Stair1')
+    #         st2 = mlines.Line2D([], [], color=my_colours[ax_counter],
+    #                             marker='o', linewidth=.5,
+    #                             markersize=4, label='Stair2')
+    #         mean_line = mlines.Line2D([], [], color=my_colours[ax_counter],
+    #                                   marker=None, linewidth=3, label='mean')
+    #         ax.legend(handles=[st1, st2, mean_line], fontsize=6)
+    #
+    #         ax_counter += 1
+    #
+    # plt.tight_layout()
+    #
+    # # save, show and close plots
+    # if save_plots:
+    #     fig1_savename = f'runs-{last_n_values}lastValues.png'
+    #     # plt.savefig(f'{save_path}{os.sep}{fig1_savename}')
+    #
+    # if show_plots:
+    #     plt.show()
+    # plt.close()
+
+    # # FIGURE7 - 'dataDivOneProbe-nextValues.png'- all ISIs on same axis, pos sep only.
+        # does not include single probe
+
+
+"""
 6. d_averageParticipant.m:
 
 """
