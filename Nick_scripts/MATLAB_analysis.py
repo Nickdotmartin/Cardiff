@@ -17,9 +17,336 @@ This page contains python functions to mirror Martin's six MATLAB analysis scrip
 5. c_plots.m:
 6. d_averageParticipant.m:
 
-So far I have just done the first two scripts.  I have also added:
+So far I have just done the first four scripts.  I have also added:
 a_data_extraction_all_runs: a version of the first script but can get all participant data across multiple runs.  
+
+I've also added functions for repeated bit of code:
+data: 
+code to turn array into symetrical array (e.g., from sep=[0, 1, 2, 3, 6, 18] 
+into sep=[-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18])
+
+split df into pos_sep_df and one_probe_df
+
+
+plots: 
+plot_pos_sep_and_one_probe: single ax with pos sepratation, with/without single probe scatter at -1
+Batman plots: 
+
+
 """
+
+def split_df_into_pos_sep_df_and_one_probe_df(pos_sep_and_one_probe_df,
+                                              ISI_name_list=None,
+                                              verbose=True):
+    """
+    For plots where positive separations are shown as line plots and 
+    one probe results are shown as scatter plot, this function splits the dataframe into two.
+    
+    :param pos_sep_and_one_probe_df: Dataframe of positive separations with
+        one_probe conds at bottom of df (e.g., shown as 20 or 99).  df must be indexed with the separation column.
+    :param ISI_name_list: List of ISI names.  If None, will use default values.
+    :param verbose: whether to print progress info to screen
+
+    :return: Pos_sel_df: same as input df but with last row removed
+            One_probe_df: constructed from last row of input df 
+    """
+
+    if verbose:
+        print("\n*** running split_df_into_pos_sep_df_and_one_probe_df() ***")
+
+    data_df = pos_sep_and_one_probe_df
+
+    if ISI_name_list is None:
+        ISI_name_list = ['Concurrent', 'ISI0', 'ISI2', 'ISI4',
+                         'ISI6', 'ISI9', 'ISI12', 'ISI24']
+
+    # check that the df only contains positive separation values
+    if 'sep' in list(data_df.columns):
+        data_df = data_df.rename(columns={'sep': 'Separation'})
+
+    data_df = data_df[data_df['Separation'] >= 0]
+
+    # check if index column is set as 'Separation'
+    if data_df.index.name is None:
+        data_df = data_df.set_index('Separation')
+
+    if verbose:
+        print(f'data_df:\n{data_df}')
+
+    # Chop last row off to use for one_probe condition
+    pos_sep_df, one_probe_df = data_df.drop(data_df.tail(1).index), data_df.tail(1)
+    if verbose:
+        print(f'pos_sep_df:\n{pos_sep_df}')
+    # change separation value from -1 so its on the left of the plot
+    one_probe_lum_list = one_probe_df.values.tolist()[0]
+    x_vals = [-1 for i in ISI_name_list]
+    one_probe_dict = {'ISIs': ISI_name_list,
+                      'probeLum': one_probe_lum_list,
+                      'x_vals': [-1 for i in ISI_name_list]}
+
+    if verbose:
+        print(f'one_probe_dict:\n{one_probe_dict}')
+        for k, v in one_probe_dict.items():
+            print(k, v)
+
+    one_probe_df = pd.DataFrame.from_dict(one_probe_dict)
+    if verbose:
+        print(f'one_probe_df:\n{one_probe_df}')
+
+    return pos_sep_df, one_probe_df
+
+
+# # choose colour pallete
+def fig_colours(n_conditions):
+    """
+    Use this to always get the same colours in the same order with no fuss.
+    :param n_conditions: number of different colours
+    :return: a colour pallet
+    """
+    use_colours = 'tab10'
+
+    if 10 < n_conditions < 21:
+        use_colours = 'tab20'
+    elif n_conditions > 20:
+        print("\tERROR - more classes than colours!?!?!?")
+    sns.set_palette(palette=use_colours, n_colors=n_conditions)
+    my_colours = sns.color_palette()
+
+    return my_colours
+
+
+# # # all ISIs on one axis - pos sep only, plus single probe
+# FIGURE 1 - shows one axis (x=separation (0-18), y=probeLum) with all ISIs added.
+# it also seems that for ISI=99 there are simple dots added at -1 on the x axis.
+
+def plot_pos_sep_and_one_probe(pos_sep_and_one_probe_df,
+                               ISI_name_list=None,
+                               pos_set_ticks=None,
+                               pos_tick_labels=None,
+                               thr_col='probeLum',
+                               fig_title=None,
+                               one_probe=True,
+                               save_path=None, 
+                               save_name=None, 
+                               verbose=True):
+    """
+    This plots a figure with one axis, x has separation values [-2, -1, 0, 1, 2, 3, 6, 18],
+    where -2 is not uses, -1 is for the single probe condition - shows as a scatter plot.
+    Values sep (0:18) are shown as lineplots.
+    Will plot all ISIs on the same axis.
+
+    :param pos_sep_and_one_probe_df: Full dataframe to use for values
+    :param ISI_name_list: default=NONE: will use defaults, or pass list of names for legend.
+    :param pos_set_ticks: default=NONE: will use defaults, or pass list of names for x-axis positions.
+    :param pos_tick_labels: default=NONE: will use defaults, or pass list of names for x_axis labels.
+    :param thr_col: column in df to use for y_vals
+    :param thr_col: column in df to use for y_vals
+    :param fig_title: default=None.  Pass a string to add as a title.
+    :param one_probe: default=True.  Add data for one_probe as scatter.
+    :param save_path: default=None.  Path to dir to save fig
+    :param save_name: default=None.  name to save fig
+    :param verbose: default: True. Won't print anything to screen if set to false.
+
+    :return: plot
+    """
+    if verbose:
+        print("\n*** running plot_pos_sep_and_one_probe() ***")
+
+    print(f'ISI_name_list: {ISI_name_list}')
+    if ISI_name_list is None:
+        ISI_name_list = ['Concurrent', 'ISI0', 'ISI2', 'ISI4',
+                         'ISI6', 'ISI9', 'ISI12', 'ISI24']
+    if pos_set_ticks is None:
+        pos_set_ticks = [-2, -1, 0, 1, 2, 3, 6, 18]
+    if pos_tick_labels is None:
+        pos_tick_labels = ['', 'one\nprobe', 0, 1, 2, 3, 6, 18]
+
+
+    # call function to split df into pos_sep_df and one_probe_df
+    if one_probe:
+        pos_sep_df, one_probe_df = split_df_into_pos_sep_df_and_one_probe_df(
+            pos_sep_and_one_probe_df=pos_sep_and_one_probe_df, ISI_name_list=ISI_name_list)
+        if verbose:
+            print(f'pos_sep_df:\n{pos_sep_df}\none_probe_df:\n{one_probe_df}')
+    else:
+        pos_sep_df = pos_sep_and_one_probe_df
+
+    # make fig1
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    # line plot for main ISIs
+    sns.lineplot(data=pos_sep_df, markers=True, dashes=False, ax=ax)
+
+    # scatter plot for single probe conditions
+    if one_probe:
+        sns.scatterplot(data=one_probe_df, x="x_vals", y=thr_col,
+                        hue="ISIs", style='ISIs', ax=ax)
+
+    # decorate plot
+    ax.legend(labels=ISI_name_list, title='ISI',
+              shadow=True,
+              # place lower left corner of legend at specified location.
+              loc='lower left', bbox_to_anchor=(0.96, 0.5))
+
+    if one_probe:
+        ax.set_xticks(pos_set_ticks)
+        ax.set_xticklabels(pos_tick_labels)
+    else:
+        ax.set_xticks(pos_set_ticks[2:])
+        ax.set_xticklabels(pos_tick_labels[2:])
+
+    # ax.set_ylim([40, 90])
+    ax.set_xlabel('Probe separation in diagonal pixels')
+    ax.set_ylabel('Probe Luminance')
+
+    if fig_title is not None:
+        plt.title(fig_title)
+        
+    if save_path is not None:
+        if save_name is not None:
+            plt.savefig(f'{save_path}{os.sep}{save_name}')
+
+    return fig
+
+
+# # # all ISIs on one axis - pos sep only, NO single probe
+
+# # # 8 batman plots
+
+# # FIGURE 2
+# this is a figure with one axis per ISI, showing neg and pos sep
+# (e.g., -18:18)
+
+def eight_batman_plots(mean_df, thr1_df, thr2_df,
+                       fig_title=None, ISI_name_list=None,
+                       x_tick_vals=None, x_tick_labels=None,
+                       sym_sep_diff_list=None,
+                       save_path=None, save_name=None,
+                       verbose=True
+                       ):
+    """
+    From array make seperate batman plots for
+    :param mean_df: df of values for mean thr
+    :param thr1_df: df of values from cond 1 (e.g., probe_jump inwards)
+    :param thr2_df: df of values for cond 2 (e.g., probe_jump outwards)
+    :param fig_title: title for figure or None
+    :param ISI_name_list: If None, will use default setting, or pass list of
+        names for legend
+    :param x_tick_vals: If None, will use default setting, or pass list of
+        values for x_axis
+    :param x_tick_labels: If None, will use default setting, or pass list of
+        labels for x_axis
+    :param sym_sep_diff_list: list of differences between thr1&thr2 to be added
+        as text to figure
+    :param save_path: default=None.  Path to dir to save fig
+    :param save_name: default=None.  name to save fig
+    :param verbose: If True, print info to screen.
+
+    :return: Batman Plot
+    """
+
+    if verbose:
+        print("\n*** running eight_batman_plots() ***")
+
+    if ISI_name_list is None:
+        ISI_name_list = ['Concurrent', 'ISI0', 'ISI2', 'ISI4',
+                         'ISI6', 'ISI9', 'ISI12', 'ISI24']
+
+    if x_tick_vals is None:
+        x_tick_vals = [-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18, 20]
+
+    if x_tick_labels is None:
+        x_tick_labels = [-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18, '1\nprobe']
+
+    # check column name for x_values
+    if 'sep' in list(mean_df.columns):
+        mean_df = mean_df.rename(columns={'sep': 'Separation'})
+        thr1_df = thr1_df.rename(columns={'sep': 'Separation'})
+        thr2_df = thr2_df.rename(columns={'sep': 'Separation'})
+
+    if 'Separation' in list(mean_df):
+        x_col = 'Separation'
+    elif 'sep' in list(mean_df):
+        x_col = 'sep'
+    else:
+        raise ValueError(f'which column is for x values?\n{list(mean_df)}')
+
+    # set colours
+    my_colours = fig_colours(len(ISI_name_list))
+
+    # make plots
+    fig, axes = plt.subplots(nrows=2, ncols=4, figsize=(12, 6))
+
+    if fig_title is not None:
+        fig.suptitle(fig_title)
+
+    ax_counter = 0
+    # loop through the eight axes
+    for row_idx, row in enumerate(axes):
+        for col_idx, ax in enumerate(row):
+            print(row_idx, col_idx, ax)
+
+            # mean threshold from CW and CCW prode jump direction
+            sns.lineplot(ax=axes[row_idx, col_idx], data=mean_df,
+                         x='Separation', y=ISI_name_list[ax_counter],
+                         color=my_colours[ax_counter],
+                         linewidth=3, markers=True)
+
+            # stair1: CW probe jumps only
+            sns.lineplot(ax=axes[row_idx, col_idx], data=thr1_df,
+                         x='Separation', y=ISI_name_list[ax_counter],
+                         color=my_colours[ax_counter],
+                         linewidth=.5, marker="v")
+
+            # stair2: CCW probe jumps only
+            sns.lineplot(ax=axes[row_idx, col_idx], data=thr2_df,
+                         x='Separation', y=ISI_name_list[ax_counter],
+                         color=my_colours[ax_counter],
+                         linewidth=.5, marker="o")
+
+            ax.set_title(ISI_name_list[ax_counter])
+            ax.set_xticks(x_tick_vals)
+            ax.set_xticklabels(x_tick_labels)
+            ax.xaxis.set_tick_params(labelsize=6)
+            ax.set_ylim([40, 90])
+
+            if row_idx == 1:
+                ax.set_xlabel('Probe separation (pixels)')
+            else:
+                ax.xaxis.label.set_visible(False)
+
+            if col_idx == 0:
+                ax.set_ylabel('Probe Luminance')
+            else:
+                ax.yaxis.label.set_visible(False)
+
+            if sym_sep_diff_list is not None:
+                ax.text(x=0.4, y=0.8, s=round(sym_sep_diff_list[ax_counter], 2),
+                        # needs transform to appear with rest of plot.
+                        transform=ax.transAxes, fontsize=12)
+
+            # artist for legend
+            st1 = mlines.Line2D([], [], color=my_colours[ax_counter],
+                                marker='v', linewidth=.5,
+                                markersize=4, label='Stair1')
+            st2 = mlines.Line2D([], [], color=my_colours[ax_counter],
+                                marker='o', linewidth=.5,
+                                markersize=4, label='Stair2')
+            mean_line = mlines.Line2D([], [], color=my_colours[ax_counter],
+                                marker=None, linewidth=3, label='mean')
+            ax.legend(handles=[st1, st2, mean_line], fontsize=6)
+
+            ax_counter += 1
+
+    plt.tight_layout()
+    
+    if save_path is not None:
+        if save_name is not None:
+            plt.savefig(f'{save_path}{os.sep}{save_name}')
+
+    return fig
+
+# # # split array into pos and neg set (sym) and get thr1, thr2 and mean thr
 
 
 def a_data_extraction(p_name, run_dir, ISI_list, save_all_data=True, verbose=True):
@@ -358,13 +685,14 @@ def b1_extract_last_values(all_data_path, thr_col='probeLum', resp_col='trial_re
 
 
 # # # # # # # # #
-# test_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim/Nick_practice/P6a-Kim/P6a-Kim_ALLDATA-sorted.xlsx'
+# test_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim/' \
+#             'Nick_practice/P6a-Kim/P6a-Kim_ALLDATA-sorted.xlsx'
 # b1_extract_last_values(all_data_path=test_path)
 
 
 def b2_lastReversal(all_data_path, reversals_list=[2, 3, 4],
-                   thr_col='probeLum', resp_col='trial_response',
-                   show_plots=True, save_plots=True, verbose=True):
+                    thr_col='probeLum', resp_col='trial_response',
+                    show_plots=True, save_plots=True, verbose=True):
     """
     b2_lastReversal/m: Computes the threshold for each staircase as an average of
     the last N reversals (incorrect responses).  Plot these as mean per sep,
@@ -411,7 +739,7 @@ def b2_lastReversal(all_data_path, reversals_list=[2, 3, 4],
         print(f"ISI_list: {ISI_list}\nstair_list: {stair_list}")
 
     # get ISI string for column names
-    ISI_name_list = ['concurrent' if i == -1 else f'ISI{i}' for i in ISI_list]
+    ISI_name_list = ['Concurrent' if i == -1 else f'ISI{i}' for i in ISI_list]
     if verbose:
         print(f"ISI_name_list: {ISI_name_list}")
         print(f"{len(ISI_list)} ISI values and {len(stair_list)} stair values")
@@ -481,6 +809,8 @@ def b2_lastReversal(all_data_path, reversals_list=[2, 3, 4],
         # dataframes for figures
         rev_thr_mean_df = pd.DataFrame(data=reversalThreshMean, columns=ISI_name_list)
         sym_sep_list = [-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18, 20]
+        fig2_x_tick_lab = [-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18, '1\nprobe']
+
         rev_thr_mean_df.insert(loc=0, column='Separation', value=sym_sep_list)
         if verbose:
             print(f"\nrev_thr_mean_df:\n{rev_thr_mean_df}")
@@ -505,143 +835,45 @@ def b2_lastReversal(all_data_path, reversals_list=[2, 3, 4],
         meandiffNext = np.mean(diffNext)
 
 
-
         # PLOT FIGURES
-        # choose colours
-        use_colours = 'tab10'
-        n_conditions = int(len(ISI_name_list))
-        if 10 < n_conditions < 21:
-            use_colours = 'tab20'
-        elif n_conditions > 20:
-            print("\tERROR - more classes than colours!?!?!?")
-        sns.set_palette(palette=use_colours, n_colors=n_conditions)
-        my_colours = sns.color_palette()
 
-
-        # FIGURE 1 - shows one axis (x=separation (0-18), y=probeLum) with all ISIs added.
-        # it also seems that for ISI=99 there are simple dots added at -1 on the x axis.
-
-        # only take positive separation values
-        fig1_df = rev_thr_mean_df[rev_thr_mean_df['Separation'] >= 0]
-        fig1_df = fig1_df.set_index('Separation')
-
-        # the values listed as separation=20 are actually for the single probe cond.
-        # Chop last row off and add values later.
-        fig1_df, one_probe_df = fig1_df.drop(fig1_df.tail(1).index), fig1_df.tail(1)
-
-        # change value from 20 to -1 so its on the left of the plot
-        one_probe_lum_list = one_probe_df.values.tolist()[0]
-        one_probe_dict = {'ISIs': ISI_name_list,
-                          'ProbeLum': one_probe_lum_list,
-                          'x_vals': [-1 for i in ISI_name_list]}
-        one_probe_df = pd.DataFrame.from_dict(one_probe_dict)
-
-        # make fig1
-        fig, ax = plt.subplots(figsize=(10, 6))
-
-        # line plot for main ISIs
-        sns.lineplot(data=fig1_df, markers=True, dashes=False)
-
-        # scatter plot for single probe conditions
-        sns.scatterplot(data=one_probe_df, x="x_vals", y="ProbeLum",
-                        hue="ISIs", style='ISIs')
-
-        # decorate plot
-        ax.legend(labels=ISI_name_list, title='ISI',
-                  shadow=True,
-                  # place lower left corner of legend at specified location.
-                  loc='lower left', bbox_to_anchor=(0.96, 0.5))
-
-        ax.set_xticks([-2, -1, 0, 1, 2, 3, 6, 18])
-        ax.set_xticklabels(['', 'one\nprobe', 0, 1, 2, 3, 6, 18])
-
-        ax.set_xlabel('Probe separation in diagonal pixels')
-        ax.set_ylabel('Probe Luminance')
+        # # FIGURE 1 - shows one axis (x=separation (0-18), y=probeLum) with all ISIs added.
+        # # it also seems that for ISI=99 there are simple dots added at -1 on the x axis.
 
         fig1_title = f'Mean {thr_col} from last {reversals} reversals'
-        plt.title(fig1_title)
+        fig1_savename = f'data_last{reversals}_reversals.png'
 
-        # save, show and close plots
-        if save_plots:
-            fig1_savename = f'data_last{reversals}_reversals.png'
-            plt.savefig(f'{save_path}{os.sep}{fig1_savename}')
+        fig1 = plot_pos_sep_and_one_probe(pos_sep_and_one_probe_df=rev_thr_mean_df,
+                                          fig_title=fig1_title, 
+                                          save_path=save_path, 
+                                          save_name=fig1_savename)
 
+        # show and close plots
         if show_plots:
             plt.show()
         plt.close()
 
-        # FIGURE 2
-        # this is a figure with one axis per ISI, showing neg and pos sep
-        # (e.g., -18:18)
-        fig, axes = plt.subplots(nrows=2, ncols=4, figsize=(12, 6))
-        fig.suptitle(f'Last {reversals} reversals per ISI. '
-                     f'(mean diff: {round(meandiffNext, 2)})')
 
-        fig2_x_tick_lab = [-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18, '1\nprobe']
+        # # FIGURE 2 - eight batman plots
+        # # this is a figure with one axis per ISI, showing neg and pos sep
+        # # (e.g., -18:18)
+        fig_title = f'Last {reversals} reversals per ISI. ' \
+                    f'(mean diff: {round(meandiffNext, 2)})'
+        fig2_savename = f'runs_last{reversals}_reversals.png'
 
-        ax_counter = 0
-        for row_idx, row in enumerate(axes):
-            for col_idx, ax in enumerate(row):
-                print(row_idx, col_idx, ax)
+        fig2 = eight_batman_plots(mean_df=rev_thr_mean_df,
+                                  thr1_df=rev_thr1_sym_df,
+                                  thr2_df=rev_thr2_sym_df,
+                                  fig_title=fig_title,
+                                  ISI_name_list=ISI_name_list,
+                                  x_tick_vals=sym_sep_list,
+                                  x_tick_labels=fig2_x_tick_lab,
+                                  sym_sep_diff_list=diffNext, 
+                                  save_path=save_path, 
+                                  save_name=fig2_savename,
+                                  verbose=True)
 
-                # mean threshold from CW and CCW prode jump direction
-                sns.lineplot(ax=axes[row_idx, col_idx], data=rev_thr_mean_df,
-                             x='Separation', y=ISI_name_list[ax_counter],
-                             color=my_colours[ax_counter],
-                             linewidth=3, markers=True)
-
-                # stair1: CW probe jumps only
-                sns.lineplot(ax=axes[row_idx, col_idx], data=rev_thr1_sym_df,
-                             x='Separation', y=ISI_name_list[ax_counter],
-                             color=my_colours[ax_counter],
-                             linewidth=.5, marker="v")
-
-                # stair2: CCW probe jumps only
-                sns.lineplot(ax=axes[row_idx, col_idx], data=rev_thr2_sym_df,
-                             x='Separation', y=ISI_name_list[ax_counter],
-                             color=my_colours[ax_counter],
-                             linewidth=.5, marker="o")
-
-                ax.set_title(ISI_name_list[ax_counter])
-                ax.set_xticks(sym_sep_list)
-                ax.set_xticklabels(fig2_x_tick_lab)
-                ax.xaxis.set_tick_params(labelsize=6)
-                ax.set_ylim([40, 90])
-
-                if row_idx == 1:
-                    ax.set_xlabel('Probe separation (pixels)')
-                else:
-                    ax.xaxis.label.set_visible(False)
-
-                if col_idx == 0:
-                    ax.set_ylabel('Probe Luminance')
-                else:
-                    ax.yaxis.label.set_visible(False)
-
-                ax.text(x=0.4, y=0.8, s=round(diffNext[ax_counter], 2),
-                        # needs transform to appear with rest of plot.
-                        transform=ax.transAxes, fontsize=12)
-
-                # artist for legend
-                st1 = mlines.Line2D([], [], color=my_colours[ax_counter],
-                                    marker='v', linewidth=.5,
-                                    markersize=4, label='Stair1')
-                st2 = mlines.Line2D([], [], color=my_colours[ax_counter],
-                                    marker='o', linewidth=.5,
-                                    markersize=4, label='Stair2')
-                mean_line = mlines.Line2D([], [], color=my_colours[ax_counter],
-                                    marker=None, linewidth=3, label='mean')
-                ax.legend(handles=[st1, st2, mean_line], fontsize=6)
-
-                ax_counter += 1
-
-        plt.tight_layout()
-
-        # save, show and close plots
-        if save_plots:
-            fig2_savename = f'runs_last{reversals}_reversals.png'
-            plt.savefig(f'{save_path}{os.sep}{fig2_savename}')
-
+        # show and close plots
         if show_plots:
             plt.show()
         plt.close()
@@ -649,13 +881,13 @@ def b2_lastReversal(all_data_path, reversals_list=[2, 3, 4],
         print("\n***finished b2_lastReversal()***\n")
 
 
-# ################
+################
 # all_data_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim/' \
 #                 'Nick_practice/P6a-Kim/P6a-Kim_ALLDATA-sorted.xlsx'
 # b2_lastReversal(all_data_path=all_data_path, reversals_list=[2, 3, 4],
-#                thr_col='probeLum', resp_col='trial_response',
-#                show_plots=True, save_plots=True,
-#                verbose=True)
+#                 thr_col='probeLum', resp_col='trial_response',
+#                 show_plots=True, save_plots=True,
+#                 verbose=True)
 
 
 """
@@ -687,8 +919,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
 
 
     """
-
-
+    print("\n*** running b3_plot_staircase() ***\n")
 
     save_path, xlsx_name = os.path.split(all_data_path)
 
@@ -703,7 +934,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
     stair_list = all_data_df['stair'].unique()
 
     # get ISI string for column names
-    ISI_name_list = ['concurrent' if i == -1 else f'ISI{i}' for i in ISI_list]
+    ISI_name_list = ['Concurrent' if i == -1 else f'ISI{i}' for i in ISI_list]
 
     trials, columns = np.shape(all_data_df)
     trials_per_stair = int(trials/len(ISI_list)/len(stair_list))
@@ -769,7 +1000,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
     # # change value from 20 to -1 so its on the left of the plot
     # one_probe_lum_list = mean_one_probe_df.values.tolist()[0]
     # one_probe_dict = {'ISIs': ISI_name_list,
-    #                   'ProbeLum': one_probe_lum_list,
+    #                   'probeLum': one_probe_lum_list,
     #                   'x_vals': [-1 for i in ISI_name_list]}
     # mean_one_probe_df = pd.DataFrame.from_dict(one_probe_dict)
     # print(f'thr_mean_df:\n{thr_mean_df}')
@@ -942,7 +1173,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
 
         plt.tight_layout()
 
-        # save, show and close plots
+        # show and close plots
         if save_plots:
             savename = f'staircases_{ISI_name}.png'
             plt.savefig(f'{save_path}{os.sep}{savename}')
@@ -958,33 +1189,6 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
 #                     'Nick_practice/P6a-Kim/P6a-Kim_ALLDATA-sorted.xlsx'
 # b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_response',
 #                   show_plots=True, save_plots=True, verbose=True)
-
-
-# # choose colour pallete
-# choose colours
-def fig_colours(n_conditions):
-    """
-    Use this to always get the same colours in the same order with no fuss.
-    :param n_conditions: number of different colours
-    :return: a colour pallet
-    """
-    n_conditions = int(len(ISI_name_list))
-    use_colours = 'tab10'
-
-    if 10 < n_conditions < 21:
-        use_colours = 'tab20'
-    elif n_conditions > 20:
-        print("\tERROR - more classes than colours!?!?!?")
-    sns.set_palette(palette=use_colours, n_colors=n_conditions)
-    my_colours = sns.color_palette()
-
-    return my_colours
-
-# # # all ISIs on one axis - pos sep only, plus single probe
-
-# # # all ISIs on one axis - pos sep only, NO single probe
-
-# # # 8 batman plots
 
 
 
@@ -1037,7 +1241,7 @@ verbose=True
 last_vals_list = [1]
 
 ISI_list = [-1, 0, 2, 4, 6, 9, 12, 24]
-ISI_name_list = ['concurrent', 'ISI0', 'ISI2', 'ISI4', 'ISI6', 'ISI9', 'ISI12', 'ISI24']
+ISI_name_list = ['Concurrent', 'ISI0', 'ISI2', 'ISI4', 'ISI6', 'ISI9', 'ISI12', 'ISI24']
 stair_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
 separation_title = ['18sep', '06sep', '03sep', '02sep', '01sep', '00sep', 'onePb']
 sym_sep_list = [-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18, 20]
@@ -1045,14 +1249,7 @@ sym_sep_tick_labels = [-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18, '1\nprobe']
 pos_sep_list = [0, 1, 2, 3, 6, 18, 20]
 
 # choose colours
-use_colours = 'tab10'
-n_conditions = int(len(ISI_name_list))
-if 10 < n_conditions < 21:
-    use_colours = 'tab20'
-elif n_conditions > 20:
-    print("\tERROR - more classes than colours!?!?!?")
-sns.set_palette(palette=use_colours, n_colors=n_conditions)
-my_colours = sns.color_palette()
+my_colours = fig_colours(len(ISI_name_list))
 
 for last_n_values in last_vals_list:
     print(f'last {last_n_values} values')
@@ -1100,161 +1297,108 @@ for last_n_values in last_vals_list:
 
     # # Figure1 - runs-{n}lastValues
     # this is a figure with one axis per ISI, showing neg and pos sep
-    # (e.g., -18:18)
-    fig, axes = plt.subplots(nrows=2, ncols=4, figsize=(12, 6))
-    fig.suptitle(f'Last {last_n_values} values per ISI. '
-                 f'(mean diff: {round(meandiffVal, 2)})')
+    # (e.g., -18:18) - eight batman plots
+    fig_title = f'Last {last_n_values} values per ISI. ' \
+                f'(mean diff: {round(meandiffVal, 2)})'
+    fig1_savename = f'runs-{last_n_values}lastValues.png'
+    # fig1 = eight_batman_plots(mean_df=thr_mean_df,
+    #                           thr1_df=thr1_df,
+    #                           thr2_df=thr2_df,
+    #                           fig_title=fig_title,
+    #                           ISI_name_list=ISI_name_list,
+    #                           x_tick_vals=sym_sep_list,
+    #                           x_tick_labels=sym_sep_tick_labels,
+    #                           sym_sep_diff_list=diffVal,
+    #                           save_path=save_path,
+    #                           save_name=fig1_savename,
+    #                           verbose=True)
 
-    ax_counter = 0
-    for row_idx, row in enumerate(axes):
-        for col_idx, ax in enumerate(row):
-            print(row_idx, col_idx, ax)
-
-            # mean threshold from CW and CCW prode jump direction
-            sns.lineplot(ax=axes[row_idx, col_idx], data=thr_mean_df,
-                         x='sep', y=ISI_name_list[ax_counter],
-                         color=my_colours[ax_counter],
-                         linewidth=3, markers=True)
-
-            # stair1: CW probe jumps only
-            sns.lineplot(ax=axes[row_idx, col_idx], data=thr1_df,
-                         x='sep', y=ISI_name_list[ax_counter],
-                         color=my_colours[ax_counter],
-                         linewidth=.5, marker="v")
-
-            # stair2: CCW probe jumps only
-            sns.lineplot(ax=axes[row_idx, col_idx], data=thr2_df,
-                         x='sep', y=ISI_name_list[ax_counter],
-                         color=my_colours[ax_counter],
-                         linewidth=.5, marker="o")
-
-            ax.set_title(ISI_name_list[ax_counter])
-            ax.set_xticks(sym_sep_list)
-            ax.set_xticklabels(sym_sep_tick_labels)
-            ax.xaxis.set_tick_params(labelsize=6)
-            ax.set_ylim([40, 90])
-
-            if row_idx == 1:
-                ax.set_xlabel('Probe separation (pixels)')
-            else:
-                ax.xaxis.label.set_visible(False)
-
-            if col_idx == 0:
-                ax.set_ylabel('Probe Luminance')
-            else:
-                ax.yaxis.label.set_visible(False)
-
-            ax.text(x=0.4, y=0.8, s=round(diffVal[ax_counter], 2),
-                    # needs transform to appear with rest of plot.
-                    transform=ax.transAxes, fontsize=12)
-
-            # artist for legend
-            st1 = mlines.Line2D([], [], color=my_colours[ax_counter],
-                                marker='v', linewidth=.5,
-                                markersize=4, label='Stair1')
-            st2 = mlines.Line2D([], [], color=my_colours[ax_counter],
-                                marker='o', linewidth=.5,
-                                markersize=4, label='Stair2')
-            mean_line = mlines.Line2D([], [], color=my_colours[ax_counter],
-                                marker=None, linewidth=3, label='mean')
-            ax.legend(handles=[st1, st2, mean_line], fontsize=6)
-
-            ax_counter += 1
-
-    plt.tight_layout()
-
-    # save, show and close plots
-    if save_plots:
-        fig1_savename = f'runs-{last_n_values}lastValues.png'
-        # plt.savefig(f'{save_path}{os.sep}{fig1_savename}')
-
-    if show_plots:
-        plt.show()
-    plt.close()
 
     # # FIGURE2 - doesn't exist in script - but I'll keep their numbers
 
     # # FIGURE3 - 'data-{n}lastValues.png' - all ISIs on same axis, pos sep only, plus single
+    # # use plot_pos_sep_and_one_probe()
+    # fig3_save_name = f'data-{last_n_values}lastValues.png'
+    # fig3 = plot_pos_sep_and_one_probe(pos_sep_and_one_probe_df=thr_mean_df,
+    #                                   ISI_name_list=None,
+    #                                   pos_set_ticks=None,
+    #                                   pos_tick_labels=None,
+    #                                   thr_col='probeLum',
+    #                                   fig_title=fig3_save_name[:-4],
+    #                                   one_probe=True,
+    #                                   save_path=save_path,
+    #                                   save_name=fig3_save_name,
+    #                                   verbose=True)
+    # plt.show()
 
-    # # FIGURE4 - 'dataDivOneProbe-{n}lastValues.png' - all ISIs on same axis, pos sep only.
-            # does not include single probe
+    # # # FIGURE4 - 'dataDivOneProbe-{n}lastValues.png' - all ISIs on same axis, pos sep only.
+    #         # does not include single probe
+    # # # use plot_pos_sep_and_one_probe(one_probe=False)
+    # # each sep row in pos_sep_df is divided by one_probe_df.
+    # fig4_save_name = f'dataDivOneProbe-{last_n_values}lastValues.png'
+    # pos_sep_df, one_probe_df = split_df_into_pos_sep_df_and_one_probe_df(thr_mean_df)
+    # pos_sep_arr = pos_sep_df.to_numpy()
+    # one_probe_arr = one_probe_df['probeLum'].to_numpy()
+    # div_by_one_probe_arr = (pos_sep_arr.T / one_probe_arr[:, None]).T
+    # div_by_one_probe_df = pd.DataFrame(div_by_one_probe_arr, columns=ISI_name_list)
+    # div_by_one_probe_df.insert(0, 'Separation', pos_sep_list[:-1])
+    # div_by_one_probe_df.set_index('Separation', inplace=True)
+    # print(f'div_by_one_probe_df:\n{div_by_one_probe_df}')
+    #
+    # fig4 = plot_pos_sep_and_one_probe(div_by_one_probe_df,
+    #                            ISI_name_list=None,
+    #                            pos_set_ticks=None,
+    #                            pos_tick_labels=None,
+    #                            thr_col='probeLum',
+    #                            fig_title=fig4_save_name[:-4],
+    #                            one_probe=False,
+    #                            save_path=save_path,
+    #                            save_name=fig4_save_name,
+    #                            verbose=True)
+    # plt.show()
 
     # # FIGURE5 - 'data-nextValues.png' - all ISIs on same axis, pos sep only, plus single.
+    # # use plot_pos_sep_and_one_probe()
+    # fig5 = plot_pos_sep_and_one_probe(pos_sep_and_one_probe_df,
+    #                            ISI_name_list=None,
+    #                            pos_set_ticks=None,
+    #                            pos_tick_labels=None,
+    #                            thr_col='probeLum',
+    #                            fig_title=None,
+    #                            one_probe=True,
+    #                            save_path=None,
+    #                            save_name=None,
+    #                            verbose=True)
+
 
     # # FIGURE6 - 'runs-nextValues.png' - 8 batman plots
-    # fig, axes = plt.subplots(nrows=2, ncols=4, figsize=(12, 6))
-    # fig.suptitle(f'Last {last_n_values} values per ISI. '
-    #              f'(mean diff: {round(meandiffVal, 2)})')
-    #
-    # ax_counter = 0
-    # for row_idx, row in enumerate(axes):
-    #     for col_idx, ax in enumerate(row):
-    #         print(row_idx, col_idx, ax)
-    #
-    #         # mean threshold from CW and CCW prode jump direction
-    #         sns.lineplot(ax=axes[row_idx, col_idx], data=thr_mean_df,
-    #                      x='sep', y=ISI_name_list[ax_counter],
-    #                      color=my_colours[ax_counter],
-    #                      linewidth=3, markers=True)
-    #
-    #         # stair1: CW probe jumps only
-    #         sns.lineplot(ax=axes[row_idx, col_idx], data=thr1_df,
-    #                      x='sep', y=ISI_name_list[ax_counter],
-    #                      color=my_colours[ax_counter],
-    #                      linewidth=.5, marker="v")
-    #
-    #         # stair2: CCW probe jumps only
-    #         sns.lineplot(ax=axes[row_idx, col_idx], data=thr2_df,
-    #                      x='sep', y=ISI_name_list[ax_counter],
-    #                      color=my_colours[ax_counter],
-    #                      linewidth=.5, marker="o")
-    #
-    #         ax.set_title(ISI_name_list[ax_counter])
-    #         ax.set_xticks(sym_sep_list)
-    #         ax.set_xticklabels(sym_sep_tick_labels)
-    #         ax.xaxis.set_tick_params(labelsize=6)
-    #         ax.set_ylim([40, 90])
-    #
-    #         if row_idx == 1:
-    #             ax.set_xlabel('Probe separation (pixels)')
-    #         else:
-    #             ax.xaxis.label.set_visible(False)
-    #
-    #         if col_idx == 0:
-    #             ax.set_ylabel('Probe Luminance')
-    #         else:
-    #             ax.yaxis.label.set_visible(False)
-    #
-    #         ax.text(x=0.4, y=0.8, s=round(diffVal[ax_counter], 2),
-    #                 # needs transform to appear with rest of plot.
-    #                 transform=ax.transAxes, fontsize=12)
-    #
-    #         # artist for legend
-    #         st1 = mlines.Line2D([], [], color=my_colours[ax_counter],
-    #                             marker='v', linewidth=.5,
-    #                             markersize=4, label='Stair1')
-    #         st2 = mlines.Line2D([], [], color=my_colours[ax_counter],
-    #                             marker='o', linewidth=.5,
-    #                             markersize=4, label='Stair2')
-    #         mean_line = mlines.Line2D([], [], color=my_colours[ax_counter],
-    #                                   marker=None, linewidth=3, label='mean')
-    #         ax.legend(handles=[st1, st2, mean_line], fontsize=6)
-    #
-    #         ax_counter += 1
-    #
-    # plt.tight_layout()
-    #
-    # # save, show and close plots
-    # if save_plots:
-    #     fig1_savename = f'runs-{last_n_values}lastValues.png'
-    #     # plt.savefig(f'{save_path}{os.sep}{fig1_savename}')
-    #
-    # if show_plots:
-    #     plt.show()
-    # plt.close()
+    # fig6_savename = 'runs-nextValues.png'
+    # fig6 = eight_batman_plots(mean_df=thr_mean_df,
+    #                           thr1_df=thr1_df,
+    #                           thr2_df=thr2_df,
+    #                           fig_title=fig_title,
+    #                           ISI_name_list=ISI_name_list,
+    #                           x_tick_vals=sym_sep_list,
+    #                           x_tick_labels=sym_sep_tick_labels,
+    #                           sym_sep_diff_list=diffVal,
+    #                           save_path=save_path,
+    #                           save_name=fig6_savename,
+    #                           verbose=True)
+
 
     # # FIGURE7 - 'dataDivOneProbe-nextValues.png'- all ISIs on same axis, pos sep only.
         # does not include single probe
+    # # use plot_pos_sep_and_one_probe(one_probe=False)
+    # fig7 = plot_pos_sep_and_one_probe(pos_sep_and_one_probe_df,
+    #                            ISI_name_list=None,
+    #                            pos_set_ticks=None,
+    #                            pos_tick_labels=None,
+    #                            thr_col='probeLum',
+    #                            fig_title=None,
+    #                            one_probe=False,
+    #                            save_path=None,
+    #                            save_name=None,
+    #                            verbose=True)
 
 
 """
