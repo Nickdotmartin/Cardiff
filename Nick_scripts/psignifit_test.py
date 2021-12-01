@@ -14,11 +14,12 @@ This script contains the analysis pipeline for individual participants.
 4. Plot psychometric function
 """
 
+print(ps.__version__)
+
 # # 1. load in CSV file.
-raw_data_df = pd.read_csv('/Users/nickmartin/Documents/PycharmProjects/Cardiff/'
-                       'Nick_scripts/testnm_50/ISI_12_probeDur2/testnm_50.csv',
-                          usecols=['probeLum', 'trial_response']
-)
+exp_csv_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim/' \
+               'Nick_practice/P6a-Kim/ISI_24_probeDur2/Kim1.csv'
+raw_data_df = pd.read_csv(exp_csv_path, usecols=['probeLum', 'trial_response'])
 print(f"raw_data:\n{raw_data_df.head()}")
 
 # identify col of interest (e.g., probeLum)
@@ -37,11 +38,19 @@ print(f"bin_size: {bin_size}")
 
 # put responses into bins (e.g., 10)
 raw_data_df['binned'] = pd.cut(x=raw_data_df[focus_col], bins=n_bins)
+print(f"raw_data:\n{raw_data_df.head()}")
 
 # get bin_values which are type(pandas.Interval)
 bins = raw_data_df.binned.unique()
 
-# for each bin (e.g., probeLum value) get n_trials and n_correct
+
+# for bin_idx, bin in enumerate(bins):
+#     print(bin_idx, bin)
+# #
+# # print(f"bins: {bins}")
+# # print(type(bins))
+# # print(len(bins))
+# # for each bin (e.g., probeLum value) get n_trials and n_correct
 
 # get n_correct for each bin
 bin_count = pd.value_counts(raw_data_df['binned'])
@@ -63,10 +72,10 @@ new_df = pd.DataFrame(hist_df, columns=['bin_left', 'stim_level', 'n_correct', '
 new_df = new_df.sort_values(by='bin_left')
 new_df = new_df.drop(columns='bin_left')
 print(f"new_df:\n{new_df}")
-
-# # 2. convert data into format for analysis: 3 cols [stimulus level | nCorrect | ntotal]
-data = new_df.to_numpy()
-print(f"data:\n{data}")
+#
+# # # 2. convert data into format for analysis: 3 cols [stimulus level | nCorrect | ntotal]
+# data = new_df.to_numpy()
+# print(f"data:\n{data}")
 
 # # 3. run psignifit for fit, conf intervals and threshold etc
 
