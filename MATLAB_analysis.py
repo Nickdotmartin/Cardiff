@@ -1,8 +1,9 @@
-import pandas as pd
-import numpy as np
 import os
-import matplotlib.pyplot as plt
+
 import matplotlib.lines as mlines
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import seaborn as sns
 
 """
@@ -788,10 +789,10 @@ def b2_last_reversal(all_data_path,
         (e.g., varied by the staircase).
     :param resp_col: (default: 'trial_response') name of the column showing
         (accuracy per trial).
-    :param reversals_list: Default=None.  If none will use values [2, 3, 4].  
+    :param reversals_list: Default=None.  If none will use values [2, 4].  
         Else input a list of values to calculate scores from.
-        e.g., if reversals_list=[2, 3, 4], will get the mean threshold from last
-        n_reversals where n=2, 3 or 4.
+        e.g., if reversals_list=[2, 4], will get the mean threshold from last
+        n_reversals where n=2 or 4.  DO not use an odd number of reversals!
     :param show_plots: whether to display plots on-screen.
     :param verbose: If True, will print progress to screen.
 
@@ -824,7 +825,7 @@ def b2_last_reversal(all_data_path,
 
     # get reversals list
     if reversals_list is None:
-        reversals_list = [2, 3, 4]
+        reversals_list = [2, 4]
     if verbose:
         print(f'reversals_list: {reversals_list}')
 
@@ -855,10 +856,15 @@ def b2_last_reversal(all_data_path,
                 # get indices of last n incorrect responses
                 incorrect_list = stair_df.index[stair_df[resp_col] == 0]
 
-                # get probeLum for corresponding trials
+                # if there are an odd number of reversals, remove the first one
+                if len(incorrect_list) % 2 == 1:
+                    incorrect_list = incorrect_list[1:]
+
+                    # get probeLum for corresponding trials
                 reversal_probe_lum_list = stair_df[thr_col].loc[incorrect_list]
 
                 # just select last n_reversals - or whole list if list is shorter than n
+                # whole list will always be an even number
                 reversal_probe_lum_list = reversal_probe_lum_list[-n_reversals:]
 
                 # get mean of these probeLums
@@ -965,7 +971,7 @@ def b2_last_reversal(all_data_path,
 # all_data_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim/' \
 #                 'Nick_practice/P6a-Kim/ALLDATA-sorted.xlsx'
 # b2_last_reversal(all_data_path=all_data_path,
-#                 reversals_list=[2, 3, 4],
+#                 reversals_list=[2, 4],
 #                 # reversals_list=[2],
 #                 thr_col='probeLum', resp_col='trial_response',
 #                 show_plots=True,
@@ -1613,10 +1619,10 @@ def c_plots(save_path, thr_col='probeLum', last_vals_list=None,
 def d_averageParticipant(root_path, run_dir_names_list,
                          thr_col='probeLum', show_plots=True, verbose=True):
     """
-    d_averageParticipant: take P-next-thresholds.xlsx and P-reversal3-thresholds.csv
+    d_averageParticipant: take P-next-thresholds.xlsx and P-reversal4-thresholds.csv
     in each participant run folder and make master lists  
     MASTER_next_thresh
-    MASTER_reversal_3_thresh
+    MASTER_reversal_4_thresh
     
     Get mean of next threshold across 6 run conditions saved as 
     MASTER_ave_next_thresh.csv
@@ -1637,8 +1643,8 @@ def d_averageParticipant(root_path, run_dir_names_list,
     print("\n***running d_averageParticipant()***\n")
 
     # # part1. Munge data, save master lists and get means etc
-    # #  - loop through runs and get each P-next-thresholds and P-reversal3-thresholds
-    # # Make master sheets: MASTER_next_thresh & MASTER_reversal_3_thresh
+    # #  - loop through runs and get each P-next-thresholds and P-reversal4-thresholds
+    # # Make master sheets: MASTER_next_thresh & MASTER_reversal_4_thresh
     # # Incidentally the MATLAB script didn't specify which reversals data to use,
     # # although the figures imply Martin used last3 reversals.
 
@@ -1647,7 +1653,7 @@ def d_averageParticipant(root_path, run_dir_names_list,
                      'ISI6', 'ISI9', 'ISI12', 'ISI24']
     pos_sep_list = [0, 1, 2, 3, 6, 18, 20]
     all_data_next_list = []
-    all_data_3_reversals_list = []
+    all_data_4_reversals_list = []
 
     for run_idx, run_name in enumerate(run_dir_names_list):
         this_next_df = pd.read_excel(f'{root_path}{os.sep}{run_name}{os.sep}P-next-thresholds.xlsx',
@@ -1660,23 +1666,23 @@ def d_averageParticipant(root_path, run_dir_names_list,
         all_data_next_list.append(this_next_df)
         # print(f'\nthis_next_df: ({run_idx}) {run_name}\n{this_next_df}')
 
-        this_reversal_df = pd.read_csv(f'{root_path}{os.sep}{run_name}{os.sep}P-reversal3-thresholds.csv')
+        this_reversal_df = pd.read_csv(f'{root_path}{os.sep}{run_name}{os.sep}P-reversal4-thresholds.csv')
         if 'Unnamed: 0' in list(this_reversal_df):
             this_reversal_df.drop('Unnamed: 0', axis=1, inplace=True)
             print('foundunnamed')
 
         this_reversal_df.insert(0, 'Run', run_idx)
-        all_data_3_reversals_list.append(this_reversal_df)
+        all_data_4_reversals_list.append(this_reversal_df)
 
     all_data_next_df = pd.concat(all_data_next_list, ignore_index=True)
     all_data_next_df.to_csv(f'{root_path}{os.sep}MASTER_next_thresh.csv', index=False)
 
-    all_data_3_reversals_df = pd.concat(all_data_3_reversals_list, ignore_index=True)
-    all_data_3_reversals_df.to_csv(f'{root_path}{os.sep}MASTER_reversal_3_thresh.csv', index=False)
+    all_data_4_reversals_df = pd.concat(all_data_4_reversals_list, ignore_index=True)
+    all_data_4_reversals_df.to_csv(f'{root_path}{os.sep}MASTER_reversal_4_thresh.csv', index=False)
 
     if verbose:
         print(f'all_data_next_df:\n{all_data_next_df}')
-        print(f'all_data_3_reversals_df:\n{all_data_3_reversals_df}')
+        print(f'all_data_4_reversals_df:\n{all_data_4_reversals_df}')
 
     # get mean of all runs (each sep and ISI)
     # try just grouping the master sheet first, rather than using concat.
@@ -1687,11 +1693,11 @@ def d_averageParticipant(root_path, run_dir_names_list,
     ave_next_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_next_thresh.csv')
     # std_next_df = ave_next_thr_df.groupby('Separation').std()
 
-    # ave_reversal3_thr_df = all_data_3_reversals_df.drop('Run', axis=1)
-    # ave_reversal3_thr_df = ave_reversal3_thr_df.groupby('Separation').mean()
+    # ave_reversal4_thr_df = all_data_4_reversals_df.drop('Run', axis=1)
+    # ave_reversal4_thr_df = ave_reversal4_thr_df.groupby('Separation').mean()
     # if verbose:
-    #     print(f'ave_reversal3_thr_df:\n{ave_reversal3_thr_df}')
-    # std_reversal_df = = ave_reversal3_thr_df.groupby('Separation').std()
+    #     print(f'ave_reversal4_thr_df:\n{ave_reversal4_thr_df}')
+    # std_reversal_df = = ave_reversal4_thr_df.groupby('Separation').std()
 
 
 
