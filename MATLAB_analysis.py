@@ -100,8 +100,8 @@ def merge_pos_and_neg_sep_dfs(pos_sep_df, neg_sep_df):
     if pos_sep_df.shape != neg_sep_df.shape:
         raise ValueError(f'Dataframes to be merged must have same shape.\n'
                          f'pos_sep_df: {pos_sep_df.shape}, neg_sep_df: {neg_sep_df.shape}')
-    else:
-        print('shapes match :)')
+    # else:
+    #     print('shapes match :)')
 
     # reset indices for sorting
     pos_sep_df.reset_index(drop=True, inplace=True)
@@ -185,6 +185,7 @@ def fig_colours(n_conditions):
     if 10 < n_conditions < 21:
         use_colours = 'tab20'
     elif n_conditions > 20:
+        raise ValueError(f"\tERROR - more classes ({n_conditions}) than colours!?!?!?")
         print("\tERROR - more classes than colours!?!?!?")
     sns.set_palette(palette=use_colours, n_colors=n_conditions)
     my_colours = sns.color_palette()
@@ -1393,6 +1394,7 @@ def c_plots(save_path, thr_col='probeLum', last_vals_list=None,
                            verbose=True)
         if show_plots:
             plt.show()
+        plt.close()
 
         # # FIGURE2 - doesn't exist in script - but I'll keep their numbers
 
@@ -1408,6 +1410,7 @@ def c_plots(save_path, thr_col='probeLum', last_vals_list=None,
                                    verbose=True)
         if show_plots:
             plt.show()
+        plt.close()
 
         # # # FIGURE4 - 'dataDivOneProbe-{n}lastValues.png' - all ISIs on same axis, pos sep only.
         #         # does not include single probe
@@ -1432,6 +1435,7 @@ def c_plots(save_path, thr_col='probeLum', last_vals_list=None,
                                    verbose=True)
         if show_plots:
             plt.show()
+        plt.close()
 
         # these plots (5, 6, 7) only for single last value.
         if last_n_values == 1:
@@ -1553,6 +1557,7 @@ def c_plots(save_path, thr_col='probeLum', last_vals_list=None,
                                        verbose=True)
             if show_plots:
                 plt.show()
+            plt.close()
             print('\nplot 5 finished')
 
 
@@ -1581,6 +1586,7 @@ def c_plots(save_path, thr_col='probeLum', last_vals_list=None,
                                verbose=True)
             if show_plots:
                 plt.show()
+            plt.close()
             if verbose:
                 print('\nplot 6 finished')
 
@@ -1606,6 +1612,7 @@ def c_plots(save_path, thr_col='probeLum', last_vals_list=None,
                                        verbose=True)
             if show_plots:
                 plt.show()
+            plt.close()
 
     print("\n***finished c_plots()***\n")
 
@@ -1739,6 +1746,7 @@ def d_averageParticipant(root_path, run_dir_names_list,
                                verbose=True)
     if show_plots:
         plt.show()
+    plt.close()
 
     '''
     # this code is in the MATLAB script but not used anywhere

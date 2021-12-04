@@ -28,7 +28,7 @@ def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='sta
     has 3 cols [stimulus level | nCorrect | ntotal].
 
 
-    :param csv_path: path to results csv
+    :param csv_path: path to results csv, or df.
     :param isi: which ISI are results for?
     :param sep: which separation are results for?
     :param p_run_name: participant and run name e.g., Kim1, Nick4 etc
@@ -54,7 +54,10 @@ def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='sta
 
     print('*** running results_csv_to_np_for_psignifit ***')
 
-    raw_data_df = pd.read_csv(csv_path, usecols=[sep_col, thr_col, resp_col])
+    if type(csv_path) == pd.core.frame.DataFrame:
+        raw_data_df = csv_path
+    else:
+        raw_data_df = pd.read_csv(csv_path, usecols=[sep_col, thr_col, resp_col])
     if verbose:
         print(f"raw_data:\n{raw_data_df.head()}")
 
@@ -93,7 +96,7 @@ def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='sta
     # # i.e., bins will not be of equal size but will have equal value count
     if quartile_bins:
         bin_col, bin_labels = pd.qcut(x=raw_data_df[thr_col], q=n_bins,
-                                      precision=3, retbins=True)
+                                      precision=3, retbins=True, duplicates='drop')
     # # use pd.cut for bins of equal size based on values, but value count may vary.
     else:
         bin_col, bin_labels = pd.cut(x=raw_data_df[thr_col], bins=n_bins,
@@ -256,13 +259,15 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
     if save_plot:
         print(f'saving plot to: {save_path}{os.sep}{dset_name}_psig.png')
         plt.savefig(f'{save_path}{os.sep}{dset_name}_psig.png')
+    plt.close()
 
     # ps.psigniplot.plotMarginal(res)
     # ps.psigniplot.plot2D(res, 0,1)
     # ps.psigniplot.plotPrior(res)
 
     slope_at_target = ps.getSlopePC(res, target_threshold)
-    print(f'slope_at_target: {slope_at_target}')
+    if verbose:
+        print(f'slope_at_target: {slope_at_target}')
 
     psignifit_dict = {'data': data_np, 'csv_path': bin_data_dict['csv_path'],
                       'dset_name': dset_name,
