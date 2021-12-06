@@ -1,102 +1,183 @@
 import os
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from psignifit_tools import results_to_psignifit
+from MATLAB_analysis import split_df_alternate_rows, eight_batman_plots
 
 root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim'
-run_folder_names = ['P6e-Kim', 'P6f-Kim']
+run_folder_names = ['P6a-Kim', 'P6b-Kim', 'P6c-Kim', 'P6d-Kim', 'P6e-Kim', 'P6f-Kim']
+# run_folder_names = ['P6a-Kim', 'P6b-Kim', 'P6c-Kim', 'P6d-Kim', 'P6e-Kim', 'P6f-Kim']
+
+# # Loop through to build dfs of mean diff (e.g., stair1, stair2..)
 # run_folder_names = ['P6a-Kim', 'P6b-Kim', 'P6c-Kim', 'P6d-Kim', 'P6e-Kim', 'P6f-Kim']
 # root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim/Nick_practice'
 # run_folder_names = ['P6a-Kim']
 
-participant_name = 'Kim'
+# participant_name = 'Kim'
+# isi_list = [-1, 0, 2, 4, 6, 9, 12, 24]
+# isi_name_list = [f'isi{i}' for i in isi_list]
+# stair_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+# sep_list = [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0, 99, 99]
+# verbose = False
+#
+# q_bins = True
+# n_bins = 10
+#
+# # loop through runs
+# for run_idx, run_dir in enumerate(run_folder_names):
+#
+#     print(f'run {run_idx}: {run_dir}')
+#
+#     thr_array = np.zeros(shape=[len(stair_list), len(isi_list)])
+#
+#
+#     # loop through ISI
+#     # loop through isi values
+#     for isi_idx, isi in enumerate(isi_list):
+#         if verbose:
+#             print(f"\n{isi_idx}: isi: {isi}")
+#
+#         isi_name = isi_name_list[isi_idx]
+#         p_name = participant_name
+#
+#         p_name = f'{participant_name}{run_idx+5}'
+#         print(f'p_name: {p_name}')
+#
+#         # get df for this isi only
+#         isi_df = pd.read_csv(f'{root_path}{os.sep}{run_dir}'
+#                              f'{os.sep}ISI_{isi}_probeDur2/{p_name}.csv')
+#
+#         print(f'\nrunning analysis for {p_name}, {run_dir}\n')
+#
+#         # loop through stairs for this isi
+#         for stair_idx, stair in enumerate(stair_list):
+#
+#             # get df just for one stair at this isi
+#             stair_df = isi_df[isi_df['stair'] == stair]
+#             if verbose:
+#                 print(f'\nstair_df (stair={stair}, isi={isi}:\n'
+#                       f'{type(stair_df)}'
+#                       )
+#
+#             # # # test with csv to numpy
+#             # yes script now works directly with df, don't need to load csv.
+#             # now move on to doing full thing
+#
+#             sep = sep_list[stair_idx]
+#             stair_levels = [stair]
+#
+#             # # for all in one function
+#             # # # # #
+#
+#             fit_curve_plot, psignifit_dict = results_to_psignifit(csv_path=stair_df, save_path=root_path,
+#                                                                   isi=isi, sep=sep, p_run_name=p_name,
+#                                                                   sep_col='stair', stair_levels=stair_levels,
+#                                                                   thr_col='probeLum', resp_col='trial_response',
+#                                                                   quartile_bins=q_bins, n_bins=n_bins,
+#                                                                   save_np=False, target_threshold=.75,
+#                                                                   sig_name='norm', est_type='MAP',
+#                                                                   save_plot=False, verbose=verbose
+#                                                                   )
+#
+#             # append result to zeros_df
+#             threshold = psignifit_dict['Threshold']
+#             thr_array[stair_idx, isi_idx] = threshold
+#
+#     # save zeros df - run and q_bin in name.
+#     print(f'thr_array:\n{thr_array}')
+#
+#     # make dataframe from array
+#     thr_df = pd.DataFrame(thr_array, columns=isi_name_list)
+#     thr_df.insert(0, 'stair', stair_list)
+#     if verbose:
+#         print(f"thr_df:\n{thr_df}")
+#
+#     # save response and threshold arrays
+#     if q_bins:
+#         bin_type = 'qbin'
+#     else:
+#         bin_type = 'cbin'
+#     thr_filename = f'{bin_type}_{run_dir}.csv'
+#     thr_filepath = os.path.join(root_path, thr_filename)
+#     thr_df.to_csv(thr_filepath, index=False)
+
+print('make batman plots')
+row_indices = [0, 1, 2, 3, 4, 5, 4, 3, 2, 1, 0, 6]
+sym_sep_list = [-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18, 20]
+fig2_x_tick_lab = [-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18, '1\nprobe']
 isi_list = [-1, 0, 2, 4, 6, 9, 12, 24]
-isi_name_list = [f'isi{i}' for i in isi_list]
-stair_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
-sep_list = [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0, 99, 99]
-verbose = False
+isi_name_list = ['Concurrent' if i == -1 else f'isi{i}' for i in isi_list]
+bin_type_list = ['cbin', 'qbin']
 
-q_bins = True
-n_bins = 10
+cbin_mean_diffs = []
+qbin_mean_diffs = []
 
-# loop through runs
-for run_idx, run_dir in enumerate(run_folder_names):
-
-    print(f'run {run_idx}: {run_dir}')
-
-    thr_array = np.zeros(shape=[len(stair_list), len(isi_list)])
-
-
-    # loop through ISI
-    # loop through isi values
-    for isi_idx, isi in enumerate(isi_list):
-        if verbose:
-            print(f"\n{isi_idx}: isi: {isi}")
-
-        isi_name = isi_name_list[isi_idx]
-        p_name = participant_name
-
-        p_name = f'{participant_name}{run_idx+5}'
-        print(f'p_name: {p_name}')
-
-        # get df for this isi only
-        isi_df = pd.read_csv(f'{root_path}{os.sep}{run_dir}'
-                             f'{os.sep}ISI_{isi}_probeDur2/{p_name}.csv')
-
-        print(f'\nrunning analysis for {p_name}, {run_dir}\n')
-
-        # loop through stairs for this isi
-        for stair_idx, stair in enumerate(stair_list):
-
-            # get df just for one stair at this isi
-            stair_df = isi_df[isi_df['stair'] == stair]
-            if verbose:
-                print(f'\nstair_df (stair={stair}, isi={isi}:\n'
-                      f'{type(stair_df)}'
-                      )
-
-            # # # test with csv to numpy
-            # yes script now wirks directly with df, don't need to load csv.
-            # now move on to doing full thing
-
-            sep=sep_list[stair_idx]
-            stair_levels = [stair]
-
-            # # for all in one function
-            # # # # #
-
-            fit_curve_plot, psignifit_dict = results_to_psignifit(csv_path=stair_df, save_path=root_path,
-                                                                  isi=isi, sep=sep, p_run_name=p_name,
-                                                                  sep_col='stair', stair_levels=stair_levels,
-                                                                  thr_col='probeLum', resp_col='trial_response',
-                                                                  quartile_bins=q_bins, n_bins=n_bins,
-                                                                  save_np=False, target_threshold=.75,
-                                                                  sig_name='norm', est_type='MAP',
-                                                                  save_plot=False, verbose=verbose
-                                                                  )
-
-            # append result to zeros_df
-            threshold = psignifit_dict['Threshold']
-            thr_array[stair_idx, isi_idx] = threshold
-
-    # save zeros df - run and q_bin in name.
-    print(f'thr_array:\n{thr_array}')
-
-    # make dataframe from array
-    thr_df = pd.DataFrame(thr_array, columns=isi_name_list)
-    thr_df.insert(0, 'stair', stair_list)
-    if verbose:
-        print(f"thr_df:\n{thr_df}")
-
-    # save response and threshold arrays
-    if q_bins:
-        bin_type = 'qbin'
+# # Loop through to make batman plots from diff dfs.
+for bin_type in bin_type_list:
+    if bin_type is 'cbin':
+        diff_list = cbin_mean_diffs
     else:
-        bin_type = 'cbin'
-    thr_filename = f'{bin_type}_{run_dir}.csv'
-    thr_filepath = os.path.join(root_path, thr_filename)
-    thr_df.to_csv(thr_filepath, index=False)
+        diff_list = qbin_mean_diffs
+
+    for run_name in run_folder_names:
+        print(f'\n{bin_type}, {run_name}')
+        this_df_path = f'{root_path}{os.sep}{bin_type}_{run_name}.csv'
+        this_df = pd.read_csv(this_df_path)
+        # print(f'this_df:\n{this_df}')
+
+        # batman plots need three dfs, pos, neg and mean.
+        pos_df, neg_df = split_df_alternate_rows(this_df)
+        print(f'pos_df:\n{pos_df}')
+        # print(f'neg_df:\n{neg_df}')
+
+        mean_thr_df = pd.concat([pos_df, neg_df]).groupby(level=0).mean()
+        # print(f'mean_thr_df:\n{mean_thr_df}')
+
+        # expand dfs to have pos and neg sep values
+        mean_thr_df.columns = ['stair'] + isi_name_list
+        pos_df.columns = ['stair'] + isi_name_list
+        neg_df.columns = ['stair'] + isi_name_list
+        pos_sym_df = pos_df.iloc[row_indices]
+        pos_sym_df.reset_index(drop=True, inplace=True)
+        pos_sym_df.insert(loc=0, column='Separation', value=sym_sep_list)
+        print(f'pos_sym_df:\n{pos_sym_df}')
+        neg_sym_df = neg_df.iloc[row_indices]
+        neg_sym_df.reset_index(drop=True, inplace=True)
+        neg_sym_df.insert(loc=0, column='Separation', value=sym_sep_list)
+        mean_sym_df = mean_thr_df.iloc[row_indices]
+        mean_sym_df.reset_index(drop=True, inplace=True)
+        mean_sym_df.insert(loc=0, column='Separation', value=sym_sep_list)
+
+        # # diff values are calculated here, not in batman plots.
+        # get mean difference between pairs of sep values for evaluating analysis,
+        # method with lowest mean difference is least noisy method. (for fig2)
+        # for each pair of sep values (e.g., stair1&2, stair3&4) subtract one from other.
+        # get abs of all values them sum the columns (ISIs)
+        diff_next = np.sum(abs(pos_sym_df - neg_sym_df), axis=0)
+        # take the mean of these across all ISIs to get single value
+        mean_diff_next = float(np.mean(diff_next))
+
+        diff_list.append(mean_diff_next)
+
+        fig_title = f'runs_psignifit thresholds per isi. ' \
+                    f'(mean diff: {round(mean_diff_next, 2)})'
+        fig2_savename = f'runs_psignifit_thresholds.png'
+        save_path = f'{root_path}{os.sep}{run_name}'
+        eight_batman_plots(mean_df=mean_sym_df, thr1_df=pos_sym_df, thr2_df=neg_sym_df,
+                           fig_title=fig_title, isi_name_list=isi_name_list,
+                           x_tick_vals=sym_sep_list, x_tick_labels=fig2_x_tick_lab,
+                           sym_sep_diff_list=diff_next,
+                           save_path=save_path, save_name=fig2_savename,
+                           verbose=True
+                           )
+        plt.show()
+        plt.close()
+
+print(f'\nFinnished getting differences\n'
+      f'cbin_mean_diffs: {cbin_mean_diffs}\n'
+      f'qbin_mean_diffs: {qbin_mean_diffs}')
+
 
 print('\n\nfinished')
