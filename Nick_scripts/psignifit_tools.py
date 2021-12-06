@@ -74,7 +74,7 @@ def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='sta
     if verbose:
         print(f"raw_data, stair_levels:{stair_levels}:\n{raw_data_df.head()}")
 
-    dataset_name = f'{p_run_name}_ISI{isi}_sep{sep}'
+    dataset_name = f'{p_run_name}_ISI{isi}_sep{sep}_stair{stair_levels[0]}'
 
     # get useful info
     n_rows, n_cols = raw_data_df.shape
@@ -193,7 +193,8 @@ def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='sta
 
 
 def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
-                  sig_name='norm', est_type='MAP', save_plot=True, verbose=True):
+                  sig_name='norm', est_type='MAP', n_blocks=None,
+                  save_plot=True, show_plot=False, verbose=True):
 
     """
     Will run psignifit on data_np to fit curve and output dict.
@@ -205,7 +206,13 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
     :param target_threshold: threshold if this percentage correct
     :param sig_name: default: 'norm', can also choose 'logistic'.
     :param est_type: default: 'MAP' (maximum a posteriori), can also choose 'mean' (posterior mean).
+    :param n_blocks: default: None. Pass a value to set the number of unique
+        probeLum values in the array or number of bins if greater than 25.
+        e.g., if you want to have 30 bins enter 30.
     :param save_plot: default: True.
+    :param show_plot: default: False.  Display plot on sceen. Useful if doing a
+        single pot or not saving, but don't use for multiple plots as it slows
+        things down and eats memory.
     :param verbose:
 
     :return: figure of fitted curve and dict of details
@@ -220,8 +227,12 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
     options['sigmoidName'] = sig_name  # 'norm'  # 'logistic'
     options['expType'] = 'nAFC'
     options['expN'] = 4
-
     options['estimateType'] = est_type  # 'mean'  # 'MAP'  'mean'
+
+    # number of bins/unique probeLum values
+    if type(n_blocks) is int:
+        if n_blocks > 25:
+            options['nBlocks'] = n_blocks
 
     # set percent correct corresponding to the threshold
     options['threshPC'] = target_threshold
@@ -254,11 +265,14 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
               f"threshPC: {target_threshold}, threshold: {threshold}, "
               f"sig: {sig_name}, "
               f"est: {est_type}")
-    fit_curve_plot = ps.psigniplot.plotPsych(res)
+    fit_curve_plot = ps.psigniplot.plotPsych(res, showImediate=False)
 
     if save_plot:
         print(f'saving plot to: {save_path}{os.sep}{dset_name}_psig.png')
         plt.savefig(f'{save_path}{os.sep}{dset_name}_psig.png')
+
+    if show_plot:
+        plt.show()
     plt.close()
 
     # ps.psigniplot.plotMarginal(res)
@@ -334,7 +348,9 @@ def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
                          thr_col='probeLum', resp_col='trial_response',
                          quartile_bins=False, n_bins=10, save_np=False,
                          target_threshold=.75,
-                         sig_name='norm', est_type='MAP', save_plot=True, verbose=True
+                         sig_name='norm', est_type='MAP',
+                         save_plot=True, show_plot=False,
+                         verbose=True
                          ):
 
     """
@@ -363,6 +379,9 @@ def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
     :param sig_name: default: 'norm', can also choose 'logistic'.
     :param est_type: default: 'MAP' (maximum a postieriori), can also choose 'mean' (posterior mean).
     :param save_plot: default: True.
+    :param show_plot: default: False.  Display plot on sceen. Useful if doing a
+        single pot or not saving, but don't use for multiple plots as it slows
+        things down and eats memory.
     :param verbose: if True will print progress to screen
 
     :return: figure of fitted curve and dict of details
@@ -431,5 +450,7 @@ def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
 #                                                       thr_col='probeLum', resp_col='trial_response',
 #                                                       quartile_bins=q_bins, n_bins=n_bins, save_np=False,
 #                                                       target_threshold=.75,
-#                                                       sig_name='norm', est_type='MAP', save_plot=True, verbose=True
+#                                                       sig_name='norm', est_type='MAP',
+#                                                       save_plot=True, show_plot=False,
+#                                                       verbose=True
 #                                                       )
