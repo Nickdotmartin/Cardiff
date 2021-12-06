@@ -1,16 +1,16 @@
 from __future__ import division
-from psychopy import gui, visual, core, data, event, logging, monitors
-from psychopy import __version__ as psychopy_version
-import os
-import numpy as np
+
 import copy
+import os
 from datetime import datetime
 from math import *
 
-from kestenSTmaxVal import Staircase
+import numpy as np
+from psychopy import __version__ as psychopy_version
+from psychopy import gui, visual, core, data, event, monitors
+
 from PsychoPy_tools import check_correct_monitor
-
-
+from kestenSTmaxVal import Staircase
 
 """
 This script takes: 
@@ -32,9 +32,9 @@ display_number = 1  # 0 indexed, 1 for external display
 expName = 'integration_flow'  # from the Builder filename that created this script
 
 expInfo = {'1_Participant': 'testnm',
-           '2_Probe_dur_in_frames_at_240hz': [2, 50],
+           '2_Probe_dur_in_frames_at_240hz': [50, 2],
            '3_fps': [60, 144, 240],
-           '4_ISI_dur_in_ms': [0, 8.33, 16.67, 25, 37.5, 50, 100],
+           '4_ISI_dur_in_ms': [100, 50, 37.5, 25, 16.67, 8.33, 0],
            '5_Probe_orientation': ['radial', 'tangent'],
            '6_Probe_size': ['5pixels', '6pixels', '3pixels'],
            '7_Trials_counter': [True, False],
@@ -87,7 +87,7 @@ separations = list(np.repeat(separation_values, 2))
 n_conds = len(separations)
 
 # flow_directions is a list of [-1, 1...] of same length as separations
-flow_directions = [-1, 1]*len(separation_values)
+flow_directions = [1, -1]*len(separation_values)
 
 # FILENAME
 filename = f'{_thisDir}{os.sep}' \
@@ -123,8 +123,9 @@ if background == 'flow_rad':
     # background colour: use darker grey.  set once here and use elsewhere
     bgcolor = flow_bgcolor
 else:
-    bgColor255 = bgLum * LumColor255Factor
-    bgcolor = bgColor255
+    # bgColor255 = bgLum * LumColor255Factor
+    # bgcolor = bgColor255
+    bgcolor = flow_bgcolor
 
 
 # MONITOR SPEC
@@ -366,6 +367,13 @@ for step in range(n_trials_per_stair):
 
         # PROBE
         target_jump = np.random.choice([1, -1])  # direction in which the probe jumps : CW or CCW
+
+        if flow_dir == target_jump:
+            trgt_flow_same = 1
+        else:
+            trgt_flow_same = 0
+
+
         # staircase varies probeLum
         probeLum = thisStair.next()
         probeColor255 = probeLum * LumColor255Factor
@@ -377,6 +385,7 @@ for step in range(n_trials_per_stair):
         # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
         corner = np.random.choice([45, 135, 225, 315])
 
+        print(f'\tcorner: {corner}, flow_dir: {flow_dir}, target_jump: {target_jump}')
         # dist_from_fix is a constant giving distance form fixation,
         # dist_from_fix was previously 2 identical variables x_prob & y_prob.
         dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
@@ -407,16 +416,16 @@ for step in range(n_trials_per_stair):
                     # probe2 is right and down from probe1
                     probe2.pos = [p1_x + sep - 1, p1_y - sep]
             elif orientation == 'radial':
-                if target_jump == 1:  # CCW
-                    probe1.ori = 90
-                    probe2.ori = 270
-                    # probe2 is right and up from probe1
-                    probe2.pos = [p1_x + sep - 1, p1_y + sep]
-                elif target_jump == -1:  # CW
+                if target_jump == 1:  # inward
                     probe1.ori = 270
                     probe2.ori = 90
                     # probe2 is left and down from probe1
                     probe2.pos = [p1_x - sep + 1, p1_y - sep]
+                elif target_jump == -1:  # outward
+                    probe1.ori = 90
+                    probe2.ori = 270
+                    # probe2 is right and up from probe1
+                    probe2.pos = [p1_x + sep - 1, p1_y + sep]
         elif corner == 135:
             # in top-left corner, x decreases (left) and y increases (up)
             p1_x = dist_from_fix * -1
@@ -433,13 +442,15 @@ for step in range(n_trials_per_stair):
                     # probe2 is left and down from probe1
                     probe2.pos = [p1_x - sep + 1, p1_y - sep]
             elif orientation == 'radial':
-                if target_jump == 1:  # CCW
+                if target_jump == 1:  # inward
                     probe1.ori = 180
                     probe2.ori = 0
+                    # probe2 is right and down from probe1
                     probe2.pos = [p1_x + sep - 1, p1_y - sep]
-                elif target_jump == -1:  # CW
+                elif target_jump == -1:  # outward
                     probe1.ori = 0
                     probe2.ori = 180
+                    # probe2 is left and up from probe1
                     probe2.pos = [p1_x - sep + 1, p1_y + sep]
         elif corner == 225:
             # in bottom left corner, both x and y decrease (left and down)
@@ -455,14 +466,16 @@ for step in range(n_trials_per_stair):
                     probe2.ori = 180
                     probe2.pos = [p1_x - sep + 1, p1_y + sep]
             elif orientation == 'radial':
-                if target_jump == 1:  # CCW
-                    probe1.ori = 270
-                    probe2.ori = 90
-                    probe2.pos = [p1_x - sep + 1, p1_y - sep]
-                elif target_jump == -1:  # CW
+                if target_jump == 1:  # inward
                     probe1.ori = 90
                     probe2.ori = 270
+                    # probe2 is right and up from probe1
                     probe2.pos = [p1_x + sep - 1, p1_y + sep]
+                elif target_jump == -1:  # outward
+                    probe1.ori = 270
+                    probe2.ori = 90
+                    # probe2 is left and down from probe1
+                    probe2.pos = [p1_x - sep + 1, p1_y - sep]
         else:
             corner = 315
             # in bottom-right corner, x increases (right) and y decreases (down)
@@ -478,12 +491,12 @@ for step in range(n_trials_per_stair):
                     probe2.ori = 270
                     probe2.pos = [p1_x + sep - 1, p1_y + sep]
             elif orientation == 'radial':
-                if target_jump == 1:  # CCW
+                if target_jump == 1:  # inward
                     probe1.ori = 0
                     probe2.ori = 180
                     # probe2 is left and up from probe1
                     probe2.pos = [p1_x - sep + 1, p1_y + sep]
-                elif target_jump == -1:  # CW
+                elif target_jump == -1:  # outward
                     probe1.ori = 180
                     probe2.ori = 0
                     # probe2 is right and down from probe1
@@ -670,15 +683,16 @@ for step in range(n_trials_per_stair):
         # add to exp dict
         thisExp.addData('trial_number', trial_number)
         thisExp.addData('cond', this_cond)
-        thisExp.addData('flow_dir', flow_dir)
-        thisExp.addData('separation', sep)
-        thisExp.addData('step', step)
-        thisExp.addData('probeLum', probeLum)
-        thisExp.addData('probe_jump', target_jump)
-        thisExp.addData('trial_response', resp.corr)
-        thisExp.addData('corner', corner)
-        thisExp.addData('resp.rt', resp.rt)
         thisExp.addData('stair_name', thisStair)
+        thisExp.addData('step', step)
+        thisExp.addData('separation', sep)
+        thisExp.addData('flow_dir', flow_dir)
+        thisExp.addData('probe_jump', target_jump)
+        thisExp.addData('trgt_flow_same', trgt_flow_same)
+        thisExp.addData('corner', corner)
+        thisExp.addData('probeLum', probeLum)
+        thisExp.addData('trial_response', resp.corr)
+        thisExp.addData('resp.rt', resp.rt)
         thisExp.addData('probeColor1', probeColor1)
         thisExp.addData('probeColor255', probeColor255)
         thisExp.addData('probe_ecc', probe_ecc)
