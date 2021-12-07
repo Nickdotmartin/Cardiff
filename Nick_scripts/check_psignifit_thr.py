@@ -238,7 +238,7 @@ for run_idx, run_dir in enumerate(run_folder_names):
             unbinned_np = unbinned_df.to_numpy()
             print(f'unbinned_np:\n{unbinned_np}')
 
-            dest_name = f'{participant_name}_{isi_name}_sep{sep}_stair{stair}_UB'
+            dest_name = f'{participant_name}_{run_dir}_{isi_name}_sep{sep}_stair{stair}_UB'
             bin_data_dict = {'dset_name': dest_name,
                              'stair_levels': stair_levels,
                              'csv_path': csv_path}
