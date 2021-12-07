@@ -3,7 +3,7 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from psignifit_tools import run_psignifit, results_to_psignifit
+from psignifit_tools import results_to_psignifit
 
 root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim'
 run_folder_names = ['P6a-Kim', 'P6b-Kim', 'P6c-Kim', 'P6d-Kim', 'P6e-Kim', 'P6f-Kim']
@@ -191,7 +191,7 @@ sep_list = [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0, 99, 99]
 target_threshold = .75
 verbose = True
 q_bins = True
-n_bins = 10
+n_bins = 6
 
 results_array = []
 
@@ -243,19 +243,22 @@ for run_idx, run_dir in enumerate(run_folder_names):
                              'stair_levels': stair_levels,
                              'csv_path': csv_path}
 
-            unbinned_plot, unbinned_dict = run_psignifit(data_np=unbinned_np,
-                                                         bin_data_dict=bin_data_dict,
-                                                         save_path=save_path,
-                                                         target_threshold=target_threshold,
-                                                         # sig_name=sig_name, est_type=est_type,
-                                                         n_blocks=n_unique_values,
-                                                         save_plot=True, show_plot=False,
-                                                         verbose=True)
-            plt.close()
-            unbinned_thr = unbinned_dict['Threshold']
+            # unbinned_plot, unbinned_dict = run_psignifit(data_np=unbinned_np,
+            #                                              bin_data_dict=bin_data_dict,
+            #                                              save_path=save_path,
+            #                                              target_threshold=target_threshold,
+            #                                              # sig_name=sig_name, est_type=est_type,
+            #                                              n_blocks=n_unique_values,
+            #                                              save_plot=True, show_plot=False,
+            #                                              verbose=True)
+            # plt.close()
+            # unbinned_thr = unbinned_dict['Threshold']
+            unbinned_thr = 0
             print(f'\nunbinned_thr: {unbinned_thr}')
 
             # # for all in one function
+            p_name = f'{participant_name}{run_idx + 1}_6bins'
+
             binned_plot, binned_dict = results_to_psignifit(csv_path=stair_df, save_path=save_path,
                                                             isi=isi, sep=sep, p_run_name=p_name,
                                                             sep_col='stair', stair_levels=stair_levels,
@@ -275,7 +278,7 @@ for run_idx, run_dir in enumerate(run_folder_names):
 
 results_df = pd.DataFrame(results_array, columns=['dset_name', 'n_unique', 'unbinned_thr', 'binned_thr'])
 print(f'results_df:\n{results_df}')
-results_df.to_csv(f'{save_path}{os.sep}compare_unbinned.csv', index=False)
+results_df.to_csv(f'{save_path}{os.sep}compare_unbinned_6bins.csv', index=False)
 
 # for each run, ISI, sep
 
