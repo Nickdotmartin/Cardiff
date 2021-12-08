@@ -1,15 +1,15 @@
 import os
 
-from MATLAB_analysis import b1_extract_last_values
+from MATLAB_analysis import d_averageParticipant
 
 # # loop through run folders with first 5 scripts (a, b1, b2, b3, c)
 # # then run script d to get master lists and averages
-# root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim'
-# run_folder_names = ['P6a-Kim', 'P6b-Kim', 'P6c-Kim', 'P6d-Kim', 'P6e-Kim', 'P6f-Kim']
-# participant_name = 'Kim'
-root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim/Nick_practice'
-run_folder_names = ['P6a-Kim']
+root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim'
+run_folder_names = ['P6a-Kim', 'P6b-Kim', 'P6c-Kim', 'P6d-Kim', 'P6e-Kim', 'P6f-Kim']
 participant_name = 'Kim'
+# root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim/Nick_practice'
+# run_folder_names = ['P6a-Kim']
+# participant_name = 'Kim'
 
 
 for run_idx, run_dir in enumerate(run_folder_names):
@@ -29,9 +29,9 @@ for run_idx, run_dir in enumerate(run_folder_names):
     # all_data_path = f'{save_path}{os.sep}ALLDATA-sorted.xlsx'
 
     '''b1'''
-    all_data_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim/' \
-                    'Nick_practice/P6a-Kim/ALLDATA-sorted.xlsx'
-    b1_extract_last_values(all_data_path=all_data_path)
+    # all_data_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim/' \
+    #                 'Nick_practice/P6a-Kim/ALLDATA-sorted.xlsx'
+    # b1_extract_last_values(all_data_path=all_data_path)
 
     # '''b2'''
     # # all_data_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim/' \
@@ -47,8 +47,9 @@ for run_idx, run_dir in enumerate(run_folder_names):
     # c_plots(save_path=save_path)
 
 '''d'''
-# # root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim'  # master folder containing all runs
-# run_dir_names_list = ['P6a-Kim', 'P6b-Kim', 'P6c-Kim', 'P6d-Kim', 'P6e-Kim', 'P6f-Kim']
-# d_averageParticipant(root_path=root_path, run_dir_names_list=run_dir_names_list)
+root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim'  # master folder containing all runs
+run_dir_names_list = ['P6a-Kim', 'P6b-Kim', 'P6c-Kim', 'P6d-Kim', 'P6e-Kim', 'P6f-Kim']
+d_averageParticipant(root_path=root_path, run_dir_names_list=run_dir_names_list,
+                     use_psignifit=True)
 
 print('exp1a_analysis_pipe finished')

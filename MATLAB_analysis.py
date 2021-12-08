@@ -517,113 +517,6 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
 # a_data_extraction(p_name=participant_name, run_dir=run_dir, isi_list=isi_list, verbose=True)
 
 
-
-def a_data_extraction_all_runs(p_name, p_dir, run_list, isi_list, save_all_data=True, verbose=True):
-    """
-    This script is a python version of Martin's six MATLAB analysis scripts, described below.
-
-    a_data_extraction.m: Once a participant has completed a run of all ISIs,
-        this script gets all their data into one file, and sorts each isi by stair.
-
-    NEW here: This script can also take multiple directories to collate
-        ALL participant info, for multiple runs, all ISIs.
-
-    :param p_name: participant's name as used to save files.  This should not include the run number.
-    e.g., if the file is .../nick1.csv, participant name is just 'nick'.
-    :param p_dir: directory where the participant's data is stored (e.g. multiple runs).
-    :param run_list: a list of all run directory names.
-    :param isi_list: List of isi values, may differ between experiments.
-    :param save_all_data: If True, will save all_data_df as an xlsx.
-    :param verbose: If True, will print progress to screen.
-
-    :return: A pandas DataFrame with n xlsx file of all data for one run of all ISIs.
-        If multiple run_list are passes, then the output contains all data for one participant.
-    """
-
-    print("\n***running a_data_extraction_all_runs()***\n")
-
-    # strip run number from participant name if present
-    if p_name[-1].isdigit():
-        if verbose:
-            print(f'last digit stripped from: {p_name}')
-        p_name = p_name[:-1]
-        if verbose:
-            print(f'renamed as: {p_name}')
-
-    # empty array to append info into
-    all_data = []
-
-    # loop through runs if multiple runs are passed.
-    for run_idx, run in enumerate(run_list):
-        run_num = run_idx + 1
-        if verbose:
-            print(f"\nrun_num: {run_num}, run: {run}")
-
-        # loop through ISIs in each run.
-        for isi in isi_list:
-            filepath = f'{p_dir}{os.path.sep}{run}{os.path.sep}ISI_{isi}_probeDur2{os.path.sep}' \
-                       f'{p_name}{run_num}.csv'
-            this_isi_df = pd.read_csv(filepath)
-            if verbose:
-                print(f'\nisi: {isi}')
-                print(f"filepath: {filepath}")
-                print(f"loaded csv:\n{this_isi_df.head()}")
-
-            # sort by staircase
-            trial_numbers = list(this_isi_df['total_nTrials'])
-            this_isi_df = this_isi_df.sort_values(by=['stair', 'total_nTrials'])
-
-            # add isi column for multi-indexing
-            this_isi_df.insert(0, 'run', run)
-            this_isi_df.insert(1, 'ISI', isi)
-            this_isi_df.insert(2, 'srtd_trial_idx', trial_numbers)
-            if verbose:
-                print(f'df sorted by stair:\n{this_isi_df.head()}')
-
-            # get column names to use on all_data_df
-            column_names = list(this_isi_df)
-
-            # add to all_data
-            all_data.append(this_isi_df)
-
-
-    # create all_data_df - reshape to 2d
-    all_data_shape = np.shape(all_data)
-    if len(all_data_shape) == 3:
-        sheets, rows, columns = np.shape(all_data)
-        all_data = np.reshape(all_data, newshape=(sheets * rows, columns))
-        if verbose:
-            print(f'\nall_data reshaped from {all_data_shape} to {np.shape(all_data)}')
-
-    all_data_df = pd.DataFrame(all_data, columns=column_names)
-
-    if verbose:
-        print(f"all_data_df:\n{all_data_df}")
-
-    if save_all_data:
-        # Save xlsx in participant folder.
-        # save_name = f'{len(run_list)}runs_ALLDATA-sorted.xlsx'
-        save_name = 'ALLDATA-sorted.xlsx'
-        save_excel_path = os.path.join(p_dir, save_name)
-        if verbose:
-            print(f"\nsaving all_data_df to save_excel_path:\n{save_excel_path}")
-        all_data_df.to_excel(save_excel_path, index=False)
-
-    print("\n***finished a_data_extraction_all_runs()***\n")
-
-
-    return all_data_df
-
-
-# # # # # # #
-# participant_name = 'Kim1'
-# isi_list = [0, 2, 4, 6, 9, 12, 24, -1]
-# p_dir = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim'
-# run_list = ['P6a-Kim', 'P6b-Kim', 'P6c-Kim', 'P6d-Kim', 'P6e-Kim', 'P6f-Kim']
-# a_data_extraction_all_runs(p_name=participant_name, p_dir=p_dir, run_list=run_list,
-#                            isi_list=isi_list, verbose=True)
-
-
 def b1_extract_last_values(all_data_path, thr_col='probeLum', resp_col='trial_response',
                            last_vals_list=None, verbose=True):
 
@@ -1011,6 +904,8 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
     """
     print("\n*** running b3_plot_staircase() ***\n")
 
+    # todo: add make plots with psignifit thresholds
+
     save_path, xlsx_name = os.path.split(all_data_path)
 
     # open all_data file.  use engine='openpyxl' for xlsx files.
@@ -1316,6 +1211,9 @@ def c_plots(save_path, thr_col='probeLum', last_vals_list=None,
 
     :return:
     """
+
+    # todo: add make plots with psignifit thresholds
+
     print("\n*** running c_plots() ***\n")
 
 
@@ -1624,7 +1522,8 @@ def c_plots(save_path, thr_col='probeLum', last_vals_list=None,
 
 
 def d_averageParticipant(root_path, run_dir_names_list,
-                         thr_col='probeLum', show_plots=True, verbose=True):
+                         thr_col='probeLum', use_psignifit=True,
+                         show_plots=True, verbose=True):
     """
     d_averageParticipant: take P-next-thresholds.xlsx and P-reversal4-thresholds.csv
     in each participant run folder and make master lists  
@@ -1644,8 +1543,12 @@ def d_averageParticipant(root_path, run_dir_names_list,
     :param run_dir_names_list: names of run folders
     :param thr_col: Default: 'probeLum'. column with variable controlled by staircase
     :param show_plots: default True - dispplay plots
+    :param use_psignifit: Default True, uses data from psignifit rather than Martin's MATLAB scripts.
     :param verbose: Defaut true, print progress to screen
     """
+
+    # todo: add make plots with psignifit thresholds
+
 
     print("\n***running d_averageParticipant()***\n")
 
@@ -1659,53 +1562,79 @@ def d_averageParticipant(root_path, run_dir_names_list,
     isi_name_list = ['Concurrent', 'ISI0', 'ISI2', 'ISI4',
                      'ISI6', 'ISI9', 'ISI12', 'ISI24']
     pos_sep_list = [0, 1, 2, 3, 6, 18, 20]
+    sep_list = [18, -18, 6, -6, 3, -3, 2, -2, 1, -1, 0, -0, 20, -20]
     all_data_next_list = []
     all_data_4_reversals_list = []
+    all_psignifit_list = []
 
     for run_idx, run_name in enumerate(run_dir_names_list):
-        this_next_df = pd.read_excel(f'{root_path}{os.sep}{run_name}{os.sep}P-next-thresholds.xlsx',
-                                     sheet_name='next_thresh_mean_df', engine='openpyxl')
 
-        if 'Unnamed: 0' in list(this_next_df):
-            this_next_df.drop('Unnamed: 0', axis=1, inplace=True)
-            print('foundunnamed')
-        this_next_df.insert(0, 'Run', run_idx)
-        all_data_next_list.append(this_next_df)
-        # print(f'\nthis_next_df: ({run_idx}) {run_name}\n{this_next_df}')
+        if use_psignifit:
+            this_psignifit_df = pd.read_csv(f'{root_path}{os.sep}{run_name}{os.sep}psignifit_thresholds.csv')
+            print(f'this_psignifit_df:\n{this_psignifit_df}')
+
+            if 'Unnamed: 0' in list(this_psignifit_df):
+                this_reversal_df.drop('Unnamed: 0', axis=1, inplace=True)
+                print('foundunnamed')
+            this_psignifit_df.drop(columns='stair', inplace=True)
+            this_psignifit_df.insert(0, 'Separation', sep_list)
+            this_psignifit_df.insert(0, 'Run', run_idx)
+            all_psignifit_list.append(this_psignifit_df)
+
+        else:
+            this_next_df = pd.read_excel(f'{root_path}{os.sep}{run_name}{os.sep}P-next-thresholds.xlsx',
+                                         sheet_name='next_thresh_mean_df', engine='openpyxl')
+
+            if 'Unnamed: 0' in list(this_next_df):
+                this_next_df.drop('Unnamed: 0', axis=1, inplace=True)
+                print('foundunnamed')
+            this_next_df.insert(0, 'Run', run_idx)
+            all_data_next_list.append(this_next_df)
+            # print(f'\nthis_next_df: ({run_idx}) {run_name}\n{this_next_df}')
 
         this_reversal_df = pd.read_csv(f'{root_path}{os.sep}{run_name}{os.sep}P-reversal4-thresholds.csv')
         if 'Unnamed: 0' in list(this_reversal_df):
             this_reversal_df.drop('Unnamed: 0', axis=1, inplace=True)
             print('foundunnamed')
-
         this_reversal_df.insert(0, 'Run', run_idx)
         all_data_4_reversals_list.append(this_reversal_df)
 
-    all_data_next_df = pd.concat(all_data_next_list, ignore_index=True)
-    all_data_next_df.to_csv(f'{root_path}{os.sep}MASTER_next_thresh.csv', index=False)
 
     all_data_4_reversals_df = pd.concat(all_data_4_reversals_list, ignore_index=True)
     all_data_4_reversals_df.to_csv(f'{root_path}{os.sep}MASTER_reversal_4_thresh.csv', index=False)
-
     if verbose:
-        print(f'all_data_next_df:\n{all_data_next_df}')
         print(f'all_data_4_reversals_df:\n{all_data_4_reversals_df}')
 
-    # get mean of all runs (each sep and ISI)
-    # try just grouping the master sheet first, rather than using concat.
-    ave_next_thr_df = all_data_next_df.drop('Run', axis=1)
-    ave_next_thr_df = ave_next_thr_df.groupby('Separation').mean()
-    if verbose:
-        print(f'ave_next_thr_df:\n{ave_next_thr_df}')
-    ave_next_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_next_thresh.csv')
-    # std_next_df = ave_next_thr_df.groupby('Separation').std()
+    if use_psignifit:
+        all_data_psignifit_df = pd.concat(all_psignifit_list, ignore_index=True)
+        all_data_psignifit_df.to_csv(f'{root_path}{os.sep}MASTER_psignifit_thresh.csv', index=False)
+        if verbose:
+            print(f'all_data_psignifit_df:\n{all_data_psignifit_df}')
 
-    # ave_reversal4_thr_df = all_data_4_reversals_df.drop('Run', axis=1)
-    # ave_reversal4_thr_df = ave_reversal4_thr_df.groupby('Separation').mean()
-    # if verbose:
-    #     print(f'ave_reversal4_thr_df:\n{ave_reversal4_thr_df}')
-    # std_reversal_df = = ave_reversal4_thr_df.groupby('Separation').std()
+        # get mean of all runs (each sep and ISI)
+        # try just grouping the master sheet first, rather than using concat.
+        # todo: change mean to robust mean (drop highest and lowest value)
+        ave_psignifit_thr_df = all_data_psignifit_df.drop('Run', axis=1)
+        ave_psignifit_thr_df = ave_psignifit_thr_df.groupby('Separation').mean()
+        if verbose:
+            print(f'ave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
+        ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_psignifit_thresh.csv')
+        # std_next_df = ave_next_thr_df.groupby('Separation').std()
 
+    else:
+        all_data_next_df = pd.concat(all_data_next_list, ignore_index=True)
+        all_data_next_df.to_csv(f'{root_path}{os.sep}MASTER_next_thresh.csv', index=False)
+        if verbose:
+            print(f'all_data_next_df:\n{all_data_next_df}')
+        # get mean of all runs (each sep and ISI)
+        # todo: change mean to robust mean (drop highest and lowest value)
+        # try just grouping the master sheet first, rather than using concat.
+        ave_next_thr_df = all_data_next_df.drop('Run', axis=1)
+        ave_next_thr_df = ave_next_thr_df.groupby('Separation').mean()
+        if verbose:
+            print(f'ave_next_thr_df:\n{ave_next_thr_df}')
+        ave_next_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_next_thresh.csv')
+        # std_next_df = ave_next_thr_df.groupby('Separation').std()
 
 
     # part 2. main Figures (these are the ones saved in the matlab script)
@@ -1714,9 +1643,14 @@ def d_averageParticipant(root_path, run_dir_names_list,
     #     threshold values are mean of two probes / single probe
 
     # # Fig1
+    if use_psignifit:
+        fig_df = ave_psignifit_thr_df
+    else:
+        fig_df = ave_next_thr_df
+
     fig1_title = f'Participant average threshold across all runs'
-    fig1_savename = f'P_ave_thr_all_runs.png'
-    plot_pos_sep_and_one_probe(pos_sep_and_one_probe_df=ave_next_thr_df,
+    fig1_savename = f'P_ave_thr_all_runs_isi.png'
+    plot_pos_sep_and_one_probe(pos_sep_and_one_probe_df=fig_df,
                                fig_title=fig1_title,
                                save_path=root_path,
                                save_name=fig1_savename)
@@ -1727,7 +1661,7 @@ def d_averageParticipant(root_path, run_dir_names_list,
     # # Fig 2
     fig2_save_name = 'P_ave_thr_divided_one_probe'
     fig2_title = 'Participant average threshold divided by single probe'
-    pos_sep_df, one_probe_df = split_df_into_pos_sep_df_and_one_probe_df(ave_next_thr_df)
+    pos_sep_df, one_probe_df = split_df_into_pos_sep_df_and_one_probe_df(fig_df)
     pos_sep_arr = pos_sep_df.to_numpy()
     one_probe_arr = one_probe_df['probeLum'].to_numpy()
     div_by_one_probe_arr = (pos_sep_arr.T / one_probe_arr[:, None]).T

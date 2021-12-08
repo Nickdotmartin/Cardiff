@@ -1,6 +1,6 @@
 import os
 
-from psignifit_analysis import b3_plot_staircase
+from psignifit_analysis import a_data_extraction
 
 # # loop through run folders with first 5 scripts (a, b1, b2, b3, c)
 # # then run script d to get master lists and averages
@@ -22,9 +22,9 @@ for run_idx, run_dir in enumerate(run_folder_names):
     participant_name = participant_name
 
     # '''a'''
-    # participant_name = f'{participant_name}_{run_idx+3}'
-    # isi_list = [0, 1, 4, 6, 12, 24]
-    # a_data_extraction(p_name=participant_name, run_dir=save_path, isi_list=isi_list, verbose=True)
+    participant_name = f'{participant_name}_{run_idx+3}'
+    isi_list = [0, 1, 4, 6, 12, 24]
+    a_data_extraction(p_name=participant_name, run_dir=save_path, isi_list=isi_list, verbose=True)
     #
     # all_data_path = f'{save_path}{os.sep}ALL_ISIs_sorted.xlsx'
 
@@ -33,16 +33,11 @@ for run_idx, run_dir in enumerate(run_folder_names):
     #                 'radial_flow_exp/Nick_3/ALL_ISIs_sorted.xlsx'
     # b1_extract_last_values(all_data_path=all_data_path)
 
-    # '''b2 - I don't think I need this '''
+    '''b3'''
     # all_data_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/' \
     #                 'radial_flow_exp/Nick_3/ALL_ISIs_sorted.xlsx'
-    # b2_last_reversal(all_data_path=all_data_path)
-    #
-    '''b3'''
-    all_data_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/' \
-                    'radial_flow_exp/Nick_3/ALL_ISIs_sorted.xlsx'
-    b3_plot_staircase(all_data_path)
-    #
+    # b3_plot_staircase(all_data_path)
+
     # '''c I don't actually need any of these, instead sort get psignifit thr ands make plots from those.'''
     # c_plots(save_path=save_path)
 

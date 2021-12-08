@@ -79,14 +79,15 @@ probe_ecc = 4
 
 # Distances between probes & flow direction
 separation_values = [18, 6, 3, 2, 1, 0]
-# each separation value appears in 2 conditions, e.g.,
-# cond1 will be sep=18, flow_dir=inwards; cond2 will be sep=18, flow_dir=outwards etc.
+# each separation value appears in 2 stairs, e.g.,
+# stair1 will be sep=18, flow_dir=inwards; stair2 will be sep=18, flow_dir=outwards etc.
 # this study does not include the two 99 values for single probe condition
 # old_separations = [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]
 separations = list(np.repeat(separation_values, 2))
-n_conds = len(separations)
+n_stairs = len(separations)
 
 # flow_directions is a list of [-1, 1...] of same length as separations
+# flow_directions: 1=flow inward (backward self-motion), -1=flow outward (forward self-motion)
 flow_directions = [1, -1]*len(separation_values)
 
 # FILENAME
@@ -292,7 +293,7 @@ if trials_counter:
     trials_counter.color = [1, 1, 1]
 
 # BREAKS
-total_n_trials = int(n_trials_per_stair * n_conds)
+total_n_trials = int(n_trials_per_stair * n_stairs)
 take_break = int(total_n_trials/3)
 print(f"take_break every {take_break} trials.")
 breaks = visual.TextStim(win=win, name='breaks',
@@ -308,7 +309,7 @@ end_of_exp = visual.TextStim(win=win, name='end_of_exp',
 
 
 # STAIRCASE
-expInfo['condition_list'] = list(range(n_conds))
+expInfo['stair_list'] = list(range(n_stairs))
 expInfo['n_trials_per_stair'] = n_trials_per_stair
 
 stairStart = maxLum
@@ -321,11 +322,11 @@ for k, v in expInfo.items():
 
 
 stairs = []
-for this_cond in expInfo['condition_list']:
+for stair_idx in expInfo['stair_list']:
     thisInfo = copy.copy(expInfo)
-    thisInfo['this_cond'] = this_cond
+    thisInfo['stair_idx'] = stair_idx
 
-    thisStair = Staircase(name=f'Stair{this_cond}_sep{separations[this_cond]}_flow_dir{flow_directions[this_cond]}',
+    thisStair = Staircase(name=f'Stair{stair_idx}_sep{separations[stair_idx]}_flow_dir{flow_directions[stair_idx]}',
                           type='simple',
                           value=stairStart,
                           C=stairStart * 0.6,  # step_size, typically 60% of reference stimulus
@@ -352,9 +353,9 @@ for step in range(n_trials_per_stair):
         trial_number = trial_number + 1
         trialClock.reset()
 
-        this_cond = thisStair.extraInfo['this_cond']
-        sep = separations[this_cond]
-        flow_dir = flow_directions[this_cond]
+        stair_idx = thisStair.extraInfo['stair_idx']
+        sep = separations[stair_idx]
+        flow_dir = flow_directions[stair_idx]
 
         # flow_dots
         x = np.random.rand(nDots) * taille - taille / 2
@@ -368,11 +369,9 @@ for step in range(n_trials_per_stair):
         # PROBE
         target_jump = np.random.choice([1, -1])  # direction in which the probe jumps : CW or CCW
 
-        if flow_dir == target_jump:
-            trgt_flow_same = 1
-        else:
-            trgt_flow_same = 0
-
+        # Make variable for whether target_jump and flow dir are the same
+        # (e.g., both inward or both outward = 1, else -1)
+        trgt_flow_same = flow_dir*target_jump
 
         # staircase varies probeLum
         probeLum = thisStair.next()
@@ -682,7 +681,7 @@ for step in range(n_trials_per_stair):
 
         # add to exp dict
         thisExp.addData('trial_number', trial_number)
-        thisExp.addData('cond', this_cond)
+        thisExp.addData('stair', stair_idx)
         thisExp.addData('stair_name', thisStair)
         thisExp.addData('step', step)
         thisExp.addData('separation', sep)

@@ -20,7 +20,7 @@ This script contains the analysis pipeline for individual participants.
 def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='stair',
                                     stair_levels=None, 
                                     thr_col='probeLum', resp_col='trial_response',
-                                    quartile_bins=False, n_bins=10, save_np_path=None,
+                                    quartile_bins=True, n_bins=10, save_np_path=None,
                                     verbose=True):
 
     """
@@ -52,7 +52,7 @@ def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='sta
         psignifit_dict: contains details for psignifit e.g., for title, save plot etc.
     """
 
-    print('*** running results_csv_to_np_for_psignifit ***')
+    print('*** running results_csv_to_np_for_psignifit() ***')
 
     if type(csv_path) == pd.core.frame.DataFrame:
         raw_data_df = csv_path
@@ -151,7 +151,7 @@ def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='sta
         with open(f"{save_np_path}{os.sep}{dataset_name}.pickle", 'wb') as handle:
             pickle.dump(bin_data_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-    print('*** finished results_csv_to_np_for_psignifit ***')
+    print('*** finished results_csv_to_np_for_psignifit() ***')
 
 
     return data_np, bin_data_dict
@@ -218,7 +218,7 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
     :return: figure of fitted curve and dict of details
     """
 
-    print('*** running run_psignifit ***')
+    print('*** running run_psignifit() ***')
 
     # # To start psignifit you need to pass a dictionary, which specifies, what kind
     #      of experiment you did and any other parameters of the fit you might want
@@ -260,20 +260,24 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
     # # # 4. Plot psychometric function
     dset_name = bin_data_dict['dset_name']
 
-    plt.figure()
-    plt.title(f"{dset_name}: stair: {bin_data_dict['stair_levels']}\n"
-              f"threshPC: {target_threshold}, threshold: {threshold}, "
-              f"sig: {sig_name}, "
-              f"est: {est_type}")
-    fit_curve_plot = ps.psigniplot.plotPsych(res, showImediate=False)
+    if (show_plot is False) & (save_plot is False):
+        print('not making plots')
+        fit_curve_plot = None
+    else:
+        plt.figure()
+        plt.title(f"{dset_name}: stair: {bin_data_dict['stair_levels']}\n"
+                  f"threshPC: {target_threshold}, threshold: {threshold}, "
+                  f"sig: {sig_name}, "
+                  f"est: {est_type}")
+        fit_curve_plot = ps.psigniplot.plotPsych(res, showImediate=False)
 
-    if save_plot:
-        print(f'saving plot to: {save_path}{os.sep}{dset_name}_psig.png')
-        plt.savefig(f'{save_path}{os.sep}{dset_name}_psig.png')
+        if save_plot:
+            print(f'saving plot to: {save_path}{os.sep}{dset_name}_psig.png')
+            plt.savefig(f'{save_path}{os.sep}{dset_name}_psig.png')
 
-    if show_plot:
-        plt.show()
-    plt.close()
+        if show_plot:
+            plt.show()
+        plt.close()
 
     # ps.psigniplot.plotMarginal(res)
     # ps.psigniplot.plot2D(res, 0,1)
@@ -291,7 +295,7 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
                       'target_threshold': target_threshold,
                       'Threshold': threshold, 'slope_at_target': slope_at_target}
 
-    print('*** finished run_psignifit ***')
+    print('*** finished run_psignifit() ***')
 
     return fit_curve_plot, psignifit_dict
 
@@ -387,7 +391,7 @@ def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
     :return: figure of fitted curve and dict of details
     """
 
-    print('*** running results_to_psignifit ***')
+    print('*** running results_to_psignifit() ***')
 
     if save_np is False:
         save_np_path = None
@@ -424,9 +428,10 @@ def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
                                                    sig_name=sig_name,
                                                    est_type=est_type,
                                                    save_plot=save_plot,
+                                                   show_plot=show_plot,
                                                    verbose=True)
 
-    print('*** finished results_to_psignifit ***')
+    print('*** finished results_to_psignifit() ***')
 
     return fit_curve_plot, psignifit_dict
 
@@ -454,3 +459,109 @@ def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
 #                                                       save_plot=True, show_plot=False,
 #                                                       verbose=True
 #                                                       )
+
+
+
+
+def get_psignifit_threshold_df(root_path, p_run_name, n_bins=10, q_bins=True,
+                               isi_list=None, sep_list=None, verbose=True):
+    """
+    Function to make a stairxisi dataframe of psignifit threshold values.
+
+    :param root_path: path to folder containing ISI folders
+    :param p_run_name: Name of this run (e.g., Nick1 or Nick_1 etc)
+    :param n_bins: Default=10. Number of bins to use.
+    :param q_bins: Default=True. If True will use quartile bins, if false will use equally space bins.
+    :param isi_list: Default=None. list of ISI values.  If None passed will use default values.
+    :param sep_list: Default=None.  List of separation values.  If None passed will use defualts.
+    :param verbose: Print progress to screen
+
+    :return: Dataframe of thresholds from psignifit for each ISI and stair.
+    """
+
+    print('*** running get_psignifit_threshold_df() ***')
+
+
+    if isi_list is None:
+        isi_list = [0, 1, 4, 6, 12, 24]
+    isi_name_list = [f'isi{i}' for i in isi_list]
+
+    if sep_list is None:
+        sep_list = [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]
+
+    thr_array = np.zeros(shape=[len(sep_list), len(isi_list)])
+
+    # loop through isi values
+    for isi_idx, isi in enumerate(isi_list):
+        if verbose:
+            print(f"\n{isi_idx}: isi: {isi}")
+
+        # get df for this isi only
+        isi_df = pd.read_csv(f'{root_path}{os.sep}{p_run_name}'
+                             f'{os.sep}ISI_{isi}_probeDur2/{p_run_name}.csv')
+        if 'Unnamed: 0' in list(isi_df):
+            isi_df.drop('Unnamed: 0', axis=1, inplace=True)
+        print(f'\nrunning analysis for {p_run_name}\n')
+        print(f"isi_df:\n{isi_df}")
+
+        stair_list = sorted(list(isi_df['stair'].unique()))
+        print(f"stair_list: {stair_list}")
+
+        # loop through stairs for this isi
+        for stair_idx, stair in enumerate(stair_list):
+
+            # get df just for one stair at this isi
+            stair_df = isi_df[isi_df['stair'] == stair]
+            if verbose:
+                print(f'\nstair_df (stair={stair}, isi={isi}:\n')
+
+            # # # test with csv to numpy
+            # yes script now works directly with df, don't need to load csv.
+            # now move on to doing full thing
+
+            sep = sep_list[stair_idx]
+            stair_levels = [stair]
+            print(f'\nsep: {sep}, stair_levels: {stair_levels}')
+
+            # # for all in one function
+            # # # # #
+
+            fit_curve_plot, psignifit_dict = results_to_psignifit(csv_path=stair_df, save_path=root_path,
+                                                                  isi=isi, sep=sep, p_run_name=p_run_name,
+                                                                  sep_col='stair', stair_levels=stair_levels,
+                                                                  thr_col='probeLum', resp_col='trial_response',
+                                                                  quartile_bins=q_bins, n_bins=n_bins,
+                                                                  save_np=False, target_threshold=.75,
+                                                                  sig_name='norm', est_type='MAP',
+                                                                  save_plot=False, show_plot=False,
+                                                                  verbose=verbose
+                                                                  )
+
+            # append result to zeros_df
+            threshold = psignifit_dict['Threshold']
+            thr_array[stair_idx, isi_idx] = threshold
+
+    # save zeros df - run and q_bin in name.
+    print(f'thr_array:\n{thr_array}')
+
+    # make dataframe from array
+    thr_df = pd.DataFrame(thr_array, columns=isi_name_list)
+    thr_df.insert(0, 'stair', stair_list)
+    if verbose:
+        print(f"thr_df:\n{thr_df}")
+
+    # save threshold array
+    thr_filename = f'psignifit_thresholds.csv'
+    thr_filepath = os.path.join(root_path, p_run_name, thr_filename)
+    thr_df.to_csv(thr_filepath, index=False)
+
+    print('*** finished get_psignifit_threshold_df() ***')
+
+    return thr_df
+
+# # # ##############
+# root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp'
+# p_run_name = 'Nick_3'
+# thr_df = get_psignifit_threshold_df(root_path=root_path, p_run_name=p_run_name,
+#                                     n_bins=10, q_bins=True,
+#                                     isi_list=None, sep_list=None, verbose=True)
