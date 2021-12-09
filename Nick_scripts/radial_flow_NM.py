@@ -88,7 +88,9 @@ n_stairs = len(separations)
 
 # flow_directions is a list of [-1, 1...] of same length as separations
 # flow_directions: 1=flow inward (backward self-motion), -1=flow outward (forward self-motion)
-flow_directions = [1, -1]*len(separation_values)
+# flow_directions = [1, -1]*len(separation_values)
+# # main contrast is whether the background and target motion is in same or opposite directions
+congruence_list = [1, -1]*len(separation_values)
 
 # FILENAME
 filename = f'{_thisDir}{os.sep}' \
@@ -251,6 +253,7 @@ def WrapPoints(ii, imin, imax):
     morethanmax = (ii > imax)
     ii[morethanmax] = ii[morethanmax] - (imax-imin)
 
+
 taille = 5000  # french for 'size', 'cut', 'trim', 'clip' etc
 minDist = 0.5
 maxDist = 5
@@ -326,7 +329,13 @@ for stair_idx in expInfo['stair_list']:
     thisInfo = copy.copy(expInfo)
     thisInfo['stair_idx'] = stair_idx
 
-    thisStair = Staircase(name=f'Stair{stair_idx}_sep{separations[stair_idx]}_flow_dir{flow_directions[stair_idx]}',
+    # stair_name will be pos or neg sep value for congruence (e.g., 18, -18, 6, -6 etc)
+    # however, change -0 to -.1 to avoid confusion with 0.
+    stair_name = separations[stair_idx] * congruence_list[stair_idx]
+    if separations[stair_idx] + congruence_list[stair_idx] == -1:
+        stair_name = -.1
+
+    thisStair = Staircase(name=stair_name,
                           type='simple',
                           value=stairStart,
                           C=stairStart * 0.6,  # step_size, typically 60% of reference stimulus
@@ -355,7 +364,14 @@ for step in range(n_trials_per_stair):
 
         stair_idx = thisStair.extraInfo['stair_idx']
         sep = separations[stair_idx]
-        flow_dir = flow_directions[stair_idx]
+        # congruence is balanced with separation values
+        congruent = congruence_list[stair_idx]
+        # flow_dir = flow_directions[stair_idx]
+        flow_dir = np.random.choice([1, -1])
+
+        # PROBE
+        # target_jump = np.random.choice([1, -1])  # direction in which the probe jumps : CW or CCW
+        target_jump = congruent * flow_dir
 
         # flow_dots
         x = np.random.rand(nDots) * taille - taille / 2
@@ -366,8 +382,7 @@ for step in range(n_trials_per_stair):
         y_flow = y / z
 
 
-        # PROBE
-        target_jump = np.random.choice([1, -1])  # direction in which the probe jumps : CW or CCW
+
 
         # Make variable for whether target_jump and flow dir are the same
         # (e.g., both inward or both outward = 1, else -1)
@@ -685,9 +700,9 @@ for step in range(n_trials_per_stair):
         thisExp.addData('stair_name', thisStair)
         thisExp.addData('step', step)
         thisExp.addData('separation', sep)
+        thisExp.addData('congruent', congruent)
         thisExp.addData('flow_dir', flow_dir)
         thisExp.addData('probe_jump', target_jump)
-        thisExp.addData('trgt_flow_same', trgt_flow_same)
         thisExp.addData('corner', corner)
         thisExp.addData('probeLum', probeLum)
         thisExp.addData('trial_response', resp.corr)
@@ -714,4 +729,3 @@ else:
     # close and quit once a key is pressed
     win.close()
     core.quit()
-
