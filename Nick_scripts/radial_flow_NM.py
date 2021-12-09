@@ -335,7 +335,7 @@ for stair_idx in expInfo['stair_list']:
     if separations[stair_idx] + congruence_list[stair_idx] == -1:
         stair_name = -.1
 
-    thisStair = Staircase(name=stair_name,
+    thisStair = Staircase(name=f'{stair_name}',
                           type='simple',
                           value=stairStart,
                           C=stairStart * 0.6,  # step_size, typically 60% of reference stimulus
