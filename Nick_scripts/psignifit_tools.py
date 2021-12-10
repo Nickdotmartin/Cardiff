@@ -165,7 +165,7 @@ def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='sta
 # sep=18
 # stair_levels = [1, 2]
 # q_bins=False
-# n_bins=43
+# n_bins=10
 # results_np, bin_data_dict = results_csv_to_np_for_psignifit(csv_path=exp_csv_path,
 #                                                              isi=isi, sep=18,
 #                                                              p_run_name=participant_run_name,
