@@ -8,7 +8,7 @@ import seaborn as sns
 
 """
 This page contains python functions to analyse the radial_flow.py experiment.
-The workflow is based on Martin's MATLAB scripts used in MATLAB_analysis.py.
+The workflow is based on Martin's MATLAB scripts used in OLD_MATLAB_analysis.py.
 
 1. a_data_extraction: put data from one run, multiple ISIs into one array. 
 2. b1_extract_last_values: get the threshold used on the last values in each 

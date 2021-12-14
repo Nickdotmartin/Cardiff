@@ -1,6 +1,6 @@
 import os
 
-from psignifit_analysis import a_data_extraction
+from OLD_psignifit_analysis import a_data_extraction
 
 # # loop through run folders with first 5 scripts (a, b1, b2, b3, c)
 # # then run script d to get master lists and averages

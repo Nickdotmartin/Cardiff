@@ -1,6 +1,6 @@
 import os
 
-from MATLAB_analysis import d_averageParticipant
+from OLD_MATLAB_analysis import d_averageParticipant
 
 # # loop through run folders with first 5 scripts (a, b1, b2, b3, c)
 # # then run script d to get master lists and averages
