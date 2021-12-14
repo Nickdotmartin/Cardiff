@@ -20,7 +20,7 @@ The workflow is based on Martin's MATLAB scripts used in OLD_MATLAB_analysis.py.
 5. c_plots: get psignifit thr values, 
     plot:   data_psignifit_values (pos_sep_no_one_probe)
             runs_psignifit_values (eight_batman_plots)
-6. d_averageParticipant:
+6. d_average_participant:
     master_psignifit_thr (all runs, one csv)
     master_average_psignifit_thr (mean of all runs)
     plot:
@@ -59,6 +59,9 @@ Batman plots:
 #  direction (inwards, outwards), this is of more interest than target jump and should be treated as such.
 #  e.g., analysis scripts should dig into this factor
 
+
+# todo: some of these functions are duplicated in the exp1a_psitgnifit_analysis.py script.  
+#  I don't need to two copies, so perhaps make a 'data_tools' script and put them there?
 
 def split_df_alternate_rows(df):
     """
@@ -203,7 +206,6 @@ def fig_colours(n_conditions):
         use_colours = 'tab20'
     elif n_conditions > 20:
         raise ValueError(f"\tERROR - more classes ({n_conditions}) than colours!?!?!?")
-        print("\tERROR - more classes than colours!?!?!?")
     sns.set_palette(palette=use_colours, n_colors=n_conditions)
     my_colours = sns.color_palette()
 
@@ -942,7 +944,8 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
                                          'probeLum', 'trial_response', 'resp.rt'])
 
     # todo: for motion_same contrast use sep*trgt_flow_same
-    motion_same_cond = np.where(((all_data_df['separation'] == 0) & (all_data_df['trgt_flow_same'] == -1)), -.1, all_data_df['separation'] * all_data_df['trgt_flow_same'])
+    motion_same_cond = np.where(((all_data_df['separation'] == 0) & (all_data_df['trgt_flow_same'] == -1)), -.1,
+                                all_data_df['separation'] * all_data_df['trgt_flow_same'])
     print(f"\nmotion_same_cond:{motion_same_cond[-25:]}")
     all_data_df['motion_same_cond'] = motion_same_cond
     check_df = all_data_df[['separation', 'flow_dir', 'probe_jump', 'trgt_flow_same', 'motion_same_cond']]
@@ -1249,11 +1252,9 @@ def c_plots(save_path, thr_col='probeLum', last_vals_list=None,
     print("\n*** running c_plots() ***\n")
 
 
-    isi_list = [-1, 0, 2, 4, 6, 9, 12, 24]
     isi_name_list = ['Concurrent', 'ISI0', 'ISI2', 'ISI4', 'ISI6', 'ISI9', 'ISI12', 'ISI24']
     sym_sep_list = [-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18, 20]
     sym_sep_tick_labels = [-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18, '1\nprobe']
-    pos_sep_list = [0, 1, 2, 3, 6, 18, 20]
 
     if last_vals_list is None:
         last_vals_list = [1, 4, 7]
@@ -1556,10 +1557,10 @@ def c_plots(save_path, thr_col='probeLum', last_vals_list=None,
 #         show_plots=True, verbose=True)
 
 
-def d_averageParticipant(root_path, run_dir_names_list,
+def d_average_participant(root_path, run_dir_names_list,
                          thr_col='probeLum', show_plots=True, verbose=True):
     """
-    d_averageParticipant: take P-next-thresholds.xlsx and P-reversal4-thresholds.csv
+    d_average_participant: take P-next-thresholds.xlsx and P-reversal4-thresholds.csv
     in each participant run folder and make master lists  
     MASTER_next_thresh
     MASTER_reversal_4_thresh
@@ -1580,7 +1581,7 @@ def d_averageParticipant(root_path, run_dir_names_list,
     :param verbose: Defaut true, print progress to screen
     """
 
-    print("\n***running d_averageParticipant()***\n")
+    print("\n***running d_average_participant()***\n")
 
     # # part1. Munge data, save master lists and get means etc
     # #  - loop through runs and get each P-next-thresholds and P-reversal4-thresholds
@@ -1726,7 +1727,7 @@ def d_averageParticipant(root_path, run_dir_names_list,
     '''
     extra figures - these are made but not saved in the matlab script.
     '''
-    print("\n*** finished d_averageParticipant()***\n")
+    print("\n*** finished d_average_participant()***\n")
 
 
 
@@ -1734,4 +1735,4 @@ def d_averageParticipant(root_path, run_dir_names_list,
 #######
 # root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim'  # master folder containing all runs
 # run_dir_names_list = ['P6a-Kim', 'P6b-Kim', 'P6c-Kim', 'P6d-Kim', 'P6e-Kim', 'P6f-Kim']
-# d_averageParticipant(root_path=root_path, run_dir_names_list=run_dir_names_list)
+# d_average_participant(root_path=root_path, run_dir_names_list=run_dir_names_list)
