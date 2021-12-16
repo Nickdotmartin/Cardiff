@@ -27,7 +27,6 @@ os.chdir(_thisDir)
 monitor_name = 'HP_24uh'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz'
 display_number = 1  # 0 indexed, 1 for external display
 
-
 # Store info about the experiment session
 expName = 'integration_flow'  # from the Builder filename that created this script
 
@@ -142,6 +141,9 @@ mon_dict = {'mon_name': monitor_name,
             }
 print(f"mon_dict: {mon_dict}")
 
+# double check using full screen in lab
+if monitor_name == 'ASUS_2_13_240Hz':
+    display_number = 0
 use_full_screen = True
 if display_number > 0:
     use_full_screen = False

@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from scipy import stats
 
 """
 This page contains functions based on Martin's MATLAB analysis scripts.
@@ -163,6 +164,57 @@ def split_df_into_pos_sep_df_and_one_probe_df(pos_sep_and_one_probe_df,
         print(f'one_probe_df:\n{one_probe_df}')
 
     return pos_sep_df, one_probe_df
+
+
+def get_trimmed_mean_df(data_df, col_to_average_across='Run',
+                        first_col_to_keep='Separation',
+                        n_cut_from_each_tail=1,
+                        verbose=True):
+    """
+    Function to calculate the trimmed mean of values in a dataframe.
+    Trimmed mean involves removing the highest and lowest value before
+    calculating the mean.
+
+    The function assumes you want to find the average threshold for each
+    ISI & separation combination across several runs.
+
+    :param data_df: Dataframe containing thresholds for ISI & separation
+        combinations across several runs, where runs is one of the columns.
+    :param col_to_average_across: Default = 'Runs'.
+    :param first_col_to_keep: Default = 'Separation'
+    :param n_cut_from_each_tail: Default = 1.  Number to cut from each tail.
+        e.g., if 1 is passed it will cut the 1 highest AND 1 lowest value.
+    :param verbose: print progress to screen
+
+    :return: trimmed_mean_df Dataframe showing the trimmed means.
+    """
+
+    # get number of datapoints to average across (used re-shaping array)
+    n_runs = len(data_df[col_to_average_across].unique())
+
+    # sort columns and re-shape data
+    data_df = data_df.drop(col_to_average_across, axis=1)
+    sep_col = data_df.pop(first_col_to_keep)
+    headers = list(data_df.columns)
+    n_rows, n_cols = data_df.shape
+    data_array = data_df.to_numpy().reshape(n_runs, int(n_rows / n_runs), n_cols)
+
+    # get trimmed mean
+    prop_to_cut = n_cut_from_each_tail/n_runs
+    trimmed_mean_np = stats.trim_mean(data_array, proportiontocut=prop_to_cut, axis=0)
+    trimmed_mean_df = pd.DataFrame(trimmed_mean_np, columns=headers)
+    trimmed_mean_df.insert(0, first_col_to_keep, sep_col)
+    trimmed_mean_df = trimmed_mean_df.set_index([first_col_to_keep])
+    if verbose:
+        print(f'\ntrimmed_mean_df:\n{trimmed_mean_df}')
+
+    # get sd
+    trimmed_stdev_np = stats.mstats.trimmed_std(data_array,
+                                                limits=(prop_to_cut*100, prop_to_cut*100), relative=True)
+
+
+    return trimmed_mean_df
+
 
 
 # # choose colour palette
@@ -966,7 +1018,7 @@ def c_plots(save_path, thr_col='probeLum', show_plots=True, verbose=True):
 
 def d_average_participant(root_path, run_dir_names_list,
                           thr_col='probeLum',
-                          robust_mean=False,
+                          trimmed_mean=False,
                           show_plots=True, verbose=True):
     """
     d_average_participant: take psignifit_thresholds.csv
@@ -985,13 +1037,12 @@ def d_average_participant(root_path, run_dir_names_list,
     :param root_path: dir containing run folders
     :param run_dir_names_list: names of run folders
     :param thr_col: Default: 'probeLum'. column with variable controlled by staircase
-    :param robust_mean: default False - if True, will call function to make robust mean df.
-    :param show_plots: default True - dispplay plots
+    :param trimmed_mean: default False - if True, will call function
+        get_trimmed_mean_df(), which drops the highest and lowest value before
+        calculating the mean.
+    :param show_plots: default True - display plots
     :param verbose: Defaut true, print progress to screen
     """
-
-    # todo: get robust mean of all runs dataframes
-
 
     print("\n***running d_average_participant()***\n")
 
@@ -1000,18 +1051,16 @@ def d_average_participant(root_path, run_dir_names_list,
     # # Make master sheets: MASTER_next_thresh & MASTER_reversal_4_thresh
     # # Incidentally the MATLAB script didn't specify which reversals data to use,
     # # although the figures imply Martin used last3 reversals.
-
-
     isi_name_list = ['Concurrent', 'ISI0', 'ISI2', 'ISI4',
                      'ISI6', 'ISI9', 'ISI12', 'ISI24']
     pos_sep_list = [0, 1, 2, 3, 6, 18, 20]
-    sep_list = [18, -18, 6, -6, 3, -3, 2, -2, 1, -1, 0, -0, 20, -20]
+    sep_list = [18, -18, 6, -6, 3, -3, 2, -2, 1, -1, 0, -.1, 20, -20]
     all_psignifit_list = []
 
     for run_idx, run_name in enumerate(run_dir_names_list):
 
         this_psignifit_df = pd.read_csv(f'{root_path}{os.sep}{run_name}{os.sep}psignifit_thresholds.csv')
-        print(f'this_psignifit_df:\n{this_psignifit_df}')
+        print(f'{run_idx}. {run_name} - this_psignifit_df:\n{this_psignifit_df}')
 
         if 'Unnamed: 0' in list(this_psignifit_df):
             this_psignifit_df.drop('Unnamed: 0', axis=1, inplace=True)
@@ -1025,20 +1074,26 @@ def d_average_participant(root_path, run_dir_names_list,
     all_data_psignifit_df = pd.concat(all_psignifit_list, ignore_index=True)
     all_data_psignifit_df.to_csv(f'{root_path}{os.sep}MASTER_psignifit_thresholds.csv', index=False)
     if verbose:
-        print(f'all_data_psignifit_df:\n{all_data_psignifit_df}')
+        print(f'\nall_data_psignifit_df:\n{all_data_psignifit_df}')
+
+    # todo: split pos and neg values so that there are actually 12 data points to average over,
+    #  Could do this in the loop and label then run1_pos, 'run1_neg' etc
 
     # get mean of all runs (each sep and ISI)
     # try just grouping the master sheet first, rather than using concat.
-    # todo: change mean to robust mean (drop highest and lowest value)
-    if robust_mean:
+    if trimmed_mean:
         print('calling robust mean function')
+        # todo: for 12 data point, drop the 2 highest and lowst
+        ave_TM_psignifit_thr_df = get_trimmed_mean_df(all_data_psignifit_df)
+        ave_TM_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM_thresh.csv')
+        if verbose:
+            print(f'ave_TM_psignifit_thr_df:\n{ave_TM_psignifit_thr_df}')
     else:
         ave_psignifit_thr_df = all_data_psignifit_df.drop('Run', axis=1)
-        ave_psignifit_thr_df = ave_psignifit_thr_df.groupby('Separation').mean()
-    if verbose:
-        print(f'ave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
-    ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_thresh.csv')
-    # std_next_df = ave_next_thr_df.groupby('Separation').std()
+        ave_psignifit_thr_df = ave_psignifit_thr_df.groupby('Separation', sort=False).mean()
+        ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_thresh.csv')
+        if verbose:
+            print(f'ave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
 
 
     # part 2. main Figures (these are the ones saved in the matlab script)
@@ -1046,15 +1101,19 @@ def d_average_participant(root_path, run_dir_names_list,
     # Fig2: single ax, pos_sep_and_one_probe (but no one probe).
     #     threshold values are mean of two probes / single probe
 
-    # # Fig1
+    # # Fig1a
     # todo: add error bars
-    fig_df = ave_psignifit_thr_df
 
-    fig1_title = f'Participant average threshold across all runs'
-    fig1_savename = f'ave_thr_all_runs.png'
-    if robust_mean:
-        fig1_title = f'Robust mean of thresholds across all runs'
-        fig1_savename = f'ave_RM_thr_all_runs.png'
+    if trimmed_mean:
+        fig_df = ave_TM_psignifit_thr_df
+        fig1_title = f'Participant trimmed mean of thresholds across all runs'
+        fig1_savename = f'ave_TM_thr_all_runs.png'
+    else:
+        fig_df = ave_psignifit_thr_df
+        fig1_title = f'Participant average threshold across all runs'
+        fig1_savename = f'ave_thr_all_runs.png'
+
+    # todo: change this so it includes neg sep values as part of the plot.
     plot_pos_sep_and_one_probe(pos_sep_and_one_probe_df=fig_df,
                                fig_title=fig1_title,
                                save_path=root_path,
@@ -1063,14 +1122,20 @@ def d_average_participant(root_path, run_dir_names_list,
         plt.show()
     plt.close()
 
+    if verbose:
+        print('finished fig1a')
+
+    # todo: fig1b with ISI on x-axis and different lines for each sep.
+
     # # Fig 2
     # todo: add error bars
+    if trimmed_mean:
+        fig2_save_name = 'ave_TM_thr_div_one_probe.png'
+        fig2_title = 'Participant trimmed mean of thresholds divided by single probe'
+    else:
+        fig2_save_name = 'ave_thr_div_one_probe.png'
+        fig2_title = 'Participant average threshold divided by single probe'
 
-    fig2_save_name = 'ave_thr_div_one_probe.png'
-    fig2_title = 'Participant average threshold divided by single probe'
-    if robust_mean:
-        fig2_save_name = 'ave_RM_thr_div_one_probe.png'
-        fig2_title = 'Robust mean of thresholds divided by single probe'
     pos_sep_df, one_probe_df = split_df_into_pos_sep_df_and_one_probe_df(fig_df)
     pos_sep_arr = pos_sep_df.to_numpy()
     one_probe_arr = one_probe_df['probeLum'].to_numpy()
@@ -1091,6 +1156,9 @@ def d_average_participant(root_path, run_dir_names_list,
     if show_plots:
         plt.show()
     plt.close()
+
+    # todo: fig2b with ISI on x-axis and different lines for each sep.
+
 
 
     print("\n*** finished d_average_participant()***\n")
