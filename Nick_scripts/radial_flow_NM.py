@@ -62,7 +62,10 @@ background = expInfo['8_Background']
 '''ISI can be given (roughly) in ms, for any monitor it will try to match that value in frames.
 The script uses on frames so ISI will be used in that format.
 The actual ms timing is given for record.
-This means that the experiment should have similar ms timings on monitors with different fps'''
+This means that the experiment should have similar ms timings on monitors with different fps
+milliseconds: [100, 50, 37.5, 25, 16.67, 8.33, 0]
+frames@240hz: [24,  12,  9,    6,  4,    2,    0]
+'''
 ISI_selected_ms = float(expInfo['4_ISI_dur_in_ms'])
 ISI_frames = int(ISI_selected_ms * fps / 1000)
 ISI_actual_ms = (1/fps) * ISI_frames * 1000

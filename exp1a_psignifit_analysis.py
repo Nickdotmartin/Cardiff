@@ -158,7 +158,7 @@ def split_df_into_pos_sep_df_and_one_probe_df(pos_sep_and_one_probe_df,
     one_probe_lum_list = one_probe_df.values.tolist()[0]
     one_probe_dict = {'ISIs': isi_name_list,
                       'probeLum': one_probe_lum_list,
-                      'x_vals': [-1 for i in isi_name_list]}
+                      'x_vals': [19 for i in isi_name_list]}
     one_probe_df = pd.DataFrame.from_dict(one_probe_dict)
     if verbose:
         print(f'one_probe_df:\n{one_probe_df}')
@@ -280,9 +280,9 @@ def plot_pos_sep_and_one_probe(pos_sep_and_one_probe_df,
             print(f'isi_name_list: {isi_name_list}')
 
     if pos_set_ticks is None:
-        pos_set_ticks = [-2, -1, 0, 1, 2, 3, 6, 18]
+        pos_set_ticks = [0, 1, 2, 3, 6, 18, 19]
     if pos_tick_labels is None:
-        pos_tick_labels = ['', 'one\nprobe', 0, 1, 2, 3, 6, 18]
+        pos_tick_labels = [0, 1, 2, 3, 6, 18, 'one\nprobe']
 
 
     # call function to split df into pos_sep_df and one_probe_df
@@ -315,8 +315,8 @@ def plot_pos_sep_and_one_probe(pos_sep_and_one_probe_df,
         ax.set_xticks(pos_set_ticks)
         ax.set_xticklabels(pos_tick_labels)
     else:
-        ax.set_xticks(pos_set_ticks[2:])
-        ax.set_xticklabels(pos_tick_labels[2:])
+        ax.set_xticks(pos_set_ticks[:-1])
+        ax.set_xticklabels(pos_tick_labels[:-1])
 
     # ax.set_ylim([40, 90])
     ax.set_xlabel('Probe separation in diagonal pixels')
@@ -1066,9 +1066,25 @@ def d_average_participant(root_path, run_dir_names_list,
             this_psignifit_df.drop('Unnamed: 0', axis=1, inplace=True)
             print('foundunnamed')
         this_psignifit_df.drop(columns='stair', inplace=True)
-        this_psignifit_df.insert(0, 'Separation', sep_list)
-        this_psignifit_df.insert(0, 'Run', run_idx)
-        all_psignifit_list.append(this_psignifit_df)
+
+        # todo: combine pos and neg sep to get mean value here
+        this_psignifit_df.columns = isi_name_list
+
+        # split into pos_sep, neg_sep and mean of pos and neg.
+        psig_pos_sep_df, psig_neg_sep_df = split_df_alternate_rows(this_psignifit_df)
+        psig_thr_mean_df = pd.concat([psig_pos_sep_df, psig_neg_sep_df]).groupby(level=0).mean()
+
+        # # add sep column in
+        sep_list = [18, 6, 3, 2, 1, 0, 20]
+        psig_thr_mean_df.insert(0, 'Separation', sep_list)
+        psig_thr_mean_df.insert(0, 'Run', run_idx)
+        if verbose:
+            print(f'\npsig_thr_mean_df:\n{psig_thr_mean_df}')
+
+        all_psignifit_list.append(psig_thr_mean_df)
+        # this_psignifit_df.insert(0, 'Separation', sep_list)
+        # this_psignifit_df.insert(0, 'Run', run_idx)
+        # all_psignifit_list.append(this_psignifit_df)
 
 
     all_data_psignifit_df = pd.concat(all_psignifit_list, ignore_index=True)
@@ -1076,8 +1092,6 @@ def d_average_participant(root_path, run_dir_names_list,
     if verbose:
         print(f'\nall_data_psignifit_df:\n{all_data_psignifit_df}')
 
-    # todo: split pos and neg values so that there are actually 12 data points to average over,
-    #  Could do this in the loop and label then run1_pos, 'run1_neg' etc
 
     # get mean of all runs (each sep and ISI)
     # try just grouping the master sheet first, rather than using concat.
@@ -1113,7 +1127,6 @@ def d_average_participant(root_path, run_dir_names_list,
         fig1_title = f'Participant average threshold across all runs'
         fig1_savename = f'ave_thr_all_runs.png'
 
-    # todo: change this so it includes neg sep values as part of the plot.
     plot_pos_sep_and_one_probe(pos_sep_and_one_probe_df=fig_df,
                                fig_title=fig1_title,
                                save_path=root_path,
@@ -1126,7 +1139,87 @@ def d_average_participant(root_path, run_dir_names_list,
         print('finished fig1a')
 
     # todo: fig1b with ISI on x-axis and different lines for each sep.
+    # # fig 1b
+    if trimmed_mean:
+        fig_1b_df = ave_TM_psignifit_thr_df.T
+        fig1b_title = f'Participant trimmed mean of thresholds across all runs'
+        fig1b_savename = f'ave_TM_thr_all_runs_T.png'
+    else:
+        fig_1b_df = ave_psignifit_thr_df.T
+        fig1b_title = f'Participant average threshold across all runs'
+        fig1b_savename = f'ave_thr_all_runs_T.png'
+    if verbose:
+        print(f'fig_1b_df:\n{fig_1b_df}')
 
+    # # #
+    # if isi_name_list is None:
+    #     isi_name_list = ['Concurrent', 'ISI0', 'ISI2', 'ISI4',
+    #                      'ISI6', 'ISI9', 'ISI12', 'ISI24']
+    #     if verbose:
+    #         print(f'isi_name_list: {isi_name_list}')
+
+    # if pos_set_ticks is None:
+    pos_set_ticks = [-1, 0, 2, 4, 6, 9, 12, 24]
+    fig_1b_df.insert(0, 'isi', pos_set_ticks)
+    # fig_1b_df.columns = pos_set_ticks
+    fig_1b_df.set_index('isi', inplace=True)
+    # if pos_tick_labels is None:
+    #     pos_tick_labels = [0, 1, 2, 3, 6, 18, 'one\nprobe']
+
+    # # call function to split df into pos_sep_df and one_probe_df
+    # if one_probe:
+    #     pos_sep_df, one_probe_df = split_df_into_pos_sep_df_and_one_probe_df(
+    #         pos_sep_and_one_probe_df=pos_sep_and_one_probe_df, isi_name_list=isi_name_list)
+    #     if verbose:
+    #         print(f'pos_sep_df:\n{pos_sep_df}\none_probe_df:\n{one_probe_df}')
+    # else:
+    #     pos_sep_df = pos_sep_and_one_probe_df
+
+    # make fig1
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    # line plot for main ISIs
+    sns.lineplot(data=fig_1b_df, markers=True, dashes=False, ax=ax)
+
+    # # scatter plot for single probe conditions
+    # if one_probe:
+    #     sns.scatterplot(data=one_probe_df, x="x_vals", y=thr_col,
+    #                     hue="ISIs", style='ISIs', ax=ax)
+
+    # # decorate plot
+    # ax.legend(labels=isi_name_list, title='ISI',
+    #           shadow=True,
+    #           # place lower left corner of legend at specified location.
+    #           loc='lower left', bbox_to_anchor=(0.96, 0.5))
+    #
+    # if one_probe:
+    ax.set_xticklabels(['Conc', '0', '2', '4',
+                         '6', '9', '12', '24'])
+    ax.set_xticks(pos_set_ticks)
+    # ax.set(xticks=pos_set_ticks, xticklabels=isi_name_list)
+    # else:
+    #     ax.set_xticks(pos_set_ticks[:-1])
+    #     ax.set_xticklabels(pos_tick_labels[:-1])
+    #
+    ax.set_ylim([40, 90])
+    ax.set_xlabel('Inter stimulus interval (ISI)')
+    ax.set_ylabel('Probe Luminance')
+    #
+    # if fig_title is not None:
+    #     plt.title(fig_title)
+    #
+    # if save_path is not None:
+    #     if save_name is not None:
+    #         plt.savefig(f'{save_path}{os.sep}{save_name}')
+    # # #
+
+
+    # if show_plots:
+    plt.show()
+    # plt.close()
+
+    if verbose:
+        print('finished fig1b')
     # # Fig 2
     # todo: add error bars
     if trimmed_mean:

@@ -49,5 +49,5 @@ participant_name = 'Kim'
 # root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim'  # master folder containing all runs
 # run_folder_names = ['P6a-Kim', 'P6b-Kim', 'P6c-Kim', 'P6d-Kim', 'P6e-Kim', 'P6f-Kim']
 d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-                      show_plots=False, trimmed_mean=True)
+                      show_plots=False, trimmed_mean=False)
 print('exp1a_analysis_pipe finished')
