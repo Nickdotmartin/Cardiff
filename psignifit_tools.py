@@ -17,6 +17,7 @@ This script contains the analysis pipeline for individual participants.
 4. Plot psychometric function
 """
 
+# todo: change default sep_col to 'Separation'?
 def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='stair',
                                     stair_levels=None, 
                                     thr_col='probeLum', resp_col='trial_response',
@@ -67,7 +68,7 @@ def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='sta
                              f'Enter a list of stair levels corresponding to the '
                              f'separation value or enter the name of the column '
                              f'showing separation values. ')
-        stair_levels = sep
+        stair_levels = [sep]
     
     raw_data_df = raw_data_df[raw_data_df[sep_col].isin(stair_levels)]
     if verbose:
@@ -108,10 +109,10 @@ def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='sta
     if verbose:
         print(f"\nbin_count (trials per bin):\n{bin_count}")
 
-        # get bin intervals as list of type(pandas.Interval)
+    # get bin intervals as list of type(pandas.Interval)
     bins = sorted([i for i in list(bin_count.index)])
 
-    # loop through bins and get correct per bin
+    # loop through bins and get number correct_per_bin
     data_arr = []
     found_bins_left = []
     for idx, bin_interval in enumerate(bins):
@@ -161,7 +162,7 @@ def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='sta
 # isi=24
 # participant_run_name = 'Kim1'
 # sep=18
-# stair_levels = [1, 2]
+# stair_levels = [1]
 # q_bins=False
 # n_bins=10
 # results_np, bin_data_dict = results_csv_to_np_for_psignifit(csv_path=exp_csv_path,
@@ -343,7 +344,7 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
 #                                                verbose=True)
 #
 
-
+# todo: change default sep_col to 'Separation'?
 def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
                          sep_col='stair', stair_levels=None,
                          thr_col='probeLum', resp_col='trial_response',
@@ -459,17 +460,21 @@ def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
 
 
 def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bins=True,
-                               isi_list=None, sep_list=None, verbose=True):
+                               sep_col='Separation', isi_list=None, sep_list=None, 
+                               group=None, verbose=True):
     """
     Function to make a dataframe (stair x isi) of psignifit threshold values for an entire run.
 
     :param root_path: path to folder containing ISI folders
     :param p_run_name: Name of this run directory where csv is stored (e.g., P6a-Kim or P6b-Kim etc)
-    :param csv_name: Name of this results csv (e.g., Kim1, Kim2 etc)
+    :param csv_name: Dataframe to analyse or Name of results csv to load (e.g., Kim1, Kim2 etc)
     :param n_bins: Default=10. Number of bins to use.
     :param q_bins: Default=True. If True will use quartile bins, if false will use equally space bins.
+    :param sep_col: name of column containing separations: use 'stair' if there
+        is no separation column.    
     :param isi_list: Default=None. list of ISI values.  If None passed will use default values.
     :param sep_list: Default=None.  List of separation values.  If None passed will use defualts.
+    :param group: Default=None.  Pass a group id for exp1a to differentiate between identical stairs (e.g., 1&2, 3&4 etc).
     :param verbose: Print progress to screen
 
     :return: Dataframe of thresholds from psignifit for each ISI and stair.
@@ -477,18 +482,25 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
 
     print('\n*** running get_psignifit_threshold_df() ***')
 
-
     if isi_list is None:
         isi_list = [0, 1, 4, 6, 12, 24]
     isi_name_list = [f'isi{i}' for i in isi_list]
 
     if sep_list is None:
-        sep_list = [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]
+        sep_list = [18, 6, 3, 2, 1, 0]
+        # sep_list = [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]
 
     thr_array = np.zeros(shape=[len(sep_list), len(isi_list)])
 
-    if csv_name[-4:] == '.csv':
-        csv_name = csv_name[:-4]
+    # identify whether csv_name is actaully a csv_name or infact a dataframe ready to use.
+    load_csv = True
+    if type(csv_name) is str:
+        if csv_name[-4:] == '.csv':
+            csv_name = csv_name[:-4]
+    elif type(csv_name) is pd.core.frame.DataFrame:
+        load_csv = False
+    else:
+        raise TypeError(f'csv_name should be a string or df, not {type(csv_name)}')
 
     # loop through isi values
     for isi_idx, isi in enumerate(isi_list):
@@ -496,43 +508,46 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
             print(f"\n{isi_idx}: isi: {isi}")
 
         # get df for this isi only
-        isi_df = pd.read_csv(f'{root_path}{os.sep}{p_run_name}'
-                             f'{os.sep}ISI_{isi}_probeDur2/{csv_name}.csv')
-        if 'Unnamed: 0' in list(isi_df):
-            isi_df.drop('Unnamed: 0', axis=1, inplace=True)
-        print(f'\nrunning analysis for {p_run_name}\n')
-        print(f"isi_df:\n{isi_df}")
+        if load_csv:
+            isi_df = pd.read_csv(f'{root_path}{os.sep}{p_run_name}'
+                                 f'{os.sep}ISI_{isi}_probeDur2/{csv_name}.csv')
+            if 'Unnamed: 0' in list(isi_df):
+                isi_df.drop('Unnamed: 0', axis=1, inplace=True)
+            print(f'\nrunning analysis for {p_run_name}\n')
+            print(f"isi_df:\n{isi_df}")
+        else:
+            isi_df = csv_name[csv_name['ISI'] == isi]
 
-        stair_list = sorted(list(isi_df['stair'].unique()))
-        print(f"stair_list: {stair_list}")
-
-        if len(stair_list) != len(sep_list):
-            raise ValueError(f'Number of stairs ({len(stair_list)}) does not '
-                             f'match number of separations ({len(sep_list)}).\n'
-                             f'Please enter sep_list when calling get_psignifit_threshold_df()')
+        # stair_list = sorted(list(isi_df['stair'].unique()))
+        # print(f"stair_list: {stair_list}")
+        # 
+        # if len(stair_list) != len(sep_list):
+        #     raise ValueError(f'Number of stairs ({len(stair_list)}) does not '
+        #                      f'match number of separations ({len(sep_list)}).\n'
+        #                      f'Please enter sep_list when calling get_psignifit_threshold_df()')
 
         # loop through stairs for this isi
-        for stair_idx, stair in enumerate(stair_list):
+        for sep_idx, sep in enumerate(sep_list):
 
             # get df just for one stair at this isi
-            stair_df = isi_df[isi_df['stair'] == stair]
+            sep_df = isi_df[isi_df[sep_col] == sep]
             if verbose:
-                print(f'\nstair_df (stair={stair}, isi={isi}:\n{stair_df}')
+                print(f'\nsep_df (sep={sep}, isi={isi}:\n{sep_df}')
 
             # # # test with csv to numpy
             # yes script now works directly with df, don't need to load csv.
             # now move on to doing full thing
 
-            sep = sep_list[stair_idx]
-            stair_levels = [stair]
-            print(f'\nsep: {sep}, stair_levels: {stair_levels}')
+            # sep = sep_list[sep_idx]
+            # stair_levels = [stair]
+            # print(f'\nsep: {sep}, stair_levels: {stair_levels}')
 
             # # for all in one function
             # # # # #
 
-            fit_curve_plot, psignifit_dict = results_to_psignifit(csv_path=stair_df, save_path=root_path,
+            fit_curve_plot, psignifit_dict = results_to_psignifit(csv_path=sep_df, save_path=root_path,
                                                                   isi=isi, sep=sep, p_run_name=p_run_name,
-                                                                  sep_col='stair', stair_levels=stair_levels,
+                                                                  sep_col='Separation', stair_levels=None,
                                                                   thr_col='probeLum', resp_col='trial_response',
                                                                   quartile_bins=q_bins, n_bins=n_bins,
                                                                   save_np=False, target_threshold=.75,
@@ -543,19 +558,22 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
 
             # append result to zeros_df
             threshold = psignifit_dict['Threshold']
-            thr_array[stair_idx, isi_idx] = threshold
+            thr_array[sep_idx, isi_idx] = threshold
 
     # save zeros df - run and q_bin in name.
     print(f'thr_array:\n{thr_array}')
 
     # make dataframe from array
     thr_df = pd.DataFrame(thr_array, columns=isi_name_list)
-    thr_df.insert(0, 'stair', stair_list)
+    thr_df.insert(0, 'Separation', sep_list)
     if verbose:
         print(f"thr_df:\n{thr_df}")
 
     # save threshold array
     thr_filename = f'psignifit_thresholds.csv'
+    if group is not None:
+        thr_filename = f'g{group}_{thr_filename}'
+
     thr_filepath = os.path.join(root_path, p_run_name, thr_filename)
     print(f'saving psignifit_thresholds.csv to {thr_filepath}')
     thr_df.to_csv(thr_filepath, index=False)

@@ -318,7 +318,7 @@ def plot_pos_sep_and_one_probe(pos_sep_and_one_probe_df,
         ax.set_xticks(pos_set_ticks[:-1])
         ax.set_xticklabels(pos_tick_labels[:-1])
 
-    # ax.set_ylim([40, 90])
+    ax.set_ylim([0, 110])
     ax.set_xlabel('Probe separation in diagonal pixels')
     ax.set_ylabel('Probe Luminance')
 
@@ -332,7 +332,67 @@ def plot_pos_sep_and_one_probe(pos_sep_and_one_probe_df,
     return fig
 
 
-# # # all ISIs on one axis - pos sep only, NO single probe
+###################
+
+def plot_pos_sep_x_axis_isi(pos_sep_x_axis_isi_df,
+                            fig_title=None,
+                            save_path=None,
+                            save_name=None,
+                            isi_int_list=None,
+                            isi_name_list=None,
+                            verbose=True):
+
+    print('\n*** Running plot_pos_sep_x_axis_isi() ***')
+
+    # transpose dataframe
+    pos_sep_x_axis_isi_df = pos_sep_x_axis_isi_df.T
+
+    # Use isi_int_list to rename index
+    if isi_int_list is None:
+        isi_int_list = [-1, 0, 2, 4, 6, 9, 12, 24]
+    pos_sep_x_axis_isi_df.set_axis(isi_int_list, axis='index', inplace=True)
+
+    # get sep labels for legend and change one_probe name
+    sep_labels = list(pos_sep_x_axis_isi_df.columns)
+    sep_labels = ['1probe' if i == 20 else i for i in sep_labels]
+    pos_sep_x_axis_isi_df.columns = sep_labels
+    if verbose:
+        print(f'pos_sep_x_axis_isi_df:\n{pos_sep_x_axis_isi_df}')
+
+    # get isi_name_list for xticklabels
+    if isi_name_list is None:
+        isi_name_list = ['Conc', '0', '2', '4', '6', '9', '12', '24']
+
+    # make fig1
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    sns.lineplot(data=pos_sep_x_axis_isi_df, markers=True, dashes=False, ax=ax)
+
+    # decorate plot
+    ax.legend(labels=sep_labels, title='Separation',
+              shadow=True,
+              # place lower left corner of legend at specified location.
+              loc='lower left', bbox_to_anchor=(0.96, 0.5))
+
+    # set tick labels
+    ax.set_xticks(isi_int_list)
+    ax.set_xticklabels(isi_name_list)
+    ax.set_ylim([0, 110])
+    ax.set_xlabel('Inter stimulus interval (ISI)')
+    ax.set_ylabel('Probe Luminance')
+
+    if fig_title is not None:
+        plt.title(fig_title)
+
+    if save_path is not None:
+        if save_name is not None:
+            plt.savefig(f'{save_path}{os.sep}{save_name}')
+
+    return fig
+
+
+###########################
+
 
 # # # 8 batman plots
 
@@ -424,7 +484,7 @@ def eight_batman_plots(mean_df, thr1_df, thr2_df,
             ax.set_xticks(x_tick_vals)
             ax.set_xticklabels(x_tick_labels)
             ax.xaxis.set_tick_params(labelsize=6)
-            ax.set_ylim([40, 90])
+            ax.set_ylim([0, 110])
 
             if row_idx == 1:
                 ax.set_xlabel('Probe separation (pixels)')
@@ -480,10 +540,10 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
     :param save_all_data: If True, will save all_data_df as an xlsx.
     :param verbose: If True, will print progress to screen.
 
-    :return: ALLDATA-sorted.xlsx: A pandas DataFrame with n xlsx file of all data for one run of all ISIs.
+    :return: RUNDATA-sorted.xlsx: A pandas DataFrame with n xlsx file of all data for one run of all ISIs.
     """
 
-    print("\n***running a_data_extraction()***\n")
+    print("\n***running a_data_extraction()***")
 
     # get run name/number
     path, run = os.path.split(run_dir)
@@ -492,6 +552,15 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
 
     if isi_list is None:
         isi_list = [-1, 0, 2, 4, 6, 9, 12, 24]
+
+    # dicts for mapping stair number to separation and group.
+    stair_sep_dict = {1: 18, 2: 18, 3: 6, 4: 6, 5: 3, 6: 3, 7: 2,
+                      8: 2, 9: 1, 10: 1, 11: 0, 12: 0, 13: 99, 14: 99}
+    stair_group_dict = {1: 1, 2: 2, 3: 1, 4: 2, 5: 1, 6: 2, 7: 1,
+                        8: 2, 9: 1, 10: 2, 11: 1, 12: 2, 13: 1, 14: 2}
+
+    # raw results csv doesn't have separation or group columns, so assume I'll add them and re-save raw data.
+    resave_results = True
 
     # empty array to append info into
     all_data = []
@@ -508,13 +577,30 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
         if verbose:
             print(f"loaded csv:\n{this_isi_df.head()}")
 
-        # sort by staircase
-        trial_numbers = list(this_isi_df['total_nTrials'])
-        this_isi_df = this_isi_df.sort_values(by=['stair', 'total_nTrials'])
+        # remove any Unnamed columns
+        if any("Unnamed" in i for i in list(this_isi_df.columns)):
+            unnamed_col = [i for i in list(this_isi_df.columns) if "Unnamed" in i][0]
+            this_isi_df.drop(unnamed_col, axis=1, inplace=True)
+
+        if 'Separation' in list(this_isi_df.columns):
+            resave_results = False
+
+        # add in Separation column mapped from stair_sep_dict
+        sep_list = this_isi_df['stair'].map(stair_sep_dict)
+        this_isi_df.insert(1, 'Separation', sep_list)
+
+        # add in group column to differentiate identical stairs (e.g., 1&2, 3&4 etc)
+        group_list = this_isi_df['stair'].map(stair_group_dict)
+        this_isi_df.insert(2, 'group', group_list)
 
         # add isi column for multi-indexing
         this_isi_df.insert(0, 'ISI', isi)
-        this_isi_df.insert(1, 'srtd_trial_idx', trial_numbers)
+
+        # sort by group, stair, original trial number
+        trial_numbers = list(this_isi_df['total_nTrials'])
+        this_isi_df = this_isi_df.sort_values(by=['group', 'stair', 'total_nTrials'])
+        this_isi_df.insert(0, 'srtd_trial_idx', trial_numbers)
+
         if verbose:
             print(f'df sorted by stair:\n{this_isi_df.head()}')
 
@@ -523,6 +609,12 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
 
         # add to all_data
         all_data.append(this_isi_df)
+
+        if resave_results:
+            filepath = f'{run_dir}{os.path.sep}ISI_{isi}_probeDur2{os.path.sep}' \
+                       f'{p_name}_w_sep.csv'
+            this_isi_df.to_csv(f'{run_dir}{os.path.sep}ISI_{isi}_probeDur2{os.path.sep}' \
+                               f'{p_name}_w_sep.csv', index=False)
 
 
     # create all_data_df - reshape to 2d
@@ -537,10 +629,7 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
         print(f"all_data_df:\n{all_data_df}")
 
     if save_all_data:
-        # Save xlsx in run folder if just one run, or participant folder if multiple runs.
-        # save_name = f'{run}_ALLDATA-sorted.xlsx'
-        save_name = 'ALLDATA-sorted.xlsx'
-
+        save_name = 'RUNDATA-sorted.xlsx'
         save_excel_path = os.path.join(run_dir, save_name)
         if verbose:
             print(f"\nsaving all_data_df to save_excel_path:\n{save_excel_path}")
@@ -715,7 +804,6 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
     
                     later the 8th panel is added - not sure what this is yet...
                     '''
-
                     fig.suptitle(f'Staircases and reversals for isi {isi_name}')
 
                     # plot thr per step for odd numbered stair
@@ -822,13 +910,13 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
     n_reversals_df = n_reversals_df.astype(int)
     if verbose:
         print(f'\nn_reversals_df:\n{n_reversals_df}')
-    n_reversals_df.to_csv(f'{save_path}{os.sep}n_reversals.csv')
+    n_reversals_df.to_csv(f'{save_path}{os.sep}n_reversals.csv', index=False)
 
     print("\n***finished b3_plot_staircases()***\n")
 
 ####################
 # all_data_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim/' \
-#                     'Nick_practice/P6a-Kim/ALLDATA-sorted.xlsx'
+#                     'Nick_practice/P6a-Kim/RUNDATA-sorted.xlsx'
 # b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_response',
 #                   show_plots=True, save_plots=True, verbose=True)
 
@@ -986,6 +1074,7 @@ def c_plots(save_path, thr_col='probeLum', show_plots=True, verbose=True):
     # # # use plot_pos_sep_and_one_probe(one_probe=False)
     # # each sep row in pos_sep_df is divided by one_probe_df.
     fig4_save_name = f'dataDivOneProbe.png'
+    fig4_title = f'two-probe conditions divided by one-probe conditions'
     pos_sep_df, one_probe_df = split_df_into_pos_sep_df_and_one_probe_df(psig_thr_mean_df)
     pos_sep_arr = pos_sep_df.to_numpy()
     one_probe_arr = one_probe_df['probeLum'].to_numpy()
@@ -997,7 +1086,7 @@ def c_plots(save_path, thr_col='probeLum', show_plots=True, verbose=True):
 
     plot_pos_sep_and_one_probe(div_by_one_probe_df,
                                thr_col='probeLum',
-                               fig_title=fig4_save_name[:-4],
+                               fig_title=fig4_title,
                                one_probe=False,
                                save_path=save_path,
                                save_name=fig4_save_name,
@@ -1099,13 +1188,18 @@ def d_average_participant(root_path, run_dir_names_list,
         print('calling robust mean function')
         # todo: for 12 data point, drop the 2 highest and lowst
         ave_TM_psignifit_thr_df = get_trimmed_mean_df(all_data_psignifit_df)
-        ave_TM_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM_thresh.csv')
+        ave_TM_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM_thresh.csv', index=False)
         if verbose:
             print(f'ave_TM_psignifit_thr_df:\n{ave_TM_psignifit_thr_df}')
     else:
-        ave_psignifit_thr_df = all_data_psignifit_df.drop('Run', axis=1)
-        ave_psignifit_thr_df = ave_psignifit_thr_df.groupby('Separation', sort=False).mean()
-        ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_thresh.csv')
+        get_mean_sem_df = all_data_psignifit_df.drop('Run', axis=1)
+        ave_psignifit_thr_df = get_mean_sem_df.groupby('Separation', sort=False).mean()
+
+
+        stdev_psignifit_thr_df = get_mean_sem_df.groupby('Separation', sort=False).sem()
+        print(f'stdev_psignifit_thr_df:\n{stdev_psignifit_thr_df}')
+
+        ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_thresh.csv', index=False)
         if verbose:
             print(f'ave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
 
@@ -1141,85 +1235,32 @@ def d_average_participant(root_path, run_dir_names_list,
     # todo: fig1b with ISI on x-axis and different lines for each sep.
     # # fig 1b
     if trimmed_mean:
-        fig_1b_df = ave_TM_psignifit_thr_df.T
+        fig_1b_df = ave_TM_psignifit_thr_df
         fig1b_title = f'Participant trimmed mean of thresholds across all runs'
         fig1b_savename = f'ave_TM_thr_all_runs_T.png'
     else:
-        fig_1b_df = ave_psignifit_thr_df.T
+        fig_1b_df = ave_psignifit_thr_df
         fig1b_title = f'Participant average threshold across all runs'
         fig1b_savename = f'ave_thr_all_runs_T.png'
     if verbose:
-        print(f'fig_1b_df:\n{fig_1b_df}')
+        print(f'\nfig_1b_df:\n{fig_1b_df}')
 
-    # # #
-    # if isi_name_list is None:
-    #     isi_name_list = ['Concurrent', 'ISI0', 'ISI2', 'ISI4',
-    #                      'ISI6', 'ISI9', 'ISI12', 'ISI24']
-    #     if verbose:
-    #         print(f'isi_name_list: {isi_name_list}')
+    plot_pos_sep_x_axis_isi(pos_sep_x_axis_isi_df=fig_1b_df,
+                            fig_title=fig1b_title,
+                            save_path=root_path,
+                            save_name=fig1b_savename,
+                            isi_int_list=[-1, 0, 2, 4, 6, 9, 12, 24],
+                            isi_name_list=['Conc', '0', '2', '4', '6', '9', '12', '24'],
+                            verbose=True)
 
-    # if pos_set_ticks is None:
-    pos_set_ticks = [-1, 0, 2, 4, 6, 9, 12, 24]
-    fig_1b_df.insert(0, 'isi', pos_set_ticks)
-    # fig_1b_df.columns = pos_set_ticks
-    fig_1b_df.set_index('isi', inplace=True)
-    # if pos_tick_labels is None:
-    #     pos_tick_labels = [0, 1, 2, 3, 6, 18, 'one\nprobe']
-
-    # # call function to split df into pos_sep_df and one_probe_df
-    # if one_probe:
-    #     pos_sep_df, one_probe_df = split_df_into_pos_sep_df_and_one_probe_df(
-    #         pos_sep_and_one_probe_df=pos_sep_and_one_probe_df, isi_name_list=isi_name_list)
-    #     if verbose:
-    #         print(f'pos_sep_df:\n{pos_sep_df}\none_probe_df:\n{one_probe_df}')
-    # else:
-    #     pos_sep_df = pos_sep_and_one_probe_df
-
-    # make fig1
-    fig, ax = plt.subplots(figsize=(10, 6))
-
-    # line plot for main ISIs
-    sns.lineplot(data=fig_1b_df, markers=True, dashes=False, ax=ax)
-
-    # # scatter plot for single probe conditions
-    # if one_probe:
-    #     sns.scatterplot(data=one_probe_df, x="x_vals", y=thr_col,
-    #                     hue="ISIs", style='ISIs', ax=ax)
-
-    # # decorate plot
-    # ax.legend(labels=isi_name_list, title='ISI',
-    #           shadow=True,
-    #           # place lower left corner of legend at specified location.
-    #           loc='lower left', bbox_to_anchor=(0.96, 0.5))
-    #
-    # if one_probe:
-    ax.set_xticklabels(['Conc', '0', '2', '4',
-                         '6', '9', '12', '24'])
-    ax.set_xticks(pos_set_ticks)
-    # ax.set(xticks=pos_set_ticks, xticklabels=isi_name_list)
-    # else:
-    #     ax.set_xticks(pos_set_ticks[:-1])
-    #     ax.set_xticklabels(pos_tick_labels[:-1])
-    #
-    ax.set_ylim([40, 90])
-    ax.set_xlabel('Inter stimulus interval (ISI)')
-    ax.set_ylabel('Probe Luminance')
-    #
-    # if fig_title is not None:
-    #     plt.title(fig_title)
-    #
-    # if save_path is not None:
-    #     if save_name is not None:
-    #         plt.savefig(f'{save_path}{os.sep}{save_name}')
-    # # #
-
-
-    # if show_plots:
-    plt.show()
-    # plt.close()
+    if show_plots:
+        plt.show()
+    plt.close()
 
     if verbose:
         print('finished fig1b')
+
+
     # # Fig 2
     # todo: add error bars
     if trimmed_mean:
