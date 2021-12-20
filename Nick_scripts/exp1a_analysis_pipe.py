@@ -2,6 +2,8 @@ import os
 
 import pandas as pd
 
+from exp1a_psignifit_analysis import a_data_extraction, b3_plot_staircase
+from exp1a_psignifit_analysis import c_plots, d_average_participant
 from psignifit_tools import get_psignifit_threshold_df
 
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
@@ -28,7 +30,7 @@ for run_idx, run_dir in enumerate(run_folder_names):
     # '''a'''
     p_name = f'{participant_name}{run_idx+1}'
     isi_list = [-1, 0, 2, 4, 6, 9, 12, 24]
-    # a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=isi_list, verbose=True)
+    a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=isi_list, verbose=True)
 
     run_data_path = f'{save_path}{os.sep}RUNDATA-sorted.xlsx'
 
@@ -54,18 +56,18 @@ for run_idx, run_dir in enumerate(run_folder_names):
                                             group=group,
                                             verbose=True)
 
-        #
-        # # '''b3'''
-        # # # run_data_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim_split_runs/' \
-        # # #                 'Nick_practice/P6a-Kim/RUNDATA-sorted.xlsx'
-        # # b3_plot_staircase(run_data_path, show_plots=False)
-        # #
-        # # '''c'''
-        # # c_plots(save_path=save_path, show_plots=False)
+
+        '''b3'''
+        # run_data_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim_split_runs/' \
+        #                 'Nick_practice/P6a-Kim/RUNDATA-sorted.xlsx'
+        b3_plot_staircase(run_data_path, show_plots=False)
+
+        '''c'''
+        c_plots(save_path=save_path, show_plots=False)
 
 '''d'''
-# root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim_split_runs'  # master folder containing all runs
-# run_folder_names = ['P6a-Kim', 'P6b-Kim', 'P6c-Kim', 'P6d-Kim', 'P6e-Kim', 'P6f-Kim']
-# d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-#                       show_plots=True, trimmed_mean=False)
+root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim_psignifit'  # master folder containing all runs
+run_folder_names = ['P6a-Kim', 'P6b-Kim', 'P6c-Kim', 'P6d-Kim', 'P6e-Kim', 'P6f-Kim']
+d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
+                      show_plots=True, trimmed_mean=False, error_bars='SE')
 print('exp1a_analysis_pipe finished')
