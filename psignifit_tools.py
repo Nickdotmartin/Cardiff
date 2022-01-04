@@ -461,7 +461,9 @@ def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
 
 def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bins=True,
                                sep_col='Separation', isi_list=None, sep_list=None, 
-                               group=None, verbose=True):
+                               group=None,
+                               cols_to_add_dict=None,
+                               verbose=True):
     """
     Function to make a dataframe (stair x isi) of psignifit threshold values for an entire run.
 
@@ -475,6 +477,7 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
     :param isi_list: Default=None. list of ISI values.  If None passed will use default values.
     :param sep_list: Default=None.  List of separation values.  If None passed will use defualts.
     :param group: Default=None.  Pass a group id for exp1a to differentiate between identical stairs (e.g., 1&2, 3&4 etc).
+    :param cols_to_add_dict: add dictionary of columns to insert to finished df (header=key, column=value)
     :param verbose: Print progress to screen
 
     :return: Dataframe of thresholds from psignifit for each ISI and stair.
@@ -513,10 +516,12 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
                                  f'{os.sep}ISI_{isi}_probeDur2/{csv_name}.csv')
             if 'Unnamed: 0' in list(isi_df):
                 isi_df.drop('Unnamed: 0', axis=1, inplace=True)
-            print(f'\nrunning analysis for {p_run_name}\n')
-            print(f"isi_df:\n{isi_df}")
         else:
             isi_df = csv_name[csv_name['ISI'] == isi]
+
+        if verbose:
+            print(f'\nrunning analysis for {p_run_name}\n')
+            print(f"isi_df:\n{isi_df}")
 
         # stair_list = sorted(list(isi_df['stair'].unique()))
         # print(f"stair_list: {stair_list}")
@@ -532,7 +537,7 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
             # get df just for one stair at this isi
             sep_df = isi_df[isi_df[sep_col] == sep]
             if verbose:
-                print(f'\nsep_df (sep={sep}, isi={isi}:\n{sep_df}')
+                print(f'\nsep_df ({sep_col}={sep}, isi={isi}:\n{sep_df}')
 
             # # # test with csv to numpy
             # yes script now works directly with df, don't need to load csv.
@@ -547,7 +552,7 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
 
             fit_curve_plot, psignifit_dict = results_to_psignifit(csv_path=sep_df, save_path=root_path,
                                                                   isi=isi, sep=sep, p_run_name=p_run_name,
-                                                                  sep_col='Separation', stair_levels=None,
+                                                                  sep_col=sep_col, stair_levels=[sep],
                                                                   thr_col='probeLum', resp_col='trial_response',
                                                                   quartile_bins=q_bins, n_bins=n_bins,
                                                                   save_np=False, target_threshold=.75,
@@ -565,7 +570,12 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
 
     # make dataframe from array
     thr_df = pd.DataFrame(thr_array, columns=isi_name_list)
-    thr_df.insert(0, 'Separation', sep_list)
+    thr_df.insert(0, sep_col, sep_list)
+
+    if cols_to_add_dict is not None:
+        for idx, (header, col_vals) in enumerate(cols_to_add_dict.items()):
+            thr_df.insert(idx+1, header, col_vals)
+
     if verbose:
         print(f"thr_df:\n{thr_df}")
 

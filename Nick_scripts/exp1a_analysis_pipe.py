@@ -29,44 +29,50 @@ for run_idx, run_dir in enumerate(run_folder_names):
 
     # '''a'''
     p_name = f'{participant_name}{run_idx+1}'
+
     isi_list = [-1, 0, 2, 4, 6, 9, 12, 24]
-    a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=isi_list, verbose=True)
+    run_data_df = a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=isi_list, verbose=True)
 
     run_data_path = f'{save_path}{os.sep}RUNDATA-sorted.xlsx'
 
     run_data_df = pd.read_excel(run_data_path, engine='openpyxl',
-                                usecols=['ISI', 'Separation', 'group',
+                                usecols=['ISI',
+                                         'stair',
+                                         'Separation', 'group',
                                          'probeLum', 'trial_response'])
     print(f"run_data_df:\n{run_data_df}")
-    # todo: change get_psignifit_threshold_df to take csv as input so I can use RUNDATA rather than raw data.
-    for group in group_list:
 
-        group_df = run_data_df[run_data_df['group'] == group]
-        print(f"group_df:\n{list(group_df.columns)}\n{group_df}")
+    stair_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+    cols_to_add_dict = {'group': [1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2],
+                        'Separation': [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0, 20, 20]}
 
-        '''get psignifit thresholds df'''
-        thr_df = get_psignifit_threshold_df(root_path=root_path,
-                                            p_run_name=run_dir,
-                                            # csv_name=p_name,
-                                            csv_name=group_df,
-                                            n_bins=10, q_bins=True,
-                                            isi_list=isi_list,
-                                            sep_list=[18, 6, 3, 2, 1, 0, 99],
-                                            # sep_list=[18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0, 99, 99],
-                                            group=group,
-                                            verbose=True)
+    '''get psignifit thresholds df'''
+    thr_df = get_psignifit_threshold_df(root_path=root_path,
+                                        p_run_name=run_dir,
+                                        # csv_name=p_name,
+                                        csv_name=run_data_df,
+                                        n_bins=10, q_bins=True,
+                                        sep_col='stair',
+                                        isi_list=isi_list,
+                                        # sep_list=[18, 6, 3, 2, 1, 0, 99],
+                                        # sep_list=[18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0, 99, 99],
+                                        sep_list=stair_list,
+                                        # group=group,
+                                        cols_to_add_dict=cols_to_add_dict,
+                                        verbose=True)
+    print(f'thr_df:\n{thr_df}')
 
 
-        '''b3'''
-        # run_data_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim_split_runs/' \
-        #                 'Nick_practice/P6a-Kim/RUNDATA-sorted.xlsx'
-        b3_plot_staircase(run_data_path, show_plots=False)
+    '''b3'''
+    # run_data_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim_split_runs/' \
+    #                 'Nick_practice/P6a-Kim/RUNDATA-sorted.xlsx'
+    b3_plot_staircase(run_data_path, show_plots=True)
 
-        '''c'''
-        c_plots(save_path=save_path, show_plots=False)
+    # '''c'''
+    c_plots(save_path=save_path, show_plots=True)
 
 '''d'''
-root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim_psignifit'  # master folder containing all runs
+root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim_split_runs'  # master folder containing all runs
 run_folder_names = ['P6a-Kim', 'P6b-Kim', 'P6c-Kim', 'P6d-Kim', 'P6e-Kim', 'P6f-Kim']
 d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
                       show_plots=True, trimmed_mean=False, error_bars='SE')
