@@ -650,6 +650,144 @@ def plot_thr_heatmap(heatmap_df,
 
 ##########################
 
+def trim_n_high_n_low(all_data_df, trim_from_ends=None, reference_col='Separation',
+                      loop_col_1='Run', loop_col_2='group', verbose=True):
+    """
+    Function for trimming the n highest and lowest values from each condition of a set with multiple runs.
+
+    :param all_data_df: Dataset to be trimmed.
+    :param trim_from_ends: number of values to trim from each end of the distribution.
+    :param reference_col: Column containing repeated conditions (e.g., same label for each run).
+    :param loop_col_1: first index label (e.g., 'Run')
+    :param loop_col_2: second index label (e.g., group)
+    :param verbose: in true will print progress to screen.
+
+    :return: trimmed df
+    """
+    print('\n*** running trim_high_n_low() ***')
+
+    '''Part 1, convert 2d df into 3d numpy array'''
+    # prepare to extract numpy
+    if verbose:
+        print(f'all_data_df {all_data_df.shape}:\n{all_data_df.head(25)}')
+
+    # get unique values to loop over
+    run_list = list(all_data_df[loop_col_1].unique())
+    group_list = list(all_data_df[loop_col_2].unique())
+    datapoints_per_cond = len(run_list)*len(group_list)
+
+    if verbose:
+        print(f'\nrun_list:\n{run_list}\n'
+              f'group_list:\n{group_list}\n'
+              f'datapoints_per_cond:\n{datapoints_per_cond}')
+
+    # loop through df to get 3d numpy
+    my_list = []
+    for run in run_list:
+        run_df = all_data_df[all_data_df[loop_col_1] == run]
+        run_df = run_df.drop(loop_col_1, axis=1)
+        # print(f'run{run}_df ({run_df.shape}):\n{run_df}')
+        for group in group_list:
+            group_df = run_df[run_df[loop_col_2] == group]
+            group_df = group_df.drop(loop_col_2, axis=1)
+            sep_list = list(group_df.pop(reference_col))
+            isi_name_list = list(group_df.columns)
+            # print(f'group{group}_df ({group_df.shape}):\n{group_df}')
+            my_list.append(group_df.to_numpy())
+
+    # 3d numpy array are indexed with [depth, row, col]
+    # use variables depth_3d, rows_3d, cols_all later to reshaped_2d_array trimmed array
+    my_3d_array = np.array(my_list)
+    depth_3d, rows_3d, cols_all = np.shape(my_3d_array)
+
+    if trim_from_ends is not None:
+        target_3d_depth = depth_3d - 2*trim_from_ends
+    else:
+        target_3d_depth = depth_3d
+    target_2d_rows = target_3d_depth * rows_3d
+    if verbose:
+        print(f'\nUse these values for defining array shapes.\n'
+              f'target_3d_depth (depth-trim): {target_3d_depth}, '
+              f'3d shape after trim (target_3d_depth, rows_3d, cols_all) = '
+              f'({target_3d_depth}, {rows_3d}, {cols_all})\n'
+              f'2d array shape (after trim, but before Separation, stack or headers are added): '
+              f'(target_2d_rows, cols_all) = ({target_2d_rows}, {cols_all})')
+
+    '''Part 2, trim highest and lowest n values from each depth slice to get trimmed_3d_list'''
+    if verbose:
+        print('\ngetting depth slices to trim...')
+    trimmed_3d_list = []
+    counter = 0
+    for col in list(range(cols_all)):
+        row_list = []
+        for row in list(range(rows_3d)):
+            depth_slice = my_3d_array[:, row, col]
+            depth_slice = np.sort(depth_slice)
+            if trim_from_ends is not None:
+                trimmed = depth_slice[trim_from_ends: -trim_from_ends]
+            else:
+                trimmed = depth_slice[:]
+            # if verbose:
+                # print(f'{counter}: {trimmed}')
+            row_list.append(trimmed)
+            counter += 1
+        trimmed_3d_list.append(row_list)
+
+    """
+    Part 3, turn 3d numpy back into 2d df.
+    trimmed_3d_list is a list of arrays (e.g., 3d).  Each array relates to a
+    depth-stack of my_3d_array which has now be trimmed (e.g., fewer rows).
+    However, trimmed_3d_list has the same depth and number of columns as my_3d_array.
+    trimmed_array re-shapes trimmed_3d_list so all values are in their original
+    row and column positions (e.g., Separation and ISI).
+    However, the 3rd dimension (depth) is not in original order, but in ascending order."""
+
+    trimmed_3d_array = np.array(trimmed_3d_list)
+    print(f'\n\nReshaping trimmed data\ntrimmed_3d_array: {np.shape(trimmed_3d_array)}')
+    if verbose:
+        print(trimmed_3d_array)
+
+    ravel_array_f = np.ravel(trimmed_3d_array, order='F')
+    print(f'\n1. ravel_array_f: {np.shape(ravel_array_f)}')
+    if verbose:
+        print(ravel_array_f)
+
+    reshaped_3d_array = ravel_array_f.reshape(target_3d_depth, rows_3d, cols_all)
+    print(f'\n2. reshaped_3d_array: {np.shape(reshaped_3d_array)}')
+    if verbose:
+        print(reshaped_3d_array)
+
+    reshaped_2d_array = reshaped_3d_array.reshape(target_2d_rows, -1)
+    print(f'\n3. reshaped_2d_array {np.shape(reshaped_2d_array)}')
+    if verbose:
+        print(reshaped_2d_array)
+
+    stack_col = np.repeat(np.arange(target_3d_depth), rows_3d)
+    sep_list_depth = sep_list*target_3d_depth
+
+    if verbose:
+        print(f'\ndetails for df\n'
+              f'isi_name_list: {isi_name_list}\n'
+              f'sep_list: {sep_list}\n'
+              f'stack_col: {stack_col}\n'
+              f'sep_list_depth: {sep_list_depth}')
+
+    trimmed_df = pd.DataFrame(reshaped_2d_array, columns=isi_name_list)
+    trimmed_df.insert(0, 'stack', stack_col)
+    trimmed_df.insert(1, reference_col, sep_list_depth)
+    print(f'\ntrimmed_df {trimmed_df.shape}:\n{trimmed_df}')
+
+    print(f'trimmed {trim_from_ends} highest and lowest values ({2*trim_from_ends} in total) from each of the '
+          f'{datapoints_per_cond} datapoints so there are now '
+          f'{target_3d_depth} datapoints for each of the '
+          f'{rows_3d} x {cols_all} conditions.')
+
+    print('\n*** finished trim_high_n_low() ***')
+
+    return trimmed_df
+
+
+##################
 
 def make_long_df(wide_df, wide_stubnames='ISI',
                  col_to_keep='Separation', idx_col='Run', verbose=True):
@@ -1405,39 +1543,6 @@ def c_plots(save_path, thr_col='probeLum', show_plots=True, verbose=True):
         sep_col_s = psig_thr_df.pop('Separation')
     psig_thr_df.columns = isi_name_list
 
-    # # split into pos_sep, neg_sep and mean of pos and neg.
-    # psig_pos_sep_df, psig_neg_sep_df = split_df_alternate_rows(psig_thr_df)
-    # psig_thr_mean_df = pd.concat([psig_pos_sep_df, psig_neg_sep_df]).groupby(level=0).mean()
-    #
-    # # add sep column in
-    # # sep_list = [0, 1, 2, 3, 6, 18, 20]
-    # # psig_thr_mean_df.insert(0, 'Separation', sep_list)
-    # # psig_pos_sep_df.insert(0, 'Separation', sep_list)
-    # # psig_neg_sep_df.insert(0, 'Separation', sep_list)
-    # if verbose:
-    #     print(f'\npsig_pos_sep_df:\n{psig_pos_sep_df}')
-    #     print(f'\npsig_neg_sep_df:\n{psig_neg_sep_df}')
-    #     print(f'\npsig_thr_mean_df:\n{psig_thr_mean_df}')
-
-    # # the values listed as separation=20 are actually for the single probe cond.
-    # # Chop last row off and add values later.
-    # psig_thr_mean_df, mean_one_probe_df = \
-    #     psig_thr_mean_df.drop(psig_thr_mean_df.tail(1).index), psig_thr_mean_df.tail(1)
-    # psig_pos_sep_df, thr1_one_probe_df = \
-    #     psig_pos_sep_df.drop(psig_pos_sep_df.tail(1).index), psig_pos_sep_df.tail(1)
-    # psig_neg_sep_df, thr2_one_probe_df = \
-    #     psig_neg_sep_df.drop(psig_neg_sep_df.tail(1).index), psig_neg_sep_df.tail(1)
-    # if verbose:
-    #     print(f'\npsig_thr_mean_df (chopped off one_probe):\n{psig_thr_mean_df}')
-
-    # # put the one_probe values into a df to use later
-    # one_probe_df = pd.concat([thr1_one_probe_df, thr2_one_probe_df, mean_one_probe_df],
-    #                          ignore_index=True)
-    # one_probe_df.insert(0, 'dset', ['thr1', 'thr2', 'mean'])
-    # one_probe_df.insert(0, 'x_val', [-1, -1, -1])
-    # if verbose:
-    #     print(f'one_probe_df:\n{one_probe_df}')
-
 
     # lastN_pos_sym_np has values for 1-indexed stairs [1, 3, 5, 7, 9, 11, 9, 7, 5, 3, 1, 13]
     # these correspond to separation values:     [18, 6, 3, 2, 1, 0, 1, 2, 3, 6, 18, 99]
@@ -1670,48 +1775,53 @@ def d_average_participant(root_path, run_dir_names_list,
     if verbose:
         print(f'np.shape(all_psignifit_list): {np.shape(all_psignifit_list)}')
         print(f'\nall_data_psignifit_df:\n{all_data_psignifit_df}')
+        # group_list = list(all_data_psignifit_df['group'].unique())
+        # print(group_list)
 
-    # todo: delete this
-    np.save(f'{root_path}{os.sep}all_psignifit_list', all_psignifit_list)
+    # # trim highest and lowest values
+    trimmed_df = trim_n_high_n_low(all_data_psignifit_df, trim_from_ends=3,
+                                   reference_col='Separation',
+                                   loop_col_1='Run', loop_col_2='group',
+                                   verbose=False)
 
-    # get mean of all runs (each sep and ISI)
-    # try just grouping the master sheet first, rather than using concat.
-    if trimmed_mean:
-        print('calling robust mean function')
-        # todo: for 12 data point, drop the 2 highest and lowst
-        ave_TM_psignifit_thr_df = get_trimmed_mean_df(all_data_psignifit_df)
-        ave_TM_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM_thresh.csv', index=False)
-        if verbose:
-            print(f'ave_TM_psignifit_thr_df:\n{ave_TM_psignifit_thr_df}')
-    else:
-        groupby_sep_df = all_data_psignifit_df.drop('Run', axis=1)
-        ave_psignifit_thr_df = groupby_sep_df.groupby('Separation', sort=True).mean()
-
-        if error_bars in [False, None]:
-            error_bars_df = None
-        elif error_bars.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
-            error_bars_df = groupby_sep_df.groupby('Separation', sort=True).sem()
-            print(f'error_bars_df: ({error_bars})\n{error_bars_df}')
-        elif error_bars.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
-            error_bars_df = groupby_sep_df.groupby('Separation', sort=True).std()
-            print(f'error_bars_df:\n{error_bars_df}')
-        else:
-            raise ValueError(f"error_bars should be in:\nfor none: [False, None]\n"
-                             f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standrad_error']\n"
-                             f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
-                             f"'deviation', 'standard_deviation']")
-
-
-        ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_thresh.csv', index=False)
-        if verbose:
-            print(f'ave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
-
-        # print(f'test groupby')
-        # grouped_df = groupby_sep_df.groupby('Separation', sort=True)
-        # print(grouped_df.describe())
-        # print(list(grouped_df.describe()))
-
-
+    # # get mean of all runs (each sep and ISI)
+    # # try just grouping the master sheet first, rather than using concat.
+    # if trimmed_mean:
+    #     print('calling robust mean function')
+    #     # todo: for 12 data point, drop the 2 highest and lowst
+    #     ave_TM_psignifit_thr_df = get_trimmed_mean_df(all_data_psignifit_df)
+    #     ave_TM_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM_thresh.csv', index=False)
+    #     if verbose:
+    #         print(f'ave_TM_psignifit_thr_df:\n{ave_TM_psignifit_thr_df}')
+    # else:
+    #     groupby_sep_df = all_data_psignifit_df.drop('Run', axis=1)
+    #     ave_psignifit_thr_df = groupby_sep_df.groupby('Separation', sort=True).mean()
+    #
+    #     if error_bars in [False, None]:
+    #         error_bars_df = None
+    #     elif error_bars.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
+    #         error_bars_df = groupby_sep_df.groupby('Separation', sort=True).sem()
+    #         print(f'error_bars_df: ({error_bars})\n{error_bars_df}')
+    #     elif error_bars.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
+    #         error_bars_df = groupby_sep_df.groupby('Separation', sort=True).std()
+    #         print(f'error_bars_df:\n{error_bars_df}')
+    #     else:
+    #         raise ValueError(f"error_bars should be in:\nfor none: [False, None]\n"
+    #                          f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standrad_error']\n"
+    #                          f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
+    #                          f"'deviation', 'standard_deviation']")
+    #
+    #
+    #     ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_thresh.csv', index=False)
+    #     if verbose:
+    #         print(f'ave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
+    #
+    #     # print(f'test groupby')
+    #     # grouped_df = groupby_sep_df.groupby('Separation', sort=True)
+    #     # print(grouped_df.describe())
+    #     # print(list(grouped_df.describe()))
+    #
+    #
 
     # part 2. main Figures (these are the ones saved in the matlab script)
     # Fig1: single ax, pos_sep_and_one_probe.  Uses ave_next_thr_df: for thr values (e.g., mean of all runs).
