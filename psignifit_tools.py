@@ -17,7 +17,6 @@ This script contains the analysis pipeline for individual participants.
 4. Plot psychometric function
 """
 
-# todo: change default sep_col to 'Separation'?
 def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='stair',
                                     stair_levels=None, 
                                     thr_col='probeLum', resp_col='trial_response',
@@ -156,40 +155,6 @@ def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='sta
     return data_np, bin_data_dict
 
 # # # # # # # #
-# # # 1. load in CSV file.
-# exp_csv_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim/' \
-#                'Nick_practice/P6a-Kim/ISI_24_probeDur2/Kim1.csv'
-# isi=24
-# participant_run_name = 'Kim1'
-# sep=18
-# stair_levels = [1]
-# q_bins=False
-# n_bins=10
-# results_np, bin_data_dict = results_csv_to_np_for_psignifit(csv_path=exp_csv_path,
-#                                                              isi=isi, sep=18,
-#                                                              p_run_name=participant_run_name,
-#                                                              stair_levels=stair_levels,
-#                                                              quartile_bins=q_bins, n_bins=n_bins,
-#                                                              save_np_path=
-#                                                             '/Users/nickmartin/Documents/'
-#                                                             'PycharmProjects/Cardiff/Kim/' \
-#                                                             f'Nick_practice/P6a-Kim')
-#
-# print(f'results_np: {results_np}')
-#
-#
-# data = results_np
-# target_threshold = .75
-# sig_name = 'norm'  # 'logistic' 'norm'
-# est_type = 'mean'  # 'MAP'
-# dset_name = bin_data_dict['dset_name']
-# csv_path = bin_data_dict['csv_path']
-# save_path = bin_data_dict['save_np_path']
-# if save_path is None:
-#     tail, head = os.path.split(csv_path)
-#     save_path, head = os.path.split(tail)
-# save_plot=True
-
 
 def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
                   sig_name='norm', est_type='MAP', n_blocks=None,
@@ -301,50 +266,8 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
 
 
 # # # # # # # # #
-# # # 1. load in CSV file.
-# exp_csv_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim/' \
-#                'Nick_practice/P6a-Kim/ISI_4_probeDur2/Kim1.csv'
-# isi=24
-# participant_run_name = 'Kim1'
-# sep=18
-# stair_levels = [1, 2]
-# q_bins=False
-# n_bins=10
-# results_np, bin_data_dict = results_csv_to_np_for_psignifit(csv_path=exp_csv_path,
-#                                                              isi=isi, sep=18,
-#                                                              p_run_name=participant_run_name,
-#                                                              stair_levels=stair_levels,
-#                                                              quartile_bins=q_bins, n_bins=n_bins,
-#                                                              save_np_path=None)
-#
-# print(f'results_np:\n{results_np}')
-# print('\nbin_data_dict')
-# for k, v in bin_data_dict.items():
-#     print(k, v)
-# #
-# # data = results_np
-# target_threshold = .75
-# sig_name = 'norm'  # 'logistic' 'norm'
-# est_type = 'MAP'  # 'MAP'
-# # dset_name = bin_data_dict['dset_name']
-# csv_path = bin_data_dict['csv_path']
-# save_path = bin_data_dict['save_np_path']
-# print(f'check save_path: {save_path}')
-#
-# if save_path is None:
-#     tail, head = os.path.split(csv_path)
-#     save_path, head = os.path.split(tail)
-#
-# print(f'check save_path: {save_path}')
-# save_plot=True
-#
-# fit_curve_plot, psignifit_dict = run_psignifit(data_np=results_np, bin_data_dict=bin_data_dict,
-#                                                save_path=save_path, target_threshold=target_threshold,
-#                                                sig_name=sig_name, est_type=est_type, save_plot=save_plot,
-#                                                verbose=True)
-#
 
-# todo: change default sep_col to 'Separation'?
+
 def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
                          sep_col='stair', stair_levels=None,
                          thr_col='probeLum', resp_col='trial_response',
@@ -352,9 +275,7 @@ def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
                          target_threshold=.75,
                          sig_name='norm', est_type='MAP',
                          save_plot=True, show_plot=False,
-                         verbose=True
-                         ):
-
+                         verbose=True):
     """
     Function to fit curve with psignifit to raw_data.csv in one go.  It calls
     results_csv_to_np_for_psignifit() and run_psignifit().
@@ -435,28 +356,6 @@ def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
 
 
 # # # # # #
-# exp_csv_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim/' \
-#                'Nick_practice/P6a-Kim/ISI_24_probeDur2/Kim1.csv'
-# save_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim/' \
-#                'Nick_practice/P6a-Kim'
-# isi = 24
-# participant_run_name = 'Kim1'
-# sep = 18
-# stair_levels = [1, 2]
-# q_bins = False
-# n_bins = 10
-#
-# fit_curve_plot, psignifit_dict = results_to_psignifit(csv_path=exp_csv_path, save_path=save_path,
-#                                                       isi=isi, sep=sep, p_run_name=participant_run_name,
-#                                                       sep_col='stair', stair_levels=stair_levels,
-#                                                       thr_col='probeLum', resp_col='trial_response',
-#                                                       quartile_bins=q_bins, n_bins=n_bins, save_np=False,
-#                                                       target_threshold=.75,
-#                                                       sig_name='norm', est_type='MAP',
-#                                                       save_plot=True, show_plot=False,
-#                                                       verbose=True
-#                                                       )
-
 
 
 def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bins=True,

@@ -30,14 +30,10 @@ merge_pos_and_neg_sep_dfs():
 split_df_into_pos_sep_df_and_one_probe_df():
     code to turn array into symmetrical array (e.g., from sep=[0, 1, 2, 3, 6, 18] 
     into sep=[-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18])
-
-split df into pos_sep_df and one_probe_df
-
-
 """
 
-# todo: some of these functions are duplicated in the OLD_psignifit_analysis.py script.
-#  I don't need to two copies, so perhaps make a 'data_tools' script and put them there?
+pd.options.display.float_format = "{:,.2f}".format
+
 
 def split_df_alternate_rows(df):
     """
@@ -92,8 +88,6 @@ def merge_pos_and_neg_sep_dfs(pos_sep_df, neg_sep_df):
     if pos_sep_df.shape != neg_sep_df.shape:
         raise ValueError(f'Dataframes to be merged must have same shape.\n'
                          f'pos_sep_df: {pos_sep_df.shape}, neg_sep_df: {neg_sep_df.shape}')
-    # else:
-    #     print('shapes match :)')
 
     # reset indices for sorting
     pos_sep_df.reset_index(drop=True, inplace=True)
@@ -162,67 +156,15 @@ def split_df_into_pos_sep_df_and_one_probe_df(pos_sep_and_one_probe_df,
         one_probe_pos = one_probe_df.index.tolist()[-1]
         print(f'one_probe_pos: {one_probe_pos}')
 
-
     one_probe_lum_list = one_probe_df.values.tolist()[0]
     one_probe_dict = {'ISIs': isi_name_list,
                       'probeLum': one_probe_lum_list,
-                      'x_vals': [one_probe_pos for i in isi_name_list]}
+                      'x_vals': [one_probe_pos for _ in isi_name_list]}
     one_probe_df = pd.DataFrame.from_dict(one_probe_dict)
     if verbose:
         print(f'one_probe_df:\n{one_probe_df}')
 
     return pos_sep_df, one_probe_df
-
-
-# def get_trimmed_mean_df(data_df, col_to_average_across='Run',
-#                         first_col_to_keep='Separation',
-#                         n_cut_from_each_tail=1,
-#                         verbose=True):
-#     """
-#     Function to calculate the trimmed mean of values in a dataframe.
-#     Trimmed mean involves removing the highest and lowest value before
-#     calculating the mean.
-#
-#     The function assumes you want to find the average threshold for each
-#     ISI & separation combination across several runs.
-#
-#     :param data_df: Dataframe containing thresholds for ISI & separation
-#         combinations across several runs, where runs is one of the columns.
-#     :param col_to_average_across: Default = 'Runs'.
-#     :param first_col_to_keep: Default = 'Separation'
-#     :param n_cut_from_each_tail: Default = 1.  Number to cut from each tail.
-#         e.g., if 1 is passed it will cut the 1 highest AND 1 lowest value.
-#     :param verbose: print progress to screen
-#
-#     :return: trimmed_mean_df Dataframe showing the trimmed means.
-#     """
-#
-#     # get number of datapoints to average across (used re-shaping array)
-#     n_runs = len(data_df[col_to_average_across].unique())
-#
-#     # sort columns and re-shape data
-#     data_df = data_df.drop(col_to_average_across, axis=1)
-#     sep_col = data_df.pop(first_col_to_keep)
-#     headers = list(data_df.columns)
-#     n_rows, n_cols = data_df.shape
-#     data_array = data_df.to_numpy().reshape(n_runs, int(n_rows / n_runs), n_cols)
-#
-#     # get trimmed mean
-#     prop_to_cut = n_cut_from_each_tail/n_runs
-#     trimmed_mean_np = stats.trim_mean(data_array, proportiontocut=prop_to_cut, axis=0)
-#     trimmed_mean_df = pd.DataFrame(trimmed_mean_np, columns=headers)
-#     trimmed_mean_df.insert(0, first_col_to_keep, sep_col)
-#     trimmed_mean_df = trimmed_mean_df.set_index([first_col_to_keep])
-#     if verbose:
-#         print(f'\ntrimmed_mean_df:\n{trimmed_mean_df}')
-#
-#     # get sd
-#     trimmed_stdev_np = stats.mstats.trimmed_std(data_array,
-#                                                 limits=(prop_to_cut*100, prop_to_cut*100), relative=True)
-#
-#
-#     return trimmed_mean_df
-
 
 
 # # choose colour palette
@@ -234,8 +176,8 @@ def fig_colours(n_conditions, alternative_colours=False):
     :param alternative_colours: a second pallet of alternative colours.
     :return: a colour pallet
     """
+
     use_colours = 'colorblind'
-    use_cmap = False
     if alternative_colours:
         use_colours = 'husl'
 
@@ -244,9 +186,10 @@ def fig_colours(n_conditions, alternative_colours=False):
     elif n_conditions > 20:
         use_colour = 'spectral'
 
+    use_cmap = False
+
     my_colours = sns.color_palette(palette=use_colours, n_colors=n_conditions, as_cmap=use_cmap)
     sns.set_palette(palette=use_colours, n_colors=n_conditions)
-
 
     return my_colours
 
@@ -301,7 +244,6 @@ def plot_pos_sep_and_one_probe(pos_sep_and_one_probe_df,
     if pos_tick_labels is None:
         pos_tick_labels = [0, 1, 2, 3, 6, 18, 'one\nprobe']
 
-
     # call function to split df into pos_sep_df and one_probe_df
     if one_probe:
         pos_sep_df, one_probe_df = split_df_into_pos_sep_df_and_one_probe_df(
@@ -317,13 +259,12 @@ def plot_pos_sep_and_one_probe(pos_sep_and_one_probe_df,
     # line plot for main ISIs
     sns.lineplot(data=pos_sep_df, markers=True, dashes=False, ax=ax)
 
-    if error_bars_df != None:
+    if error_bars_df is not None:
         lvls = error_bars_df.group.unique()
         for i in lvls:
             ax.errorbar(x=error_bars_df[error_bars_df['group'] == i]["x"],
                         y=error_bars_df[error_bars_df['group'] == i]["y"],
                         yerr=error_bars_df[error_bars_df['group'] == i]["stderr"], label=i)
-
 
     # scatter plot for single probe conditions
     if one_probe:
@@ -409,7 +350,6 @@ def plot_1probe_w_errors(fig_df, error_df, split_1probe=True,
     if verbose:
         print(f'two_probe_df:\n{two_probe_df}')
         print(f'two_probe_er_df:\n{two_probe_er_df}')
-
 
     # get names for legend (e.g., different lines)
     column_names = two_probe_df.columns.to_list()
@@ -546,7 +486,7 @@ def plot_w_errors_no_1probe(wide_df, x_var, y_var, lines_var,
         cap_size = .1
 
     # convert wide_df to long for getting means and standard error.
-    long_fig_df = make_long_df(wide_df)
+    long_fig_df = make_long_df(wide_df, idx_col='stack')
     if verbose:
         print(f'long_fig_df:\n{long_fig_df}')
 
@@ -603,7 +543,6 @@ def plot_thr_heatmap(heatmap_df,
                      save_name=None,
                      save_path=None,
                      verbose=True):
-
     """
     Function for making a heatmap
     :param heatmap_df: Expects dataframe with Separation as index and ISIs as columns.
@@ -627,10 +566,9 @@ def plot_thr_heatmap(heatmap_df,
         y_tick_labels = [0, 1, 2, 3, 6, 18, '1probe']
 
     # get mean of each column, then mean of those
-    mean_thr = np.mean(heatmap_df.mean())
+    mean_thr = float(np.mean(heatmap_df.mean()))
     if verbose:
         print(f'mean_val: {round(mean_thr, 2)}')
-
 
     heatmap = sns.heatmap(data=heatmap_df,
                           annot=True, center=mean_thr,
@@ -651,15 +589,14 @@ def plot_thr_heatmap(heatmap_df,
 ##########################
 
 def trim_n_high_n_low(all_data_df, trim_from_ends=None, reference_col='Separation',
-                      loop_col_1='Run', loop_col_2='group', verbose=True):
+                      stack_col_id='stack', verbose=True):
     """
     Function for trimming the n highest and lowest values from each condition of a set with multiple runs.
 
     :param all_data_df: Dataset to be trimmed.
     :param trim_from_ends: number of values to trim from each end of the distribution.
-    :param reference_col: Column containing repeated conditions (e.g., same label for each run).
-    :param loop_col_1: first index label (e.g., 'Run')
-    :param loop_col_2: second index label (e.g., group)
+    :param reference_col: Idx column containing repeated conditions (e.g., Separation has same label for each stack).
+    :param stack_col_id: idx column showing different runs/groups etc (e.g., stack)
     :param verbose: in true will print progress to screen.
 
     :return: trimmed df
@@ -672,28 +609,22 @@ def trim_n_high_n_low(all_data_df, trim_from_ends=None, reference_col='Separatio
         print(f'all_data_df {all_data_df.shape}:\n{all_data_df.head(25)}')
 
     # get unique values to loop over
-    run_list = list(all_data_df[loop_col_1].unique())
-    group_list = list(all_data_df[loop_col_2].unique())
-    datapoints_per_cond = len(run_list)*len(group_list)
+    stack_list = list(all_data_df[stack_col_id].unique())
+    datapoints_per_cond = len(stack_list)
 
     if verbose:
-        print(f'\nrun_list:\n{run_list}\n'
-              f'group_list:\n{group_list}\n'
-              f'datapoints_per_cond:\n{datapoints_per_cond}')
+        print(f'stack_list: {stack_list}\n'
+              f'datapoints_per_cond: {datapoints_per_cond}')
 
     # loop through df to get 3d numpy
     my_list = []
-    for run in run_list:
-        run_df = all_data_df[all_data_df[loop_col_1] == run]
-        run_df = run_df.drop(loop_col_1, axis=1)
-        # print(f'run{run}_df ({run_df.shape}):\n{run_df}')
-        for group in group_list:
-            group_df = run_df[run_df[loop_col_2] == group]
-            group_df = group_df.drop(loop_col_2, axis=1)
-            sep_list = list(group_df.pop(reference_col))
-            isi_name_list = list(group_df.columns)
-            # print(f'group{group}_df ({group_df.shape}):\n{group_df}')
-            my_list.append(group_df.to_numpy())
+    for stack in stack_list:
+        stack_df = all_data_df[all_data_df[stack_col_id] == stack]
+        stack_df = stack_df.drop(stack_col_id, axis=1)
+        sep_list = list(stack_df.pop(reference_col))
+        isi_name_list = list(stack_df.columns)
+        # print(f'stack{stack}_df ({stack_df.shape}):\n{stack_df}')
+        my_list.append(stack_df.to_numpy())
 
     # 3d numpy array are indexed with [depth, row, col]
     # use variables depth_3d, rows_3d, cols_all later to reshaped_2d_array trimmed array
@@ -762,19 +693,12 @@ def trim_n_high_n_low(all_data_df, trim_from_ends=None, reference_col='Separatio
     if verbose:
         print(reshaped_2d_array)
 
-    stack_col = np.repeat(np.arange(target_3d_depth), rows_3d)
-    sep_list_depth = sep_list*target_3d_depth
-
-    if verbose:
-        print(f'\ndetails for df\n'
-              f'isi_name_list: {isi_name_list}\n'
-              f'sep_list: {sep_list}\n'
-              f'stack_col: {stack_col}\n'
-              f'sep_list_depth: {sep_list_depth}')
-
+    # make dataframe and insert column for separation and stack (trimmed run/group)
     trimmed_df = pd.DataFrame(reshaped_2d_array, columns=isi_name_list)
-    trimmed_df.insert(0, 'stack', stack_col)
-    trimmed_df.insert(1, reference_col, sep_list_depth)
+    stack_col_vals = np.repeat(np.arange(target_3d_depth), rows_3d)
+    sep_col_vals = sep_list*target_3d_depth
+    trimmed_df.insert(0, 'stack', stack_col_vals)
+    trimmed_df.insert(1, reference_col, sep_col_vals)
     print(f'\ntrimmed_df {trimmed_df.shape}:\n{trimmed_df}')
 
     print(f'trimmed {trim_from_ends} highest and lowest values ({2*trim_from_ends} in total) from each of the '
@@ -804,8 +728,6 @@ def make_long_df(wide_df, wide_stubnames='ISI',
 
     :return: Long form dataframe with single index
     """
-
-
     print('\n*** running make_long_df() ***\n')
 
     if verbose:
@@ -830,10 +752,6 @@ def make_long_df(wide_df, wide_stubnames='ISI',
     long_df.index = pd.MultiIndex.from_tuples([(x[0], x[1], 'ISI -1') if x[2] == 999 else
                                                (x[0], x[1], f'ISI {x[2]}') for x in long_df.index])
 
-    # # change sep column back to correct values (20 => '1probe')
-    # long_df.index = pd.MultiIndex.from_tuples([(x[0], '1probe', x[2]) if x[1] == 20 else
-    #                                            (x[0], x[1], x[2]) for x in long_df.index])
-
     # rename index columns
     long_df.index.names = [idx_col, col_to_keep, wide_stubnames]
 
@@ -847,115 +765,6 @@ def make_long_df(wide_df, wide_stubnames='ISI',
 
 ###########################
 
-# def plot_many_line_ave_w_err(long_sngl_idx_df,
-#                              thr_col='probeLum',
-#                              fig_title=None,
-#                              one_probe=True,
-#                              save_path=None,
-#                              save_name=None,
-#                              isi_name_list=None,
-#                              pos_set_ticks=None,
-#                              pos_tick_labels=None,
-#                              error_bars_df=None,
-#                              verbose=True):
-#     """
-#     This plots a figure with one axis, x has separation values [-2, -1, 0, 1, 2, 3, 6, 18],
-#     where -2 is not uses, -1 is for the single probe condition - shows as a scatter plot.
-#     Values sep (0:18) are shown as lineplots.
-#     Will plot all ISIs on the same axis.
-#
-#     :param pos_sep_and_one_probe_df: Full dataframe to use for values
-#     :param thr_col: column in df to use for y_vals
-#     :param fig_title: default=None.  Pass a string to add as a title.
-#     :param one_probe: default=True.  Add data for one_probe as scatter.
-#     :param save_path: default=None.  Path to dir to save fig
-#     :param save_name: default=None.  name to save fig
-#     :param isi_name_list: default=NONE: will use defaults, or pass list of names for legend.
-#     :param pos_set_ticks: default=NONE: will use defaults, or pass list of names for x-axis positions.
-#     :param pos_tick_labels: default=NONE: will use defaults, or pass list of names for x_axis labels.
-#     :param verbose: default: True. Won't print anything to screen if set to false.
-#
-#     :return: plot
-#     """
-#     if verbose:
-#         print("\n*** running plot_pos_sep_and_one_probe() ***")
-#         # print(f'pos_sep_and_one_probe_df:\n{pos_sep_and_one_probe_df}')
-#
-#     if isi_name_list is None:
-#         isi_name_list = ['Concurrent', 'ISI0', 'ISI2', 'ISI4',
-#                          'ISI6', 'ISI9', 'ISI12', 'ISI24']
-#         if verbose:
-#             print(f'isi_name_list: {isi_name_list}')
-#
-#     if pos_set_ticks is None:
-#         pos_set_ticks = [0, 1, 2, 3, 6, 18, 20]
-#     if pos_tick_labels is None:
-#         pos_tick_labels = [0, 1, 2, 3, 6, 18, 'one\nprobe']
-#
-#     # call function to split df into pos_sep_df and one_probe_df
-#     if one_probe:
-#         pos_sep_df, one_probe_df = split_df_into_pos_sep_df_and_one_probe_df(
-#             pos_sep_and_one_probe_df=pos_sep_and_one_probe_df, isi_name_list=isi_name_list)
-#         if verbose:
-#             print(f'pos_sep_df:\n{pos_sep_df}\none_probe_df:\n{one_probe_df}')
-#     else:
-#         pos_sep_df = pos_sep_and_one_probe_df
-#
-#     # make fig1
-#     fig, ax = plt.subplots(figsize=(10, 6))
-#
-#     # line plot for main ISIs
-#     sns.lineplot(data=pos_sep_df, markers=True, dashes=False, ax=ax)
-#
-#     if error_bars_df != None:
-#         lvls = error_bars_df.group.unique()
-#         for i in lvls:
-#             ax.errorbar(x=error_bars_df[error_bars_df['group'] == i]["time"],
-#                         y=error_bars_df[error_bars_df['group'] == i]["coef"],
-#                         yerr=error_bars_df[error_bars_df['group'] == i]["stderr"], label=i)
-#
-#     # scatter plot for single probe conditions
-#     if one_probe:
-#         sns.scatterplot(data=one_probe_df, x="x_vals", y=thr_col,
-#                         hue="ISIs", style='ISIs', ax=ax)
-#
-#     # decorate plot
-#     ax.legend(labels=isi_name_list, title='ISI',
-#               shadow=True,
-#               # place lower left corner of legend at specified location.
-#               loc='lower left', bbox_to_anchor=(0.96, 0.5))
-#
-#     if one_probe:
-#         ax.set_xticks(pos_set_ticks)
-#         ax.set_xticklabels(pos_tick_labels)
-#     else:
-#         ax.set_xticks(pos_set_ticks[:-1])
-#         ax.set_xticklabels(pos_tick_labels[:-1])
-#
-#     # ax.set_ylim([0, 110])
-#     ax.set_xlabel('Probe separation in diagonal pixels')
-#     ax.set_ylabel('Probe Luminance')
-#
-#     if fig_title is not None:
-#         plt.title(fig_title)
-#
-#     if save_path is not None:
-#         if save_name is not None:
-#             plt.savefig(f'{save_path}{os.sep}{save_name}')
-#
-#     return fig
-
-
-###################
-
-
-###########################
-
-# # # 8 batman plots
-
-# # FIGURE 2
-# this is a figure with one axis per isi, showing neg and pos sep
-# (e.g., -18:18)
 
 def eight_batman_plots(mean_df, thr1_df, thr2_df,
                        fig_title=None, isi_name_list=None,
@@ -984,7 +793,6 @@ def eight_batman_plots(mean_df, thr1_df, thr2_df,
 
     :return: Batman Plot
     """
-
     if verbose:
         print("\n*** running eight_batman_plots() ***")
 
@@ -1003,7 +811,6 @@ def eight_batman_plots(mean_df, thr1_df, thr2_df,
         mean_df = mean_df.rename(columns={'sep': 'Separation'})
         thr1_df = thr1_df.rename(columns={'sep': 'Separation'})
         thr2_df = thr2_df.rename(columns={'sep': 'Separation'})
-
 
     # set colours
     my_colours = fig_colours(len(isi_name_list))
@@ -1146,8 +953,8 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
         this_isi_df.insert(0, 'ISI', isi)
 
         # add in group column to differentiate identical stairs (e.g., 1&2, 3&4 etc)
-        group_list = this_isi_df['stair'].map(stair_group_dict)
-        this_isi_df.insert(1, 'group', group_list)
+        stack_list = this_isi_df['stair'].map(stair_group_dict)
+        this_isi_df.insert(1, 'group', stack_list)
 
         # add in Separation column mapped from stair_sep_dict
         sep_list = this_isi_df['stair'].map(stair_sep_dict)
@@ -1191,8 +998,8 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
 
     print("\n***finished a_data_extraction()***\n")
 
-
     return all_data_df
+
 
 # # # # # # #
 # participant_name = 'Kim1'
@@ -1202,7 +1009,6 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
 #
 # a_data_extraction(p_name=participant_name, run_dir=run_dir, isi_list=isi_list, verbose=True)
 
-# todo: remove 'group' variable from b3 and c
 """
 4. b3_plot_staircase.m: staircases-ISIxxx.png: xxx corresponds to isi conditions. 
     Eight figure (8 isi conditions) with seven panels on each (7 probes separation 
@@ -1295,8 +1101,8 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
     if len(sep_list) == rows*2:
         # takes every other item
         sep_list = sep_list[::2]
+    print(f'sep_list: {sep_list}')
 
-    # todo: check this to make sure sep list is in correct order!
     psig_thr_mean_df.insert(0, 'Separation', sep_list)
     psig_pos_sep_df.insert(0, 'Separation', sep_list)
     psig_neg_sep_df.insert(0, 'Separation', sep_list)
@@ -1326,7 +1132,6 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
 
     # make empty arrays to save reversal n_reversals
     n_reversals_np = np.zeros(shape=[len(stair_list), len(isi_list)])
-
 
     # loop through isi values
     for isi_idx, isi in enumerate(isi_list):
@@ -1543,7 +1348,6 @@ def c_plots(save_path, thr_col='probeLum', show_plots=True, verbose=True):
         sep_col_s = psig_thr_df.pop('Separation')
     psig_thr_df.columns = isi_name_list
 
-
     # lastN_pos_sym_np has values for 1-indexed stairs [1, 3, 5, 7, 9, 11, 9, 7, 5, 3, 1, 13]
     # these correspond to separation values:     [18, 6, 3, 2, 1, 0, 1, 2, 3, 6, 18, 99]
     if verbose:
@@ -1578,7 +1382,6 @@ def c_plots(save_path, thr_col='probeLum', show_plots=True, verbose=True):
         print(f'\ndiff_val:\n{diff_val}')
         print(f'\nmean_diff_val: {mean_diff_val}')
 
-
     # # Figure1 - runs-{n}lastValues
     # this is a figure with one axis per isi, showing neg and pos sep
     # (e.g., -18:18) - eight batman plots
@@ -1601,8 +1404,7 @@ def c_plots(save_path, thr_col='probeLum', show_plots=True, verbose=True):
         plt.show()
     plt.close()
 
-    # # FIGURE2 - doesn't exist in script - but I'll keep their numbers
-
+    # #  (figure2 doesn't exist in Martin's script - but I'll keep their numbers)
 
     # add columns back in to split thr_df by group for data and divby1probe plots.
     if 'group' not in list(psig_thr_df.columns):
@@ -1671,7 +1473,6 @@ def c_plots(save_path, thr_col='probeLum', show_plots=True, verbose=True):
             plt.show()
         plt.close()
 
-
     print("\n***finished c_plots()***\n")
 
 
@@ -1682,9 +1483,8 @@ def c_plots(save_path, thr_col='probeLum', show_plots=True, verbose=True):
 
 
 def d_average_participant(root_path, run_dir_names_list,
-                          thr_col='probeLum',
                           error_bars=None,
-                          trimmed_mean=False,
+                          trim_n=None,
                           show_plots=True, verbose=True):
     """
     d_average_participant: take psignifit_thresholds.csv
@@ -1699,31 +1499,35 @@ def d_average_participant(root_path, run_dir_names_list,
     Plots:
     MASTER_ave_thresh saved as ave_thr_all_runs.png
     MASTER_ave_thresh two-probe/one-probesaved as ave_thr_div_one_probe.png
+    these both have two versions:
+    a. x-axis is separation, ISI as different lines
+    b. x-axis is ISI, Separation as different lines
+    Heatmap: with average probe lum for ISI and Separation.
 
     :param root_path: dir containing run folders
     :param run_dir_names_list: names of run folders
-    :param thr_col: Default: 'probeLum'. column with variable controlled by staircase
     :param error_bars: Default: None. Can pass sd or se for standard deviation or error.
-    :param trimmed_mean: default False - if True, will call function
-        get_trimmed_mean_df(), which drops the highest and lowest value before
-        calculating the mean.
+    :param trim_n: default None.  If int is passed, will call function trim_n_high_n_low(),
+            which trims the n highest and lowest values.
     :param show_plots: default True - display plots
     :param verbose: Defaut true, print progress to screen
+
+    :returns: ave_psignifit_thr_df: (trimmed?) mean threshold for each separation and ISI.
     """
 
     print("\n***running d_average_participant()***\n")
 
-    # # part1. Munge data, save master lists and get means etc
-    # #  - loop through runs and get each P-next-thresholds and P-reversal4-thresholds
-    # # Make master sheets: MASTER_next_thresh & MASTER_reversal_4_thresh
-    # # Incidentally the MATLAB script didn't specify which reversals data to use,
-    # # although the figures imply Martin used last3 reversals.
+    """ part1. Munge data, save master lists and get means etc
+     - loop through runs and get each P-next-thresholds and P-reversal4-thresholds
+    Make master sheets: MASTER_next_thresh & MASTER_reversal_4_thresh
+    Incidentally the MATLAB script didn't specify which reversals data to use,
+    although the figures imply Martin used last3 reversals."""
+
     isi_name_list = ['Concurrent', 'ISI0', 'ISI2', 'ISI4',
                      'ISI6', 'ISI9', 'ISI12', 'ISI24']
-    # pos_sep_list = [0, 1, 2, 3, 6, 18, 20]
-    # sep_list = [18, -18, 6, -6, 3, -3, 2, -2, 1, -1, 0, -.1, 20, -20]
-    all_psignifit_list = []
+    pos_sep_list = [0, 1, 2, 3, 6, 18, 20]
 
+    all_psignifit_list = []
     for run_idx, run_name in enumerate(run_dir_names_list):
 
         this_psignifit_df = pd.read_csv(f'{root_path}{os.sep}{run_name}{os.sep}psignifit_thresholds.csv')
@@ -1731,225 +1535,252 @@ def d_average_participant(root_path, run_dir_names_list,
 
         if 'Unnamed: 0' in list(this_psignifit_df):
             this_psignifit_df.drop('Unnamed: 0', axis=1, inplace=True)
-            print('foundunnamed')
+
         this_psignifit_df.drop(columns='stair', inplace=True)
-        # this_psignifit_df.drop(columns='group', inplace=True)
 
+        # split df into group1 and group2
+        psig_g1_df = this_psignifit_df[this_psignifit_df['group'] == 1]
+        psig_g1_df.drop(columns='group', inplace=True)
+        rows, cols = psig_g1_df.shape
+        psig_g1_df.insert(0, 'stack', [run_idx*2] * rows)
 
-        # split into pos_sep, neg_sep and mean of pos and neg.
-        psig_g1_df, psig_g2_df = split_df_alternate_rows(this_psignifit_df)
-        # psig_thr_mean_df = \
-        #     pd.concat([psig_g1_df.drop('Separation', axis=1), psig_g2_df.drop('Separation', axis=1)]).groupby(level=0).mean()
+        psig_g2_df = this_psignifit_df[this_psignifit_df['group'] == 2]
+        psig_g2_df.drop(columns='group', inplace=True)
+        psig_g2_df.insert(0, 'stack', [run_idx*2+1] * rows)
 
-        columns_list = ['group', 'Separation'] + isi_name_list
+        columns_list = ['stack', 'Separation'] + isi_name_list
         psig_g1_df.columns = columns_list
         psig_g2_df.columns = columns_list
 
-        # # add sep column in
-        # sep_list = psig_g1_df['Separation'].tolist()
-        # psig_thr_mean_df.insert(0, 'Separation', sep_list)
-        # psig_thr_mean_df.columns = columns_list
-
-        # # add run column in
-        psig_g1_df.insert(0, 'Run', run_idx)
-        psig_g2_df.insert(0, 'Run', run_idx)
-        # psig_thr_mean_df.insert(0, 'Run', run_idx)
-
-
         if verbose:
-            # print(f'\npsig_thr_mean_df:\n{psig_thr_mean_df}')
             print(f'\npsig_g1_df:\n{psig_g1_df}')
             print(f'\npsig_g2_df:\n{psig_g2_df}')
 
         all_psignifit_list.append(psig_g1_df)
         all_psignifit_list.append(psig_g2_df)
-        # all_psignifit_list.append(psig_thr_mean_df)
 
-        # this_psignifit_df.insert(0, 'Separation', sep_list)
-        # this_psignifit_df.insert(0, 'Run', run_idx)
-        # all_psignifit_list.append(this_psignifit_df)
-
-
+    # join all stacks (run/group) data and save as master csv
     all_data_psignifit_df = pd.concat(all_psignifit_list, ignore_index=True)
     all_data_psignifit_df.to_csv(f'{root_path}{os.sep}MASTER_psignifit_thresholds.csv', index=False)
     if verbose:
-        print(f'np.shape(all_psignifit_list): {np.shape(all_psignifit_list)}')
         print(f'\nall_data_psignifit_df:\n{all_data_psignifit_df}')
-        # group_list = list(all_data_psignifit_df['group'].unique())
-        # print(group_list)
 
+    """Part 2: trim highest and lowest values is required and get average vals and errors"""
     # # trim highest and lowest values
-    trimmed_df = trim_n_high_n_low(all_data_psignifit_df, trim_from_ends=3,
-                                   reference_col='Separation',
-                                   loop_col_1='Run', loop_col_2='group',
-                                   verbose=False)
+    if trim_n is not None:
+        trimmed_df = trim_n_high_n_low(all_data_psignifit_df, trim_from_ends=trim_n,
+                                       reference_col='Separation',
+                                       stack_col_id='stack',
+                                       verbose=verbose)
+        get_means_df = trimmed_df
+    else:
+        get_means_df = all_data_psignifit_df
 
-    # # get mean of all runs (each sep and ISI)
-    # # try just grouping the master sheet first, rather than using concat.
-    # if trimmed_mean:
-    #     print('calling robust mean function')
-    #     # todo: for 12 data point, drop the 2 highest and lowst
-    #     ave_TM_psignifit_thr_df = get_trimmed_mean_df(all_data_psignifit_df)
-    #     ave_TM_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM_thresh.csv', index=False)
-    #     if verbose:
-    #         print(f'ave_TM_psignifit_thr_df:\n{ave_TM_psignifit_thr_df}')
-    # else:
-    #     groupby_sep_df = all_data_psignifit_df.drop('Run', axis=1)
-    #     ave_psignifit_thr_df = groupby_sep_df.groupby('Separation', sort=True).mean()
-    #
-    #     if error_bars in [False, None]:
-    #         error_bars_df = None
-    #     elif error_bars.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
-    #         error_bars_df = groupby_sep_df.groupby('Separation', sort=True).sem()
-    #         print(f'error_bars_df: ({error_bars})\n{error_bars_df}')
-    #     elif error_bars.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
-    #         error_bars_df = groupby_sep_df.groupby('Separation', sort=True).std()
-    #         print(f'error_bars_df:\n{error_bars_df}')
-    #     else:
-    #         raise ValueError(f"error_bars should be in:\nfor none: [False, None]\n"
-    #                          f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standrad_error']\n"
-    #                          f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
-    #                          f"'deviation', 'standard_deviation']")
-    #
-    #
-    #     ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_thresh.csv', index=False)
-    #     if verbose:
-    #         print(f'ave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
-    #
-    #     # print(f'test groupby')
-    #     # grouped_df = groupby_sep_df.groupby('Separation', sort=True)
-    #     # print(grouped_df.describe())
-    #     # print(list(grouped_df.describe()))
-    #
-    #
+    # # get means and errors
+    groupby_sep_df = get_means_df.drop('stack', axis=1)
+    ave_psignifit_thr_df = groupby_sep_df.groupby('Separation', sort=True).mean()
+    if verbose:
+        print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
 
-    # part 2. main Figures (these are the ones saved in the matlab script)
-    # Fig1: single ax, pos_sep_and_one_probe.  Uses ave_next_thr_df: for thr values (e.g., mean of all runs).
-    # Fig2: single ax, pos_sep_and_one_probe (but no one probe).
-    #     threshold values are mean of two probes / single probe
+    if error_bars in [False, None]:
+        error_bars_df = None
+    elif error_bars.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
+        error_bars_df = groupby_sep_df.groupby('Separation', sort=True).sem()
+    elif error_bars.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
+        error_bars_df = groupby_sep_df.groupby('Separation', sort=True).std()
+    else:
+        raise ValueError(f"error_bars should be in:\nfor none: [False, None]\n"
+                         f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standrad_error']\n"
+                         f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
+                         f"'deviation', 'standard_deviation']")
+    print(f'\nerror_bars_df: ({error_bars})\n{error_bars_df}')
 
-    # # # Fig1a
-    # if trimmed_mean:
-    #     fig_df = ave_TM_psignifit_thr_df
-    #     fig1_title = f'Participant trimmed mean of thresholds across all runs'
-    #     fig1_savename = f'ave_TM_thr_all_runs.png'
-    # else:
-    #     fig_df = ave_psignifit_thr_df
-    #     fig1_title = f'Participant average threshold across all runs'
-    #     fig1_savename = f'ave_thr_all_runs.png'
-    #
-    # fig1a = plot_1probe_w_errors(fig_df=fig_df, error_df=error_bars_df,
-    #                              split_1probe=True, jitter=True,
-    #                              error_caps=True, alt_colours=False,
-    #                              legend_names=['Concurrent', 'ISI 0', 'ISI 2', 'ISI 4',
-    #                                            'ISI 6', 'ISI 9', 'ISI 12', 'ISI 24'],
-    #                              x_tick_vals=[0, 1, 2, 3, 6, 18, 20],
-    #                              x_tick_labels=[0, 1, 2, 3, 6, 18, '1probe'],
-    #                              fixed_y_range=False,
-    #                              fig_title=fig1_title, save_name=fig1_savename,
-    #                              save_path=root_path, verbose=True)
-    # if show_plots:
-    #     plt.show()
-    # plt.close()
-    #
-    # if verbose:
-    #     print('finished fig1a')
-    #
-    #
-    #
-    # # fig 1b, ISI on x-axis, different line for each sep
-    # print(f"\nfig_1b\n")
-    # # # # fig 1b
-    # # todo: set up fig1b to handle trimmed data
-    # # if trimmed_mean:
-    # #     fig_1b_df = ave_TM_psignifit_thr_df
-    # #     fig1b_title = f'Participant trimmed mean of thresholds across all runs'
-    # #     fig1b_savename = f'ave_TM_thr_all_runs_T.png'
-    # # else:
-    # #     fig_1b_df = ave_psignifit_thr_df
-    # #     fig1b_title = f'Participant average threshold across all runs'
-    # #     fig1b_savename = f'ave_thr_all_runs_T.png'
-    # # if verbose:
-    # #     print(f'\nfig_1b_df:\n{fig_1b_df}')
-    # fig1b_title = 'Probe luminance at each ISI value per Separation'
-    # fig1b_savename = 'ave_thr_all_runs_transpose'
-    # fig1b = plot_w_errors_no_1probe(wide_df=all_data_psignifit_df,
-    #                                 x_var='ISI', y_var='probeLum',
-    #                                 lines_var='Separation',
-    #                                 legend_names=['0', '1', '2', '3', '6', '18', '1probe'],
-    #                                 x_tick_labels=['conc', 0, 2, 4, 6, 9, 12, 24],
-    #                                 alt_colours=True,
-    #                                 fixed_y_range=False,
-    #                                 jitter=True,
-    #                                 error_caps=True,
-    #                                 fig1b_title=fig1b_title,
-    #                                 fig1b_savename=fig1b_savename,
-    #                                 save_path=root_path,
-    #                                 verbose=True)
-    # if show_plots:
-    #     plt.show()
-    # plt.close()
-    #
-    # if verbose:
-    #     print('finished fig1b')
+    # save csv with average values
+    if trim_n is not None:
+        ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM_thresh.csv', index=False)
+    else:
+        ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_thresh.csv', index=False)
 
 
-    # # todo: fig1b with ISI on x-axis and different lines for each sep.
+    """part 3. main Figures (these are the ones saved in the matlab script)
+    Fig1: plot average threshold for each ISI and sep.
+    Fig2: divide all 2probe conds (pos_sep) by one_probe condition for each stack.
+    For both figures there are 2 versions:
+        a) Sep on x-axis, different line for each ISI
+        b) ISI on x-axis, different line for each Sep"""
 
+    print(f"\nfig_1a\n")
+    if trim_n is not None:
+        fig1_title = f'Average thresholds across all runs (trim={trim_n}).'
+        fig1_savename = f'ave_TM_thr_all_runs.png'
+    else:
+        fig1_title = f'Average threshold across all runs'
+        fig1_savename = f'ave_thr_all_runs.png'
 
-    # # # Fig 2
-    # # todo: add error bars - can this be run with plot_w_errors_no_1probe()?
-    # if trimmed_mean:
-    #     fig2_save_name = 'ave_TM_thr_div_one_probe.png'
-    #     fig2_title = 'Participant trimmed mean of thresholds divided by single probe'
-    # else:
-    #     fig2_save_name = 'ave_thr_div_one_probe.png'
-    #     fig2_title = 'Participant average threshold divided by single probe'
-    #
-    # pos_sep_df, one_probe_df = split_df_into_pos_sep_df_and_one_probe_df(fig_df)
-    # pos_sep_arr = pos_sep_df.to_numpy()
-    # one_probe_arr = one_probe_df['probeLum'].to_numpy()
-    # div_by_one_probe_arr = (pos_sep_arr.T / one_probe_arr[:, None]).T
-    # div_by_one_probe_df = pd.DataFrame(div_by_one_probe_arr, columns=isi_name_list)
-    # div_by_one_probe_df.insert(0, 'Separation', pos_sep_list[:-1])
-    # div_by_one_probe_df.set_index('Separation', inplace=True)
-    # if verbose:
-    #     print(f'div_by_one_probe_df:\n{div_by_one_probe_df}')
-    #
-    # plot_pos_sep_and_one_probe(div_by_one_probe_df,
-    #                            thr_col=thr_col,
-    #                            fig_title=fig2_title,
-    #                            one_probe=False,
-    #                            save_path=root_path,
-    #                            save_name=fig2_save_name,
-    #                            verbose=True)
-    # if show_plots:
-    #     plt.show()
-    # plt.close()
-    #
-    # # todo: fig2b with ISI on x-axis and different lines for each sep.
+    fig1a = plot_1probe_w_errors(fig_df=ave_psignifit_thr_df, error_df=error_bars_df,
+                                 split_1probe=True, jitter=True,
+                                 error_caps=True, alt_colours=False,
+                                 legend_names=['Concurrent', 'ISI 0', 'ISI 2', 'ISI 4',
+                                               'ISI 6', 'ISI 9', 'ISI 12', 'ISI 24'],
+                                 x_tick_vals=[0, 1, 2, 3, 6, 18, 20],
+                                 x_tick_labels=[0, 1, 2, 3, 6, 18, '1probe'],
+                                 fixed_y_range=False,
+                                 fig_title=fig1_title, save_name=fig1_savename,
+                                 save_path=root_path, verbose=True)
+    if show_plots:
+        plt.show()
+    plt.close()
 
-    # # get mean of each col, then mean of that
-    # x_tick_labels = ['conc', 'isi 0', 'isi 2', 'isi 4', 'isi 6', 'isi 9', 'isi12', 'isi 24']
-    # y_tick_labels = [0, 1, 2, 3, 6, 18, '1probe']
-    # fig_title = 'Mean Threshold for each ISI and separation'
-    # save_name = 'mean_thr_heatmap'
-    #
-    # heatmap = plot_thr_heatmap(heatmap_df=ave_psignifit_thr_df,
-    #                  x_tick_labels=x_tick_labels,
-    #                  y_tick_labels=y_tick_labels,
-    #                  fig_title=fig_title,
-    #                  save_name=save_name,
-    #                  save_path=root_path,
-    #                  verbose=True)
-    # plt.show()
+    if verbose:
+        print('finished fig1a')
 
+    print(f"\nfig_1b\n")
+    # fig 1b, ISI on x-axis, different line for each sep
+    if trim_n is not None:
+        fig1b_title = f'Probe luminance at each ISI value per Separation (trim={trim_n}).'
+        fig1b_savename = f'ave_TM_thr_all_runs_transpose.png'
+    else:
+        fig1b_title = f'Probe luminance at each ISI value per Separation'
+        fig1b_savename = f'ave_thr_all_runs_transpose.png'
 
+    fig1b = plot_w_errors_no_1probe(wide_df=get_means_df,
+                                    x_var='ISI', y_var='probeLum',
+                                    lines_var='Separation',
+                                    legend_names=['0', '1', '2', '3', '6', '18', '1probe'],
+                                    x_tick_labels=['conc', 0, 2, 4, 6, 9, 12, 24],
+                                    alt_colours=True,
+                                    fixed_y_range=False,
+                                    jitter=True,
+                                    error_caps=True,
+                                    fig1b_title=fig1b_title,
+                                    fig1b_savename=fig1b_savename,
+                                    save_path=root_path,
+                                    verbose=True)
+    if show_plots:
+        plt.show()
+    plt.close()
+
+    if verbose:
+        print('finished fig1b')
+
+    print(f"\nfig_2a\n")
+    # # Fig 2  - divide all 2probe conditions (pos_sep) by one_probe for each stack
+    # use get_means_df with all (or trimmed) data.
+    # first split each stack into 1probe and pos_sep (2probe), divide and make back into long df
+    stack_list = list(get_means_df['stack'].unique())
+    print(f'stack_list: {stack_list}')
+
+    divided_list = []
+    # loop through stacks
+    for stack in stack_list:
+        # for each stack_df, split into pos_sep_df and one_probe_df
+        stack_df = get_means_df[get_means_df['stack'] == stack]
+        stack_df = stack_df.drop('stack', axis=1)
+        pos_sep_df, one_probe_df = split_df_into_pos_sep_df_and_one_probe_df(stack_df)
+
+        # divide pos_sep by one_probe and append to list
+        pos_sep_arr = pos_sep_df.to_numpy()
+        one_probe_arr = one_probe_df['probeLum'].to_numpy()
+        div_by_one_probe_arr = (pos_sep_arr.T / one_probe_arr[:, None]).T
+        div_by_one_probe_df = pd.DataFrame(div_by_one_probe_arr, columns=isi_name_list)
+        div_by_one_probe_df.insert(0, 'stack', [stack] * len(div_by_one_probe_df))
+        div_by_one_probe_df.insert(1, 'Separation', pos_sep_list[:-1])
+        divided_list.append(div_by_one_probe_df)
+
+    # put back into long form df with stack Sep cols
+    divided_df = pd.concat(divided_list)
+    print(f'divided_df:\n{divided_df}')
+
+    # # get means and errors
+    div_groupby_sep_df = divided_df.drop('stack', axis=1)
+    div_ave_psignifit_thr_df = div_groupby_sep_df.groupby('Separation', sort=True).mean()
+    if verbose:
+        print(f'\ndiv_ave_psignifit_thr_df:\n{div_ave_psignifit_thr_df}')
+
+    if error_bars in [False, None]:
+        div_error_bars_df = None
+    elif error_bars.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
+        div_error_bars_df = div_groupby_sep_df.groupby('Separation', sort=True).sem()
+    elif error_bars.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
+        div_error_bars_df = div_groupby_sep_df.groupby('Separation', sort=True).std()
+    print(f'\ndiv_error_bars_df: ({error_bars})\n{div_error_bars_df}')
+
+    if trim_n is not None:
+        fig2a_save_name = 'ave_TM_thr_div_one_probe.png'
+        fig2a_title = f'Average thresholds divided by single probe (trim={trim_n}).'
+    else:
+        fig2a_save_name = 'ave_thr_div_one_probe.png'
+        fig2a_title = 'Average threshold divided by single probe'
+
+    fig2a = plot_1probe_w_errors(fig_df=div_ave_psignifit_thr_df, error_df=div_error_bars_df,
+                                 split_1probe=False, jitter=True,
+                                 error_caps=True, alt_colours=False,
+                                 legend_names=['Concurrent', 'ISI 0', 'ISI 2', 'ISI 4',
+                                               'ISI 6', 'ISI 9', 'ISI 12', 'ISI 24'],
+                                 x_tick_vals=[0, 1, 2, 3, 6, 18],
+                                 x_tick_labels=[0, 1, 2, 3, 6, 18],
+                                 fixed_y_range=False,
+                                 fig_title=fig2a_title, save_name=fig2a_save_name,
+                                 save_path=root_path, verbose=True)
+    if show_plots:
+        plt.show()
+    plt.close()
+
+    if verbose:
+        print('finished fig2a')
+
+    print(f"\nfig_2b\n")
+    # fig 2b, ISI on x-axis, different line for each sep
+    if trim_n is not None:
+        fig2b_save_name = 'ave_TM_thr_div_one_probe_transpose.png'
+        fig2b_title = f'Average thresholds divided by single probe at each ISI (trim={trim_n}).'
+    else:
+        fig2b_save_name = 'ave_thr_div_one_probe_transpose.png'
+        fig2b_title = 'Average thresholds divided by single probe at each ISI'
+
+    fig2b = plot_w_errors_no_1probe(wide_df=divided_df,
+                                    x_var='ISI', y_var='probeLum',
+                                    lines_var='Separation',
+                                    legend_names=['0', '1', '2', '3', '6', '18'],
+                                    x_tick_labels=['conc', 0, 2, 4, 6, 9, 12, 24],
+                                    alt_colours=True,
+                                    fixed_y_range=False,
+                                    jitter=True,
+                                    error_caps=True,
+                                    fig1b_title=fig2b_title,
+                                    fig1b_savename=fig2b_save_name,
+                                    save_path=root_path,
+                                    verbose=True)
+    if show_plots:
+        plt.show()
+    plt.close()
+
+    if verbose:
+        print('finished fig2b')
+
+    print(f"\nHeatmap\n")
+    # get mean of each col, then mean of that
+    x_tick_labels = ['conc', 'isi 0', 'isi 2', 'isi 4', 'isi 6', 'isi 9', 'isi12', 'isi 24']
+    y_tick_labels = [0, 1, 2, 3, 6, 18, '1probe']
+    if trim_n is not None:
+        heatmap_title = f'Mean Threshold for each ISI and separation (trim={trim_n}).'
+        heatmap_savename = 'mean_TM_thr_heatmap'
+    else:
+        heatmap_title = 'Mean Threshold for each ISI and separation'
+        heatmap_savename = 'mean_thr_heatmap'
+
+    heatmap = plot_thr_heatmap(heatmap_df=ave_psignifit_thr_df,
+                               x_tick_labels=x_tick_labels,
+                               y_tick_labels=y_tick_labels,
+                               fig_title=heatmap_title,
+                               save_name=heatmap_savename,
+                               save_path=root_path,
+                               verbose=True)
+    plt.show()
 
     print("\n*** finished d_average_participant()***\n")
 
-
-
+    return ave_psignifit_thr_df
 
 #######
 # root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim'  # master folder containing all runs
