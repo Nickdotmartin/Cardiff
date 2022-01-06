@@ -830,7 +830,7 @@ def eight_batman_plots(mean_df, thr1_df, thr2_df,
             sns.lineplot(ax=axes[row_idx, col_idx], data=mean_df,
                          x='Separation', y=isi_name_list[ax_counter],
                          color=my_colours[ax_counter],
-                         linewidth=3, markers=True)
+                         linewidth=2, linestyle="dotted", markers=True)
 
             # stair1: CW probe jumps only
             sns.lineplot(ax=axes[row_idx, col_idx], data=thr1_df,
@@ -873,7 +873,8 @@ def eight_batman_plots(mean_df, thr1_df, thr2_df,
                                 marker='o', linewidth=.5,
                                 markersize=4, label='group2')
             mean_line = mlines.Line2D([], [], color=my_colours[ax_counter],
-                                      marker=None, linewidth=3, label='mean')
+                                      marker=None, linewidth=2, linestyle="dotted",
+                                      label='mean')
             ax.legend(handles=[st1, st2, mean_line], fontsize=6)
 
             ax_counter += 1
@@ -1068,8 +1069,8 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
         print(f"separation_title: {separation_title}")
         print(f"trials_per_stair: {trials_per_stair}")
 
-    # # the eighth plot is the psignifit thr for each sep (+sep, -sep and mean).
-    # # get data from psignifit_thresholds.csv and reshape here
+    '''the eighth plot is the psignifit thr for each sep (+sep, -sep and mean).
+    get data from psignifit_thresholds.csv and reshape here'''
     thr_csv_name = f'{save_path}{os.sep}psignifit_thresholds.csv'
     psignifit_thr_df = pd.read_csv(thr_csv_name)
     if verbose:
@@ -1123,9 +1124,9 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
         print(f'\npsig_thr_mean_df (chopped off one_probe):\n{psig_thr_mean_df}')
 
     # put the one_probe values into a df to use later
-    one_probe_df = pd.concat([thr1_one_probe_df, thr2_one_probe_df, mean_one_probe_df],
+    one_probe_df = pd.concat([mean_one_probe_df, thr1_one_probe_df, thr2_one_probe_df],
                              ignore_index=True)
-    one_probe_df.insert(0, 'dset', ['group1', 'group2', 'mean'])
+    one_probe_df.insert(0, 'dset', ['mean', 'group1', 'group2'])
     one_probe_df.insert(0, 'x_val', [-1, -1, -1])
     if verbose:
         print(f'one_probe_df:\n{one_probe_df}')
@@ -1181,8 +1182,6 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
                     There is also a horizontal line from the last value (step25)
                     There is text showing the number of reversals (incorrect responses)
                     y-axis can be 0:106 (maxLum), x is 1:25.
-    
-                    later the 8th panel is added - not sure what this is yet...
                     '''
                     fig.suptitle(f'Staircases and reversals for isi {isi_name}')
 
@@ -1230,7 +1229,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
                                                      linestyle="-.", marker=None,
                                                      label='g2_last_val')
                         ax.legend(handles=[st1, st1_last_val, st2, st2_last_val],
-                                  fontsize=5)
+                                  fontsize=5, loc='lower right')
 
                 else:
                     """use the psignifit values from each stair pair (e.g., 18, -18) to
@@ -1247,23 +1246,39 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
                         print(f'isi_thr_mean_df:\n{isi_thr_mean_df}')
 
                     # line plot for thr1, th2 and mean thr
-                    sns.lineplot(ax=axes[row_idx, col_idx], data=psig_pos_sep_df,
-                                 x='Separation', y=isi_name, color='tab:red',
-                                 linewidth=.5)
-                    sns.lineplot(ax=axes[row_idx, col_idx], data=psig_neg_sep_df,
-                                 x='Separation', y=isi_name, color='tab:blue',
-                                 linewidth=.5)
                     sns.lineplot(ax=axes[row_idx, col_idx], data=isi_thr_mean_df,
-                                 x='Separation', y=isi_name, color='tab:green')
+                                 x='Separation', y=isi_name, color='lightgreen',
+                                 linewidth=3)
+
+                    sns.lineplot(ax=axes[row_idx, col_idx], data=psig_pos_sep_df,
+                                 x='Separation', y=isi_name, color='red',
+                                 linestyle="--")
+                    sns.lineplot(ax=axes[row_idx, col_idx], data=psig_neg_sep_df,
+                                 x='Separation', y=isi_name, color='blue',
+                                 linestyle="dotted")
+
 
                     # scatter plot for single probe conditions
                     sns.scatterplot(data=one_probe_df, x="x_val", y=isi_name,
                                     hue='dset',
-                                    palette=['tab:red', 'tab:blue', 'tab:green'])
-                    ax.legend(fontsize=8, markerscale=.5)
+                                    palette=['lightgreen', 'red', 'blue'])
+
+                    # artist for legend
+                    group1 = mlines.Line2D([], [], color='red',
+                                             linestyle="--", marker=None,
+                                             label='Congruent thr')
+
+                    group2 = mlines.Line2D([], [], color='blue',
+                                               linestyle="dotted", marker=None,
+                                               label='Incongruent thr')
+                    mean_thr = mlines.Line2D([], [], color='lightgreen',
+                                                 linestyle="solid", marker=None,
+                                                 label='mean thr')
+                    ax.legend(handles=[group1, group2, mean_thr], fontsize=6,
+                              loc='lower right')
 
                     # decorate plot
-                    ax.set_title(f'{isi_name} end threshold')
+                    ax.set_title(f'{isi_name} psignifit thresholds')
                     ax.set_xticks([-2, -1, 0, 1, 2, 3, 6, 18])
                     ax.set_xticklabels(['', '\n1probe', 0, 1, 2, 3, 6, 18])
                     ax.set_xlabel('Probe separation')
@@ -1305,7 +1320,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
 def c_plots(save_path, thr_col='probeLum', show_plots=True, verbose=True):
 
     """
-    5. c_plots.m: uses psignifit_thresholds.csv and output  plots.
+    5. c_plots.m: uses psignifit_thresholds.csv and outputs plots.
 
     figures:
             data.png: threshold luminance as function of probe separation.
@@ -1349,15 +1364,17 @@ def c_plots(save_path, thr_col='probeLum', show_plots=True, verbose=True):
     psig_thr_df.columns = isi_name_list
 
     # lastN_pos_sym_np has values for 1-indexed stairs [1, 3, 5, 7, 9, 11, 9, 7, 5, 3, 1, 13]
-    # these correspond to separation values:     [18, 6, 3, 2, 1, 0, 1, 2, 3, 6, 18, 99]
+    # but the rows I select are zero indexed, use rows [0, 2, 4, 6, 8, 10, 8, 6, 4, 2, 0, 12]
+    # these correspond to separation values:          [18, 6, 3, 2, 1, 0, 1, 2, 3, 6, 18, 99]
     if verbose:
         print('\npreparing data for batman plots')
     pos_sym_indices = [0, 2, 4, 6, 8, 10, 8, 6, 4, 2, 0, 12]
     psig_pos_sep_df = psig_thr_df.iloc[pos_sym_indices]
     psig_pos_sep_df.reset_index(drop=True, inplace=True)
 
-    # lastN_neg_sym_np has values for 1-indexed stairs [2, 4, 6, 8, 10, 12, 10, 8, 6, 4, 2, 14]
-    # these correspond to sep values:   [-18, -6, -3, -2, -1, 0, -1, -2, -3, -6, -18, 99]
+    # lastN_neg_sym_np has values for 1-indexed stairs   [2,  4,  6,  8, 10, 12, 10, 8,  6,  4,  2,  14]
+    # but the rows I select are zero indexed, use rows   [1,  3,  5,  7, 9,  11, 9,  7,  5,  3,  1,  13]
+    # these correspond to sep values:                  [-18, -6, -3, -2, -1, 0, -1, -2, -3, -6, -18, 99]
     neg_sym_indices = [1, 3, 5, 7, 9, 11, 9, 7, 5, 3, 1, 13]
     psig_neg_sep_df = psig_thr_df.iloc[neg_sym_indices]
     psig_neg_sep_df.reset_index(drop=True, inplace=True)

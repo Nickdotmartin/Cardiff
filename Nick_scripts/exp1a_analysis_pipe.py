@@ -4,6 +4,7 @@ import pandas as pd
 
 from exp1a_psignifit_analysis import a_data_extraction, b3_plot_staircase, c_plots
 from exp1a_psignifit_analysis import d_average_participant
+from psignifit_tools import get_psignifit_threshold_df
 
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
@@ -63,8 +64,7 @@ for run_idx, run_dir in enumerate(run_folder_names):
 
 
     '''b3'''
-    run_data_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim_split_runs/' \
-                    'Nick_practice/P6a-Kim/RUNDATA-sorted.xlsx'
+    run_data_path = f'{save_path}{os.sep}RUNDATA-sorted.xlsx'
     b3_plot_staircase(run_data_path, show_plots=True)
 
     # '''c'''
