@@ -169,13 +169,13 @@ def split_df_into_pos_sep_df_and_one_probe_df(pos_sep_and_one_probe_df,
     # check that the df only contains positive separation values
     if 'sep' in list(data_df.columns):
         # todo: column in data is called 'separation' not 'sep'
-        data_df = data_df.rename(columns={'sep': 'Separation'})
+        data_df = data_df.rename(columns={'sep': 'separation'})
 
-    # check if index column is set as 'Separation'
+    # check if index column is set as 'separation'
     if data_df.index.name is None:
-        data_df = data_df.set_index('Separation')
+        data_df = data_df.set_index('separation')
 
-    # data_df = data_df.loc[data_df['Separation'] >= 0]
+    # data_df = data_df.loc[data_df['separation'] >= 0]
     data_df = data_df.loc[data_df.index >= 0]
 
     if verbose:
@@ -198,22 +198,32 @@ def split_df_into_pos_sep_df_and_one_probe_df(pos_sep_and_one_probe_df,
 
 
 # # choose colour palette
-def fig_colours(n_conditions):
+def fig_colours(n_conditions, alternative_colours=False):
     """
     Use this to always get the same colours in the same order with no fuss.
-    :param n_conditions: number of different colours
+    :param n_conditions: number of different colours - use 256 for colourmap
+        (e.g., for heatmaps or something where colours are used in continuous manner)
+    :param alternative_colours: a second pallet of alternative colours.
     :return: a colour pallet
     """
-    use_colours = 'tab10'
+
+    use_colours = 'colorblind'
+    if alternative_colours:
+        use_colours = 'husl'
 
     if 10 < n_conditions < 21:
         use_colours = 'tab20'
     elif n_conditions > 20:
-        raise ValueError(f"\tERROR - more classes ({n_conditions}) than colours!?!?!?")
+        use_colour = 'spectral'
+
+    use_cmap = False
+
+    my_colours = sns.color_palette(palette=use_colours, n_colors=n_conditions, as_cmap=use_cmap)
     sns.set_palette(palette=use_colours, n_colors=n_conditions)
-    my_colours = sns.color_palette()
 
     return my_colours
+
+
 
 def multi_plot_shape(n_figs, min_rows=1):
     """
@@ -256,7 +266,7 @@ def multi_plot_shape(n_figs, min_rows=1):
 # # # all ISIs on one axis - pos sep only, plus single probe
 # FIGURE 1 - shows one axis (x=separation (0-18), y=probeLum) with all ISIs added.
 # it also seems that for isi=99 there are simple dots added at -1 on the x axis.
-
+# todo: rename - plot_unsymm_sep
 def plot_pos_sep_and_one_probe(pos_sep_and_one_probe_df,
                                thr_col='probeLum',
                                fig_title=None,
@@ -320,6 +330,7 @@ def plot_pos_sep_and_one_probe(pos_sep_and_one_probe_df,
 
     # line plot for main ISIs
     sns.lineplot(data=pos_sep_df, markers=True, dashes=False, ax=ax)
+    ax.axvline(x=5.5, linestyle="-.", color='lightgrey')
 
     # scatter plot for single probe conditions
     if one_probe:
@@ -336,8 +347,10 @@ def plot_pos_sep_and_one_probe(pos_sep_and_one_probe_df,
         ax.set_xticks(pos_set_ticks)
         ax.set_xticklabels(pos_tick_labels)
     else:
-        ax.set_xticks(pos_set_ticks[2:])
-        ax.set_xticklabels(pos_tick_labels[2:])
+        ax.set_xticks(pos_set_ticks)
+        ax.set_xticklabels(pos_tick_labels)
+        # ax.set_xticks(pos_set_ticks[2:])
+        # ax.set_xticklabels(pos_tick_labels[2:])
 
     # ax.set_ylim([40, 90])
     ax.set_xlabel('Probe separation in diagonal pixels')
@@ -351,6 +364,500 @@ def plot_pos_sep_and_one_probe(pos_sep_and_one_probe_df,
             plt.savefig(f'{save_path}{os.sep}{save_name}')
 
     return fig
+
+
+def plot_1probe_w_errors(fig_df, error_df, split_1probe=True,
+                         jitter=True, error_caps=False, alt_colours=False,
+                         legend_names=None,
+                         x_tick_vals=None,
+                         x_tick_labels=None,
+                         fixed_y_range=False,
+                         fig_title=None, save_name=None, save_path=None,
+                         verbose=True):
+    """
+    Calculate and plot the mean and error estimates (y-axis) at each separation values (x-axis) including 1probe.
+    Separate line for each ISI.  Error bar values taken from separate error_df.
+
+    :param fig_df: dataframe to build plot from.  Expects fig_df in the form:
+        separation as index, 1probe as bottom row, ISIs as columns.
+    :param error_df: dataframe of same shape as fig_df, but contains error values
+    :param split_1probe: Default=True - whether to treat 1probe data separately,
+        e.g., not joined with line to 2probe data.
+    :param jitter: Jitter x_axis values so points don't overlap.
+    :param error_caps: caps on error bars for more easy reading
+    :param alt_colours: Use different set of colours to normal (e.g., if ISI on
+        x-axis and lines for each separation).
+    :param legend_names: Names of different lines (e.g., ISI names)
+    :param x_tick_vals: Positions on x-axis.
+    :param x_tick_labels: labels for x-axis.
+    :param fixed_y_range: default=False. If True will use full range of y values
+        (e.g., 0:110) or can pass a tuple to set y_limits.
+    :param fig_title: Title for figure
+    :param save_name: filename of plot
+    :param save_path: path to folder where plots will be saved
+    :param verbose: print progress to screen
+
+    :return: figure
+    """
+    print('\n*** running plot_1probe_w_errors() ***\n')
+
+    if verbose:
+        print(f'fig_df:\n{fig_df}')
+
+    # split 1probe from bottom of fig_df and error_df
+    if split_1probe:
+        two_probe_df, one_probe_df = split_df_into_pos_sep_df_and_one_probe_df(fig_df)
+        two_probe_er_df, one_probe_er_df = split_df_into_pos_sep_df_and_one_probe_df(error_df)
+        if verbose:
+            print(f'one_probe_df:\n{one_probe_df}')
+            print(f'one_probe_er_df:\n{one_probe_er_df}')
+    else:
+        two_probe_df = fig_df
+        two_probe_er_df = error_df
+    if verbose:
+        print(f'two_probe_df:\n{two_probe_df}')
+        print(f'two_probe_er_df:\n{two_probe_er_df}')
+
+    # get names for legend (e.g., different lines)
+    column_names = two_probe_df.columns.to_list()
+    if legend_names is None:
+        legend_names = column_names
+    if verbose:
+        print(f'Column and Legend names:')
+        for a, b in zip(column_names, legend_names):
+            print(f"{a}\t=>\t{b}\tmatch: {bool(a==b)}")
+
+    # get number of locations for jitter list
+    n_pos_sep = len(two_probe_df.index.to_list())
+
+    jit_max = 0
+    if jitter:
+        jit_max = .2
+        if type(jitter) in [float, np.float]:
+            jit_max = jitter
+
+    cap_size = 0
+    if error_caps:
+        cap_size = 5
+
+    # set colour palette
+    my_colours = fig_colours(len(column_names), alternative_colours=alt_colours)
+
+    fig, ax = plt.subplots()
+
+    legend_handles_list = []
+
+    for idx, name in enumerate(column_names):
+
+        # get rand float to add to x-axis for jitter
+        jitter_list = np.random.uniform(size=n_pos_sep, low=-jit_max, high=jit_max)
+
+        if split_1probe:
+            one_probe = ax.errorbar(x=one_probe_df['x_vals'][idx] + np.random.uniform(low=-jit_max, high=jit_max),
+                                    y=one_probe_df['probeLum'][idx],
+                                    yerr=one_probe_er_df['probeLum'][idx],
+                                    marker='.', lw=2, elinewidth=.7,
+                                    capsize=cap_size,
+                                    color=my_colours[idx])
+
+        two_probes = ax.errorbar(x=two_probe_df.index + jitter_list,
+                                 y=two_probe_df[name], yerr=two_probe_er_df[name],
+                                 marker='.', lw=2, elinewidth=.7,
+                                 capsize=cap_size,
+                                 color=my_colours[idx])
+
+        leg_handle = mlines.Line2D([], [], color=my_colours[idx], label=name,
+                                   marker='.', linewidth=.5, markersize=4)
+        legend_handles_list.append(leg_handle)
+
+    ax.legend(handles=legend_handles_list, fontsize=6, title='ISI', framealpha=.5)
+
+    if x_tick_vals is not None:
+        ax.set_xticks(x_tick_vals)
+    if x_tick_labels is not None:
+        ax.set_xticklabels(x_tick_labels)
+
+    ax.set_xlabel('Probe separation in diagonal pixels')
+    ax.set_ylabel('Probe Luminance')
+
+    if fixed_y_range:
+        ax.set_ylim([0, 110])
+        if type(fixed_y_range) in [tuple, list]:
+            ax.set_ylim([fixed_y_range[0], fixed_y_range[1]])
+
+    if fig_title is not None:
+        plt.title(fig_title)
+
+    if save_path is not None:
+        if save_name is not None:
+            plt.savefig(f'{save_path}{os.sep}{save_name}')
+
+    return fig
+
+
+###################
+
+def plot_w_errors_no_1probe(wide_df, x_var, y_var, lines_var,
+                            hue_var=None,
+                            legend_names=None,
+                            x_tick_labels=None,
+                            alt_colours=True,
+                            fixed_y_range=False,
+                            jitter=True,
+                            error_caps=True,
+                            fig1b_title=None,
+                            fig1b_savename=None,
+                            save_path=None,
+                            verbose=True):
+    """
+    Function to plot pointplot with error bars.  Use this for plots unless
+    there is a need for the separate 1probe condition.  Note: x-axis is categorical
+    so its not easy to move ticks.  If I want to do this, use plot_1probe_w_errors().
+
+    # todo: add hue_var to doc_string
+
+    :param wide_df: wide form dataframe with data from multiple runs
+    :param x_var: Name of variable to go on x-axis (should be consistent with wide_df)
+    :param y_var: Name of variable to go on y-axis (should be consistent with wide_df)
+    :param lines_var: Name of variable for the lines (should be consistent with wide_df)
+    # :param isi_name_list:
+    :param legend_names: Default: None, which will access frequently used names.
+        Else pass list of names to appear on legend, use verbose to compare order with matplotlib assumptions.
+    :param x_tick_labels: Default: None, which will access frequently used labels.
+        Else pass list of labels to appearn on x-axis.  Note: for pointplot x-axis is catagorical,
+        not numerical; so all x-ticks are evently spaced.  For variable x-axis use plot_1probe_w_errors().
+    :param alt_colours: Default=True.  Use alternative colours to differentiate
+        from other plots e.g., colours associated with Sep not ISI.
+    :param fixed_y_range: If True it will fix y-axis to 0:110.  Otherwise uses adaptive range.
+    :param jitter: Points on x-axis.
+    :param error_caps: Whether to have caps on error bars.
+    :param fig1b_title: Title for figure
+    :param fig1b_savename: Name for figure.
+    :param save_path: Path to folder to save plot.
+    :param verbose: Print progress to screen.
+
+    :return: fig
+    """
+
+    print('\n*** Running plot_w_errors_no_1probe() ***')
+
+    # get default values.
+    if legend_names is None:
+        legend_names = ['0', '1', '2', '3', '6', '18', '1probe']
+    if x_tick_labels is None:
+        x_tick_labels = ['conc', 0, 2, 4, 6, 9, 12, 24]
+
+    # get names for legend (e.g., different lines_var)
+    n_colours = len(wide_df[lines_var].unique())
+    print(f'lines_var: {lines_var}, n_colours: {n_colours}')
+
+    # do error bars have caps?
+    cap_size = 0
+    if error_caps:
+        cap_size = .1
+
+    # convert wide_df to long for getting means and standard error.
+    # long_fig_df = make_long_df(wide_df, idx_col='stack')
+    long_fig_df = make_long_df(wide_df,
+                 cols_to_keep=['congruent', 'stair_names'],
+                 cols_to_change=['isi1', 'isi4', 'isi6'],
+                 cols_to_change_show='probeLum',
+                 new_col_name='isi', strip_from_cols='isi', verbose=True)
+    if verbose:
+        print(f'long_fig_df:\n{long_fig_df}')
+
+    my_colours = fig_colours(n_colours, alternative_colours=alt_colours)
+    print(f"my_colours - {np.shape(my_colours)}\n{my_colours}")
+
+
+    fig, ax = plt.subplots()
+
+    if hue_var is not None:
+        hue_list = sorted(list(long_fig_df[hue_var].unique()))
+        line_styles = ['dotted', 'dashed', 'dashdot', 'solid', 'loosely dotted',
+                       'densely dotted', 'loosely dashed', 'densely dashed',
+                       'densely dashed', 'dashdotted', 'densely dashdotted',
+                       'dashdotdotted', 'loosely dashdotdotted', 'densely dashdotdotted']
+        for hue_idx, hue in enumerate(hue_list):
+            hue_df = long_fig_df[long_fig_df[hue_var] == hue]
+            print(f'\nhue_df ({hue}):\n{hue_df}')
+            sns.pointplot(data=hue_df, x=x_var, y=y_var, hue=lines_var,
+                          estimator=np.mean, ci=68, dodge=jitter, markers='.',
+                          linestyle='dashdotted',  #  line_styles[hue_idx],
+                          errwidth=1, capsize=cap_size, palette=my_colours, ax=ax)
+    else:
+        sns.pointplot(data=long_fig_df, x=x_var, y=y_var, hue=lines_var,
+                      estimator=np.mean, ci=68, dodge=jitter, markers='.',
+                      errwidth=1, capsize=cap_size, palette=my_colours, ax=ax)
+
+    # sort legend
+    handles, orig_labels = ax.get_legend_handles_labels()
+    if legend_names is None:
+        legend_names = orig_labels
+    if verbose:
+        print(f'orig_labels and Legend names:')
+        for a, b in zip(orig_labels, legend_names):
+            print(f"{a}\t=>\t{b}\tmatch: {bool(a == b)}")
+    ax.legend(handles, legend_names, fontsize=6, title=lines_var, framealpha=.5)
+
+    # decorate plot
+    if x_tick_labels is not None:
+        ax.set_xticklabels(x_tick_labels)
+    ax.set_xlabel(x_var)
+
+    if y_var is 'probeLum':
+        ax.set_ylabel('Probe Luminance')
+    else:
+        ax.set_ylabel(y_var)
+
+    if fixed_y_range:
+        ax.set_ylim([0, 110])
+        if type(fixed_y_range) in [tuple, list]:
+            ax.set_ylim([fixed_y_range[0], fixed_y_range[1]])
+
+    if fig1b_title is not None:
+        plt.title(fig1b_title)
+
+    if save_path is not None:
+        if fig1b_savename is not None:
+            plt.savefig(f'{save_path}{os.sep}{fig1b_savename}')
+
+    return fig
+
+
+###########################
+
+
+def plot_thr_heatmap(heatmap_df,
+                     x_tick_labels=None,
+                     y_tick_labels=None,
+                     fig_title=None,
+                     save_name=None,
+                     save_path=None,
+                     verbose=True):
+    """
+    Function for making a heatmap
+    :param heatmap_df: Expects dataframe with separation as index and ISIs as columns.
+    :param x_tick_labels: Labels for columns
+    :param y_tick_labels: Labels for rows
+    :param fig_title:
+    :param save_name:
+    :param save_path:
+    :param verbose:
+    :return: Heatmap
+    """
+
+    print('\n*** running plot_thr_heatmap() ***\n')
+
+    if verbose:
+        print(f'heatmap_df:\n{heatmap_df}')
+
+    if x_tick_labels is None:
+        x_tick_labels = ['conc', 'isi 0', 'isi 2', 'isi 4', 'isi 6', 'isi 9', 'isi12', 'isi 24']
+    if y_tick_labels is None:
+        y_tick_labels = [0, 1, 2, 3, 6, 18, '1probe']
+
+    # get mean of each column, then mean of those
+    mean_thr = float(np.mean(heatmap_df.mean()))
+    if verbose:
+        print(f'mean_val: {round(mean_thr, 2)}')
+
+    heatmap = sns.heatmap(data=heatmap_df,
+                          annot=True, center=mean_thr,
+                          cmap=sns.color_palette("Spectral", as_cmap=True),
+                          xticklabels=x_tick_labels, yticklabels=y_tick_labels)
+
+    heatmap.set_xlabel('ISI')
+
+    if fig_title is not None:
+        plt.title(fig_title)
+
+    if save_path is not None:
+        if save_name is not None:
+            plt.savefig(f'{save_path}{os.sep}{save_name}')
+
+    return heatmap
+
+##########################
+
+def trim_n_high_n_low(all_data_df, trim_from_ends=None, reference_col='separation',
+                      stack_col_id='stack', verbose=True):
+    """
+    Function for trimming the n highest and lowest values from each condition of a set with multiple runs.
+
+    :param all_data_df: Dataset to be trimmed.
+    :param trim_from_ends: number of values to trim from each end of the distribution.
+    :param reference_col: Idx column containing repeated conditions (e.g., separation has same label for each stack).
+    :param stack_col_id: idx column showing different runs/groups etc (e.g., stack)
+    :param verbose: in true will print progress to screen.
+
+    :return: trimmed df
+    """
+    print('\n*** running trim_high_n_low() ***')
+
+    '''Part 1, convert 2d df into 3d numpy array'''
+    # prepare to extract numpy
+    if verbose:
+        print(f'all_data_df {all_data_df.shape}:\n{all_data_df.head(25)}')
+
+    # get unique values to loop over
+    stack_list = list(all_data_df[stack_col_id].unique())
+    datapoints_per_cond = len(stack_list)
+
+    if verbose:
+        print(f'stack_list: {stack_list}\n'
+              f'datapoints_per_cond: {datapoints_per_cond}')
+
+    # loop through df to get 3d numpy
+    my_list = []
+    for stack in stack_list:
+        stack_df = all_data_df[all_data_df[stack_col_id] == stack]
+        stack_df = stack_df.drop(stack_col_id, axis=1)
+        sep_list = list(stack_df.pop(reference_col))
+        isi_name_list = list(stack_df.columns)
+        # print(f'stack{stack}_df ({stack_df.shape}):\n{stack_df}')
+        my_list.append(stack_df.to_numpy())
+
+    # 3d numpy array are indexed with [depth, row, col]
+    # use variables depth_3d, rows_3d, cols_all later to reshaped_2d_array trimmed array
+    my_3d_array = np.array(my_list)
+    depth_3d, rows_3d, cols_all = np.shape(my_3d_array)
+
+    if trim_from_ends is not None:
+        target_3d_depth = depth_3d - 2*trim_from_ends
+    else:
+        target_3d_depth = depth_3d
+    target_2d_rows = target_3d_depth * rows_3d
+    if verbose:
+        print(f'\nUse these values for defining array shapes.\n'
+              f'target_3d_depth (depth-trim): {target_3d_depth}, '
+              f'3d shape after trim (target_3d_depth, rows_3d, cols_all) = '
+              f'({target_3d_depth}, {rows_3d}, {cols_all})\n'
+              f'2d array shape (after trim, but before separation, stack or headers are added): '
+              f'(target_2d_rows, cols_all) = ({target_2d_rows}, {cols_all})')
+
+    '''Part 2, trim highest and lowest n values from each depth slice to get trimmed_3d_list'''
+    if verbose:
+        print('\ngetting depth slices to trim...')
+    trimmed_3d_list = []
+    counter = 0
+    for col in list(range(cols_all)):
+        row_list = []
+        for row in list(range(rows_3d)):
+            depth_slice = my_3d_array[:, row, col]
+            depth_slice = np.sort(depth_slice)
+            if trim_from_ends is not None:
+                trimmed = depth_slice[trim_from_ends: -trim_from_ends]
+            else:
+                trimmed = depth_slice[:]
+            # if verbose:
+                # print(f'{counter}: {trimmed}')
+            row_list.append(trimmed)
+            counter += 1
+        trimmed_3d_list.append(row_list)
+
+    """
+    Part 3, turn 3d numpy back into 2d df.
+    trimmed_3d_list is a list of arrays (e.g., 3d).  Each array relates to a
+    depth-stack of my_3d_array which has now be trimmed (e.g., fewer rows).
+    However, trimmed_3d_list has the same depth and number of columns as my_3d_array.
+    trimmed_array re-shapes trimmed_3d_list so all values are in their original
+    row and column positions (e.g., separation and ISI).
+    However, the 3rd dimension (depth) is not in original order, but in ascending order."""
+
+    trimmed_3d_array = np.array(trimmed_3d_list)
+    print(f'\n\nReshaping trimmed data\ntrimmed_3d_array: {np.shape(trimmed_3d_array)}')
+    if verbose:
+        print(trimmed_3d_array)
+
+    ravel_array_f = np.ravel(trimmed_3d_array, order='F')
+    print(f'\n1. ravel_array_f: {np.shape(ravel_array_f)}')
+    if verbose:
+        print(ravel_array_f)
+
+    reshaped_3d_array = ravel_array_f.reshape(target_3d_depth, rows_3d, cols_all)
+    print(f'\n2. reshaped_3d_array: {np.shape(reshaped_3d_array)}')
+    if verbose:
+        print(reshaped_3d_array)
+
+    reshaped_2d_array = reshaped_3d_array.reshape(target_2d_rows, -1)
+    print(f'\n3. reshaped_2d_array {np.shape(reshaped_2d_array)}')
+    if verbose:
+        print(reshaped_2d_array)
+
+    # make dataframe and insert column for separation and stack (trimmed run/group)
+    trimmed_df = pd.DataFrame(reshaped_2d_array, columns=isi_name_list)
+    stack_col_vals = np.repeat(np.arange(target_3d_depth), rows_3d)
+    sep_col_vals = sep_list*target_3d_depth
+    trimmed_df.insert(0, 'stack', stack_col_vals)
+    trimmed_df.insert(1, reference_col, sep_col_vals)
+    print(f'\ntrimmed_df {trimmed_df.shape}:\n{trimmed_df}')
+
+    print(f'trimmed {trim_from_ends} highest and lowest values ({2*trim_from_ends} in total) from each of the '
+          f'{datapoints_per_cond} datapoints so there are now '
+          f'{target_3d_depth} datapoints for each of the '
+          f'{rows_3d} x {cols_all} conditions.')
+
+    print('\n*** finished trim_high_n_low() ***')
+
+    return trimmed_df
+
+
+
+def make_long_df(wide_df,
+                 cols_to_keep=['congruent', 'separation'],
+                 cols_to_change=['isi1', 'isi4', 'isi6'],
+                 cols_to_change_show='probeLum',
+                 new_col_name='isi', strip_from_cols='isi', verbose=True):
+    """
+    Function to convert wide-form_df to long-form_df.  e.g., if there are several
+    columns showing ISIs (cols_to_change), this puts them all into one column (new_col_name).
+
+    :param wide_df: dataframe to be changed
+    :param cols_to_keep: Columns to use for indexing (e.g., ['congruent', 'separation'...etc]
+    :param cols_to_change: List of columns showing data at different levels e.g., [isi1, isi4, isi6...etc].
+    :param cols_to_change_show: What is being measured in repeated cols, e.g., probeLum.
+    :param new_col_name: name for new col describing levels e.g. isi
+    :param strip_from_cols: string to strip from col names when for new cols.
+        e.g., if strip_from_cols='isi_', then [isi_1, isi_4] becomes [1, 4].
+    :param verbose: if true, prints progress to screen.
+
+    :return: long_df
+    """
+    print("\n*** running make_long_df() ***\n")
+
+    new_col_names = cols_to_keep + [new_col_name] + [cols_to_change_show]
+
+    # make longform data
+    if verbose:
+        print(f"\n preparing to loop through: {cols_to_change}")
+    long_list = []
+    for this_col in cols_to_change:
+        this_df_cols = cols_to_keep + [this_col]
+        this_df = wide_df[this_df_cols]
+
+        if strip_from_cols not in [False, None]:
+            if strip_from_cols in this_col:
+                this_col = this_col.strip(strip_from_cols)
+            elif strip_from_cols.lower() in this_col:
+                this_col = this_col.strip(strip_from_cols.lower())
+            elif strip_from_cols.upper() in this_col:
+                this_col = this_col.strip(strip_from_cols.upper())
+            else:
+                raise ValueError(f"can't strip {strip_from_cols} from {this_col}")
+
+        this_df.insert(len(cols_to_keep), new_col_name, [this_col] * len(this_df.index))
+        this_df.columns = new_col_names
+        long_list.append(this_df)
+
+    long_df = pd.concat(long_list)
+    long_df.reset_index(drop=True, inplace=True)
+    if verbose:
+        print(f'long_df:\n{long_df}')
+
+    print("\n*** finished make_long_df() ***\n")
+
+    return long_df
 
 
 # # # all ISIs on one axis - pos sep only, NO single probe
@@ -399,16 +906,16 @@ def multi_batman_plots(mean_df, thr1_df, thr2_df,
         print(f'isi_name_list: {isi_name_list}')
 
     if x_tick_vals is None:
-        x_tick_vals = [-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18, 20]
+        x_tick_vals = [-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18]
 
     if x_tick_labels is None:
-        x_tick_labels = [-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18, '1\nprobe']
+        x_tick_labels = [-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18]
 
     # check column name for x_values
     if 'sep' in list(mean_df.columns):
-        mean_df = mean_df.rename(columns={'sep': 'Separation'})
-        thr1_df = thr1_df.rename(columns={'sep': 'Separation'})
-        thr2_df = thr2_df.rename(columns={'sep': 'Separation'})
+        mean_df = mean_df.rename(columns={'sep': 'separation'})
+        thr1_df = thr1_df.rename(columns={'sep': 'separation'})
+        thr2_df = thr2_df.rename(columns={'sep': 'separation'})
 
 
     # set colours
@@ -426,25 +933,23 @@ def multi_batman_plots(mean_df, thr1_df, thr2_df,
     # loop through the eight axes
     for row_idx, row in enumerate(axes):
         for col_idx, ax in enumerate(row):
-            # print(f'row_idx: {row_idx}, col_idx {col_idx}')
-            print(f'ax_counter: {ax_counter}')
             if ax_counter < len(isi_name_list):
-                print(f'this_isi_name: {isi_name_list[ax_counter]}')
+
                 # mean threshold from CW and CCW probe jump direction
                 sns.lineplot(ax=axes[row_idx, col_idx], data=mean_df,
-                             x='Separation', y=isi_name_list[ax_counter],
+                             x='separation', y=isi_name_list[ax_counter],
                              color=my_colours[ax_counter],
                              linewidth=2, linestyle="dotted", markers=True)
 
                 # stair1: CW probe jumps only
                 sns.lineplot(ax=axes[row_idx, col_idx], data=thr1_df,
-                             x='Separation', y=isi_name_list[ax_counter],
+                             x='separation', y=isi_name_list[ax_counter],
                              color=my_colours[ax_counter],
                              linewidth=.5, marker="v")
 
                 # stair2: CCW probe jumps only
                 sns.lineplot(ax=axes[row_idx, col_idx], data=thr2_df,
-                             x='Separation', y=isi_name_list[ax_counter],
+                             x='separation', y=isi_name_list[ax_counter],
                              color=my_colours[ax_counter],
                              linewidth=.5, marker="o")
 
@@ -472,10 +977,10 @@ def multi_batman_plots(mean_df, thr1_df, thr2_df,
                 # artist for legend
                 st1 = mlines.Line2D([], [], color=my_colours[ax_counter],
                                     marker='v', linewidth=.5,
-                                    markersize=4, label='Stair1')
+                                    markersize=4, label='Congruent')
                 st2 = mlines.Line2D([], [], color=my_colours[ax_counter],
                                     marker='o', linewidth=.5,
-                                    markersize=4, label='Stair2')
+                                    markersize=4, label='Incongruent')
                 mean_line = mlines.Line2D([], [], color=my_colours[ax_counter],
                                           marker=None, linewidth=2, linestyle="dotted",
                                           label='mean')
@@ -483,7 +988,10 @@ def multi_batman_plots(mean_df, thr1_df, thr2_df,
 
                 ax_counter += 1
             else:
-                print('finished')
+                # write 'empty' so its clear this is empty on purpose
+                ax.text(x=0.45, y=0.5, s='empty',
+                        # needs transform to appear with rest of plot.
+                        transform=ax.transAxes, fontsize=8)
 
     plt.tight_layout()
     
@@ -885,9 +1393,9 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
 #         rev_thr2_sym_df.reset_index(drop=True, inplace=True)
 #
 #         rev_thr_mean_df = pd.concat([rev_thr1_sym_df, rev_thr2_sym_df]).groupby(level=0).mean()
-#         rev_thr_mean_df.insert(loc=0, column='Separation', value=sym_sep_list)
-#         rev_thr1_sym_df.insert(loc=0, column='Separation', value=sym_sep_list)
-#         rev_thr2_sym_df.insert(loc=0, column='Separation', value=sym_sep_list)
+#         rev_thr_mean_df.insert(loc=0, column='separation', value=sym_sep_list)
+#         rev_thr1_sym_df.insert(loc=0, column='separation', value=sym_sep_list)
+#         rev_thr2_sym_df.insert(loc=0, column='separation', value=sym_sep_list)
 #         if verbose:
 #             print(f"\nrev_thr_mean_df:\n{rev_thr_mean_df}")
 #             print(f'\nrev_thr1_sym_df:\n{rev_thr1_sym_df}')
@@ -1054,9 +1562,9 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
         print(f'sep_list: {sep_list}')
         print(f"separation_title: {separation_title}")
 
-    psig_thr_mean_df.insert(0, 'Separation', sep_list)
-    psig_cong_sep_df.insert(0, 'Separation', sep_list)
-    psig_incong_sep_df.insert(0, 'Separation', sep_list)
+    psig_thr_mean_df.insert(0, 'separation', sep_list)
+    psig_cong_sep_df.insert(0, 'separation', sep_list)
+    psig_incong_sep_df.insert(0, 'separation', sep_list)
     if verbose:
         print(f'\npsig_cong_sep_df:\n{psig_cong_sep_df}')
         print(f'\npsig_incong_sep_df:\n{psig_incong_sep_df}')
@@ -1162,20 +1670,20 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
                         print("Seventh plot")
                         print(f'psig_thr_mean_df:\n{psig_thr_mean_df}')
 
-                    isi_thr_mean_df = pd.concat([psig_thr_mean_df['Separation'], psig_thr_mean_df[isi_name]],
-                                                axis=1, keys=['Separation', isi_name])
+                    isi_thr_mean_df = pd.concat([psig_thr_mean_df['separation'], psig_thr_mean_df[isi_name]],
+                                                axis=1, keys=['separation', isi_name])
                     if verbose:
                         print(f'isi_thr_mean_df:\n{isi_thr_mean_df}')
 
                     # line plot for thr1, th2 and mean thr
                     sns.lineplot(ax=axes[row_idx, col_idx], data=isi_thr_mean_df,
-                                 x='Separation', y=isi_name, color='lightgreen',
+                                 x='separation', y=isi_name, color='lightgreen',
                                  linewidth=3)
                     sns.lineplot(ax=axes[row_idx, col_idx], data=psig_cong_sep_df,
-                                 x='Separation', y=isi_name, color='red',
+                                 x='separation', y=isi_name, color='red',
                                  linestyle="--")
                     sns.lineplot(ax=axes[row_idx, col_idx], data=psig_incong_sep_df,
-                                 x='Separation', y=isi_name, color='blue',
+                                 x='separation', y=isi_name, color='blue',
                                  linestyle="dotted")
 
                     # artist for legend
@@ -1233,9 +1741,6 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
 #                   show_plots=True, save_plots=True, verbose=True)
 
 
-# todo: I'm only doing plots 1 & 3.  Actaully I dpnt' need any of these.
-#  I could just do plots 1 and 3 for last thr value (not mean of last n)
-#  but to be honest, its not necessary.
 def c_plots(save_path, thr_col='probeLum', isi_name_list=None,
             show_plots=True, verbose=True):
 
@@ -1243,19 +1748,21 @@ def c_plots(save_path, thr_col='probeLum', isi_name_list=None,
     5. c_plots.m: uses psignifit_thresholds.csv and outputs plots.
 
     figures:
+            MIRRORED_runs.png: threshold luminance as function of probe separation,
+                  Positive and negative separation values (batman plots),
+                  one panel for each isi condition.
+                  use multi_batman_plots()
+
             data.png: threshold luminance as function of probe separation.
-                      Positive separation values only, all ISIs on same axis.
-                      Use plot_pos_sep_and_one_probe()
+                Positive and negative separation values (batman plot),
+                all ISIs on same axis.
+                Use plot_pos_sep_and_one_probe()
 
-            dataDivOneProbe: threshold luminance as function of probe separation.
-                      Positive separation values only, all ISIs on same axis.
-                      Use plot_pos_sep_and_one_probe(one_probe=False)
+            compare_data.png: threshold luminance as function of probe separation.
+                Positive and negative separation values (batman plot),
+                all ISIs on same axis.
+                doesn't use a function, built in c_plots()
 
-
-            runs.png: threshold luminance as function of probe separation,
-                      Positive and negative separation values (batman plots),
-                      one panel one isi condition.
-                      use multi_batman_plots()
 
     :param save_path: path to run dir containing psignifit_thresholds.csv, where plots will be save.
     :param thr_col: column for threshold (e.g., probeLum)
@@ -1272,7 +1779,6 @@ def c_plots(save_path, thr_col='probeLum', isi_name_list=None,
     if verbose:
         print(f'isi_name_list: {isi_name_list}')
     sym_sep_list = [-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18]
-    # sym_sep_tick_labels = [-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18]
     pos_sep_list = [0, 1, 2, 3, 6, 18]
 
     # load df mean of last n probeLum values (14 stairs x 8 isi).
@@ -1282,64 +1788,62 @@ def c_plots(save_path, thr_col='probeLum', isi_name_list=None,
         print(f'psig_thr_df:\n{psig_thr_df}')
 
     psig_thr_df = psig_thr_df.drop(['stair'], axis=1)
-    if 'group' in list(psig_thr_df.columns):  # it shouldn't be...
-        group_col_s = psig_thr_df.pop('group')
     if 'separation' in list(psig_thr_df.columns):
         sep_col_s = psig_thr_df.pop('separation')
     if 'stair_names' in list(psig_thr_df.columns):
-        # stair_names_col_s = psig_thr_df.pop('stair_names')
         stair_names_list = list(psig_thr_df['stair_names'])
+        print(f'stair_names_list: {stair_names_list}')
+
     if 'congruent' in list(psig_thr_df.columns):
         cong_col_s = psig_thr_df.pop('congruent')
 
     psig_thr_df.columns = ['stair_names']+isi_name_list
     if verbose:
         print(f'\npsig_thr_df:\n{psig_thr_df}')
-    # todo: rename pos_sym to cong something
-    # todo: be careful, stairs are zero indexed in rad_flow, not 1-indexed as in exp1a
 
     if verbose:
         print('\npreparing data for batman plots')
     symm_sep_indices = [0, 1, 2, 3, 4, 5, 4, 3, 2, 1, 0]
 
-    psig_pos_sep_df_ = psig_thr_df[psig_thr_df['stair_names'] >= 0]
-    psig_pos_sep_df = psig_pos_sep_df_.iloc[symm_sep_indices]
-    psig_pos_sep_df.reset_index(drop=True, inplace=True)
+    psig_cong_sep_df = psig_thr_df[psig_thr_df['stair_names'] >= 0]
+    psig_cong_sym_df = psig_cong_sep_df.iloc[symm_sep_indices]
+    psig_cong_sym_df.reset_index(drop=True, inplace=True)
 
-    psig_neg_sep_df_ = psig_thr_df[psig_thr_df['stair_names'] < 0]
-    psig_neg_sep_df = psig_neg_sep_df_.iloc[symm_sep_indices]
-    psig_neg_sep_df.reset_index(drop=True, inplace=True)
+    psig_incong_sep_df = psig_thr_df[psig_thr_df['stair_names'] < 0]
+    psig_incong_sym_df = psig_incong_sep_df.iloc[symm_sep_indices]
+    psig_incong_sym_df.reset_index(drop=True, inplace=True)
 
     # mean of pos and neg stair_name values [18, 6, 3, 2, 1, 0, 1, 2, 3, 6, 18]
-    psig_thr_mean_df = pd.concat([psig_pos_sep_df, psig_neg_sep_df]).groupby(level=0).mean()
+    psig_sym_thr_mean_df = pd.concat([psig_cong_sym_df, psig_incong_sym_df]).groupby(level=0).mean()
 
     # subtract the dfs from each other, then for each column get the sum of abs values
-    diff_val = np.sum(abs(psig_pos_sep_df - psig_neg_sep_df), axis=0)
+    diff_val = np.sum(abs(psig_cong_sym_df - psig_incong_sym_df), axis=0)
     # take the mean of these across all ISIs to get single value
     mean_diff_val = float(np.mean(diff_val))
 
     # add sep column into dfs
-    psig_thr_mean_df.insert(0, 'Separation', sym_sep_list)
-    psig_pos_sep_df.insert(0, 'Separation', sym_sep_list)
-    psig_neg_sep_df.insert(0, 'Separation', sym_sep_list)
+    psig_sym_thr_mean_df.insert(0, 'separation', sym_sep_list)
+    psig_cong_sym_df.insert(0, 'separation', sym_sep_list)
+    psig_incong_sym_df.insert(0, 'separation', sym_sep_list)
 
     if verbose:
-        print(f'\npsig_pos_sep_df:\n{psig_pos_sep_df}')
-        print(f'\npsig_neg_sep_df:\n{psig_neg_sep_df}')
-        print(f'\npsig_thr_mean_df:\n{psig_thr_mean_df}')
+        print(f'\npsig_cong_sym_df:\n{psig_cong_sym_df}')
+        print(f'\npsig_incong_sym_df:\n{psig_incong_sym_df}')
+        print(f'\npsig_sym_thr_mean_df:\n{psig_sym_thr_mean_df}')
         print(f'\ndiff_val:\n{diff_val}')
         print(f'\nmean_diff_val: {mean_diff_val}')
 
     # # Figure1 - runs-{n}lastValues
     # this is a figure with one axis per isi, showing neg and pos sep
     # (e.g., -18:18) - eight batman plots
-    fig_title = f'Psignifit thresholds per ISI. ' \
+    #
+    fig_title = f'MIRRORED Psignifit thresholds per ISI. ' \
                 f'(mean diff: {round(mean_diff_val, 2)})'
-    fig1_savename = f'runs.png'
+    fig1_savename = f'MIRRORED_runs.png'
 
-    multi_batman_plots(mean_df=psig_thr_mean_df,
-                       thr1_df=psig_pos_sep_df,
-                       thr2_df=psig_neg_sep_df,
+    multi_batman_plots(mean_df=psig_sym_thr_mean_df,
+                       thr1_df=psig_cong_sym_df,
+                       thr2_df=psig_incong_sym_df,
                        fig_title=fig_title,
                        isi_name_list=isi_name_list,
                        x_tick_vals=sym_sep_list,
@@ -1351,76 +1855,84 @@ def c_plots(save_path, thr_col='probeLum', isi_name_list=None,
     if show_plots:
         plt.show()
     plt.close()
-    #
-    # # #  (figure2 doesn't exist in Martin's script - but I'll keep their numbers)
-    #
-    # # add columns back in to split thr_df by group for data and divby1probe plots.
-    # if 'group' not in list(psig_thr_df.columns):
-    #     psig_thr_df.insert(0, 'group', group_col_s)
-    # todo: instead of adding separation, should I add in (stair_names_col_s) or stair_names_list?
-    # if 'Separation' not in list(psig_thr_df.columns):
-    #     sep_list = [19 if i == 20 else i for i in sep_col_s.tolist()]
-    #     psig_thr_df.insert(1, 'Separation', sep_list)
-    # print(f'\nmaking plots from group1 and group2 data with psig_thr_df:\n{psig_thr_df}')
-    #
-    # for group in [1, 2]:
-    #
-    #     group_plot_df = psig_thr_df[psig_thr_df['group'] == group]
-    #     group_plot_df = group_plot_df.drop(['group'], axis=1)
-    #     print(f'\nrunning group{group} with group_plot_df:\n{group_plot_df}')
-    #
-    #     # # FIGURE3 - 'data-{n}lastValues.png' - all ISIs on same axis, pos sep only, plus single
-    #     # # use plot_pos_sep_and_one_probe()
-    #     fig3_save_name = f'data.png'
-    #     fig_3_title = 'All ISIs and separations'
-    #
-    #     if group is not None:
-    #         fig3_save_name = f'g{group}_data.png'
-    #         fig_3_title = f'g{group} All ISIs and separations'
-    #
-    #     plot_pos_sep_and_one_probe(pos_sep_and_one_probe_df=group_plot_df,
-    #                                thr_col=thr_col,
-    #                                fig_title=fig_3_title,
-    #                                one_probe=True,
-    #                                save_path=save_path,
-    #                                save_name=fig3_save_name,
-    #                                pos_set_ticks=[0, 1, 2, 3, 6, 18, 19],
-    #                                verbose=True)
-    #     if show_plots:
-    #         plt.show()
-    #     plt.close()
-    #
-    #     # # # FIGURE4 - 'dataDivOneProbe-{n}lastValues.png' - all ISIs on same axis, pos sep only.
-    #     #         # does not include single probe
-    #     # # # use plot_pos_sep_and_one_probe(one_probe=False)
-    #     # # each sep row in pos_sep_df is divided by one_probe_df.
-    #     fig4_save_name = f'dataDivOneProbe.png'
-    #     fig4_title = f'two-probe conditions divided by one-probe conditions'
-    #
-    #     if group is not None:
-    #         fig4_save_name = f'g{group}_dataDivOneProbe.png'
-    #         fig4_title = f'g{group} two-probe conditions divided by one-probe conditions'
-    #
-    #     pos_sep_df, one_probe_df = split_df_into_pos_sep_df_and_one_probe_df(group_plot_df)
-    #     pos_sep_arr = pos_sep_df.to_numpy()
-    #     one_probe_arr = one_probe_df['probeLum'].to_numpy()
-    #     div_by_one_probe_arr = (pos_sep_arr.T / one_probe_arr[:, None]).T
-    #     div_by_one_probe_df = pd.DataFrame(div_by_one_probe_arr, columns=isi_name_list)
-    #     div_by_one_probe_df.insert(0, 'Separation', pos_sep_list[:-1])
-    #     div_by_one_probe_df.set_index('Separation', inplace=True)
-    #     print(f'div_by_one_probe_df:\n{div_by_one_probe_df}')
-    #
-    #     plot_pos_sep_and_one_probe(div_by_one_probe_df,
-    #                                thr_col='probeLum',
-    #                                fig_title=fig4_title,
-    #                                one_probe=False,
-    #                                save_path=save_path,
-    #                                save_name=fig4_save_name,
-    #                                pos_set_ticks=[0, 1, 2, 3, 6, 18, 19],
-    #                                verbose=True)
-    #     if show_plots:
-    #         plt.show()
-    #     plt.close()
+
+
+    #  (figure2 doesn't exist in Martin's script - but I'll keep their numbers)
+
+    # # FIGURE3 - 'data-{n}lastValues.png' - all ISIs on same axis, pos sep only
+    # # use plot_pos_sep_and_one_probe()
+    fig3_save_name = f'data.png'
+    fig_3_title = 'All ISIs and separations\n' \
+                  '(positive values for congruent probe/flow motion, ' \
+                  'negative for incongruent).'
+
+    psig_thr_df = psig_thr_df.sort_values(by=['stair_names'])
+    psig_thr_df.drop('stair_names', axis=1, inplace=True)
+    psig_thr_df.reset_index(drop=True, inplace=True)
+    psig_thr_idx_list = list(psig_thr_df.index)
+    stair_names_list = sorted(stair_names_list)
+    stair_names_list = ['-0' if i == -.10 else int(i) for i in stair_names_list]
+
+    if verbose:
+        print(f'\npsig_thr_df:\n{psig_thr_df}')
+        print(f'\npsig_thr_idx_list: {psig_thr_idx_list}')
+        print(f'\nstair_names_list: {stair_names_list}')
+
+
+    plot_pos_sep_and_one_probe(pos_sep_and_one_probe_df=psig_thr_df,
+                               fig_title=fig_3_title,
+                               one_probe=False,
+                               save_path=save_path,
+                               save_name=fig3_save_name,
+                               isi_name_list=isi_name_list,
+                               pos_set_ticks=psig_thr_idx_list,
+                               pos_tick_labels=stair_names_list,
+                               verbose=True)
+    if show_plots:
+        plt.show()
+    plt.close()
+
+    #########
+    # fig to compare congruent and incongruent thr for each ISI
+
+    if 'congruent' not in list(psig_thr_df.columns):
+        psig_thr_df.insert(0, 'congruent', cong_col_s)
+    if 'separation' not in list(psig_thr_df.columns):
+        psig_thr_df.insert(1, 'separation', sep_col_s)
+    if 'stair_names' in list(psig_thr_df.columns):
+        psig_thr_df.drop('stair_names', axis=1, inplace=True)
+
+    isi_cols_list = list(psig_thr_df.columns)[-len(isi_name_list):]
+    if verbose:
+        print(f'psig_thr_df:\n{psig_thr_df}')
+        print(f'isi_name_list: {isi_name_list}')
+
+    # convert wide df to long
+    long_df = make_long_df(wide_df=psig_thr_df, cols_to_keep=['congruent', 'separation'],
+                           cols_to_change=isi_cols_list, cols_to_change_show='probeLum',
+                           new_col_name='ISI', strip_from_cols='ISI_', verbose=True)
+
+    # make plot with pos sep only
+    # same colour with dashed or dotted for congruent/incongruent
+    fig_title = 'Congruent and incongruent probe/flow motion for each ISI'
+    fig_savename = 'compare_data'
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.lineplot(data=long_df,
+                 x='separation', y='probeLum', hue='ISI', style='congruent',
+                 style_order=[1, -1],
+                 markers=True, dashes=True, ax=ax)
+    ax.set_xticks(pos_sep_list)
+    plt.title(fig_title)
+
+    # Change legend labels for congruent and incongruent data
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles=handles, labels=labels[:-2] + ['True', 'False'])
+
+    plt.savefig(f'{save_path}{os.sep}{fig_savename}')
+
+    if show_plots:
+        plt.show()
+    plt.close()
 
     print("\n***finished c_plots()***\n")
 
@@ -1432,176 +1944,239 @@ def c_plots(save_path, thr_col='probeLum', isi_name_list=None,
 
 
 def d_average_participant(root_path, run_dir_names_list,
-                         thr_col='probeLum', show_plots=True, verbose=True):
+                          error_bars=None,
+                          trim_n=None,
+                          show_plots=True, verbose=True):
     """
-    d_average_participant: take P-next-thresholds.xlsx and P-reversal4-thresholds.csv
-    in each participant run folder and make master lists  
-    MASTER_next_thresh
-    MASTER_reversal_4_thresh
-    
-    Get mean of next threshold across 6 run conditions saved as 
-    MASTER_ave_next_thresh.csv
-    
+    d_average_participant: take psignifit_thresholds.csv
+    in each participant run folder and make master lists
+    MASTER_psignifit_thresholds.csv
+
+    Get mean threshold across 6 run conditions saved as
+    MASTER_ave_thresh.csv
+
     Save master lists to folder containing the six runs (root_path).
-    
+
     Plots:
-    mean_next_thresh saved as P_ave_thr_all_runs.png
-    mean_next_thresh two-probe/one-probe saved as P_ave_thr_divided_one_probe
-    
+    MASTER_ave_thresh saved as ave_thr_all_runs.png
+    this has two versions:
+    a. x-axis is separation, ISI as different lines
+    b. x-axis is ISI, separation as different lines
+    Heatmap: with average probe lum for ISI and separation.
+
     :param root_path: dir containing run folders
     :param run_dir_names_list: names of run folders
-    :param thr_col: Default: 'probeLum'. column with variable controlled by staircase
-    :param show_plots: default True - dispplay plots
+    :param error_bars: Default: None. Can pass sd or se for standard deviation or error.
+    :param trim_n: default None.  If int is passed, will call function trim_n_high_n_low(),
+            which trims the n highest and lowest values.
+    :param show_plots: default True - display plots
     :param verbose: Defaut true, print progress to screen
+
+    :returns: ave_psignifit_thr_df: (trimmed?) mean threshold for each separation and ISI.
     """
 
     print("\n***running d_average_participant()***\n")
 
-    # # part1. Munge data, save master lists and get means etc
-    # #  - loop through runs and get each P-next-thresholds and P-reversal4-thresholds
-    # # Make master sheets: MASTER_next_thresh & MASTER_reversal_4_thresh
-    # # Incidentally the MATLAB script didn't specify which reversals data to use,
-    # # although the figures imply Martin used last3 reversals.
+    """ part1. Munge data, save master lists and get means etc
+     - loop through runs and get each P-next-thresholds and P-reversal4-thresholds
+    Make master sheets: MASTER_next_thresh & MASTER_reversal_4_thresh
+    Incidentally the MATLAB script didn't specify which reversals data to use,
+    although the figures imply Martin used last3 reversals."""
 
-
-    isi_name_list = ['Concurrent', 'ISI0', 'ISI2', 'ISI4',
-                     'ISI6', 'ISI9', 'ISI12', 'ISI24']
-    pos_sep_list = [0, 1, 2, 3, 6, 18, 20]
-    all_data_next_list = []
-    all_data_4_reversals_list = []
-
+    all_psignifit_list = []
     for run_idx, run_name in enumerate(run_dir_names_list):
-        this_next_df = pd.read_excel(f'{root_path}{os.sep}{run_name}{os.sep}P-next-thresholds.xlsx',
-                                     sheet_name='next_thresh_mean_df', engine='openpyxl')
 
-        if 'Unnamed: 0' in list(this_next_df):
-            this_next_df.drop('Unnamed: 0', axis=1, inplace=True)
-            print('foundunnamed')
-        this_next_df.insert(0, 'Run', run_idx)
-        all_data_next_list.append(this_next_df)
-        # print(f'\nthis_next_df: ({run_idx}) {run_name}\n{this_next_df}')
+        this_psignifit_df = pd.read_csv(f'{root_path}{os.sep}{run_name}{os.sep}psignifit_thresholds.csv')
+        print(f'{run_idx}. {run_name} - this_psignifit_df:\n{this_psignifit_df}')
 
-        this_reversal_df = pd.read_csv(f'{root_path}{os.sep}{run_name}{os.sep}P-reversal4-thresholds.csv')
-        if 'Unnamed: 0' in list(this_reversal_df):
-            this_reversal_df.drop('Unnamed: 0', axis=1, inplace=True)
-            print('foundunnamed')
+        if 'Unnamed: 0' in list(this_psignifit_df):
+            this_psignifit_df.drop('Unnamed: 0', axis=1, inplace=True)
 
-        this_reversal_df.insert(0, 'Run', run_idx)
-        all_data_4_reversals_list.append(this_reversal_df)
+        this_psignifit_df.drop(columns='stair', inplace=True)
 
-    all_data_next_df = pd.concat(all_data_next_list, ignore_index=True)
-    all_data_next_df.to_csv(f'{root_path}{os.sep}MASTER_next_thresh.csv', index=False)
+        isi_name_list = list(this_psignifit_df.columns)[3:]
 
-    all_data_4_reversals_df = pd.concat(all_data_4_reversals_list, ignore_index=True)
-    all_data_4_reversals_df.to_csv(f'{root_path}{os.sep}MASTER_reversal_4_thresh.csv', index=False)
+        rows, cols = this_psignifit_df.shape
+        this_psignifit_df.insert(0, 'stack', [run_idx] * rows)
 
+        if verbose:
+            print(f'\nthis_psignifit_df:\n{this_psignifit_df}')
+
+        all_psignifit_list.append(this_psignifit_df)
+
+
+    # join all stacks (runs/groups) data and save as master csv
+    all_data_psignifit_df = pd.concat(all_psignifit_list, ignore_index=True)
+    all_data_psignifit_df.to_csv(f'{root_path}{os.sep}MASTER_psignifit_thresholds.csv', index=False)
     if verbose:
-        print(f'all_data_next_df:\n{all_data_next_df}')
-        print(f'all_data_4_reversals_df:\n{all_data_4_reversals_df}')
+        print(f'\nall_data_psignifit_df:\n{all_data_psignifit_df}')
 
-    # get mean of all runs (each sep and ISI)
-    # try just grouping the master sheet first, rather than using concat.
-    ave_next_thr_df = all_data_next_df.drop('Run', axis=1)
-    ave_next_thr_df = ave_next_thr_df.groupby('Separation').mean()
+    """Part 2: trim highest and lowest values is required and get average vals and errors"""
+    # # trim highest and lowest values
+    if trim_n is not None:
+        trimmed_df = trim_n_high_n_low(all_data_psignifit_df, trim_from_ends=trim_n,
+                                       reference_col='stair_names',
+                                       stack_col_id='stack',
+                                       verbose=verbose)
+        get_means_df = trimmed_df
+    else:
+        get_means_df = all_data_psignifit_df
+
+    # # get means and errors
+    groupby_sep_df = get_means_df.drop('stack', axis=1)
+    groupby_sep_df = groupby_sep_df.drop('congruent', axis=1)
+    groupby_sep_df = groupby_sep_df.drop('separation', axis=1)
+
+    ave_psignifit_thr_df = groupby_sep_df.groupby('stair_names', sort=True).mean()
     if verbose:
-        print(f'ave_next_thr_df:\n{ave_next_thr_df}')
-    ave_next_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_next_thresh.csv')
-    # std_next_df = ave_next_thr_df.groupby('Separation').std()
+        print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
 
-    # ave_reversal4_thr_df = all_data_4_reversals_df.drop('Run', axis=1)
-    # ave_reversal4_thr_df = ave_reversal4_thr_df.groupby('Separation').mean()
-    # if verbose:
-    #     print(f'ave_reversal4_thr_df:\n{ave_reversal4_thr_df}')
-    # std_reversal_df = = ave_reversal4_thr_df.groupby('Separation').std()
+    if error_bars in [False, None]:
+        error_bars_df = None
+    elif error_bars.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
+        error_bars_df = groupby_sep_df.groupby('stair_names', sort=True).sem()
+    elif error_bars.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
+        error_bars_df = groupby_sep_df.groupby('stair_names', sort=True).std()
+    else:
+        raise ValueError(f"error_bars should be in:\nfor none: [False, None]\n"
+                         f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standrad_error']\n"
+                         f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
+                         f"'deviation', 'standard_deviation']")
+    print(f'\nerror_bars_df: ({error_bars})\n{error_bars_df}')
 
+    # save csv with average values
+    if trim_n is not None:
+        ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM_thresh.csv', index=False)
+    else:
+        ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_thresh.csv', index=False)
 
+    """part 3. main Figures (these are the ones saved in the matlab script)
+    Fig1: plot average threshold for each ISI and sep.
+    Fig2: divide all 2probe conds (pos_sep) by one_probe condition for each stack.
+    For both figures there are 2 versions:
+        a) Sep on x-axis, different line for each ISI
+        b) ISI on x-axis, different line for each Sep"""
 
-    # part 2. main Figures (these are the ones saved in the matlab script)
-    # Fig1: single ax, pos_sep_and_one_probe.  Uses ave_next_thr_df: for thr values (e.g., mean of all runs).
-    # Fig2: single ax, pos_sep_and_one_probe (but no one probe).
-    #     threshold values are mean of two probes / single probe
+    stair_names_list = sorted(list(all_data_psignifit_df['stair_names'].unique()))
+    stair_names_list = [-.1 if i == -.10 else int(i) for i in stair_names_list]
+    stair_names_labels = ['-0' if i == -.10 else int(i) for i in stair_names_list]
+    print(f"\nstair_names_list: {stair_names_list}")
+    print(f"stair_names_labels: {stair_names_labels}")
 
-    # # Fig1
-    fig1_title = f'Participant average threshold across all runs'
-    fig1_savename = f'P_ave_thr_all_runs.png'
-    plot_pos_sep_and_one_probe(pos_sep_and_one_probe_df=ave_next_thr_df,
-                               fig_title=fig1_title,
-                               one_probe=False,
-                               save_path=root_path,
-                               save_name=fig1_savename)
+    print(f"\nfig_1a\n")
+    if trim_n is not None:
+        fig1_title = f'Average thresholds across all runs (trim={trim_n}).'
+        fig1_savename = f'ave_TM_thr_all_runs.png'
+    else:
+        fig1_title = f'Average threshold across all runs'
+        fig1_savename = f'ave_thr_all_runs.png'
+
+    fig1a = plot_1probe_w_errors(fig_df=ave_psignifit_thr_df, error_df=error_bars_df,
+                                 split_1probe=False, jitter=True,
+                                 error_caps=True, alt_colours=False,
+                                 legend_names=isi_name_list,
+                                 x_tick_vals=stair_names_list,
+                                 x_tick_labels=stair_names_labels,
+                                 fixed_y_range=False,
+                                 fig_title=fig1_title, save_name=fig1_savename,
+                                 save_path=root_path, verbose=True)
     if show_plots:
         plt.show()
     plt.close()
 
-    # # Fig 2
-    # # todo: don't need this plot
-    # fig2_save_name = 'P_ave_thr_divided_one_probe'
-    # fig2_title = 'Participant average threshold divided by single probe'
-    # pos_sep_df, one_probe_df = split_df_into_pos_sep_df_and_one_probe_df(ave_next_thr_df)
-    # pos_sep_arr = pos_sep_df.to_numpy()
-    # one_probe_arr = one_probe_df['probeLum'].to_numpy()
-    # div_by_one_probe_arr = (pos_sep_arr.T / one_probe_arr[:, None]).T
-    # div_by_one_probe_df = pd.DataFrame(div_by_one_probe_arr, columns=isi_name_list)
-    # div_by_one_probe_df.insert(0, 'Separation', pos_sep_list[:-1])
-    # div_by_one_probe_df.set_index('Separation', inplace=True)
-    # if verbose:
-    #     print(f'div_by_one_probe_df:\n{div_by_one_probe_df}')
-    #
-    # plot_pos_sep_and_one_probe(div_by_one_probe_df,
-    #                            thr_col=thr_col,
-    #                            fig_title=fig2_title,
-    #                            one_probe=False,
-    #                            save_path=root_path,
-    #                            save_name=fig2_save_name,
-    #                            verbose=True)
+    if verbose:
+        print('finished fig1a')
+
+    print(f"\nfig_1b\n")
+    # fig 1b, ISI on x-axis, different line for each sep
+    if trim_n is not None:
+        fig1b_title = f'Probe luminance at each ISI value per separation (trim={trim_n}).'
+        fig1b_savename = f'ave_TM_thr_all_runs_transpose.png'
+    else:
+        fig1b_title = f'Probe luminance at each ISI value per separation'
+        fig1b_savename = f'ave_thr_all_runs_transpose.png'
+
+    print(f"\nget_means_df\n{get_means_df}")
+
+    # # currently not working
+    # fig1b = plot_w_errors_no_1probe(wide_df=get_means_df,
+    #                                 x_var='isi', y_var='probeLum',
+    #                                 lines_var='stair_names',
+    #                                 hue_var='congruent',
+    #                                 legend_names=stair_names_list,
+    #                                 x_tick_labels=isi_name_list,
+    #                                 alt_colours=True,
+    #                                 fixed_y_range=False,
+    #                                 jitter=True,
+    #                                 error_caps=True,
+    #                                 fig1b_title=fig1b_title,
+    #                                 fig1b_savename=fig1b_savename,
+    #                                 save_path=root_path,
+    #                                 verbose=True)
     # if show_plots:
     #     plt.show()
     # plt.close()
 
-    '''
-    # this code is in the MATLAB script but not used anywhere
-    # make data_stats df from all_data_next_df
-    # same data, but reshaped to 6 rows x 56 columns.
-    # 6 rows are the values for each of the six runs.
-    # 56 columns correspond to combinations of 7 pos sep values (0, 1, 2, 3, 6, 18, 20)
-    # and 8 ISI values ('Concurrent', 'ISI0', 'ISI2', 'ISI4', 'ISI6', 'ISI9', 'ISI12', 'ISI24')
-    # 0_concurrent, 1_concurrent, 2_concurrent etc
-    
-    combo_name_list = []
-    data_stats_list = np.zeros(shape=[6, 56])
-    
-    combo_counter = 0  # should be 56 combos
-    for isi_name in isi_name_list:
-        for sep in pos_sep_list:
-            combo_name = f'{sep}_{isi_name}'
-            combo_name_list.append(combo_name)
-    
-            for run_idx, run_name in enumerate(run_dir_names_list):
-    
-                # get threshold at isi_name for each Separation & Run value
-                this_val = \
-                    all_data_next_df.loc[(all_data_next_df["Separation"] == sep) &
-                                         (all_data_next_df["Run"] == run_idx)][isi_name].values[0]
-    
-                # print(f'{combo_name}, ({run_idx}, {combo_counter}): {this_val}')
-    
-                data_stats_list[run_idx, combo_counter] = this_val
-    
-                # data_stats_list[run_idx, combo_counter] = \
-                #     all_data_next_df.loc[(all_data_next_df["Separation"] == sep) &
-                #                          (all_data_next_df["Run"] == run_idx)]["Concurrent"].values[0]
-            combo_counter += 1
-            # print('')
-    
-    data_stats_df = pd.DataFrame(data_stats_list, columns=combo_name_list)
+    isi_cols_list = list(get_means_df.columns)[-len(isi_name_list):]
     if verbose:
-        print(f'data_stats_df:\n{data_stats_df}')
-    '''
+        print(f'get_means_df:\n{get_means_df}')
+        print(f'isi_name_list: {isi_name_list}')
 
-    '''
-    extra figures - these are made but not saved in the matlab script.
-    '''
+    # convert wide df to long
+    long_df = make_long_df(wide_df=get_means_df, cols_to_keep=['congruent', 'separation'],
+                           cols_to_change=isi_cols_list, cols_to_change_show='probeLum',
+                           new_col_name='ISI', strip_from_cols='isi', verbose=True)
+
+    # make plot with pos sep only
+    # same colour with dashed or dotted for congruent/incongruent
+    fig_title = 'Congruent and incongruent probe/flow motion for each ISI'
+    fig_savename = 'compare_mean_data'
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.lineplot(data=long_df,
+                 x='separation', y='probeLum', hue='ISI', style='congruent',
+                 style_order=[1, -1],
+                 markers=True, dashes=True,
+                 estimator=np.mean, ci='sd', err_style='bars',
+                 ax=ax)
+    ax.set_xticks(sorted(list(long_df['separation'].unique())))
+    plt.title(fig_title)
+
+    # Change legend labels for congruent and incongruent data
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles=handles, labels=labels[:-2] + ['True', 'False'])
+
+    plt.savefig(f'{root_path}{os.sep}{fig_savename}')
+
+    if show_plots:
+        plt.show()
+    plt.close()
+
+    if verbose:
+        print('finished fig1b')
+
+
+    print(f"\nHeatmap\n")
+    # get mean of each col, then mean of that
+
+    if trim_n is not None:
+        heatmap_title = f'Mean Threshold for each ISI and separation (trim={trim_n}).'
+        heatmap_savename = 'mean_TM_thr_heatmap'
+    else:
+        heatmap_title = 'Mean Threshold for each ISI and separation'
+        heatmap_savename = 'mean_thr_heatmap'
+
+    heatmap = plot_thr_heatmap(heatmap_df=ave_psignifit_thr_df,
+                               x_tick_labels=isi_name_list,
+                               y_tick_labels=stair_names_list,
+                               fig_title=heatmap_title,
+                               save_name=heatmap_savename,
+                               save_path=root_path,
+                               verbose=True)
+    plt.show()
+
     print("\n*** finished d_average_participant()***\n")
+
+    return ave_psignifit_thr_df
 
 
 

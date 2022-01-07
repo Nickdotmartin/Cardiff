@@ -359,7 +359,7 @@ def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
 
 
 def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bins=True,
-                               sep_col='Separation', isi_list=None, sep_list=None, 
+                               sep_col='separation', isi_list=None, sep_list=None, 
                                group=None,
                                cols_to_add_dict=None,
                                verbose=True):

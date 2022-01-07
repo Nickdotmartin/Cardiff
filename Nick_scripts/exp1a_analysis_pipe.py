@@ -38,13 +38,13 @@ for run_idx, run_dir in enumerate(run_folder_names):
     run_data_df = pd.read_excel(run_data_path, engine='openpyxl',
                                 usecols=['ISI',
                                          'stair',
-                                         'Separation', 'group',
+                                         'separation', 'group',
                                          'probeLum', 'trial_response'])
     print(f"run_data_df:\n{run_data_df}")
 
     stair_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
     cols_to_add_dict = {'group': [1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2],
-                        'Separation': [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0, 20, 20]}
+                        'separation': [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0, 20, 20]}
 
     '''get psignifit thresholds df'''
     thr_df = get_psignifit_threshold_df(root_path=root_path,

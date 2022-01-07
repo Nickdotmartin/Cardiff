@@ -133,13 +133,13 @@ def split_df_into_pos_sep_df_and_one_probe_df(pos_sep_and_one_probe_df,
 
     # check that the df only contains positive separation values
     if 'sep' in list(data_df.columns):
-        data_df = data_df.rename(columns={'sep': 'Separation'})
+        data_df = data_df.rename(columns={'sep': 'separation'})
 
-    # check if index column is set as 'Separation'
+    # check if index column is set as 'separation'
     if data_df.index.name is None:
-        data_df = data_df.set_index('Separation')
+        data_df = data_df.set_index('separation')
 
-    # data_df = data_df.loc[data_df['Separation'] >= 0]
+    # data_df = data_df.loc[data_df['separation'] >= 0]
     data_df = data_df.loc[data_df.index >= 0]
 
     if verbose:
@@ -312,14 +312,14 @@ def plot_1probe_w_errors(fig_df, error_df, split_1probe=True,
     Separate line for each ISI.  Error bar values taken from separate error_df.
 
     :param fig_df: dataframe to build plot from.  Expects fig_df in the form:
-        Separation as index, 1probe as bottom row, ISIs as columns.
+        separation as index, 1probe as bottom row, ISIs as columns.
     :param error_df: dataframe of same shape as fig_df, but contains error values
     :param split_1probe: Default=True - whether to treat 1probe data separately,
         e.g., not joined with line to 2probe data.
     :param jitter: Jitter x_axis values so points don't overlap.
     :param error_caps: caps on error bars for more easy reading
     :param alt_colours: Use different set of colours to normal (e.g., if ISI on
-        x-axis and lines for each Separation).
+        x-axis and lines for each separation).
     :param legend_names: Names of different lines (e.g., ISI names)
     :param x_tick_vals: Positions on x-axis.
     :param x_tick_labels: labels for x-axis.
@@ -545,7 +545,7 @@ def plot_thr_heatmap(heatmap_df,
                      verbose=True):
     """
     Function for making a heatmap
-    :param heatmap_df: Expects dataframe with Separation as index and ISIs as columns.
+    :param heatmap_df: Expects dataframe with separation as index and ISIs as columns.
     :param x_tick_labels: Labels for columns
     :param y_tick_labels: Labels for rows
     :param fig_title:
@@ -588,14 +588,14 @@ def plot_thr_heatmap(heatmap_df,
 
 ##########################
 
-def trim_n_high_n_low(all_data_df, trim_from_ends=None, reference_col='Separation',
+def trim_n_high_n_low(all_data_df, trim_from_ends=None, reference_col='separation',
                       stack_col_id='stack', verbose=True):
     """
     Function for trimming the n highest and lowest values from each condition of a set with multiple runs.
 
     :param all_data_df: Dataset to be trimmed.
     :param trim_from_ends: number of values to trim from each end of the distribution.
-    :param reference_col: Idx column containing repeated conditions (e.g., Separation has same label for each stack).
+    :param reference_col: Idx column containing repeated conditions (e.g., separation has same label for each stack).
     :param stack_col_id: idx column showing different runs/groups etc (e.g., stack)
     :param verbose: in true will print progress to screen.
 
@@ -641,7 +641,7 @@ def trim_n_high_n_low(all_data_df, trim_from_ends=None, reference_col='Separatio
               f'target_3d_depth (depth-trim): {target_3d_depth}, '
               f'3d shape after trim (target_3d_depth, rows_3d, cols_all) = '
               f'({target_3d_depth}, {rows_3d}, {cols_all})\n'
-              f'2d array shape (after trim, but before Separation, stack or headers are added): '
+              f'2d array shape (after trim, but before separation, stack or headers are added): '
               f'(target_2d_rows, cols_all) = ({target_2d_rows}, {cols_all})')
 
     '''Part 2, trim highest and lowest n values from each depth slice to get trimmed_3d_list'''
@@ -670,7 +670,7 @@ def trim_n_high_n_low(all_data_df, trim_from_ends=None, reference_col='Separatio
     depth-stack of my_3d_array which has now be trimmed (e.g., fewer rows).
     However, trimmed_3d_list has the same depth and number of columns as my_3d_array.
     trimmed_array re-shapes trimmed_3d_list so all values are in their original
-    row and column positions (e.g., Separation and ISI).
+    row and column positions (e.g., separation and ISI).
     However, the 3rd dimension (depth) is not in original order, but in ascending order."""
 
     trimmed_3d_array = np.array(trimmed_3d_list)
@@ -714,15 +714,15 @@ def trim_n_high_n_low(all_data_df, trim_from_ends=None, reference_col='Separatio
 ##################
 
 def make_long_df(wide_df, wide_stubnames='ISI',
-                 col_to_keep='Separation', idx_col='Run', verbose=True):
+                 col_to_keep='separation', idx_col='Run', verbose=True):
 
     """
     Function to convert a wide form df containing multiple measurements at each value
     (e.g., data dfs concatenated from several runs), into long-form dataframe
     :param wide_df: Expects a dataframe made by concatenating data from several runs.
-        Dataframe expected to contain columns for: Run, Separation and ISI levels.
+        Dataframe expected to contain columns for: Run, separation and ISI levels.
     :param wide_stubnames: repeated prefix for several columns (e.g., ISI0, ISI1, ISI2, ISI4 etc).
-    :param col_to_keep: Existing columns of useful data (e.g., Separation)
+    :param col_to_keep: Existing columns of useful data (e.g., separation)
     :param idx_col: Existing column of irrelavent data to use as index (e.g., Run)
     :param verbose: print progress to screen.
 
@@ -808,9 +808,9 @@ def eight_batman_plots(mean_df, thr1_df, thr2_df,
 
     # check column name for x_values
     if 'sep' in list(mean_df.columns):
-        mean_df = mean_df.rename(columns={'sep': 'Separation'})
-        thr1_df = thr1_df.rename(columns={'sep': 'Separation'})
-        thr2_df = thr2_df.rename(columns={'sep': 'Separation'})
+        mean_df = mean_df.rename(columns={'sep': 'separation'})
+        thr1_df = thr1_df.rename(columns={'sep': 'separation'})
+        thr2_df = thr2_df.rename(columns={'sep': 'separation'})
 
     # set colours
     my_colours = fig_colours(len(isi_name_list))
@@ -828,19 +828,19 @@ def eight_batman_plots(mean_df, thr1_df, thr2_df,
 
             # mean threshold from CW and CCW probe jump direction
             sns.lineplot(ax=axes[row_idx, col_idx], data=mean_df,
-                         x='Separation', y=isi_name_list[ax_counter],
+                         x='separation', y=isi_name_list[ax_counter],
                          color=my_colours[ax_counter],
                          linewidth=2, linestyle="dotted", markers=True)
 
             # stair1: CW probe jumps only
             sns.lineplot(ax=axes[row_idx, col_idx], data=thr1_df,
-                         x='Separation', y=isi_name_list[ax_counter],
+                         x='separation', y=isi_name_list[ax_counter],
                          color=my_colours[ax_counter],
                          linewidth=.5, marker="v")
 
             # stair2: CCW probe jumps only
             sns.lineplot(ax=axes[row_idx, col_idx], data=thr2_df,
-                         x='Separation', y=isi_name_list[ax_counter],
+                         x='separation', y=isi_name_list[ax_counter],
                          color=my_colours[ax_counter],
                          linewidth=.5, marker="o")
 
@@ -947,7 +947,7 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
             unnamed_col = [i for i in list(this_isi_df.columns) if "Unnamed" in i][0]
             this_isi_df.drop(unnamed_col, axis=1, inplace=True)
 
-        if 'Separation' in list(this_isi_df.columns):
+        if 'separation' in list(this_isi_df.columns):
             resave_results = False
 
         # add isi column for multi-indexing
@@ -957,9 +957,9 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
         stack_list = this_isi_df['stair'].map(stair_group_dict)
         this_isi_df.insert(1, 'group', stack_list)
 
-        # add in Separation column mapped from stair_sep_dict
+        # add in separation column mapped from stair_sep_dict
         sep_list = this_isi_df['stair'].map(stair_sep_dict)
-        this_isi_df.insert(2, 'Separation', sep_list)
+        this_isi_df.insert(2, 'separation', sep_list)
 
         # sort by group, stair, original trial number
         trial_numbers = list(this_isi_df['total_nTrials'])
@@ -1083,9 +1083,9 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
     if 'group' in list(psignifit_thr_df.columns):
         psignifit_thr_df = psignifit_thr_df.drop(['group'], axis=1)
 
-    if 'Separation' in list(psignifit_thr_df.columns):
-        # test_sep_list = psignifit_thr_df.pop(['Separation'], axis=1)
-        sep_list = psignifit_thr_df.pop('Separation').tolist()
+    if 'separation' in list(psignifit_thr_df.columns):
+        # test_sep_list = psignifit_thr_df.pop(['separation'], axis=1)
+        sep_list = psignifit_thr_df.pop('separation').tolist()
         sep_list = [20 if i == 99 else i for i in sep_list]
     else:
         sep_list = [18, 6, 3, 2, 1, 0, 20]
@@ -1104,9 +1104,9 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
         sep_list = sep_list[::2]
     print(f'sep_list: {sep_list}')
 
-    psig_thr_mean_df.insert(0, 'Separation', sep_list)
-    psig_pos_sep_df.insert(0, 'Separation', sep_list)
-    psig_neg_sep_df.insert(0, 'Separation', sep_list)
+    psig_thr_mean_df.insert(0, 'separation', sep_list)
+    psig_pos_sep_df.insert(0, 'separation', sep_list)
+    psig_neg_sep_df.insert(0, 'separation', sep_list)
     if verbose:
         print(f'\npsig_pos_sep_df:\n{psig_pos_sep_df}')
         print(f'\npsig_neg_sep_df:\n{psig_neg_sep_df}')
@@ -1240,21 +1240,21 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
                         print(f'psig_thr_mean_df:\n{psig_thr_mean_df}')
                         print(f'\none_probe_df:\n{one_probe_df}')
 
-                    isi_thr_mean_df = pd.concat([psig_thr_mean_df['Separation'], psig_thr_mean_df[isi_name]],
-                                                axis=1, keys=['Separation', isi_name])
+                    isi_thr_mean_df = pd.concat([psig_thr_mean_df['separation'], psig_thr_mean_df[isi_name]],
+                                                axis=1, keys=['separation', isi_name])
                     if verbose:
                         print(f'isi_thr_mean_df:\n{isi_thr_mean_df}')
 
                     # line plot for thr1, th2 and mean thr
                     sns.lineplot(ax=axes[row_idx, col_idx], data=isi_thr_mean_df,
-                                 x='Separation', y=isi_name, color='lightgreen',
+                                 x='separation', y=isi_name, color='lightgreen',
                                  linewidth=3)
 
                     sns.lineplot(ax=axes[row_idx, col_idx], data=psig_pos_sep_df,
-                                 x='Separation', y=isi_name, color='red',
+                                 x='separation', y=isi_name, color='red',
                                  linestyle="--")
                     sns.lineplot(ax=axes[row_idx, col_idx], data=psig_neg_sep_df,
-                                 x='Separation', y=isi_name, color='blue',
+                                 x='separation', y=isi_name, color='blue',
                                  linestyle="dotted")
 
 
@@ -1359,8 +1359,8 @@ def c_plots(save_path, thr_col='probeLum', show_plots=True, verbose=True):
     psig_thr_df = psig_thr_df.drop(['stair'], axis=1)
     if 'group' in list(psig_thr_df.columns):
         group_col_s = psig_thr_df.pop('group')
-    if 'Separation' in list(psig_thr_df.columns):
-        sep_col_s = psig_thr_df.pop('Separation')
+    if 'separation' in list(psig_thr_df.columns):
+        sep_col_s = psig_thr_df.pop('separation')
     psig_thr_df.columns = isi_name_list
 
     # lastN_pos_sym_np has values for 1-indexed stairs [1, 3, 5, 7, 9, 11, 9, 7, 5, 3, 1, 13]
@@ -1369,46 +1369,46 @@ def c_plots(save_path, thr_col='probeLum', show_plots=True, verbose=True):
     if verbose:
         print('\npreparing data for batman plots')
     pos_sym_indices = [0, 2, 4, 6, 8, 10, 8, 6, 4, 2, 0, 12]
-    psig_pos_sep_df = psig_thr_df.iloc[pos_sym_indices]
-    psig_pos_sep_df.reset_index(drop=True, inplace=True)
+    psig_pos_sym_sep_df = psig_thr_df.iloc[pos_sym_indices]
+    psig_pos_sym_sep_df.reset_index(drop=True, inplace=True)
 
     # lastN_neg_sym_np has values for 1-indexed stairs   [2,  4,  6,  8, 10, 12, 10, 8,  6,  4,  2,  14]
     # but the rows I select are zero indexed, use rows   [1,  3,  5,  7, 9,  11, 9,  7,  5,  3,  1,  13]
     # these correspond to sep values:                  [-18, -6, -3, -2, -1, 0, -1, -2, -3, -6, -18, 99]
     neg_sym_indices = [1, 3, 5, 7, 9, 11, 9, 7, 5, 3, 1, 13]
-    psig_neg_sep_df = psig_thr_df.iloc[neg_sym_indices]
-    psig_neg_sep_df.reset_index(drop=True, inplace=True)
+    psig_neg_sym_sep_df = psig_thr_df.iloc[neg_sym_indices]
+    psig_neg_sym_sep_df.reset_index(drop=True, inplace=True)
 
     # mean of pos and neg sep values [18, 6, 3, 2, 1, 0, 1, 2, 3, 6, 18, 99]
-    psig_thr_mean_df = pd.concat([psig_pos_sep_df, psig_neg_sep_df]).groupby(level=0).mean()
+    psig_sym_thr_mean_df = pd.concat([psig_pos_sym_sep_df, psig_neg_sym_sep_df]).groupby(level=0).mean()
 
     # subtract the dfs from each other, then for each column get the sum of abs values
-    diff_val = np.sum(abs(psig_pos_sep_df - psig_neg_sep_df), axis=0)
+    diff_val = np.sum(abs(psig_pos_sym_sep_df - psig_neg_sym_sep_df), axis=0)
     # take the mean of these across all ISIs to get single value
     mean_diff_val = float(np.mean(diff_val))
 
     # add sep column into dfs
-    psig_thr_mean_df.insert(0, 'Separation', sym_sep_list)
-    psig_pos_sep_df.insert(0, 'Separation', sym_sep_list)
-    psig_neg_sep_df.insert(0, 'Separation', sym_sep_list)
+    psig_sym_thr_mean_df.insert(0, 'separation', sym_sep_list)
+    psig_pos_sym_sep_df.insert(0, 'separation', sym_sep_list)
+    psig_neg_sym_sep_df.insert(0, 'separation', sym_sep_list)
 
     if verbose:
-        print(f'\npsig_pos_sep_df:\n{psig_pos_sep_df}')
-        print(f'\npsig_neg_sep_df:\n{psig_neg_sep_df}')
-        print(f'\npsig_thr_mean_df:\n{psig_thr_mean_df}')
+        print(f'\npsig_pos_sym_sep_df:\n{psig_pos_sym_sep_df}')
+        print(f'\npsig_neg_sym_sep_df:\n{psig_neg_sym_sep_df}')
+        print(f'\npsig_sym_thr_mean_df:\n{psig_sym_thr_mean_df}')
         print(f'\ndiff_val:\n{diff_val}')
         print(f'\nmean_diff_val: {mean_diff_val}')
 
     # # Figure1 - runs-{n}lastValues
     # this is a figure with one axis per isi, showing neg and pos sep
     # (e.g., -18:18) - eight batman plots
-    fig_title = f'Psignifit thresholds per ISI. ' \
+    fig_title = f'MIRRORED Psignifit thresholds per ISI. ' \
                 f'(mean diff: {round(mean_diff_val, 2)})'
-    fig1_savename = f'runs.png'
+    fig1_savename = f'MIRRORED_runs.png'
 
-    eight_batman_plots(mean_df=psig_thr_mean_df,
-                       thr1_df=psig_pos_sep_df,
-                       thr2_df=psig_neg_sep_df,
+    eight_batman_plots(mean_df=psig_sym_thr_mean_df,
+                       thr1_df=psig_pos_sym_sep_df,
+                       thr2_df=psig_neg_sym_sep_df,
                        fig_title=fig_title,
                        isi_name_list=isi_name_list,
                        x_tick_vals=sym_sep_list,
@@ -1426,9 +1426,9 @@ def c_plots(save_path, thr_col='probeLum', show_plots=True, verbose=True):
     # add columns back in to split thr_df by group for data and divby1probe plots.
     if 'group' not in list(psig_thr_df.columns):
         psig_thr_df.insert(0, 'group', group_col_s)
-    if 'Separation' not in list(psig_thr_df.columns):
+    if 'separation' not in list(psig_thr_df.columns):
         sep_list = [19 if i == 20 else i for i in sep_col_s.tolist()]
-        psig_thr_df.insert(1, 'Separation', sep_list)
+        psig_thr_df.insert(1, 'separation', sep_list)
     print(f'\nmaking plots from group1 and group2 data with psig_thr_df:\n{psig_thr_df}')
 
     for group in [1, 2]:
@@ -1474,8 +1474,8 @@ def c_plots(save_path, thr_col='probeLum', show_plots=True, verbose=True):
         one_probe_arr = one_probe_df['probeLum'].to_numpy()
         div_by_one_probe_arr = (pos_sep_arr.T / one_probe_arr[:, None]).T
         div_by_one_probe_df = pd.DataFrame(div_by_one_probe_arr, columns=isi_name_list)
-        div_by_one_probe_df.insert(0, 'Separation', pos_sep_list[:-1])
-        div_by_one_probe_df.set_index('Separation', inplace=True)
+        div_by_one_probe_df.insert(0, 'separation', pos_sep_list[:-1])
+        div_by_one_probe_df.set_index('separation', inplace=True)
         print(f'div_by_one_probe_df:\n{div_by_one_probe_df}')
 
         plot_pos_sep_and_one_probe(div_by_one_probe_df,
@@ -1518,8 +1518,8 @@ def d_average_participant(root_path, run_dir_names_list,
     MASTER_ave_thresh two-probe/one-probesaved as ave_thr_div_one_probe.png
     these both have two versions:
     a. x-axis is separation, ISI as different lines
-    b. x-axis is ISI, Separation as different lines
-    Heatmap: with average probe lum for ISI and Separation.
+    b. x-axis is ISI, separation as different lines
+    Heatmap: with average probe lum for ISI and separation.
 
     :param root_path: dir containing run folders
     :param run_dir_names_list: names of run folders
@@ -1565,7 +1565,7 @@ def d_average_participant(root_path, run_dir_names_list,
         psig_g2_df.drop(columns='group', inplace=True)
         psig_g2_df.insert(0, 'stack', [run_idx*2+1] * rows)
 
-        columns_list = ['stack', 'Separation'] + isi_name_list
+        columns_list = ['stack', 'separation'] + isi_name_list
         psig_g1_df.columns = columns_list
         psig_g2_df.columns = columns_list
 
@@ -1586,7 +1586,7 @@ def d_average_participant(root_path, run_dir_names_list,
     # # trim highest and lowest values
     if trim_n is not None:
         trimmed_df = trim_n_high_n_low(all_data_psignifit_df, trim_from_ends=trim_n,
-                                       reference_col='Separation',
+                                       reference_col='separation',
                                        stack_col_id='stack',
                                        verbose=verbose)
         get_means_df = trimmed_df
@@ -1595,16 +1595,16 @@ def d_average_participant(root_path, run_dir_names_list,
 
     # # get means and errors
     groupby_sep_df = get_means_df.drop('stack', axis=1)
-    ave_psignifit_thr_df = groupby_sep_df.groupby('Separation', sort=True).mean()
+    ave_psignifit_thr_df = groupby_sep_df.groupby('separation', sort=True).mean()
     if verbose:
         print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
 
     if error_bars in [False, None]:
         error_bars_df = None
     elif error_bars.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
-        error_bars_df = groupby_sep_df.groupby('Separation', sort=True).sem()
+        error_bars_df = groupby_sep_df.groupby('separation', sort=True).sem()
     elif error_bars.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
-        error_bars_df = groupby_sep_df.groupby('Separation', sort=True).std()
+        error_bars_df = groupby_sep_df.groupby('separation', sort=True).std()
     else:
         raise ValueError(f"error_bars should be in:\nfor none: [False, None]\n"
                          f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standrad_error']\n"
@@ -1654,15 +1654,15 @@ def d_average_participant(root_path, run_dir_names_list,
     print(f"\nfig_1b\n")
     # fig 1b, ISI on x-axis, different line for each sep
     if trim_n is not None:
-        fig1b_title = f'Probe luminance at each ISI value per Separation (trim={trim_n}).'
+        fig1b_title = f'Probe luminance at each ISI value per separation (trim={trim_n}).'
         fig1b_savename = f'ave_TM_thr_all_runs_transpose.png'
     else:
-        fig1b_title = f'Probe luminance at each ISI value per Separation'
+        fig1b_title = f'Probe luminance at each ISI value per separation'
         fig1b_savename = f'ave_thr_all_runs_transpose.png'
 
     fig1b = plot_w_errors_no_1probe(wide_df=get_means_df,
                                     x_var='ISI', y_var='probeLum',
-                                    lines_var='Separation',
+                                    lines_var='separation',
                                     legend_names=['0', '1', '2', '3', '6', '18', '1probe'],
                                     x_tick_labels=['conc', 0, 2, 4, 6, 9, 12, 24],
                                     alt_colours=True,
@@ -1701,7 +1701,7 @@ def d_average_participant(root_path, run_dir_names_list,
         div_by_one_probe_arr = (pos_sep_arr.T / one_probe_arr[:, None]).T
         div_by_one_probe_df = pd.DataFrame(div_by_one_probe_arr, columns=isi_name_list)
         div_by_one_probe_df.insert(0, 'stack', [stack] * len(div_by_one_probe_df))
-        div_by_one_probe_df.insert(1, 'Separation', pos_sep_list[:-1])
+        div_by_one_probe_df.insert(1, 'separation', pos_sep_list[:-1])
         divided_list.append(div_by_one_probe_df)
 
     # put back into long form df with stack Sep cols
@@ -1710,16 +1710,16 @@ def d_average_participant(root_path, run_dir_names_list,
 
     # # get means and errors
     div_groupby_sep_df = divided_df.drop('stack', axis=1)
-    div_ave_psignifit_thr_df = div_groupby_sep_df.groupby('Separation', sort=True).mean()
+    div_ave_psignifit_thr_df = div_groupby_sep_df.groupby('separation', sort=True).mean()
     if verbose:
         print(f'\ndiv_ave_psignifit_thr_df:\n{div_ave_psignifit_thr_df}')
 
     if error_bars in [False, None]:
         div_error_bars_df = None
     elif error_bars.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
-        div_error_bars_df = div_groupby_sep_df.groupby('Separation', sort=True).sem()
+        div_error_bars_df = div_groupby_sep_df.groupby('separation', sort=True).sem()
     elif error_bars.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
-        div_error_bars_df = div_groupby_sep_df.groupby('Separation', sort=True).std()
+        div_error_bars_df = div_groupby_sep_df.groupby('separation', sort=True).std()
     print(f'\ndiv_error_bars_df: ({error_bars})\n{div_error_bars_df}')
 
     if trim_n is not None:
@@ -1757,7 +1757,7 @@ def d_average_participant(root_path, run_dir_names_list,
 
     fig2b = plot_w_errors_no_1probe(wide_df=divided_df,
                                     x_var='ISI', y_var='probeLum',
-                                    lines_var='Separation',
+                                    lines_var='separation',
                                     legend_names=['0', '1', '2', '3', '6', '18'],
                                     x_tick_labels=['conc', 0, 2, 4, 6, 9, 12, 24],
                                     alt_colours=True,
