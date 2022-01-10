@@ -25,12 +25,13 @@ for run_idx, run_dir in enumerate(run_folder_names):
     # don't delete this (p_name = participant_name),
     # needed to ensure names go name1, name2, name3 not name1, name12, name123
     p_name = participant_name
+    run_data_path = f'{save_path}{os.sep}ALL_ISIs_sorted.xlsx'
+
 
     # '''a'''
     p_name = f'{participant_name}_{add_to_run_idx}'
     a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=isi_list, verbose=True)
 
-    run_data_path = f'{save_path}{os.sep}ALL_ISIs_sorted.xlsx'
 
     run_data_df = pd.read_excel(run_data_path, engine='openpyxl',
                                 usecols=["ISI", "stair", "stair_name",
@@ -63,4 +64,5 @@ for run_idx, run_dir in enumerate(run_folder_names):
 '''d'''
 d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
                       show_plots=True, trim_n=1, error_bars='SE')
+
 print('\nrad_flow_analysis_pipe finished')
