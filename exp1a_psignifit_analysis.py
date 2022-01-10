@@ -1266,11 +1266,11 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
                     # artist for legend
                     group1 = mlines.Line2D([], [], color='red',
                                              linestyle="--", marker=None,
-                                             label='Congruent thr')
+                                             label='Group1 thr')
 
                     group2 = mlines.Line2D([], [], color='blue',
                                                linestyle="dotted", marker=None,
-                                               label='Incongruent thr')
+                                               label='Group2 thr')
                     mean_thr = mlines.Line2D([], [], color='lightgreen',
                                                  linestyle="solid", marker=None,
                                                  label='mean thr')
@@ -1793,8 +1793,9 @@ def d_average_participant(root_path, run_dir_names_list,
                                save_name=heatmap_savename,
                                save_path=root_path,
                                verbose=True)
-    plt.show()
-
+    if show_plots:
+        plt.show()
+    plt.close()
     print("\n*** finished d_average_participant()***\n")
 
     return ave_psignifit_thr_df
