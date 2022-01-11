@@ -1167,6 +1167,7 @@ def c_plots(save_path, isi_name_list=None, show_plots=True, verbose=True):
         print(f'psig_thr_df:\n{psig_thr_df}')
         print(f'isi_name_list: {isi_name_list}')
 
+    # todo: make this final plot and fig 1b of d into a function
     # convert wide df to long
     long_df = make_long_df(wide_df=psig_thr_df, cols_to_keep=['congruent', 'separation'],
                            cols_to_change=isi_cols_list, cols_to_change_show='probeLum',
@@ -1359,6 +1360,8 @@ def d_average_participant(root_path, run_dir_names_list,
     if verbose:
         print(f'get_means_df:\n{get_means_df}')
         print(f'isi_name_list: {isi_name_list}')
+
+    # todo: use function in scratch
 
     # convert wide df to long
     long_df = make_long_df(wide_df=get_means_df, cols_to_keep=['congruent', 'separation'],
