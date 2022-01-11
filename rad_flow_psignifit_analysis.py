@@ -34,12 +34,6 @@ split_df_alternate_rows():
     split a dataframe into two dataframes: 
         one with positive sep values, one with negative
 
-split_df_into_pos_sep_df_and_one_probe_df():
-    code to turn array into symmetrical array (e.g., from sep=[0, 1, 2, 3, 6, 18] 
-    into sep=[-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18])
-
-split df into pos_sep_df and one_probe_df
-
 
 plots: 
 plot_data_unsym_batman: single ax with pos and neg separation (not symmetrical), dotted line at zero.
@@ -47,14 +41,6 @@ Batman plots:
 
 
 """
-
-# todo: none of my studies have the one-probe ISI condition, so get rid of this (isi=-1 or sep=99, one_probe, 1probe)
-
-# todo: none of my studies have the concurrent ISI condition, so get rid of that
-
-# todo: some of these functions are duplicated in the exp1a_psitgnifit_analysis.py script.  
-#  I don't need to two copies, so perhaps make a 'data_tools' script and put them there?
-
 
 pd.options.display.float_format = "{:,.2f}".format
 
@@ -84,7 +70,6 @@ def split_df_alternate_rows(df):
     return pos_sep_df, neg_sep_df
 
 
-# # choose colour palette
 def fig_colours(n_conditions, alternative_colours=False):
     """
     Use this to always get the same colours in the same order with no fuss.
@@ -109,7 +94,6 @@ def fig_colours(n_conditions, alternative_colours=False):
     sns.set_palette(palette=use_colours, n_colors=n_conditions)
 
     return my_colours
-
 
 
 def multi_plot_shape(n_figs, min_rows=1):
@@ -150,7 +134,7 @@ def multi_plot_shape(n_figs, min_rows=1):
     return n_rows, n_cols
 
 
-# # # all ISIs on one axis - pos sep only, plus single probe
+# # # all ISIs on one axis -
 # FIGURE 1 - shows one axis (x=separation (-18:18), y=probeLum) with multiple ISI lines.
 # dotted line at zero to make batman more apparent.
 def plot_data_unsym_batman(pos_and_neg_sep_df,
@@ -162,10 +146,8 @@ def plot_data_unsym_batman(pos_and_neg_sep_df,
                            x_tick_labels=None,
                            verbose=True):
     """
-    This plots a figure with one axis, x has separation values [-2, -1, 0, 1, 2, 3, 6, 18],
-    where -2 is not uses, -1 is for the single probe condition - shows as a scatter plot.
-    Values sep (0:18) are shown as lineplots.
-    Will plot all ISIs on the same axis.
+    This plots a figure with one axis, x has separation values [-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18],
+    Will plot all ISIs on the same axis as lineplots.
 
     :param pos_and_neg_sep_df: Full dataframe to use for values
     :param fig_title: default=None.  Pass a string to add as a title.
@@ -192,14 +174,12 @@ def plot_data_unsym_batman(pos_and_neg_sep_df,
     if x_tick_labels is None:
         x_tick_labels = [-18, -6, -3, -2, -1, '-0', 0, 1, 2, 3, 6, 18]
 
-
     # make fig1
     fig, ax = plt.subplots(figsize=(10, 6))
 
     # line plot for main ISIs
     sns.lineplot(data=pos_and_neg_sep_df, markers=True, dashes=False, ax=ax)
     ax.axvline(x=5.5, linestyle="-.", color='lightgrey')
-
 
     # decorate plot
     if x_tick_values is not None:
@@ -225,23 +205,21 @@ def plot_data_unsym_batman(pos_and_neg_sep_df,
     return fig
 
 
-def plot_runs_ave_w_errors(fig_df, error_df, split_1probe=True,
-                         jitter=True, error_caps=False, alt_colours=False,
-                         legend_names=None,
-                         x_tick_vals=None,
-                         x_tick_labels=None,
-                         fixed_y_range=False,
-                         fig_title=None, save_name=None, save_path=None,
-                         verbose=True):
+def plot_runs_ave_w_errors(fig_df, error_df,
+                           jitter=True, error_caps=False, alt_colours=False,
+                           legend_names=None,
+                           x_tick_vals=None,
+                           x_tick_labels=None,
+                           fixed_y_range=False,
+                           fig_title=None, save_name=None, save_path=None,
+                           verbose=True):
     """
-    Calculate and plot the mean and error estimates (y-axis) at each separation values (x-axis) including 1probe.
+    Calculate and plot the mean and error estimates (y-axis) at each separation values (x-axis).
     Separate line for each ISI.  Error bar values taken from separate error_df.
 
     :param fig_df: dataframe to build plot from.  Expects fig_df in the form:
-        separation as index, 1probe as bottom row, ISIs as columns.
+        separation as index, ISIs as columns.
     :param error_df: dataframe of same shape as fig_df, but contains error values
-    :param split_1probe: Default=True - whether to treat 1probe data separately,
-        e.g., not joined with line to 2probe data.
     :param jitter: Jitter x_axis values so points don't overlap.
     :param error_caps: caps on error bars for more easy reading
     :param alt_colours: Use different set of colours to normal (e.g., if ISI on
@@ -350,7 +328,6 @@ def plot_thr_heatmap(heatmap_df,
 
     :return: Heatmap
     """
-
     print('\n*** running plot_thr_heatmap() ***\n')
 
     if verbose:
@@ -382,7 +359,6 @@ def plot_thr_heatmap(heatmap_df,
 
     return heatmap
 
-##########################
 
 def trim_n_high_n_low(all_data_df, trim_from_ends=None, reference_col='separation',
                       stack_col_id='stack', verbose=True):
@@ -507,7 +483,6 @@ def trim_n_high_n_low(all_data_df, trim_from_ends=None, reference_col='separatio
     return trimmed_df
 
 
-
 def make_long_df(wide_df,
                  cols_to_keep=['congruent', 'separation'],
                  cols_to_change=['isi1', 'isi4', 'isi6'],
@@ -565,10 +540,8 @@ def make_long_df(wide_df,
     return long_df
 
 
-
 # # # 8 batman plots
-# this is a figure with one axis per isi, showing neg and pos sep
-# (e.g., -18:18)
+# this is a figure with one axis per isi, showing neg and pos sep (e.g., -18:18)
 def multi_batman_plots(mean_df, thr1_df, thr2_df,
                        fig_title=None, isi_name_list=None,
                        x_tick_vals=None, x_tick_labels=None,
@@ -630,13 +603,11 @@ def multi_batman_plots(mean_df, thr1_df, thr2_df,
                              color=my_colours[ax_counter],
                              linewidth=2, linestyle="dotted", markers=True)
 
-                # stair1: CW probe jumps only
                 sns.lineplot(ax=axes[row_idx, col_idx], data=thr1_df,
                              x='separation', y=isi_name_list[ax_counter],
                              color=my_colours[ax_counter],
                              linewidth=.5, marker="v")
 
-                # stair2: CCW probe jumps only
                 sns.lineplot(ax=axes[row_idx, col_idx], data=thr2_df,
                              x='separation', y=isi_name_list[ax_counter],
                              color=my_colours[ax_counter],
@@ -688,7 +659,6 @@ def multi_batman_plots(mean_df, thr1_df, thr2_df,
     return fig
 
 
-
 def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=True):
 
     """
@@ -707,7 +677,6 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
     :return: ALL_ISIs_sorted.xlsx: A pandas DataFrame with n xlsx file of all
         data for one run of all ISIs.
     """
-
     print("\n***running a_data_extraction()***\n")
 
     # get run name/number
@@ -718,7 +687,6 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
     if isi_list is None:
         raise ValueError('Please pass a list of isi values to identify directories containing data.')
 
-    # empty array to append info into
     all_data = []
 
     # loop through ISIs in each run.
@@ -779,7 +747,6 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
     return all_data_df
 
 
-
 def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_response',
                       show_plots=True, save_plots=True, verbose=True):
     """
@@ -801,7 +768,6 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
     one figure per isi value - saved as Staircases_{isi_name}
     n_reversals.csv - number of reversals per stair - used in c_plots
     """
-
     print("\n*** running b3_plot_staircase() ***\n")
 
     save_path, xlsx_name = os.path.split(all_data_path)
@@ -903,12 +869,14 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
                     # # get pairs of stairs (e.g., [[18, -18], [6, -6], ...etc)
                     stair_even_cong = ax_counter*2  # 0, 2, 4, 6, 8, 10
                     stair_even_cong_df = isi_df[isi_df['stair'] == stair_even_cong]
-                    final_lum_even_cong = stair_even_cong_df.loc[stair_even_cong_df['step'] == trials_per_stair-1, 'probeLum'].item()
+                    final_lum_even_cong = \
+                        stair_even_cong_df.loc[stair_even_cong_df['step'] == trials_per_stair-1, 'probeLum'].item()
                     n_reversals_even_cong = trials_per_stair - stair_even_cong_df[resp_col].sum()
 
                     stair_odd_incong = (ax_counter*2)+1  # 1, 3, 5, 7, 9, 11
                     stair_odd_incong_df = isi_df[isi_df['stair'] == stair_odd_incong]
-                    final_lum_odd_incong = stair_odd_incong_df.loc[stair_odd_incong_df['step'] == trials_per_stair-1, 'probeLum'].item()
+                    final_lum_odd_incong = \
+                        stair_odd_incong_df.loc[stair_odd_incong_df['step'] == trials_per_stair-1, 'probeLum'].item()
                     n_reversals_odd_incong = trials_per_stair - stair_odd_incong_df[resp_col].sum()
 
                     # append n_reversals to n_reversals_np to save later.
@@ -1040,9 +1008,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
     print("\n***finished b3_plot_staircases()***\n")
 
 
-
 def c_plots(save_path, isi_name_list=None, show_plots=True, verbose=True):
-
     """
     5. c_plots.m: uses psignifit_thresholds.csv and outputs plots.
 
@@ -1341,8 +1307,6 @@ def d_average_participant(root_path, run_dir_names_list,
 
     """part 3. main Figures (these are the ones saved in the matlab script)
     Fig1: plot average threshold for each ISI and sep.
-    Fig2: divide all 2probe conds (pos_sep) by one_probe condition for each stack.
-    For both figures there are 2 versions:
         a) Sep on x-axis, different line for each ISI
         b) ISI on x-axis, different line for each Sep"""
 
@@ -1360,15 +1324,14 @@ def d_average_participant(root_path, run_dir_names_list,
         fig1_title = f'Average threshold across all runs'
         fig1_savename = f'ave_thr_all_runs.png'
 
-    fig1a = plot_runs_ave_w_errors(fig_df=ave_psignifit_thr_df, error_df=error_bars_df,
-                                 split_1probe=False, jitter=True,
-                                 error_caps=True, alt_colours=False,
-                                 legend_names=isi_name_list,
-                                 x_tick_vals=stair_names_list,
-                                 x_tick_labels=stair_names_labels,
-                                 fixed_y_range=False,
-                                 fig_title=fig1_title, save_name=fig1_savename,
-                                 save_path=root_path, verbose=True)
+    plot_runs_ave_w_errors(fig_df=ave_psignifit_thr_df, error_df=error_bars_df,
+                           jitter=True, error_caps=True, alt_colours=False,
+                           legend_names=isi_name_list,
+                           x_tick_vals=stair_names_list,
+                           x_tick_labels=stair_names_labels,
+                           fixed_y_range=False,
+                           fig_title=fig1_title, save_name=fig1_savename,
+                           save_path=root_path, verbose=True)
     if show_plots:
         plt.show()
     plt.close()
@@ -1438,16 +1401,15 @@ def d_average_participant(root_path, run_dir_names_list,
         heatmap_title = 'Mean Threshold for each ISI and separation'
         heatmap_savename = 'mean_thr_heatmap'
 
-    heatmap = plot_thr_heatmap(heatmap_df=ave_psignifit_thr_df,
-                               x_tick_labels=isi_name_list,
-                               y_tick_labels=stair_names_list,
-                               fig_title=heatmap_title,
-                               save_name=heatmap_savename,
-                               save_path=root_path,
-                               verbose=True)
+    plot_thr_heatmap(heatmap_df=ave_psignifit_thr_df,
+                     x_tick_labels=isi_name_list,
+                     y_tick_labels=stair_names_list,
+                     fig_title=heatmap_title,
+                     save_name=heatmap_savename,
+                     save_path=root_path,
+                     verbose=True)
     plt.show()
 
     print("\n*** finished d_average_participant()***\n")
 
     return ave_psignifit_thr_df
-
