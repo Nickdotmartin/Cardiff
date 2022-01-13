@@ -925,7 +925,7 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
                         8: 2, 9: 1, 10: 2, 11: 1, 12: 2, 13: 1, 14: 2}
 
     # raw results csv doesn't have separation or group columns, so assume I'll add them and re-save raw data.
-    resave_results = True
+    # resave_results = True
 
     # empty array to append info into
     all_data = []
@@ -947,8 +947,8 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
             unnamed_col = [i for i in list(this_isi_df.columns) if "Unnamed" in i][0]
             this_isi_df.drop(unnamed_col, axis=1, inplace=True)
 
-        if 'separation' in list(this_isi_df.columns):
-            resave_results = False
+        # if 'separation' in list(this_isi_df.columns):
+        #     resave_results = False
 
         # add isi column for multi-indexing
         this_isi_df.insert(0, 'ISI', isi)
@@ -975,9 +975,9 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
         # add to all_data
         all_data.append(this_isi_df)
 
-        if resave_results:
-            this_isi_df.to_csv(f'{run_dir}{os.path.sep}ISI_{isi}_probeDur2{os.path.sep}'
-                               f'{p_name}_w_sep.csv', index=False)
+        # if resave_results:
+        #     this_isi_df.to_csv(f'{run_dir}{os.path.sep}ISI_{isi}_probeDur2{os.path.sep}'
+        #                        f'{p_name}_w_sep.csv', index=False)
 
     # create all_data_df - reshape to 2d
     all_data_shape = np.shape(all_data)

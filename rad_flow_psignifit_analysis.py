@@ -70,296 +70,6 @@ def split_df_alternate_rows(df):
     return pos_sep_df, neg_sep_df
 
 
-def fig_colours(n_conditions, alternative_colours=False):
-    """
-    Use this to always get the same colours in the same order with no fuss.
-    :param n_conditions: number of different colours - use 256 for colourmap
-        (e.g., for heatmaps or something where colours are used in continuous manner)
-    :param alternative_colours: a second pallet of alternative colours.
-    :return: a colour pallet
-    """
-
-    use_colours = 'colorblind'
-    if alternative_colours:
-        use_colours = 'husl'
-
-    if 10 < n_conditions < 21:
-        use_colours = 'tab20'
-    elif n_conditions > 20:
-        use_colour = 'spectral'
-
-    use_cmap = False
-
-    my_colours = sns.color_palette(palette=use_colours, n_colors=n_conditions, as_cmap=use_cmap)
-    sns.set_palette(palette=use_colours, n_colors=n_conditions)
-
-    return my_colours
-
-
-def multi_plot_shape(n_figs, min_rows=1):
-    """
-    Function to make multi-plot figure with right number of rows and cols, 
-    to fit n_figs, but with smallest shape for landscape.
-    :param n_figs: Number of plots I need to make.
-    :param min_rows: Minimum number of rows (sometimes won't work with just 1)
-
-    :return: n_rows, n_cols
-    """
-    n_rows = 1
-    if n_figs > 3:
-        n_rows = 2
-    if n_figs > 8:
-        n_rows = 3
-    if n_figs > 12:
-        n_rows = 4
-
-    if n_rows < min_rows:
-        n_rows = min_rows
-
-    td = n_figs // n_rows
-    mod = n_figs % n_rows
-    n_cols = td + mod
-
-    # there are some weird results, this helps catch 11, 14, 15 etc from going mad.
-    if n_rows * (n_cols - 1) > n_figs:
-        n_cols = n_cols - 1
-        if n_rows * (n_cols - 1) > n_figs:
-            n_cols = n_cols - 1
-    # plots = n_rows * n_cols
-    # print(f"{n_figs}: n_rows: {n_rows}, td: {td}, mod: {mod}, n_cols: {n_cols}, plots: {plots}, ")
-
-    if n_figs > 20:
-        raise ValueError('too many plots for one page!')
-
-    return n_rows, n_cols
-
-
-# # # all ISIs on one axis -
-# FIGURE 1 - shows one axis (x=separation (-18:18), y=probeLum) with multiple ISI lines.
-# dotted line at zero to make batman more apparent.
-def plot_data_unsym_batman(pos_and_neg_sep_df,
-                           fig_title=None,
-                           save_path=None,
-                           save_name=None,
-                           isi_name_list=None,
-                           x_tick_values=None,
-                           x_tick_labels=None,
-                           verbose=True):
-    """
-    This plots a figure with one axis, x has separation values [-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18],
-    Will plot all ISIs on the same axis as lineplots.
-
-    :param pos_and_neg_sep_df: Full dataframe to use for values
-    :param fig_title: default=None.  Pass a string to add as a title.
-    :param save_path: default=None.  Path to dir to save fig
-    :param save_name: default=None.  name to save fig
-    :param isi_name_list: default=NONE: will use defaults, or pass list of names for legend.
-    :param x_tick_values: default=NONE: will use defaults, or pass list of names for x-axis positions.
-    :param x_tick_labels: default=NONE: will use defaults, or pass list of names for x_axis labels.
-    :param verbose: default: True. Won't print anything to screen if set to false.
-
-    :return: plot
-    """
-    if verbose:
-        print("\n*** running plot_data_unsym_batman() ***")
-
-    # get plot details
-    if isi_name_list is None:
-        raise ValueError('please pass an isi_name_list')
-    if verbose:
-        print(f'isi_name_list: {isi_name_list}')
-
-    if x_tick_values is None:
-        x_tick_values = [-18, -6, -3, -2, -1, -.1, 0, 1, 2, 3, 6, 18]
-    if x_tick_labels is None:
-        x_tick_labels = [-18, -6, -3, -2, -1, '-0', 0, 1, 2, 3, 6, 18]
-
-    # make fig1
-    fig, ax = plt.subplots(figsize=(10, 6))
-
-    # line plot for main ISIs
-    sns.lineplot(data=pos_and_neg_sep_df, markers=True, dashes=False, ax=ax)
-    ax.axvline(x=5.5, linestyle="-.", color='lightgrey')
-
-    # decorate plot
-    if x_tick_values is not None:
-        ax.set_xticks(x_tick_values)
-    if x_tick_labels is not None:
-        ax.set_xticklabels(x_tick_labels)
-    ax.set_xlabel('Probe separation in diagonal pixels')
-    ax.set_ylabel('Probe Luminance')
-
-    ax.legend(labels=isi_name_list, title='ISI',
-              shadow=True,
-              # place lower left corner of legend at specified location.
-              loc='lower left', bbox_to_anchor=(0.96, 0.5))
-
-    if fig_title is not None:
-        plt.title(fig_title)
-
-    # save plot
-    if save_path is not None:
-        if save_name is not None:
-            plt.savefig(f'{save_path}{os.sep}{save_name}')
-
-    return fig
-
-
-def plot_runs_ave_w_errors(fig_df, error_df,
-                           jitter=True, error_caps=False, alt_colours=False,
-                           legend_names=None,
-                           x_tick_vals=None,
-                           x_tick_labels=None,
-                           fixed_y_range=False,
-                           fig_title=None, save_name=None, save_path=None,
-                           verbose=True):
-    """
-    Calculate and plot the mean and error estimates (y-axis) at each separation values (x-axis).
-    Separate line for each ISI.  Error bar values taken from separate error_df.
-
-    :param fig_df: dataframe to build plot from.  Expects fig_df in the form:
-        separation as index, ISIs as columns.
-    :param error_df: dataframe of same shape as fig_df, but contains error values
-    :param jitter: Jitter x_axis values so points don't overlap.
-    :param error_caps: caps on error bars for more easy reading
-    :param alt_colours: Use different set of colours to normal (e.g., if ISI on
-        x-axis and lines for each separation).
-    :param legend_names: Names of different lines (e.g., ISI names)
-    :param x_tick_vals: Positions on x-axis.
-    :param x_tick_labels: labels for x-axis.
-    :param fixed_y_range: default=False. If True will use full range of y values
-        (e.g., 0:110) or can pass a tuple to set y_limits.
-    :param fig_title: Title for figure
-    :param save_name: filename of plot
-    :param save_path: path to folder where plots will be saved
-    :param verbose: print progress to screen
-
-    :return: figure
-    """
-    print('\n*** running plot_runs_ave_w_errors() ***\n')
-
-    if verbose:
-        print(f'fig_df:\n{fig_df}')
-        print(f'error_df:\n{error_df}')
-
-    # get names for legend (e.g., different lines)
-    column_names = fig_df.columns.to_list()
-    if legend_names is None:
-        legend_names = column_names
-    if verbose:
-        print(f'Column and Legend names:')
-        for a, b in zip(column_names, legend_names):
-            print(f"{a}\t=>\t{b}\tmatch: {bool(a==b)}")
-
-    # get number of locations for jitter list
-    n_pos_sep = len(fig_df.index.to_list())
-
-    jit_max = 0
-    if jitter:
-        jit_max = .2
-        if type(jitter) in [float, np.float]:
-            jit_max = jitter
-
-    cap_size = 0
-    if error_caps:
-        cap_size = 5
-
-    # set colour palette
-    my_colours = fig_colours(len(column_names), alternative_colours=alt_colours)
-
-    fig, ax = plt.subplots()
-
-    legend_handles_list = []
-
-    for idx, name in enumerate(column_names):
-
-        # get rand float to add to x-axis for jitter
-        jitter_list = np.random.uniform(size=n_pos_sep, low=-jit_max, high=jit_max)
-
-        ax.errorbar(x=fig_df.index + jitter_list, y=fig_df[name],
-                    yerr=error_df[name], marker='.', lw=2, elinewidth=.7,
-                    capsize=cap_size, color=my_colours[idx])
-
-        leg_handle = mlines.Line2D([], [], color=my_colours[idx], label=name,
-                                   marker='.', linewidth=.5, markersize=4)
-        legend_handles_list.append(leg_handle)
-
-    # decorate plot
-    ax.legend(handles=legend_handles_list, fontsize=6, title='ISI', framealpha=.5)
-
-    if x_tick_vals is not None:
-        ax.set_xticks(x_tick_vals)
-    if x_tick_labels is not None:
-        ax.set_xticklabels(x_tick_labels)
-    ax.set_xlabel('Probe separation in diagonal pixels')
-    ax.set_ylabel('Probe Luminance')
-
-    if fixed_y_range:
-        ax.set_ylim([0, 110])
-        if type(fixed_y_range) in [tuple, list]:
-            ax.set_ylim([fixed_y_range[0], fixed_y_range[1]])
-
-    if fig_title is not None:
-        plt.title(fig_title)
-
-    if save_path is not None:
-        if save_name is not None:
-            plt.savefig(f'{save_path}{os.sep}{save_name}')
-
-    return fig
-
-
-def plot_thr_heatmap(heatmap_df,
-                     x_tick_labels=None,
-                     y_tick_labels=None,
-                     fig_title=None,
-                     save_name=None,
-                     save_path=None,
-                     verbose=True):
-    """
-    Function for making a heatmap
-    :param heatmap_df: Expects dataframe with separation as index and ISIs as columns.
-    :param x_tick_labels: Labels for columns
-    :param y_tick_labels: Labels for rows
-    :param fig_title: Title for figue
-    :param save_name: name to save fig
-    :param save_path: location to save fig
-    :param verbose: if True, will prng progress to screen,
-
-    :return: Heatmap
-    """
-    print('\n*** running plot_thr_heatmap() ***\n')
-
-    if verbose:
-        print(f'heatmap_df:\n{heatmap_df}')
-
-    if x_tick_labels is None:
-        x_tick_labels = list(heatmap_df.columns)
-    if y_tick_labels is None:
-        y_tick_labels = list(heatmap_df.index)
-
-    # get mean of each column, then mean of those
-    mean_thr = float(np.mean(heatmap_df.mean()))
-    if verbose:
-        print(f'mean_val: {round(mean_thr, 2)}')
-
-    heatmap = sns.heatmap(data=heatmap_df,
-                          annot=True, center=mean_thr,
-                          cmap=sns.color_palette("Spectral", as_cmap=True),
-                          xticklabels=x_tick_labels, yticklabels=y_tick_labels)
-
-    heatmap.set_xlabel('ISI')
-
-    if fig_title is not None:
-        plt.title(fig_title)
-
-    if save_path is not None:
-        if save_name is not None:
-            plt.savefig(f'{save_path}{os.sep}{save_name}')
-
-    return heatmap
-
-
 def trim_n_high_n_low(all_data_df, trim_from_ends=None, reference_col='separation',
                       stack_col_id='stack', verbose=True):
     """
@@ -540,6 +250,393 @@ def make_long_df(wide_df,
     return long_df
 
 
+def fig_colours(n_conditions, alternative_colours=False):
+    """
+    Use this to always get the same colours in the same order with no fuss.
+    :param n_conditions: number of different colours - use 256 for colourmap
+        (e.g., for heatmaps or something where colours are used in continuous manner)
+    :param alternative_colours: a second pallet of alternative colours.
+    :return: a colour pallet
+    """
+
+    use_colours = 'colorblind'
+    if alternative_colours:
+        use_colours = 'husl'
+
+    if 10 < n_conditions < 21:
+        use_colours = 'tab20'
+    elif n_conditions > 20:
+        use_colour = 'spectral'
+
+    use_cmap = False
+
+    my_colours = sns.color_palette(palette=use_colours, n_colors=n_conditions, as_cmap=use_cmap)
+    sns.set_palette(palette=use_colours, n_colors=n_conditions)
+
+    return my_colours
+
+
+def multi_plot_shape(n_figs, min_rows=1):
+    """
+    Function to make multi-plot figure with right number of rows and cols, 
+    to fit n_figs, but with smallest shape for landscape.
+    :param n_figs: Number of plots I need to make.
+    :param min_rows: Minimum number of rows (sometimes won't work with just 1)
+
+    :return: n_rows, n_cols
+    """
+    n_rows = 1
+    if n_figs > 3:
+        n_rows = 2
+    if n_figs > 8:
+        n_rows = 3
+    if n_figs > 12:
+        n_rows = 4
+
+    if n_rows < min_rows:
+        n_rows = min_rows
+
+    td = n_figs // n_rows
+    mod = n_figs % n_rows
+    n_cols = td + mod
+
+    # there are some weird results, this helps catch 11, 14, 15 etc from going mad.
+    if n_rows * (n_cols - 1) > n_figs:
+        n_cols = n_cols - 1
+        if n_rows * (n_cols - 1) > n_figs:
+            n_cols = n_cols - 1
+    # plots = n_rows * n_cols
+    # print(f"{n_figs}: n_rows: {n_rows}, td: {td}, mod: {mod}, n_cols: {n_cols}, plots: {plots}, ")
+
+    if n_figs > 20:
+        raise ValueError('too many plots for one page!')
+
+    return n_rows, n_cols
+
+
+# # # all ISIs on one axis -
+# FIGURE 1 - shows one axis (x=separation (-18:18), y=probeLum) with multiple ISI lines.
+# dotted line at zero to make batman more apparent.
+def plot_data_unsym_batman(pos_and_neg_sep_df,
+                           fig_title=None,
+                           save_path=None,
+                           save_name=None,
+                           isi_name_list=None,
+                           x_tick_values=None,
+                           x_tick_labels=None,
+                           verbose=True):
+    """
+    This plots a figure with one axis, x has separation values [-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18],
+    Will plot all ISIs on the same axis as lineplots.
+
+    :param pos_and_neg_sep_df: Full dataframe to use for values
+    :param fig_title: default=None.  Pass a string to add as a title.
+    :param save_path: default=None.  Path to dir to save fig
+    :param save_name: default=None.  name to save fig
+    :param isi_name_list: default=NONE: will use defaults, or pass list of names for legend.
+    :param x_tick_values: default=NONE: will use defaults, or pass list of names for x-axis positions.
+    :param x_tick_labels: default=NONE: will use defaults, or pass list of names for x_axis labels.
+    :param verbose: default: True. Won't print anything to screen if set to false.
+
+    :return: plot
+    """
+    if verbose:
+        print("\n*** running plot_data_unsym_batman() ***")
+
+    # get plot details
+    if isi_name_list is None:
+        raise ValueError('please pass an isi_name_list')
+    if verbose:
+        print(f'isi_name_list: {isi_name_list}')
+
+    if x_tick_values is None:
+        x_tick_values = [-18, -6, -3, -2, -1, -.1, 0, 1, 2, 3, 6, 18]
+    if x_tick_labels is None:
+        x_tick_labels = [-18, -6, -3, -2, -1, '-0', 0, 1, 2, 3, 6, 18]
+
+    # make fig1
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    # line plot for main ISIs
+    sns.lineplot(data=pos_and_neg_sep_df, markers=True, dashes=False, ax=ax)
+    ax.axvline(x=5.5, linestyle="-.", color='lightgrey')
+
+    # decorate plot
+    if x_tick_values is not None:
+        ax.set_xticks(x_tick_values)
+    if x_tick_labels is not None:
+        ax.set_xticklabels(x_tick_labels)
+    ax.set_xlabel('Probe separation in diagonal pixels')
+    ax.set_ylabel('Probe Luminance')
+
+    ax.legend(labels=isi_name_list, title='ISI',
+              shadow=True,
+              # place lower left corner of legend at specified location.
+              loc='lower left', bbox_to_anchor=(0.96, 0.5))
+
+    if fig_title is not None:
+        plt.title(fig_title)
+
+    # save plot
+    if save_path is not None:
+        if save_name is not None:
+            plt.savefig(f'{save_path}{os.sep}{save_name}')
+
+    return fig
+
+
+def plot_runs_ave_w_errors(fig_df, error_df,
+                           jitter=True, error_caps=False, alt_colours=False,
+                           legend_names=None,
+                           x_tick_vals=None,
+                           x_tick_labels=None,
+                           even_spaced_x=False,
+                           fixed_y_range=False,
+                           fig_title=None, save_name=None, save_path=None,
+                           verbose=True):
+    """
+    Calculate and plot the mean and error estimates (y-axis) at each separation values (x-axis).
+    Separate line for each ISI.  Error bar values taken from separate error_df.
+
+    :param fig_df: dataframe to build plot from.  Expects fig_df in the form:
+        separation as index, ISIs as columns.
+    :param error_df: dataframe of same shape as fig_df, but contains error values
+    :param jitter: Jitter x_axis values so points don't overlap.
+    :param error_caps: caps on error bars for more easy reading
+    :param alt_colours: Use different set of colours to normal (e.g., if ISI on
+        x-axis and lines for each separation).
+    :param legend_names: Names of different lines (e.g., ISI names)
+    :param x_tick_vals: Positions on x-axis.
+    :param x_tick_labels: labels for x-axis.
+    :param fixed_y_range: default=False. If True will use full range of y values
+        (e.g., 0:110) or can pass a tuple to set y_limits.
+    :param fig_title: Title for figure
+    :param save_name: filename of plot
+    :param save_path: path to folder where plots will be saved
+    :param verbose: print progress to screen
+
+    :return: figure
+    """
+    print('\n*** running plot_runs_ave_w_errors() ***\n')
+
+    if verbose:
+        print(f'fig_df:\n{fig_df}')
+        print(f'\nerror_df:\n{error_df}')
+
+    # get names for legend (e.g., different lines)
+    column_names = fig_df.columns.to_list()
+
+    if legend_names is None:
+        legend_names = column_names
+    if verbose:
+        print(f'\nColumn and Legend names:')
+        for a, b in zip(column_names, legend_names):
+            print(f"{a}\t=>\t{b}\tmatch: {bool(a==b)}")
+
+    if x_tick_vals is None:
+        x_tick_vals = fig_df.index
+
+    # for evenly spaced items on x_axis
+    if even_spaced_x:
+        x_tick_vals = list(range(len(x_tick_vals)))
+
+    # adding jitter works well if df.index are all int
+    # need to set it up to use x_tick_vals if df.index is not all int or float
+    check_idx_num = all(isinstance(x, (int, float)) for x in fig_df.index)
+    print(f'check_idx_num: {check_idx_num}')
+
+    check_x_val_num = all(isinstance(x, (int, float)) for x in x_tick_vals)
+    print(f'check_x_val_num: {check_x_val_num}')
+
+    if jitter:
+        if not all(isinstance(x, (int, float)) for x in x_tick_vals):
+            x_tick_vals = list(range(len(x_tick_vals)))
+
+    # get number of locations for jitter list
+    n_pos_sep = len(fig_df.index.to_list())
+
+    jit_max = 0
+    if jitter:
+        jit_max = .2
+        if type(jitter) in [float, np.float]:
+            jit_max = jitter
+
+    cap_size = 0
+    if error_caps:
+        cap_size = 5
+
+    # set colour palette
+    my_colours = fig_colours(len(column_names), alternative_colours=alt_colours)
+
+    fig, ax = plt.subplots()
+
+    legend_handles_list = []
+
+    for idx, name in enumerate(column_names):
+
+        # get rand float to add to x-axis for jitter
+        jitter_list = np.random.uniform(size=n_pos_sep, low=-jit_max, high=jit_max)
+        x_values = x_tick_vals + jitter_list
+
+        ax.errorbar(x=x_values, y=fig_df[name],
+                    yerr=error_df[name],
+                    marker='.', lw=2, elinewidth=.7,
+                    capsize=cap_size, color=my_colours[idx])
+
+        leg_handle = mlines.Line2D([], [], color=my_colours[idx], label=name,
+                                   marker='.', linewidth=.5, markersize=4)
+        legend_handles_list.append(leg_handle)
+
+    # decorate plot
+    ax.legend(handles=legend_handles_list, fontsize=6, title='ISI', framealpha=.5)
+
+    if x_tick_vals is not None:
+        ax.set_xticks(x_tick_vals)
+    if x_tick_labels is not None:
+        ax.set_xticklabels(x_tick_labels)
+    ax.set_xlabel('Probe separation in diagonal pixels')
+    ax.set_ylabel('Probe Luminance')
+
+    if fixed_y_range:
+        ax.set_ylim([0, 110])
+        if type(fixed_y_range) in [tuple, list]:
+            ax.set_ylim([fixed_y_range[0], fixed_y_range[1]])
+
+    if fig_title is not None:
+        plt.title(fig_title)
+
+    if save_path is not None:
+        if save_name is not None:
+            plt.savefig(f'{save_path}{os.sep}{save_name}')
+
+    return fig
+
+
+def plot_isi_x_axis_w_errors(wide_df, cols_to_keep=['congruent', 'separation'],
+                             cols_to_change=['isi1', 'isi4', 'isi6'],
+                             cols_to_change_show='probeLum', new_col_name='ISI',
+                             strip_from_cols='isi',
+                             x_axis='separation', y_axis='probeLum',
+                             hue_var='ISI', style_var='congruent', style_order=[1, -1],
+                             error_bars=False,
+                             jitter=False,
+                             even_spaced_x=False,
+                             x_tick_vals=None,
+                             fig_title=None,
+                             fig_savename=None,
+                             verbose=True):
+    """
+    Funtion to plot line_plot with multiple lines.  This function works with a single dataset,
+    or with a df containing several datasets, in which case it plots the mean with error bars at .68 confidence interval.
+    It will work with either separation on x-axis and different lines for each ISI, or vice versa.
+    The first part of the function converts a wide dataframe to a long dataframe.
+
+    :param wide_df: Data to be plotted
+    :param cols_to_keep: Variables that will be included in long dataframe.
+    :param cols_to_change: Columns containing different measurements of some
+        variable (e.g., isi1, isi4, isi6...etc) that will be converted into
+        longform (e.g., isi: [1, 4, 6]).
+    :param cols_to_change_show: What is being measured in cols to change (e.g., probeLum; dependent variable)
+    :param new_col_name: What the cols to change describe (e.g., isi; independent variable)
+    :param strip_from_cols: string to remove if independent variables are to be
+        turned into numberic values (e.g., for isi1, isi4 isi6, strip 'isi' to get 1, 4,6).
+    :param x_axis: Variable to be shown along x-axis (e.g., separation or isi)
+    :param y_axis: Variable to be shown along y-axis (e.g., probeLum)
+    :param hue_var: Variable to be shown with different lines (e.g., isi or separation)
+    :param style_var: Addition variable to show with solid or dashed lines (e.g., congruent or incongruent)
+    :param style_order: Order of style var as displayed in df (e.g., [1, -1])
+    :param error_bars: True or false, whether to display error bars
+    :param jitter: Whether to jitter items on x-axis to make easier to read.
+        Can be True, False or float for amount of jitter in relation to x-axis values.
+    :param even_spaced_x: Whether to evenly spave ticks on x-axis.
+        For example to make the left side of log-scale x-values easier to read.
+    :param x_tick_vals: Values/labels for x-axis.  Can be string, int or float.
+    :param fig_title: Title for figure
+    :param fig_savename: Save path/name for figure
+    :param verbose: Whether to print progress to screen.
+
+    :return: figure
+    """
+    print('\n*** running plot_isi_x_axis_w_errors() ***\n')
+
+    # convert wide df to long
+    long_df = make_long_df(wide_df=wide_df, cols_to_keep=cols_to_keep,
+                           cols_to_change=cols_to_change, cols_to_change_show=cols_to_change_show,
+                           new_col_name=new_col_name, strip_from_cols=strip_from_cols, verbose=True)
+
+    # data_for_x to use for x_axis data, whilst keeping original values list (x_axis)
+    data_for_x = x_axis
+
+    # for evenly spaced items on x_axis
+    if even_spaced_x:
+        orig_x_vals = sorted(x_tick_vals)
+        new_x_vals = list(range(len(orig_x_vals)))
+
+        # check if x_tick_vals refer to values in df, if not, use df values.
+        if list(long_df[x_axis])[0] in orig_x_vals:
+            x_space_dict = dict(zip(orig_x_vals, new_x_vals))
+        else:
+            x_space_dict = dict(zip(set(list(long_df[x_axis])), new_x_vals))
+
+        # add column with new evenly spaced x-values, relating to original x_values
+        spaced_x = [x_space_dict[i] for i in list(long_df[x_axis])]
+        long_df.insert(0, 'spaced_x', spaced_x)
+        data_for_x = 'spaced_x'
+
+    # for jittering values on x-axis
+    if jitter:
+        jitter_keys = list(long_df[hue_var])
+        n_jitter = len(jitter_keys)
+        jit_max = .2
+        if type(jitter) in [float, np.float]:
+            jit_max = jitter
+
+        # get rand float to add to x-axis values for jitter
+        jitter_vals = np.random.uniform(size=n_jitter, low=-jit_max, high=jit_max)
+        jitter_dict = dict(zip(jitter_keys, jitter_vals))
+        jitter_x = [a+jitter_dict[b] for a, b in zip(list(long_df[data_for_x]), list(long_df[hue_var]))]
+        long_df.insert(0, 'jitter_x', jitter_x)
+        data_for_x = 'jitter_x'
+
+    conf_interval = None
+    if error_bars:
+        conf_interval = 68
+
+    if verbose:
+        print(f'long_df:\n{long_df}')
+        print(f'error_bars: {error_bars}')
+        print(f'conf_interval: {conf_interval}')
+
+    # initialize plot
+    my_colours = fig_colours(n_conditions=len(set(list(long_df[hue_var]))))
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    # with error bards for d_averages example
+    sns.lineplot(data=long_df, x=data_for_x, y=y_axis, hue=hue_var,
+                 style=style_var, style_order=style_order,
+                 ci=conf_interval, err_style='bars', err_kws={'elinewidth': .7, 'capsize': 5},
+                 palette=my_colours, ax=ax)
+
+    if even_spaced_x:
+        ax.set_xticks(new_x_vals)
+        ax.set_xticklabels(orig_x_vals)
+    else:
+        ax.set_xticks(x_tick_vals)
+
+    plt.xlabel(x_axis)
+    plt.title(fig_title)
+
+    # Change legend labels for congruent and incongruent data
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles=handles, labels=labels[:-2] + ['True', 'False'])
+
+    plt.savefig(fig_savename)
+
+    print('\n*** finished plot_isi_x_axis_w_errors() ***\n')
+
+    return fig
+
+
 # # # 8 batman plots
 # this is a figure with one axis per isi, showing neg and pos sep (e.g., -18:18)
 def multi_batman_plots(mean_df, thr1_df, thr2_df,
@@ -657,6 +754,59 @@ def multi_batman_plots(mean_df, thr1_df, thr2_df,
             plt.savefig(f'{save_path}{os.sep}{save_name}')
 
     return fig
+
+
+
+def plot_thr_heatmap(heatmap_df,
+                     x_tick_labels=None,
+                     y_tick_labels=None,
+                     fig_title=None,
+                     save_name=None,
+                     save_path=None,
+                     verbose=True):
+    """
+    Function for making a heatmap
+    :param heatmap_df: Expects dataframe with separation as index and ISIs as columns.
+    :param x_tick_labels: Labels for columns
+    :param y_tick_labels: Labels for rows
+    :param fig_title: Title for figue
+    :param save_name: name to save fig
+    :param save_path: location to save fig
+    :param verbose: if True, will prng progress to screen,
+
+    :return: Heatmap
+    """
+    print('\n*** running plot_thr_heatmap() ***\n')
+
+    if verbose:
+        print(f'heatmap_df:\n{heatmap_df}')
+
+    if x_tick_labels is None:
+        x_tick_labels = list(heatmap_df.columns)
+    if y_tick_labels is None:
+        y_tick_labels = list(heatmap_df.index)
+
+    # get mean of each column, then mean of those
+    mean_thr = float(np.mean(heatmap_df.mean()))
+    if verbose:
+        print(f'mean_val: {round(mean_thr, 2)}')
+
+    heatmap = sns.heatmap(data=heatmap_df,
+                          annot=True, center=mean_thr,
+                          cmap=sns.color_palette("Spectral_r", as_cmap=True),
+                          xticklabels=x_tick_labels, yticklabels=y_tick_labels)
+
+    heatmap.set_xlabel('ISI')
+
+    if fig_title is not None:
+        plt.title(fig_title)
+
+    if save_path is not None:
+        if save_name is not None:
+            plt.savefig(f'{save_path}{os.sep}{save_name}')
+
+    return heatmap
+
 
 
 def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=True):
@@ -1123,7 +1273,7 @@ def c_plots(save_path, isi_name_list=None, show_plots=True, verbose=True):
 
     # # FIGURE3 - 'data.png' - all ISIs on same axis, pos and neg sep, looks like batman.
     # # use plot_data_unsym_batman()
-    fig3_save_name = f'data.png'
+    fig3_save_name = f'data_pos_and_neg.png'
     fig_3_title = 'All ISIs and separations\n' \
                   '(positive values for congruent probe/flow motion, ' \
                   'negative for incongruent).'
@@ -1166,32 +1316,38 @@ def c_plots(save_path, isi_name_list=None, show_plots=True, verbose=True):
     if verbose:
         print(f'psig_thr_df:\n{psig_thr_df}')
         print(f'isi_name_list: {isi_name_list}')
+        print('\nfig4 single run data')
+    fig4_title = 'Congruent and incongruent probe/flow motion for each ISI'
+    fig4_savename = 'compare_data_isi'
 
-    # todo: make this final plot and fig 1b of d into a function
-    # convert wide df to long
-    long_df = make_long_df(wide_df=psig_thr_df, cols_to_keep=['congruent', 'separation'],
-                           cols_to_change=isi_cols_list, cols_to_change_show='probeLum',
-                           new_col_name='ISI', strip_from_cols='ISI_', verbose=True)
+    plot_isi_x_axis_w_errors(wide_df=psig_thr_df, cols_to_keep=['congruent', 'separation'],
+                             cols_to_change=isi_name_list,
+                             cols_to_change_show='probeLum', new_col_name='ISI',
+                             strip_from_cols='isi',
+                             x_axis='separation', y_axis='probeLum', x_tick_vals=[0, 1, 2, 3, 6, 18],
+                             hue_var='ISI', style_var='congruent', style_order=[1, -1],
+                             error_bars=True, even_spaced_x=True, jitter=False,
+                             fig_title=fig4_title, fig_savename=fig4_savename, verbose=True)
+    if show_plots:
+        plt.show()
+    plt.close()
 
-    # make plot with pos sep only
-    # same colour with dashed or dotted for congruent/incongruent
-    fig_title = 'Congruent and incongruent probe/flow motion for each ISI'
-    fig_savename = 'compare_data'
-    fig, ax = plt.subplots(figsize=(10, 6))
-    sns.lineplot(data=long_df,
-                 x='separation', y='probeLum', hue='ISI', style='congruent',
-                 style_order=[1, -1],
-                 markers=True, dashes=True, ax=ax)
-    pos_sep_list = [0, 1, 2, 3, 6, 18]
-    ax.set_xticks(pos_sep_list)
-    plt.title(fig_title)
-
-    # Change legend labels for congruent and incongruent data
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles=handles, labels=labels[:-2] + ['True', 'False'])
-
-    plt.savefig(f'{save_path}{os.sep}{fig_savename}')
-
+    if verbose:
+        print('\nfig5 single run data')
+    fig5_title = 'Congruent and incongruent probe/flow motion for each separation'
+    fig5_savename = 'compare_data_sep'
+    plot_isi_x_axis_w_errors(wide_df=psig_thr_df, cols_to_keep=['congruent', 'separation'],
+                             cols_to_change=isi_name_list,
+                             cols_to_change_show='probeLum', new_col_name='ISI',
+                             strip_from_cols='isi',
+                             x_axis='ISI', y_axis='probeLum',
+                             hue_var='separation', style_var='congruent', style_order=[1, -1],
+                             error_bars=True,
+                             even_spaced_x=True,
+                             jitter=False,
+                             fig_title=fig5_title,
+                             fig_savename=fig5_savename, x_tick_vals=[1, 4, 6],
+                             verbose=True)
     if show_plots:
         plt.show()
     plt.close()
@@ -1319,81 +1475,185 @@ def d_average_participant(root_path, run_dir_names_list,
 
     print(f"\nfig_1a\n")
     if trim_n is not None:
-        fig1_title = f'Average thresholds across all runs (trim={trim_n}).'
-        fig1_savename = f'ave_TM_thr_all_runs.png'
+        fig_1a_title = f'Average thresholds per ISI across all runs (trim={trim_n}).\n' \
+                       f'(positive values for congruent probe/flow motion, negative for incongruent).'
+        fig_1a_savename = f'ave_TM_thr_pos_and_neg.png'
     else:
-        fig1_title = f'Average threshold across all runs'
-        fig1_savename = f'ave_thr_all_runs.png'
+        fig_1a_title = f'Average threshold per ISI across all runs.\n' \
+                       f'(positive values for congruent probe/flow motion, negative for incongruent).'
+        fig_1a_savename = f'ave_thr_pos_and_neg.png'
+
 
     plot_runs_ave_w_errors(fig_df=ave_psignifit_thr_df, error_df=error_bars_df,
                            jitter=True, error_caps=True, alt_colours=False,
                            legend_names=isi_name_list,
                            x_tick_vals=stair_names_list,
                            x_tick_labels=stair_names_labels,
+                           even_spaced_x=False,
                            fixed_y_range=False,
-                           fig_title=fig1_title, save_name=fig1_savename,
+                           fig_title=fig_1a_title, save_name=fig_1a_savename,
                            save_path=root_path, verbose=True)
     if show_plots:
         plt.show()
     plt.close()
+    #
+    # if verbose:
+    #     print('finished fig_1a')
+    #
+    # # todo: transpose version e.gh., isi on x-axis
+    #
+    # ####################
+    # # can't use plot_runs_ave_w_errors for comparrisons between cong/incong
+    # print('\nnew fig')
+    # ave_thr_df_T = ave_psignifit_thr_df.T
+    # error_bars_df_T = error_bars_df.T
+    # print(f'ave_thr_df_T:\n{ave_thr_df_T}')
+    # print(f'error_bars_df_T:\n{error_bars_df_T}')
+    #
+    # ave_thr_df_T.columns = [str(i) for i in list(ave_thr_df_T.columns)]
+    # error_bars_df_T.columns = [str(i) for i in list(error_bars_df_T.columns)]
+    # col_names = list(ave_thr_df_T.columns)
+    # print(f'col_names: {col_names}')
+    # print(f'col_names: {type(col_names[0])}')
 
-    if verbose:
-        print('finished fig1a')
+    # print(f"\nfig_1b")
+    # if trim_n is not None:
+    #     fig_1b_title = f'Average thresholds per separation across all runs (trim={trim_n}).'
+    #     fig_1b_savename = f'ave_TM_thr_all_runs_sep.png'
+    # else:
+    #     fig_1b_title = f'Average threshold per separation across all runs'
+    #     fig_1b_savename = f'ave_thr_all_runs_sep.png'
+    #
+    # plot_runs_ave_w_errors(fig_df=ave_psignifit_thr_df.T, error_df=error_bars_df.T,
+    #                        jitter=True, error_caps=True, alt_colours=False,
+    #                        legend_names=ave_thr_df_T.columns,
+    #                        x_tick_vals=isi_name_list,
+    #                        x_tick_labels=isi_name_list,
+    #                        even_spaced_x=False,
+    #                        fixed_y_range=False,
+    #                        fig_title=fig_1b_title, save_name=fig_1b_savename,
+    #                        save_path=root_path, verbose=True)
+    # if show_plots:
+    #     plt.show()
+    # plt.close()
+    #
+    # if verbose:
+    #     print('finished fig_1b')
+    ####################
 
-    print(f"\nfig_1b\n")
-    # fig 1b, ISI on x-axis, different line for each sep
 
+    # print(f"\nfig_1c\n")
+    # # fig 1c, ISI on x-axis, different line for each sep
+    # print('fig2a participant average with errors')
+    # save_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp/'
+    # thr_csv_name = f'{save_path}{os.sep}MASTER_psignifit_thresholds.csv'
+    # ave_thr_df = pd.read_csv(thr_csv_name)
+
+    # wide_df = ave_thr_df
+    # print(f'wide_df:\n{wide_df}')
+
+    print(f"\nfig_1a\n")
     if trim_n is not None:
-        # fig1b_title = f'Probe luminance at each ISI value per separation (trim={trim_n}).'
-        # fig1b_savename = f'ave_TM_thr_all_runs_transpose.png'
-        fig1b_title = f'Congruent and incongruent probe/flow motion for each ISI (trim={trim_n})'
-        fig1b_savename = 'compare_mean_data_TM'
+        fig_1a_title = f'Average thresholds per ISI across all runs (trim={trim_n}).'
+        fig_1a_savename = f'ave_TM_thr_all_runs_isi.png'
     else:
-        # fig1b_title = f'Probe luminance at each ISI value per separation'
-        # fig1b_savename = f'ave_thr_all_runs_transpose.png'
-        fig1b_title = 'Congruent and incongruent probe/flow motion for each ISI'
-        fig1b_savename = 'compare_mean_data'
+        fig_1a_title = f'Average threshold per ISI across all runs'
+        fig_1a_savename = f'ave_thr_all_runs_isi.png'
 
-    print(f"\nget_means_df\n{get_means_df}")
-
-    isi_cols_list = list(get_means_df.columns)[-len(isi_name_list):]
-    if verbose:
-        print(f'get_means_df:\n{get_means_df}')
-        print(f'isi_name_list: {isi_name_list}')
-
-    # todo: use function in scratch
-
-    # convert wide df to long
-    long_df = make_long_df(wide_df=get_means_df, cols_to_keep=['congruent', 'separation'],
-                           cols_to_change=isi_cols_list, cols_to_change_show='probeLum',
-                           new_col_name='ISI', strip_from_cols='isi', verbose=True)
-
-    # make plot with pos sep only
-    # same colour with dashed or dotted for congruent/incongruent
-    fig, ax = plt.subplots(figsize=(10, 6))
-    sns.lineplot(data=long_df,
-                 x='separation', y='probeLum', hue='ISI', style='congruent',
-                 style_order=[1, -1],
-                 markers=True, dashes=True,
-                 estimator=np.mean, ci='sd', err_style='bars',
-                 ax=ax)
-    ax.set_xticks(sorted(list(long_df['separation'].unique())))
-    plt.title(fig1b_title)
-
-    # Change legend labels for congruent and incongruent data
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles=handles, labels=labels[:-2] + ['True', 'False'])
-
-    plt.savefig(f'{root_path}{os.sep}{fig1b_savename}')
-
+    plot_isi_x_axis_w_errors(wide_df=get_means_df, cols_to_keep=['congruent', 'separation'],
+                             cols_to_change=['isi1', 'isi4', 'isi6'],
+                             cols_to_change_show='probeLum', new_col_name='ISI',
+                             strip_from_cols='isi',
+                             x_axis='separation', y_axis='probeLum',
+                             hue_var='ISI', style_var='congruent', style_order=[1, -1],
+                             error_bars=True,
+                             even_spaced_x=True,
+                             jitter=True,
+                             fig_title=fig_1a_title,
+                             fig_savename=fig_1a_savename, x_tick_vals=[0, 1, 2, 3, 6, 18],
+                             verbose=True)
     if show_plots:
         plt.show()
     plt.close()
 
-    if verbose:
-        print('finished fig1b')
+    print(f"\nfig_1b")
+    if trim_n is not None:
+        fig_1b_title = f'Average thresholds per separation across all runs (trim={trim_n}).'
+        fig_1b_savename = f'ave_TM_thr_all_runs_sep.png'
+    else:
+        fig_1b_title = f'Average threshold per separation across all runs'
+        fig_1b_savename = f'ave_thr_all_runs_sep.png'
 
+    plot_isi_x_axis_w_errors(wide_df=get_means_df, cols_to_keep=['congruent', 'separation'],
+                             cols_to_change=['isi1', 'isi4', 'isi6'],
+                             cols_to_change_show='probeLum', new_col_name='ISI',
+                             strip_from_cols='isi',
+                             x_axis='ISI', y_axis='probeLum',
+                             hue_var='separation', style_var='congruent', style_order=[1, -1],
+                             error_bars=True,
+                             even_spaced_x=True,
+                             jitter=.01,
+                             fig_title=fig_1b_title,
+                             fig_savename=fig_1b_savename, x_tick_vals=['ISI 1', 'ISI 4', 'ISI 6'],
+                             verbose=True)
+    if show_plots:
+        plt.show()
+    plt.close()
 
+    #
+    # if trim_n is not None:
+    #     # fig_1c_title = f'Probe luminance at each ISI value per separation (trim={trim_n}).'
+    #     # fig_1c_savename = f'ave_TM_thr_all_runs_transpose.png'
+    #     fig_1c_title = f'Congruent and incongruent probe/flow motion for each ISI (trim={trim_n})'
+    #     fig_1c_savename = 'compare_mean_data_TM'
+    # else:
+    #     # fig_1c_title = f'Probe luminance at each ISI value per separation'
+    #     # fig_1c_savename = f'ave_thr_all_runs_transpose.png'
+    #     fig_1c_title = 'Congruent and incongruent probe/flow motion for each ISI'
+    #     fig_1c_savename = 'compare_mean_data'
+    #
+    # print(f"\nget_means_df\n{get_means_df}")
+    #
+    # isi_cols_list = list(get_means_df.columns)[-len(isi_name_list):]
+    # if verbose:
+    #     print(f'get_means_df:\n{get_means_df}')
+    #     print(f'isi_name_list: {isi_name_list}')
+    #
+    # # todo: use function in scratch
+    # # todo: add jitted x_axis values such that each isi is separate (but congruent/incongruent are aligned)
+    # # todo: add error bars
+    #
+    # # convert wide df to long
+    # long_df = make_long_df(wide_df=get_means_df, cols_to_keep=['congruent', 'separation'],
+    #                        cols_to_change=isi_cols_list, cols_to_change_show='probeLum',
+    #                        new_col_name='ISI', strip_from_cols='isi', verbose=True)
+    #
+    # # make plot with pos sep only
+    # # same colour with dashed or dotted for congruent/incongruent
+    # fig, ax = plt.subplots(figsize=(10, 6))
+    # sns.lineplot(data=long_df,
+    #              x='separation', y='probeLum', hue='ISI', style='congruent',
+    #              style_order=[1, -1],
+    #              markers=True, dashes=True,
+    #              estimator=np.mean, ci='sd', err_style='bars',
+    #              ax=ax)
+    # ax.set_xticks(sorted(list(long_df['separation'].unique())))
+    # plt.title(fig_1c_title)
+    #
+    # # Change legend labels for congruent and incongruent data
+    # handles, labels = ax.get_legend_handles_labels()
+    # ax.legend(handles=handles, labels=labels[:-2] + ['True', 'False'])
+    #
+    # plt.savefig(f'{root_path}{os.sep}{fig_1c_savename}')
+    #
+    # if show_plots:
+    #     plt.show()
+    # plt.close()
+    #
+    # if verbose:
+    #     print('finished fig_1c')
+    #
+    #
     print(f"\nHeatmap\n")
     # get mean of each col, then mean of that
 
@@ -1411,7 +1671,27 @@ def d_average_participant(root_path, run_dir_names_list,
                      save_name=heatmap_savename,
                      save_path=root_path,
                      verbose=True)
-    plt.show()
+    if show_plots:
+        plt.show()
+    plt.close()
+
+    if trim_n is not None:
+        heatmap_title = f'Mean Threshold for each ISI and separation 2(trim={trim_n}).'
+        heatmap_savename = 'mean_TM_thr_heatmap2'
+    else:
+        heatmap_title = 'Mean Threshold for each ISI and separation2'
+        heatmap_savename = 'mean_thr_heatmap2'
+
+    plot_thr_heatmap(heatmap_df=ave_psignifit_thr_df.T,
+                     x_tick_labels=stair_names_list,
+                     y_tick_labels=isi_name_list,
+                     fig_title=heatmap_title,
+                     save_name=heatmap_savename,
+                     save_path=root_path,
+                     verbose=True)
+    if show_plots:
+        plt.show()
+    plt.close()
 
     print("\n*** finished d_average_participant()***\n")
 
