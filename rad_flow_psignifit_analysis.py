@@ -195,20 +195,20 @@ def trim_n_high_n_low(all_data_df, trim_from_ends=None, reference_col='separatio
 
 def make_long_df(wide_df,
                  cols_to_keep=['congruent', 'separation'],
-                 cols_to_change=['isi1', 'isi4', 'isi6'],
+                 cols_to_change=['ISI_1', 'ISI_4', 'ISI_6'],
                  cols_to_change_show='probeLum',
-                 new_col_name='isi', strip_from_cols='isi', verbose=True):
+                 new_col_name='ISI', strip_from_cols='ISI_', verbose=True):
     """
     Function to convert wide-form_df to long-form_df.  e.g., if there are several
     columns showing ISIs (cols_to_change), this puts them all into one column (new_col_name).
 
     :param wide_df: dataframe to be changed
     :param cols_to_keep: Columns to use for indexing (e.g., ['congruent', 'separation'...etc]
-    :param cols_to_change: List of columns showing data at different levels e.g., [isi1, isi4, isi6...etc].
+    :param cols_to_change: List of columns showing data at different levels e.g., [ISI_1, ISI_4, ISI_6...etc].
     :param cols_to_change_show: What is being measured in repeated cols, e.g., probeLum.
     :param new_col_name: name for new col describing levels e.g. isi
     :param strip_from_cols: string to strip from col names when for new cols.
-        e.g., if strip_from_cols='isi_', then [isi_1, isi_4] becomes [1, 4].
+        e.g., if strip_from_cols='ISI_', then [ISI_1, ISI_4, ISI_6] becomes [1, 4, 6].
     :param verbose: if true, prints progress to screen.
 
     :return: long_df
@@ -365,6 +365,7 @@ def plot_data_unsym_batman(pos_and_neg_sep_df,
     if x_tick_values is not None:
         ax.set_xticks(x_tick_values)
     if x_tick_labels is not None:
+        ax.set_xticks(x_tick_values)
         ax.set_xticklabels(x_tick_labels)
     ax.set_xlabel('Probe separation in diagonal pixels')
     ax.set_ylabel('Probe Luminance')
@@ -384,7 +385,7 @@ def plot_data_unsym_batman(pos_and_neg_sep_df,
 
     return fig
 
-
+# todo: do I need this function, it's really messy, can I just use plot isi x axis w errors?
 def plot_runs_ave_w_errors(fig_df, error_df,
                            jitter=True, error_caps=False, alt_colours=False,
                            legend_names=None,
@@ -493,6 +494,7 @@ def plot_runs_ave_w_errors(fig_df, error_df,
     if x_tick_vals is not None:
         ax.set_xticks(x_tick_vals)
     if x_tick_labels is not None:
+        ax.set_xticks(x_tick_vals)
         ax.set_xticklabels(x_tick_labels)
     ax.set_xlabel('Probe separation in diagonal pixels')
     ax.set_ylabel('Probe Luminance')
@@ -511,20 +513,20 @@ def plot_runs_ave_w_errors(fig_df, error_df,
 
     return fig
 
-
-def plot_isi_x_axis_w_errors(wide_df, cols_to_keep=['congruent', 'separation'],
-                             cols_to_change=['isi1', 'isi4', 'isi6'],
-                             cols_to_change_show='probeLum', new_col_name='ISI',
-                             strip_from_cols='isi',
-                             x_axis='separation', y_axis='probeLum',
-                             hue_var='ISI', style_var='congruent', style_order=[1, -1],
-                             error_bars=False,
-                             jitter=False,
-                             even_spaced_x=False,
-                             x_tick_vals=None,
-                             fig_title=None,
-                             fig_savename=None,
-                             verbose=True):
+def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'],
+                                cols_to_change=['ISI_1', 'ISI_4', 'ISI_6'],
+                                cols_to_change_show='probeLum', new_col_name='ISI',
+                                strip_from_cols='ISI_',
+                                x_axis='separation', y_axis='probeLum',
+                                hue_var='ISI', style_var='congruent', style_order=[1, -1],
+                                error_bars=False,
+                                jitter=False,
+                                even_spaced_x=False,
+                                x_tick_vals=None,
+                                fig_title=None,
+                                fig_savename=None,
+                                save_path=None,
+                                verbose=True):
     """
     Funtion to plot line_plot with multiple lines.  This function works with a single dataset,
     or with a df containing several datasets, in which case it plots the mean with error bars at .68 confidence interval.
@@ -534,12 +536,12 @@ def plot_isi_x_axis_w_errors(wide_df, cols_to_keep=['congruent', 'separation'],
     :param wide_df: Data to be plotted
     :param cols_to_keep: Variables that will be included in long dataframe.
     :param cols_to_change: Columns containing different measurements of some
-        variable (e.g., isi1, isi4, isi6...etc) that will be converted into
-        longform (e.g., isi: [1, 4, 6]).
+        variable (e.g., ISI_1, ISI_4, ISI_6...etc) that will be converted into
+        longform (e.g., ISI: [1, 4, 6]).
     :param cols_to_change_show: What is being measured in cols to change (e.g., probeLum; dependent variable)
     :param new_col_name: What the cols to change describe (e.g., isi; independent variable)
     :param strip_from_cols: string to remove if independent variables are to be
-        turned into numberic values (e.g., for isi1, isi4 isi6, strip 'isi' to get 1, 4,6).
+        turned into numberic values (e.g., for ISI_1, ISI_4, ISI_6, strip 'ISI_' to get 1, 4,6).
     :param x_axis: Variable to be shown along x-axis (e.g., separation or isi)
     :param y_axis: Variable to be shown along y-axis (e.g., probeLum)
     :param hue_var: Variable to be shown with different lines (e.g., isi or separation)
@@ -557,7 +559,7 @@ def plot_isi_x_axis_w_errors(wide_df, cols_to_keep=['congruent', 'separation'],
 
     :return: figure
     """
-    print('\n*** running plot_isi_x_axis_w_errors() ***\n')
+    print('\n*** running plot_w_errors_either_x_axis() ***\n')
 
     # convert wide df to long
     long_df = make_long_df(wide_df=wide_df, cols_to_keep=cols_to_keep,
@@ -569,7 +571,7 @@ def plot_isi_x_axis_w_errors(wide_df, cols_to_keep=['congruent', 'separation'],
 
     # for evenly spaced items on x_axis
     if even_spaced_x:
-        orig_x_vals = sorted(x_tick_vals)
+        orig_x_vals = x_tick_vals  # sorted(x_tick_vals)
         new_x_vals = list(range(len(orig_x_vals)))
 
         # check if x_tick_vals refer to values in df, if not, use df values.
@@ -606,6 +608,9 @@ def plot_isi_x_axis_w_errors(wide_df, cols_to_keep=['congruent', 'separation'],
         print(f'long_df:\n{long_df}')
         print(f'error_bars: {error_bars}')
         print(f'conf_interval: {conf_interval}')
+        print(f'x_tick_vals: {x_tick_vals}')
+        print(f'orig_x_vals: {orig_x_vals}')
+        print(f'new_x_vals: {new_x_vals}')
 
     # initialize plot
     my_colours = fig_colours(n_conditions=len(set(list(long_df[hue_var]))))
@@ -630,12 +635,99 @@ def plot_isi_x_axis_w_errors(wide_df, cols_to_keep=['congruent', 'separation'],
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles=handles, labels=labels[:-2] + ['True', 'False'])
 
-    plt.savefig(fig_savename)
+    print(f'test save path:\n{save_path}\n{fig_savename}')
+    plt.savefig(os.path.join(save_path, fig_savename))
 
-    print('\n*** finished plot_isi_x_axis_w_errors() ***\n')
+    print('\n*** finished plot_w_errors_either_x_axis() ***\n')
 
     return fig
 
+
+def plot_diff(ave_thr_df, stair_names_col='stair_names', fig_title=None, save_path=None, save_name=None,
+              x_axis_isi=False, verbose=True):
+    """
+    Function to plot the difference between congruent and incongruent conditions.
+    :param ave_thr_df: Dataframe to use to get differences
+    :param stair_names_col: Column name containing separation and congruence values.
+    :param fig_title: Title for fig
+    :param save_path: path to save fig to
+    :param save_name: name to save fig
+    :param x_axis_isi: If False, with have Separation on x-axis with different lines for each ISI.
+                        If True, will have ISI on x-axis and diffferent lines for each Separation.
+    :param verbose: Prints progress to screen
+    :return:
+    """
+    print('*** running plot_diff() ***')
+
+    # if stair_names_col is set as index, move it to regular column and add standard index
+    if ave_thr_df.index.name == stair_names_col:
+        ave_thr_df.reset_index(drop=False, inplace=True)
+    if verbose:
+        print(f'ave_thr_df:\n{ave_thr_df}')
+
+    # get rows to slice for each df to be in ascending order
+    # if stair_names_col in list(ave_thr_df.columns):
+    cong_rows = sorted(ave_thr_df.index[ave_thr_df['stair_names'] >= 0].tolist())
+    incong_rows = sorted(ave_thr_df.index[ave_thr_df['stair_names'] < 0].tolist(), reverse=True)
+    # else:
+    #     cong_rows = sorted(ave_thr_df.index[ave_thr_df.index >= 0].tolist())
+    #     incong_rows = sorted(ave_thr_df.index[ave_thr_df.index < 0].tolist(), reverse=True)
+    if verbose:
+        print(f'\ncong_rows: {cong_rows}')
+        print(f'incong_rows: {incong_rows}')
+
+    # slice rows for cong and incong df
+    cong_df = ave_thr_df.iloc[cong_rows, :]
+    incong_df = ave_thr_df.iloc[incong_rows, :]
+
+    pos_sep_list = [int(i) for i in list(sorted(cong_df['stair_names'].tolist()))]
+    cong_df.reset_index(drop=True, inplace=True)
+    incong_df.reset_index(drop=True, inplace=True)
+    if verbose:
+        print(f'\ncong_df: {cong_df.shape}\n{cong_df}')
+        print(f'\nincong_df: {incong_df.shape}\n{incong_df}')
+        print(f'\npos_sep_list: {pos_sep_list}')
+
+    # subtract one from the other
+    diff_df = cong_df - incong_df
+    diff_df.drop('stair_names', inplace=True, axis=1)
+
+    if x_axis_isi:
+        diff_df = diff_df.T
+        diff_df.columns = pos_sep_list
+        isi_names_list = list(diff_df.index)
+        x_tick_labels = isi_names_list
+        x_axis_label = 'ISI'
+        legend_title = 'Separation'
+    else:
+        x_tick_labels = pos_sep_list
+        x_axis_label = 'Separation'
+        legend_title = 'ISI'
+
+    if verbose:
+        print(f'\ndiff_df:\n{diff_df}')
+        print(f'\nx_axis_label: {x_axis_label}')
+
+    # make plot
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.lineplot(data=diff_df, ax=ax)
+
+    # decorate plot
+    if fig_title:
+        plt.title(fig_title)
+    plt.axhline(y=0, color='lightgrey', linestyle='dashed')
+    ax.set_xticks(list(range(len(x_tick_labels))))
+    ax.set_xticklabels(x_tick_labels)
+    plt.xlabel(x_axis_label)
+    plt.ylabel("Difference in probeLum (cong-incong)")
+    ax.legend(title=legend_title)
+
+    if save_name:
+        plt.savefig(os.path.join(save_path, save_name))
+
+    print('*** finished plot_diff() ***')
+
+    return fig
 
 # # # 8 batman plots
 # this is a figure with one axis per isi, showing neg and pos sep (e.g., -18:18)
@@ -665,8 +757,7 @@ def multi_batman_plots(mean_df, thr1_df, thr2_df,
 
     :return: Batman Plot
     """
-    if verbose:
-        print("\n*** running multi_batman_plots() ***")
+    print("\n*** running multi_batman_plots() ***")
 
     # get plot info
     if isi_name_list is None:
@@ -753,7 +844,161 @@ def multi_batman_plots(mean_df, thr1_df, thr2_df,
         if save_name is not None:
             plt.savefig(f'{save_path}{os.sep}{save_name}')
 
+    print("\n*** finished multi_batman_plots() ***")
+
     return fig
+
+
+def multi_pos_sep_per_isi(ave_thr_df, error_df,
+                          stair_names_col='stair_names',
+                          even_spaced_x=True, error_caps=True,
+                          fig_title=None,
+                          save_path=None, save_name=None,
+                          verbose=True):
+    """
+    Function to plot multi-plot for comparsing cong and incong for each isi.
+
+    :param ave_thr_df: dataframe to analyse containing mean thresholds
+    :param error_df: dataframe containing error values
+    :param stair_names_col: name of colun containing separation and congruent info
+    :param even_spaced_x: If true willl evenly space ticks on x-axis.
+        If false will use values given which might not be evenly spaces (e.g., 1, 2, 3, 6, 18)
+    :param error_caps: Whether to add caps to error bars
+    :param fig_title: Title for page of figures
+    :param save_path: directory to save into
+    :param save_name: name of saved file
+    :param verbose: if Ture, will print progress to screen
+
+    :return: figure
+    """
+    print("\n*** running multi_pos_sep_per_isi() ***")
+
+    # if stair_names col is being used as the index, change stair_names to regular column and add index.
+    if ave_thr_df.index.name == stair_names_col:
+        # get the dataframe max and min values for y_axis limits.
+        max_thr = ave_thr_df.max().max() + 5
+        min_thr = ave_thr_df.min().min() - 5
+        ave_thr_df.reset_index(drop=False, inplace=True)
+        error_df.reset_index(drop=False, inplace=True)
+    else:
+        get_min_max = ave_thr_df.iloc[:, 1:]
+        max_thr = get_min_max.max().max() + 5
+        min_thr = get_min_max.min().min() - 5
+
+    if verbose:
+        print(f'ave_thr_df:\n{ave_thr_df}\n'
+              f'error_df:\n{error_df}')
+        print(f'max_thr: {max_thr}\nmin_thr: {min_thr}')
+
+    cong_rows = sorted(ave_thr_df.index[ave_thr_df[stair_names_col] >= 0].tolist())
+    incong_rows = sorted(ave_thr_df.index[ave_thr_df[stair_names_col] < 0].tolist(), reverse=True)
+    if verbose:
+        print(f'\ncong_rows: {cong_rows}')
+        print(f'incong_rows: {incong_rows}')
+
+    # slice rows for cong and incong df
+    cong_df = ave_thr_df.iloc[cong_rows, :]
+    cong_err_df = error_df.iloc[cong_rows, :]
+    incong_df = ave_thr_df.iloc[incong_rows, :]
+    incong_err_df = error_df.iloc[incong_rows, :]
+
+    pos_sep_list = [int(i) for i in list(sorted(cong_df[stair_names_col].tolist()))]
+    isi_names_list = list(cong_df.columns)[1:]
+
+    cong_df.reset_index(drop=True, inplace=True)
+    cong_err_df.reset_index(drop=True, inplace=True)
+    incong_df.reset_index(drop=True, inplace=True)
+    incong_err_df.reset_index(drop=True, inplace=True)
+    if verbose:
+        print(f'\npos_sep_list: {pos_sep_list}')
+        print(f'isi_names_list: {isi_names_list}')
+        print(f'\ncong_df: {cong_df.shape}\n{cong_df}')
+        print(f'\ncong_err_df: {cong_err_df.shape}\n{cong_err_df}')
+        print(f'\nincong_df: {incong_df.shape}\n{incong_df}')
+        print(f'\nincong_err_df: {incong_err_df.shape}\n{incong_err_df}')
+
+    cap_size = 0
+    if error_caps:
+        cap_size = 5
+
+    if even_spaced_x:
+        x_values = list(range(len(pos_sep_list)))
+    else:
+        x_values = pos_sep_list
+
+    # make plots
+    my_colours = fig_colours(len(isi_names_list))
+    n_rows, n_cols = multi_plot_shape(len(isi_names_list), min_rows=2)
+    fig, axes = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(12, 6))
+
+    if fig_title is not None:
+        fig.suptitle(fig_title)
+
+    ax_counter = 0
+    # loop through the different axes
+    for row_idx, row in enumerate(axes):
+        for col_idx, ax in enumerate(row):
+            if ax_counter < len(isi_names_list):
+
+                this_isi = isi_names_list[ax_counter]
+
+                ax.errorbar(x=x_values, y=cong_df[this_isi],
+                            yerr=cong_err_df[this_isi],
+                            marker=None, lw=2, elinewidth=.7,
+                            capsize=cap_size,
+                            color=my_colours[ax_counter])
+
+                ax.errorbar(x=x_values, y=incong_df[this_isi],
+                            yerr=incong_err_df[this_isi],
+                            linestyle='dashed',
+                            marker=None, lw=2, elinewidth=.7,
+                            capsize=cap_size,
+                            color=my_colours[ax_counter])
+
+                ax.set_title(isi_names_list[ax_counter])
+                if even_spaced_x:
+                    ax.set_xticks(list(range(len(pos_sep_list))))
+                else:
+                    ax.set_xticks(pos_sep_list)
+                ax.set_xticklabels(pos_sep_list)
+                ax.set_ylim([min_thr, max_thr])
+
+                if row_idx == 1:
+                    ax.set_xlabel('Probe separation (pixels)')
+                else:
+                    ax.xaxis.label.set_visible(False)
+
+                if col_idx == 0:
+                    ax.set_ylabel('Probe Luminance')
+                else:
+                    ax.yaxis.label.set_visible(False)
+
+                # artist for legend
+                st1 = mlines.Line2D([], [], color=my_colours[ax_counter],
+                                    # marker='v',
+                                    linewidth=.5,
+                                    markersize=4, label='Congruent')
+                st2 = mlines.Line2D([], [], color=my_colours[ax_counter],
+                                    # marker='o',
+                                    marker=None, linewidth=.5, linestyle="dotted",
+                                    markersize=4, label='Incongruent')
+
+                ax.legend(handles=[st1, st2], fontsize=6)
+
+                ax_counter += 1
+            else:
+                fig.delaxes(ax=axes[row_idx, col_idx])
+
+    plt.tight_layout()
+
+    if save_path is not None:
+        if save_name is not None:
+            plt.savefig(f'{save_path}{os.sep}{save_name}')
+
+    print("\n*** finished multi_pos_sep_per_isi() ***")
+
+    return fig
+
 
 
 
@@ -933,7 +1178,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
     stair_list = all_data_df['stair'].unique()
     isi_list = all_data_df['ISI'].unique()
     # get isi string for column names
-    isi_name_list = [f'isi{i}' for i in isi_list]
+    isi_name_list = [f'ISI_{i}' for i in isi_list]
 
     trials, columns = np.shape(all_data_df)
     trials_per_stair = int(trials/len(isi_list)/len(stair_list))
@@ -981,7 +1226,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
     else:
         raise ValueError(f"I dunno why the number of rows ({rows}) isn't double "
                          f"the sep_list ({sep_list})")
-    separation_title = [f'sep{i}' for i in sep_list]
+    separation_title = [f'sep_{i}' for i in sep_list]
     if verbose:
         print(f'sep_list: {sep_list}')
         print(f"separation_title: {separation_title}")
@@ -1320,33 +1565,36 @@ def c_plots(save_path, isi_name_list=None, show_plots=True, verbose=True):
     fig4_title = 'Congruent and incongruent probe/flow motion for each ISI'
     fig4_savename = 'compare_data_isi'
 
-    plot_isi_x_axis_w_errors(wide_df=psig_thr_df, cols_to_keep=['congruent', 'separation'],
+    plot_w_errors_either_x_axis(wide_df=psig_thr_df, cols_to_keep=['congruent', 'separation'],
                              cols_to_change=isi_name_list,
                              cols_to_change_show='probeLum', new_col_name='ISI',
-                             strip_from_cols='isi',
+                             strip_from_cols='ISI_',
                              x_axis='separation', y_axis='probeLum', x_tick_vals=[0, 1, 2, 3, 6, 18],
                              hue_var='ISI', style_var='congruent', style_order=[1, -1],
                              error_bars=True, even_spaced_x=True, jitter=False,
-                             fig_title=fig4_title, fig_savename=fig4_savename, verbose=True)
+                             fig_title=fig4_title, fig_savename=fig4_savename,
+                             save_path=save_path, verbose=True)
     if show_plots:
         plt.show()
     plt.close()
 
     if verbose:
         print('\nfig5 single run data')
+
+    x_tick_vals = [int(i[4:]) for i in isi_cols_list]
+    print(f'x_tick_vals: {x_tick_vals}')
     fig5_title = 'Congruent and incongruent probe/flow motion for each separation'
     fig5_savename = 'compare_data_sep'
-    plot_isi_x_axis_w_errors(wide_df=psig_thr_df, cols_to_keep=['congruent', 'separation'],
+
+    plot_w_errors_either_x_axis(wide_df=psig_thr_df, cols_to_keep=['congruent', 'separation'],
                              cols_to_change=isi_name_list,
                              cols_to_change_show='probeLum', new_col_name='ISI',
-                             strip_from_cols='isi',
+                             strip_from_cols='ISI_',
                              x_axis='ISI', y_axis='probeLum',
                              hue_var='separation', style_var='congruent', style_order=[1, -1],
-                             error_bars=True,
-                             even_spaced_x=True,
-                             jitter=False,
-                             fig_title=fig5_title,
-                             fig_savename=fig5_savename, x_tick_vals=[1, 4, 6],
+                             error_bars=True, even_spaced_x=True, jitter=False,
+                             fig_title=fig5_title, fig_savename=fig5_savename,
+                             save_path=save_path, x_tick_vals=x_tick_vals,
                              verbose=True)
     if show_plots:
         plt.show()
@@ -1458,9 +1706,9 @@ def d_average_participant(root_path, run_dir_names_list,
 
     # save csv with average values
     if trim_n is not None:
-        ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM_thresh.csv', index=False)
+        ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM_thresh.csv')  #, index=False)
     else:
-        ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_thresh.csv', index=False)
+        ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_thresh.csv')  #, index=False)
 
     """part 3. main Figures (these are the ones saved in the matlab script)
     Fig1: plot average threshold for each ISI and sep.
@@ -1483,95 +1731,15 @@ def d_average_participant(root_path, run_dir_names_list,
                        f'(positive values for congruent probe/flow motion, negative for incongruent).'
         fig_1a_savename = f'ave_thr_pos_and_neg.png'
 
-
+    # if I delete this messy plot, I can also delete the function that made it.
     plot_runs_ave_w_errors(fig_df=ave_psignifit_thr_df, error_df=error_bars_df,
                            jitter=True, error_caps=True, alt_colours=False,
                            legend_names=isi_name_list,
                            x_tick_vals=stair_names_list,
                            x_tick_labels=stair_names_labels,
-                           even_spaced_x=False,
-                           fixed_y_range=False,
+                           even_spaced_x=False, fixed_y_range=False,
                            fig_title=fig_1a_title, save_name=fig_1a_savename,
                            save_path=root_path, verbose=True)
-    if show_plots:
-        plt.show()
-    plt.close()
-    #
-    # if verbose:
-    #     print('finished fig_1a')
-    #
-    # # todo: transpose version e.gh., isi on x-axis
-    #
-    # ####################
-    # # can't use plot_runs_ave_w_errors for comparrisons between cong/incong
-    # print('\nnew fig')
-    # ave_thr_df_T = ave_psignifit_thr_df.T
-    # error_bars_df_T = error_bars_df.T
-    # print(f'ave_thr_df_T:\n{ave_thr_df_T}')
-    # print(f'error_bars_df_T:\n{error_bars_df_T}')
-    #
-    # ave_thr_df_T.columns = [str(i) for i in list(ave_thr_df_T.columns)]
-    # error_bars_df_T.columns = [str(i) for i in list(error_bars_df_T.columns)]
-    # col_names = list(ave_thr_df_T.columns)
-    # print(f'col_names: {col_names}')
-    # print(f'col_names: {type(col_names[0])}')
-
-    # print(f"\nfig_1b")
-    # if trim_n is not None:
-    #     fig_1b_title = f'Average thresholds per separation across all runs (trim={trim_n}).'
-    #     fig_1b_savename = f'ave_TM_thr_all_runs_sep.png'
-    # else:
-    #     fig_1b_title = f'Average threshold per separation across all runs'
-    #     fig_1b_savename = f'ave_thr_all_runs_sep.png'
-    #
-    # plot_runs_ave_w_errors(fig_df=ave_psignifit_thr_df.T, error_df=error_bars_df.T,
-    #                        jitter=True, error_caps=True, alt_colours=False,
-    #                        legend_names=ave_thr_df_T.columns,
-    #                        x_tick_vals=isi_name_list,
-    #                        x_tick_labels=isi_name_list,
-    #                        even_spaced_x=False,
-    #                        fixed_y_range=False,
-    #                        fig_title=fig_1b_title, save_name=fig_1b_savename,
-    #                        save_path=root_path, verbose=True)
-    # if show_plots:
-    #     plt.show()
-    # plt.close()
-    #
-    # if verbose:
-    #     print('finished fig_1b')
-    ####################
-
-
-    # print(f"\nfig_1c\n")
-    # # fig 1c, ISI on x-axis, different line for each sep
-    # print('fig2a participant average with errors')
-    # save_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp/'
-    # thr_csv_name = f'{save_path}{os.sep}MASTER_psignifit_thresholds.csv'
-    # ave_thr_df = pd.read_csv(thr_csv_name)
-
-    # wide_df = ave_thr_df
-    # print(f'wide_df:\n{wide_df}')
-
-    print(f"\nfig_1a\n")
-    if trim_n is not None:
-        fig_1a_title = f'Average thresholds per ISI across all runs (trim={trim_n}).'
-        fig_1a_savename = f'ave_TM_thr_all_runs_isi.png'
-    else:
-        fig_1a_title = f'Average threshold per ISI across all runs'
-        fig_1a_savename = f'ave_thr_all_runs_isi.png'
-
-    plot_isi_x_axis_w_errors(wide_df=get_means_df, cols_to_keep=['congruent', 'separation'],
-                             cols_to_change=['isi1', 'isi4', 'isi6'],
-                             cols_to_change_show='probeLum', new_col_name='ISI',
-                             strip_from_cols='isi',
-                             x_axis='separation', y_axis='probeLum',
-                             hue_var='ISI', style_var='congruent', style_order=[1, -1],
-                             error_bars=True,
-                             even_spaced_x=True,
-                             jitter=True,
-                             fig_title=fig_1a_title,
-                             fig_savename=fig_1a_savename, x_tick_vals=[0, 1, 2, 3, 6, 18],
-                             verbose=True)
     if show_plots:
         plt.show()
     plt.close()
@@ -1584,78 +1752,85 @@ def d_average_participant(root_path, run_dir_names_list,
         fig_1b_title = f'Average threshold per separation across all runs'
         fig_1b_savename = f'ave_thr_all_runs_sep.png'
 
-    plot_isi_x_axis_w_errors(wide_df=get_means_df, cols_to_keep=['congruent', 'separation'],
-                             cols_to_change=['isi1', 'isi4', 'isi6'],
+    plot_w_errors_either_x_axis(wide_df=get_means_df, cols_to_keep=['congruent', 'separation'],
+                             cols_to_change=isi_name_list,
                              cols_to_change_show='probeLum', new_col_name='ISI',
-                             strip_from_cols='isi',
+                             strip_from_cols='ISI_',
                              x_axis='ISI', y_axis='probeLum',
                              hue_var='separation', style_var='congruent', style_order=[1, -1],
-                             error_bars=True,
-                             even_spaced_x=True,
-                             jitter=.01,
-                             fig_title=fig_1b_title,
-                             fig_savename=fig_1b_savename, x_tick_vals=['ISI 1', 'ISI 4', 'ISI 6'],
-                             verbose=True)
+                             error_bars=True, even_spaced_x=True, jitter=.01,
+                             fig_title=fig_1b_title, fig_savename=fig_1b_savename,
+                             save_path=root_path, x_tick_vals=isi_name_list, verbose=True)
     if show_plots:
         plt.show()
     plt.close()
 
-    #
-    # if trim_n is not None:
-    #     # fig_1c_title = f'Probe luminance at each ISI value per separation (trim={trim_n}).'
-    #     # fig_1c_savename = f'ave_TM_thr_all_runs_transpose.png'
-    #     fig_1c_title = f'Congruent and incongruent probe/flow motion for each ISI (trim={trim_n})'
-    #     fig_1c_savename = 'compare_mean_data_TM'
-    # else:
-    #     # fig_1c_title = f'Probe luminance at each ISI value per separation'
-    #     # fig_1c_savename = f'ave_thr_all_runs_transpose.png'
-    #     fig_1c_title = 'Congruent and incongruent probe/flow motion for each ISI'
-    #     fig_1c_savename = 'compare_mean_data'
-    #
-    # print(f"\nget_means_df\n{get_means_df}")
-    #
-    # isi_cols_list = list(get_means_df.columns)[-len(isi_name_list):]
-    # if verbose:
-    #     print(f'get_means_df:\n{get_means_df}')
-    #     print(f'isi_name_list: {isi_name_list}')
-    #
-    # # todo: use function in scratch
-    # # todo: add jitted x_axis values such that each isi is separate (but congruent/incongruent are aligned)
-    # # todo: add error bars
-    #
-    # # convert wide df to long
-    # long_df = make_long_df(wide_df=get_means_df, cols_to_keep=['congruent', 'separation'],
-    #                        cols_to_change=isi_cols_list, cols_to_change_show='probeLum',
-    #                        new_col_name='ISI', strip_from_cols='isi', verbose=True)
-    #
-    # # make plot with pos sep only
-    # # same colour with dashed or dotted for congruent/incongruent
-    # fig, ax = plt.subplots(figsize=(10, 6))
-    # sns.lineplot(data=long_df,
-    #              x='separation', y='probeLum', hue='ISI', style='congruent',
-    #              style_order=[1, -1],
-    #              markers=True, dashes=True,
-    #              estimator=np.mean, ci='sd', err_style='bars',
-    #              ax=ax)
-    # ax.set_xticks(sorted(list(long_df['separation'].unique())))
-    # plt.title(fig_1c_title)
-    #
-    # # Change legend labels for congruent and incongruent data
-    # handles, labels = ax.get_legend_handles_labels()
-    # ax.legend(handles=handles, labels=labels[:-2] + ['True', 'False'])
-    #
-    # plt.savefig(f'{root_path}{os.sep}{fig_1c_savename}')
-    #
-    # if show_plots:
-    #     plt.show()
-    # plt.close()
-    #
-    # if verbose:
-    #     print('finished fig_1c')
-    #
-    #
+    print(f"\nfig_1c\n")
+    if trim_n is not None:
+        fig_1c_title = f'Average thresholds per ISI across all runs (trim={trim_n}).'
+        fig_1c_savename = f'ave_TM_thr_all_runs_isi.png'
+    else:
+        fig_1c_title = f'Average threshold per ISI across all runs'
+        fig_1c_savename = f'ave_thr_all_runs_isi.png'
+
+    plot_w_errors_either_x_axis(wide_df=get_means_df, cols_to_keep=['congruent', 'separation'],
+                             cols_to_change=isi_name_list,
+                             cols_to_change_show='probeLum', new_col_name='ISI',
+                             strip_from_cols='ISI_',
+                             x_axis='separation', y_axis='probeLum',
+                             hue_var='ISI', style_var='congruent', style_order=[1, -1],
+                             error_bars=True, even_spaced_x=True, jitter=.1,
+                             fig_title=fig_1c_title, fig_savename=fig_1c_savename,
+                             x_tick_vals=[0, 1, 2, 3, 6, 18], save_path=root_path, verbose=True)
+    if show_plots:
+        plt.show()
+    plt.close()
+
+    #################
+    # figure 1d multiple plots with single line.
+    print("\n\nplot 1d: one ax per ISI, pos_sep, compare congruent and incongruent.")
+
+    multi_pos_sep_per_isi(ave_thr_df=ave_psignifit_thr_df, error_df=error_bars_df,
+                          stair_names_col='stair_names',
+                          even_spaced_x=True, error_caps=True,
+                          fig_title='Congruent and Incongruent thresholds for each ISI',
+                          save_path=root_path, save_name=f'pos_sep_per_isi.png',
+                          verbose=True)
+    if show_plots:
+        plt.show()
+    plt.close()
+
+    print('fig2a: Mean participant difference between congruent and incongruent conditions (x-axis=Sep)')
+    fig_save_name = 'mean_diff_x_sep.png'
+    fig_title = 'Mean Difference Between Congruent and Incongruent Conditions (x-axis=Sep).\n' \
+                '(Positive=congruent has higher threshold).'
+
+    plot_diff(ave_psignifit_thr_df, stair_names_col='stair_names',
+              fig_title=fig_title, save_path=root_path, save_name=fig_save_name,
+              x_axis_isi=False, verbose=True)
+    if show_plots:
+        plt.show()
+    plt.close()
+    print('fig2b: Mean participant difference between congruent and incongruent conditions (x-axis=ISI)')
+
+    fig_save_name = 'mean_diff_x_isi.png'
+    fig_title = 'Mean Difference Between Congruent and Incongruent Conditions (x-axis=ISI).\n' \
+                '(Positive=congruent has higher threshold).'
+    plot_diff(ave_psignifit_thr_df, stair_names_col='stair_names',
+              fig_title=fig_title, save_path=root_path, save_name=fig_save_name,
+              x_axis_isi=True, verbose=True)
+
+    if show_plots:
+        plt.show()
+    plt.close()
+
+
     print(f"\nHeatmap\n")
     # get mean of each col, then mean of that
+    print(f'ave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
+    if 'stair_names' in ave_psignifit_thr_df.columns:
+        ave_psignifit_thr_df.set_index('stair_names', inplace=True)
+        print(f'ave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
 
     if trim_n is not None:
         heatmap_title = f'Mean Threshold for each ISI and separation (trim={trim_n}).'

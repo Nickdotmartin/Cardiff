@@ -386,7 +386,7 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
 
     if isi_list is None:
         isi_list = [0, 1, 4, 6, 12, 24]
-    isi_name_list = [f'isi{i}' for i in isi_list]
+    isi_name_list = [f'ISI_{i}' for i in isi_list]
 
     if sep_list is None:
         sep_list = [18, 6, 3, 2, 1, 0]
