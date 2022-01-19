@@ -1038,10 +1038,15 @@ def plot_thr_heatmap(heatmap_df,
 
     heatmap = sns.heatmap(data=heatmap_df,
                           annot=True, center=mean_thr,
-                          cmap=sns.color_palette("Spectral_r", as_cmap=True),
+                          cmap=sns.color_palette("Spectral", as_cmap=True),
                           xticklabels=x_tick_labels, yticklabels=y_tick_labels)
 
-    heatmap.set_xlabel('ISI')
+    if 'ISI' in str(x_tick_labels[0]).upper():
+        heatmap.set_xlabel('ISI')
+        heatmap.set_ylabel('Separation')
+    else:
+        heatmap.set_xlabel('Separation')
+        heatmap.set_ylabel('ISI')
 
     if fig_title is not None:
         plt.title(fig_title)
@@ -1832,23 +1837,24 @@ def d_average_participant(root_path, run_dir_names_list,
         ave_psignifit_thr_df.set_index('stair_names', inplace=True)
         print(f'ave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
 
-    if trim_n is not None:
-        heatmap_title = f'Mean Threshold for each ISI and separation (trim={trim_n}).'
-        heatmap_savename = 'mean_TM_thr_heatmap'
-    else:
-        heatmap_title = 'Mean Threshold for each ISI and separation'
-        heatmap_savename = 'mean_thr_heatmap'
-
-    plot_thr_heatmap(heatmap_df=ave_psignifit_thr_df,
-                     x_tick_labels=isi_name_list,
-                     y_tick_labels=stair_names_list,
-                     fig_title=heatmap_title,
-                     save_name=heatmap_savename,
-                     save_path=root_path,
-                     verbose=True)
-    if show_plots:
-        plt.show()
-    plt.close()
+    # todo: get rid of heatmap1
+    # if trim_n is not None:
+    #     heatmap_title = f'Mean Threshold for each ISI and separation (trim={trim_n}).'
+    #     heatmap_savename = 'mean_TM_thr_heatmap'
+    # else:
+    #     heatmap_title = 'Mean Threshold for each ISI and separation'
+    #     heatmap_savename = 'mean_thr_heatmap'
+    #
+    # plot_thr_heatmap(heatmap_df=ave_psignifit_thr_df,
+    #                  x_tick_labels=isi_name_list,
+    #                  y_tick_labels=stair_names_list,
+    #                  fig_title=heatmap_title,
+    #                  save_name=heatmap_savename,
+    #                  save_path=root_path,
+    #                  verbose=True)
+    # if show_plots:
+    #     plt.show()
+    # plt.close()
 
     if trim_n is not None:
         heatmap_title = f'Mean Threshold for each ISI and separation 2(trim={trim_n}).'
