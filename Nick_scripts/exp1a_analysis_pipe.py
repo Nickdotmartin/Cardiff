@@ -105,8 +105,6 @@ for p_idx, participant_name in enumerate(participant_list):
     n_trimmed = 1
     exp_ave = False
 
-    # todo: these plots should say that they are trimmed.
-
     make_average_plots(all_df_path=all_df_path,
                        ave_df_path=p_ave_path,
                        error_bars_path=err_path,
@@ -195,9 +193,6 @@ print('\nget exp_average_data')
 e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
                    error_type='SE', use_trimmed=True, verbose=True)
 
-# todo: these plots don't need to mention hat they use trimmed data.
-
-# todo: check if heatmaps with int numbers use floats for colours
 
 all_df_path = f'{exp_path}/MASTER_exp_thr.csv'
 exp_ave_path = f'{exp_path}/MASTER_exp_ave_thr.csv'

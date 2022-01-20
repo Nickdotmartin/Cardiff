@@ -409,6 +409,8 @@ def plot_runs_ave_w_errors(fig_df, error_df,
     :param legend_names: Names of different lines (e.g., ISI names)
     :param x_tick_vals: Positions on x-axis.
     :param x_tick_labels: labels for x-axis.
+    :param even_spaced_x: If True, x-ticks are evenly spaced,
+        if False they will be spaced according to numeric value (e.g., 0, 1, 2, 3, 6, 18)
     :param fixed_y_range: default=False. If True will use full range of y values
         (e.g., 0:110) or can pass a tuple to set y_limits.
     :param fig_title: Title for figure
@@ -528,8 +530,9 @@ def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'
                                 save_path=None,
                                 verbose=True):
     """
-    Funtion to plot line_plot with multiple lines.  This function works with a single dataset,
-    or with a df containing several datasets, in which case it plots the mean with error bars at .68 confidence interval.
+    Function to plot line_plot with multiple lines.  This function works with a single dataset,
+    or with a df containing several datasets, in which case it plots the mean
+    with error bars at .68 confidence interval.
     It will work with either separation on x-axis and different lines for each ISI, or vice versa.
     The first part of the function converts a wide dataframe to a long dataframe.
 
@@ -541,7 +544,7 @@ def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'
     :param cols_to_change_show: What is being measured in cols to change (e.g., probeLum; dependent variable)
     :param new_col_name: What the cols to change describe (e.g., isi; independent variable)
     :param strip_from_cols: string to remove if independent variables are to be
-        turned into numberic values (e.g., for ISI_1, ISI_4, ISI_6, strip 'ISI_' to get 1, 4,6).
+        turned into numeric values (e.g., for ISI_1, ISI_4, ISI_6, strip 'ISI_' to get 1, 4,6).
     :param x_axis: Variable to be shown along x-axis (e.g., separation or isi)
     :param y_axis: Variable to be shown along y-axis (e.g., probeLum)
     :param hue_var: Variable to be shown with different lines (e.g., isi or separation)
@@ -550,11 +553,12 @@ def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'
     :param error_bars: True or false, whether to display error bars
     :param jitter: Whether to jitter items on x-axis to make easier to read.
         Can be True, False or float for amount of jitter in relation to x-axis values.
-    :param even_spaced_x: Whether to evenly spave ticks on x-axis.
+    :param even_spaced_x: Whether to evenly space ticks on x-axis.
         For example to make the left side of log-scale x-values easier to read.
     :param x_tick_vals: Values/labels for x-axis.  Can be string, int or float.
     :param fig_title: Title for figure
-    :param fig_savename: Save path/name for figure
+    :param fig_savename: Save name for figure
+    :param save_path: Save path for figure
     :param verbose: Whether to print progress to screen.
 
     :return: figure
@@ -564,7 +568,7 @@ def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'
     # convert wide df to long
     long_df = make_long_df(wide_df=wide_df, cols_to_keep=cols_to_keep,
                            cols_to_change=cols_to_change, cols_to_change_show=cols_to_change_show,
-                           new_col_name=new_col_name, strip_from_cols=strip_from_cols, verbose=True)
+                           new_col_name=new_col_name, strip_from_cols=strip_from_cols, verbose=verbose)
 
     # data_for_x to use for x_axis data, whilst keeping original values list (x_axis)
     data_for_x = x_axis
@@ -856,12 +860,12 @@ def multi_pos_sep_per_isi(ave_thr_df, error_df,
                           save_path=None, save_name=None,
                           verbose=True):
     """
-    Function to plot multi-plot for comparsing cong and incong for each isi.
+    Function to plot multi-plot for comparing cong and incong for each isi.
 
     :param ave_thr_df: dataframe to analyse containing mean thresholds
     :param error_df: dataframe containing error values
-    :param stair_names_col: name of colun containing separation and congruent info
-    :param even_spaced_x: If true willl evenly space ticks on x-axis.
+    :param stair_names_col: name of column containing separation and congruent info
+    :param even_spaced_x: If true will evenly space ticks on x-axis.
         If false will use values given which might not be evenly spaces (e.g., 1, 2, 3, 6, 18)
     :param error_caps: Whether to add caps to error bars
     :param fig_title: Title for page of figures
@@ -1014,7 +1018,7 @@ def plot_thr_heatmap(heatmap_df,
     :param heatmap_df: Expects dataframe with separation as index and ISIs as columns.
     :param x_tick_labels: Labels for columns
     :param y_tick_labels: Labels for rows
-    :param fig_title: Title for figue
+    :param fig_title: Title for figure
     :param save_name: name to save fig
     :param save_path: location to save fig
     :param verbose: if True, will prng progress to screen,
@@ -1513,7 +1517,7 @@ def c_plots(save_path, isi_name_list=None, show_plots=True, verbose=True):
                        sym_sep_diff_list=diff_val,
                        save_path=save_path,
                        save_name=fig1_savename,
-                       verbose=True)
+                       verbose=verbose)
     if show_plots:
         plt.show()
     plt.close()
@@ -1547,7 +1551,7 @@ def c_plots(save_path, isi_name_list=None, show_plots=True, verbose=True):
                            isi_name_list=isi_name_list,
                            x_tick_values=psig_thr_idx_list,
                            x_tick_labels=stair_names_list,
-                           verbose=True)
+                           verbose=verbose)
     if show_plots:
         plt.show()
     plt.close()
@@ -1571,14 +1575,14 @@ def c_plots(save_path, isi_name_list=None, show_plots=True, verbose=True):
     fig4_savename = 'compare_data_isi'
 
     plot_w_errors_either_x_axis(wide_df=psig_thr_df, cols_to_keep=['congruent', 'separation'],
-                             cols_to_change=isi_name_list,
-                             cols_to_change_show='probeLum', new_col_name='ISI',
-                             strip_from_cols='ISI_',
-                             x_axis='separation', y_axis='probeLum', x_tick_vals=[0, 1, 2, 3, 6, 18],
-                             hue_var='ISI', style_var='congruent', style_order=[1, -1],
-                             error_bars=True, even_spaced_x=True, jitter=False,
-                             fig_title=fig4_title, fig_savename=fig4_savename,
-                             save_path=save_path, verbose=True)
+                                cols_to_change=isi_name_list,
+                                cols_to_change_show='probeLum', new_col_name='ISI',
+                                strip_from_cols='ISI_',
+                                x_axis='separation', y_axis='probeLum', x_tick_vals=[0, 1, 2, 3, 6, 18],
+                                hue_var='ISI', style_var='congruent', style_order=[1, -1],
+                                error_bars=True, even_spaced_x=True, jitter=False,
+                                fig_title=fig4_title, fig_savename=fig4_savename,
+                                save_path=save_path, verbose=verbose)
     if show_plots:
         plt.show()
     plt.close()
@@ -1592,15 +1596,15 @@ def c_plots(save_path, isi_name_list=None, show_plots=True, verbose=True):
     fig5_savename = 'compare_data_sep'
 
     plot_w_errors_either_x_axis(wide_df=psig_thr_df, cols_to_keep=['congruent', 'separation'],
-                             cols_to_change=isi_name_list,
-                             cols_to_change_show='probeLum', new_col_name='ISI',
-                             strip_from_cols='ISI_',
-                             x_axis='ISI', y_axis='probeLum',
-                             hue_var='separation', style_var='congruent', style_order=[1, -1],
-                             error_bars=True, even_spaced_x=True, jitter=False,
-                             fig_title=fig5_title, fig_savename=fig5_savename,
-                             save_path=save_path, x_tick_vals=x_tick_vals,
-                             verbose=True)
+                                cols_to_change=isi_name_list,
+                                cols_to_change_show='probeLum', new_col_name='ISI',
+                                strip_from_cols='ISI_',
+                                x_axis='ISI', y_axis='probeLum',
+                                hue_var='separation', style_var='congruent', style_order=[1, -1],
+                                error_bars=True, even_spaced_x=True, jitter=False,
+                                fig_title=fig5_title, fig_savename=fig5_savename,
+                                save_path=save_path, x_tick_vals=x_tick_vals,
+                                verbose=verbose)
     if show_plots:
         plt.show()
     plt.close()
@@ -1609,9 +1613,9 @@ def c_plots(save_path, isi_name_list=None, show_plots=True, verbose=True):
 
 
 def d_average_participant(root_path, run_dir_names_list,
-                          error_bars=None,
+                          error_type=None,
                           trim_n=None,
-                          show_plots=True, verbose=True):
+                          verbose=True):
     """
     d_average_participant: take psignifit_thresholds.csv
     in each participant run folder and make master lists
@@ -1622,19 +1626,11 @@ def d_average_participant(root_path, run_dir_names_list,
 
     Save master lists to folder containing the six runs (root_path).
 
-    Plots:
-    MASTER_ave_thresh saved as ave_thr_all_runs.png
-    this has two versions:
-    a. x-axis is separation, ISI as different lines
-    b. x-axis is ISI, separation as different lines
-    Heatmap: with average probe lum for ISI and separation.
-
     :param root_path: dir containing run folders
     :param run_dir_names_list: names of run folders
-    :param error_bars: Default: None. Can pass sd or se for standard deviation or error.
+    :param error_type: Default: None. Can pass sd or se for standard deviation or error.
     :param trim_n: default None.  If int is passed, will call function trim_n_high_n_low(),
             which trims the n highest and lowest values.
-    :param show_plots: default True - display plots
     :param verbose: Default true, print progress to screen
 
     :returns: ave_psignifit_thr_df: (trimmed?) mean threshold for each separation and ISI.
@@ -1642,11 +1638,14 @@ def d_average_participant(root_path, run_dir_names_list,
 
     print("\n***running d_average_participant()***\n")
 
-    """ part1. Munge data, save master lists and get means etc
-     - loop through runs and get each P-next-thresholds and P-reversal4-thresholds
-    Make master sheets: MASTER_next_thresh & MASTER_reversal_4_thresh
-    Incidentally the MATLAB script didn't specify which reversals data to use,
-    although the figures imply Martin used last3 reversals."""
+    """ d_average_participant: take psignifit_thresholds.csv
+    in each participant run folder and make master lists  
+    MASTER_psignifit_thresholds.csv
+
+    Get mean threshold across 6 run conditions saved as
+    MASTER_ave_thresh.csv
+    
+    Save master lists to folder containing the six runs (root_path)."""
 
     all_psignifit_list = []
     for run_idx, run_name in enumerate(run_dir_names_list):
@@ -1658,8 +1657,6 @@ def d_average_participant(root_path, run_dir_names_list,
             this_psignifit_df.drop('Unnamed: 0', axis=1, inplace=True)
 
         this_psignifit_df.drop(columns='stair', inplace=True)
-
-        isi_name_list = list(this_psignifit_df.columns)[3:]
 
         rows, cols = this_psignifit_df.shape
         this_psignifit_df.insert(0, 'stack', [run_idx] * rows)
@@ -1683,6 +1680,8 @@ def d_average_participant(root_path, run_dir_names_list,
                                        reference_col='stair_names',
                                        stack_col_id='stack',
                                        verbose=verbose)
+        trimmed_df.to_csv(f'{root_path}{os.sep}MASTER_TM{trim_n}_thresholds.csv', index=False)
+
         get_means_df = trimmed_df
     else:
         get_means_df = all_data_psignifit_df
@@ -1696,184 +1695,347 @@ def d_average_participant(root_path, run_dir_names_list,
     if verbose:
         print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
 
-    if error_bars in [False, None]:
+    if error_type in [False, None]:
         error_bars_df = None
-    elif error_bars.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
+    elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
         error_bars_df = groupby_sep_df.groupby('stair_names', sort=True).sem()
-    elif error_bars.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
+    elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
         error_bars_df = groupby_sep_df.groupby('stair_names', sort=True).std()
     else:
-        raise ValueError(f"error_bars should be in:\nfor none: [False, None]\n"
-                         f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standrad_error']\n"
+        raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
+                         f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standard_error']\n"
                          f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
                          f"'deviation', 'standard_deviation']")
-    print(f'\nerror_bars_df: ({error_bars})\n{error_bars_df}')
+    print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
 
     # save csv with average values
     if trim_n is not None:
-        ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM_thresh.csv')  #, index=False)
+        ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM_thresh.csv')
+        error_bars_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM_thr_error_{error_type}.csv')
+
     else:
-        ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_thresh.csv')  #, index=False)
+        ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_thresh.csv')
+        error_bars_df.to_csv(f'{root_path}{os.sep}MASTER_ave_thr_error_{error_type}.csv')
+
+    print("\n*** finished d_average_participant()***\n")
+
+    return ave_psignifit_thr_df, error_bars_df
+
+
+def e_average_exp_data(exp_path, p_names_list,
+                       error_type='SE',
+                       use_trimmed=True,
+                       verbose=True):
+    """
+    e_average_over_participants: take MASTER_ave_TM_thresh.csv (or MASTER_ave_thresh.csv)
+    in each participant folder and make master list
+    MASTER_exp_thr.csv
+
+    Get mean thresholds averaged across all participants saved as
+    MASTER_exp_ave_thr.csv
+
+    Save master lists to exp_path.
+
+    Plots:
+    MASTER_exp_ave_thr saved as exp_ave_thr_all_runs.png
+    MASTER_exp_ave_thr two-probe/one-probe saved as exp_ave_thr_div_1probe.png
+    these both have two versions:
+    a. x-axis is separation, ISI as different lines
+    b. x-axis is ISI, separation as different lines
+    Heatmap: with average probe lum for ISI and separation.
+
+    :param exp_path: dir containing participant folders
+    :param p_names_list: names of participant's folders
+    :param error_type: Default: None. Can pass sd or se for standard deviation or error.
+    :param use_trimmed: default True.  If True, use trimmed_mean ave (MASTER_ave_TM_thresh),
+         if False, use MASTER_ave_thresh.
+    :param verbose: Default True, print progress to screen
+
+    :returns: exp_ave_thr_df: experiment mean threshold for each separation and ISI.
+    """
+    print("\n***running e_average_over_participants()***\n")
+
+
+    """ part1. Munge data, save master lists and get means etc
+     - loop through participants and get each MASTER_ave_TM_thresh.csv
+    Make master sheets: MASTER_exp_thr and MASTER_exp_ave_thr."""
+
+    all_p_ave_list = []
+    for p_idx, p_name in enumerate(p_names_list):
+
+        ave_df_name = 'MASTER_ave_thresh'
+        if use_trimmed:
+            ave_df_name = 'MASTER_ave_TM_thresh'
+
+        this_p_ave_df = pd.read_csv(f'{exp_path}{os.sep}{p_name}{os.sep}{ave_df_name}.csv')
+
+        if verbose:
+            print(f'{p_idx}. {p_name} - this_p_ave_df:\n{this_p_ave_df}')
+
+        if 'Unnamed: 0' in list(this_p_ave_df):
+            this_p_ave_df.drop('Unnamed: 0', axis=1, inplace=True)
+
+        stair_names_list = this_p_ave_df['stair_names'].tolist()
+        cong_list = [-1 if x < 0 else 1 for x in stair_names_list]
+        sep_list = [0 if x == -.10 else abs(int(x)) for x in stair_names_list]
+
+
+        rows, cols = this_p_ave_df.shape
+        this_p_ave_df.insert(0, 'participant', [p_name] * rows)
+        this_p_ave_df.insert(2, 'congruent', cong_list)
+        this_p_ave_df.insert(3, 'separation', sep_list)
+
+        all_p_ave_list.append(this_p_ave_df)
+
+    # join all participants' data and save as master csv
+    all_exp_thr_df = pd.concat(all_p_ave_list, ignore_index=True)
+    all_exp_thr_df.to_csv(f'{exp_path}{os.sep}MASTER_exp_thr.csv', index=False)
+    if verbose:
+        print(f'\nall_exp_thr_df:\n{all_exp_thr_df}')
+
+    # # get means and errors
+    groupby_sep_df = all_exp_thr_df.drop('participant', axis=1)
+    groupby_sep_df = groupby_sep_df.drop('separation', axis=1)
+    groupby_sep_df = groupby_sep_df.drop('congruent', axis=1)
+
+    exp_ave_thr_df = groupby_sep_df.groupby('stair_names', sort=True).mean()
+    if verbose:
+        print(f'\nexp_ave_thr_df:\n{exp_ave_thr_df}')
+
+    if error_type in [False, None]:
+        error_bars_df = None
+    elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
+        error_bars_df = groupby_sep_df.groupby('stair_names', sort=True).sem()
+    elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
+        error_bars_df = groupby_sep_df.groupby('stair_names', sort=True).std()
+    else:
+        raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
+                         f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standrad_error']\n"
+                         f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
+                         f"'deviation', 'standard_deviation']")
+    if verbose:
+        print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
+
+    # save csv with average values
+    exp_ave_thr_df.to_csv(f'{exp_path}{os.sep}MASTER_exp_ave_thr.csv')
+    error_bars_df.to_csv(f'{exp_path}{os.sep}MASTER_ave_thr_error_{error_type}.csv')
+
+    print("\n*** finished e_average_over_participants()***\n")
+
+    return exp_ave_thr_df, error_bars_df
+
+
+
+def make_average_plots(all_df_path, ave_df_path, error_bars_path,
+                       n_trimmed=False,
+                       exp_ave=False,
+                       show_plots=True, verbose=True):
+    """Plots:
+    MASTER_ave_thresh saved as ave_thr_all_runs.png
+    MASTER_ave_thresh two-probe/one-probe saved as ave_thr_div_1probe.png
+    these both have two versions:
+    a. x-axis is separation, ISI as different lines
+    b. x-axis is ISI, separation as different lines
+    Heatmap: with average probe lum for ISI and separation.
+
+    :param all_df_path: Path to df with all participant/stack data.
+    :param ave_df_path: Path to df with average across all stacks/participants
+    :param error_bars_path: Path to df for errors bars with SE/SD associated with averages.
+    :param n_trimmed: Whether averages data has been trimmed.
+    :param exp_ave:
+    :param show_plots:
+    :param verbose:
+    :return: """
+
+    print("\n*** running make_average_plots()***\n")
+
+    save_path, df_name = os.path.split(ave_df_path)
+
+    if exp_ave:
+        ave_over = 'Exp'
+    else:
+        ave_over = 'P'
+
+    # if type(all_df_path) is 'pandas.core.frame.DataFrame':
+    if isinstance(all_df_path, pd.DataFrame):
+        all_df = all_df_path
+    else:
+        all_df = pd.read_csv(all_df_path)
+
+    # if type(ave_df_path) is 'pandas.core.frame.DataFrame':
+    if isinstance(ave_df_path, pd.DataFrame):
+        ave_df = ave_df_path
+    else:
+        ave_df = pd.read_csv(ave_df_path)
+    # use ave_w_sep_idx_df for fig 1a and heatmap
+    ave_w_sep_idx_df = ave_df.set_index('stair_names')
+
+
+    # if type(error_bars_path) is 'pandas.core.frame.DataFrame':
+    if isinstance(error_bars_path, pd.DataFrame):
+        error_bars_df = error_bars_path
+    else:
+        error_bars_df = pd.read_csv(error_bars_path)
+
+    isi_name_list = list(all_df.columns[4:])
+
+    if verbose:
+        print(f'\nall_df:\n{all_df}')
+        print(f'\nave_df:\n{ave_df}')
+        print(f'\nerror_bars_df:\n{error_bars_df}')
+        print(f'\nisi_name_list; {isi_name_list}')
+
+    stair_names_list = sorted(list(all_df['stair_names'].unique()))
+    stair_names_list = [-.1 if i == -.10 else int(i) for i in stair_names_list]
+    stair_names_labels = ['-0' if i == -.10 else int(i) for i in stair_names_list]
+    if verbose:
+        print(f"\nstair_names_list: {stair_names_list}")
+        print(f"stair_names_labels: {stair_names_labels}")
 
     """part 3. main Figures (these are the ones saved in the matlab script)
     Fig1: plot average threshold for each ISI and sep.
+    Fig2: divide all 2probe conds (pos_sep) by one_probe condition for each participant.
+    For both figures there are 2 versions:
         a) Sep on x-axis, different line for each ISI
         b) ISI on x-axis, different line for each Sep"""
 
-    stair_names_list = sorted(list(all_data_psignifit_df['stair_names'].unique()))
-    stair_names_list = [-.1 if i == -.10 else int(i) for i in stair_names_list]
-    stair_names_labels = ['-0' if i == -.10 else int(i) for i in stair_names_list]
-    print(f"\nstair_names_list: {stair_names_list}")
-    print(f"stair_names_labels: {stair_names_labels}")
-
-    print(f"\nfig_1a\n")
-    if trim_n is not None:
-        fig_1a_title = f'Average thresholds per ISI across all runs (trim={trim_n}).\n' \
+    print(f"\nfig_1a")
+    if n_trimmed is not None:
+        fig_1a_title = f'{ave_over} average thresholds per ISI across all runs (trim={n_trimmed}).\n' \
                        f'(positive values for congruent probe/flow motion, negative for incongruent).'
         fig_1a_savename = f'ave_TM_thr_pos_and_neg.png'
     else:
-        fig_1a_title = f'Average threshold per ISI across all runs.\n' \
+        fig_1a_title = f'{ave_over} average threshold per ISI across all runs.\n' \
                        f'(positive values for congruent probe/flow motion, negative for incongruent).'
         fig_1a_savename = f'ave_thr_pos_and_neg.png'
 
     # if I delete this messy plot, I can also delete the function that made it.
-    plot_runs_ave_w_errors(fig_df=ave_psignifit_thr_df, error_df=error_bars_df,
+    plot_runs_ave_w_errors(fig_df=ave_w_sep_idx_df, error_df=error_bars_df,
                            jitter=True, error_caps=True, alt_colours=False,
                            legend_names=isi_name_list,
                            x_tick_vals=stair_names_list,
                            x_tick_labels=stair_names_labels,
                            even_spaced_x=False, fixed_y_range=False,
                            fig_title=fig_1a_title, save_name=fig_1a_savename,
-                           save_path=root_path, verbose=True)
+                           save_path=save_path, verbose=verbose)
     if show_plots:
         plt.show()
     plt.close()
 
     print(f"\nfig_1b")
-    if trim_n is not None:
-        fig_1b_title = f'Average thresholds per separation across all runs (trim={trim_n}).'
+    if n_trimmed is not None:
+        fig_1b_title = f'{ave_over} average thresholds per separation across all runs (trim={n_trimmed}).'
         fig_1b_savename = f'ave_TM_thr_all_runs_sep.png'
     else:
-        fig_1b_title = f'Average threshold per separation across all runs'
+        fig_1b_title = f'{ave_over} average threshold per separation across all runs'
         fig_1b_savename = f'ave_thr_all_runs_sep.png'
 
-    plot_w_errors_either_x_axis(wide_df=get_means_df, cols_to_keep=['congruent', 'separation'],
-                             cols_to_change=isi_name_list,
-                             cols_to_change_show='probeLum', new_col_name='ISI',
-                             strip_from_cols='ISI_',
-                             x_axis='ISI', y_axis='probeLum',
-                             hue_var='separation', style_var='congruent', style_order=[1, -1],
-                             error_bars=True, even_spaced_x=True, jitter=.01,
-                             fig_title=fig_1b_title, fig_savename=fig_1b_savename,
-                             save_path=root_path, x_tick_vals=isi_name_list, verbose=True)
+    plot_w_errors_either_x_axis(wide_df=all_df, cols_to_keep=['congruent', 'separation'],
+                                cols_to_change=isi_name_list,
+                                cols_to_change_show='probeLum', new_col_name='ISI',
+                                strip_from_cols='ISI_',
+                                x_axis='ISI', y_axis='probeLum',
+                                hue_var='separation', style_var='congruent', style_order=[1, -1],
+                                error_bars=True, even_spaced_x=True, jitter=.01,
+                                fig_title=fig_1b_title, fig_savename=fig_1b_savename,
+                                save_path=save_path, x_tick_vals=isi_name_list, verbose=verbose)
     if show_plots:
         plt.show()
     plt.close()
 
-    print(f"\nfig_1c\n")
-    if trim_n is not None:
-        fig_1c_title = f'Average thresholds per ISI across all runs (trim={trim_n}).'
+    print(f"\nfig_1c")
+    if n_trimmed is not None:
+        fig_1c_title = f'{ave_over} average thresholds per ISI across all runs (trim={n_trimmed}).'
         fig_1c_savename = f'ave_TM_thr_all_runs_isi.png'
     else:
-        fig_1c_title = f'Average threshold per ISI across all runs'
+        fig_1c_title = f'{ave_over} average threshold per ISI across all runs'
         fig_1c_savename = f'ave_thr_all_runs_isi.png'
 
-    plot_w_errors_either_x_axis(wide_df=get_means_df, cols_to_keep=['congruent', 'separation'],
-                             cols_to_change=isi_name_list,
-                             cols_to_change_show='probeLum', new_col_name='ISI',
-                             strip_from_cols='ISI_',
-                             x_axis='separation', y_axis='probeLum',
-                             hue_var='ISI', style_var='congruent', style_order=[1, -1],
-                             error_bars=True, even_spaced_x=True, jitter=.1,
-                             fig_title=fig_1c_title, fig_savename=fig_1c_savename,
-                             x_tick_vals=[0, 1, 2, 3, 6, 18], save_path=root_path, verbose=True)
+    plot_w_errors_either_x_axis(wide_df=all_df, cols_to_keep=['congruent', 'separation'],
+                                cols_to_change=isi_name_list,
+                                cols_to_change_show='probeLum', new_col_name='ISI',
+                                strip_from_cols='ISI_',
+                                x_axis='separation', y_axis='probeLum',
+                                hue_var='ISI', style_var='congruent', style_order=[1, -1],
+                                error_bars=True, even_spaced_x=True, jitter=.1,
+                                fig_title=fig_1c_title, fig_savename=fig_1c_savename,
+                                x_tick_vals=[0, 1, 2, 3, 6, 18], save_path=save_path, verbose=verbose)
     if show_plots:
         plt.show()
     plt.close()
 
     #################
     # figure 1d multiple plots with single line.
-    print("\n\nplot 1d: one ax per ISI, pos_sep, compare congruent and incongruent.")
+    print("\n\nfig_1d 1d: one ax per ISI, pos_sep, compare congruent and incongruent.")
+    if n_trimmed is not None:
+        fig_1d_title = f'{ave_over} Congruent and Incongruent thresholds for each ISI (trim={n_trimmed}).'
+        fig_1d_savename = f'ave_TM_pos_sep_per_isi.png'
+    else:
+        fig_1d_title = f'{ave_over} Congruent and Incongruent thresholds for each ISI'
+        fig_1d_savename = f'ave_thr_pos_sep_per_isi.png'
 
-    multi_pos_sep_per_isi(ave_thr_df=ave_psignifit_thr_df, error_df=error_bars_df,
+    multi_pos_sep_per_isi(ave_thr_df=ave_df, error_df=error_bars_df,
                           stair_names_col='stair_names',
                           even_spaced_x=True, error_caps=True,
-                          fig_title='Congruent and Incongruent thresholds for each ISI',
-                          save_path=root_path, save_name=f'pos_sep_per_isi.png',
-                          verbose=True)
+                          fig_title=fig_1d_title,
+                          save_path=save_path, save_name=fig_1d_savename,
+                          verbose=verbose)
     if show_plots:
         plt.show()
     plt.close()
 
-    print('fig2a: Mean participant difference between congruent and incongruent conditions (x-axis=Sep)')
-    fig_save_name = 'mean_diff_x_sep.png'
-    fig_title = 'Mean Difference Between Congruent and Incongruent Conditions (x-axis=Sep).\n' \
-                '(Positive=congruent has higher threshold).'
-
-    plot_diff(ave_psignifit_thr_df, stair_names_col='stair_names',
-              fig_title=fig_title, save_path=root_path, save_name=fig_save_name,
-              x_axis_isi=False, verbose=True)
-    if show_plots:
-        plt.show()
-    plt.close()
-    print('fig2b: Mean participant difference between congruent and incongruent conditions (x-axis=ISI)')
-
-    fig_save_name = 'mean_diff_x_isi.png'
-    fig_title = 'Mean Difference Between Congruent and Incongruent Conditions (x-axis=ISI).\n' \
-                '(Positive=congruent has higher threshold).'
-    plot_diff(ave_psignifit_thr_df, stair_names_col='stair_names',
-              fig_title=fig_title, save_path=root_path, save_name=fig_save_name,
-              x_axis_isi=True, verbose=True)
-
-    if show_plots:
-        plt.show()
-    plt.close()
-
-
-    print(f"\nHeatmap\n")
-    # get mean of each col, then mean of that
-    print(f'ave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
-    if 'stair_names' in ave_psignifit_thr_df.columns:
-        ave_psignifit_thr_df.set_index('stair_names', inplace=True)
-        print(f'ave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
-
-    # todo: get rid of heatmap1
-    # if trim_n is not None:
-    #     heatmap_title = f'Mean Threshold for each ISI and separation (trim={trim_n}).'
-    #     heatmap_savename = 'mean_TM_thr_heatmap'
-    # else:
-    #     heatmap_title = 'Mean Threshold for each ISI and separation'
-    #     heatmap_savename = 'mean_thr_heatmap'
-    #
-    # plot_thr_heatmap(heatmap_df=ave_psignifit_thr_df,
-    #                  x_tick_labels=isi_name_list,
-    #                  y_tick_labels=stair_names_list,
-    #                  fig_title=heatmap_title,
-    #                  save_name=heatmap_savename,
-    #                  save_path=root_path,
-    #                  verbose=True)
-    # if show_plots:
-    #     plt.show()
-    # plt.close()
-
-    if trim_n is not None:
-        heatmap_title = f'Mean Threshold for each ISI and separation 2(trim={trim_n}).'
-        heatmap_savename = 'mean_TM_thr_heatmap2'
+    print('\nfig2a: Mean participant difference between congruent and incongruent conditions (x-axis=Sep)')
+    if n_trimmed is not None:
+        fig_2a_title = f'{ave_over} Mean Difference Between Congruent and Incongruent Conditions (x-axis=Sep).\n' \
+                '(Positive=congruent has higher threshold). (trim={n_trimmed}).'
+        fig_2a_savename = f'ave_TM_diff_x_sep.png'
     else:
-        heatmap_title = 'Mean Threshold for each ISI and separation2'
-        heatmap_savename = 'mean_thr_heatmap2'
+        fig_2a_title = f'{ave_over} Mean Difference Between Congruent and Incongruent Conditions (x-axis=Sep).\n' \
+                '(Positive=congruent has higher threshold).'
+        fig_2a_savename = f'ave_diff_x_sep.png'
 
-    plot_thr_heatmap(heatmap_df=ave_psignifit_thr_df.T,
+    plot_diff(ave_df, stair_names_col='stair_names',
+              fig_title=fig_2a_title, save_path=save_path, save_name=fig_2a_savename,
+              x_axis_isi=False, verbose=verbose)
+    if show_plots:
+        plt.show()
+    plt.close()
+    print('\nfig2b: Mean participant difference between congruent and incongruent conditions (x-axis=ISI)')
+
+    if n_trimmed is not None:
+        fig_2b_title = f'{ave_over} Mean Difference Between Congruent and Incongruent Conditions (x-axis=ISI).\n' \
+                       f'(Positive=congruent has higher threshold). (trim={n_trimmed}).'
+        fig_2b_savename = f'ave_TM_diff_x_isi.png'
+    else:
+        fig_2b_title = f'{ave_over} Mean Difference Between Congruent and Incongruent Conditions (x-axis=ISI).\n' \
+                '(Positive=congruent has higher threshold).'
+        fig_2b_savename = f'ave_diff_x_isi.png'
+
+    plot_diff(ave_df, stair_names_col='stair_names',
+              fig_title=fig_2b_title, save_path=save_path, save_name=fig_2b_savename,
+              x_axis_isi=True, verbose=verbose)
+    if show_plots:
+        plt.show()
+    plt.close()
+
+
+    print(f"\nHeatmap")
+    if n_trimmed is not None:
+        heatmap_title = f'{ave_over} mean Threshold for each ISI and separation (trim={n_trimmed}).'
+        heatmap_savename = 'mean_TM_thr_heatmap'
+    else:
+        heatmap_title = f'{ave_over} mean Threshold for each ISI and separation'
+        heatmap_savename = 'mean_thr_heatmap'
+
+    plot_thr_heatmap(heatmap_df=ave_w_sep_idx_df.T,
                      x_tick_labels=stair_names_list,
                      y_tick_labels=isi_name_list,
                      fig_title=heatmap_title,
                      save_name=heatmap_savename,
-                     save_path=root_path,
-                     verbose=True)
+                     save_path=save_path,
+                     verbose=verbose)
     if show_plots:
         plt.show()
     plt.close()
 
-    print("\n*** finished d_average_participant()***\n")
-
-    return ave_psignifit_thr_df
+    print("\n*** finished make_average_plots()***\n")

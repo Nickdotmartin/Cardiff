@@ -105,9 +105,9 @@ def merge_pos_and_neg_sep_dfs(pos_sep_df, neg_sep_df):
 
 
 def split_df_into_pos_sep_df_and_1probe_df(pos_sep_and_1probe_df,
-                                              isi_name_list=None,
-                                              one_probe_pos=None,
-                                              verbose=True):
+                                           isi_name_list=None,
+                                           one_probe_pos=None,
+                                           verbose=True):
     """
     For plots where positive separations are shown as line plots and 
     one probe results are shown as scatter plot, this function splits the dataframe into two.
@@ -194,21 +194,206 @@ def fig_colours(n_conditions, alternative_colours=False):
     return my_colours
 
 
+def trim_n_high_n_low(all_data_df, trim_from_ends=None, reference_col='separation',
+                      stack_col_id='stack', verbose=True):
+    """
+    Function for trimming the n highest and lowest values from each condition of a set with multiple runs.
+
+    :param all_data_df: Dataset to be trimmed.
+    :param trim_from_ends: number of values to trim from each end of the distribution.
+    :param reference_col: Idx column containing repeated conditions (e.g., separation has same label for each stack).
+    :param stack_col_id: idx column showing different runs/groups etc (e.g., stack)
+    :param verbose: in true will print progress to screen.
+
+    :return: trimmed df
+    """
+    print('\n*** running trim_high_n_low() ***')
+
+    '''Part 1, convert 2d df into 3d numpy array'''
+    # prepare to extract numpy
+    if verbose:
+        print(f'all_data_df {all_data_df.shape}:\n{all_data_df.head(25)}')
+
+    # get unique values to loop over
+    stack_list = list(all_data_df[stack_col_id].unique())
+    datapoints_per_cond = len(stack_list)
+
+    if verbose:
+        print(f'stack_list: {stack_list}\n'
+              f'datapoints_per_cond: {datapoints_per_cond}')
+
+    # loop through df to get 3d numpy
+    my_list = []
+    for stack in stack_list:
+        stack_df = all_data_df[all_data_df[stack_col_id] == stack]
+        stack_df = stack_df.drop(stack_col_id, axis=1)
+        sep_list = list(stack_df.pop(reference_col))
+        isi_name_list = list(stack_df.columns)
+        # print(f'stack{stack}_df ({stack_df.shape}):\n{stack_df}')
+        my_list.append(stack_df.to_numpy())
+
+    # 3d numpy array are indexed with [depth, row, col]
+    # use variables depth_3d, rows_3d, cols_all later to reshaped_2d_array trimmed array
+    my_3d_array = np.array(my_list)
+    depth_3d, rows_3d, cols_all = np.shape(my_3d_array)
+
+    if trim_from_ends == 0:
+        trim_from_ends = None
+    if trim_from_ends is not None:
+        target_3d_depth = depth_3d - 2*trim_from_ends
+    else:
+        target_3d_depth = depth_3d
+    target_2d_rows = target_3d_depth * rows_3d
+    if verbose:
+        print(f'\nUse these values for defining array shapes.\n'
+              f'target_3d_depth (depth-trim): {target_3d_depth}, '
+              f'3d shape after trim (target_3d_depth, rows_3d, cols_all) = '
+              f'({target_3d_depth}, {rows_3d}, {cols_all})\n'
+              f'2d array shape (after trim, but before separation, stack or headers are added): '
+              f'(target_2d_rows, cols_all) = ({target_2d_rows}, {cols_all})')
+
+    '''Part 2, trim highest and lowest n values from each depth slice to get trimmed_3d_list'''
+    if verbose:
+        print('\ngetting depth slices to trim...')
+    trimmed_3d_list = []
+    counter = 0
+    for col in list(range(cols_all)):
+        row_list = []
+        for row in list(range(rows_3d)):
+            depth_slice = my_3d_array[:, row, col]
+            depth_slice = np.sort(depth_slice)
+            if trim_from_ends is not None:
+                trimmed = depth_slice[trim_from_ends: -trim_from_ends]
+            else:
+                trimmed = depth_slice[:]
+            # if verbose:
+                # print(f'{counter}: {trimmed}')
+            row_list.append(trimmed)
+            counter += 1
+        trimmed_3d_list.append(row_list)
+
+    """
+    Part 3, turn 3d numpy back into 2d df.
+    trimmed_3d_list is a list of arrays (e.g., 3d).  Each array relates to a
+    depth-stack of my_3d_array which has now be trimmed (e.g., fewer rows).
+    However, trimmed_3d_list has the same depth and number of columns as my_3d_array.
+    trimmed_array re-shapes trimmed_3d_list so all values are in their original
+    row and column positions (e.g., separation and ISI).
+    However, the 3rd dimension (depth) is not in original order, but in ascending order."""
+
+    trimmed_3d_array = np.array(trimmed_3d_list)
+    if verbose:
+        print(f'\n\nReshaping trimmed data\ntrimmed_3d_array: {np.shape(trimmed_3d_array)}')
+        print(trimmed_3d_array)
+
+    ravel_array_f = np.ravel(trimmed_3d_array, order='F')
+    if verbose:
+        print(f'\n1. ravel_array_f: {np.shape(ravel_array_f)}')
+        print(ravel_array_f)
+
+    reshaped_3d_array = ravel_array_f.reshape(target_3d_depth, rows_3d, cols_all)
+    if verbose:
+        print(f'\n2. reshaped_3d_array: {np.shape(reshaped_3d_array)}')
+        print(reshaped_3d_array)
+
+    reshaped_2d_array = reshaped_3d_array.reshape(target_2d_rows, -1)
+    if verbose:
+        print(f'\n3. reshaped_2d_array {np.shape(reshaped_2d_array)}')
+        print(reshaped_2d_array)
+
+    # make dataframe and insert column for separation and stack (trimmed run/group)
+    trimmed_df = pd.DataFrame(reshaped_2d_array, columns=isi_name_list)
+    stack_col_vals = np.repeat(np.arange(target_3d_depth), rows_3d)
+    sep_col_vals = sep_list*target_3d_depth
+    trimmed_df.insert(0, 'stack', stack_col_vals)
+    trimmed_df.insert(1, reference_col, sep_col_vals)
+
+    total_trimmed = 0
+    if trim_from_ends is not None:
+        total_trimmed = 2*trim_from_ends
+    if verbose:
+        print(f'\ntrimmed_df {trimmed_df.shape}:\n{trimmed_df}')
+        print(f'trimmed {trim_from_ends} highest and lowest values ({total_trimmed} in total) from each of the '
+              f'{datapoints_per_cond} datapoints so there are now '
+              f'{target_3d_depth} datapoints for each of the '
+              f'{rows_3d} x {cols_all} conditions.')
+
+    print('\n*** finished trim_high_n_low() ***')
+
+    return trimmed_df
+
+
+##################
+
+def make_long_df(wide_df, wide_stubnames='ISI',
+                 col_to_keep='separation', idx_col='Run', verbose=True):
+
+    """
+    Function to convert a wide form df containing multiple measurements at each value
+    (e.g., data dfs concatenated from several runs), into long-form dataframe
+    :param wide_df: Expects a dataframe made by concatenating data from several runs.
+        Dataframe expected to contain columns for: Run, separation and ISI levels.
+    :param wide_stubnames: repeated prefix for several columns (e.g., ISI0, ISI1, ISI2, ISI4 etc).
+    :param col_to_keep: Existing columns of useful data (e.g., separation)
+    :param idx_col: Existing column of irrelevant data to use as index (e.g., Run)
+    :param verbose: print progress to screen.
+
+    :return: Long form dataframe with single index
+    """
+    print('\n*** running make_long_df() ***\n')
+
+    if verbose:
+        print(f'wide_df:\n{wide_df}')
+
+    # add spaces to ISI names and change concurrent to 999.
+    orig_col_names = list(wide_df.columns)
+    new_col_names = [f"ISI {i.strip('ISI')}" if 'ISI' in i else i for i in orig_col_names]
+    # change 'concurrent' to 999 not -1 as wide_to_long won't take negative numbers
+    new_col_names = [f"ISI 999" if i == 'Concurrent' else i for i in new_col_names]
+    wide_df.columns = new_col_names
+
+    # use pandas wide_to_long for transform df
+    long_df = pd.wide_to_long(wide_df, stubnames=wide_stubnames, i=[idx_col, col_to_keep], j='data',
+                              sep=' ')
+    if verbose:
+        print(f'long_df:\n{long_df}')
+
+    # # replace column values and labels
+    long_df = long_df.rename({wide_stubnames: 'probeLum'}, axis='columns')
+    # change concurrent ISI column from 999 to -1
+    long_df.index = pd.MultiIndex.from_tuples([(x[0], x[1], 'ISI -1') if x[2] == 999 else
+                                               (x[0], x[1], f'ISI {x[2]}') for x in long_df.index])
+
+    # rename index columns
+    long_df.index.names = [idx_col, col_to_keep, wide_stubnames]
+
+    # go from multi-indexed df to single-indexed df.
+    long_sngl_idx_df = long_df.reset_index([col_to_keep, wide_stubnames])
+    if verbose:
+        print(f'long_sngl_idx_df:\n{long_sngl_idx_df}')
+
+    return long_sngl_idx_df
+
+
+###########################
+
+
+
 # # # all ISIs on one axis - pos sep only, plus single probe
 # FIGURE 1 - shows one axis (x=separation (0-18), y=probeLum) with all ISIs added.
 # it also seems that for isi=99 there are simple dots added at -1 on the x axis.
 
 def plot_pos_sep_and_1probe(pos_sep_and_1probe_df,
-                               thr_col='probeLum',
-                               fig_title=None,
-                               one_probe=True,
-                               save_path=None, 
-                               save_name=None,
-                               isi_name_list=None,
-                               pos_set_ticks=None,
-                               pos_tick_labels=None,
-                               error_bars_df=None,
-                               verbose=True):
+                            thr_col='probeLum',
+                            fig_title=None,
+                            one_probe=True,
+                            save_path=None,
+                            save_name=None,
+                            isi_name_list=None,
+                            pos_set_ticks=None,
+                            pos_tick_labels=None,
+                            error_bars_df=None,
+                            verbose=True):
     """
     This plots a figure with one axis, x has separation values [-2, -1, 0, 1, 2, 3, 6, 18],
     where -2 is not uses, -1 is for the single probe condition - shows as a scatter plot.
@@ -386,18 +571,18 @@ def plot_1probe_w_errors(fig_df, error_df, split_1probe=True,
         jitter_list = np.random.uniform(size=n_pos_sep, low=-jit_max, high=jit_max)
 
         if split_1probe:
-            one_probe = ax.errorbar(x=one_probe_df['x_vals'][idx] + np.random.uniform(low=-jit_max, high=jit_max),
-                                    y=one_probe_df['probeLum'][idx],
-                                    yerr=one_probe_er_df['probeLum'][idx],
-                                    marker='.', lw=2, elinewidth=.7,
-                                    capsize=cap_size,
-                                    color=my_colours[idx])
+            ax.errorbar(x=one_probe_df['x_vals'][idx] + np.random.uniform(low=-jit_max, high=jit_max),
+                        y=one_probe_df['probeLum'][idx],
+                        yerr=one_probe_er_df['probeLum'][idx],
+                        marker='.', lw=2, elinewidth=.7,
+                        capsize=cap_size,
+                        color=my_colours[idx])
 
-        two_probes = ax.errorbar(x=two_probe_df.index + jitter_list,
-                                 y=two_probe_df[name], yerr=two_probe_er_df[name],
-                                 marker='.', lw=2, elinewidth=.7,
-                                 capsize=cap_size,
-                                 color=my_colours[idx])
+        ax.errorbar(x=two_probe_df.index + jitter_list,
+                    y=two_probe_df[name], yerr=two_probe_er_df[name],
+                    marker='.', lw=2, elinewidth=.7,
+                    capsize=cap_size,
+                    color=my_colours[idx])
 
         leg_handle = mlines.Line2D([], [], color=my_colours[idx], label=name,
                                    marker='.', linewidth=.5, markersize=4)
@@ -451,12 +636,12 @@ def plot_w_errors_no_1probe(wide_df, x_var, y_var, lines_var,
     :param x_var: Name of variable to go on x-axis (should be consistent with wide_df)
     :param y_var: Name of variable to go on y-axis (should be consistent with wide_df)
     :param lines_var: Name of variable for the lines (should be consistent with wide_df)
-    # :param isi_name_list:
+    :param long_df_idx_col: Name of column to use as index when going wide to long form df.
     :param legend_names: Default: None, which will access frequently used names.
         Else pass list of names to appear on legend, use verbose to compare order with matplotlib assumptions.
     :param x_tick_labels: Default: None, which will access frequently used labels.
-        Else pass list of labels to appearn on x-axis.  Note: for pointplot x-axis is catagorical,
-        not numerical; so all x-ticks are evently spaced.  For variable x-axis use plot_1probe_w_errors().
+        Else pass list of labels to appear on x-axis.  Note: for pointplot x-axis is categorical,
+        not numerical; so all x-ticks are evenly spaced.  For variable x-axis use plot_1probe_w_errors().
     :param alt_colours: Default=True.  Use alternative colours to differentiate
         from other plots e.g., colours associated with Sep not ISI.
     :param fixed_y_range: If True it will fix y-axis to 0:110.  Otherwise uses adaptive range.
@@ -594,188 +779,66 @@ def plot_thr_heatmap(heatmap_df,
 
 ##########################
 
-def trim_n_high_n_low(all_data_df, trim_from_ends=None, reference_col='separation',
-                      stack_col_id='stack', verbose=True):
+
+def plot_diff_from_concurrent(thr_df_path, div_by_1probe=False, save_path=None):
     """
-    Function for trimming the n highest and lowest values from each condition of a set with multiple runs.
-
-    :param all_data_df: Dataset to be trimmed.
-    :param trim_from_ends: number of values to trim from each end of the distribution.
-    :param reference_col: Idx column containing repeated conditions (e.g., separation has same label for each stack).
-    :param stack_col_id: idx column showing different runs/groups etc (e.g., stack)
-    :param verbose: in true will print progress to screen.
-
-    :return: trimmed df
+    :param thr_df_path: Either an actual DataFrame or a path to dataframe.
+        thr_df is a ISI (columns) x separation (rows) dataframe.
+    :param div_by_1probe: If True, divide all 2probe thr by 1probe.
+    :param save_path: Path to save file if a thr_df_path is a dataframe.
+    :return: Fig
     """
-    print('\n*** running trim_high_n_low() ***')
+    print('\n*** running plot_diff_from_concurrent() ***')
 
-    '''Part 1, convert 2d df into 3d numpy array'''
-    # prepare to extract numpy
-    if verbose:
-        print(f'all_data_df {all_data_df.shape}:\n{all_data_df.head(25)}')
+    if isinstance(thr_df_path, str):
+        thr_df = pd.read_csv(thr_df_path)
+        save_path, df_name = os.path.split(thr_df_path)
 
-    # get unique values to loop over
-    stack_list = list(all_data_df[stack_col_id].unique())
-    datapoints_per_cond = len(stack_list)
-
-    if verbose:
-        print(f'stack_list: {stack_list}\n'
-              f'datapoints_per_cond: {datapoints_per_cond}')
-
-    # loop through df to get 3d numpy
-    my_list = []
-    for stack in stack_list:
-        stack_df = all_data_df[all_data_df[stack_col_id] == stack]
-        stack_df = stack_df.drop(stack_col_id, axis=1)
-        sep_list = list(stack_df.pop(reference_col))
-        isi_name_list = list(stack_df.columns)
-        # print(f'stack{stack}_df ({stack_df.shape}):\n{stack_df}')
-        my_list.append(stack_df.to_numpy())
-
-    # 3d numpy array are indexed with [depth, row, col]
-    # use variables depth_3d, rows_3d, cols_all later to reshaped_2d_array trimmed array
-    my_3d_array = np.array(my_list)
-    depth_3d, rows_3d, cols_all = np.shape(my_3d_array)
-
-    if trim_from_ends == 0:
-        trim_from_ends = None
-    if trim_from_ends is not None:
-        target_3d_depth = depth_3d - 2*trim_from_ends
+    elif isinstance(thr_df_path, pd.DataFrame):
+        thr_df = thr_df_path
+        if save_path is None:
+            raise ValueError('In order to save plot, please pass a save path or path to df.')
     else:
-        target_3d_depth = depth_3d
-    target_2d_rows = target_3d_depth * rows_3d
-    if verbose:
-        print(f'\nUse these values for defining array shapes.\n'
-              f'target_3d_depth (depth-trim): {target_3d_depth}, '
-              f'3d shape after trim (target_3d_depth, rows_3d, cols_all) = '
-              f'({target_3d_depth}, {rows_3d}, {cols_all})\n'
-              f'2d array shape (after trim, but before separation, stack or headers are added): '
-              f'(target_2d_rows, cols_all) = ({target_2d_rows}, {cols_all})')
+        raise TypeError(f'thr_df_path should be str (path to dataframe) or '
+                        f'DataFrame, not {type(thr_df_path)}')
 
-    '''Part 2, trim highest and lowest n values from each depth slice to get trimmed_3d_list'''
-    if verbose:
-        print('\ngetting depth slices to trim...')
-    trimmed_3d_list = []
-    counter = 0
-    for col in list(range(cols_all)):
-        row_list = []
-        for row in list(range(rows_3d)):
-            depth_slice = my_3d_array[:, row, col]
-            depth_slice = np.sort(depth_slice)
-            if trim_from_ends is not None:
-                trimmed = depth_slice[trim_from_ends: -trim_from_ends]
-            else:
-                trimmed = depth_slice[:]
-            # if verbose:
-                # print(f'{counter}: {trimmed}')
-            row_list.append(trimmed)
-            counter += 1
-        trimmed_3d_list.append(row_list)
+    print(f'thr_df:\n{thr_df}')
 
-    """
-    Part 3, turn 3d numpy back into 2d df.
-    trimmed_3d_list is a list of arrays (e.g., 3d).  Each array relates to a
-    depth-stack of my_3d_array which has now be trimmed (e.g., fewer rows).
-    However, trimmed_3d_list has the same depth and number of columns as my_3d_array.
-    trimmed_array re-shapes trimmed_3d_list so all values are in their original
-    row and column positions (e.g., separation and ISI).
-    However, the 3rd dimension (depth) is not in original order, but in ascending order."""
+    if 'separation' in list(thr_df.columns):
+        thr_df.set_index('separation', inplace=True, drop=True)
+    thr_df.rename(index={20: '1Probe'}, inplace=True)
+    print(f'thr_df:\n{thr_df}')
 
-    trimmed_3d_array = np.array(trimmed_3d_list)
-    if verbose:
-        print(f'\n\nReshaping trimmed data\ntrimmed_3d_array: {np.shape(trimmed_3d_array)}')
-        print(trimmed_3d_array)
+    plt_savename = 'diff_from_conc'
+    plt_title = 'ISI Difference in threshold from Concurrent'
 
-    ravel_array_f = np.ravel(trimmed_3d_array, order='F')
-    if verbose:
-        print(f'\n1. ravel_array_f: {np.shape(ravel_array_f)}')
-        print(ravel_array_f)
+    # div by 1probe
+    if div_by_1probe:
+        thr_df = thr_df.iloc[:-1, :].div(thr_df.iloc[-1][:], axis=1)
+        plt_savename = 'diff_from_conc_div1probe'
+        plt_title = 'ISI Difference in threshold from Concurrent (div1probe)'
+        print(f'thr_df:\n{thr_df}')
 
-    reshaped_3d_array = ravel_array_f.reshape(target_3d_depth, rows_3d, cols_all)
-    if verbose:
-        print(f'\n2. reshaped_3d_array: {np.shape(reshaped_3d_array)}')
-        print(reshaped_3d_array)
+    # diff_from_conc_df is an ISI x Sep df where the concurrent column is subtracted from all columns.
+    # therefore the first column has zero for al values,
+    # and all other columns show the difference between an ISI and concurrent.
+    diff_from_conc_df = thr_df.iloc[:, :].sub(thr_df.Concurrent, axis=0)
+    print(f'diff_from_conc_df:\n{diff_from_conc_df}')
 
-    reshaped_2d_array = reshaped_3d_array.reshape(target_2d_rows, -1)
-    if verbose:
-        print(f'\n3. reshaped_2d_array {np.shape(reshaped_2d_array)}')
-        print(reshaped_2d_array)
+    fig, ax = plt.subplots(figsize=(10, 6))
 
-    # make dataframe and insert column for separation and stack (trimmed run/group)
-    trimmed_df = pd.DataFrame(reshaped_2d_array, columns=isi_name_list)
-    stack_col_vals = np.repeat(np.arange(target_3d_depth), rows_3d)
-    sep_col_vals = sep_list*target_3d_depth
-    trimmed_df.insert(0, 'stack', stack_col_vals)
-    trimmed_df.insert(1, reference_col, sep_col_vals)
+    sns.lineplot(data=diff_from_conc_df.T, linewidth=3)
+    plt.axhline(y=0, color='lightgrey', linestyle='dashed')
+    plt.ylabel('ProbeLum difference from concurrent')
+    plt.xlabel('ISI')
+    plt.title(plt_title)
+    plt.savefig(f'{save_path}/{plt_savename}.png')
 
-    total_trimmed = 0
-    if trim_from_ends is not None:
-        total_trimmed = 2*trim_from_ends
-    if verbose:
-        print(f'\ntrimmed_df {trimmed_df.shape}:\n{trimmed_df}')
-        print(f'trimmed {trim_from_ends} highest and lowest values ({total_trimmed} in total) from each of the '
-              f'{datapoints_per_cond} datapoints so there are now '
-              f'{target_3d_depth} datapoints for each of the '
-              f'{rows_3d} x {cols_all} conditions.')
+    print('\n*** finished plot_diff_from_concurrent() ***')
 
-    print('\n*** finished trim_high_n_low() ***')
-
-    return trimmed_df
+    return fig
 
 
-##################
-
-def make_long_df(wide_df, wide_stubnames='ISI',
-                 col_to_keep='separation', idx_col='Run', verbose=True):
-
-    """
-    Function to convert a wide form df containing multiple measurements at each value
-    (e.g., data dfs concatenated from several runs), into long-form dataframe
-    :param wide_df: Expects a dataframe made by concatenating data from several runs.
-        Dataframe expected to contain columns for: Run, separation and ISI levels.
-    :param wide_stubnames: repeated prefix for several columns (e.g., ISI0, ISI1, ISI2, ISI4 etc).
-    :param col_to_keep: Existing columns of useful data (e.g., separation)
-    :param idx_col: Existing column of irrelavent data to use as index (e.g., Run)
-    :param verbose: print progress to screen.
-
-    :return: Long form dataframe with single index
-    """
-    print('\n*** running make_long_df() ***\n')
-
-    if verbose:
-        print(f'wide_df:\n{wide_df}')
-
-    # add spaces to ISI names and change concurrent to 999.
-    orig_col_names = list(wide_df.columns)
-    new_col_names = [f"ISI {i.strip('ISI')}" if 'ISI' in i else i for i in orig_col_names]
-    # change 'concurrent' to 999 not -1 as wide_to_long won't take negative numbers
-    new_col_names = [f"ISI 999" if i == 'Concurrent' else i for i in new_col_names]
-    wide_df.columns = new_col_names
-
-    # use pandas wide_to_long for transform df
-    long_df = pd.wide_to_long(wide_df, stubnames=wide_stubnames, i=[idx_col, col_to_keep], j='data',
-                              sep=' ')
-    if verbose:
-        print(f'long_df:\n{long_df}')
-
-    # # replace column values and labels
-    long_df = long_df.rename({wide_stubnames: 'probeLum'}, axis='columns')
-    # change concurrent ISI column from 999 to -1
-    long_df.index = pd.MultiIndex.from_tuples([(x[0], x[1], 'ISI -1') if x[2] == 999 else
-                                               (x[0], x[1], f'ISI {x[2]}') for x in long_df.index])
-
-    # rename index columns
-    long_df.index.names = [idx_col, col_to_keep, wide_stubnames]
-
-    # go from multi-indexed df to single-indexed df.
-    long_sngl_idx_df = long_df.reset_index([col_to_keep, wide_stubnames])
-    if verbose:
-        print(f'long_sngl_idx_df:\n{long_sngl_idx_df}')
-
-    return long_sngl_idx_df
-
-
-###########################
 
 
 def eight_batman_plots(mean_df, thr1_df, thr2_df,
@@ -1277,15 +1340,15 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
 
                     # artist for legend
                     group1 = mlines.Line2D([], [], color='red',
-                                             linestyle="--", marker=None,
-                                             label='Group1 thr')
+                                           linestyle="--", marker=None,
+                                           label='Group1 thr')
 
                     group2 = mlines.Line2D([], [], color='blue',
-                                               linestyle="dotted", marker=None,
-                                               label='Group2 thr')
+                                           linestyle="dotted", marker=None,
+                                           label='Group2 thr')
                     mean_thr = mlines.Line2D([], [], color='lightgreen',
-                                                 linestyle="solid", marker=None,
-                                                 label='mean thr')
+                                             linestyle="solid", marker=None,
+                                             label='mean thr')
                     ax.legend(handles=[group1, group2, mean_thr], fontsize=6,
                               loc='lower right')
 
@@ -1459,13 +1522,13 @@ def c_plots(save_path, thr_col='probeLum', show_plots=True, verbose=True):
             fig_3_title = f'g{group} All ISIs and separations'
 
         plot_pos_sep_and_1probe(pos_sep_and_1probe_df=group_plot_df,
-                                   thr_col=thr_col,
-                                   fig_title=fig_3_title,
-                                   one_probe=True,
-                                   save_path=save_path,
-                                   save_name=fig3_save_name,
-                                   pos_set_ticks=[0, 1, 2, 3, 6, 18, 19],
-                                   verbose=True)
+                                thr_col=thr_col,
+                                fig_title=fig_3_title,
+                                one_probe=True,
+                                save_path=save_path,
+                                save_name=fig3_save_name,
+                                pos_set_ticks=[0, 1, 2, 3, 6, 18, 19],
+                                verbose=True)
         if show_plots:
             plt.show()
         plt.close()
@@ -1491,13 +1554,13 @@ def c_plots(save_path, thr_col='probeLum', show_plots=True, verbose=True):
         print(f'div_by_1probe_df:\n{div_by_1probe_df}')
 
         plot_pos_sep_and_1probe(div_by_1probe_df,
-                                   thr_col='probeLum',
-                                   fig_title=fig4_title,
-                                   one_probe=False,
-                                   save_path=save_path,
-                                   save_name=fig4_save_name,
-                                   pos_set_ticks=[0, 1, 2, 3, 6, 18, 19],
-                                   verbose=True)
+                                thr_col='probeLum',
+                                fig_title=fig4_title,
+                                one_probe=False,
+                                save_path=save_path,
+                                save_name=fig4_save_name,
+                                pos_set_ticks=[0, 1, 2, 3, 6, 18, 19],
+                                verbose=True)
         if show_plots:
             plt.show()
         plt.close()
@@ -1660,7 +1723,7 @@ def e_average_exp_data(exp_path, p_names_list,
     :param error_type: Default: None. Can pass sd or se for standard deviation or error.
     :param use_trimmed: default True.  If True, use trimmed_mean ave (MASTER_ave_TM_thresh),
          if False, use MASTER_ave_thresh.
-    :param verbose: Defaut true, print progress to screen
+    :param verbose: Default true, print progress to screen
 
     :returns: exp_ave_thr_df: experiment mean threshold for each separation and ISI.
     """
@@ -1711,7 +1774,7 @@ def e_average_exp_data(exp_path, p_names_list,
         error_bars_df = groupby_sep_df.groupby('separation', sort=True).std()
     else:
         raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
-                         f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standrad_error']\n"
+                         f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standard_error']\n"
                          f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
                          f"'deviation', 'standard_deviation']")
     if verbose:
@@ -1734,7 +1797,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     """
     Plots:
     MASTER_ave_thresh saved as ave_thr_all_runs.png
-    MASTER_ave_thresh two-probe/one-probesaved as ave_thr_div_1probe.png
+    MASTER_ave_thresh two-probe/one-probe saved as ave_thr_div_1probe.png
     these both have two versions:
     a. x-axis is separation, ISI as different lines
     b. x-axis is ISI, separation as different lines
@@ -1748,9 +1811,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     :param exp_ave: 
     :param show_plots: 
     :param verbose: 
-    :return: 
     """
-
     print("\n*** running make_average_plots()***\n")
 
     save_path, df_name = os.path.split(ave_df_path)
@@ -1762,19 +1823,22 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         ave_over = 'P'
         idx_col = 'stack'
 
-    if type(all_df_path) is 'pandas.core.frame.DataFrame':
+    # if type(all_df_path) is 'pandas.core.frame.DataFrame':
+    if isinstance(all_df_path, pd.DataFrame):
         all_df = all_df_path
     else:
         all_df = pd.read_csv(all_df_path)
     print(f'\nall_df:\n{all_df}')
 
-    if type(ave_df_path) is 'pandas.core.frame.DataFrame':
+    # if type(ave_df_path) is 'pandas.core.frame.DataFrame':
+    if isinstance(ave_df_path, pd.DataFrame):
         ave_df = ave_df_path
     else:
         ave_df = pd.read_csv(ave_df_path)
     print(f'\nave_df:\n{ave_df}')
 
-    if type(error_bars_path) is 'pandas.core.frame.DataFrame':
+    # if type(error_bars_path) is 'pandas.core.frame.DataFrame':
+    if isinstance(error_bars_path, pd.DataFrame):
         error_bars_df = error_bars_path
     else:
         error_bars_df = pd.read_csv(error_bars_path)
@@ -1782,7 +1846,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     isi_name_list = ['Concurrent', 'ISI0', 'ISI2', 'ISI4',
                      'ISI6', 'ISI9', 'ISI12', 'ISI24']
-    pos_sedset_list = [0, 1, 2, 3, 6, 18, 20]
+    pos_sep_list = [0, 1, 2, 3, 6, 18, 20]
 
     """part 3. main Figures (these are the ones saved in the matlab script)
     Fig1: plot average threshold for each ISI and sep.
@@ -1799,16 +1863,16 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         fig1_title = f'{ave_over} average threshold across all runs'
         fig1_savename = f'ave_thr_all_runs.png'
 
-    fig1a = plot_1probe_w_errors(fig_df=ave_df, error_df=error_bars_df,
-                                 split_1probe=True, jitter=True,
-                                 error_caps=True, alt_colours=False,
-                                 legend_names=['Concurrent', 'ISI 0', 'ISI 2', 'ISI 4',
-                                               'ISI 6', 'ISI 9', 'ISI 12', 'ISI 24'],
-                                 x_tick_vals=[0, 1, 2, 3, 6, 18, 20],
-                                 x_tick_labels=[0, 1, 2, 3, 6, 18, '1probe'],
-                                 fixed_y_range=False,
-                                 fig_title=fig1_title, save_name=fig1_savename,
-                                 save_path=save_path, verbose=True)
+    plot_1probe_w_errors(fig_df=ave_df, error_df=error_bars_df,
+                         split_1probe=True, jitter=True,
+                         error_caps=True, alt_colours=False,
+                         legend_names=['Concurrent', 'ISI 0', 'ISI 2', 'ISI 4',
+                                       'ISI 6', 'ISI 9', 'ISI 12', 'ISI 24'],
+                         x_tick_vals=[0, 1, 2, 3, 6, 18, 20],
+                         x_tick_labels=[0, 1, 2, 3, 6, 18, '1probe'],
+                         fixed_y_range=False,
+                         fig_title=fig1_title, save_name=fig1_savename,
+                         save_path=save_path, verbose=True)
     if show_plots:
         plt.show()
     plt.close()
@@ -1825,20 +1889,14 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         fig1b_title = f'{ave_over} probe luminance at each ISI value per separation'
         fig1b_savename = f'ave_thr_all_runs_transpose.png'
 
-    fig1b = plot_w_errors_no_1probe(wide_df=all_df,
-                                    x_var='ISI', y_var='probeLum',
-                                    lines_var='separation',
-                                    long_df_idx_col=idx_col,
-                                    legend_names=['0', '1', '2', '3', '6', '18', '1probe'],
-                                    x_tick_labels=['conc', 0, 2, 4, 6, 9, 12, 24],
-                                    alt_colours=True,
-                                    fixed_y_range=False,
-                                    jitter=True,
-                                    error_caps=True,
-                                    fig1b_title=fig1b_title,
-                                    fig1b_savename=fig1b_savename,
-                                    save_path=save_path,
-                                    verbose=True)
+    plot_w_errors_no_1probe(wide_df=all_df, x_var='ISI', y_var='probeLum',
+                            lines_var='separation', long_df_idx_col=idx_col,
+                            legend_names=['0', '1', '2', '3', '6', '18', '1probe'],
+                            x_tick_labels=['conc', 0, 2, 4, 6, 9, 12, 24],
+                            alt_colours=True, fixed_y_range=False, jitter=True,
+                            error_caps=True, fig1b_title=fig1b_title,
+                            fig1b_savename=fig1b_savename, save_path=save_path,
+                            verbose=True)
     if show_plots:
         plt.show()
     plt.close()
@@ -1869,7 +1927,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         div_by_1probe_arr = (pos_sep_arr.T / one_probe_arr[:, None]).T
         div_by_1probe_df = pd.DataFrame(div_by_1probe_arr, columns=isi_name_list)
         div_by_1probe_df.insert(0, idx_col, [data_set] * len(div_by_1probe_df))
-        div_by_1probe_df.insert(1, 'separation', pos_sedset_list[:-1])
+        div_by_1probe_df.insert(1, 'separation', pos_sep_list[:-1])
         divided_list.append(div_by_1probe_df)
 
     # put back into long form df with data_set Sep cols
@@ -1897,16 +1955,16 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         fig2a_save_name = 'ave_thr_div_1probe.png'
         fig2a_title = f'{ave_over} average threshold divided by single probe'
 
-    fig2a = plot_1probe_w_errors(fig_df=div_ave_psignifit_thr_df, error_df=div_error_bars_df,
-                                 split_1probe=False, jitter=True,
-                                 error_caps=True, alt_colours=False,
-                                 legend_names=['Concurrent', 'ISI 0', 'ISI 2', 'ISI 4',
-                                               'ISI 6', 'ISI 9', 'ISI 12', 'ISI 24'],
-                                 x_tick_vals=[0, 1, 2, 3, 6, 18],
-                                 x_tick_labels=[0, 1, 2, 3, 6, 18],
-                                 fixed_y_range=False,
-                                 fig_title=fig2a_title, save_name=fig2a_save_name,
-                                 save_path=save_path, verbose=True)
+    plot_1probe_w_errors(fig_df=div_ave_psignifit_thr_df, error_df=div_error_bars_df,
+                         split_1probe=False, jitter=True,
+                         error_caps=True, alt_colours=False,
+                         legend_names=['Concurrent', 'ISI 0', 'ISI 2', 'ISI 4',
+                                       'ISI 6', 'ISI 9', 'ISI 12', 'ISI 24'],
+                         x_tick_vals=[0, 1, 2, 3, 6, 18],
+                         x_tick_labels=[0, 1, 2, 3, 6, 18],
+                         fixed_y_range=False,
+                         fig_title=fig2a_title, save_name=fig2a_save_name,
+                         save_path=save_path, verbose=True)
     if show_plots:
         plt.show()
     plt.close()
@@ -1923,26 +1981,40 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         fig2b_save_name = 'ave_thr_div_1probe_transpose.png'
         fig2b_title = f'{ave_over} average thresholds divided by single probe at each ISI'
 
-    fig2b = plot_w_errors_no_1probe(wide_df=divided_df,
-                                    x_var='ISI', y_var='probeLum',
-                                    lines_var='separation',
-                                    long_df_idx_col=idx_col,
-                                    legend_names=['0', '1', '2', '3', '6', '18'],
-                                    x_tick_labels=['conc', 0, 2, 4, 6, 9, 12, 24],
-                                    alt_colours=True,
-                                    fixed_y_range=False,
-                                    jitter=True,
-                                    error_caps=True,
-                                    fig1b_title=fig2b_title,
-                                    fig1b_savename=fig2b_save_name,
-                                    save_path=save_path,
-                                    verbose=True)
+    plot_w_errors_no_1probe(wide_df=divided_df, x_var='ISI', y_var='probeLum',
+                            lines_var='separation', long_df_idx_col=idx_col,
+                            legend_names=['0', '1', '2', '3', '6', '18'],
+                            x_tick_labels=['conc', 0, 2, 4, 6, 9, 12, 24],
+                            alt_colours=True, fixed_y_range=False, jitter=True,
+                            error_caps=True, fig1b_title=fig2b_title,
+                            fig1b_savename=fig2b_save_name, save_path=save_path,
+                            verbose=True)
     if show_plots:
         plt.show()
     plt.close()
 
     if verbose:
         print('finished fig2b')
+
+    print(f"\nfig_3a - difference from concurrent\n")
+    plot_diff_from_concurrent(ave_df, div_by_1probe=False, save_path=save_path)
+
+    if show_plots:
+        plt.show()
+    plt.close()
+
+    if verbose:
+        print('finished fig3a')
+
+    print(f"\nfig_3b - difference from concurrent div1probe\n")
+    plot_diff_from_concurrent(ave_df, div_by_1probe=True, save_path=save_path)
+
+    if show_plots:
+        plt.show()
+    plt.close()
+
+    if verbose:
+        print('finished fig3b')
 
     print(f"\nHeatmap 1\n")
     if 'separation' in list(ave_df.columns):
@@ -1958,13 +2030,9 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         heatmap_title = f'{ave_over} mean Threshold for each ISI and separation'
         heatmap_savename = 'mean_thr_heatmap'
 
-    heatmap = plot_thr_heatmap(heatmap_df=ave_df.T,
-                               x_tick_labels=sep_labels,
-                               y_tick_labels=isi_labels,
-                               fig_title=heatmap_title,
-                               save_name=heatmap_savename,
-                               save_path=save_path,
-                               verbose=True)
+    plot_thr_heatmap(heatmap_df=ave_df.T, x_tick_labels=sep_labels,
+                     y_tick_labels=isi_labels, fig_title=heatmap_title,
+                     save_name=heatmap_savename, save_path=save_path, verbose=True)
     if show_plots:
         plt.show()
     plt.close()
@@ -1984,16 +2052,11 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         heatmap_title = f'{ave_over} mean Threshold/1probe for each ISI and separation'
         heatmap_savename = 'mean_thr_div_1probe_heatmap'
 
-    heatmap = plot_thr_heatmap(heatmap_df=div_ave_psignifit_thr_df.T,
-                               x_tick_labels=sep_labels,
-                               y_tick_labels=isi_labels,
-                               fig_title=heatmap_title,
-                               save_name=heatmap_savename,
-                               save_path=save_path,
-                               verbose=True)
+    plot_thr_heatmap(heatmap_df=div_ave_psignifit_thr_df.T,
+                     x_tick_labels=sep_labels, y_tick_labels=isi_labels,
+                     fig_title=heatmap_title, save_name=heatmap_savename,
+                     save_path=save_path, verbose=True)
     if show_plots:
         plt.show()
     plt.close()
     print("\n*** finished make_average_plots()***\n")
-
-
