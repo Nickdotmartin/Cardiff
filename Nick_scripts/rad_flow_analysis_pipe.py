@@ -4,23 +4,25 @@ import pandas as pd
 
 from psignifit_tools import get_psignifit_threshold_df
 from rad_flow_psignifit_analysis import a_data_extraction, b3_plot_staircase
-from rad_flow_psignifit_analysis import c_plots, d_average_participant, make_average_plots, e_average_exp_data
+from rad_flow_psignifit_analysis import c_plots, d_average_participant, make_average_plots
 
 # # loop through run folders with first 5 scripts (a, b1, b2, b3, c)
 # # then run script d to get master lists and averages
-# root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp'
-# run_folder_names = ['Nick_5', 'Nick_6', 'Nick_7', 'Nick_8', 'Nick_9', 'Nick_10']
-# participant_name = 'Nick'
-# isi_list = [1, 4, 6, 9, 12]
-# isi_names_list = ['ISI_1', 'ISI_4', 'ISI_6', 'ISI_9', 'ISI_12']
-# stair_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-
-
-exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp/test_e_ave'
-participant_list = ['Test', 'Test2']
-isi_list = [1, 4, 6]
-isi_names_list = ['ISI_1', 'ISI_4', 'ISI_6']
+root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp'
+run_folder_names = ['Nick_5', 'Nick_6', 'Nick_7', 'Nick_8', 'Nick_9', 'Nick_10']
+participant_name = 'Nick'
+isi_list = [1, 4, 6, 8, 9, 10, 12]
+isi_names_list = ['ISI_1', 'ISI_4', 'ISI_6', 'ISI_8', 'ISI_9', 'ISI_10', 'ISI_12']
 stair_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+participant_list = ['Nick']
+exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp'
+
+
+# exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp/test_e_ave'
+# participant_list = ['Test', 'Test2']
+# isi_list = [1, 4, 6]
+# isi_names_list = ['ISI_1', 'ISI_4', 'ISI_6']
+# stair_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 
 
 verbose = True
@@ -33,8 +35,8 @@ for p_idx, participant_name in enumerate(participant_list):
 
     root_path = f'{exp_path}/{participant_name}'
     run_folder_names = [f'{participant_name}_{p_idx_plus}', f'{participant_name}_{p_idx_plus + 1}',
-                        f'{participant_name}_{p_idx_plus + 2}']  # , f'{participant_name}_{p_idx_plus + 3}',
-                        # f'{participant_name}_{p_idx_plus + 4}', f'{participant_name}_{p_idx_plus + 5}']
+                        f'{participant_name}_{p_idx_plus + 2}', f'{participant_name}_{p_idx_plus + 3}',
+                        f'{participant_name}_{p_idx_plus + 4}', f'{participant_name}_{p_idx_plus + 5}']
     print(f'run_folder_names: {run_folder_names}')
 
     for run_idx, run_dir in enumerate(run_folder_names):
@@ -102,24 +104,24 @@ for p_idx, participant_name in enumerate(participant_list):
                        exp_ave=False,
                        show_plots=True, verbose=True)
 
-# get averages_over_participants
-e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
-                   error_type='SE', use_trimmed=False, verbose=True)
-
-
-# testing make_average_plots for experiment averages
-all_df_path = f'{exp_path}/MASTER_exp_thr.csv'
-exp_ave_path = f'{exp_path}/MASTER_exp_ave_thr.csv'
-err_path = f'{exp_path}/MASTER_ave_thr_error_SE.csv'
-n_trimmed = None
-exp_ave=True
-
-make_average_plots(all_df_path=all_df_path,
-                   ave_df_path=exp_ave_path,
-                   error_bars_path=err_path,
-                   error_type='SE',
-                   n_trimmed=n_trimmed,
-                   exp_ave=exp_ave,
-                   show_plots=True, verbose=True)
+# # get averages_over_participants
+# e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
+#                    error_type='SE', use_trimmed=False, verbose=True)
+#
+#
+# # testing make_average_plots for experiment averages
+# all_df_path = f'{exp_path}/MASTER_exp_thr.csv'
+# exp_ave_path = f'{exp_path}/MASTER_exp_ave_thr.csv'
+# err_path = f'{exp_path}/MASTER_ave_thr_error_SE.csv'
+# n_trimmed = None
+# exp_ave=True
+#
+# make_average_plots(all_df_path=all_df_path,
+#                    ave_df_path=exp_ave_path,
+#                    error_bars_path=err_path,
+#                    error_type='SE',
+#                    n_trimmed=n_trimmed,
+#                    exp_ave=exp_ave,
+#                    show_plots=True, verbose=True)
 
 print('\nrad_flow_analysis_pipe finished')

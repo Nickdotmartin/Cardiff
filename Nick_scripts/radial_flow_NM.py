@@ -24,16 +24,16 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'HP_24uh'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz'
+monitor_name = 'ASUS_2_13_240Hz'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz'
 display_number = 1  # 0 indexed, 1 for external display
 
 # Store info about the experiment session
 expName = 'integration_flow'  # from the Builder filename that created this script
 
-expInfo = {'1_Participant': 'testnm',
-           '2_Probe_dur_in_frames_at_240hz': [50, 2],
-           '3_fps': [60, 144, 240],
-           '4_ISI_dur_in_ms': [100, 50, 37.5, 25, 16.67, 8.33, 0],
+expInfo = {'1_Participant': 'Nick_test',
+           '2_Probe_dur_in_frames_at_240hz': [2, 50],
+           '3_fps': [240, 144, 60],
+           '4_ISI_dur_in_ms': [100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0],
            '5_Probe_orientation': ['radial', 'tangent'],
            '6_Probe_size': ['5pixels', '6pixels', '3pixels'],
            '7_Trials_counter': [True, False],
@@ -63,8 +63,8 @@ background = expInfo['8_Background']
 The script uses on frames so ISI will be used in that format.
 The actual ms timing is given for record.
 This means that the experiment should have similar ms timings on monitors with different fps
-milliseconds: [100, 50, 37.5, 25, 16.67, 8.33, 0]
-frames@240hz: [24,  12,  9,    6,  4,    2,    0]
+milliseconds: [100, 50, 41.66, 37.5, 33.34, 25, 16.67, 8.33, 0]
+frames@240hz: [24,  12,  10,    9,    8,     6,  4,    2,    0]
 '''
 ISI_selected_ms = float(expInfo['4_ISI_dur_in_ms'])
 ISI_frames = int(ISI_selected_ms * fps / 1000)

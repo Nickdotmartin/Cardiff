@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from matplotlib import cm
 
 """
 This page contains functions based on Martin's MATLAB analysis scripts.
@@ -759,7 +760,8 @@ def plot_thr_heatmap(heatmap_df,
     heatmap = sns.heatmap(data=heatmap_df,
                           annot=True, center=mean_thr,
                           cmap=sns.color_palette("Spectral", as_cmap=True),
-                          xticklabels=x_tick_labels, yticklabels=y_tick_labels)
+                          xticklabels=x_tick_labels, yticklabels=y_tick_labels,
+                          square=False)
 
     if 'ISI' in str(x_tick_labels[0]).upper():
         heatmap.set_xlabel('ISI')
@@ -780,12 +782,18 @@ def plot_thr_heatmap(heatmap_df,
 ##########################
 
 
-def plot_diff_from_concurrent(thr_df_path, div_by_1probe=False, save_path=None):
+def plot_diff_from_concurrent(thr_df_path, div_by_1probe=False,
+                              fig_title=None, save_name=None, save_path=None):
     """
+    Function to plot the difference in threshold from concurrent for each ISI.
+
     :param thr_df_path: Either an actual DataFrame or a path to dataframe.
         thr_df is a ISI (columns) x separation (rows) dataframe.
     :param div_by_1probe: If True, divide all 2probe thr by 1probe.
+    :param fig_title: Title for figure.
+    :param save_name: File name to save figure.
     :param save_path: Path to save file if a thr_df_path is a dataframe.
+
     :return: Fig
     """
     print('\n*** running plot_diff_from_concurrent() ***')
@@ -809,14 +817,9 @@ def plot_diff_from_concurrent(thr_df_path, div_by_1probe=False, save_path=None):
     thr_df.rename(index={20: '1Probe'}, inplace=True)
     print(f'thr_df:\n{thr_df}')
 
-    plt_savename = 'diff_from_conc'
-    plt_title = 'ISI Difference in threshold from Concurrent'
-
     # div by 1probe
     if div_by_1probe:
         thr_df = thr_df.iloc[:-1, :].div(thr_df.iloc[-1][:], axis=1)
-        plt_savename = 'diff_from_conc_div1probe'
-        plt_title = 'ISI Difference in threshold from Concurrent (div1probe)'
         print(f'thr_df:\n{thr_df}')
 
     # diff_from_conc_df is an ISI x Sep df where the concurrent column is subtracted from all columns.
@@ -831,15 +834,199 @@ def plot_diff_from_concurrent(thr_df_path, div_by_1probe=False, save_path=None):
     plt.axhline(y=0, color='lightgrey', linestyle='dashed')
     plt.ylabel('ProbeLum difference from concurrent')
     plt.xlabel('ISI')
-    plt.title(plt_title)
-    plt.savefig(f'{save_path}/{plt_savename}.png')
+    plt.title(fig_title)
+    plt.savefig(f'{save_path}/{save_name}.png')
 
     print('\n*** finished plot_diff_from_concurrent() ***')
 
     return fig
 
 
+def plot_thr_3dsurface(plot_df, my_rotation=True, even_spaced=False,
+                       transpose_df=False, rev_rows=False, rev_cols=False,
+                       show_min_per_sep=True, min_per_df_row=False,
+                       my_elev=15, my_azim=300,
+                       fig_title=None,
+                       save_path=None, save_name=None,
+                       verbose=True):
+    """
+    Function to plot a 3d surface plot of average thresholds.
+    Can add markers to show minimum per ISI or Separation.
 
+    :param plot_df: dataframe (sep index, ISI columns)
+    :param my_rotation: transform df to my prefered alignement (reverse columns)
+    :param even_spaced: Evenly spaced axis are better if I am transforming data (not sure why)
+    :param transpose_df: If not using my_rotation, I can manually transpose df.
+    :param rev_rows: If not using my_rotation, I can manually reverse order of rows.
+    :param rev_cols: If not using my_rotation, I can manually reverse order of columns.
+    :param show_min_per_sep: If True, Show minumim value per separation with markers.
+    :param min_per_df_row: If False (and if show_min_per_sep) shows minimum value
+                          per ISI with markers.
+    :param my_elev: Change viewing angle elevation.
+    :param my_azim: Change viewing angle azimuth.
+    :param fig_title: Title if I want to override defaults.
+    :param save_path: Path to save to.
+    :param save_name: File name to save
+    :param verbose: print progress to screen
+
+    :return: figure
+    """
+    print('\n*** running plot_thr_3dsurface() ***')
+
+    if verbose:
+        print(f'input plot_df:\n{plot_df}')
+
+    x_label = 'ISI'
+    y_label = 'Separation'
+    figure_title = 'Average threshold for each ISI and separation condition.'
+
+    # # If I want to rotate the data, I need to switch to evenly spaced axes.
+    if my_rotation:
+        # my rotation is just the normal df (not transposed) with cols reversed
+        even_spaced = True
+
+        # #reverse order of columns
+        plot_df = plot_df.loc[:, ::-1]
+    else:
+        # for future reference, to reverse order of rows and columns
+        # plot_df = plot_df.loc[::-1, ::-1]
+        if transpose_df:
+            # swap index and columns
+            plot_df = plot_df.T
+            x_label = 'ISI'
+            y_label = 'Separation'
+            even_spaced = True
+        if rev_rows:
+            # reverse order of rows
+            plot_df = plot_df[::-1]
+            even_spaced = True
+        if rev_cols:
+            # #reverse order of columns
+            plot_df = plot_df.loc[:, ::-1]
+            even_spaced = True
+
+    # arrays to use for the meshgrid
+    rows_array = np.array(list(plot_df.index))
+    cols_array = np.array(list(plot_df.columns))
+
+    if even_spaced:
+        # values to use for axis labels
+        row_labels = list(plot_df.index)
+        col_labels = list(plot_df.columns)
+
+        # change labels for 1probe and concurrent so it is clear
+        if -1 in row_labels:
+            row_labels = ['conc' if i == -1 else i for i in row_labels]
+        if -1 in col_labels:
+            col_labels = ['conc' if i == -1 else i for i in col_labels]
+        if 20 in row_labels:
+            row_labels = ['1pr' if i == 20 else i for i in row_labels]
+        if 20 in col_labels:
+            col_labels = ['1pr' if i == 20 else i for i in col_labels]
+
+        row_labels = np.array(row_labels)
+        col_labels = np.array(col_labels)
+
+        # evenly spaced axes for meshgrid
+        rows_array = np.array(list(range(len(rows_array))))
+        cols_array = np.array(list(range(len(cols_array))))
+
+        # give df basic rows and cols
+        plot_df.reset_index(inplace=True, drop=True)
+        plot_df.columns = cols_array
+
+    if verbose:
+        print(f'transformed plot_df:\n{plot_df}')
+
+    # data for surface
+    x_array, y_array = np.meshgrid(cols_array, rows_array)
+    z_array = plot_df.to_numpy()
+    if verbose:
+        print(f'\nvalues for surface:')
+        print(f'rows_array: {rows_array}')
+        print(f'cols_array: {cols_array}')
+        print(f'z_array:\n{z_array}')
+    # z_min = np.amin(z_array)
+    # z_max = np.amax(z_array)
+
+    # make figure
+    fig = plt.figure()
+    # ax = Axes3D(fig)
+    ax = fig.gca(projection='3d')  # to work in 3d
+
+    # my_cmap = plt.get_cmap('Spectral')
+    my_cmap = cm.coolwarm
+    surf = ax.plot_surface(X=x_array, Y=y_array, Z=z_array,
+                           cmap=my_cmap,
+                           edgecolor='grey',
+                           alpha=.5,
+                           # vmin=z_min, vmax=z_max
+                           )
+    # ax.set_zlim(z_min, z_max)
+    fig.colorbar(surf, ax=ax, shrink=0.75)
+
+    if show_min_per_sep:
+        if even_spaced:
+            plot_df.reset_index(drop=True, inplace=True)
+        scat_x = []
+        scat_y = []
+        scat_z = []
+        if min_per_df_row:
+            figure_title = 'Average threshold for each ISI and separation condition.\n' \
+                           'Markers show min thr per Separation'
+            for index, row in plot_df.iterrows():
+                # print("")
+                # print(index, row.min(), row.argmin())
+                # print(list(row))
+                scat_x.append(row.argmin())
+                scat_y.append(index)
+                scat_z.append(row.min()+.1)
+        else:  # min per column
+            figure_title = 'Average threshold for each ISI and separation condition.\n' \
+                           'Markers show min thr per ISI'
+            for index, row in plot_df.T.iterrows():
+                scat_x.append(index)
+                scat_y.append(row.argmin())
+                scat_z.append((.1+row.min()))
+
+        if verbose:
+            print(f'\nValues for 3d scatter\n'
+                  f'scat_x: {scat_x}\n'
+                  f'scat_y: {scat_y}\n'
+                  f'scat_z: {scat_z}\n')
+
+        # Creating scatter plot
+        ax.scatter3D(scat_x, scat_y, scat_z,
+                     color="black",
+                     # alpha=.99,
+                     marker='D'
+                     )
+
+    if even_spaced:
+        # # # evenly spaced axes
+        ax.set_xticks(cols_array)
+        ax.set_yticks(rows_array)
+        ax.set_xticklabels(col_labels)
+        ax.set_yticklabels(row_labels)
+
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+    ax.set_zlabel('threshold')
+
+    if fig_title is not None:
+        figure_title = fig_title
+    plt.suptitle(figure_title)
+
+    if save_path is not None:
+        if save_name is not None:
+            plt.savefig(f'{save_path}/{save_name}.png')
+
+    # change viewing angle:  default elev=30, azim=300 (counterclockwize on z axis)
+    ax.view_init(elev=my_elev, azim=my_azim)
+
+    print('*** finished plot_thr_3dsurface() ***')
+
+    return fig
 
 def eight_batman_plots(mean_df, thr1_df, thr2_df,
                        fig_title=None, isi_name_list=None,
@@ -1997,8 +2184,14 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         print('finished fig2b')
 
     print(f"\nfig_3a - difference from concurrent\n")
-    plot_diff_from_concurrent(ave_df, div_by_1probe=False, save_path=save_path)
-
+    if n_trimmed is not None:
+        fig3a_save_name = 'diff_from_conc_TM.png'
+        fig3a_title = f'{ave_over} ISI different in threshold from concurrent (trim={n_trimmed}).'
+    else:
+        fig3a_save_name = 'diff_from_conc.png'
+        fig3a_title = f'{ave_over} ISI different in threshold from concurrent'
+    plot_diff_from_concurrent(ave_df, div_by_1probe=False,
+                              fig_title=fig3a_title, save_name=fig3a_save_name, save_path=save_path)
     if show_plots:
         plt.show()
     plt.close()
@@ -2007,8 +2200,14 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         print('finished fig3a')
 
     print(f"\nfig_3b - difference from concurrent div1probe\n")
-    plot_diff_from_concurrent(ave_df, div_by_1probe=True, save_path=save_path)
-
+    if n_trimmed is not None:
+        fig3b_save_name = 'diff_from_conc_TM_div1probe.png'
+        fig3b_title = f'{ave_over} ISI different in threshold from concurrent (div1probe, trim={n_trimmed}).'
+    else:
+        fig3b_save_name = 'diff_from_conc_div1probe.png'
+        fig3b_title = f'{ave_over} ISI different in threshold from concurrent (div1probe)'
+    plot_diff_from_concurrent(ave_df, div_by_1probe=True,
+                              fig_title=fig3b_title, save_name=fig3b_save_name, save_path=save_path)
     if show_plots:
         plt.show()
     plt.close()
@@ -2059,4 +2258,32 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     if show_plots:
         plt.show()
     plt.close()
+
+    print(f"\n3d surface plot\n")
+    if 'separation' in list(ave_df.columns):
+        ave_df.set_index('separation', drop=True, inplace=True)
+
+    if n_trimmed is not None:
+        surface_title = f'{ave_over} mean threshold for each ISI and separation condition.\n' \
+                        f'Markers show min thr per ISI (trim={n_trimmed}).'
+        surface_savename = 'mean_TM_thr_surface'
+    else:
+        surface_title = f'{ave_over} mean threshold for each ISI and separation condition.\n' \
+                        f'Markers show min thr per ISI'
+        surface_savename = 'mean_thr_surface'
+
+    plot_thr_3dsurface(plot_df=ave_df, my_rotation=True, even_spaced=False,
+                       transpose_df=False, rev_rows=False, rev_cols=False,
+                       show_min_per_sep=True, min_per_df_row=True,
+                       my_elev=15, my_azim=300,
+                       fig_title=surface_title,
+                       save_path=save_path,
+                       save_name=surface_savename,
+                       verbose=True)
+
+    if show_plots:
+        plt.show()
+    plt.close()
+
+
     print("\n*** finished make_average_plots()***\n")
