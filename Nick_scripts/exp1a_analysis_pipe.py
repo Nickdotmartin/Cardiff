@@ -15,7 +15,7 @@ exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim_split_runs'
 participant_list = ['Kim']
 
 # use 1 for Martin, 2 for Tony, 3 for 'Simon', 4='Maria', 5='Kristian', 6='Kim'
-p_idx_plus = 6
+p_idx_plus = 2
 
 for p_idx, participant_name in enumerate(participant_list):
     root_path = f'{exp_path}/{participant_name}'

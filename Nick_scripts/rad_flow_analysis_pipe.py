@@ -99,7 +99,6 @@ for p_idx, participant_name in enumerate(participant_list):
     make_average_plots(all_df_path=all_df_path,
                        ave_df_path=p_ave_path,
                        error_bars_path=err_path,
-                       error_type='SE',
                        n_trimmed=n_trimmed,
                        exp_ave=False,
                        show_plots=True, verbose=True)

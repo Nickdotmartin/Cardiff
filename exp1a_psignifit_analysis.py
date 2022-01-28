@@ -1149,7 +1149,109 @@ def eight_batman_plots(mean_df, thr1_df, thr2_df,
 
     return fig
 
-# # # split array into pos and neg set (sym) and get thr1, thr2 and mean thr
+
+def plot_8_sep_thr(all_thr_df, exp_ave=False, fig_title=None, save_name=None, save_path=None, verbose=True):
+    """
+    Function to make a page with seven axes showing the threshold for each separation,
+    and an eighth plot showing all separations.
+
+    :param all_thr_df: Dataframe with thresholds from multiple runs or participants
+                        (e.g., MASTER_thresholds.csv or MASTER_exp_thr.csv)
+    :param exp_ave: Use True for experiment thr from multiple participants or
+                    False for thr from multiple runs from a single participant.
+    :param save_name: File name to save plot.
+    :param save_path: Directory to save plot into.
+    :param verbose: print progress to screen,
+
+    :return: Figure
+    """
+    print('\n*** running plot_8_sep_thr()***')
+    if type(all_thr_df) is str:
+        if os.path.isfile(all_thr_df):
+            all_thr_df = pd.read_csv(all_thr_df)
+
+    if exp_ave:
+        ave_over = 'Exp'
+        long_df_idx_col = 'participant'
+    else:
+        ave_over = 'P'
+        long_df_idx_col = 'stack'
+
+    if not fig_title:
+        fig_title = f'{ave_over} average thresholds per separation'
+
+    if verbose:
+        print(f'input: all_thr_df: \n{all_thr_df}')
+
+    # just_thr_df = all_thr_df.loc[:, 'ISI 999':]
+    just_thr_df = all_thr_df.loc[:, 'Concurrent':]
+
+    min_thr = just_thr_df.min().min()
+    max_thr = just_thr_df.max().max()
+
+    # convert wide_df to long for getting means and standard error.
+    long_fig_df = make_long_df(all_thr_df, idx_col=long_df_idx_col)
+    if verbose:
+        print(f'long_fig_df:\n{long_fig_df}')
+
+    sep_list = sorted(list(long_fig_df['separation'].unique()))
+    isi_labels = ['conc', 0, 2, 4, 6, 9, 12, 24]
+
+    my_colours = fig_colours(len(sep_list))
+
+    fig, axes = plt.subplots(nrows=2, ncols=4, figsize=(12, 6))
+    ax_counter = 0
+
+    for row_idx, row in enumerate(axes):
+        for col_idx, ax in enumerate(row):
+
+            # for the first seven plots...
+            if ax_counter < 7:
+
+                fig.suptitle(fig_title)
+                this_sep = sep_list[ax_counter]
+                sep_df = long_fig_df[long_fig_df['separation'] == this_sep]
+
+                sns.pointplot(ax=axes[row_idx, col_idx],
+                              data=sep_df, x='ISI', y='probeLum',
+                              estimator=np.mean, ci=68,
+                              markers='.',
+                              errwidth=1,
+                              color=my_colours[ax_counter],
+                              capsize=.1)
+
+                if this_sep == 20:
+                    this_sep = '1probe'
+
+                ax.set_title(f'Separation = {this_sep}')
+                ax.set_xticklabels(isi_labels)
+                ax.set_ylim([min_thr, max_thr])
+            else:
+                sns.pointplot(ax=axes[row_idx, col_idx],
+                              data=long_fig_df, x='ISI', y='probeLum',
+                              hue='separation',
+                              estimator=np.mean, ci=68,
+                              markers='.',
+                              errwidth=1,
+                              capsize=.1,
+                              palette=my_colours)
+                ax.set_ylim([min_thr, max_thr])
+                ax.set_xticklabels(isi_labels)
+                plt.legend([], [], frameon=False)
+                ax.set_title(f'All Separation conditions')
+
+            ax_counter += 1
+
+    plt.tight_layout()
+
+    if save_path:
+        if save_name:
+            plt.savefig(os.path.join(save_path, save_name))
+
+    print('\n*** finished plot_8_sep_thr()***')
+
+    return fig
+
 
 
 def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=True):
@@ -2010,6 +2112,9 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         ave_over = 'P'
         idx_col = 'stack'
 
+    # todo: look at column names for all_df.  it is best if they have no space (e.g., ISI9 or ISI_9).
+    #  Sometimes, for exp or participant data they have spaces - also where does ISI 999 come from?
+
     # if type(all_df_path) is 'pandas.core.frame.DataFrame':
     if isinstance(all_df_path, pd.DataFrame):
         all_df = all_df_path
@@ -2090,6 +2195,32 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     if verbose:
         print('finished fig1b')
+
+    print(f"\nfig_1c\n")
+    # check because columns names get changed somewhere.
+    if 'ISI 999' in list(all_df.columns):
+        print('yes, changing isi 999 to concurrent')
+        all_df = all_df.rename(columns={'ISI 999': 'Concurrent'})
+
+    # fig 1c, eight plots - seven showing a particular sepration, eighth showing all separations.
+    if n_trimmed is not None:
+        f'{ave_over} average thresholds per separation'
+        fig1c_title = f'{ave_over} average thresholds per separation (trim={n_trimmed}).'
+        fig1c_savename = f'ave_TM_thr_per_sep.png'
+    else:
+        fig1c_title = f'{ave_over} average thresholds per separation'
+        fig1c_savename = f'ave_thr_per_sep.png'
+
+    plot_8_sep_thr(all_thr_df=all_df, exp_ave=exp_ave, fig_title=fig1c_title,
+                   save_name=fig1c_savename, save_path=save_path, verbose=True)
+
+    if show_plots:
+        plt.show()
+    plt.close()
+
+    if verbose:
+        print('finished fig1c')
+
 
     print(f"\nfig_2a\n")
     # # Fig 2  - divide all 2probe conditions (pos_sep) by one_probe for each data_set
