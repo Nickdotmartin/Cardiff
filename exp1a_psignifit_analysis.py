@@ -2136,9 +2136,17 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         error_bars_df = pd.read_csv(error_bars_path)
     print(f'\nerror_bars_df:\n{error_bars_df}')
 
-    isi_name_list = ['Concurrent', 'ISI0', 'ISI2', 'ISI4',
-                     'ISI6', 'ISI9', 'ISI12', 'ISI24']
-    pos_sep_list = [0, 1, 2, 3, 6, 18, 20]
+    all_df_headers = list(all_df.columns)
+    isi_name_list = all_df_headers[2:]
+    pos_sep_list = sorted(list(all_df['separation'].unique()))
+    if verbose:
+        print(f'\nall_df_headers: {all_df_headers}')
+        print(f'isi_name_list: {isi_name_list}')
+        print(f'pos_sep_list: {pos_sep_list}')
+
+    # isi_name_list = ['Concurrent', 'ISI0', 'ISI2', 'ISI4',
+    #                  'ISI6', 'ISI9', 'ISI12', 'ISI24']
+    # pos_sep_list = [0, 1, 2, 3, 6, 18, 20]
 
     """part 3. main Figures (these are the ones saved in the matlab script)
     Fig1: plot average threshold for each ISI and sep.
@@ -2199,8 +2207,8 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     print(f"\nfig_1c\n")
     # check because columns names get changed somewhere.
     if 'ISI 999' in list(all_df.columns):
-        print('yes, changing isi 999 to concurrent')
-        all_df = all_df.rename(columns={'ISI 999': 'Concurrent'})
+        print('Columns headers changed when making plot 1b, changing back to originals')
+        all_df.columns = all_df_headers
 
     # fig 1c, eight plots - seven showing a particular sepration, eighth showing all separations.
     if n_trimmed is not None:
