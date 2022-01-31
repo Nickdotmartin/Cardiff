@@ -294,7 +294,7 @@ for trialN in range(expInfo['nTrials']):
         probeColor255 = probeLum * LumColor255Factor
         probeColor1 = (probeColor255 * Color255Color1Factor) - 1
 
-        # print(f"stairNum: {stairNum}\nprobeLum: {probeLum}")
+        print(f"\ntrialN: {trialN} thisStair: {thisStair} stairNum: {stairNum}\nprobeLum: {probeLum}")
 
         total_nTrials = total_nTrials + 1
 
@@ -380,6 +380,12 @@ for trialN in range(expInfo['nTrials']):
         t_interval_2 = t_ISI + probe_duration
         # I presume this means almost unlimited time to respond?
         t_response = t_interval_2 + 10000*fps
+
+        print(f't_fixation: {t_fixation}')
+        print(f't_interval_1: {t_interval_1}')
+        print(f't_ISI: {t_ISI}')
+        print(f't_interval_2: {t_interval_2}')
+        print(f't_response: {t_response}')
 
 
         # repeat the trial if [r] has been pressed
