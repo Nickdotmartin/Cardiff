@@ -1045,6 +1045,12 @@ def plot_thr_heatmap(heatmap_df,
                           cmap=sns.color_palette("Spectral", as_cmap=True),
                           xticklabels=x_tick_labels, yticklabels=y_tick_labels)
 
+    # keep y ticks upright rather than rotates (90)
+    plt.yticks(rotation=0)
+
+    # add central mirror symmetry line
+    plt.axvline(x=6, color='grey', linestyle='dashed')
+
     if 'ISI' in str(x_tick_labels[0]).upper():
         heatmap.set_xlabel('ISI')
         heatmap.set_ylabel('Separation')
@@ -1878,12 +1884,14 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         error_bars_df = pd.read_csv(error_bars_path)
 
     isi_name_list = list(all_df.columns[4:])
+    isi_values_list = [i[4:] for i in isi_name_list]
 
     if verbose:
         print(f'\nall_df:\n{all_df}')
         print(f'\nave_df:\n{ave_df}')
         print(f'\nerror_bars_df:\n{error_bars_df}')
         print(f'\nisi_name_list; {isi_name_list}')
+        print(f'\nisi_values_list; {isi_values_list}')
 
     stair_names_list = sorted(list(all_df['stair_names'].unique()))
     stair_names_list = [-.1 if i == -.10 else int(i) for i in stair_names_list]
@@ -2028,8 +2036,8 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         heatmap_savename = 'mean_thr_heatmap'
 
     plot_thr_heatmap(heatmap_df=ave_w_sep_idx_df.T,
-                     x_tick_labels=stair_names_list,
-                     y_tick_labels=isi_name_list,
+                     x_tick_labels=stair_names_labels,
+                     y_tick_labels=isi_values_list,
                      fig_title=heatmap_title,
                      save_name=heatmap_savename,
                      save_path=save_path,
