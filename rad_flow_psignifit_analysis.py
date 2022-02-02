@@ -523,6 +523,7 @@ def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'
                                 hue_var='ISI', style_var='congruent', style_order=[1, -1],
                                 error_bars=False,
                                 jitter=False,
+                                log_scale=False,
                                 even_spaced_x=False,
                                 x_tick_vals=None,
                                 fig_title=None,
@@ -553,8 +554,9 @@ def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'
     :param error_bars: True or false, whether to display error bars
     :param jitter: Whether to jitter items on x-axis to make easier to read.
         Can be True, False or float for amount of jitter in relation to x-axis values.
+    :param log_scale: Put axes onto log scale.
     :param even_spaced_x: Whether to evenly space ticks on x-axis.
-        For example to make the left side of log-scale x-values easier to read.
+        For example to make the left side of log-scale-like x-values easier to read.
     :param x_tick_vals: Values/labels for x-axis.  Can be string, int or float.
     :param fig_title: Title for figure
     :param fig_savename: Save name for figure
@@ -572,6 +574,9 @@ def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'
 
     # data_for_x to use for x_axis data, whilst keeping original values list (x_axis)
     data_for_x = x_axis
+
+    if log_scale:
+        even_spaced_x = False
 
     # for evenly spaced items on x_axis
     if even_spaced_x:
@@ -613,8 +618,8 @@ def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'
         print(f'error_bars: {error_bars}')
         print(f'conf_interval: {conf_interval}')
         print(f'x_tick_vals: {x_tick_vals}')
-        print(f'orig_x_vals: {orig_x_vals}')
-        print(f'new_x_vals: {new_x_vals}')
+        # print(f'orig_x_vals: {orig_x_vals}')
+        # print(f'new_x_vals: {new_x_vals}')
 
     # initialize plot
     my_colours = fig_colours(n_conditions=len(set(list(long_df[hue_var]))))
@@ -626,7 +631,10 @@ def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'
                  ci=conf_interval, err_style='bars', err_kws={'elinewidth': .7, 'capsize': 5},
                  palette=my_colours, ax=ax)
 
-    if even_spaced_x:
+    if log_scale:
+        ax.set_xscale('log')
+        ax.set_yscale('log')
+    elif even_spaced_x:
         ax.set_xticks(new_x_vals)
         ax.set_xticklabels(orig_x_vals)
     else:
@@ -786,61 +794,111 @@ def multi_batman_plots(mean_df, thr1_df, thr2_df,
     ax_counter = 0
     # loop through the eight axes
     for row_idx, row in enumerate(axes):
-        for col_idx, ax in enumerate(row):
-            if ax_counter < len(isi_name_list):
+        print(f'row_idx: {row_idx}, row: {row} type(row): {type(row)}')
 
-                # mean threshold from CW and CCW probe jump direction
-                sns.lineplot(ax=axes[row_idx, col_idx], data=mean_df,
-                             x='separation', y=isi_name_list[ax_counter],
-                             color=my_colours[ax_counter],
-                             linewidth=2, linestyle="dotted", markers=True)
+        # if there are multiple ISIs
+        if isinstance(row, np.ndarray):
+            for col_idx, ax in enumerate(row):
+                print(f'col_idx: {col_idx}, ax: {ax}')
+                if ax_counter < len(isi_name_list):
 
-                sns.lineplot(ax=axes[row_idx, col_idx], data=thr1_df,
-                             x='separation', y=isi_name_list[ax_counter],
-                             color=my_colours[ax_counter],
-                             linewidth=.5, marker="v")
+                    # mean threshold from CW and CCW probe jump direction
+                    sns.lineplot(ax=axes[row_idx, col_idx], data=mean_df,
+                                 x='separation', y=isi_name_list[ax_counter],
+                                 color=my_colours[ax_counter],
+                                 linewidth=2, linestyle="dotted", markers=True)
 
-                sns.lineplot(ax=axes[row_idx, col_idx], data=thr2_df,
-                             x='separation', y=isi_name_list[ax_counter],
-                             color=my_colours[ax_counter],
-                             linewidth=.5, marker="o")
+                    sns.lineplot(ax=axes[row_idx, col_idx], data=thr1_df,
+                                 x='separation', y=isi_name_list[ax_counter],
+                                 color=my_colours[ax_counter],
+                                 linewidth=.5, marker="v")
 
-                ax.set_title(isi_name_list[ax_counter])
-                ax.set_xticks(x_tick_vals)
-                ax.set_xticklabels(x_tick_labels)
-                ax.xaxis.set_tick_params(labelsize=6)
-                ax.set_ylim([40, 90])
+                    sns.lineplot(ax=axes[row_idx, col_idx], data=thr2_df,
+                                 x='separation', y=isi_name_list[ax_counter],
+                                 color=my_colours[ax_counter],
+                                 linewidth=.5, marker="o")
 
-                if row_idx == 1:
-                    ax.set_xlabel('Probe separation (pixels)')
+                    ax.set_title(isi_name_list[ax_counter])
+                    ax.set_xticks(x_tick_vals)
+                    ax.set_xticklabels(x_tick_labels)
+                    ax.xaxis.set_tick_params(labelsize=6)
+                    ax.set_ylim([40, 90])
+
+                    if row_idx == 1:
+                        ax.set_xlabel('Probe separation (pixels)')
+                    else:
+                        ax.xaxis.label.set_visible(False)
+
+                    if col_idx == 0:
+                        ax.set_ylabel('Probe Luminance')
+                    else:
+                        ax.yaxis.label.set_visible(False)
+
+                    if sym_sep_diff_list is not None:
+                        ax.text(x=0.4, y=0.8, s=round(sym_sep_diff_list[ax_counter], 2),
+                                # needs transform to appear with rest of plot.
+                                transform=ax.transAxes, fontsize=12)
+
+                    # artist for legend
+                    st1 = mlines.Line2D([], [], color=my_colours[ax_counter],
+                                        marker='v', linewidth=.5,
+                                        markersize=4, label='Congruent')
+                    st2 = mlines.Line2D([], [], color=my_colours[ax_counter],
+                                        marker='o', linewidth=.5,
+                                        markersize=4, label='Incongruent')
+                    mean_line = mlines.Line2D([], [], color=my_colours[ax_counter],
+                                              marker=None, linewidth=2, linestyle="dotted",
+                                              label='mean')
+                    ax.legend(handles=[st1, st2, mean_line], fontsize=6)
+
+                    ax_counter += 1
                 else:
-                    ax.xaxis.label.set_visible(False)
+                    fig.delaxes(ax=axes[row_idx, col_idx])
 
-                if col_idx == 0:
-                    ax.set_ylabel('Probe Luminance')
-                else:
-                    ax.yaxis.label.set_visible(False)
+        # if there is only 1 ISI
+        else:
+            ax = row
+            # mean threshold from CW and CCW probe jump direction
+            sns.lineplot(ax=axes[row_idx], data=mean_df,
+                         x='separation', y=isi_name_list[ax_counter],
+                         color=my_colours[ax_counter],
+                         linewidth=2, linestyle="dotted", markers=True)
 
-                if sym_sep_diff_list is not None:
-                    ax.text(x=0.4, y=0.8, s=round(sym_sep_diff_list[ax_counter], 2),
-                            # needs transform to appear with rest of plot.
-                            transform=ax.transAxes, fontsize=12)
+            sns.lineplot(ax=axes[row_idx], data=thr1_df,
+                         x='separation', y=isi_name_list[ax_counter],
+                         color=my_colours[ax_counter],
+                         linewidth=.5, marker="v")
 
-                # artist for legend
-                st1 = mlines.Line2D([], [], color=my_colours[ax_counter],
-                                    marker='v', linewidth=.5,
-                                    markersize=4, label='Congruent')
-                st2 = mlines.Line2D([], [], color=my_colours[ax_counter],
-                                    marker='o', linewidth=.5,
-                                    markersize=4, label='Incongruent')
-                mean_line = mlines.Line2D([], [], color=my_colours[ax_counter],
-                                          marker=None, linewidth=2, linestyle="dotted",
-                                          label='mean')
-                ax.legend(handles=[st1, st2, mean_line], fontsize=6)
+            sns.lineplot(ax=axes[row_idx], data=thr2_df,
+                         x='separation', y=isi_name_list[ax_counter],
+                         color=my_colours[ax_counter],
+                         linewidth=.5, marker="o")
 
-                ax_counter += 1
-            else:
-                fig.delaxes(ax=axes[row_idx, col_idx])
+            ax.set_title(isi_name_list[ax_counter])
+            ax.set_xticks(x_tick_vals)
+            ax.set_xticklabels(x_tick_labels)
+            ax.xaxis.set_tick_params(labelsize=6)
+            ax.set_ylim([40, 90])
+
+            ax.set_xlabel('Probe separation (pixels)')
+            ax.set_ylabel('Probe Luminance')
+
+            if sym_sep_diff_list is not None:
+                ax.text(x=0.4, y=0.8, s=round(sym_sep_diff_list[ax_counter], 2),
+                        # needs transform to appear with rest of plot.
+                        transform=ax.transAxes, fontsize=12)
+
+            # artist for legend
+            st1 = mlines.Line2D([], [], color=my_colours[ax_counter],
+                                marker='v', linewidth=.5,
+                                markersize=4, label='Congruent')
+            st2 = mlines.Line2D([], [], color=my_colours[ax_counter],
+                                marker='o', linewidth=.5,
+                                markersize=4, label='Incongruent')
+            mean_line = mlines.Line2D([], [], color=my_colours[ax_counter],
+                                      marker=None, linewidth=2, linestyle="dotted",
+                                      label='mean')
+            ax.legend(handles=[st1, st2, mean_line], fontsize=6)
 
     plt.tight_layout()
     
@@ -941,57 +999,109 @@ def multi_pos_sep_per_isi(ave_thr_df, error_df,
     ax_counter = 0
     # loop through the different axes
     for row_idx, row in enumerate(axes):
-        for col_idx, ax in enumerate(row):
-            if ax_counter < len(isi_names_list):
+        print(f'row_idx: {row_idx}, type(row): {type(row)}, row: {row}')
+        # if there are multiple ISIs
+        if isinstance(row, np.ndarray):
+            print(f'type is {type(row)}')
+            for col_idx, ax in enumerate(row):
+                if ax_counter < len(isi_names_list):
 
-                this_isi = isi_names_list[ax_counter]
+                    this_isi = isi_names_list[ax_counter]
 
-                ax.errorbar(x=x_values, y=cong_df[this_isi],
-                            yerr=cong_err_df[this_isi],
-                            marker=None, lw=2, elinewidth=.7,
-                            capsize=cap_size,
-                            color=my_colours[ax_counter])
+                    ax.errorbar(x=x_values, y=cong_df[this_isi],
+                                yerr=cong_err_df[this_isi],
+                                marker=None, lw=2, elinewidth=.7,
+                                capsize=cap_size,
+                                color=my_colours[ax_counter])
 
-                ax.errorbar(x=x_values, y=incong_df[this_isi],
-                            yerr=incong_err_df[this_isi],
-                            linestyle='dashed',
-                            marker=None, lw=2, elinewidth=.7,
-                            capsize=cap_size,
-                            color=my_colours[ax_counter])
+                    ax.errorbar(x=x_values, y=incong_df[this_isi],
+                                yerr=incong_err_df[this_isi],
+                                linestyle='dashed',
+                                marker=None, lw=2, elinewidth=.7,
+                                capsize=cap_size,
+                                color=my_colours[ax_counter])
 
-                ax.set_title(isi_names_list[ax_counter])
-                if even_spaced_x:
-                    ax.set_xticks(list(range(len(pos_sep_list))))
+                    ax.set_title(isi_names_list[ax_counter])
+                    if even_spaced_x:
+                        ax.set_xticks(list(range(len(pos_sep_list))))
+                    else:
+                        ax.set_xticks(pos_sep_list)
+                    ax.set_xticklabels(pos_sep_list)
+                    ax.set_ylim([min_thr, max_thr])
+
+                    if row_idx == 1:
+                        ax.set_xlabel('Probe separation (pixels)')
+                    else:
+                        ax.xaxis.label.set_visible(False)
+
+                    if col_idx == 0:
+                        ax.set_ylabel('Probe Luminance')
+                    else:
+                        ax.yaxis.label.set_visible(False)
+
+                    # artist for legend
+                    st1 = mlines.Line2D([], [], color=my_colours[ax_counter],
+                                        # marker='v',
+                                        linewidth=.5,
+                                        markersize=4, label='Congruent')
+                    st2 = mlines.Line2D([], [], color=my_colours[ax_counter],
+                                        # marker='o',
+                                        marker=None, linewidth=.5, linestyle="dotted",
+                                        markersize=4, label='Incongruent')
+
+                    ax.legend(handles=[st1, st2], fontsize=6)
+
+                    ax_counter += 1
                 else:
-                    ax.set_xticks(pos_sep_list)
-                ax.set_xticklabels(pos_sep_list)
-                ax.set_ylim([min_thr, max_thr])
+                    fig.delaxes(ax=axes[row_idx, col_idx])
 
-                if row_idx == 1:
-                    ax.set_xlabel('Probe separation (pixels)')
-                else:
-                    ax.xaxis.label.set_visible(False)
+        # if there is only one isi
+        else:
+            ax = row
+            this_isi = isi_names_list[ax_counter]
 
-                if col_idx == 0:
-                    ax.set_ylabel('Probe Luminance')
-                else:
-                    ax.yaxis.label.set_visible(False)
+            ax.errorbar(x=x_values, y=cong_df[this_isi],
+                        yerr=cong_err_df[this_isi],
+                        marker=None, lw=2, elinewidth=.7,
+                        capsize=cap_size,
+                        color=my_colours[ax_counter])
 
-                # artist for legend
-                st1 = mlines.Line2D([], [], color=my_colours[ax_counter],
-                                    # marker='v',
-                                    linewidth=.5,
-                                    markersize=4, label='Congruent')
-                st2 = mlines.Line2D([], [], color=my_colours[ax_counter],
-                                    # marker='o',
-                                    marker=None, linewidth=.5, linestyle="dotted",
-                                    markersize=4, label='Incongruent')
+            ax.errorbar(x=x_values, y=incong_df[this_isi],
+                        yerr=incong_err_df[this_isi],
+                        linestyle='dashed',
+                        marker=None, lw=2, elinewidth=.7,
+                        capsize=cap_size,
+                        color=my_colours[ax_counter])
 
-                ax.legend(handles=[st1, st2], fontsize=6)
-
-                ax_counter += 1
+            ax.set_title(isi_names_list[ax_counter])
+            if even_spaced_x:
+                ax.set_xticks(list(range(len(pos_sep_list))))
             else:
-                fig.delaxes(ax=axes[row_idx, col_idx])
+                ax.set_xticks(pos_sep_list)
+            ax.set_xticklabels(pos_sep_list)
+            ax.set_ylim([min_thr, max_thr])
+
+            # if row_idx == 1:
+            ax.set_xlabel('Probe separation (pixels)')
+            # else:
+            #     ax.xaxis.label.set_visible(False)
+
+            # if col_idx == 0:
+            ax.set_ylabel('Probe Luminance')
+            # else:
+            #     ax.yaxis.label.set_visible(False)
+
+            # artist for legend
+            st1 = mlines.Line2D([], [], color=my_colours[ax_counter],
+                                # marker='v',
+                                linewidth=.5,
+                                markersize=4, label='Congruent')
+            st2 = mlines.Line2D([], [], color=my_colours[ax_counter],
+                                # marker='o',
+                                marker=None, linewidth=.5, linestyle="dotted",
+                                markersize=4, label='Incongruent')
+
+            ax.legend(handles=[st1, st2], fontsize=6)
 
     plt.tight_layout()
 
@@ -1965,7 +2075,9 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                                 strip_from_cols='ISI_',
                                 x_axis='separation', y_axis='probeLum',
                                 hue_var='ISI', style_var='congruent', style_order=[1, -1],
-                                error_bars=True, even_spaced_x=True, jitter=.1,
+                                error_bars=True,
+                                log_scale=False,
+                                even_spaced_x=True, jitter=.1,
                                 fig_title=fig_1c_title, fig_savename=fig_1c_savename,
                                 x_tick_vals=[0, 1, 2, 3, 6, 18], save_path=save_path, verbose=verbose)
     if show_plots:

@@ -8,22 +8,28 @@ from rad_flow_psignifit_analysis import c_plots, d_average_participant, make_ave
 
 # # loop through run folders with first 5 scripts (a, b1, b2, b3, c)
 # # then run script d to get master lists and averages
-root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp'
-run_folder_names = ['Nick_5', 'Nick_6', 'Nick_7', 'Nick_8', 'Nick_9', 'Nick_10']
-participant_name = 'Nick'
-isi_list = [1, 4, 6, 8, 9, 10, 12]
-isi_names_list = ['ISI_1', 'ISI_4', 'ISI_6', 'ISI_8', 'ISI_9', 'ISI_10', 'ISI_12']
-stair_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-participant_list = ['Nick']
-exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp'
-
-
-# exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp/test_e_ave'
-# participant_list = ['Test', 'Test2']
-# isi_list = [1, 4, 6]
-# isi_names_list = ['ISI_1', 'ISI_4', 'ISI_6']
+# root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp'
+# run_folder_names = ['Nick_5', 'Nick_6', 'Nick_7', 'Nick_8', 'Nick_9', 'Nick_10']
+# participant_name = 'Nick'
+# isi_list = [1, 4, 6, 8, 9, 10, 12]
+# isi_names_list = ['ISI_1', 'ISI_4', 'ISI_6', 'ISI_8', 'ISI_9', 'ISI_10', 'ISI_12']
 # stair_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+# participant_list = ['Nick']
+# exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp'
 
+exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp/test_e_ave'
+participant_list = ['Test', 'Test2']
+isi_list = [1, 4, 6]
+isi_names_list = ['ISI_1', 'ISI_4', 'ISI_6']
+stair_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+#
+# root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp'
+# exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp'
+# participant_list = ['Simon']
+# run_folder_names = ['Simon_1', 'Simon_2', 'Simon_3', 'Simon_4', 'Simon_5', 'Simon_6']
+# isi_list = [9]
+# isi_names_list = ['ISI_9']
+# stair_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 
 verbose = True
 show_plots = True

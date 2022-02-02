@@ -173,12 +173,23 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     )
 
 
-# check correct monitor details (fps, size) have been accessed.
-check_correct_monitor(monitor_name=monitor_name,
-                      actual_size=win.size,
-                      actual_fps=win.getActualFrameRate(),
-                      verbose=True)
+# # check correct monitor details (fps, size) have been accessed.
+# check_correct_monitor(monitor_name=monitor_name,
+#                       actual_size=win.size,
+#                       actual_fps=win.getActualFrameRate(),
+#                       verbose=True)
+# # todo: add something so that if check_correct_monitor raises an error, don't save csv.
+# #  Can use ExperimentHandler.abort() for this
 
+try:
+    check_correct_monitor(monitor_name=monitor_name,
+                          actual_size=win.size,
+                          actual_fps=win.getActualFrameRate(),
+                          verbose=True)
+except ValueError:
+    print("Value error when running check_correct_monitor()")
+    # don't save csv, no trials have happened yet
+    thisExp.abort()
 
 # CLOCK
 trialClock = core.Clock()
