@@ -1,5 +1,6 @@
 from psychopy import monitors, core
-
+from psychopy.tools import monitorunittools
+import numpy as np
 '''
 Page has tools to use for psychoPy experiments.
 
@@ -101,3 +102,60 @@ def check_correct_monitor(monitor_name, actual_size, actual_fps, verbose=False):
     if verbose:
         print("check_correct_monitor() complete")
 
+
+def get_pixel_mm_deg_values(monitor_name='Asus_VG24', n_pixels=1,
+                            use_diagonal=True, ):
+    """
+    use psychopy's monitor tools to convert pixels to mm or degrees at a certain viewing distance.
+    Choose horizontal or diagonal pixels.
+    :param monitor_name: default='Asus_VG24', monitor in lab 2.13.
+            str - should match saved file in psychopy's monitor centre.
+    :param n_pixels: default = 1.
+    :param use_diagonal: default True.  if False, uses monitor centre (horizontal) pixel size.
+        If True, calculates length of diagonal assuming pixel is square (It probably isn;t).
+    """
+
+    # # this_monitor = monitors.Monitor('NickMac')
+    this_monitor = monitors.Monitor(monitor_name)
+    print(f'this_monitor: {this_monitor}')
+
+    print(f'n_pixels: {n_pixels}')
+
+    # This gets horizontal pixel size.
+    pix2cm = monitorunittools.pix2cm(pixels=n_pixels, monitor=this_monitor)
+    print(f'\nHorizontal pixel size:\n'
+          f'pix2cm: {pix2cm}')
+    width_mm = pix2cm * 10
+    print(f'width_mm = pix2cm*10: {width_mm}')
+    # width_mm = 0.27671875
+
+    pix2deg = monitorunittools.pix2deg(pixels=n_pixels, monitor=this_monitor)
+    print(f'pix2deg: {pix2deg}')
+    # pix2deg: 0.027812746561333156
+
+    # if pix measurements are horizontal then diag pix will be
+    print('\nConverted to Diagonal pixel sizes')
+    diag_mm = width_mm * np.sqrt(2)
+    print(f'diag_mm: {diag_mm}')
+    # diag_mm = 0.3913394092129299
+
+    # get nnumber of widths that fit into diagonal.
+    len_of_diag_to_w = 1 * np.sqrt(2)
+    # print(f'len_of_diag_to_w: {len_of_diag_to_w}')
+    diag_deg = monitorunittools.pix2deg(pixels=n_pixels * len_of_diag_to_w,
+                                            monitor=this_monitor)
+    print(f'diag_deg: {diag_deg}')
+    # diag_deg: 0.039333163393883014
+
+
+    # cm2deg = monitorunittools.cm2deg(cm=pix2cm, monitor=this_monitor, correctFlat=True)
+    # print(f'cm2deg: {cm2deg}')
+    # # cm2deg: 0.02781546533608415
+    #
+    # cm2pix = monitorunittools.cm2pix(cm=pix2cm, monitor=this_monitor)
+    # print(f'cm2pix: {cm2pix}')
+    # # cm2pix: 1.0
+
+monitor_name = 'Asus_VG24'
+
+get_pixel_mm_deg_values(use_diagonal=False)

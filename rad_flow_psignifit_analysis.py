@@ -800,6 +800,9 @@ def multi_batman_plots(mean_df, thr1_df, thr2_df,
         if isinstance(row, np.ndarray):
             for col_idx, ax in enumerate(row):
                 print(f'col_idx: {col_idx}, ax: {ax}')
+
+                print(f'{ax_counter}. isi_name_list[ax_counter]: {isi_name_list[ax_counter]}')
+
                 if ax_counter < len(isi_name_list):
 
                     # mean threshold from CW and CCW probe jump direction
@@ -855,26 +858,28 @@ def multi_batman_plots(mean_df, thr1_df, thr2_df,
                 else:
                     fig.delaxes(ax=axes[row_idx, col_idx])
 
-        # if there is only 1 ISI
+        # if there is only 1 ISI in this row
         else:
+            print(f'{row_idx}. isi_name_list[row_idx]: {isi_name_list[row_idx]}')
+
             ax = row
             # mean threshold from CW and CCW probe jump direction
             sns.lineplot(ax=axes[row_idx], data=mean_df,
-                         x='separation', y=isi_name_list[ax_counter],
-                         color=my_colours[ax_counter],
+                         x='separation', y=isi_name_list[row_idx],
+                         color=my_colours[row_idx],
                          linewidth=2, linestyle="dotted", markers=True)
 
             sns.lineplot(ax=axes[row_idx], data=thr1_df,
-                         x='separation', y=isi_name_list[ax_counter],
-                         color=my_colours[ax_counter],
+                         x='separation', y=isi_name_list[row_idx],
+                         color=my_colours[row_idx],
                          linewidth=.5, marker="v")
 
             sns.lineplot(ax=axes[row_idx], data=thr2_df,
-                         x='separation', y=isi_name_list[ax_counter],
-                         color=my_colours[ax_counter],
+                         x='separation', y=isi_name_list[row_idx],
+                         color=my_colours[row_idx],
                          linewidth=.5, marker="o")
 
-            ax.set_title(isi_name_list[ax_counter])
+            ax.set_title(isi_name_list[row_idx])
             ax.set_xticks(x_tick_vals)
             ax.set_xticklabels(x_tick_labels)
             ax.xaxis.set_tick_params(labelsize=6)
@@ -884,18 +889,18 @@ def multi_batman_plots(mean_df, thr1_df, thr2_df,
             ax.set_ylabel('Probe Luminance')
 
             if sym_sep_diff_list is not None:
-                ax.text(x=0.4, y=0.8, s=round(sym_sep_diff_list[ax_counter], 2),
+                ax.text(x=0.4, y=0.8, s=round(sym_sep_diff_list[row_idx], 2),
                         # needs transform to appear with rest of plot.
                         transform=ax.transAxes, fontsize=12)
 
             # artist for legend
-            st1 = mlines.Line2D([], [], color=my_colours[ax_counter],
+            st1 = mlines.Line2D([], [], color=my_colours[row_idx],
                                 marker='v', linewidth=.5,
                                 markersize=4, label='Congruent')
-            st2 = mlines.Line2D([], [], color=my_colours[ax_counter],
+            st2 = mlines.Line2D([], [], color=my_colours[row_idx],
                                 marker='o', linewidth=.5,
                                 markersize=4, label='Incongruent')
-            mean_line = mlines.Line2D([], [], color=my_colours[ax_counter],
+            mean_line = mlines.Line2D([], [], color=my_colours[row_idx],
                                       marker=None, linewidth=2, linestyle="dotted",
                                       label='mean')
             ax.legend(handles=[st1, st2, mean_line], fontsize=6)
@@ -1055,25 +1060,25 @@ def multi_pos_sep_per_isi(ave_thr_df, error_df,
                 else:
                     fig.delaxes(ax=axes[row_idx, col_idx])
 
-        # if there is only one isi
+        # if there is only one isi in this row
         else:
             ax = row
-            this_isi = isi_names_list[ax_counter]
+            this_isi = isi_names_list[row_idx]
 
             ax.errorbar(x=x_values, y=cong_df[this_isi],
                         yerr=cong_err_df[this_isi],
                         marker=None, lw=2, elinewidth=.7,
                         capsize=cap_size,
-                        color=my_colours[ax_counter])
+                        color=my_colours[row_idx])
 
             ax.errorbar(x=x_values, y=incong_df[this_isi],
                         yerr=incong_err_df[this_isi],
                         linestyle='dashed',
                         marker=None, lw=2, elinewidth=.7,
                         capsize=cap_size,
-                        color=my_colours[ax_counter])
+                        color=my_colours[row_idx])
 
-            ax.set_title(isi_names_list[ax_counter])
+            ax.set_title(isi_names_list[row_idx])
             if even_spaced_x:
                 ax.set_xticks(list(range(len(pos_sep_list))))
             else:
@@ -1092,11 +1097,11 @@ def multi_pos_sep_per_isi(ave_thr_df, error_df,
             #     ax.yaxis.label.set_visible(False)
 
             # artist for legend
-            st1 = mlines.Line2D([], [], color=my_colours[ax_counter],
+            st1 = mlines.Line2D([], [], color=my_colours[row_idx],
                                 # marker='v',
                                 linewidth=.5,
                                 markersize=4, label='Congruent')
-            st2 = mlines.Line2D([], [], color=my_colours[ax_counter],
+            st2 = mlines.Line2D([], [], color=my_colours[row_idx],
                                 # marker='o',
                                 marker=None, linewidth=.5, linestyle="dotted",
                                 markersize=4, label='Incongruent')
