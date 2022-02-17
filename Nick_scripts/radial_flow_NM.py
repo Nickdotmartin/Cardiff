@@ -9,7 +9,7 @@ import numpy as np
 from psychopy import __version__ as psychopy_version
 from psychopy import gui, visual, core, data, event, monitors
 
-from PsychoPy_tools import check_correct_monitor
+from PsychoPy_tools import check_correct_monitor, get_pixel_mm_deg_values
 from kestenSTmaxVal import Staircase
 
 """
@@ -186,6 +186,9 @@ try:
                           actual_size=win.size,
                           actual_fps=win.getActualFrameRate(),
                           verbose=True)
+    print('\nsize of a single pixel at 57cm')
+    get_pixel_mm_deg_values(monitor_name=monitor_name, use_diagonal=False)
+    print('Monitor setting all correct')
 except ValueError:
     print("Value error when running check_correct_monitor()")
     # don't save csv, no trials have happened yet

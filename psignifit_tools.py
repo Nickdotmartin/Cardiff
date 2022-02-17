@@ -202,6 +202,7 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
     options['threshPC'] = target_threshold
 
     if verbose:
+        print(f'data_np:\n{data_np}')
         print(f'options (dict): {options}')
 
     # results
@@ -438,13 +439,17 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
             if verbose:
                 print(f'\nsep_df ({sep_col}={sep}, isi={isi}:\n{sep_df}')
 
+                print(f'n correct = {sep_df["trial_response"].sum()}')
+
+
+
             # # # test with csv to numpy
             # yes script now works directly with df, don't need to load csv.
             # now move on to doing full thing
 
             # sep = sep_list[sep_idx]
             # stair_levels = [stair]
-            # print(f'\nsep: {sep}, stair_levels: {stair_levels}')
+            print(f'\nsep: {sep_col}, stair_levels: {[sep]}')
 
             # # for all in one function
             # # # # #

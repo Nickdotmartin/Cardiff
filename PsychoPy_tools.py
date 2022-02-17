@@ -1,4 +1,4 @@
-from psychopy import monitors, core
+from psychopy import monitors
 from psychopy.tools import monitorunittools
 import numpy as np
 '''
@@ -13,7 +13,7 @@ def check_correct_monitor(monitor_name, actual_size, actual_fps, verbose=False):
 
     The actual size calculation may be double the true size for apple retina
     displays, so the comparison check for values that twice the expected size.
-    The comparison of frame rate allows an error of +/- 2 fps.
+    The comparison of frame rate allows an error of +/- 5 fps.
 
     :param monitor_name: (str) name given to monitor in psychopy monitor centre.
     This function wil use monitor_name to load the monitor configuration from
@@ -93,7 +93,8 @@ def check_correct_monitor(monitor_name, actual_size, actual_fps, verbose=False):
             print(f"expected_fps: {expected_fps}")
 
     # check fps
-    if expected_fps in list(range(actual_frame_rate-2, actual_frame_rate+2)):
+    margin = 5
+    if expected_fps in list(range(actual_frame_rate-margin, actual_frame_rate+margin)):
         print("expected_fps matches actual frame rate")
     else:
         raise ValueError(f"expected_fps ({expected_fps}) does not match actual "
@@ -103,7 +104,7 @@ def check_correct_monitor(monitor_name, actual_size, actual_fps, verbose=False):
         print("check_correct_monitor() complete")
 
 
-def get_pixel_mm_deg_values(monitor_name='Asus_VG24', n_pixels=1,
+def get_pixel_mm_deg_values(monitor_name='ASUS_2_13_240Hz', n_pixels=1,
                             use_diagonal=True, ):
     """
     use psychopy's monitor tools to convert pixels to mm or degrees at a certain viewing distance.
@@ -117,7 +118,7 @@ def get_pixel_mm_deg_values(monitor_name='Asus_VG24', n_pixels=1,
 
     # # this_monitor = monitors.Monitor('NickMac')
     this_monitor = monitors.Monitor(monitor_name)
-    print(f'this_monitor: {this_monitor}')
+    print(f'this_monitor: {monitor_name}')
 
     print(f'n_pixels: {n_pixels}')
 
@@ -156,6 +157,7 @@ def get_pixel_mm_deg_values(monitor_name='Asus_VG24', n_pixels=1,
     # print(f'cm2pix: {cm2pix}')
     # # cm2pix: 1.0
 
-monitor_name = 'Asus_VG24'
+# monitor_name = 'Asus_VG24'
 
-get_pixel_mm_deg_values(use_diagonal=False)
+# get_pixel_mm_deg_values(use_diagonal=False)
+

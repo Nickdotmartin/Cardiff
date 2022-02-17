@@ -23,10 +23,14 @@ from rad_flow_psignifit_analysis import c_plots, d_average_participant, make_ave
 # isi_names_list = ['ISI_1', 'ISI_4', 'ISI_6']
 # stair_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 #
-root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp'
+# root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp'
 exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp'
-participant_list = ['Simon']
-run_folder_names = ['Simon_7', 'Simon_8']  # ['Simon_1', 'Simon_2', 'Simon_3', 'Simon_4', 'Simon_5', 'Simon_6', 'Simon_7', 'Simon_8']
+# participant_list = ['Simon']
+# run_folder_names = ['Simon_8']
+# run_folder_names = ['Simon_1', 'Simon_2', 'Simon_3', 'Simon_4', 'Simon_5', 'Simon_6', 'Simon_7']
+participant_list = ['Kim']
+run_folder_names = ['Kim_1', 'Kim_2', 'Kim_3', 'Kim_4', 'Kim_5', 'Kim_6']
+
 isi_list = [6, 9]
 isi_names_list = ['ISI_6', 'ISI_9']
 stair_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
@@ -40,9 +44,12 @@ for p_idx, participant_name in enumerate(participant_list):
         p_idx_plus = 5
 
     root_path = f'{exp_path}/{participant_name}'
+
     run_folder_names = [f'{participant_name}_{p_idx_plus}', f'{participant_name}_{p_idx_plus + 1}',
                         f'{participant_name}_{p_idx_plus + 2}', f'{participant_name}_{p_idx_plus + 3}',
                         f'{participant_name}_{p_idx_plus + 4}', f'{participant_name}_{p_idx_plus + 5}']
+                        # f'{participant_name}_{p_idx_plus + 6}', f'{participant_name}_{p_idx_plus + 7}']
+    # run_folder_names = [f'{participant_name}_{p_idx_plus}']
     print(f'run_folder_names: {run_folder_names}')
 
     for run_idx, run_dir in enumerate(run_folder_names):
@@ -61,7 +68,8 @@ for p_idx, participant_name in enumerate(participant_list):
         run_data_path = f'{save_path}{os.sep}ALL_ISIs_sorted.xlsx'
 
         '''a'''
-        p_name = f'{participant_name}_{r_idx_plus}'
+        # p_name = f'{participant_name}_{r_idx_plus}'
+        p_name = f'{participant_name}{r_idx_plus}'
         a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=isi_list, verbose=verbose)
 
         run_data_df = pd.read_excel(run_data_path, engine='openpyxl',
@@ -69,7 +77,7 @@ for p_idx, participant_name in enumerate(participant_list):
                                              "step", "separation", "congruent",
                                              "flow_dir", "probe_jump", "corner",
                                              "probeLum", "trial_response"])
-        # print(f"run_data_df:\n{run_data_df}")
+        print(f"run_data_df:\n{run_data_df}")
 
         '''get psignifit thresholds df'''
         cols_to_add_dict = {'stair_names': [18, -18, 6, -6, 3, -3, 2, -2, 1, -1, 0, -0.1],
@@ -84,7 +92,7 @@ for p_idx, participant_name in enumerate(participant_list):
                                             sep_list=stair_list,
                                             cols_to_add_dict=cols_to_add_dict,
                                             verbose=verbose)
-        # print(f'thr_df:\n{thr_df}')
+        print(f'thr_df:\n{thr_df}')
 
         '''b3'''
         b3_plot_staircase(run_data_path, show_plots=show_plots, verbose=verbose)
@@ -93,7 +101,7 @@ for p_idx, participant_name in enumerate(participant_list):
         c_plots(save_path=save_path, isi_name_list=isi_names_list, show_plots=show_plots, verbose=verbose)
 
     '''d'''
-    run_folder_names = ['Simon_1', 'Simon_2', 'Simon_3', 'Simon_4', 'Simon_5', 'Simon_6', 'Simon_7', 'Simon_8']
+    # run_folder_names = ['Simon_1', 'Simon_2', 'Simon_3', 'Simon_4', 'Simon_5', 'Simon_6', 'Simon_7']
 
     d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
                           trim_n=None, error_type='SE', verbose=verbose)
