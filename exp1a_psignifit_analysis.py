@@ -62,7 +62,7 @@ def split_df_alternate_rows(df):
 
 
 #######
-# save_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim/Nick_practice/P6a-Kim'
+# save_path = ''
 # last_response_df = pd.read_csv(f'{save_path}{os.sep}last_response.csv', dtype=int)
 # print(f'last_response_df:\n{last_response_df}')
 # df1, df2 = split_df_alternate_rows(last_response_df)
@@ -1263,7 +1263,7 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
         this script gets all their data into one file, and sorts each isi by stair.
 
     :param p_name: participant's name as used to save csv files.  e.g., if the
-            file is .../nick1.csv, participant name is 'nick1'.
+            file is .../aa_output.csv, participant name is 'aa'.
     :param run_dir: directory where isi folders are stored.
     :param isi_list: List of isi values, may differ between experiments.
     :param save_all_data: If True, will save all_data_df as an xlsx.
@@ -1367,10 +1367,10 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
 
 
 # # # # # # #
-# participant_name = 'Kim1'
+# participant_name = ''
 # isi_list = [-1, 0, 2, 4, 6, 9, 12, 24]
 # # isi_list = [0, 2]  # , 4, 6, 9, 12, 24, -1]
-# run_dir = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim/Nick_practice/P6a-Kim'
+# run_dir = ''
 #
 # a_data_extraction(p_name=participant_name, run_dir=run_dir, isi_list=isi_list, verbose=True)
 
@@ -1676,8 +1676,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
     print("\n***finished b3_plot_staircases()***\n")
 
 ####################
-# all_data_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim/' \
-#                     'Nick_practice/P6a-Kim/RUNDATA-sorted.xlsx'
+# all_data_path = ''
 # b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_response',
 #                   show_plots=True, save_plots=True, verbose=True)
 
@@ -1858,7 +1857,7 @@ def c_plots(save_path, thr_col='probeLum', show_plots=True, verbose=True):
 
 
 # #########
-# c_plots(save_path='/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim/Nick_practice/P6a-Kim',
+# c_plots(save_path='',
 #         thr_col='probeLum', last_vals_list=[1, 4, 7],
 #         show_plots=True, verbose=True)
 

@@ -8,21 +8,19 @@ from psignifit_tools import get_psignifit_threshold_df
 
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
-# exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data'
-# participant_list = ['Tony', 'Simon', 'Maria', 'Kristian', 'Kim']  # incomplete  'Martin' 'Nick'
+exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data'
+participant_list = ['aa', 'bb', 'cc', 'dd', 'ee']
 
-exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim_split_runs'
-participant_list = ['Kim']
-
-# use 1 for Martin, 2 for Tony, 3 for 'Simon', 4='Maria', 5='Kristian', 6='Kim'
-p_idx_plus = 6
+p_idx_plus = 1
 
 for p_idx, participant_name in enumerate(participant_list):
     root_path = f'{exp_path}/{participant_name}'
-    run_folder_names = [f'P{p_idx + p_idx_plus}a-{participant_name}', f'P{p_idx + p_idx_plus}b-{participant_name}',
-                        f'P{p_idx + p_idx_plus}c-{participant_name}', f'P{p_idx + p_idx_plus}d-{participant_name}',
-                        f'P{p_idx + p_idx_plus}e-{participant_name}', f'P{p_idx + p_idx_plus}f-{participant_name}']
-
+    # run_folder_names = [f'P{p_idx + p_idx_plus}a-{participant_name}', f'P{p_idx + p_idx_plus}b-{participant_name}',
+    #                     f'P{p_idx + p_idx_plus}c-{participant_name}', f'P{p_idx + p_idx_plus}d-{participant_name}',
+    #                     f'P{p_idx + p_idx_plus}e-{participant_name}', f'P{p_idx + p_idx_plus}f-{participant_name}']
+    run_folder_names = [f'{participant_name}_1', f'{participant_name}_2',
+                        f'{participant_name}_3', f'{participant_name}_4',
+                        f'{participant_name}_5', f'{participant_name}_6']
 
     group_list = [1, 2]
 
@@ -48,7 +46,8 @@ for p_idx, participant_name in enumerate(participant_list):
             p_name = participant_name
 
             # '''a'''
-            p_name = f'{participant_name}{run_idx+1}'
+            p_name = f'{participant_name}_{run_idx+1}_output'
+            # p_name = f'{participant_name}{run_idx+1}'
             isi_list = [-1, 0, 2, 4, 6, 9, 12, 24]
 
             # for first run, some files are saved just as name not name1
