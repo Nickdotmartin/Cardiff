@@ -10,12 +10,14 @@ from rad_flow_psignifit_analysis import c_plots, d_average_participant, make_ave
 # # then run script d to get master lists and averages
 # root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp'
 # run_folder_names = ['Nick_5', 'Nick_6', 'Nick_7', 'Nick_8', 'Nick_9', 'Nick_10']
+run_folder_names = ['Nick_1', 'Nick_2', 'Nick_3', 'Nick_4', 'Nick_5', 'Nick_6',
+                    'Nick_7', 'Nick_8', 'Nick_9', 'Nick_10', 'Nick_11', 'Nick_12']
 # participant_name = 'Nick'
 # isi_list = [1, 4, 6, 8, 9, 10, 12]
 # isi_names_list = ['ISI_1', 'ISI_4', 'ISI_6', 'ISI_8', 'ISI_9', 'ISI_10', 'ISI_12']
 # stair_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-# participant_list = ['Nick']
-# exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp'
+participant_list = ['Nick']
+exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp'
 #
 # exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp/test_e_ave'
 # participant_list = ['Test', 'Test2']
@@ -24,12 +26,12 @@ from rad_flow_psignifit_analysis import c_plots, d_average_participant, make_ave
 # stair_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 #
 # root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp'
-exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp'
+# exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp'
 # participant_list = ['Simon']
-# run_folder_names = ['Simon_8']
+# run_folder_names = ['Simon_8', 'Simon_9', 'Simon_10', 'Simon_11', 'Simon_12']
 # run_folder_names = ['Simon_1', 'Simon_2', 'Simon_3', 'Simon_4', 'Simon_5', 'Simon_6', 'Simon_7']
-participant_list = ['Kim']
-run_folder_names = ['Kim_1', 'Kim_2', 'Kim_3', 'Kim_4', 'Kim_5', 'Kim_6']
+# participant_list = ['Kim']
+# run_folder_names = ['Kim_1', 'Kim_2', 'Kim_3', 'Kim_4', 'Kim_5', 'Kim_6']
 
 isi_list = [6, 9]
 isi_names_list = ['ISI_6', 'ISI_9']
@@ -40,24 +42,26 @@ show_plots = True
 p_idx_plus = 1
 
 for p_idx, participant_name in enumerate(participant_list):
-    if participant_name is 'Nick':
-        p_idx_plus = 5
+    # if participant_name is 'Nick':
+    #     p_idx_plus = 5
 
     root_path = f'{exp_path}/{participant_name}'
 
     run_folder_names = [f'{participant_name}_{p_idx_plus}', f'{participant_name}_{p_idx_plus + 1}',
                         f'{participant_name}_{p_idx_plus + 2}', f'{participant_name}_{p_idx_plus + 3}',
-                        f'{participant_name}_{p_idx_plus + 4}', f'{participant_name}_{p_idx_plus + 5}']
-                        # f'{participant_name}_{p_idx_plus + 6}', f'{participant_name}_{p_idx_plus + 7}']
+                        f'{participant_name}_{p_idx_plus + 4}', f'{participant_name}_{p_idx_plus + 5}',
+                        f'{participant_name}_{p_idx_plus + 6}', f'{participant_name}_{p_idx_plus + 7}',
+                        f'{participant_name}_{p_idx_plus + 8}', f'{participant_name}_{p_idx_plus + 9}',
+                        f'{participant_name}_{p_idx_plus + 10}', f'{participant_name}_{p_idx_plus + 11}']
     # run_folder_names = [f'{participant_name}_{p_idx_plus}']
     print(f'run_folder_names: {run_folder_names}')
 
     for run_idx, run_dir in enumerate(run_folder_names):
 
         # add run number , e.g., add five to access Nick_5 on the zeroth iteration
-        r_idx_plus = run_idx + 1
-        if participant_name is 'Nick':
-            r_idx_plus = run_idx + 5
+        r_idx_plus = run_idx + p_idx_plus
+        # if participant_name is 'Nick':
+        #     r_idx_plus = run_idx + 5
 
         print(f'\nrun_idx{run_idx}: running analysis for {participant_name}, {run_dir}, {participant_name}_{r_idx_plus}\n')
         save_path = f'{root_path}{os.sep}{run_dir}'
@@ -101,10 +105,11 @@ for p_idx, participant_name in enumerate(participant_list):
         c_plots(save_path=save_path, isi_name_list=isi_names_list, show_plots=show_plots, verbose=verbose)
 
     '''d'''
-    # run_folder_names = ['Simon_1', 'Simon_2', 'Simon_3', 'Simon_4', 'Simon_5', 'Simon_6', 'Simon_7']
+    run_folder_names = ['Nick_1', 'Nick_2', 'Nick_3', 'Nick_4', 'Nick_5', 'Nick_6',
+                        'Nick_7', 'Nick_8', 'Nick_9', 'Nick_10', 'Nick_11', 'Nick_12']
 
     d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-                          trim_n=None, error_type='SE', verbose=verbose)
+                          trim_n=1, error_type='SE', verbose=verbose)
 
     all_df_path = f'{root_path}/MASTER_psignifit_thresholds.csv'
     p_ave_path = f'{root_path}/MASTER_ave_thresh.csv'

@@ -1970,6 +1970,8 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     print("\n*** running make_average_plots()***\n")
 
+    # todo: check why plots have changed order - since I added extra ISI conditions.
+
     save_path, df_name = os.path.split(ave_df_path)
 
     if exp_ave:
