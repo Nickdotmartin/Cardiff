@@ -531,16 +531,13 @@ for step in range(n_trials_per_stair):
 
 
         # timing in frames
-        # if ISI >= 0:
-        # t_fixation = 1 * fps
-        # t_interval_1 = t_fixation + probe_duration
         # fixation time is now 70ms shorted than previously.
         t_fixation = 1 * (fps - prelim_bg_flow_fr)
         t_bg_motion = t_fixation + prelim_bg_flow_fr
         t_interval_1 = t_bg_motion + probe_duration
         t_ISI = t_interval_1 + ISI
         t_interval_2 = t_ISI + probe_duration
-        # I presume this means almost unlimited time to respond?
+        # essentially unlimited time to respond
         t_response = t_interval_2 + 10000 * fps
 
         # repeat the trial if [r] has been pressed
@@ -656,8 +653,15 @@ for step in range(n_trials_per_stair):
                 if t_interval_2 >= frameN > t_ISI:
                     # after ISI but before end of probe2 interval
                     if background == 'flow_rad':
-                        # draw flow_dots but with no motion
+                        # radial flow_dots motion
+                        z = z + flow_speed * flow_dir
+                        WrapPoints(z, minDist, maxDist)
+                        x_flow = x / z
+                        y_flow = y / z
+
+                        flow_dots.xys = np.array([x_flow, y_flow]).transpose()
                         flow_dots.draw()
+
                         probeMask1.draw()
                         probeMask2.draw()
                         probeMask3.draw()
