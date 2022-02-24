@@ -28,9 +28,9 @@ monitor_name = 'ASUS_2_13_240Hz'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' '
 display_number = 1  # 0 indexed, 1 for external display
 
 # Store info about the experiment session
-expName = 'integration_flow'  # from the Builder filename that created this script
+expName = 'rad_flow_2'  # from the Builder filename that created this script
 
-expInfo = {'1_Participant': 'Nick_test',
+expInfo = {'1_Participant': 'NM_test_rad_flow_2',
            '2_Probe_dur_in_frames_at_240hz': [2, 50],
            '3_fps': [240, 144, 60],
            '4_ISI_dur_in_ms': [100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0],
@@ -39,7 +39,6 @@ expInfo = {'1_Participant': 'Nick_test',
            '7_Trials_counter': [True, False],
            '8_Background': ['flow_rad', 'None']
            }
-
 
 # GUI
 dlg = gui.DlgFromDict(dictionary=expInfo, title=expName)
@@ -74,28 +73,30 @@ print(f"\nSelected {ISI_selected_ms}ms ISI.\n"
       f"At {fps}Hz this is {ISI_frames} frames which each take {ISI_actual_ms}ms.\n")
 
 # VARIABLES
-# n_stair_sets is actaully trials per staircase.
-# However, the output file suggests I only have 23 per stair, not sure why?
 n_trials_per_stair = 25
 probe_ecc = 4
 
+# background motion to start 70ms before probe1 (e.g., 17frames at 240Hz).
+prelim_bg_flow_ms = 70
+prelim_bg_flow_fr = int(prelim_bg_flow_ms * fps / 1000)
+
 # Distances between probes & flow direction
 separation_values = [18, 6, 3, 2, 1, 0]
-# each separation value appears in 2 stairs, e.g.,
-# stair1 will be sep=18, flow_dir=inwards; stair2 will be sep=18, flow_dir=outwards etc.
-# this study does not include the two 99 values for single probe condition
-# old_separations = [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]
+'''each separation value appears in 2 stairs, e.g.,
+stair1 will be sep=18, flow_dir=inwards; stair2 will be sep=18, flow_dir=outwards etc.
+e.g., separations = [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]
+this study does not include the two single probe conditions (labeled 99 in previous exp)
+'''
 separations = list(np.repeat(separation_values, 2))
 n_stairs = len(separations)
 
-# flow_directions is a list of [-1, 1...] of same length as separations
-# flow_directions: 1=flow inward (backward self-motion), -1=flow outward (forward self-motion)
-# flow_directions = [1, -1]*len(separation_values)
 # # main contrast is whether the background and target motion is in same or opposite directions
+# congruence_list: 1=congruent/same, -1=incongruent/different
 congruence_list = [1, -1]*len(separation_values)
 
 # FILENAME
 filename = f'{_thisDir}{os.sep}' \
+           f'rad_flow_2{os.sep}' \
            f'{participant_name}{os.sep}' \
            f'ISI_{ISI}_probeDur{probe_duration}{os.sep}' \
            f'{participant_name}'
@@ -163,7 +164,7 @@ mon.save()
 # WINDOW SPEC
 win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     colorSpace='rgb',
-                    color=bgcolor,  # bgcolor from martin's flow script, not bgColor255
+                    color=bgcolor,  # bgcolor from Martin's flow script, not bgColor255
                     winType='pyglet',  # I've added pyglet to make it work on pycharm/mac
                     pos=[1, -1],  # pos gives position of top-left of screen
                     units='pix',
@@ -174,13 +175,6 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
 
 
 # # check correct monitor details (fps, size) have been accessed.
-# check_correct_monitor(monitor_name=monitor_name,
-#                       actual_size=win.size,
-#                       actual_fps=win.getActualFrameRate(),
-#                       verbose=True)
-# # todo: add something so that if check_correct_monitor raises an error, don't save csv.
-# #  Can use ExperimentHandler.abort() for this
-
 try:
     check_correct_monitor(monitor_name=monitor_name,
                           actual_size=win.size,
@@ -401,8 +395,6 @@ for step in range(n_trials_per_stair):
         y_flow = y / z
 
 
-
-
         # Make variable for whether target_jump and flow dir are the same
         # (e.g., both inward or both outward = 1, else -1)
         trgt_flow_same = flow_dir*target_jump
@@ -540,13 +532,16 @@ for step in range(n_trials_per_stair):
 
         # timing in frames
         # if ISI >= 0:
-        t_fixation = 1 * fps
-        t_interval_1 = t_fixation + probe_duration
+        # t_fixation = 1 * fps
+        # t_interval_1 = t_fixation + probe_duration
+        # fixation time is now 70ms shorted than previously.
+        t_fixation = 1 * (fps - prelim_bg_flow_fr)
+        t_bg_motion = t_fixation + prelim_bg_flow_fr
+        t_interval_1 = t_bg_motion + probe_duration
         t_ISI = t_interval_1 + ISI
         t_interval_2 = t_ISI + probe_duration
         # I presume this means almost unlimited time to respond?
         t_response = t_interval_2 + 10000 * fps
-
 
         # repeat the trial if [r] has been pressed
         repeat = True
@@ -585,13 +580,44 @@ for step in range(n_trials_per_stair):
                     fixation.draw()
                     trials_counter.draw()
 
-                # PROBE 1
-                if t_interval_1 >= frameN > t_fixation:
-                    # after fixation, before end of probe1 interval
+                # Background motion prior to probe1
+                if t_bg_motion >= frameN > t_fixation:
+                    # after fixation, before end of background motion
                     if background == 'flow_rad':
-                        # draw flow_dots but with no motion
+                        # radial flow_dots motion
+                        z = z + flow_speed * flow_dir
+                        WrapPoints(z, minDist, maxDist)
+                        x_flow = x / z
+                        y_flow = y / z
+
                         flow_dots.xys = np.array([x_flow, y_flow]).transpose()
                         flow_dots.draw()
+
+                        probeMask1.draw()
+                        probeMask2.draw()
+                        probeMask3.draw()
+                        probeMask4.draw()
+                        dotsMask.draw()
+
+                    fixation.setRadius(3)
+                    fixation.draw()
+                    # probe1.draw()
+                    trials_counter.draw()
+
+
+                # PROBE 1
+                if t_interval_1 >= frameN > t_bg_motion:
+                    # after background motion, before end of probe1 interval
+                    if background == 'flow_rad':
+                        # radial flow_dots motion
+                        z = z + flow_speed * flow_dir
+                        WrapPoints(z, minDist, maxDist)
+                        x_flow = x / z
+                        y_flow = y / z
+
+                        flow_dots.xys = np.array([x_flow, y_flow]).transpose()
+                        flow_dots.draw()
+
                         probeMask1.draw()
                         probeMask2.draw()
                         probeMask3.draw()
@@ -630,15 +656,6 @@ for step in range(n_trials_per_stair):
                 if t_interval_2 >= frameN > t_ISI:
                     # after ISI but before end of probe2 interval
                     if background == 'flow_rad':
-                        # if flow_dots motion during probe2
-                        #     # radial flow_dots
-                        #     z = z + flow_speed * flow_dir
-                        #     WrapPoints(z, minDist, maxDist)
-                        #     x_flow = x / z
-                        #     y_flow = y / z
-                        #
-                        #     flow_dots.xys = np.array([x_flow, y_flow]).transpose()
-
                         # draw flow_dots but with no motion
                         flow_dots.draw()
                         probeMask1.draw()
@@ -703,7 +720,7 @@ for step in range(n_trials_per_stair):
                     thisExp.close()
                     core.quit()
 
-                # redo the trial if i think i made a mistake
+                # redo the trial if I think I made a mistake
                 if event.getKeys(keyList=["r"]) or event.getKeys(keyList=['num_9']):
                     repeat = True
                     continueRoutine = False
@@ -732,6 +749,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('BGspeed', flow_speed)
         thisExp.addData('orientation', orientation)
         thisExp.addData('ISI_actual_ms', ISI_actual_ms)
+        thisExp.addData('ISI_frames', ISI_frames)
 
         thisExp.nextEntry()
 
