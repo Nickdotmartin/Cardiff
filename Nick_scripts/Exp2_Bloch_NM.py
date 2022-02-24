@@ -12,12 +12,23 @@ from psychopy import gui, visual, core, data, event, monitors
 from PsychoPy_tools import check_correct_monitor, get_pixel_mm_deg_values
 from kestenSTmaxVal import Staircase
 
-"""
-This script takes: 
-the probes from EXPERIMENT3_background_motion_SKR, and adds the option for tangent or radial jump.
-the background radial motion is taken from integration_RiccoBloch_flow_new.
-ISI is always >=0 (no simultaneous probes).
-"""
+'''
+This script is a follow on from exp1a (but uses radial_flow_NM_v2 as its basis):
+Exp2_Bloch_NM - no spatial separation - just temporal - test Bloch.
+probe 2 in exact same place as probe 1.'''
+
+
+'''
+Future directions...Version 2
+If still not complete summation:
+a. test with no ISI (e.g., vary duration). 
+
+If complete summation:
+b. Probe2 in same location but rotated 90º
+
+Exp3_Ricco_NM: no temporal summation, just spatial - test Ricco.
+No separation, probe size (length) varies.
+'''
 
 # Ensure that relative paths start from the same directory as this script
 _thisDir = os.path.dirname(os.path.abspath(__file__))
@@ -28,12 +39,13 @@ monitor_name = 'NickMac'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_1
 display_number = 1  # 0 indexed, 1 for external display
 
 # Store info about the experiment session
-expName = 'rad_flow_2'  # from the Builder filename that created this script
+expName = 'Exp2_Bloch_NM'  # from the Builder filename that created this script
 
-expInfo = {'1_Participant': 'NM_test_rad_flow_2',
+# todo: experiment doesn't need to set an ISI, will test all ISIs in each run
+expInfo = {'1_Participant': 'NM_test_Exp2_Bloch_NM',
            '2_Probe_dur_in_frames_at_240hz': [2, 50],
            '3_fps': [240, 144, 60],
-           '4_ISI_dur_in_ms': [100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0],
+           # '4_ISI_dur_in_ms': [100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0],
            '5_Probe_orientation': ['radial', 'tangent'],
            '6_Probe_size': ['5pixels', '6pixels', '3pixels'],
            '7_Trials_counter': [True, False],
@@ -65,41 +77,54 @@ This means that the experiment should have similar ms timings on monitors with d
 milliseconds: [100, 50, 41.66, 37.5, 33.34, 25, 16.67, 8.33, 0]
 frames@240hz: [24,  12,  10,    9,    8,     6,  4,    2,    0]
 '''
-ISI_selected_ms = float(expInfo['4_ISI_dur_in_ms'])
-ISI_frames = int(ISI_selected_ms * fps / 1000)
-ISI_actual_ms = (1/fps) * ISI_frames * 1000
-ISI = ISI_frames
-print(f"\nSelected {ISI_selected_ms}ms ISI.\n"
-      f"At {fps}Hz this is {ISI_frames} frames which each take {ISI_actual_ms}ms.\n")
+# ISI_selected_ms = float(expInfo['4_ISI_dur_in_ms'])
+# ISI_frames = int(ISI_selected_ms * fps / 1000)
+# ISI_actual_ms = (1/fps) * ISI_frames * 1000
+# ISI = ISI_frames
+# print(f"\nSelected {ISI_selected_ms}ms ISI.\n"
+#       f"At {fps}Hz this is {ISI_frames} frames which each take {ISI_actual_ms}ms.\n")
+
+# if fps == 240:
+ISI_ms_list = [0, 8.33, 16.67, 25, 37.5, 50, 100]
+if fps == 144:
+    ISI_ms_list = [0, 6.94, 13.89, 27.78, 34.72, 48.61, 97.22]
+elif fps == 60:
+    ISI_ms_list = [0, 16.67, 33.33, 50, 100]
 
 # VARIABLES
 n_trials_per_stair = 25
 probe_ecc = 4
+# todo: for future versions probe 2 might be rotated 90
+rotate_probe2 = 0
 
 # background motion to start 70ms before probe1 (e.g., 17frames at 240Hz).
 prelim_bg_flow_ms = 70
 prelim_bg_flow_fr = int(prelim_bg_flow_ms * fps / 1000)
 
 # Distances between probes & flow direction
-separation_values = [18, 6, 3, 2, 1, 0]
+# todo: I don't need separations, as all probes are in same location
+# separation_values = [18, 6, 3, 2, 1, 0]
 '''each separation value appears in 2 stairs, e.g.,
 stair1 will be sep=18, flow_dir=inwards; stair2 will be sep=18, flow_dir=outwards etc.
 e.g., separations = [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]
 this study does not include the two single probe conditions (labeled 99 in previous exp)
 '''
-separations = list(np.repeat(separation_values, 2))
-n_stairs = len(separations)
+# separations = list(np.repeat(separation_values, 2))
+if background == 'flow_rad':
+    isi_list = list(np.repeat(ISI_ms_list, 2))
+else:
+    isi_list = ISI_ms_list
+n_stairs = len(isi_list)
 
 # # main contrast is whether the background and target motion is in same or opposite directions
 # congruence_list: 1=congruent/same, -1=incongruent/different
-congruence_list = [1, -1]*len(separation_values)
+# congruence_list = [1, -1]*len(separation_values)
 
 # FILENAME
 filename = f'{_thisDir}{os.sep}' \
            f'{expName}{os.sep}' \
            f'{participant_name}{os.sep}' \
-           f'ISI_{ISI}_probeDur{probe_duration}{os.sep}' \
-           f'{participant_name}'
+           f'{participant_name}_output'
 
 # Experiment Handler
 thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
@@ -141,8 +166,7 @@ mon_dict = {'mon_name': monitor_name,
             'width': thisMon.getWidth(),
             'size': thisMon.getSizePix(),
             'dist': thisMon.getDistance(),
-            'notes': thisMon.getNotes()
-            }
+            'notes': thisMon.getNotes()}
 print(f"mon_dict: {mon_dict}")
 
 # double check using full screen in lab
@@ -344,9 +368,11 @@ for stair_idx in expInfo['stair_list']:
 
     # stair_name will be pos or neg sep value for congruence (e.g., 18, -18, 6, -6 etc)
     # however, change -0 to -.1 to avoid confusion with 0.
-    stair_name = separations[stair_idx] * congruence_list[stair_idx]
-    if separations[stair_idx] + congruence_list[stair_idx] == -1:
-        stair_name = -.1
+    # todo: change this so stairs are for different ISIs. Don't need congruence
+    # stair_name = separations[stair_idx] * congruence_list[stair_idx]
+    # if separations[stair_idx] + congruence_list[stair_idx] == -1:
+    #     stair_name = -.1
+    stair_name = isi_list[stair_idx]
 
     thisStair = Staircase(name=f'{stair_name}',
                           type='simple',
@@ -376,15 +402,21 @@ for step in range(n_trials_per_stair):
         trialClock.reset()
 
         stair_idx = thisStair.extraInfo['stair_idx']
-        sep = separations[stair_idx]
-        # congruence is balanced with separation values
-        congruent = congruence_list[stair_idx]
+        # sep = separations[stair_idx]
+        sep = 0
+        ISI = isi_list[stair_idx]
+
+        # # congruence is balanced with separation values
+        # congruent = congruence_list[stair_idx]
         # flow_dir = flow_directions[stair_idx]
         flow_dir = np.random.choice([1, -1])
 
         # PROBE
         # target_jump = np.random.choice([1, -1])  # direction in which the probe jumps : CW or CCW
-        target_jump = congruent * flow_dir
+        # todo: don't need target jump, both probes in same position
+        # target_jump = congruent * flow_dir
+        target_jump = flow_dir
+
 
         # flow_dots
         x = np.random.rand(nDots) * taille - taille / 2
@@ -397,7 +429,7 @@ for step in range(n_trials_per_stair):
 
         # Make variable for whether target_jump and flow dir are the same
         # (e.g., both inward or both outward = 1, else -1)
-        trgt_flow_same = flow_dir*target_jump
+        # trgt_flow_same = flow_dir*target_jump
 
         # staircase varies probeLum
         probeLum = thisStair.next()
@@ -432,23 +464,23 @@ for step in range(n_trials_per_stair):
             if orientation == 'tangent':
                 if target_jump == 1:  # CCW
                     probe1.ori = 0
-                    probe2.ori = 180
+                    probe2.ori = probe1.ori + rotate_probe2
                     # probe2 is left and up from probe1
                     probe2.pos = [p1_x - sep + 1, p1_y + sep]
                 elif target_jump == -1:  # CW
                     probe1.ori = 180
-                    probe2.ori = 0
+                    probe2.ori = probe1.ori + rotate_probe2
                     # probe2 is right and down from probe1
                     probe2.pos = [p1_x + sep - 1, p1_y - sep]
             elif orientation == 'radial':
                 if target_jump == 1:  # inward
                     probe1.ori = 270
-                    probe2.ori = 90
+                    probe2.ori = probe1.ori + rotate_probe2
                     # probe2 is left and down from probe1
                     probe2.pos = [p1_x - sep + 1, p1_y - sep]
                 elif target_jump == -1:  # outward
                     probe1.ori = 90
-                    probe2.ori = 270
+                    probe2.ori = probe1.ori + rotate_probe2
                     # probe2 is right and up from probe1
                     probe2.pos = [p1_x + sep - 1, p1_y + sep]
         elif corner == 135:
@@ -458,23 +490,23 @@ for step in range(n_trials_per_stair):
             if orientation == 'tangent':
                 if target_jump == 1:  # CCW
                     probe1.ori = 90
-                    probe2.ori = 270
+                    probe2.ori = probe1.ori + rotate_probe2
                     # probe2 is right and up from probe1
                     probe2.pos = [p1_x + sep - 1, p1_y + sep]
                 elif target_jump == -1:  # CW
                     probe1.ori = 270
-                    probe2.ori = 90
+                    probe2.ori = probe1.ori + rotate_probe2
                     # probe2 is left and down from probe1
                     probe2.pos = [p1_x - sep + 1, p1_y - sep]
             elif orientation == 'radial':
                 if target_jump == 1:  # inward
                     probe1.ori = 180
-                    probe2.ori = 0
+                    probe2.ori = probe1.ori + rotate_probe2
                     # probe2 is right and down from probe1
                     probe2.pos = [p1_x + sep - 1, p1_y - sep]
                 elif target_jump == -1:  # outward
                     probe1.ori = 0
-                    probe2.ori = 180
+                    probe2.ori = probe1.ori + rotate_probe2
                     # probe2 is left and up from probe1
                     probe2.pos = [p1_x - sep + 1, p1_y + sep]
         elif corner == 225:
@@ -484,21 +516,21 @@ for step in range(n_trials_per_stair):
             if orientation == 'tangent':
                 if target_jump == 1:  # CCW
                     probe1.ori = 180
-                    probe2.ori = 0
+                    probe2.ori = probe1.ori + rotate_probe2
                     probe2.pos = [p1_x + sep - 1, p1_y - sep]
                 elif target_jump == -1:  # CW
                     probe1.ori = 0
-                    probe2.ori = 180
+                    probe2.ori = probe1.ori + rotate_probe2
                     probe2.pos = [p1_x - sep + 1, p1_y + sep]
             elif orientation == 'radial':
                 if target_jump == 1:  # inward
                     probe1.ori = 90
-                    probe2.ori = 270
+                    probe2.ori = probe1.ori + rotate_probe2
                     # probe2 is right and up from probe1
                     probe2.pos = [p1_x + sep - 1, p1_y + sep]
                 elif target_jump == -1:  # outward
                     probe1.ori = 270
-                    probe2.ori = 90
+                    probe2.ori = probe1.ori + rotate_probe2
                     # probe2 is left and down from probe1
                     probe2.pos = [p1_x - sep + 1, p1_y - sep]
         else:
@@ -509,21 +541,21 @@ for step in range(n_trials_per_stair):
             if orientation == 'tangent':
                 if target_jump == 1:  # CCW
                     probe1.ori = 270
-                    probe2.ori = 90
+                    probe2.ori = probe1.ori + rotate_probe2
                     probe2.pos = [p1_x - sep + 1, p1_y - sep]
                 elif target_jump == -1:  # CW
                     probe1.ori = 90
-                    probe2.ori = 270
+                    probe2.ori = probe1.ori + rotate_probe2
                     probe2.pos = [p1_x + sep - 1, p1_y + sep]
             elif orientation == 'radial':
                 if target_jump == 1:  # inward
                     probe1.ori = 0
-                    probe2.ori = 180
+                    probe2.ori = probe1.ori + rotate_probe2
                     # probe2 is left and up from probe1
                     probe2.pos = [p1_x - sep + 1, p1_y + sep]
                 elif target_jump == -1:  # outward
                     probe1.ori = 180
-                    probe2.ori = 0
+                    probe2.ori = probe1.ori + rotate_probe2
                     # probe2 is right and down from probe1
                     probe2.pos = [p1_x + sep - 1, p1_y - sep]
 
@@ -740,7 +772,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('stair_name', thisStair)
         thisExp.addData('step', step)
         thisExp.addData('separation', sep)
-        thisExp.addData('congruent', congruent)
+        # thisExp.addData('congruent', congruent)
         thisExp.addData('flow_dir', flow_dir)
         thisExp.addData('probe_jump', target_jump)
         thisExp.addData('corner', corner)
@@ -752,8 +784,8 @@ for step in range(n_trials_per_stair):
         thisExp.addData('probe_ecc', probe_ecc)
         thisExp.addData('BGspeed', flow_speed)
         thisExp.addData('orientation', orientation)
-        thisExp.addData('ISI_actual_ms', ISI_actual_ms)
-        thisExp.addData('ISI_frames', ISI_frames)
+        # thisExp.addData('ISI_actual_ms', ISI_actual_ms)
+        # thisExp.addData('ISI_frames', ISI_frames)
 
         thisExp.nextEntry()
 
