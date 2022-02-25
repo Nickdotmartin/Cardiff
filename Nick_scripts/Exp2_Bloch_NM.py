@@ -41,15 +41,15 @@ display_number = 1  # 0 indexed, 1 for external display
 # Store info about the experiment session
 expName = 'Exp2_Bloch_NM'  # from the Builder filename that created this script
 
-# todo: experiment doesn't need to set an ISI, will test all ISIs in each run
-expInfo = {'1_Participant': 'NM_test_Exp2_Bloch_NM',
+
+expInfo = {'1_Participant': 'Nick_test',
            '2_Probe_dur_in_frames_at_240hz': [2, 50],
            '3_fps': [240, 144, 60],
            # '4_ISI_dur_in_ms': [100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0],
            '5_Probe_orientation': ['radial', 'tangent'],
            '6_Probe_size': ['5pixels', '6pixels', '3pixels'],
            '7_Trials_counter': [True, False],
-           '8_Background': ['flow_rad', 'None']
+           '8_Background': [None, 'flow_rad']
            }
 
 # GUI
@@ -85,16 +85,16 @@ frames@240hz: [24,  12,  10,    9,    8,     6,  4,    2,    0]
 #       f"At {fps}Hz this is {ISI_frames} frames which each take {ISI_actual_ms}ms.\n")
 
 # if fps == 240:
-ISI_ms_list = [0, 8.33, 16.67, 25, 37.5, 50, 100]
+ISI_ms_list = [-99, 0, 8.33, 16.67, 25, 37.5, 50, 100]
 if fps == 144:
-    ISI_ms_list = [0, 6.94, 13.89, 27.78, 34.72, 48.61, 97.22]
+    ISI_ms_list = [-99, 0, 6.94, 13.89, 27.78, 34.72, 48.61, 97.22]
 elif fps == 60:
-    ISI_ms_list = [0, 16.67, 33.33, 50, 100]
+    ISI_ms_list = [-99, 0, 16.67, 33.33, 50, 100]
 
 # VARIABLES
 n_trials_per_stair = 25
 probe_ecc = 4
-# todo: for future versions probe 2 might be rotated 90
+# for future versions probe 2 might be rotated 90
 rotate_probe2 = 0
 
 # background motion to start 70ms before probe1 (e.g., 17frames at 240Hz).
@@ -102,7 +102,6 @@ prelim_bg_flow_ms = 70
 prelim_bg_flow_fr = int(prelim_bg_flow_ms * fps / 1000)
 
 # Distances between probes & flow direction
-# todo: I don't need separations, as all probes are in same location
 # separation_values = [18, 6, 3, 2, 1, 0]
 '''each separation value appears in 2 stairs, e.g.,
 stair1 will be sep=18, flow_dir=inwards; stair2 will be sep=18, flow_dir=outwards etc.
@@ -119,6 +118,7 @@ n_stairs = len(isi_list)
 # # main contrast is whether the background and target motion is in same or opposite directions
 # congruence_list: 1=congruent/same, -1=incongruent/different
 # congruence_list = [1, -1]*len(separation_values)
+flow_dir_list = [1, -1]*len(ISI_ms_list)
 
 # FILENAME
 filename = f'{_thisDir}{os.sep}' \
@@ -194,8 +194,7 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     units='pix',
                     screen=display_number,
                     allowGUI=False,
-                    fullscr=use_full_screen,
-                    )
+                    fullscr=use_full_screen)
 
 
 # # check correct monitor details (fps, size) have been accessed.
@@ -368,11 +367,12 @@ for stair_idx in expInfo['stair_list']:
 
     # stair_name will be pos or neg sep value for congruence (e.g., 18, -18, 6, -6 etc)
     # however, change -0 to -.1 to avoid confusion with 0.
-    # todo: change this so stairs are for different ISIs. Don't need congruence
     # stair_name = separations[stair_idx] * congruence_list[stair_idx]
     # if separations[stair_idx] + congruence_list[stair_idx] == -1:
     #     stair_name = -.1
     stair_name = isi_list[stair_idx]
+    if background == 'flow_rad':
+        stair_name = isi_list[stair_idx] * flow_dir_list[stair_idx]
 
     thisStair = Staircase(name=f'{stair_name}',
                           type='simple',
@@ -404,16 +404,22 @@ for step in range(n_trials_per_stair):
         stair_idx = thisStair.extraInfo['stair_idx']
         # sep = separations[stair_idx]
         sep = 0
-        ISI = isi_list[stair_idx]
+        
+        # ISI_cond is the condition, ISI_time is for timing 
+        ISI_cond = isi_list[stair_idx]
+        ISI_time = ISI_cond
+        if ISI_cond < 0:
+            ISI_time = 0
 
         # # congruence is balanced with separation values
         # congruent = congruence_list[stair_idx]
         # flow_dir = flow_directions[stair_idx]
-        flow_dir = np.random.choice([1, -1])
+        # flow_dir = np.random.choice([1, -1])
+        flow_dir = flow_dir_list[stair_idx]
 
         # PROBE
         # target_jump = np.random.choice([1, -1])  # direction in which the probe jumps : CW or CCW
-        # todo: don't need target jump, both probes in same position
+        # don't need target jump, both probes in same position
         # target_jump = congruent * flow_dir
         target_jump = flow_dir
 
@@ -567,7 +573,7 @@ for step in range(n_trials_per_stair):
         t_fixation = 1 * (fps - prelim_bg_flow_fr)
         t_bg_motion = t_fixation + prelim_bg_flow_fr
         t_interval_1 = t_bg_motion + probe_duration
-        t_ISI = t_interval_1 + ISI
+        t_ISI = t_interval_1 + ISI_time
         t_interval_2 = t_ISI + probe_duration
         # essentially unlimited time to respond
         t_response = t_interval_2 + 10000 * fps
@@ -702,7 +708,9 @@ for step in range(n_trials_per_stair):
 
                     fixation.setRadius(3)
                     fixation.draw()
-                    probe2.draw()
+                    # don't show 2nd probe in 1pr condition
+                    if ISI_cond >= 0:
+                        probe2.draw()
                     trials_counter.draw()
 
                 # ANSWER
@@ -723,7 +731,6 @@ for step in range(n_trials_per_stair):
 
 
                     # ANSWER
-                    # todo: check if there is a better way to get key responses and RTs
                     resp = event.BuilderKeyResponse()
                     theseKeys = event.getKeys(keyList=['num_5', 'num_4', 'num_1',
                                                        'num_2', 'w', 'q', 'a', 's'])
@@ -772,7 +779,8 @@ for step in range(n_trials_per_stair):
         thisExp.addData('stair_name', thisStair)
         thisExp.addData('step', step)
         thisExp.addData('separation', sep)
-        thisExp.addData('ISI', ISI)
+        thisExp.addData('ISI_cond', ISI_cond)
+        thisExp.addData('ISI_time', ISI_time)
         # thisExp.addData('congruent', congruent)
         thisExp.addData('flow_dir', flow_dir)
         thisExp.addData('probe_jump', target_jump)
@@ -786,7 +794,10 @@ for step in range(n_trials_per_stair):
         thisExp.addData('BGspeed', flow_speed)
         thisExp.addData('orientation', orientation)
         # thisExp.addData('ISI_actual_ms', ISI_actual_ms)
-        # thisExp.addData('ISI_frames', ISI_frames)
+        # ISI_frames = int(ISI_selected_ms * fps / 1000)
+        thisExp.addData('ISI_frames', int(ISI_time * fps / 1000))
+        thisExp.addData('rotate_probe2', rotate_probe2)
+        thisExp.addData('flow_dir', flow_dir)
 
         thisExp.nextEntry()
 

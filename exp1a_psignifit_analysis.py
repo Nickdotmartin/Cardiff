@@ -1409,20 +1409,26 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
 
     # open all_data file.  use engine='openpyxl' for xlsx files.
     # For other experiments it might be easier not to do use cols as they might be different.
-    all_data_df = pd.read_excel(all_data_path, engine='openpyxl',
-                                usecols=['ISI', 'stair', 'total_nTrials',
-                                         'probeLum', 'trial_response', 'resp.rt'])
+    if xlsx_name[-3:] == 'csv':
+        all_data_df = pd.read_csv(all_data_path)
+    else:
+        all_data_df = pd.read_excel(all_data_path, engine='openpyxl',
+                                    usecols=['ISI', 'stair', 'total_nTrials',
+                                             'probeLum', 'trial_response', 'resp.rt'])
 
     # get list of isi and stair values to loop through
     stair_list = all_data_df['stair'].unique()
     isi_list = all_data_df['ISI'].unique()
+    sep_list = all_data_df['separation'].unique()
     # get isi string for column names
     isi_name_list = ['Concurrent' if i == -1 else f'isi{i}' for i in isi_list]
+    sep_name_list = ['1pr' if i == 99 else f'sep{i}' for i in sep_list]
+    # separation_title = ['18sep', '06sep', '03sep', '02sep', '01sep', '00sep', 'onePb']
+
 
     trials, columns = np.shape(all_data_df)
     trials_per_stair = int(trials/len(isi_list)/len(stair_list))
 
-    separation_title = ['18sep', '06sep', '03sep', '02sep', '01sep', '00sep', 'onePb']
 
     if verbose:
         print(f"all_data_df:\n{all_data_df.head()}")
@@ -1430,7 +1436,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
         print(f"isi_list: {isi_list}")
         print(f"isi_name_list: {isi_name_list}")
         print(f"stair_list: {stair_list}")
-        print(f"separation_title: {separation_title}")
+        print(f"sep_name_list: {sep_name_list}")
         print(f"trials_per_stair: {trials_per_stair}")
 
     '''the eighth plot is the psignifit thr for each sep (+sep, -sep and mean).
@@ -1574,7 +1580,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
                             # needs transform to appear with rest of plot.
                             transform=ax.transAxes, fontsize=12)
 
-                    ax.set_title(f'{isi_name} {separation_title[ax_counter]}')
+                    ax.set_title(f'{isi_name} {sep_name_list[ax_counter]}')
                     ax.set_xticks(np.arange(0, trials_per_stair, 5))
                     ax.set_ylim([0, 110])
 

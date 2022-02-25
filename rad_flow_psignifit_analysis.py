@@ -1299,10 +1299,13 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
 
     # open all_data file.  use engine='openpyxl' for xlsx files.
     # For other experiments it might be easier not to do use cols as they might be different.
-    all_data_df = pd.read_excel(all_data_path, engine='openpyxl',
-                                usecols=["ISI", "stair", "step", "separation", 
-                                         "flow_dir", "probe_jump", "corner",
-                                         "probeLum", "trial_response"])
+    if xlsx_name[-3:] == 'csv':
+        all_data_df = pd.read_csv(all_data_path)
+    else:
+        all_data_df = pd.read_excel(all_data_path, engine='openpyxl',
+                                    usecols=["ISI", "stair", "step", "separation",
+                                             "flow_dir", "probe_jump", "corner",
+                                             "probeLum", "trial_response"])
 
     # get list of isi and stair values to loop through
     stair_list = all_data_df['stair'].unique()
@@ -1354,6 +1357,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
         # takes every other item
         sep_list = sep_list[::2]
     else:
+        # todo: for exp2_bloch I don't have double the number of rows, so I should do something here.
         raise ValueError(f"I dunno why the number of rows ({rows}) isn't double "
                          f"the sep_list ({sep_list})")
     separation_title = [f'sep_{i}' for i in sep_list]
@@ -1448,16 +1452,16 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
 
                     # artist for legend
                     if ax_counter == 0:
-                        st1 = mlines.Line2D([], [], color='tab:red',
+                        st1 = mlines.Line2D([], [], color='tab:blue',
                                             marker='v',
                                             markersize=5, label='Congruent')
-                        st1_last_val = mlines.Line2D([], [], color='tab:red',
+                        st1_last_val = mlines.Line2D([], [], color='tab:blue',
                                                      linestyle="--", marker=None,
                                                      label='Cong: last val')
-                        st2 = mlines.Line2D([], [], color='tab:blue',
+                        st2 = mlines.Line2D([], [], color='tab:red',
                                             marker='o',
                                             markersize=5, label='Incongruent')
-                        st2_last_val = mlines.Line2D([], [], color='tab:blue',
+                        st2_last_val = mlines.Line2D([], [], color='tab:red',
                                                      linestyle="-.", marker=None,
                                                      label='Incong: last val')
                         ax.legend(handles=[st1, st1_last_val, st2, st2_last_val],
@@ -1481,17 +1485,17 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
                                  x='separation', y=isi_name, color='lightgreen',
                                  linewidth=3)
                     sns.lineplot(ax=axes[row_idx, col_idx], data=psig_cong_sep_df,
-                                 x='separation', y=isi_name, color='red',
+                                 x='separation', y=isi_name, color='blue',
                                  linestyle="--")
                     sns.lineplot(ax=axes[row_idx, col_idx], data=psig_incong_sep_df,
-                                 x='separation', y=isi_name, color='blue',
+                                 x='separation', y=isi_name, color='red',
                                  linestyle="dotted")
 
                     # artist for legend
-                    cong_thr = mlines.Line2D([], [], color='red', linestyle="--",
+                    cong_thr = mlines.Line2D([], [], color='blue', linestyle="--",
                                              marker=None, label='Congruent thr')
 
-                    incong_thr = mlines.Line2D([], [], color='blue', linestyle="dotted",
+                    incong_thr = mlines.Line2D([], [], color='red', linestyle="dotted",
                                                marker=None, label='Incongruent thr')
                     mean_thr = mlines.Line2D([], [], color='lightgreen', linestyle="solid",
                                              marker=None, label='mean thr')
@@ -1531,6 +1535,195 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
     n_reversals_df.to_csv(f'{save_path}{os.sep}n_reversals.csv')
 
     print("\n***finished b3_plot_staircases()***\n")
+
+
+def b3_plot_stair_sep0(all_data_path, thr_col='probeLum', resp_col='trial_response',
+                      show_plots=True, save_plots=True, verbose=True):
+    """
+    b3_plot_staircase: staircases-ISIxxx.png: xxx corresponds to isi conditions.
+    One plot for each isi condition.  Each figure has six panels (6 probes separation
+    conditions) showing the Luminance value of two staircases as function of
+    trial number. Last panel shows last thr per sep condition.
+
+    :param all_data_path: path to the all_data xlsx file.
+    :param thr_col: (default probeLum) name of the column showing the threshold
+        (e.g., varied by the staircase).
+    :param resp_col: (default: 'trial_response') name of the column showing
+        (accuracy per trial).
+    :param show_plots: whether to display plots on-screen.
+    :param save_plots: whether to save the plots.
+    :param verbose: If True, will print progress to screen.
+
+    :return:
+    one figure per isi value - saved as Staircases_{isi_name}
+    n_reversals.csv - number of reversals per stair - used in c_plots
+    """
+    print("\n*** running b3_plot_stair_sep0() ***\n")
+
+    save_path, xlsx_name = os.path.split(all_data_path)
+
+    # open all_data file.  use engine='openpyxl' for xlsx files.
+    # For other experiments it might be easier not to do use cols as they might be different.
+    if xlsx_name[-3:] == 'csv':
+        all_data_df = pd.read_csv(all_data_path)
+    else:
+        all_data_df = pd.read_excel(all_data_path, engine='openpyxl',
+                                    usecols=["ISI", "stair", "step", "separation",
+                                             "flow_dir", "probe_jump", "corner",
+                                             "probeLum", "trial_response"])
+
+    # get list of isi and stair values to loop through
+    stair_list = all_data_df['stair'].unique()
+    isi_list = all_data_df['ISI'].unique()
+    # get isi string for column names
+    isi_name_list = [f'ISI_{i}' for i in isi_list]
+
+    trials, columns = np.shape(all_data_df)
+    # trials_per_stair = int(trials/len(isi_list)/len(stair_list))
+    trials_per_stair = int(trials/len(stair_list))
+
+    if verbose:
+        print(f"all_data_df:\n{all_data_df}")
+        print(f"{len(isi_list)} isi values and {len(stair_list)} stair values")
+        print(f"isi_list: {isi_list}")
+        print(f"isi_name_list: {isi_name_list}")
+        print(f"stair_list: {stair_list}")
+        print(f"trials_per_stair: {trials_per_stair}")
+
+    '''the eighth plot is the last thr for each sep (+sep, -sep and mean).  
+    get data from psignifit_thresholds.csv and reshape here'''
+    thr_csv_name = f'{save_path}{os.sep}psignifit_thresholds.csv'
+    psignifit_thr_df = pd.read_csv(thr_csv_name)
+    if verbose:
+        print(f'\npsignifit_thr_df:\n{psignifit_thr_df}')
+
+    # remove extra columns
+    if 'stair' in list(psignifit_thr_df.columns):
+        psignifit_thr_df = psignifit_thr_df.drop(['stair'], axis=1)
+
+    if 'stair_names' in list(psignifit_thr_df.columns):
+        psignifit_thr_df = psignifit_thr_df.drop(['stair_names'], axis=1)
+
+    if 'congruent' in list(psignifit_thr_df.columns):
+        psignifit_thr_df = psignifit_thr_df.drop(['congruent'], axis=1)
+
+    if 'separation' in list(psignifit_thr_df.columns):
+        sep_list = psignifit_thr_df.pop('separation').tolist()
+
+    psignifit_thr_df.columns = isi_name_list
+
+    separation_title = [f'sep_{i}' for i in sep_list]
+    if verbose:
+        print(f'sep_list: {sep_list}')
+        print(f"separation_title: {separation_title}")
+
+    psignifit_thr_df.insert(0, 'separation', sep_list)
+    if verbose:
+        print(f'\npsignifit_thr_df:\n{psignifit_thr_df}\n')
+
+    # make empty arrays to save reversal n_reversals
+    # n_reversals_np = np.zeros(shape=[len(stair_list), len(isi_list)])
+    n_reversals_np = np.zeros(shape=[len(stair_list)])
+
+    # initialise 8 plot figure - last plot will be blank
+    # # this is a figure showing n_reversals per staircase condition.
+    n_rows, n_cols = multi_plot_shape(len(isi_name_list), min_rows=2)
+    print(f"making {len(isi_name_list)} plots, rows={n_rows}, cols={n_cols}")
+
+    fig, axes = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(12, 6))
+    ax_counter = 0
+
+    for row_idx, row in enumerate(axes):
+        for col_idx, ax in enumerate(row):
+            print(f'\nrow: {row_idx}, col: {col_idx}: {ax}')
+
+            # for the first six plots...
+            if ax_counter < len(isi_name_list):
+
+                isi_name = isi_name_list[ax_counter]
+
+                # # get pairs of stairs (e.g., [[18, -18], [6, -6], ...etc)
+                this_stair_df = all_data_df[all_data_df['stair'] == ax_counter]
+                print(f"this_stair_df:\n{this_stair_df}")
+
+                final_lum_val = \
+                    this_stair_df.loc[this_stair_df['step'] == trials_per_stair-1, 'probeLum'].item()
+                n_reversals = trials_per_stair - this_stair_df[resp_col].sum()
+
+                # append n_reversals to n_reversals_np to save later.
+                n_reversals_np[ax_counter-1] = n_reversals
+
+                if verbose:
+                    print(f'\nthis_stair_df (stair={ax_counter}, '
+                          f'isi_name={isi_name}:\n{this_stair_df}')
+                    print(f"final_lum_val: {final_lum_val}")
+                    print(f"n_reversals: {n_reversals}")
+
+                fig.suptitle(f'Staircases and reversals for isi {isi_name}')
+
+                # plot thr per step for even_cong numbered stair
+                sns.lineplot(ax=axes[row_idx, col_idx], data=this_stair_df,
+                             x='step', y=thr_col, color='tab:blue',
+                             marker="o", markersize=4)
+                # line for final probeLum
+                ax.axhline(y=final_lum_val, linestyle="-.", color='tab:blue')
+                # text for n_reversals
+                ax.text(x=0.25, y=0.8, s=f'{n_reversals} reversals',
+                        color='tab:blue',
+                        # needs transform to appear with rest of plot.
+                        transform=ax.transAxes, fontsize=12)
+
+
+                # ax.set_title(f'{isi_name} {separation_title[ax_counter]}')
+                ax.set_title(isi_name)
+                ax.set_xticks(np.arange(0, trials_per_stair, 5))
+                ax.set_ylim([0, 110])
+
+                # artist for legend
+                if ax_counter == 0:
+                    st1 = mlines.Line2D([], [], color='tab:blue',
+                                        marker='v',
+                                        markersize=5, label='Data')
+                    st1_last_val = mlines.Line2D([], [], color='tab:blue',
+                                                 linestyle="--", marker=None,
+                                                 label='last val')
+                    ax.legend(handles=[st1, st1_last_val],
+                              fontsize=6, loc='lower right')
+
+            else:
+                fig.delaxes(ax=axes[row_idx, col_idx])
+
+            ax_counter += 1
+
+    plt.tight_layout()
+
+    # show and close plots
+    if save_plots:
+        # savename = f'staircases_{isi_name}.png'
+        savename = 'staircases_bloch.png'
+        plt.savefig(f'{save_path}{os.sep}{savename}')
+
+    if show_plots:
+        plt.show()
+    plt.close()
+
+    # save n_reversals to csv for use in script_c figure 5
+    print(f'n_reversals_np:\n{n_reversals_np}')
+
+    n_reversals_df = pd.DataFrame(n_reversals_np)
+    n_reversals_df.insert(0, 'del', isi_name_list)
+    # n_reversals_df.insert(0, 'stair', stair_list)
+    # n_reversals_df.set_index('stair', inplace=True)
+    n_reversals_df = n_reversals_df.T
+    n_reversals_df.columns = isi_name_list
+    n_reversals_df.drop('del', inplace=True)
+    if verbose:
+        print(f'n_reversals_df:\n{n_reversals_df}')
+    n_reversals_df.to_csv(f'{save_path}{os.sep}n_reversals.csv')
+
+    print("\n***finished b3_plot_stair_sep0()***\n")
+
+
 
 
 def c_plots(save_path, isi_name_list=None, show_plots=True, verbose=True):
