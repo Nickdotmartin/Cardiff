@@ -202,7 +202,7 @@ def make_long_df(wide_df,
     Function to convert wide-form_df to long-form_df.  e.g., if there are several
     columns showing ISIs (cols_to_change), this puts them all into one column (new_col_name).
 
-    :param wide_df: dataframe to be changed
+    :param wide_df: dataframe to be changed.
     :param cols_to_keep: Columns to use for indexing (e.g., ['congruent', 'separation'...etc]
     :param cols_to_change: List of columns showing data at different levels e.g., [ISI_1, ISI_4, ISI_6...etc].
     :param cols_to_change_show: What is being measured in repeated cols, e.g., probeLum.
@@ -393,6 +393,7 @@ def plot_runs_ave_w_errors(fig_df, error_df,
                            x_tick_labels=None,
                            even_spaced_x=False,
                            fixed_y_range=False,
+                           x_axis_label=None,
                            fig_title=None, save_name=None, save_path=None,
                            verbose=True):
     """
@@ -401,22 +402,23 @@ def plot_runs_ave_w_errors(fig_df, error_df,
 
     :param fig_df: dataframe to build plot from.  Expects fig_df in the form:
         separation as index, ISIs as columns.
-    :param error_df: dataframe of same shape as fig_df, but contains error values
+    :param error_df: dataframe of same shape as fig_df, but contains error values.
     :param jitter: Jitter x_axis values so points don't overlap.
-    :param error_caps: caps on error bars for more easy reading
+    :param error_caps: caps on error bars for more easy reading.
     :param alt_colours: Use different set of colours to normal (e.g., if ISI on
         x-axis and lines for each separation).
-    :param legend_names: Names of different lines (e.g., ISI names)
+    :param legend_names: Names of different lines (e.g., ISI names).
     :param x_tick_vals: Positions on x-axis.
     :param x_tick_labels: labels for x-axis.
     :param even_spaced_x: If True, x-ticks are evenly spaced,
-        if False they will be spaced according to numeric value (e.g., 0, 1, 2, 3, 6, 18)
-    :param fixed_y_range: default=False. If True will use full range of y values
+        if False they will be spaced according to numeric value (e.g., 0, 1, 2, 3, 6, 18).
+    :param fixed_y_range: default=False. If True, it use full range of y values
         (e.g., 0:110) or can pass a tuple to set y_limits.
-    :param fig_title: Title for figure
-    :param save_name: filename of plot
-    :param save_path: path to folder where plots will be saved
-    :param verbose: print progress to screen
+    :param x_axis_label: Label for x-axis.  If None passed, will use 'Probe separation in diagonal pixels'.
+    :param fig_title: Title for figure.
+    :param save_name: filename of plot.
+    :param save_path: path to folder where plots will be saved.
+    :param verbose: print progress to screen.
 
     :return: figure
     """
@@ -498,7 +500,12 @@ def plot_runs_ave_w_errors(fig_df, error_df,
     if x_tick_labels is not None:
         ax.set_xticks(x_tick_vals)
         ax.set_xticklabels(x_tick_labels)
-    ax.set_xlabel('Probe separation in diagonal pixels')
+
+    if x_axis_label is None:
+        ax.set_xlabel('Probe separation in diagonal pixels')
+    else:
+        ax.set_xlabel(x_axis_label)
+
     ax.set_ylabel('Probe Luminance')
 
     if fixed_y_range:
@@ -537,30 +544,30 @@ def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'
     It will work with either separation on x-axis and different lines for each ISI, or vice versa.
     The first part of the function converts a wide dataframe to a long dataframe.
 
-    :param wide_df: Data to be plotted
+    :param wide_df: Data to be plotted.
     :param cols_to_keep: Variables that will be included in long dataframe.
     :param cols_to_change: Columns containing different measurements of some
         variable (e.g., ISI_1, ISI_4, ISI_6...etc) that will be converted into
         longform (e.g., ISI: [1, 4, 6]).
-    :param cols_to_change_show: What is being measured in cols to change (e.g., probeLum; dependent variable)
-    :param new_col_name: What the cols to change describe (e.g., isi; independent variable)
+    :param cols_to_change_show: What is being measured in cols to change (e.g., probeLum; dependent variable).
+    :param new_col_name: What the cols to change describe (e.g., isi; independent variable).
     :param strip_from_cols: string to remove if independent variables are to be
         turned into numeric values (e.g., for ISI_1, ISI_4, ISI_6, strip 'ISI_' to get 1, 4,6).
-    :param x_axis: Variable to be shown along x-axis (e.g., separation or isi)
-    :param y_axis: Variable to be shown along y-axis (e.g., probeLum)
-    :param hue_var: Variable to be shown with different lines (e.g., isi or separation)
-    :param style_var: Addition variable to show with solid or dashed lines (e.g., congruent or incongruent)
-    :param style_order: Order of style var as displayed in df (e.g., [1, -1])
-    :param error_bars: True or false, whether to display error bars
+    :param x_axis: Variable to be shown along x-axis (e.g., separation or isi).
+    :param y_axis: Variable to be shown along y-axis (e.g., probeLum).
+    :param hue_var: Variable to be shown with different lines (e.g., isi or separation).
+    :param style_var: Addition variable to show with solid or dashed lines (e.g., congruent or incongruent).
+    :param style_order: Order of style var as displayed in df (e.g., [1, -1]).
+    :param error_bars: True or false, whether to display error bars.
     :param jitter: Whether to jitter items on x-axis to make easier to read.
         Can be True, False or float for amount of jitter in relation to x-axis values.
     :param log_scale: Put axes onto log scale.
     :param even_spaced_x: Whether to evenly space ticks on x-axis.
         For example to make the left side of log-scale-like x-values easier to read.
     :param x_tick_vals: Values/labels for x-axis.  Can be string, int or float.
-    :param fig_title: Title for figure
-    :param fig_savename: Save name for figure
-    :param save_path: Save path for figure
+    :param fig_title: Title for figure.
+    :param fig_savename: Save name for figure.
+    :param save_path: Save path for figure.
     :param verbose: Whether to print progress to screen.
 
     :return: figure
@@ -1196,7 +1203,7 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
             file is .../nick1.csv, participant name is 'nick1'.
     :param run_dir: directory where isi folders are stored.
     :param isi_list: List of isi values, may differ between experiments.
-    :param save_all_data: If True, will save all_data_df as an xlsx.
+    :param save_all_data: If True, will save all_data_df as a xlsx.
     :param verbose: If True, will print progress to screen.
 
     :return: ALL_ISIs_sorted.xlsx: A pandas DataFrame with n xlsx file of all
@@ -1538,7 +1545,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
 
 
 def b3_plot_stair_sep0(all_data_path, thr_col='probeLum', resp_col='trial_response',
-                      show_plots=True, save_plots=True, verbose=True):
+                       show_plots=True, save_plots=True, verbose=True):
     """
     b3_plot_staircase: staircases-ISIxxx.png: xxx corresponds to isi conditions.
     One plot for each isi condition.  Each figure has six panels (6 probes separation
@@ -1659,7 +1666,7 @@ def b3_plot_stair_sep0(all_data_path, thr_col='probeLum', resp_col='trial_respon
                     print(f"final_lum_val: {final_lum_val}")
                     print(f"n_reversals: {n_reversals}")
 
-                fig.suptitle(f'Staircases and reversals for isi {isi_name}')
+                fig.suptitle(f'Staircases and reversals')
 
                 # plot thr per step for even_cong numbered stair
                 sns.lineplot(ax=axes[row_idx, col_idx], data=this_stair_df,
@@ -1970,7 +1977,8 @@ def d_average_participant(root_path, run_dir_names_list,
         if 'Unnamed: 0' in list(this_psignifit_df):
             this_psignifit_df.drop('Unnamed: 0', axis=1, inplace=True)
 
-        this_psignifit_df.drop(columns='stair', inplace=True)
+        if 'stair' in list(this_psignifit_df):
+            this_psignifit_df.drop(columns='stair', inplace=True)
 
         rows, cols = this_psignifit_df.shape
         this_psignifit_df.insert(0, 'stack', [run_idx] * rows)
@@ -2002,25 +2010,45 @@ def d_average_participant(root_path, run_dir_names_list,
 
     # # get means and errors
     groupby_sep_df = get_means_df.drop('stack', axis=1)
-    groupby_sep_df = groupby_sep_df.drop('congruent', axis=1)
+    if 'congruent' in groupby_sep_df.columns:
+        groupby_sep_df = groupby_sep_df.drop('congruent', axis=1)
     groupby_sep_df = groupby_sep_df.drop('separation', axis=1)
 
-    ave_psignifit_thr_df = groupby_sep_df.groupby('stair_names', sort=True).mean()
-    if verbose:
-        print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
+    if 'stair_names' in groupby_sep_df.columns:
+        ave_psignifit_thr_df = groupby_sep_df.groupby('stair_names', sort=True).mean()
+        if verbose:
+            print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
 
-    if error_type in [False, None]:
-        error_bars_df = None
-    elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
-        error_bars_df = groupby_sep_df.groupby('stair_names', sort=True).sem()
-    elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
-        error_bars_df = groupby_sep_df.groupby('stair_names', sort=True).std()
+        if error_type in [False, None]:
+            error_bars_df = None
+        elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
+            error_bars_df = groupby_sep_df.groupby('stair_names', sort=True).sem()
+        elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
+            error_bars_df = groupby_sep_df.groupby('stair_names', sort=True).std()
+        else:
+            raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
+                             f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standard_error']\n"
+                             f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
+                             f"'deviation', 'standard_deviation']")
+        print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
+
     else:
-        raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
-                         f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standard_error']\n"
-                         f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
-                         f"'deviation', 'standard_deviation']")
-    print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
+        # for Exp2_Bloch
+        ave_psignifit_thr_df = groupby_sep_df.mean()
+        if verbose:
+            print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
+        if error_type in [False, None]:
+            error_bars_df = None
+        elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
+            error_bars_df = groupby_sep_df.sem()
+        elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
+            error_bars_df = groupby_sep_df.std()
+        else:
+            raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
+                             f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standard_error']\n"
+                             f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
+                             f"'deviation', 'standard_deviation']")
+        print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
 
     # save csv with average values
     if trim_n is not None:
@@ -2156,7 +2184,8 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     :param ave_df_path: Path to df with average across all stacks/participants
     :param error_bars_path: Path to df for errors bars with SE/SD associated with averages.
     :param n_trimmed: Whether averages data has been trimmed.
-    :param exp_ave:
+    :param exp_ave: If False, this script is for participant averages over runs.
+                    If True, the script if for experiment averages over participants.
     :param show_plots:
     :param verbose:
     :return: """
@@ -2183,9 +2212,6 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         ave_df = ave_df_path
     else:
         ave_df = pd.read_csv(ave_df_path)
-    # use ave_w_sep_idx_df for fig 1a and heatmap
-    ave_w_sep_idx_df = ave_df.set_index('stair_names')
-
 
     # if type(error_bars_path) is 'pandas.core.frame.DataFrame':
     if isinstance(error_bars_path, pd.DataFrame):
@@ -2226,6 +2252,9 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         fig_1a_title = f'{ave_over} average threshold per ISI across all runs.\n' \
                        f'(positive values for congruent probe/flow motion, negative for incongruent).'
         fig_1a_savename = f'ave_thr_pos_and_neg.png'
+
+    # use ave_w_sep_idx_df for fig 1a and heatmap
+    ave_w_sep_idx_df = ave_df.set_index('stair_names')
 
     # if I delete this messy plot, I can also delete the function that made it.
     plot_runs_ave_w_errors(fig_df=ave_w_sep_idx_df, error_df=error_bars_df,

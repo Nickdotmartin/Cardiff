@@ -779,7 +779,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('stair_name', thisStair)
         thisExp.addData('step', step)
         thisExp.addData('separation', sep)
-        thisExp.addData('ISI_cond', ISI_cond)
+        thisExp.addData('ISI', ISI_cond)
         thisExp.addData('ISI_time', ISI_time)
         # thisExp.addData('congruent', congruent)
         thisExp.addData('flow_dir', flow_dir)
