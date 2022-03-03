@@ -31,7 +31,6 @@ display_number = 1  # 0 indexed, 1 for external display
 # Store info about the experiment session
 expName = 'Exp3_Ricco_NM'  # from the Builder filename that created this script
 
-# todo: don't need ISI or probe size
 expInfo = {'1_Participant': 'Nick_test',
            '2_Probe_dur_in_frames_at_240hz': [2, 50],
            '3_fps': [240, 144, 60],
@@ -59,7 +58,6 @@ orientation = expInfo['5_Probe_orientation']
 trials_counter = expInfo['7_Trials_counter']
 background = expInfo['8_Background']
 
-# todo: don't need isi
 # ISI timing in ms and frames
 '''ISI can be given (roughly) in ms, for any monitor it will try to match that value in frames.
 The script uses on frames so ISI will be used in that format.
@@ -97,7 +95,7 @@ else:
     sep_vals_list = separation_values
 n_stairs = len(sep_vals_list)
 
-# # main contrast is whether the background and target motion is in same or opposite directions
+# # main contrast is whether the background and target motion is in same or opposite direction.
 # congruence_list: 1=congruent/same, -1=incongruent/different
 # congruence_list = [1, -1]*len(separation_values)
 flow_dir_list = [1, -1]*len(sep_vals_list)
@@ -489,7 +487,7 @@ for step in range(n_trials_per_stair):
         probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, -1.0, 1.0),
                                   lineWidth=0, opacity=1, size=1, interpolate=False)
         # target_jump = np.random.choice([1, -1])  # direction in which the probe jumps : CW or CCW
-        # don't need target jump, both probes in same position
+        # don't need target_jump, both probes in same position
         # target_jump = congruent * flow_dir
         target_jump = flow_dir
 
