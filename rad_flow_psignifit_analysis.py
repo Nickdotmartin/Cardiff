@@ -314,6 +314,53 @@ def multi_plot_shape(n_figs, min_rows=1):
     return n_rows, n_cols
 
 
+def simple_line_plot(indexed_df, fig_title=None, legend_title=None,
+                     x_tick_vals=None, x_tick_labels=None,
+                     x_axis=None, y_axis=None,
+                     log_x=False, log_y=False,
+                     save_as=None):
+    """
+    Function to plot a simple line plot.  No error bars.
+    :param indexed_df: DF where index col is 'separation' or 'stair_names' etc.
+    :param fig_title: Title for figure
+    :param legend_title: Title for legend
+    :param x_tick_vals: Values for x-ticks
+    :param x_tick_labels: Labels for x ticks
+    :param x_axis: Label for x-axis
+    :param y_axis: Label for y-axis
+    :param log_x: Make x-axis log scale
+    :param log_y: Make y-axis log scale
+    :param save_as: Full path (including name) to save to
+    :return: Figure
+    """
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.lineplot(data=indexed_df, markers=True, dashes=False, ax=ax)
+    if fig_title is not None:
+        plt.title(fig_title)
+    if legend_title is not None:
+        plt.legend(title=legend_title)
+    if x_tick_vals is not None:
+        ax.set_xticks(x_tick_vals)
+    if x_tick_labels is not None:
+        ax.set_xticklabels(x_tick_labels)
+        if -18 in x_tick_labels:
+            # add dotted line at zero
+            ax.axvline(x=5.5, linestyle="-.", color='lightgrey')
+    if log_x:
+        ax.set(xscale="log")
+        x_axis = f'log {x_axis}'
+    if log_y:
+        ax.set(yscale="log")
+        y_axis = f'log {y_axis}'
+    if x_axis is not None:
+        ax.set_xlabel(x_axis)
+    if y_axis is not None:
+        ax.set_ylabel(y_axis)
+    if save_as is not None:
+        plt.savefig(save_as)
+    return fig
+
+
 # # # all ISIs on one axis -
 # FIGURE 1 - shows one axis (x=separation (-18:18), y=probeLum) with multiple ISI lines.
 # dotted line at zero to make batman more apparent.
@@ -1991,6 +2038,9 @@ def d_average_participant(root_path, run_dir_names_list,
 
     # join all stacks (runs/groups) data and save as master csv
     all_data_psignifit_df = pd.concat(all_psignifit_list, ignore_index=True)
+    # todo: since I added extra ISI conditions, ISI conds are not in ascending order.
+    #  Perhaps re-order columns before saving?
+
     all_data_psignifit_df.to_csv(f'{root_path}{os.sep}MASTER_psignifit_thresholds.csv', index=False)
     if verbose:
         print(f'\nall_data_psignifit_df:\n{all_data_psignifit_df}')
@@ -2079,6 +2129,8 @@ def d_average_participant(root_path, run_dir_names_list,
             print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
 
     # save csv with average values
+    # todo: since I added extra ISI conditions, ISI conds are not in ascending order.
+    #  Perhaps re-order columns before saving?
     if trim_n is not None:
         ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM_thresh.csv')
         error_bars_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM_thr_error_{error_type}.csv')

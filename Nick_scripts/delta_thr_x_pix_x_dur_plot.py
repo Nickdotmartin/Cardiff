@@ -4,7 +4,7 @@ import psignifit as ps
 import pandas as pd
 import seaborn as sns
 import os
-from rad_flow_psignifit_analysis import plot_w_errors_either_x_axis
+from rad_flow_psignifit_analysis import plot_w_errors_either_x_axis, simple_line_plot
 '''
 This script is to convert our data such that the y axis of the plots reflects 
 something similar to number of photons per conditions.  For this we need to do a few things.
@@ -17,221 +17,241 @@ However, this requires a longform all_data_df.
 For now I'll do it without error bars to keep it simple.
 '''
 
+# def simple_line_plot(indexed_df, fig_title=None, legend_title=None,
+#                      x_tick_vals=None, x_tick_labels=None,
+#                      x_axis=None, y_axis=None,
+#                      log_x=False, log_y=False,
+#                      save_as=None):
+#     """
+#     Function to plot a simple line plot.  No error bars.
+#     :param indexed_df: DF where index col is 'separation' or 'stair_names' etc.
+#     :param fig_title: Title for figure
+#     :param legend_title: Title for legend
+#     :param x_tick_vals: Values for x-ticks
+#     :param x_tick_labels: Labels for x ticks
+#     :param x_axis: Label for x-axis
+#     :param y_axis: Label for y-axis
+#     :param log_x: Make x-axis log scale
+#     :param log_y: Make y-axis log scale
+#     :param save_as: Full path (including name) to save to
+#     :return: Figure
+#     """
+#     fig, ax = plt.subplots(figsize=(10, 6))
+#     sns.lineplot(data=indexed_df, markers=True, dashes=False, ax=ax)
+#     if fig_title is not None:
+#         plt.title(fig_title)
+#     if legend_title is not None:
+#         plt.legend(title=legend_title)
+#     if x_tick_vals is not None:
+#         ax.set_xticks(x_tick_vals)
+#     if x_tick_labels is not None:
+#         ax.set_xticklabels(x_tick_labels)
+#         if -18 in x_tick_labels:
+#             # add dotted line at zero
+#             ax.axvline(x=5.5, linestyle="-.", color='lightgrey')
+#     if log_x:
+#         ax.set(xscale="log")
+#         x_axis = f'log {x_axis}'
+#     if log_y:
+#         ax.set(yscale="log")
+#         y_axis = f'log {y_axis}'
+#     if x_axis is not None:
+#         ax.set_xlabel(x_axis)
+#     if y_axis is not None:
+#         ax.set_ylabel(y_axis)
+#     if save_as is not None:
+#         plt.savefig(save_as)
+#     return fig
 
-root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data/'
+
+root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/'
+
+exp_list = ['exp1a_data', 'radial_flow_exp']
+exp_dir = 'radial_flow_exp'
 ave_thr_name = 'MASTER_exp_ave_thr.csv'
+#
+# exp_list = ['rad_flow_2/Nick', 'Exp2_Bloch_NM/Nick', 'Exp3_Ricco_NM/Nick']
+# exp_dir = 'Exp3_Ricco_NM/Nick'
+# ave_thr_name = 'MASTER_ave_thresh.csv'
 
-ave_thr_df_path = os.path.join(root_path, ave_thr_name)
+
+# load average thr df
+ave_thr_df_path = os.path.join(root_path, exp_dir, ave_thr_name)
 ave_thr_df = pd.read_csv(ave_thr_df_path)
-ave_thr_df = ave_thr_df.set_index('separation')
+print(f'n cols = {len(ave_thr_df.columns.tolist())}')
+if 'separation' in ave_thr_df.columns.tolist():
+    # exp1a
+    index_col_name = 'separation'
+    ave_thr_df = ave_thr_df.set_index(index_col_name)
 
-# ave_thr_df["separation"].replace({20: -1}, inplace=True)
-# ave_thr_df = ave_thr_df.reindex([6, 0, 1, 2, 3, 4, 5])
-print(f'ave_thr_df:\n{ave_thr_df}\n')
+    # RICCO
+    if len(ave_thr_df.columns.tolist()) == 1:
+        ave_thr_df.columns = ['thr']
+
+elif 'stair_names' in ave_thr_df.columns.tolist():
+    # rad_flow/rad_flow_2
+    index_col_name = 'stair_names'
+    ave_thr_df = ave_thr_df.set_index(index_col_name)
+elif len(ave_thr_df.columns.tolist()) == 2:
+    print('found 2 columns')
+    # bloch
+    ave_thr_df.columns = ['cond', 'thr']
+    index_col_name = 'cond'
+    ave_thr_df = ave_thr_df.set_index(index_col_name)
+
+# reorder columns
+if 'ISI_8' in ave_thr_df.columns.to_list():
+    print('found isi_8')
+    # new_cols_order = ['ISI_1', 'ISI_4', 'ISI_6', 'ISI_8', 'ISI_9', 'ISI_10', 'ISI_12']
+    new_cols_order = ['ISI_1', 'ISI_4', 'ISI_6', 'ISI_9', 'ISI_12']
+    ave_thr_df = ave_thr_df[new_cols_order]
+
+
+
+# 1prove values to change
+one_probe_vals = [-99, -20, 20, 110, 'ISI_-99.0']
+index_col = ave_thr_df.index.to_list()
+if -18 not in index_col:
+    # experiments with -18 do not include 1probe
+    sep_vals = [-1 if i in one_probe_vals else i for i in index_col]
+    sep_labels = ['1pr' if i == -1 else i for i in sep_vals]
+    one_probe_matches = list(set(index_col).intersection(one_probe_vals))
+    if len(one_probe_matches) == 1:
+        one_probe_name = one_probe_matches[0]
+        print(f'\nFOUND\none_probe_name: {one_probe_name}\n')
+    else:
+        raise ValueError(f'\nFOUND\nseveral one probe matches: {one_probe_matches}')
+else:
+    sep_vals = index_col
+    sep_labels = sep_vals
+sep_range = list(range(len(index_col)))
+print(f'index_col:{index_col}\n'
+      f'sep_range: {sep_range}\n'
+      f'sep_vals: {sep_vals}\n'
+      f'sep_labels: {sep_labels}')
+
+log_y_axis = True
 
 # convert to delta thr
 bgLum = 21.2
-
 delta_thr_df = (ave_thr_df - bgLum)/bgLum
-print(f'delta_thr_df:\n{delta_thr_df}\n')
+
+# fake_data = {0: [1, 1, 1, 1, 1, 1, 1, 1],
+#              1: [1, 1, 1, 1, 1, 1, 1, 1],
+#              2: [1, 1, 1, 1, 1, 1, 1, 1],
+#              3: [1, 1, 1, 1, 1, 1, 1, 1],
+#              6: [1, 1, 1, 1, 1, 1, 1, 1],
+#              18: [1, 1, 1, 1, 1, 1, 1, 1],
+#              20: [1, 1, 1, 1, 1, 1, 1, 1]}
+# delta_thr_df = pd.DataFrame.from_dict(data=fake_data, orient='index',
+#                                     columns=['Concurrent', 'ISI0', 'ISI2', 'ISI4', 'ISI6', 'ISI9', 'ISI12', 'ISI24'])
+# delta_thr_df.index.names = ['separation']
+
+print(f'\ndelta_thr_df:\n{delta_thr_df}\n')
+
+# line plot for delta ISIs
+delta_isi_df = delta_thr_df.copy()
+delta_isi_df.index = sep_range
+print(f'delta_isi_df:\n{delta_isi_df}\n')
+
+fig1_title = f'{exp_dir}: ∆thr for ISIs'
+fig1_savename = 'delta_thr_isi.png'
+save_as = os.path.join(root_path, exp_dir, fig1_savename)
+simple_line_plot(indexed_df=delta_isi_df, fig_title=fig1_title,
+                 legend_title='ISI',
+                 x_tick_vals=sep_range, x_tick_labels=sep_labels,
+                 x_axis='Separation (diagonal pixels)',
+                 y_axis='∆ Threshold',
+                 log_y=log_y_axis,
+                 save_as=save_as
+                 )
+plt.show()
+
+# only make these plots if there are more than 2 columns
+if 'thr' in ave_thr_df.columns.to_list():
+    print('Not making transposed fig')
+else:
+    # line plot for delta separations
+    delta_sep_df = delta_thr_df.copy().T
+    delta_sep_df.columns = sep_labels
+    print(f'delta_sep_df:\n{delta_sep_df}\n')
+    fig2_title = f'{exp_dir}: ∆thr for Separations'
+    fig2_savename = 'delta_thr_sep.png'
+    save_as = os.path.join(root_path, exp_dir, fig2_savename)
+    simple_line_plot(indexed_df=delta_sep_df, fig_title=fig2_title,
+                     legend_title='Separation',
+                     x_axis='ISI (inter-stimulus interval)',
+                     y_axis='∆ Threshold',
+                     log_y=log_y_axis,
+                     save_as=save_as
+                     )
+plt.show()
+
+
 
 # weight by pixels and duration
+'''for most conds, thr is multiplied by 40 (2x5 active pixels for 2x2 frames).
+for concurrent, conds are multipies by 20 (2x5 active pixels for 2 frames)
+for 1probe, conds are multiples by 10 (5 active pixels for 2 frames)
+for
+'''
 weighted_df = delta_thr_df*40
-# todo: divide 1probe by 4
-# weighted_df.loc[20] = weighted_df.iloc[20]/4
-print(f'weighted_df:\n{weighted_df}\n')
+print(f'weighted_df (all * 40):\n{weighted_df}\n')
+
+# change concurrent
+# print(f'weighted_df:\n{weighted_df}\n')
+if 'Concurrent' in weighted_df.columns.tolist():
+    conc = weighted_df['Concurrent']/2
+    # print(f'conc:\n{conc}\n')
+    weighted_df['Concurrent'] = conc
+    print(f'weighted_df (Conc sorted):\n{weighted_df}\n')
+
+    # # convert oneProbe/Concurrent back
+    weighted_df["Concurrent"][one_probe_name] = weighted_df["Concurrent"][one_probe_name]*2
+
+# if there is a 1probe cond
+if -18 not in index_col:
+    # divide 1probe by 4
+    oneProbe = weighted_df.loc[one_probe_name]
+    oneProbe = oneProbe/4
+    weighted_df.loc[one_probe_name] = oneProbe
+    print(f'weighted_df (conc & 1pr sorted):\n{weighted_df}\n')
+
+# line plot for weighted delta ISIs
+weighted_isi_df = weighted_df.copy()
+weighted_isi_df.index = sep_range
+print(f'weighted_isi_df:\n{weighted_isi_df}\n')
+fig3_title = f'{exp_dir}: weighted ∆thr for ISIs'
+fig3_savename = 'weighted_delta_isi.png'
+save_as = os.path.join(root_path, exp_dir, fig3_savename)
+simple_line_plot(indexed_df=weighted_isi_df, fig_title=fig3_title,
+                 legend_title='ISI',
+                 x_tick_vals=sep_range, x_tick_labels=sep_labels,
+                 x_axis='Separation (diagonal pixels)',
+                 y_axis='∆ Threshold *  n_pixels * n_frames',
+                 log_y=log_y_axis,
+                 save_as=save_as
+                 )
+plt.show()
 
 
-# area_dur_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_notes_info_etc/probe_sizes.xlsx'
-#
-# # constants
-# bgLum = 21.2
-# onePixel_width_mm = .311
-# oneFrame_dur_ms = 4.16666666666666
-#
-# print('Duration Plots')
-# bloch_df = ave_thr_df.iloc[0][1:]
-# bloch_df = pd.DataFrame(bloch_df)
-# bloch_df.reset_index(inplace=True)
-# bloch_df.columns = ['cond', 'thr']
-# # bloch_df = bloch_df.reindex([1, 2, 3, 4, 5, 6, 7, 0])
-# # bloch_df.reset_index(drop=True, inplace=True)
-# print(f'bloch_df:\n{bloch_df}')
-#
-# dur_df = pd.read_excel(area_dur_path, engine='openpyxl', sheet_name='duration',
-#                        usecols=['cond', 'probes', 'active_fr', 'duration_fr', 'prop_active'],
-#                        nrows=8)
-# print(f'dur_df:\n{dur_df}\n')
-#
-# x_dur_frames = dur_df['duration_fr'].to_list() # [1:]
-# x_dur_ms = [i*oneFrame_dur_ms for i in x_dur_frames]
-# # print(f'x_dur_ms: {x_dur_ms}\n')
-# thr_var = bloch_df['thr'].to_list()
-# delta_thr = [(i-bgLum)/bgLum for i in thr_var]
-# print(f'thr_var: {thr_var}\n')
-# print(f'delta_thr: {delta_thr}\n')
-#
-# '''log dur x log delta lum'''
-# x_var = x_dur_ms
-# print(f'x_var: {x_var}\n')
-# y_var = delta_thr
-# print(f'y_var: {y_var}\n')
-#
-# fig, ax = plt.subplots()
-# sns.lineplot(x=x_var, y=y_var, ax=ax, marker='o')
-# ax.set_xticks(x_var)
-# ax.set_xticklabels(x_var)
-# ax.set(xscale="log", yscale="log")
-# ax.set_xlabel('duration of stimulus in ms (probe1 + ISI + probe2)')
-# ax.set_ylabel('∆lum/BGlum')
-# plt.title('Stimulus duration x Delta Lumination')
-# plt.tight_layout()
-# # plt.savefig('/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data/log_dur_x_log_delta_lum.png')
-# plt.show()
-#
-# '''log dur x WEIGHTED log delta lum'''
-# x_var = x_dur_ms
-# print(f'x_var: {x_var}\n')
-#
-# thr_multiplier = dur_df['prop_active'].to_list()
-# print(f'thr_multiplier: {thr_multiplier}\n')
-# y_var = [a*b for a, b in zip(delta_thr, thr_multiplier)] # [1:]
-# print(f'y_var: {y_var}\n')
-#
-# fig, ax = plt.subplots()
-# sns.lineplot(x=x_var, y=y_var, ax=ax, marker='o')
-# ax.set_xticks(x_var)
-# ax.set_xticklabels(x_var)
-# ax.set(xscale="log", yscale="log")
-# ax.set_xlabel('duration of stimulus in ms (probe1 + ISI + probe2)')
-# ax.set_ylabel('∆lum/BGlum x proportion of stimulus that is illuminated')
-# plt.title('Stimulus duration x WEIGHTED Delta Lumination')
-# plt.tight_layout()
-# # plt.savefig('/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data/log_dur_x_log_weighted_delta_lum.png')
-# plt.show()
-#
-# print('Area Plot')
-# ricco_df = ave_thr_df[['separation', 'Concurrent']]
-# ricco_df.columns = ['separation', 'thr']
-# print(f'ricco_df:\n{ricco_df}\n')
-#
-# area_df = pd.read_excel(area_dur_path, engine='openpyxl', sheet_name='Area',
-#                         usecols=['index', 'spatial_cond', 'active_pixels', 'area_type', 'area', 'prop_active'],
-#                         index_col='index')
-# print(f'area_df:\n{area_df}\n')
-#
-# this_area_df = area_df[area_df['area_type'] == 'circle_calc']
-# print(f'this_area_df:\n{this_area_df}\n')
-#
-# x_area_pix = this_area_df['area'].to_list() # [1:]
-# x_area_mm = [i*onePixel_width_mm for i in x_area_pix]
-# print(f'x_area_mm: {x_area_mm}\n')
-#
-# thr_var = ricco_df['thr'].to_list()
-# delta_thr = [(i-bgLum)/bgLum for i in thr_var]
-# print(f'thr_var: {thr_var}\n')
-# print(f'delta_thr: {delta_thr}\n')
-#
-# '''log area x  log delta lum'''
-# x_var = x_area_mm
-# print(f'x_var: {x_var}\n')
-#
-# y_var = delta_thr
-# print(f'y_var: {y_var}\n')
-#
-# fig, ax = plt.subplots()
-# sns.lineplot(x=x_var, y=y_var, ax=ax, marker='o')
-# ax.set_xticks(x_var)
-# ax.set_xticklabels(x_var)
-# ax.set(xscale="log", yscale="log")
-# ax.set_xlabel('Circlular area of stimulus in mm$\mathregular{^2}$')
-# ax.set_ylabel('∆lum/BGlum')
-# plt.title('Stimulus area x Delta Lumination')
-# plt.tight_layout()
-# # plt.savefig('/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data/log_area_x_log_delta_lum.png')
-# plt.show()
-#
-# '''log area x WEIGHTED log delta lum'''
-# x_var = x_area_mm
-# print(f'x_var: {x_var}\n')
-#
-# thr_multiplier = this_area_df['prop_active'].to_list()
-# print(f'thr_multiplier: {thr_multiplier}\n')
-# y_var = [a*b for a,b in zip(delta_thr, thr_multiplier)] # [1:]
-# print(f'y_var: {y_var}\n')
-#
-# fig, ax = plt.subplots()
-# sns.lineplot(x=x_var, y=y_var, ax=ax, marker='o')
-# ax.set_xticks(x_var)
-# ax.set_xticklabels(x_var)
-# ax.set(xscale="log", yscale="log")
-# ax.set_xlabel('Circlular area of stimulus in mm$\mathregular{^2}$')
-# ax.set_ylabel('∆lum/BGlum x proportion of stimulus that is illuminated')
-# plt.title('Stimulus area x WEIGHTED Delta Lumination')
-# plt.tight_layout()
-# # plt.savefig('/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data/log_area_x_log_weighted_delta_lum.png')
-# plt.show()
-#
-#
-# '''combined plot'''
-# all_thr_df = pd.read_csv(ave_thr_df_path)  # , index_col='separation')
-# # print(f'all_thr_df:\n{all_thr_df}\n')
-# all_thr_df["separation"].replace({20: -1}, inplace=True)
-# all_thr_df = ave_thr_df.reindex([6, 0, 1, 2, 3, 4, 5])
-# all_thr_df.insert(0, 'area', x_area_mm)
-# all_thr_df.set_index('area', drop=True, inplace=True)
-# all_thr_df.drop('separation', axis=1, inplace=True)
-# print(f'all_thr_df:\n{all_thr_df}\n')
-#
-# all_delta_df = (all_thr_df-bgLum)/bgLum
-# print(f'all_delta_df:\n{all_delta_df}\n')
-#
-# area_x_dur_df = pd.read_excel(area_dur_path, engine='openpyxl', sheet_name='area_x_frames',
-#                        usecols=['separation', 'Concurrent', 'ISI0', 'ISI2', 'ISI4', 'ISI6', 'ISI9', 'ISI12', 'ISI24'],
-#                        nrows=8, index_col='separation')
-# print(f'area_x_dur_df:\n{area_x_dur_df}\n')
-#
-# all_weights_df = pd.read_excel(area_dur_path, engine='openpyxl', sheet_name='all_weights',
-#                        usecols=['separation', 'Concurrent', 'ISI0', 'ISI2', 'ISI4', 'ISI6', 'ISI9', 'ISI12', 'ISI24'],
-#                        nrows=8, index_col='separation')
-# all_weights_df.insert(0, 'area', x_area_mm)
-# all_weights_df.set_index('area', drop=True, inplace=True)
-# print(f'all_weights_df:\n{all_weights_df}\n')
-#
-# weighted_thr_df = all_delta_df.mul(all_weights_df)
-# print(f'weighted_thr_df:\n{weighted_thr_df}\n')
-#
-# fig, ax = plt.subplots(figsize=(10, 6))
-# sns.lineplot(data=all_delta_df, markers=True, dashes=False, ax=ax)
-# ax.set(xscale="log", yscale="log")
-# ax.set_xlabel('Circlular area of stimulus in mm$\mathregular{^2}$')
-# ax.set_ylabel('∆lum/BGlum')
-# plt.title('Stimulus area x Delta Lumination')
-# # plt.savefig('/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data/log_area_x_log_delta_lum_ALL.png')
-# plt.show()
-#
-# fig, ax = plt.subplots(figsize=(10, 6))
-# sns.lineplot(data=weighted_thr_df, markers=True, dashes=False, ax=ax)
-# ax.set(xscale="log", yscale="log")
-# ax.set_xlabel('Circlular area of stimulus in mm$\mathregular{^2}$')
-# ax.set_ylabel('∆lum/BGlum x proportion of stimulus that is illuminated')
-# plt.title('Stimulus area x WEIGHTED Delta Lumination')
-# # plt.savefig('/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data/log_area_x_log_weighted_delta_lum_ALL.png')
-# plt.show()
-#
-#
-# '''scatter plot'''
-# area_x_dur_np = area_x_dur_df.to_numpy().flatten()
-# print(f'area_x_dur_np:\n{area_x_dur_np}\n')
-#
-# weighted_thr_np = weighted_thr_df.to_numpy().flatten()
-# print(f'weighted_thr_np:\n{weighted_thr_np}\n')
-#
-# fig, ax = plt.subplots(figsize=(10, 6))
-# sns.scatterplot(x=area_x_dur_np, y=weighted_thr_np)
-# ax.set(xscale="log", yscale="log")
-# ax.set_xlabel('Stimulus area (pixels) x duration (frames)')
-# ax.set_ylabel('∆lum/BGlum x proportion of stimulus that is illuminated')
-# plt.title('Stimulus (area x duration) x WEIGHTED Delta Lumination')
-# # plt.savefig('/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data/scatter_area_x_dur_weighted.png')
-# plt.show()
+# only make these plots if there are more than 2 columns
+if 'thr' in ave_thr_df.columns.to_list():
+    print('Not making transposed fig')
+else:
+    # line plot for weighted delta separations
+    weighted_sep_df = weighted_df.copy().T
+    weighted_sep_df.columns = sep_labels
+    print(f'weighted_sep_df:\n{weighted_sep_df}\n')
+    fig4_title = f'{exp_dir}: weighted ∆thr for Separations'
+    fig4_savename = 'weighted_delta_sep.png'
+    save_as = os.path.join(root_path, exp_dir, fig4_savename)
+
+    simple_line_plot(indexed_df=weighted_sep_df, fig_title=fig4_title,
+                     legend_title='separation',
+                     x_axis='ISI (inter-stimulus interval)',
+                     y_axis='∆ Threshold *  n_pixels * n_frames',
+                     log_y=log_y_axis,
+                     save_as=save_as
+                     )
+    plt.show()
