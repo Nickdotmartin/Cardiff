@@ -15,10 +15,8 @@ from kestenSTmaxVal import Staircase
 '''
 This script is a follow on from exp1a (but uses radial_flow_NM_v2 as its basis):
 Exp2_Bloch_NM - no spatial separation - just temporal - test Bloch.
-probe 2 in exact same place as probe 1.'''
+probe 2 in exact same place as probe 1.
 
-
-'''
 Future directions...Version 2
 If still not complete summation:
 a. test with no ISI (e.g., vary duration). 
@@ -77,19 +75,13 @@ This means that the experiment should have similar ms timings on monitors with d
 milliseconds: [100, 50, 41.66, 37.5, 33.34, 25, 16.67, 8.33, 0]
 frames@240hz: [24,  12,  10,    9,    8,     6,  4,    2,    0]
 '''
-# ISI_selected_ms = float(expInfo['4_ISI_dur_in_ms'])
-# ISI_frames = int(ISI_selected_ms * fps / 1000)
-# ISI_actual_ms = (1/fps) * ISI_frames * 1000
-# ISI = ISI_frames
-# print(f"\nSelected {ISI_selected_ms}ms ISI.\n"
-#       f"At {fps}Hz this is {ISI_frames} frames which each take {ISI_actual_ms}ms.\n")
 
 # if fps == 240:
-ISI_ms_list = [-99, 0, 8.33, 16.67, 25, 37.5, 50, 100]
+ISI_ms_list = [0, 8.33, 16.67, 25, 37.5, 50, 100, 110]
 if fps == 144:
-    ISI_ms_list = [-99, 0, 6.94, 13.89, 27.78, 34.72, 48.61, 97.22]
+    ISI_ms_list = [0, 6.94, 13.89, 27.78, 34.72, 48.61, 97.22, 110]
 elif fps == 60:
-    ISI_ms_list = [-99, 0, 16.67, 33.33, 50, 100]
+    ISI_ms_list = [0, 16.67, 33.33, 50, 100, 110]
 
 # VARIABLES
 n_trials_per_stair = 25
@@ -101,13 +93,7 @@ rotate_probe2 = 0
 prelim_bg_flow_ms = 70
 prelim_bg_flow_fr = int(prelim_bg_flow_ms * fps / 1000)
 
-# Distances between probes & flow direction
-# separation_values = [18, 6, 3, 2, 1, 0]
-'''each separation value appears in 2 stairs, e.g.,
-stair1 will be sep=18, flow_dir=inwards; stair2 will be sep=18, flow_dir=outwards etc.
-e.g., separations = [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]
-this study does not include the two single probe conditions (labeled 99 in previous exp)
-'''
+
 # separations = list(np.repeat(separation_values, 2))
 if background == 'flow_rad':
     isi_list = list(np.repeat(ISI_ms_list, 2))
@@ -115,9 +101,10 @@ else:
     isi_list = ISI_ms_list
 n_stairs = len(isi_list)
 
-# # main contrast is whether the background and target motion is in same or opposite directions
-# congruence_list: 1=congruent/same, -1=incongruent/different
-# congruence_list = [1, -1]*len(separation_values)
+"""
+main contrast is whether the background and target motion is in same or opposite directions
+congruence_list: 1=congruent/same, -1=incongruent/different
+congruence_list = [1, -1]*len(separation_values)"""
 flow_dir_list = [1, -1]*len(ISI_ms_list)
 
 # FILENAME
@@ -267,9 +254,9 @@ flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
                                             flow_bgcolor[1],
                                             flow_bgcolor[2]-0.3])
 
-# full screen mask to blend off edges and fade to black
-# Create a raisedCosine mask array and assign it to a Grating stimulus (grey outside, transparent inside)
-# this was useful http://www.cogsci.nl/blog/tutorials/211-a-bit-about-patches-textures-and-masks-in-psychopy
+"""full screen mask to blend off edges and fade to black
+Create a raisedCosine mask array and assign it to a Grating stimulus (grey outside, transparent inside)
+this was useful http://www.cogsci.nl/blog/tutorials/211-a-bit-about-patches-textures-and-masks-in-psychopy"""
 raisedCosTexture2 = visual.filters.makeMask(1080, shape='raisedCosine', fringeWidth=0.6, radius=[1.0, 1.0])
 invRaisedCosTexture = -raisedCosTexture2  # inverts mask to blur edges instead of center
 blankslab = np.ones((1080, 420))  # create blank slabs to put to left and right of image
@@ -280,9 +267,9 @@ dotsMask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
 # changed dotsmask color from grey
 # above fades to black round edges which makes screen edges less visible
 
-# function for wrapping flow_dots back into volume
-# its is used as WrapPoints(z, minDist, maxDist)
-# Any dots with a z (depth) value out of bounds are transformed to be in bounds
+"""function for wrapping flow_dots back into volume
+its is used as WrapPoints(z, minDist, maxDist)
+Any dots with a z (depth) value out of bounds are transformed to be in bounds"""
 def WrapPoints(ii, imin, imax):
     lessthanmin = (ii < imin)
     ii[lessthanmin] = ii[lessthanmin] + (imax-imin)
@@ -333,7 +320,7 @@ if trials_counter:
 
 # BREAKS
 total_n_trials = int(n_trials_per_stair * n_stairs)
-take_break = int(total_n_trials/3)
+take_break = int(total_n_trials/3)+1
 print(f"take_break every {take_break} trials.")
 breaks = visual.TextStim(win=win, name='breaks',
                          text="turn on the light and take at least 30-seconds break.\n\n"
@@ -365,11 +352,13 @@ for stair_idx in expInfo['stair_list']:
     thisInfo = copy.copy(expInfo)
     thisInfo['stair_idx'] = stair_idx
 
-    # stair_name will be pos or neg sep value for congruence (e.g., 18, -18, 6, -6 etc)
-    # however, change -0 to -.1 to avoid confusion with 0.
-    # stair_name = separations[stair_idx] * congruence_list[stair_idx]
-    # if separations[stair_idx] + congruence_list[stair_idx] == -1:
-    #     stair_name = -.1
+    """
+    stair_name will be pos or neg sep value for congruence (e.g., 18, -18, 6, -6 etc)
+    however, change -0 to -.1 to avoid confusion with 0.
+    stair_name = separations[stair_idx] * congruence_list[stair_idx]
+    if separations[stair_idx] + congruence_list[stair_idx] == -1:
+        stair_name = -.1
+    """
     stair_name = isi_list[stair_idx]
     if background == 'flow_rad':
         stair_name = isi_list[stair_idx] * flow_dir_list[stair_idx]
@@ -408,13 +397,11 @@ for step in range(n_trials_per_stair):
         # ISI_cond is the condition, ISI_time is for timing 
         ISI_cond = isi_list[stair_idx]
         ISI_time = ISI_cond
-        if ISI_cond < 0:
+        if ISI_cond == 110:
             ISI_time = 0
 
         # # congruence is balanced with separation values
         # congruent = congruence_list[stair_idx]
-        # flow_dir = flow_directions[stair_idx]
-        # flow_dir = np.random.choice([1, -1])
         flow_dir = flow_dir_list[stair_idx]
 
         # PROBE
@@ -448,7 +435,8 @@ for step in range(n_trials_per_stair):
         # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
         corner = np.random.choice([45, 135, 225, 315])
 
-        print(f'\tcorner: {corner}, flow_dir: {flow_dir}, target_jump: {target_jump}')
+        print(f'\tcorner: {corner}, flow_dir: {flow_dir}, target_jump: {target_jump}'
+              f' isi: {ISI_cond}')
         # dist_from_fix is a constant giving distance form fixation,
         # dist_from_fix was previously 2 identical variables x_prob & y_prob.
         dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
@@ -709,7 +697,7 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(3)
                     fixation.draw()
                     # don't show 2nd probe in 1pr condition
-                    if ISI_cond >= 0:
+                    if ISI_cond != 110:
                         probe2.draw()
                     trials_counter.draw()
 

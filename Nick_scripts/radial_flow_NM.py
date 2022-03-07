@@ -163,7 +163,7 @@ mon.save()
 # WINDOW SPEC
 win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     colorSpace='rgb',
-                    color=bgcolor,  # bgcolor from martin's flow script, not bgColor255
+                    color=bgcolor,  # bgcolor from Martin's flow script, not bgColor255
                     winType='pyglet',  # I've added pyglet to make it work on pycharm/mac
                     pos=[1, -1],  # pos gives position of top-left of screen
                     units='pix',
@@ -172,14 +172,6 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     fullscr=use_full_screen,
                     )
 
-
-# # check correct monitor details (fps, size) have been accessed.
-# check_correct_monitor(monitor_name=monitor_name,
-#                       actual_size=win.size,
-#                       actual_fps=win.getActualFrameRate(),
-#                       verbose=True)
-# # todo: add something so that if check_correct_monitor raises an error, don't save csv.
-# #  Can use ExperimentHandler.abort() for this
 
 try:
     check_correct_monitor(monitor_name=monitor_name,
@@ -703,7 +695,7 @@ for step in range(n_trials_per_stair):
                     thisExp.close()
                     core.quit()
 
-                # redo the trial if i think i made a mistake
+                # redo the trial if I think I made a mistake
                 if event.getKeys(keyList=["r"]) or event.getKeys(keyList=['num_9']):
                     repeat = True
                     continueRoutine = False

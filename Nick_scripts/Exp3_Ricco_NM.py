@@ -83,7 +83,7 @@ prelim_bg_flow_fr = int(prelim_bg_flow_ms * fps / 1000)
 
 
 # Distances between probes & flow direction
-separation_values = [-99, 0, 1, 2, 3, 6, 18]
+separation_values = [-1, 0, 1, 2, 3, 6, 18]
 '''each separation value appears in 2 stairs, e.g.,
 stair1 will be sep=18, flow_dir=inwards; stair2 will be sep=18, flow_dir=outwards etc.
 e.g., sep_vals_list = [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]
@@ -406,7 +406,7 @@ if trials_counter:
 
 # BREAKS
 total_n_trials = int(n_trials_per_stair * n_stairs)
-take_break = int(total_n_trials/3)
+take_break = int(total_n_trials/3)+1
 print(f"take_break every {take_break} trials.")
 breaks = visual.TextStim(win=win, name='breaks',
                          text="turn on the light and take at least 30-seconds break.\n\n"
@@ -516,7 +516,8 @@ for step in range(n_trials_per_stair):
         # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
         corner = np.random.choice([45, 135, 225, 315])
 
-        print(f'\tcorner: {corner}, flow_dir: {flow_dir}, target_jump: {target_jump}')
+        print(f'\tcorner: {corner}, flow_dir: {flow_dir}, target_jump: {target_jump}'
+              f' sep: {sep}  probe_name: {probe_name}')
         # dist_from_fix is a constant giving distance form fixation,
         # dist_from_fix was previously 2 identical variables x_prob & y_prob.
         dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
@@ -860,7 +861,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('BGspeed', flow_speed)
         thisExp.addData('orientation', orientation)
         # thisExp.addData('ISI_actual_ms', ISI_actual_ms)
-        # thisExp.addData('ISI_frames', ISI_frames)
+        thisExp.addData('ISI', 0)
 
         thisExp.nextEntry()
 

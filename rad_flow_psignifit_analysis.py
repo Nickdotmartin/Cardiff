@@ -2009,12 +2009,14 @@ def d_average_participant(root_path, run_dir_names_list,
         get_means_df = all_data_psignifit_df
 
     # # get means and errors
-    groupby_sep_df = get_means_df.drop('stack', axis=1)
-    if 'congruent' in groupby_sep_df.columns:
-        groupby_sep_df = groupby_sep_df.drop('congruent', axis=1)
-    groupby_sep_df = groupby_sep_df.drop('separation', axis=1)
+    if 'stair_names' in get_means_df.columns:
 
-    if 'stair_names' in groupby_sep_df.columns:
+        groupby_sep_df = get_means_df.drop('stack', axis=1)
+        if 'congruent' in groupby_sep_df.columns:
+            groupby_sep_df = groupby_sep_df.drop('congruent', axis=1)
+        groupby_sep_df = groupby_sep_df.drop('separation', axis=1)
+
+    # if 'stair_names' in groupby_sep_df.columns:
         ave_psignifit_thr_df = groupby_sep_df.groupby('stair_names', sort=True).mean()
         if verbose:
             print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
@@ -2032,23 +2034,49 @@ def d_average_participant(root_path, run_dir_names_list,
                              f"'deviation', 'standard_deviation']")
         print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
 
+    # elif len(groupby_sep_df.columns) ==
     else:
-        # for Exp2_Bloch
-        ave_psignifit_thr_df = groupby_sep_df.mean()
-        if verbose:
-            print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
-        if error_type in [False, None]:
-            error_bars_df = None
-        elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
-            error_bars_df = groupby_sep_df.sem()
-        elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
-            error_bars_df = groupby_sep_df.std()
+        # groupby_sep_df = get_means_df
+        groupby_sep_df = get_means_df.drop('stack', axis=1)
+
+        if len(groupby_sep_df.columns) == 2:
+            # for Exp3_Ricco - group by separation
+            ave_psignifit_thr_df = groupby_sep_df.groupby('separation', sort=True).mean()
+
+            if verbose:
+                print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
+
+            if error_type in [False, None]:
+                error_bars_df = None
+            elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
+                error_bars_df = groupby_sep_df.groupby('separation', sort=True).sem()
+            elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
+                error_bars_df = groupby_sep_df.groupby('separation', sort=True).std()
+            else:
+                raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
+                                 f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standard_error']\n"
+                                 f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
+                                 f"'deviation', 'standard_deviation']")
+            print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
         else:
-            raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
-                             f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standard_error']\n"
-                             f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
-                             f"'deviation', 'standard_deviation']")
-        print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
+            # for Exp2_Bloch - I can drop separation and don't groupby
+            groupby_sep_df = groupby_sep_df.drop('separation', axis=1)
+            ave_psignifit_thr_df = groupby_sep_df.mean()
+
+            if verbose:
+                print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
+            if error_type in [False, None]:
+                error_bars_df = None
+            elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
+                error_bars_df = groupby_sep_df.sem()
+            elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
+                error_bars_df = groupby_sep_df.std()
+            else:
+                raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
+                                 f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standard_error']\n"
+                                 f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
+                                 f"'deviation', 'standard_deviation']")
+            print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
 
     # save csv with average values
     if trim_n is not None:
