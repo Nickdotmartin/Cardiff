@@ -362,7 +362,7 @@ def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
 def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bins=True,
                                sep_col='separation', isi_list=None, sep_list=None, 
                                group=None,
-                               cols_to_add_dict=None,
+                               cols_to_add_dict=None, save_name=None,
                                verbose=True):
     """
     Function to make a dataframe (stair x isi) of psignifit threshold values for an entire run.
@@ -378,6 +378,7 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
     :param sep_list: Default=None.  List of separation values.  If None passed will use defualts.
     :param group: Default=None.  Pass a group id for exp1a to differentiate between identical stairs (e.g., 1&2, 3&4 etc).
     :param cols_to_add_dict: add dictionary of columns to insert to finished df (header=key, column=value)
+    :param save_name: Pass a name to save output or if None will save as 'psignifit_thresholds'.
     :param verbose: Print progress to screen
 
     :return: Dataframe of thresholds from psignifit for each ISI and stair.
@@ -484,9 +485,14 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
         print(f"thr_df:\n{thr_df}")
 
     # save threshold array
-    thr_filename = f'psignifit_thresholds.csv'
+    if save_name is None:
+        thr_filename = f'psignifit_thresholds'
+    else:
+        thr_filename = save_name
     if group is not None:
         thr_filename = f'g{group}_{thr_filename}'
+    thr_filename = f'{thr_filename}.csv'
+
 
     thr_filepath = os.path.join(root_path, p_run_name, thr_filename)
     print(f'saving psignifit_thresholds.csv to {thr_filepath}')

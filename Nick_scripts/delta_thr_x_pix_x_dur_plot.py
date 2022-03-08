@@ -108,7 +108,7 @@ if 'ISI_8' in ave_thr_df.columns.to_list():
 
 
 
-# 1prove values to change
+# 1probe indices to change
 one_probe_vals = [-99, -20, 20, 110, 'ISI_-99.0']
 index_col = ave_thr_df.index.to_list()
 if -18 not in index_col:
@@ -131,6 +131,18 @@ print(f'index_col:{index_col}\n'
       f'sep_labels: {sep_labels}')
 
 log_y_axis = True
+
+# todo: convert to cd/m2?
+'''At each trial, a white probe of _ cd/m2 luminance appeared at one of four 
+meridians (45, 135, 225, or 315 degrees) and at 4 dva eccentricity. 
+The probe consisted of 5 pixels (0.49 mm2) arranged in two diagonal lines, 
+one of 3 pixels and the other of 2 pixels subtending a maximum visual angle of 0.13 dva.
+
+307.65 cd/m2 and the minimum was 0.1 cd/m2
+'''
+mon_cdm2_min, mon_cdm2_max = 0.1, 307.65
+rgb_255_min, rgb_255_max = 0, 255
+bg_cdm2 = 80
 
 # convert to delta thr
 bgLum = 21.2

@@ -841,6 +841,7 @@ def multi_batman_plots(mean_df, thr1_df, thr2_df,
     my_colours = fig_colours(len(isi_name_list))
     n_rows, n_cols = multi_plot_shape(len(isi_name_list), min_rows=2)
     fig, axes = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(12, 6))
+    print(f'\nplotting {n_rows} rows and {n_cols} cols for {len(axes)} plots')
 
     if fig_title is not None:
         fig.suptitle(fig_title)
@@ -959,6 +960,12 @@ def multi_batman_plots(mean_df, thr1_df, thr2_df,
                                       label='mean')
             ax.legend(handles=[st1, st2, mean_line], fontsize=6)
 
+            print(f'ax_counter: {ax_counter}, len(isi_name_list): {len(isi_name_list)}')
+            if ax_counter+1 == len(isi_name_list):
+                print(f'idiot check, no more plots to make here')
+                # continue
+                break
+
     plt.tight_layout()
     
     if save_path is not None:
@@ -1036,7 +1043,7 @@ def multi_pos_sep_per_isi(ave_thr_df, error_df,
         print(f'\ncong_df: {cong_df.shape}\n{cong_df}')
         print(f'\ncong_err_df: {cong_err_df.shape}\n{cong_err_df}')
         print(f'\nincong_df: {incong_df.shape}\n{incong_df}')
-        print(f'\nincong_err_df: {incong_err_df.shape}\n{incong_err_df}')
+        print(f'\nincong_err_df: {incong_err_df.shape}\n{incong_err_df}\n')
 
     cap_size = 0
     if error_caps:
@@ -1051,6 +1058,7 @@ def multi_pos_sep_per_isi(ave_thr_df, error_df,
     my_colours = fig_colours(len(isi_names_list))
     n_rows, n_cols = multi_plot_shape(len(isi_names_list), min_rows=2)
     fig, axes = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(12, 6))
+    print(f'\nplotting {n_rows} rows and {n_cols} cols for {len(axes)} plots')
 
     if fig_title is not None:
         fig.suptitle(fig_title)
@@ -1161,6 +1169,12 @@ def multi_pos_sep_per_isi(ave_thr_df, error_df,
                                 markersize=4, label='Incongruent')
 
             ax.legend(handles=[st1, st2], fontsize=6)
+
+            print(f'ax_counter: {ax_counter}, len(isi_name_list): {len(isi_names_list)}')
+            if ax_counter+1 == len(isi_names_list):
+                print(f'idiot check, no more plots to make here')
+                # continue
+                break
 
     plt.tight_layout()
 
