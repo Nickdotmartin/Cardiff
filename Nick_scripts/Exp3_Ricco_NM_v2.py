@@ -18,7 +18,9 @@ This script is a follow on from exp1a (but uses radial_flow_NM_v2 as its basis):
 Exp3_Ricco_NM: no temporal summation, just spatial - test Ricco.
 No ISI, only one probe.
 designed to run with 3 conditions - 2probes, lines and circles.
-No separation, probe size (length) varies.
+For 2probes it is same as exp1a or rad_flow - two probes separated by 'sep'
+For lines there is no separation, probe length varies by sep.
+For circles there is no separation, probe area varies by sep.
 '''
 
 # Ensure that relative paths start from the same directory as this script
@@ -30,13 +32,13 @@ monitor_name = 'NickMac'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_1
 display_number = 1  # 0 indexed, 1 for external display
 
 # Store info about the experiment session
-expName = 'Exp3_Ricco_NM'  # from the Builder filename that created this script
+expName = 'Exp3_Ricco_NM_v2'  # from the Builder filename that created this script
 
-expInfo = {'1_Participant': 'Nick_test',
-           '2_Probe_dur_in_frames_at_240hz': [2, 50],
+expInfo = {'1_Participant': 'Nick_test_2',
+           '2_Probe_dur_in_frames_at_240hz': [2, 50, 100],
            '3_fps': [240, 144, 60],
            # '4_ISI_dur_in_ms': [100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0],
-           '5_Probe_orientation': ['radial', 'tangent'],
+           # '5_Probe_orientation': ['tangent', 'radial'],
            # '6_Probe_size': ['5pixels', '6pixels', '3pixels'],
            '7_Trials_counter': [True, False],
            '8_Background': [None, 'flow_rad']
@@ -54,25 +56,13 @@ expInfo['time'] = datetime.now().strftime("%H:%M:%S")
 participant_name = expInfo['1_Participant']
 probe_duration = int(expInfo['2_Probe_dur_in_frames_at_240hz'])
 fps = int(expInfo['3_fps'])
-orientation = expInfo['5_Probe_orientation']
+# orientation = expInfo['5_Probe_orientation']
+orientation = 'tangent'
 # Probe_size = expInfo['6_Probe_size']
 trials_counter = expInfo['7_Trials_counter']
 background = expInfo['8_Background']
-
-# ISI timing in ms and frames
-'''ISI can be given (roughly) in ms, for any monitor it will try to match that value in frames.
-The script uses on frames so ISI will be used in that format.
-The actual ms timing is given for record.
-This means that the experiment should have similar ms timings on monitors with different fps
-milliseconds: [100, 50, 41.66, 37.5, 33.34, 25, 16.67, 8.33, 0]
-frames@240hz: [24,  12,  10,    9,    8,     6,  4,    2,    0]
-'''
-# ISI_selected_ms = float(expInfo['4_ISI_dur_in_ms'])
-# ISI_frames = int(ISI_selected_ms * fps / 1000)
-# ISI_actual_ms = (1/fps) * ISI_frames * 1000
-# ISI = ISI_frames
-# print(f"\nSelected {ISI_selected_ms}ms ISI.\n"
-#       f"At {fps}Hz this is {ISI_frames} frames which each take {ISI_actual_ms}ms.\n")
+if background is 'flow_rad':
+    orientation = 'radial'
 
 # VARIABLES
 n_trials_per_stair = 25
@@ -82,34 +72,27 @@ probe_ecc = 4
 prelim_bg_flow_ms = 70
 prelim_bg_flow_fr = int(prelim_bg_flow_ms * fps / 1000)
 
-
+'''Sort separation and condition types'''
 # Distances between probes & flow direction
 separation_values = [-1, 0, 1, 2, 3, 6, 18]
-'''each separation value appears in 2 stairs, e.g.,
-stair1 will be sep=18, flow_dir=inwards; stair2 will be sep=18, flow_dir=outwards etc.
-e.g., sep_vals_list = [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]
-this study does not include the two single probe conditions (labeled 99 in previous exp)
-'''
-# if background == 'flow_rad':
-#     sep_vals_list = list(np.repeat(separation_values, 2))
-# else:
-#     sep_vals_list = separation_values
-
+print(f'separation_values: {separation_values}')
 # # I now have three versions of each condition - 2probe, line and area.
 cond_types = ['2probe', 'lines', 'circles']
-sep_vals_list = list(np.repeat(separation_values, 3))
-n_stairs = len(sep_vals_list)
-
-cond_type_list = list(np.tile(cond_types, len(separation_values)))
-n_stairs = len(sep_vals_list)
-stair_names_list = [f'{s}_{c}' for s, c in zip(sep_vals_list, cond_type_list)]
 print(f'cond_types: {cond_types}')
-print(f'separation_values: {separation_values}')
+# repeat separation values three times so one of each e.g., [-1, -1, -1, 0, 0, 0, ...]
+sep_vals_list = list(np.repeat(separation_values, 3))
 print(f'sep_vals_list: {sep_vals_list}')
-print(f'cond_type_list: {cond_type_list}')
+n_stairs = len(sep_vals_list)
 print(f'n_stairs: {n_stairs}')
+# cond type list cycles through conds e.g., ['2probe', 'lines', 'circles', '2probe', 'lines', 'circles'...]
+cond_type_list = list(np.tile(cond_types, len(separation_values)))
+print(f'cond_type_list: {cond_type_list}')
+# stair_names_list joins sep_vals_list and cond_type_list
+# e.g., ['-1_2probe', '-1_lines', '-1_circles', '0_2probe', '0_lines', '0_circles'...]
+stair_names_list = [f'{s}_{c}' for s, c in zip(sep_vals_list, cond_type_list)]
 print(f'stair_names_list: {stair_names_list}')
 
+'''ignore background flow for now'''
 # # main contrast is whether the background and target motion is in same or opposite direction.
 # congruence_list: 1=congruent/same, -1=incongruent/different
 # congruence_list = [1, -1]*len(separation_values)
@@ -220,120 +203,44 @@ else:
 
 
 # PROBEs
-# todo: put these vertices back in for 2probes
-# probe sizes choice
-# if expInfo['6_Probe_size'] == '6pixels':  # 6 pixels
-#     probeVert = [(0, 0), (1, 0), (1, 1), (2, 1),
-#                  (2, -2), (-1, -2), (-1, -1), (0, -1)]
-# elif expInfo['6_Probe_size'] == '3pixels':  # 3 pixels
-#     probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, 0), (1, 0), (1, -1),
-#                  (0, -1), (0, -2), (-1, -2), (-1, -2), (-1, -1), (0, -1)]
-# else:  # 5 pixels
-#     # default setting is expInfo['6_Probe_size'] == '5pixels':
-#     expInfo['6_Probe_size'] = '5pixels'
-#     probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
-#                  (1, -2), (-1, -2), (-1, -1), (0, -1)]
-# probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, -1.0, 1.0),
-#                           lineWidth=0, opacity=1, size=1, interpolate=False)
-# probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor=[-1.0, 1.0, -1.0],
-#                           lineWidth=0, opacity=1, size=1, interpolate=False)
-
+# use this for the 2probe conditions
+Martin_Vert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
+               (1, -2), (-1, -2), (-1, -1), (0, -1)]
+# use these for the lines conditions
 oneP_vert = [(-1, -2), (-1, 0), (0, 0), (0, 1), (2, 1),
              (2, 0), (1, 0), (1, -1), (0, -1), (0, -2)]
-
 sep0_vert = [(-2, -1), (-2, 1), (-1, 1), (-1, 2), (1, 2),
              (1, -1), (0, -1), (0, -2), (-2, -2)]
-sep1_vert = [(-2, 0), (-2, 2), (-1, 2), (-1, 3), (1, 3),
-             (1, 1), (2, 1), (2, -1), (1, -1), (1, -2), (-1, -2), (-1, -1),
-             (-2, -1)]
-sep2_vert = [(-2, 0), (-2, 2), (-1, 2), (-1, 3), (1, 3),
-             (1, 1), (2, 1),
-             (2, 0), (3, 0),
-             (3, -2), (2, -2), (2, -3), (0, -3), (0, -2),
-             (-1, -2), (-1, -1), (-2, -1)]
-sep3_vert = [(-3, 1), (-3, 3), (-2, 3), (-2, 4), (0, 4),
-             (0, 2), (1, 2),
-             (1, 1), (2, 1),
-
-             (2, 0), (3, 0), (3, -2),
-             (2, -2), (2, -3), (0, -3), (0, -2),
-
-             (-1, -2), (-1, -1),
-             (-2, -1), (-2, 0), (-3, 0)]
-
-sep6_vert = [(-4, 2), (-4, 4), (-3, 4), (-3, 5), (-1, 5),
-             (-1, 3), (0, 3),
-             (0, 2), (1, 2),
-             (1, 1), (2, 1),
-
-             (2, 0), (3, 0), (3, -1), (4, -1), (4, -2), (5, -2),
-             (5, -4), (4, -4), (4, -5), (2, -5),
-             (2, -4), (1, -4), (1, -3), (0, -3), (0, -2),
-
-             (-1, -2), (-1, -1),
-             (-2, -1), (-2, 0),
-             (-3, 0), (-3, 1), (-4, 1)]
-
-sep18_vert = [(-10, 8), (-10, 10), (-9, 10), (-9, 11), (-7, 11),
-              (-7, 9), (-6, 9),
-              (-6, 8), (-5, 8),
-              (-5, 7), (-4, 7),
-              (-4, 6), (-3, 6),
-              (-3, 5), (-2, 5),
-              (-2, 4), (-1, 4),
-              (-1, 3), (0, 3),
-              (0, 2), (1, 2),
-              (1, 1), (2, 1),
-              (2, 0), (3, 0),
-              (3, -1), (4, -1),
-              (4, -2), (5, -2),
-              (5, -3), (6, -3),
-              (6, -4), (7, -4),
-              (7, -5), (8, -5),
-              (8, -6), (9, -6),
-              (9, -7), (10, -7),
-              (10, -8), (11, -8),
-
-              (11, -10), (10, -10), (10, -11), (8, -11),
-              (8, -10), (7, -10),
-
-              (7, -9), (6, -9),
-              (6, -8), (5, -8),
-              (5, -7), (4, -7),
-              (4, -6), (3, -6),
-              (3, -5), (2, -5),
-              (2, -4), (1, -4),
-              (1, -3), (0, -3),
-              (0, -2), (-1, -2),
-              (-1, -1), (-2, -1),
-              (-2, 0), (-3, 0),
-              (-3, 1), (-4, 1),
-              (-4, 2), (-5, 2),
-              (-5, 3), (-6, 3),
-              (-6, 4), (-7, 4),
-              (-7, 5), (-8, 5),
-              (-8, 6), (-9, 6),
-              (-9, 7), (-10, 7)]
-
-oneP = visual.ShapeStim(win, vertices=oneP_vert, fillColor=(1.0, 1.0, 1.0),
-                        lineWidth=0, opacity=1, size=1, interpolate=False)
-sep0 = visual.ShapeStim(win, vertices=sep0_vert, fillColor=(1.0, 1.0, 1.0),
-                        lineWidth=0, opacity=1, size=1, interpolate=False)
-sep1 = visual.ShapeStim(win, vertices=sep1_vert, fillColor=(1.0, 1.0, 1.0),
-                        lineWidth=0, opacity=1, size=1, interpolate=False)
-sep2 = visual.ShapeStim(win, vertices=sep2_vert, fillColor=(1.0, 1.0, 1.0),
-                        lineWidth=0, opacity=1, size=1, interpolate=False)
-sep3 = visual.ShapeStim(win, vertices=sep3_vert, fillColor=(1.0, 1.0, 1.0),
-                        lineWidth=0, opacity=1, size=1, interpolate=False)
-sep6 = visual.ShapeStim(win, vertices=sep6_vert, fillColor=(1.0, 1.0, 1.0),
-                        lineWidth=0, opacity=1, size=1, interpolate=False)
-sep18 = visual.ShapeStim(win, vertices=sep18_vert, fillColor=(1.0, 1.0, 1.0),
-                         lineWidth=0, opacity=1, size=1, interpolate=False)
-probe_list = [oneP, sep0, sep1, sep2, sep3, sep6, sep18]
+sep1_vert = [(-2, 0), (-2, 2), (-1, 2), (-1, 3), (1, 3), (1, 1), (2, 1),
+             (2, -1), (1, -1), (1, -2), (-1, -2), (-1, -1), (-2, -1)]
+sep2_vert = [(-2, 0), (-2, 2), (-1, 2), (-1, 3), (1, 3), (1, 1), (2, 1), (2, 0),
+             (3, 0), (3, -2), (2, -2), (2, -3), (0, -3), (0, -2), (-1, -2),
+             (-1, -1), (-2, -1)]
+sep3_vert = [(-3, 1), (-3, 3), (-2, 3), (-2, 4), (0, 4), (0, 2), (1, 2), (1, 1),
+             (2, 1), (2, 0), (3, 0), (3, -2), (2, -2), (2, -3), (0, -3), (0, -2),
+             (-1, -2), (-1, -1), (-2, -1), (-2, 0), (-3, 0)]
+sep6_vert = [(-4, 2), (-4, 4), (-3, 4), (-3, 5), (-1, 5), (-1, 3), (0, 3),
+             (0, 2), (1, 2), (1, 1), (2, 1), (2, 0), (3, 0), (3, -1), (4, -1),
+             (4, -2), (5, -2), (5, -4), (4, -4), (4, -5), (2, -5), (2, -4),
+             (1, -4), (1, -3), (0, -3), (0, -2), (-1, -2), (-1, -1), (-2, -1),
+             (-2, 0), (-3, 0), (-3, 1), (-4, 1)]
+sep18_vert = [(-10, 8), (-10, 10), (-9, 10), (-9, 11), (-7, 11), (-7, 9),
+              (-6, 9), (-6, 8), (-5, 8), (-5, 7), (-4, 7), (-4, 6), (-3, 6),
+              (-3, 5), (-2, 5), (-2, 4), (-1, 4), (-1, 3), (0, 3), (0, 2),
+              (1, 2), (1, 1), (2, 1), (2, 0), (3, 0), (3, -1), (4, -1),
+              (4, -2), (5, -2), (5, -3), (6, -3), (6, -4), (7, -4), (7, -5),
+              (8, -5), (8, -6), (9, -6), (9, -7), (10, -7), (10, -8), (11, -8),
+              (11, -10), (10, -10), (10, -11), (8, -11), (8, -10), (7, -10),
+              (7, -9), (6, -9), (6, -8), (5, -8), (5, -7), (4, -7), (4, -6),
+              (3, -6), (3, -5), (2, -5), (2, -4), (1, -4), (1, -3), (0, -3),
+              (0, -2), (-1, -2), (-1, -1), (-2, -1), (-2, 0), (-3, 0), (-3, 1),
+              (-4, 1), (-4, 2), (-5, 2), (-5, 3), (-6, 3), (-6, 4), (-7, 4),
+              (-7, 5), (-8, 5), (-8, 6), (-9, 6), (-9, 7), (-10, 7)]
 probe_vert_list = [oneP_vert, sep0_vert, sep1_vert, sep2_vert, sep3_vert, sep6_vert, sep18_vert]
 probe_name_list = ['oneP', 'sep0', 'sep1', 'sep2', 'sep3', 'sep6', 'sep18']
+# radii of circles for circle_probes
+circle_rad_list = [2.15, 2.5, 2.8, 3.4, 4.1, 6.1, 14.6]
 
-# todo: add in circle probe info here
 
 # MASK BEHIND PROBES
 raisedCosTexture1 = visual.filters.makeMask(256, shape='raisedCosine',
@@ -424,7 +331,7 @@ if trials_counter:
 
 # BREAKS
 total_n_trials = int(n_trials_per_stair * n_stairs)
-take_break = int(total_n_trials/5)+1
+take_break = int(total_n_trials/7)+1
 print(f"take_break every {take_break} trials.")
 breaks = visual.TextStim(win=win, name='breaks',
                          text="turn on the light and take at least 30-seconds break.\n\n"
@@ -456,10 +363,9 @@ for stair_idx in expInfo['stair_list']:
     thisInfo = copy.copy(expInfo)
     thisInfo['stair_idx'] = stair_idx
 
-    # stair_name will be pos or neg sep value for congruence (e.g., 18, -18, 6, -6 etc)
-    # however, change -0 to -.1 to avoid confusion with 0.
-    # stair_name = sep_vals_list[stair_idx]
+
     stair_name = stair_names_list[stair_idx]
+    # ignore background flow for now
     if background == 'flow_rad':
         stair_name = stair_names_list[stair_idx] * flow_dir_list[stair_idx]
 
@@ -485,8 +391,6 @@ for step in range(n_trials_per_stair):
     np.random.shuffle(stairs)
     for thisStair in stairs:
 
-        print(f"thisStair: {thisStair}, step: {step}")
-
         trial_number = trial_number + 1
         trialClock.reset()
 
@@ -494,48 +398,44 @@ for step in range(n_trials_per_stair):
         sep = sep_vals_list[stair_idx]
         cond_type = cond_type_list[stair_idx]
 
-        # todo: sort out stimuli.  what do I need to each type of stimuli?
-        #  I need to know cond_type & separation,
+        print(f"thisStair: {thisStair}, step: {step}, trial_number: {trial_number}")
+        print(f"stair_idx: {stair_idx}, cond_type: {cond_type}, sep: {sep}")
+
+        # sort out stimuli by cond_type - load correct size stim based on sep
         if cond_type == 'lines':
-            # choose verticies specifying probe shape
-            probeVert = probe_vert_list[stair_idx]
-            probe_name = probe_name_list[stair_idx]
-
-            new_probe = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, 1.0, 1.0),
-                                         lineWidth=0, opacity=1, size=1, interpolate=False, )
+            # there are 7 probe_verts (vertices), but 21 staircases, so I've repeated them to match up
+            probe_vert_list_2 = list(np.repeat(probe_vert_list, 3))
+            probeVert = probe_vert_list_2[stair_idx]
+            line_probe = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, 1.0, 1.0),
+                                          lineWidth=0, opacity=1, size=1, interpolate=False, )
+            probe1 = line_probe
         elif cond_type == '2probe':
-            # I need to specify the sep for probe 2 as well as the orientation
-
+            dot_probe1 = visual.ShapeStim(win, vertices=Martin_Vert, fillColor=(1.0, -1.0, 1.0),
+                                          lineWidth=0, opacity=1, size=1, interpolate=False)
+            probe1 = dot_probe1
         elif cond_type == 'circles':
-            circle_rad_list = [2.15, 2.5, 2.8, 3.4, 4.1, 6.1, 14.6]
-            # todo: I need to link the circle_rad_list to sep - perhaps with a dict.
-            circle = visual.Circle(win, radius=circle_rad_list[idx], units='pix', size=1,
-                                   lineColor='black', fillColor='black', lineWidth=0, interpolate=False)
-
+            # there are 7 circle_radii, but 21 staircases, so I've repeated them to match up
+            circle_rad_list_2 = list(np.repeat(circle_rad_list, 3))
+            circle_probe = visual.Circle(win, radius=circle_rad_list_2[stair_idx],
+                                         units='pix', size=1, lineColor='black',
+                                         fillColor='black', lineWidth=0, interpolate=False)
+            probe1 = circle_probe
         else:
             raise ValueError(f'Unknown cond type: {cond_type}')
 
-        '''
-        2probe:
-        lines:
-        area: 
-        '''
+        # probe2 is always defined here, but only presented if cond_type == '2probe'
+        probe2 = visual.ShapeStim(win, vertices=Martin_Vert, fillColor=[-1.0, 1.0, -1.0],
+                                  lineWidth=0, opacity=1, size=1, interpolate=False)
 
-
+        # ignore bg flow, congruence and trgt_flow_same for now.
         # # congruence is balanced with separation values
         # congruent = congruence_list[stair_idx]
-        # flow_dir = flow_directions[stair_idx]
         # flow_dir = np.random.choice([1, -1])
         flow_dir = flow_dir_list[stair_idx]
-
-        # PROBE
-        probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, -1.0, 1.0),
-                                  lineWidth=0, opacity=1, size=1, interpolate=False)
-        # target_jump = np.random.choice([1, -1])  # direction in which the probe jumps : CW or CCW
-        # don't need target_jump, both probes in same position
-        # target_jump = congruent * flow_dir
-        target_jump = flow_dir
-
+        target_jump = np.random.choice([1, -1])  # direction in which the probe jumps : CW or CCW
+        # Make variable for whether target_jump and flow dir are the same
+        # (e.g., both inward or both outward = 1, else -1)
+        # trgt_flow_same = flow_dir*target_jump
 
         # flow_dots
         x = np.random.rand(nDots) * taille - taille / 2
@@ -546,23 +446,20 @@ for step in range(n_trials_per_stair):
         y_flow = y / z
 
 
-        # Make variable for whether target_jump and flow dir are the same
-        # (e.g., both inward or both outward = 1, else -1)
-        # trgt_flow_same = flow_dir*target_jump
+
 
         # staircase varies probeLum
         probeLum = thisStair.next()
         probeColor255 = probeLum * LumColor255Factor
         probeColor1 = (probeColor255 * Color255Color1Factor) - 1
         probe1.color = [probeColor1, probeColor1, probeColor1]
-        # probe2.color = [probeColor1, probeColor1, probeColor1]
+        probe2.color = [probeColor1, probeColor1, probeColor1]
 
         # PROBE LOCATIONS
         # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
         corner = np.random.choice([45, 135, 225, 315])
 
-        print(f'\tcorner: {corner}, flow_dir: {flow_dir}, target_jump: {target_jump}'
-              f' sep: {sep}  probe_name: {probe_name}')
+        print(f'\tcorner: {corner}, flow_dir: {flow_dir}, target_jump: {target_jump}')
         # dist_from_fix is a constant giving distance form fixation,
         # dist_from_fix was previously 2 identical variables x_prob & y_prob.
         dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
@@ -584,25 +481,25 @@ for step in range(n_trials_per_stair):
             if orientation == 'tangent':
                 if target_jump == 1:  # CCW
                     probe1.ori = 0
-                    # probe2.ori = 180
-                    # # probe2 is left and up from probe1
-                    # probe2.pos = [p1_x - sep + 1, p1_y + sep]
+                    probe2.ori = 180
+                    # probe2 is left and up from probe1
+                    probe2.pos = [p1_x - sep + 1, p1_y + sep]
                 elif target_jump == -1:  # CW
                     probe1.ori = 180
-                    # probe2.ori = 0
-                    # # probe2 is right and down from probe1
-                    # probe2.pos = [p1_x + sep - 1, p1_y - sep]
+                    probe2.ori = 0
+                    # probe2 is right and down from probe1
+                    probe2.pos = [p1_x + sep - 1, p1_y - sep]
             elif orientation == 'radial':
                 if target_jump == 1:  # inward
                     probe1.ori = 270
-                    # probe2.ori = 90
-                    # # probe2 is left and down from probe1
-                    # probe2.pos = [p1_x - sep + 1, p1_y - sep]
+                    probe2.ori = 90
+                    # probe2 is left and down from probe1
+                    probe2.pos = [p1_x - sep + 1, p1_y - sep]
                 elif target_jump == -1:  # outward
                     probe1.ori = 90
-                    # probe2.ori = 270
-                    # # probe2 is right and up from probe1
-                    # probe2.pos = [p1_x + sep - 1, p1_y + sep]
+                    probe2.ori = 270
+                    # probe2 is right and up from probe1
+                    probe2.pos = [p1_x + sep - 1, p1_y + sep]
         elif corner == 135:
             # in top-left corner, x decreases (left) and y increases (up)
             p1_x = dist_from_fix * -1
@@ -610,25 +507,25 @@ for step in range(n_trials_per_stair):
             if orientation == 'tangent':
                 if target_jump == 1:  # CCW
                     probe1.ori = 90
-                    # probe2.ori = 270
-                    # # probe2 is right and up from probe1
-                    # probe2.pos = [p1_x + sep - 1, p1_y + sep]
+                    probe2.ori = 270
+                    # probe2 is right and up from probe1
+                    probe2.pos = [p1_x + sep - 1, p1_y + sep]
                 elif target_jump == -1:  # CW
                     probe1.ori = 270
-                    # probe2.ori = 90
-                    # # probe2 is left and down from probe1
-                    # probe2.pos = [p1_x - sep + 1, p1_y - sep]
+                    probe2.ori = 90
+                    # probe2 is left and down from probe1
+                    probe2.pos = [p1_x - sep + 1, p1_y - sep]
             elif orientation == 'radial':
                 if target_jump == 1:  # inward
                     probe1.ori = 180
-                    # probe2.ori = 0
-                    # # probe2 is right and down from probe1
-                    # probe2.pos = [p1_x + sep - 1, p1_y - sep]
+                    probe2.ori = 0
+                    # probe2 is right and down from probe1
+                    probe2.pos = [p1_x + sep - 1, p1_y - sep]
                 elif target_jump == -1:  # outward
                     probe1.ori = 0
-                    # probe2.ori = 180
-                    # # probe2 is left and up from probe1
-                    # probe2.pos = [p1_x - sep + 1, p1_y + sep]
+                    probe2.ori = 180
+                    # probe2 is left and up from probe1
+                    probe2.pos = [p1_x - sep + 1, p1_y + sep]
         elif corner == 225:
             # in bottom left corner, both x and y decrease (left and down)
             p1_x = dist_from_fix * -1
@@ -636,23 +533,23 @@ for step in range(n_trials_per_stair):
             if orientation == 'tangent':
                 if target_jump == 1:  # CCW
                     probe1.ori = 180
-                    # probe2.ori = 0
-                    # probe2.pos = [p1_x + sep - 1, p1_y - sep]
+                    probe2.ori = 0
+                    probe2.pos = [p1_x + sep - 1, p1_y - sep]
                 elif target_jump == -1:  # CW
                     probe1.ori = 0
-                    # probe2.ori = 180
-                    # probe2.pos = [p1_x - sep + 1, p1_y + sep]
+                    probe2.ori = 180
+                    probe2.pos = [p1_x - sep + 1, p1_y + sep]
             elif orientation == 'radial':
                 if target_jump == 1:  # inward
                     probe1.ori = 90
-                    # probe2.ori = 270
-                    # # probe2 is right and up from probe1
-                    # probe2.pos = [p1_x + sep - 1, p1_y + sep]
+                    probe2.ori = 270
+                    # probe2 is right and up from probe1
+                    probe2.pos = [p1_x + sep - 1, p1_y + sep]
                 elif target_jump == -1:  # outward
                     probe1.ori = 270
-                    # probe2.ori = 90
-                    # # probe2 is left and down from probe1
-                    # probe2.pos = [p1_x - sep + 1, p1_y - sep]
+                    probe2.ori = 90
+                    # probe2 is left and down from probe1
+                    probe2.pos = [p1_x - sep + 1, p1_y - sep]
         else:
             corner = 315
             # in bottom-right corner, x increases (right) and y decreases (down)
@@ -661,32 +558,33 @@ for step in range(n_trials_per_stair):
             if orientation == 'tangent':
                 if target_jump == 1:  # CCW
                     probe1.ori = 270
-                    # probe2.ori = 90
-                    # probe2.pos = [p1_x - sep + 1, p1_y - sep]
+                    probe2.ori = 90
+                    probe2.pos = [p1_x - sep + 1, p1_y - sep]
                 elif target_jump == -1:  # CW
                     probe1.ori = 90
-                    # probe2.ori = 270
-                    # probe2.pos = [p1_x + sep - 1, p1_y + sep]
+                    probe2.ori = 270
+                    probe2.pos = [p1_x + sep - 1, p1_y + sep]
             elif orientation == 'radial':
                 if target_jump == 1:  # inward
                     probe1.ori = 0
-                    # probe2.ori = 180
-                    # # probe2 is left and up from probe1
-                    # probe2.pos = [p1_x - sep + 1, p1_y + sep]
+                    probe2.ori = 180
+                    # probe2 is left and up from probe1
+                    probe2.pos = [p1_x - sep + 1, p1_y + sep]
                 elif target_jump == -1:  # outward
                     probe1.ori = 180
-                    # probe2.ori = 0
-                    # # probe2 is right and down from probe1
-                    # probe2.pos = [p1_x + sep - 1, p1_y - sep]
+                    probe2.ori = 0
+                    # probe2 is right and down from probe1
+                    probe2.pos = [p1_x + sep - 1, p1_y - sep]
 
         probe1.pos = [p1_x, p1_y]
 
 
         # timing in frames
-        # fixation time is now 70ms shorted than previously.
+        # fixation time is now 70ms shorted than previously, but t_bg motion adds 70ms.
         t_fixation = 1 * (fps - prelim_bg_flow_fr)
         t_bg_motion = t_fixation + prelim_bg_flow_fr
         t_interval_1 = t_bg_motion + probe_duration
+        # there is no isi or probe2 time
         # t_ISI = t_interval_1 + ISI
         # t_interval_2 = t_ISI + probe_duration
         # essentially unlimited time to respond
@@ -776,6 +674,9 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(3)
                     fixation.draw()
                     probe1.draw()
+                    if cond_type == '2probe':
+                        # print('drawing probe2')
+                        probe2.draw()
                     trials_counter.draw()
 
 
@@ -891,9 +792,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('stair_name', thisStair)
         thisExp.addData('step', step)
         thisExp.addData('separation', sep)
-        thisExp.addData('probe_name', probe_name)
-
-        # thisExp.addData('congruent', congruent)
+        thisExp.addData('cond_type', cond_type)
         thisExp.addData('flow_dir', flow_dir)
         thisExp.addData('probe_jump', target_jump)
         thisExp.addData('corner', corner)
@@ -905,7 +804,6 @@ for step in range(n_trials_per_stair):
         thisExp.addData('probe_ecc', probe_ecc)
         thisExp.addData('BGspeed', flow_speed)
         thisExp.addData('orientation', orientation)
-        # thisExp.addData('ISI_actual_ms', ISI_actual_ms)
         thisExp.addData('ISI', 0)
 
         thisExp.nextEntry()
