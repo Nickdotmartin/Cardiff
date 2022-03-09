@@ -19,6 +19,8 @@ the background radial motion is taken from integration_RiccoBloch_flow_new.
 ISI is always >=0 (no simultaneous probes).
 """
 
+# todo: change colorspace to 255 and make sure probes, background and probemasks are sorted!
+
 # Ensure that relative paths start from the same directory as this script
 _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
@@ -123,7 +125,9 @@ maxColor1 = 1
 minColor1 = -1
 bgLumP = 20
 bgLum = maxLum * bgLumP / 100
-flow_bgcolor = [-0.1, -0.1, -0.1]
+
+# todo: I think I need to get the bgcolour255 variable in here and use this rather than bgcolor
+flow_bgcolor = [-0.1, -0.1, -0.1]  # dark grey
 
 if background == 'flow_rad':
     # background colour: use darker grey.  set once here and use elsewhere

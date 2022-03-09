@@ -58,7 +58,7 @@ def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='sta
     else:
         raw_data_df = pd.read_csv(csv_path, usecols=[sep_col, thr_col, resp_col])
     if verbose:
-        print(f"raw_data:\n{raw_data_df.head()}")
+        print(f"raw_data:\n{raw_data_df}")
 
     # access separation either through separation column or stair column
     if stair_levels is None:
@@ -71,7 +71,7 @@ def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='sta
     
     raw_data_df = raw_data_df[raw_data_df[sep_col].isin(stair_levels)]
     if verbose:
-        print(f"raw_data, stair_levels:{stair_levels}:\n{raw_data_df.head()}")
+        print(f"raw_data, stair_levels:{stair_levels}:\n{raw_data_df}")
 
     dataset_name = f'{p_run_name}_ISI{isi}_sep{sep}_stair{stair_levels[0]}'
 

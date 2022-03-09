@@ -34,7 +34,7 @@ display_number = 1  # 0 indexed, 1 for external display
 # Store info about the experiment session
 expName = 'Exp3_Ricco_NM_v2'  # from the Builder filename that created this script
 
-expInfo = {'1_Participant': 'Nick_test_2',
+expInfo = {'1_Participant': 'Nick_test_1',
            '2_Probe_dur_in_frames_at_240hz': [2, 50, 100],
            '3_fps': [240, 144, 60],
            # '4_ISI_dur_in_ms': [100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0],
@@ -75,12 +75,14 @@ prelim_bg_flow_fr = int(prelim_bg_flow_ms * fps / 1000)
 '''Sort separation and condition types'''
 # Distances between probes & flow direction
 separation_values = [-1, 0, 1, 2, 3, 6, 18]
+# separation_values = [18]
 print(f'separation_values: {separation_values}')
 # # I now have three versions of each condition - 2probe, line and area.
 cond_types = ['2probe', 'lines', 'circles']
+# cond_types = ['circles']
 print(f'cond_types: {cond_types}')
 # repeat separation values three times so one of each e.g., [-1, -1, -1, 0, 0, 0, ...]
-sep_vals_list = list(np.repeat(separation_values, 3))
+sep_vals_list = list(np.repeat(separation_values, len(cond_types)))
 print(f'sep_vals_list: {sep_vals_list}')
 n_stairs = len(sep_vals_list)
 print(f'n_stairs: {n_stairs}')
@@ -125,16 +127,19 @@ minColor255 = 0
 maxColor1 = 1
 minColor1 = -1
 bgLumP = 20
-bgLum = maxLum * bgLumP / 100
-flow_bgcolor = [-0.1, -0.1, -0.1]
+bgLum = maxLum * bgLumP / 100  # bgLum is 20% of max lum == 21.2
+# NEW using bgColor255 now, not just bgLum.
+bgColor255 = bgLum * LumColor255Factor
+flow_bgcolor = [-0.1, -0.1, -0.1]  # darkgrey
 
+# todo: get rid of bgcolor variable, just use bgcolor255
 if background == 'flow_rad':
     # background colour: use darker grey.  set once here and use elsewhere
     bgcolor = flow_bgcolor
 else:
     # bgColor255 = bgLum * LumColor255Factor
     # bgcolor = bgColor255
-    bgcolor = flow_bgcolor
+    bgcolor = bgColor255
 
 
 # MONITOR SPEC
@@ -163,10 +168,12 @@ mon = monitors.Monitor(monitor_name, width=monitorwidth, distance=viewdist)
 mon.setSizePix((widthPix, heightPix))
 mon.save()
 
-
+# todo: sort our colour space - at the moment when both probe and background say 21.2, probe is MUCH darker than bg!
 # WINDOW SPEC
 win = visual.Window(monitor=mon, size=(widthPix, heightPix),
-                    colorSpace='rgb',
+                    # colorSpace='rgb',
+                    # color=bgcolor,  # bgcolor from Martin's flow script, not bgColor255
+                    colorSpace='rgb255',
                     color=bgcolor,  # bgcolor from Martin's flow script, not bgColor255
                     winType='pyglet',  # I've added pyglet to make it work on pycharm/mac
                     pos=[1, -1],  # pos gives position of top-left of screen
@@ -240,6 +247,7 @@ probe_vert_list = [oneP_vert, sep0_vert, sep1_vert, sep2_vert, sep3_vert, sep6_v
 probe_name_list = ['oneP', 'sep0', 'sep1', 'sep2', 'sep3', 'sep6', 'sep18']
 # radii of circles for circle_probes
 circle_rad_list = [2.15, 2.5, 2.8, 3.4, 4.1, 6.1, 14.6]
+# circle_rad_list = [14.6]
 
 
 # MASK BEHIND PROBES
@@ -311,7 +319,8 @@ instructions = visual.TextStim(win=win, name='instructions',
                                     "press [r] or [9] to redo the previous trial.\n\n"
                                     "Press any key to start.",
                                font='Arial', height=20,
-                               colorSpace='rgb', color=[1, 1, 1],
+                               # colorSpace='rgb',
+                               color=[1, 1, 1],
                                )
 while not event.getKeys():
     fixation.setRadius(3)
@@ -336,7 +345,9 @@ print(f"take_break every {take_break} trials.")
 breaks = visual.TextStim(win=win, name='breaks',
                          text="turn on the light and take at least 30-seconds break.\n\n"
                               "When you are ready to continue, press any key.",
-                         font='Arial', height=20, colorSpace='rgb', color=[1, 1, 1])
+                         font='Arial', height=20,
+                         # colorSpace='rgb',
+                         color=[1, 1, 1])
 
 end_of_exp = visual.TextStim(win=win, name='end_of_exp',
                              text="You have completed this experiment.\n"
@@ -404,27 +415,27 @@ for step in range(n_trials_per_stair):
         # sort out stimuli by cond_type - load correct size stim based on sep
         if cond_type == 'lines':
             # there are 7 probe_verts (vertices), but 21 staircases, so I've repeated them to match up
-            probe_vert_list_2 = list(np.repeat(probe_vert_list, 3))
+            probe_vert_list_2 = list(np.repeat(probe_vert_list, len(cond_types)))
             probeVert = probe_vert_list_2[stair_idx]
             line_probe = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, 1.0, 1.0),
                                           lineWidth=0, opacity=1, size=1, interpolate=False, )
             probe1 = line_probe
         elif cond_type == '2probe':
-            dot_probe1 = visual.ShapeStim(win, vertices=Martin_Vert, fillColor=(1.0, -1.0, 1.0),
+            dot_probe1 = visual.ShapeStim(win, vertices=Martin_Vert, fillColor=(1.0, 1.0, 1.0),
                                           lineWidth=0, opacity=1, size=1, interpolate=False)
             probe1 = dot_probe1
         elif cond_type == 'circles':
             # there are 7 circle_radii, but 21 staircases, so I've repeated them to match up
-            circle_rad_list_2 = list(np.repeat(circle_rad_list, 3))
+            circle_rad_list_2 = list(np.repeat(circle_rad_list, len(cond_types)))
             circle_probe = visual.Circle(win, radius=circle_rad_list_2[stair_idx],
-                                         units='pix', size=1, lineColor='black',
-                                         fillColor='black', lineWidth=0, interpolate=False)
+                                         units='pix', fillColor=(1.0, 1.0, 1.0),
+                                         lineWidth=0, opacity=1, size=1, interpolate=False)
             probe1 = circle_probe
         else:
             raise ValueError(f'Unknown cond type: {cond_type}')
 
         # probe2 is always defined here, but only presented if cond_type == '2probe'
-        probe2 = visual.ShapeStim(win, vertices=Martin_Vert, fillColor=[-1.0, 1.0, -1.0],
+        probe2 = visual.ShapeStim(win, vertices=Martin_Vert, fillColor=(1.0, 1.0, 1.0),
                                   lineWidth=0, opacity=1, size=1, interpolate=False)
 
         # ignore bg flow, congruence and trgt_flow_same for now.
@@ -446,8 +457,6 @@ for step in range(n_trials_per_stair):
         y_flow = y / z
 
 
-
-
         # staircase varies probeLum
         probeLum = thisStair.next()
         probeColor255 = probeLum * LumColor255Factor
@@ -458,8 +467,11 @@ for step in range(n_trials_per_stair):
         # PROBE LOCATIONS
         # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
         corner = np.random.choice([45, 135, 225, 315])
-
         print(f'\tcorner: {corner}, flow_dir: {flow_dir}, target_jump: {target_jump}')
+
+        delta_lum = (probeLum-bgLum)/bgLum
+
+        print(f'\t\tprobeLum: {probeLum}, bgLum: {bgLum}, delta_lum: {delta_lum}\n')
         # dist_from_fix is a constant giving distance form fixation,
         # dist_from_fix was previously 2 identical variables x_prob & y_prob.
         dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
@@ -789,25 +801,28 @@ for step in range(n_trials_per_stair):
         # add to exp dict
         thisExp.addData('trial_number', trial_number)
         thisExp.addData('stair', stair_idx)
-        thisExp.addData('stair_name', thisStair)
         thisExp.addData('step', step)
-        thisExp.addData('separation', sep)
         thisExp.addData('cond_type', cond_type)
-        thisExp.addData('flow_dir', flow_dir)
-        thisExp.addData('probe_jump', target_jump)
-        thisExp.addData('corner', corner)
+        thisExp.addData('stair_name', thisStair)
+        thisExp.addData('separation', sep)
+        thisExp.addData('ISI', 0)
         thisExp.addData('probeLum', probeLum)
         thisExp.addData('trial_response', resp.corr)
         thisExp.addData('resp.rt', resp.rt)
+        thisExp.addData('flow_dir', flow_dir)
+        thisExp.addData('probe_jump', target_jump)
+        thisExp.addData('corner', corner)
         thisExp.addData('probeColor1', probeColor1)
         thisExp.addData('probeColor255', probeColor255)
         thisExp.addData('probe_ecc', probe_ecc)
         thisExp.addData('BGspeed', flow_speed)
         thisExp.addData('orientation', orientation)
-        thisExp.addData('ISI', 0)
+        thisExp.addData('bgLum', bgLum)
+        thisExp.addData('bgcolor', bgcolor)
+        thisExp.addData('bgColor255', bgColor255)
+        thisExp.addData('delta_lum', delta_lum)
 
         thisExp.nextEntry()
-
         thisStair.newValue(resp.corr)  # so that the staircase adjusts itself
 
 print("end of exp loop, saving data")

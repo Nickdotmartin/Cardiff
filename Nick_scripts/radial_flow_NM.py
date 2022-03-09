@@ -18,6 +18,7 @@ the probes from EXPERIMENT3_background_motion_SKR, and adds the option for tange
 the background radial motion is taken from integration_RiccoBloch_flow_new.
 ISI is always >=0 (no simultaneous probes).
 """
+# todo: change colorspace to 255 and make sure probes, background and probemasks are sorted!
 
 # Ensure that relative paths start from the same directory as this script
 _thisDir = os.path.dirname(os.path.abspath(__file__))
