@@ -154,84 +154,23 @@ for p_idx, participant_name in enumerate(participant_list):
         fig, ax = plt.subplots(figsize=(6, 6))
         sns.lineplot(data=thr_df, x='area', y='delta_thr', hue='cond', marker='o', ax=ax)
 
-        # circles_df = thr_df[thr_df['cond'] == 'circles']
-        # print(f'circles_df:\n{circles_df}')
-        #
-        # slope, intercept, r_value, pv, se = stats.linregress(circles_df['area'], circles_df['delta_thr'])
-        #
-        # sns.regplot(x="area", y="delta_thr", data=circles_df, ax=ax,
-        #             ci=None, label="y={0:.1f}x+{1:.1f}".format(slope, intercept)).legend(loc="best")
-
-        # Now add on a line with a fixed slope of 0.03
-        slope = -1
-
-        # A line with a fixed slope can intercept the axis
-        # anywhere so we're going to have it go through 0,0
-        x_0 = 669.66
-        y_0 = 0.03
-        # x_0 = 14.52
-        # y_0 = 0.26
-
-        # And we'll have the line stop at x = 5000
-        # x_1 = 669.66
-        x_1 = 14.52
-        # x_min, x_max = ax.get_xlim()
-        # x_0 = x_min
-        # x_1 = x_max
-        y_1 = slope*(x_1 - x_0) + y_0
-
-        print(f'x_0: {x_0}, y_0: {y_0}\n'
-              f'x_1: {x_1}, y_1: {y_1}')
-
-        # Draw these two points with big triangles to make it clear
-        # where they lie
-        # ax.scatter([x_0, x_1], [y_0, y_1], marker='^', s=150, c='r')
-        ax.scatter(x=[x_0], y=[y_0], marker='^', s=150, c='r')
-
-        # And now connect them
-        ax.plot([x_0, x_1], [y_0, y_1], c='r')
+        # add guideline with slope of -1
+        # ax.axline((14.52, 26.68), slope=-1, color='red', label='by slope')
+        ax.axline((14.52, .26), slope=-1, color='red', linestyle='dashed', label='-1 slope')
 
         ax.set_xticks(sep_vals_list)
         ax.set_xticklabels(sep_name_list)
         ax.set_xlabel('log(area)')
         ax.set_ylabel('log(∆ threshold)')
+        # ax.set(xlim=(0, 700), ylim=(0, 700))
         ax.set(xscale="log", yscale="log")
+        ax.legend()
         plt.title(f'Ricco_v2: log(area) v log(thr)')
-        # plt.savefig(f'{save_path}{os.sep}ricco_v2_logArea_v_logThr.png')
-
-        # # need a slope and c to fix the position of line
-        # slope = -1
-        # c = .7
-        # x_min, x_max = ax.get_xlim()
-        # y_min, y_max = c, c + slope * (x_max - x_min)
-        # ax.plot([x_min, x_max], [y_min, y_max])
-        # ax.set_xlim([x_min, x_max])
-
-
+        plt.savefig(f'{save_path}{os.sep}ricco_v2_logArea_v_logThr.png')
         plt.show()
         print('*** finished plot with with x=log(area), y=log(∆thr) ***')
 
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
 
-        z = np.arange(1, len(x) + 1)  # start at 1, to avoid error from log(0)
-
-        logA = np.log(z)  # no need for list comprehension since all z values >= 1
-        logB = np.log(y)
-
-        m, c = np.polyfit(logA, logB, 1, w=np.sqrt(y))  # fit log(y) = m*log(x) + c
-        y_fit = np.exp(m * logA + c)  # calculate the fitted values of y
-
-        plt.plot(z, y, color='r')
-        plt.plot(z, y_fit, ':')
-
-        ax.set_yscale('symlog')
-        ax.set_xscale('symlog')
-        # slope, intercept = np.polyfit(logA, logB, 1)
-        plt.xlabel("Pre_referer")
-        plt.ylabel("Popularity")
-        ax.set_title('Pre Referral URL Popularity distribution')
-        plt.show()
 
 #     '''d'''
 #     trim_n = None

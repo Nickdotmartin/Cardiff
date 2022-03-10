@@ -28,13 +28,13 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'NickMac'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz'
+monitor_name = 'ASUS_2_13_240Hz'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz'
 display_number = 1  # 0 indexed, 1 for external display
 
 # Store info about the experiment session
 expName = 'Exp3_Ricco_NM_v2'  # from the Builder filename that created this script
 
-expInfo = {'1_Participant': 'Nick_test_1',
+expInfo = {'1_Participant': 'Nick_1',
            '2_Probe_dur_in_frames_at_240hz': [2, 50, 100],
            '3_fps': [240, 144, 60],
            # '4_ISI_dur_in_ms': [100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0],
@@ -168,7 +168,6 @@ mon = monitors.Monitor(monitor_name, width=monitorwidth, distance=viewdist)
 mon.setSizePix((widthPix, heightPix))
 mon.save()
 
-# todo: sort our colour space - at the moment when both probe and background say 21.2, probe is MUCH darker than bg!
 # WINDOW SPEC
 win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     # colorSpace='rgb',
@@ -332,7 +331,8 @@ while not event.getKeys():
 trials_counter = visual.TextStim(win=win, name='trials_counter', text="???",
                                  font='Arial', height=20,
                                  # default set to black (e.g., invisible)
-                                 color=[-1.0, -1.0, -1.0],
+                                 # color=[-1.0, -1.0, -1.0],
+                                 color=[0, 0, 0],
                                  pos=[-widthPix*.45, -heightPix*.45])
 if trials_counter:
     # if trials counter yes, change colour to white.
@@ -361,8 +361,8 @@ expInfo['stair_list'] = list(range(n_stairs))
 expInfo['n_trials_per_stair'] = n_trials_per_stair
 
 stairStart = maxLum
-miniVal = bgLum
-maxiVal = maxLum
+miniVal = bgLum  # 21.2
+maxiVal = maxLum  # 106
 
 print('\nexpInfo (dict)')
 for k, v in expInfo.items():
@@ -472,6 +472,12 @@ for step in range(n_trials_per_stair):
         delta_lum = (probeLum-bgLum)/bgLum
 
         print(f'\t\tprobeLum: {probeLum}, bgLum: {bgLum}, delta_lum: {delta_lum}\n')
+
+        print(f'probeLum: {probeLum}, probeColor255: {probeColor255}, probeColor1: {probeColor1}\n')
+
+        print(f'\tbgLum: {bgLum}, bgColor255: {bgColor255}, bgcolor: {bgcolor}\n')
+        print(f'\t\twin.colorSpace: {win.colorSpace}, bgColor255: {bgColor255}, bgcolor: {bgcolor}\n')
+
         # dist_from_fix is a constant giving distance form fixation,
         # dist_from_fix was previously 2 identical variables x_prob & y_prob.
         dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
