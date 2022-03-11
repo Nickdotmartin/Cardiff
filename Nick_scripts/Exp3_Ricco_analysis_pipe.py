@@ -14,15 +14,17 @@ from psignifit_tools import get_psignifit_threshold_df
 # # then run script d to get master lists and averages
 exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Exp3_Ricco_NM'
 participant_list = ['Nick']  # , 'bb', 'cc', 'dd', 'ee']
+n_runs = 3
 
 p_idx_plus = 1
 
 for p_idx, participant_name in enumerate(participant_list):
     root_path = f'{exp_path}/{participant_name}'
-    run_folder_names = [f'{participant_name}_1', f'{participant_name}_2',
-                        f'{participant_name}_3']  # , f'{participant_name}_4',
-                        # f'{participant_name}_5', f'{participant_name}_6']
-
+    # run_folder_names = [f'{participant_name}_1', f'{participant_name}_2',
+    #                     f'{participant_name}_3']  # , f'{participant_name}_4',
+    #                     f'{participant_name}_5', f'{participant_name}_6']
+    run_folder_names = [f'{participant_name}_{i+1}' for i in list(range(n_runs))]
+    print(f'run_folder_names: {run_folder_names}')
 
     for run_idx, run_dir in enumerate(run_folder_names):
 

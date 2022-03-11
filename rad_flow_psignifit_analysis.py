@@ -432,7 +432,6 @@ def plot_data_unsym_batman(pos_and_neg_sep_df,
 
     return fig
 
-# todo: do I need this function, it's really messy, can I just use plot isi x axis w errors?
 def plot_runs_ave_w_errors(fig_df, error_df,
                            jitter=True, error_caps=False, alt_colours=False,
                            legend_names=None,
@@ -441,6 +440,9 @@ def plot_runs_ave_w_errors(fig_df, error_df,
                            even_spaced_x=False,
                            fixed_y_range=False,
                            x_axis_label=None,
+                           y_axis_label=None,
+                           log_log_axes=False,
+                           neg1_slope=False,
                            fig_title=None, save_name=None, save_path=None,
                            verbose=True):
     """
@@ -553,12 +555,29 @@ def plot_runs_ave_w_errors(fig_df, error_df,
     else:
         ax.set_xlabel(x_axis_label)
 
-    ax.set_ylabel('Probe Luminance')
+    if y_axis_label is None:
+        ax.set_ylabel('Probe Luminance')
+    else:
+        ax.set_ylabel(y_axis_label)
 
     if fixed_y_range:
         ax.set_ylim([0, 110])
         if type(fixed_y_range) in [tuple, list]:
             ax.set_ylim([fixed_y_range[0], fixed_y_range[1]])
+
+    if log_log_axes:
+        ax.set(xscale="log", yscale="log")
+
+    if neg1_slope:
+        # add guideline with slope of -1 which crosses through the circles 1probe delta_thr value.
+        circle_1pr_delta = fig_df.iloc[0]['circles']
+        circle_1pr_area = fig_df.index[0][0]
+        print(f'circle_1pr_delta: {circle_1pr_delta}')
+        print(f'circle_1pr_area: {circle_1pr_area}')
+        # circle_1pr_delta = fig_df.loc[fig_df.separation == -1, 'circles'].item()
+        # circle_1pr_area = fig_df.loc[fig_df.separation == -1, 'area'].item()
+        ax.plot([circle_1pr_area, circle_1pr_area * 100], [circle_1pr_delta, circle_1pr_delta / 100], c='r',
+                label='-1 slope', linestyle='dashed')
 
     if fig_title is not None:
         plt.title(fig_title)
@@ -2033,7 +2052,7 @@ def d_average_participant(root_path, run_dir_names_list,
     for run_idx, run_name in enumerate(run_dir_names_list):
 
         this_psignifit_df = pd.read_csv(f'{root_path}{os.sep}{run_name}{os.sep}psignifit_thresholds.csv')
-        print(f'{run_idx}. {run_name} - this_psignifit_df:\n{this_psignifit_df}')
+        print(f'\n{run_idx}. {run_name} - this_psignifit_df:\n{this_psignifit_df}')
 
         if 'Unnamed: 0' in list(this_psignifit_df):
             this_psignifit_df.drop('Unnamed: 0', axis=1, inplace=True)
@@ -2074,14 +2093,25 @@ def d_average_participant(root_path, run_dir_names_list,
 
     # # get means and errors
     if 'stair_names' in get_means_df.columns:
-
         groupby_sep_df = get_means_df.drop('stack', axis=1)
         if 'congruent' in groupby_sep_df.columns:
             groupby_sep_df = groupby_sep_df.drop('congruent', axis=1)
-        groupby_sep_df = groupby_sep_df.drop('separation', axis=1)
 
-    # if 'stair_names' in groupby_sep_df.columns:
-        ave_psignifit_thr_df = groupby_sep_df.groupby('stair_names', sort=True).mean()
+        if 'area' in groupby_sep_df.columns:
+            # for ricco_v2 experiment
+            ave_psignifit_thr_df = groupby_sep_df.groupby(['cond', 'separation'], sort=False).mean()
+            stair_names = groupby_sep_df['stair_names'].unique()
+            ave_psignifit_thr_df.insert(0, 'stair_names', stair_names)
+            cond_values = ave_psignifit_thr_df.index.get_level_values('cond').to_list()
+            sep_values = ave_psignifit_thr_df.index.get_level_values('separation').to_list()
+            area_values = ave_psignifit_thr_df['area'].to_list()
+
+            print(f'\ncond_values:\n{cond_values}')
+            print(f'sep_values:\n{sep_values}')
+        else:
+            groupby_sep_df = groupby_sep_df.drop('separation', axis=1)
+            ave_psignifit_thr_df = groupby_sep_df.groupby('stair_names', sort=True).mean()
+
         if verbose:
             print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
 
@@ -2096,6 +2126,17 @@ def d_average_participant(root_path, run_dir_names_list,
                              f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standard_error']\n"
                              f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
                              f"'deviation', 'standard_deviation']")
+        if 'area' in error_bars_df.columns.to_list():
+            # for ricco_v2 exp - change order to match ave_psignifit_thr_df
+            error_bars_df.insert(0, 'cond', cond_values)
+            error_bars_df['separation'] = sep_values
+            error_bars_df['area'] = area_values
+            error_bars_df.reset_index()
+            col_order = ['cond', 'separation', 'stair_names', 'area', 'delta_thr', 'ISI_0']
+            error_bars_df.reset_index(inplace=True)
+            error_bars_df = error_bars_df[col_order]
+            error_bars_df.set_index(['cond', 'separation'], inplace=True)
+
         print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
 
     # elif len(groupby_sep_df.columns) ==
@@ -2105,6 +2146,7 @@ def d_average_participant(root_path, run_dir_names_list,
 
         if len(groupby_sep_df.columns) == 2:
             # for Exp3_Ricco - group by separation
+            # todo: I no longer need this as ricco_v2 gets picked up above (stair_names)
             ave_psignifit_thr_df = groupby_sep_df.groupby('separation', sort=True).mean()
 
             if verbose:

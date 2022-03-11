@@ -14,6 +14,7 @@ from psignifit_tools import get_psignifit_threshold_df
 # # then run script d to get master lists and averages
 exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Exp2_Bloch_NM'
 participant_list = ['Nick']  # , 'bb', 'cc', 'dd', 'ee']
+n_runs = 6
 
 p_idx_plus = 1
 
@@ -22,10 +23,11 @@ for p_idx, participant_name in enumerate(participant_list):
     # run_folder_names = [f'P{p_idx + p_idx_plus}a-{participant_name}', f'P{p_idx + p_idx_plus}b-{participant_name}',
     #                     f'P{p_idx + p_idx_plus}c-{participant_name}', f'P{p_idx + p_idx_plus}d-{participant_name}',
     #                     f'P{p_idx + p_idx_plus}e-{participant_name}', f'P{p_idx + p_idx_plus}f-{participant_name}']
-    run_folder_names = [f'{participant_name}_1', f'{participant_name}_2',
-                        f'{participant_name}_3', f'{participant_name}_4',
-                        f'{participant_name}_5', f'{participant_name}_6']
-
+    # run_folder_names = [f'{participant_name}_1', f'{participant_name}_2',
+    #                     f'{participant_name}_3', f'{participant_name}_4',
+    #                     f'{participant_name}_5', f'{participant_name}_6']
+    run_folder_names = [f'{participant_name}_{i+1}' for i in list(range(n_runs))]
+    print(f'run_folder_names: {run_folder_names}')
 
     for run_idx, run_dir in enumerate(run_folder_names):
 

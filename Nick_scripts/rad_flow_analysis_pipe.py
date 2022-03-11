@@ -19,7 +19,7 @@ from rad_flow_psignifit_analysis import c_plots, d_average_participant, make_ave
 # participant_list = ['Nick']
 # run_folder_names = ['Nick_1', 'Nick_2', 'Nick_3', 'Nick_4', 'Nick_5', 'Nick_6']
 participant_list = ['Simon']
-run_folder_names = ['Simon_1', 'Simon_2', 'Simon_3', 'Simon_4', 'Simon_5', 'Simon_6']
+# run_folder_names = ['Simon_1', 'Simon_2', 'Simon_3', 'Simon_4', 'Simon_5', 'Simon_6']
 # exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp'
 exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/rad_flow_2'
 
@@ -48,6 +48,9 @@ verbose = True
 show_plots = True
 p_idx_plus = 1
 
+n_runs = 6
+
+
 for p_idx, participant_name in enumerate(participant_list):
     # if participant_name is 'Nick':
     #     p_idx_plus = 5
@@ -61,6 +64,7 @@ for p_idx, participant_name in enumerate(participant_list):
     #                     f'{participant_name}_{p_idx_plus + 8}', f'{participant_name}_{p_idx_plus + 9}',
     #                     f'{participant_name}_{p_idx_plus + 10}', f'{participant_name}_{p_idx_plus + 11}']
     # run_folder_names = [f'{participant_name}_{p_idx_plus}']
+    run_folder_names = [f'{participant_name}_{i+1}' for i in list(range(n_runs))]
     print(f'run_folder_names: {run_folder_names}')
 
     for run_idx, run_dir in enumerate(run_folder_names):
