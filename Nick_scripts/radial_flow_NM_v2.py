@@ -19,14 +19,18 @@ the background radial motion is taken from integration_RiccoBloch_flow_new.
 ISI is always >=0 (no simultaneous probes).
 """
 
-# todo: change colorspace to 255 and make sure probes, background and probemasks are sorted!
+# todo: This script uses colorspace=rgb, but it should be rgb255.
+#  I'll keep it as is for now, but I need to use these vals below for bglum and deltaLum.
+#  flow_bgcolor = [-0.1, -0.1, -0.1]  # dark grey converts to:
+#  rgb: -0.1 = rgb1: .45 = rgb255: 114.75 = lum: 47.8.
+#  for future ref, to match exp1 it should be flow_bgcolor = [-0.6, -0.6, -0.6]  # dark grey
 
 # Ensure that relative paths start from the same directory as this script
 _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'NickMac'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz'
+monitor_name = 'HP_24uh'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz'
 display_number = 1  # 0 indexed, 1 for external display
 
 # Store info about the experiment session
@@ -119,23 +123,42 @@ Color1LumFactor = 2.39538706913372
 
 maxLum = 106  # 255 RGB
 minLum = 0.12  # 0 RGB
-maxColor255 = 255
-minColor255 = 0
-maxColor1 = 1
-minColor1 = -1
-bgLumP = 20
-bgLum = maxLum * bgLumP / 100
+# maxColor255 = 255
+# minColor255 = 0
+# maxColor1 = 1
+# minColor1 = -1
+# bgLumP = 20
+# bgLum = maxLum * bgLumP / 100
+# bgColor255 = bgLum * LumColor255Factor  # I could switch to using this.
 
-# todo: I think I need to get the bgcolour255 variable in here and use this rather than bgcolor
+#  rgb: -0.1 = rgb1: .45 = rgb255: 114.75 = lum: 47.8
 flow_bgcolor = [-0.1, -0.1, -0.1]  # dark grey
+# flow_bgcolor = [-0.6, -0.6, -0.6]  # these values would be equivalent to exp1a
 
 if background == 'flow_rad':
     # background colour: use darker grey.  set once here and use elsewhere
     bgcolor = flow_bgcolor
 else:
-    # bgColor255 = bgLum * LumColor255Factor
     # bgcolor = bgColor255
     bgcolor = flow_bgcolor
+
+# get ACTUAL bgcolor details
+actual_bg_color = bgcolor[0]
+print(f'actual_bg_color: {actual_bg_color}')
+bgcolor_to_rgb255 = (actual_bg_color + 1) * 127.5
+# print(f'bgcolor_to_rgb255: {bgcolor_to_rgb255}')
+bgcolor_to_rgb1 = (actual_bg_color+1)/2
+print(f'bgcolor_to_rgb1: {bgcolor_to_rgb1}')
+bgcolor_to_lum = bgcolor_to_rgb1*maxLum
+# print(f'bgcolor_to_lum: {bgcolor_to_lum}')
+bglum_as_prop_maxLum = bgcolor_to_lum/maxLum
+# print(f'bglum_as_prop_maxLum: {bglum_as_prop_maxLum}')
+bgLumP = bglum_as_prop_maxLum
+print(f'bgLumP: {bgLumP}')
+bgLum = bgcolor_to_lum
+print(f'bgLum: {bgLum}')
+bgColor255 = bgcolor_to_rgb255
+print(f'bgColor255: {bgColor255}')
 
 
 # MONITOR SPEC
@@ -419,6 +442,22 @@ for step in range(n_trials_per_stair):
         # dist_from_fix was previously 2 identical variables x_prob & y_prob.
         dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
         # x_prob = y_prob = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
+
+        print(f'probeLum: {probeLum}, probeColor255: {probeColor255}, probeColor1: {probeColor1}')
+        print(f'\tbgLum: {bgLum}, bgColor255: {bgColor255}, bgcolor: {bgcolor}')
+        print(f'\t\twin.colorSpace: {win.colorSpace}\n')
+        # actual_bg_color = bgcolor[0]
+        # print(f'bgcolor_to_rgb255: {bgcolor_to_rgb255}')
+        # bgcolor_to_rgb255 = (actual_bg_color+1)*127.5
+        # print(f'bgcolor_to_rgb255: {bgcolor_to_rgb255}')
+        # check_bgcol_rgb = (bgcolor_to_rgb255 * Color255Color1Factor) - 1
+        # print(f'check_bgcol_rgb: {check_bgcol_rgb}')
+        # check_bg_back_to_255 = check_bgcol_rgb * LumColor255Factor
+        # print(f'check_bg_back_to_255: {check_bg_back_to_255}')
+
+
+
+
 
         # probe mask locations
         probeMask1.setPos([dist_from_fix+1, dist_from_fix+1])
@@ -758,6 +797,11 @@ for step in range(n_trials_per_stair):
         thisExp.addData('orientation', orientation)
         thisExp.addData('ISI_actual_ms', ISI_actual_ms)
         thisExp.addData('ISI_frames', ISI_frames)
+        thisExp.addData('actual_bg_color', actual_bg_color)
+        thisExp.addData('bgcolor_to_rgb1', bgcolor_to_rgb1)
+        thisExp.addData('bgLumP', bgLumP)
+        thisExp.addData('bgLum', bgLum)
+        thisExp.addData('bgColor255', bgColor255)
 
         thisExp.nextEntry()
 
