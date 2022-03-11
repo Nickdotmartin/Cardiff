@@ -15,14 +15,16 @@ from psignifit_tools import get_psignifit_threshold_df
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
 exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Exp3_Ricco_NM_v2'
-participant_list = ['Nick_test']  # , 'bb', 'cc', 'dd', 'ee']
+# participant_list = ['Nick_test']  # , 'bb', 'cc', 'dd', 'ee']
+participant_list = ['Nick']  # , 'bb', 'cc', 'dd', 'ee']
 
 p_idx_plus = 1
 
 for p_idx, participant_name in enumerate(participant_list):
     root_path = f'{exp_path}/{participant_name}'
-    run_folder_names = [f'{participant_name}_1']  # , f'{participant_name}_2',
-                        # f'{participant_name}_3']  # , f'{participant_name}_4',
+    # run_folder_names = [f'{participant_name}_1']
+    run_folder_names = [f'{participant_name}_1', f'{participant_name}_2',
+                        f'{participant_name}_3']  # , f'{participant_name}_4',
                         # f'{participant_name}_5', f'{participant_name}_6']
 
 
@@ -40,17 +42,17 @@ for p_idx, participant_name in enumerate(participant_list):
 
         # # for first run, some files are saved just as name not name1
         run_data_path = f'{save_path}{os.sep}{p_name}_output.csv'
-        # if not os.path.isfile(run_data_path):
-        #     raise FileNotFoundError(run_data_path)
-        # print(f'run_data_path: {run_data_path}')
-        # run_data_df = pd.read_csv(run_data_path)
-        #
-        # # remove any Unnamed columns
-        # if any("Unnamed" in i for i in list(run_data_df.columns)):
-        #     unnamed_col = [i for i in list(run_data_df.columns) if "Unnamed" in i][0]
-        #     run_data_df.drop(unnamed_col, axis=1, inplace=True)
-        # run_data_df.sort_values(by=['stair', 'step'], inplace=True, ignore_index=True)
-        #
+        if not os.path.isfile(run_data_path):
+            raise FileNotFoundError(run_data_path)
+        print(f'run_data_path: {run_data_path}')
+        run_data_df = pd.read_csv(run_data_path)
+
+        # remove any Unnamed columns
+        if any("Unnamed" in i for i in list(run_data_df.columns)):
+            unnamed_col = [i for i in list(run_data_df.columns) if "Unnamed" in i][0]
+            run_data_df.drop(unnamed_col, axis=1, inplace=True)
+        run_data_df.sort_values(by=['stair', 'step'], inplace=True, ignore_index=True)
+
         # # # save sorted csv
         # run_data_df.to_csv(run_data_path, index=False)
         #
@@ -79,8 +81,8 @@ for p_idx, participant_name in enumerate(participant_list):
         # print(f'stair_names_list: {stair_names_list}')
         # cols_to_add_dict = {'separation': sep_vals_list,
         #                     'cond': cond_type_list}
-        # thr_save_name = 'test1'
         #
+        # thr_save_name = 'psignifit_thresholds'
         # thr_df = get_psignifit_threshold_df(root_path=root_path,
         #                                     p_run_name=run_dir,
         #                                     csv_name=run_data_df,
@@ -92,32 +94,33 @@ for p_idx, participant_name in enumerate(participant_list):
         #                                     save_name=thr_save_name,
         #                                     verbose=True)
         # print(f'thr_df: {type(thr_df)}\n{thr_df}')
-
-
-        '''b3'''
-        run_data_path = f'{save_path}{os.sep}{p_name}_output.csv'
-        run_data_df = pd.read_csv(run_data_path, usecols=
-                                  ['trial_number', 'stair', 'stair_name', 'step',
-                                   'separation', 'cond_type', 'ISI', 'corner',
-                                   'probeLum', 'delta_lum', 'trial_response', '3_fps'])
-        print(f'run_data_df:\n{run_data_df}')
-
-        # Ricco doesn't currently work with b3_plot_staircase or c_plots
-        # b3_plot_staircase(run_data_path, show_plots=True)
-        # # c_plots(save_path=save_path, isi_name_list=isi_name_list, show_plots=True)
-
-        print('*** making plot with x=ordinal, y=thr ***')
-        # thr_df_path = f'{save_path}{os.sep}psignifit_thresholds.csv'
-        thr_df_path = f'{save_path}{os.sep}test1.csv'
+        #
+        #
+        # '''b3'''
+        # run_data_path = f'{save_path}{os.sep}{p_name}_output.csv'
+        # run_data_df = pd.read_csv(run_data_path, usecols=
+        #                           ['trial_number', 'stair', 'stair_name', 'step',
+        #                            'separation', 'cond_type', 'ISI', 'corner',
+        #                            'probeLum', 'delta_lum', 'trial_response', '3_fps'])
+        # print(f'run_data_df:\n{run_data_df}')
+        #
+        # # Ricco doesn't currently work with b3_plot_staircase or c_plots
+        # # b3_plot_staircase(run_data_path, show_plots=True)
+        # # # c_plots(save_path=save_path, isi_name_list=isi_name_list, show_plots=True)
+        #
+        # print('*** making plot with x=ordinal, y=thr ***')
+        # thr_df_path = f'{save_path}{os.sep}test1.csv'
+        thr_df_path = f'{save_path}{os.sep}psignifit_thresholds.csv'
+        # thr_df_path = f'{save_path}{os.sep}{thr_save_name}.csv'
         thr_df = pd.read_csv(thr_df_path)
         print(f'thr_df:\n{thr_df}')
-
-        sep_list = thr_df['separation'].unique()
-        sep_vals_list = [i for i in sep_list]
-        sep_name_list = ['1pr' if i == -1 else f'sep{i}' for i in sep_list]
-        print(f'sep_vals_list: {sep_vals_list}')
-        print(f'sep_name_list: {sep_name_list}')
-
+        #
+        # sep_list = thr_df['separation'].unique()
+        # sep_vals_list = [i for i in sep_list]
+        # sep_name_list = ['1pr' if i == -1 else f'sep{i}' for i in sep_list]
+        # print(f'sep_vals_list: {sep_vals_list}')
+        # print(f'sep_name_list: {sep_name_list}')
+        #
         # fig, ax = plt.subplots(figsize=(10, 6))
         # sns.lineplot(data=thr_df, x='separation', y='ISI_0', hue='cond', marker='o')
         # ax.set_xticks(sep_vals_list)
@@ -125,14 +128,14 @@ for p_idx, participant_name in enumerate(participant_list):
         # ax.set_xlabel('Probe cond (separation)')
         # ax.set_ylabel('Probe Luminance')
         # plt.title(f'Ricco_v2: probe cond vs thr')
-        # plt.savefig(f'{save_path}{os.sep}ricco_v2_cond_v_thr.png')
+        # # plt.savefig(f'{save_path}{os.sep}ricco_v2_cond_v_thr.png')
         # plt.show()
         # print('*** finished plot with x=ordinal, y=thr ***\n')
 
         print('*** making plot with x=log(area), y=log(∆thr) ***')
         print(f'thr_df:\n{thr_df}')
 
-        # convert separartion into area
+        # convert separation into area
         area_dict = {-1: {'radius': 2.15, 'area': 14.522012041218817},
                      0: {'radius': 2.5, 'area': 19.634954084936208},
                      1: {'radius': 2.8, 'area': 24.630086404143974},
@@ -154,21 +157,43 @@ for p_idx, participant_name in enumerate(participant_list):
         fig, ax = plt.subplots(figsize=(6, 6))
         sns.lineplot(data=thr_df, x='area', y='delta_thr', hue='cond', marker='o', ax=ax)
 
-        # add guideline with slope of -1
-        # ax.axline((14.52, 26.68), slope=-1, color='red', label='by slope')
-        ax.axline((14.52, .26), slope=-1, color='red', linestyle='dashed', label='-1 slope')
-
-        ax.set_xticks(sep_vals_list)
-        ax.set_xticklabels(sep_name_list)
+        # ax.set_xticks(sep_vals_list)
+        # ax.set_xticklabels(sep_name_list)
         ax.set_xlabel('log(area)')
         ax.set_ylabel('log(∆ threshold)')
-        # ax.set(xlim=(0, 700), ylim=(0, 700))
+        ax.set(xlim=(10, 10000), ylim=(.01, 10))
+
         ax.set(xscale="log", yscale="log")
+
+        # add guideline with slope of -1 which crosses through the circles 1probe delta_thr value.
+        circle_1pr_delta = thr_df.loc[thr_df['stair_name'] == '-1_circles', 'delta_thr'].item()
+        circle_1pr_area = 14.52
+        # ax.axline((circle_1pr_area, circle_1pr_delta), slope=-1, color='red', linestyle='dashed', label='-1 slope')
+        ax.plot([circle_1pr_area, circle_1pr_area*100], [circle_1pr_delta, circle_1pr_delta/100], c='r',
+                label='-1 slope', linestyle='dashed')
         ax.legend()
         plt.title(f'Ricco_v2: log(area) v log(thr)')
         plt.savefig(f'{save_path}{os.sep}ricco_v2_logArea_v_logThr.png')
         plt.show()
         print('*** finished plot with with x=log(area), y=log(∆thr) ***')
+
+
+        # # just circle data, try a regression plot or something
+        # circle_df = thr_df[thr_df['cond']=='circles']
+        #
+        # print(f'circle_df:\n{circle_df}')
+        # fig, ax = plt.subplots(figsize=(6, 6))
+        # ax.set(xscale="log", yscale="log")
+        # # sns.scatterplot(data=circle_df, x='area', y='delta_thr', ax=ax)
+        # sns.regplot(data=circle_df, x='area', y='delta_thr', ax=ax,
+        #             logx=True, fit_reg=True, truncate=True)
+        # # ax.set_xlim(auto=True)
+        # # ax.set(xscale="log", yscale="log")
+        # ax.set_xlim(10, )
+        # ax.set_ylim(.01, )
+        # # ax.set(xlim=(1, ), ylim=(.01, ))
+        #
+        # plt.show()
 
 
 
