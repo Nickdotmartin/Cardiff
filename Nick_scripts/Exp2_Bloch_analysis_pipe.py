@@ -13,7 +13,7 @@ from psignifit_tools import get_psignifit_threshold_df
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
 exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Exp2_Bloch_NM'
-participant_list = ['Nick']  # , 'bb', 'cc', 'dd', 'ee']
+participant_list = ['Simon']  # , 'bb', 'cc', 'dd', 'ee']
 n_runs = 6
 
 p_idx_plus = 1
@@ -132,12 +132,12 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
     # making average plot
-    # all_df_path = f'{root_path}/MASTER_TM1_thresholds.csv'
+    all_df_path = f'{root_path}/MASTER_TM1_thresholds.csv'
     p_ave_path = f'{root_path}/MASTER_ave_TM_thresh.csv'
     err_path = f'{root_path}/MASTER_ave_TM_thr_error_SE.csv'
     n_trimmed = trim_n
     if n_trimmed == None:
-        # all_df_path = f'{root_path}/MASTER_psignifit_thresholds.csv'
+        all_df_path = f'{root_path}/MASTER_psignifit_thresholds.csv'
         p_ave_path = f'{root_path}/MASTER_ave_thresh.csv'
         err_path = f'{root_path}/MASTER_ave_thr_error_SE.csv'
 
@@ -191,6 +191,8 @@ for p_idx, participant_name in enumerate(participant_list):
 
 print(f'exp_path: {exp_path}')
 print('\nget exp_average_data')
+
+participant_list = ['Nick', 'Simon']
 
 e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
                    error_type='SE', use_trimmed=True, verbose=True)
