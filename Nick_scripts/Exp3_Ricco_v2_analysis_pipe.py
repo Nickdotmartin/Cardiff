@@ -9,100 +9,15 @@ from scipy import stats
 #     d_average_participant, e_average_exp_data, make_average_plots
 from rad_flow_psignifit_analysis import b3_plot_staircase, b3_plot_stair_sep0, c_plots, d_average_participant
 from rad_flow_psignifit_analysis import make_average_plots, e_average_exp_data, \
-    plot_runs_ave_w_errors, plot_w_errors_either_x_axis
-
+    plot_runs_ave_w_errors, plot_w_errors_either_x_axis, run_thr_plot, simple_log_log_plot
 from psignifit_tools import get_psignifit_threshold_df
-
-def run_thr_plot(thr_df, x_col='separation', y_col='ISI_0', hue_col='cond',
-                 x_ticks_vals=None, x_tick_names=None,
-                 x_axis_label='Probe cond (separation)',
-                 y_axis_label='Probe Luminance',
-                 fig_title='Ricco_v2: probe cond vs thr', save_as=None):
-    """
-    Function to make a simple plot from one run showing lineplots for circles, lines and 2probe data.
-    Single threshold values so no error bars.
-
-    :param thr_df: dataframe from one run
-    :param x_col: column to use for x vals
-    :param y_col: column to use for y vals
-    :param hue_col: column to use for hue (different coloured lines on plot)
-    :param x_ticks_vals: values to place on x-axis ticks
-    :param x_tick_names: labels for x-tick values
-    :param x_axis_label: x axis label
-    :param y_axis_label: y axis label
-    :param fig_title: figure title
-    :param save_as: path and filename to save to
-    :return: figure
-    """
-    print('*** making plot with x=ordinal, y=thr ***')
-    fig, ax = plt.subplots(figsize=(10, 6))
-    sns.lineplot(data=thr_df, x=x_col, y=y_col, hue=hue_col, marker='o')
-    if x_ticks_vals:
-        ax.set_xticks(x_ticks_vals)
-    if x_tick_names:
-        ax.set_xticklabels(x_tick_names)
-    ax.set_xlabel(x_axis_label)
-    ax.set_ylabel(y_axis_label)
-    plt.title(fig_title)
-    if save_as:
-        plt.savefig(save_as)
-    print('*** finished plot with x=ordinal, y=thr ***\n')
-    return fig
-
-
-def simple_log_log_plot(thr_df, x_col='area', y_col='delta_thr', hue_col='cond',
-                     x_ticks_vals=None, x_tick_names=None,
-                     x_axis_label='log(area)',
-                     y_axis_label='log(∆ threshold)',
-                     fig_title='Ricco_v2: log(area) v log(thr)',
-                     save_as=None):
-    """
-    Function to make a simple plot from one run showing lineplots for circles, lines and 2probe data.
-    Data is plotted on log-log axis (log(∆thr) and log(area).
-    Single threshold values so no error bars.
-
-    :param thr_df: dataframe from one run
-    :param x_col: column to use for x vals
-    :param y_col: column to use for y vals
-    :param hue_col: column to use for hue (different coloured lines on plot)
-    :param x_ticks_vals: values to place on x-axis ticks
-    :param x_tick_names: labels for x-tick values
-    :param x_axis_label: x axis label
-    :param y_axis_label: y axis label
-    :param fig_title: figure title
-    :param save_as: path and filename to save to
-    :return: figure
-    """
-    print('*** making plot with x=log(area), y=log(∆thr) ***')
-    fig, ax = plt.subplots(figsize=(6, 6))
-    sns.lineplot(data=thr_df, x=x_col, y=y_col, hue=hue_col, marker='o', ax=ax)
-    if x_ticks_vals:
-        ax.set_xticks(x_ticks_vals)
-    if x_tick_names:
-        ax.set_xticklabels(x_tick_names)
-    ax.set_xlabel(x_axis_label)
-    ax.set_ylabel(y_axis_label)
-    ax.set(xlim=(10, 10000), ylim=(.01, 10))
-    ax.set(xscale="log", yscale="log")
-
-    # add guideline with slope of -1 which crosses through the circles 1probe delta_thr value.
-    circle_1pr_delta = thr_df.loc[thr_df['stair_names'] == '-1_circles', y_col].item()
-    circle_1pr_area = thr_df.loc[thr_df['stair_names'] == '-1_circles', x_col].item()
-    ax.plot([circle_1pr_area, circle_1pr_area*100], [circle_1pr_delta, circle_1pr_delta/100], c='r',
-            label='-1 slope', linestyle='dashed')
-    ax.legend()
-    plt.title(fig_title)
-    if save_as:
-        plt.savefig(save_as)
-    print('*** finished plot with with x=log(area), y=log(∆thr) ***')
-    return fig
 
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
 exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Exp3_Ricco_NM_v2'
 # participant_list = ['Nick_test']  # , 'bb', 'cc', 'dd', 'ee']
 participant_list = ['Nick']  # , 'bb', 'cc', 'dd', 'ee']
-n_runs = 3
+n_runs = 1
 
 p_idx_plus = 1
 
@@ -181,78 +96,78 @@ for p_idx, participant_name in enumerate(participant_list):
     #     print(f'thr_df: {type(thr_df)}\n{thr_df}')
     #
     #
-        # '''b3'''
-        # run_data_path = f'{save_path}{os.sep}{p_name}_output.csv'
-        # run_data_df = pd.read_csv(run_data_path, usecols=
-        #                           ['trial_number', 'stair', 'stair_name', 'step',
-        #                            'separation', 'cond_type', 'ISI', 'corner',
-        #                            'probeLum', 'delta_lum', 'trial_response', '3_fps'])
-        # print(f'run_data_df:\n{run_data_df}')
-        #
-        # # Ricco doesn't currently work with b3_plot_staircase or c_plots
-        # # b3_plot_staircase(run_data_path, show_plots=True)
-        # # # c_plots(save_path=save_path, isi_name_list=isi_name_list, show_plots=True)
-        #
-        # # thr_df_path = f'{save_path}{os.sep}test1.csv'
-        # thr_df_path = f'{save_path}{os.sep}psignifit_thresholds.csv'
-        # # thr_df_path = f'{save_path}{os.sep}{thr_save_name}.csv'
-        # thr_df = pd.read_csv(thr_df_path)
-        # print(f'thr_df:\n{thr_df}\n')
-        #
-        # sep_list = thr_df['separation'].unique()
-        # sep_vals_list = [i for i in sep_list]
-        # sep_name_list = ['1pr' if i == -1 else f'sep{i}' for i in sep_list]
-        # print(f'sep_vals_list: {sep_vals_list}')
-        # print(f'sep_name_list: {sep_name_list}\n')
-        #
-        # # basic plot with regular axes
-        # run_thr_plot(thr_df, x_col='separation', y_col='ISI_0', hue_col='cond',
-        #              x_ticks_vals=sep_vals_list, x_tick_names=sep_name_list,
-        #              x_axis_label='Probe cond (separation)',
-        #              y_axis_label='Probe Luminance',
-        #              fig_title='Ricco_v2: probe cond vs thr',
-        #              save_as=f'{save_path}{os.sep}ricco_v2_cond_v_thr.png')
-        # plt.show()
-        #
-        #
-        # print(f'thr_df:\n{thr_df}')
-        #
-        # # check for 'area' and 'delta_thr' col
-        # col_names = thr_df.columns.to_list()
-        #
-        # if 'area' not in col_names:
-        #     # convert separation into area (units are pixels)
-        #     area_dict = {-1: {'radius': 2.15, 'area': 14.522012041218817},
-        #                  0: {'radius': 2.5, 'area': 19.634954084936208},
-        #                  1: {'radius': 2.8, 'area': 24.630086404143974},
-        #                  2: {'radius': 3.4, 'area': 36.316811075498},
-        #                  3: {'radius': 4.1, 'area': 52.81017250684442},
-        #                  6: {'radius': 6.1, 'area': 116.89866264007618},
-        #                  18: {'radius': 14.6, 'area': 669.6618900392003}}
-        #     sep_col = thr_df['separation'].to_list()
-        #     area_col = [area_dict[i]['area'] for i in sep_col]
-        #     thr_df.insert(3, 'area', area_col)
-        #
-        #     thr_col = thr_df['ISI_0'].to_list()
-        #     bgLum = 21.2
-        #     delta_thr_col = [(i-bgLum)/bgLum for i in thr_col]
-        #     thr_df.insert(4, 'delta_thr', delta_thr_col)
-        #
-        #     if 'stair_name' in col_names:
-        #         thr_df.drop('stair_name', axis=1, inplace=True)
-        #
-        #     thr_df.to_csv(thr_df_path, index=False)
-        #     print(f'thr_df:\n{thr_df}')
-        #
-        #
-        # # plot with log-log axes
-        # simple_log_log_plot(thr_df, x_col='area', y_col='delta_thr', hue_col='cond',
-        #                  x_ticks_vals=None, x_tick_names=None,
-        #                  x_axis_label='log(area)',
-        #                  y_axis_label='log(∆ threshold)',
-        #                  fig_title='Ricco_v2: log(area) v log(thr)',
-        #                  save_as=f'{save_path}{os.sep}ricco_v2_log_area_log_delta.png')
-        # plt.show()
+        '''b3'''
+        run_data_path = f'{save_path}{os.sep}{p_name}_output.csv'
+        run_data_df = pd.read_csv(run_data_path, usecols=
+                                  ['trial_number', 'stair', 'stair_name', 'step',
+                                   'separation', 'cond_type', 'ISI', 'corner',
+                                   'probeLum', 'delta_lum', 'trial_response', '3_fps'])
+        print(f'run_data_df:\n{run_data_df}')
+
+        # Ricco doesn't currently work with b3_plot_staircase or c_plots
+        # b3_plot_staircase(run_data_path, show_plots=True)
+        # # c_plots(save_path=save_path, isi_name_list=isi_name_list, show_plots=True)
+
+        # thr_df_path = f'{save_path}{os.sep}test1.csv'
+        thr_df_path = f'{save_path}{os.sep}psignifit_thresholds.csv'
+        # thr_df_path = f'{save_path}{os.sep}{thr_save_name}.csv'
+        thr_df = pd.read_csv(thr_df_path)
+        print(f'thr_df:\n{thr_df}\n')
+
+        sep_list = thr_df['separation'].unique()
+        sep_vals_list = [i for i in sep_list]
+        sep_name_list = ['1pr' if i == -1 else f'sep{i}' for i in sep_list]
+        print(f'sep_vals_list: {sep_vals_list}')
+        print(f'sep_name_list: {sep_name_list}\n')
+
+        # basic plot with regular axes
+        run_thr_plot(thr_df, x_col='separation', y_col='ISI_0', hue_col='cond',
+                     x_ticks_vals=sep_vals_list, x_tick_names=sep_name_list,
+                     x_axis_label='Probe cond (separation)',
+                     y_axis_label='Probe Luminance',
+                     fig_title='Ricco_v2: probe cond vs thr',
+                     save_as=f'{save_path}{os.sep}ricco_v2_cond_v_thr.png')
+        plt.show()
+
+
+        print(f'thr_df:\n{thr_df}')
+
+        # check for 'area' and 'delta_thr' col
+        col_names = thr_df.columns.to_list()
+
+        if 'area' not in col_names:
+            # convert separation into area (units are pixels)
+            area_dict = {-1: {'radius': 2.15, 'area': 14.522012041218817},
+                         0: {'radius': 2.5, 'area': 19.634954084936208},
+                         1: {'radius': 2.8, 'area': 24.630086404143974},
+                         2: {'radius': 3.4, 'area': 36.316811075498},
+                         3: {'radius': 4.1, 'area': 52.81017250684442},
+                         6: {'radius': 6.1, 'area': 116.89866264007618},
+                         18: {'radius': 14.6, 'area': 669.6618900392003}}
+            sep_col = thr_df['separation'].to_list()
+            area_col = [area_dict[i]['area'] for i in sep_col]
+            thr_df.insert(3, 'area', area_col)
+
+            thr_col = thr_df['ISI_0'].to_list()
+            bgLum = 21.2
+            delta_thr_col = [(i-bgLum)/bgLum for i in thr_col]
+            thr_df.insert(4, 'delta_thr', delta_thr_col)
+
+            if 'stair_name' in col_names:
+                thr_df.drop('stair_name', axis=1, inplace=True)
+
+            thr_df.to_csv(thr_df_path, index=False)
+            print(f'thr_df:\n{thr_df}')
+
+
+        # plot with log-log axes
+        simple_log_log_plot(thr_df, x_col='area', y_col='delta_thr', hue_col='cond',
+                         x_ticks_vals=None, x_tick_names=None,
+                         x_axis_label='log(area)',
+                         y_axis_label='log(∆ threshold)',
+                         fig_title='Ricco_v2: log(area) v log(thr)',
+                         save_as=f'{save_path}{os.sep}ricco_v2_log_area_log_delta.png')
+        plt.show()
 
 
     '''d'''

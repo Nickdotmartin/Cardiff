@@ -360,6 +360,101 @@ def simple_line_plot(indexed_df, fig_title=None, legend_title=None,
         plt.savefig(save_as)
     return fig
 
+def run_thr_plot(thr_df, x_col='separation', y_col='ISI_0', hue_col='cond',
+                 x_ticks_vals=None, x_tick_names=None,
+                 x_axis_label='Probe cond (separation)',
+                 y_axis_label='Probe Luminance',
+                 fig_title='Ricco_v2: probe cond vs thr', save_as=None):
+    """
+    Function to make a simple plot from one run showing lineplots for circles, lines and 2probe data.
+    Single threshold values so no error bars.
+
+    :param thr_df: dataframe from one run
+    :param x_col: column to use for x vals
+    :param y_col: column to use for y vals
+    :param hue_col: column to use for hue (different coloured lines on plot)
+    :param x_ticks_vals: values to place on x-axis ticks
+    :param x_tick_names: labels for x-tick values
+    :param x_axis_label: x axis label
+    :param y_axis_label: y axis label
+    :param fig_title: figure title
+    :param save_as: path and filename to save to
+    :return: figure
+    """
+    print('*** running run_thr_plot (x=ordinal, y=thr) ***')
+    fig, ax = plt.subplots(figsize=(10, 6))
+    print(f'thr_df:\n{thr_df}')
+    sns.lineplot(data=thr_df, x=x_col, y=y_col, hue=hue_col, marker='o')
+    if x_ticks_vals is not None:
+        ax.set_xticks(x_ticks_vals)
+    if x_tick_names is not None:
+        ax.set_xticklabels(x_tick_names)
+    ax.set_xlabel(x_axis_label)
+    ax.set_ylabel(y_axis_label)
+    plt.title(fig_title)
+    if save_as:
+        plt.savefig(save_as)
+    print('*** finished run_thr_plot ***\n')
+    return fig
+
+
+def simple_log_log_plot(thr_df, x_col='area', y_col='delta_thr', hue_col='cond',
+                        x_ticks_vals=None, x_tick_names=None,
+                        x_axis_label='log(area)',
+                        y_axis_label='log(∆ threshold)',
+                        fig_title='Ricco_v2: log(area) v log(thr)',
+                        show_neg1slope=True,
+                        save_as=None):
+    """
+    Function to make a simple plot from one run showing lineplots for circles, lines and 2probe data.
+    Data is plotted on log-log axis (log(∆thr) and log(area).
+    Single threshold values so no error bars.
+
+    :param thr_df: dataframe from one run
+    :param x_col: column to use for x vals
+    :param y_col: column to use for y vals
+    :param hue_col: column to use for hue (different coloured lines on plot)
+    :param x_ticks_vals: values to place on x-axis ticks
+    :param x_tick_names: labels for x-tick values
+    :param x_axis_label: x axis label
+    :param y_axis_label: y axis label
+    :param fig_title: figure title
+    :param show_neg1slope: If True, plots a line with slope=-1 starting from
+            first datapoint of circles.
+    :param save_as: path and filename to save to
+    :return: figure
+    """
+    print('*** running simple_log_log_plot (x=log(area), y=log(∆thr)) ***')
+    print(f'thr_df:\n{thr_df}')
+    fig, ax = plt.subplots(figsize=(6, 6))
+    sns.lineplot(data=thr_df, x=x_col, y=y_col, hue=hue_col, marker='o', ax=ax)
+    if x_ticks_vals:
+        ax.set_xticks(x_ticks_vals)
+    if x_tick_names:
+        ax.set_xticklabels(x_tick_names)
+    ax.set_xlabel(x_axis_label)
+    ax.set_ylabel(y_axis_label)
+    x_min = thr_df[x_col].min()-1  # or use 5
+    print(f'x_min: {x_min}')
+    y_min = thr_df[y_col].min()-.01  # .01
+    ax.set(xlim=(x_min, x_min*100), ylim=(y_min, y_min*100))
+    # ax.set(xlim=(10, 10000), ylim=(.01, 10))
+    ax.set(xscale="log", yscale="log")
+
+    # add guideline with slope of -1 which crosses through the circles 1probe delta_thr value.
+    if show_neg1slope:
+        circle_1pr_delta = thr_df.loc[thr_df['stair_names'] == '-1_circles', y_col].item()
+        circle_1pr_area = thr_df.loc[thr_df['stair_names'] == '-1_circles', x_col].item()
+        ax.plot([circle_1pr_area, circle_1pr_area*100], [circle_1pr_delta, circle_1pr_delta/100], c='r',
+                label='-1 slope', linestyle='dashed')
+    ax.legend()
+    plt.title(fig_title)
+    if save_as:
+        plt.savefig(save_as)
+    print('*** finished simple_log_log_plot ***')
+    return fig
+
+
 
 # # # all ISIs on one axis -
 # FIGURE 1 - shows one axis (x=separation (-18:18), y=probeLum) with multiple ISI lines.
