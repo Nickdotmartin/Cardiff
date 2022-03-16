@@ -219,7 +219,7 @@ def make_long_df(wide_df,
 
     # make longform data
     if verbose:
-        print(f"\n preparing to loop through: {cols_to_change}")
+        print(f"preparing to loop through: {cols_to_change}")
     long_list = []
     for this_col in cols_to_change:
         this_df_cols = cols_to_keep + [this_col]
@@ -434,18 +434,27 @@ def simple_log_log_plot(thr_df, x_col='area', y_col='delta_thr', hue_col='cond',
         ax.set_xticklabels(x_tick_names)
     ax.set_xlabel(x_axis_label)
     ax.set_ylabel(y_axis_label)
-    x_min = thr_df[x_col].min()-1  # or use 5
+    x_min = thr_df[x_col].min()*.9  # -1  # or use 5
+    y_min = thr_df[y_col].min()*.9  # -.01  # .01
     print(f'x_min: {x_min}')
-    y_min = thr_df[y_col].min()-.01  # .01
+    print(f'y_min: {y_min}')
     ax.set(xlim=(x_min, x_min*100), ylim=(y_min, y_min*100))
     # ax.set(xlim=(10, 10000), ylim=(.01, 10))
     ax.set(xscale="log", yscale="log")
 
     # add guideline with slope of -1 which crosses through the circles 1probe delta_thr value.
     if show_neg1slope:
-        circle_1pr_delta = thr_df.loc[thr_df['stair_names'] == '-1_circles', y_col].item()
-        circle_1pr_area = thr_df.loc[thr_df['stair_names'] == '-1_circles', x_col].item()
-        ax.plot([circle_1pr_area, circle_1pr_area*100], [circle_1pr_delta, circle_1pr_delta/100], c='r',
+        if x_col == 'area':
+            slope_start_x = thr_df.loc[thr_df['stair_names'] == '-1_circles', x_col].item()
+            slope_start_y = thr_df.loc[thr_df['stair_names'] == '-1_circles', y_col].item()
+        elif x_col == 'dur_ms':
+            # slope_start_y = thr_df.loc[thr_df['stair_names'] == '-1_circles', y_col].item()
+            # slope_start_x = thr_df.loc[thr_df['stair_names'] == '-1_circles', x_col].item()
+            slope_start_x = thr_df.iloc[0]['dur_ms']
+            slope_start_y = thr_df.iloc[0]['delta_thr']
+        print(f'slope_start_x: {slope_start_x}')
+        print(f'slope_start_y: {slope_start_y}')
+        ax.plot([slope_start_x, slope_start_x*100], [slope_start_y, slope_start_y/100], c='r',
                 label='-1 slope', linestyle='dashed')
     ax.legend()
     plt.title(fig_title)
@@ -637,8 +646,6 @@ def plot_runs_ave_w_errors(fig_df, error_df,
         legend_handles_list.append(leg_handle)
 
     # decorate plot
-    ax.legend(handles=legend_handles_list, fontsize=6, title='ISI', framealpha=.5)
-
     if x_tick_vals is not None:
         ax.set_xticks(x_tick_vals)
     if x_tick_labels is not None:
@@ -665,14 +672,25 @@ def plot_runs_ave_w_errors(fig_df, error_df,
 
     if neg1_slope:
         # add guideline with slope of -1 which crosses through the circles 1probe delta_thr value.
-        circle_1pr_delta = fig_df.iloc[0]['circles']
-        circle_1pr_area = fig_df.index[0][0]
-        print(f'circle_1pr_delta: {circle_1pr_delta}')
-        print(f'circle_1pr_area: {circle_1pr_area}')
-        # circle_1pr_delta = fig_df.loc[fig_df.separation == -1, 'circles'].item()
-        # circle_1pr_area = fig_df.loc[fig_df.separation == -1, 'area'].item()
-        ax.plot([circle_1pr_area, circle_1pr_area * 100], [circle_1pr_delta, circle_1pr_delta / 100], c='r',
+        if 'circles' in column_names:
+            slope_start_x = fig_df.index[0][0]
+            slope_start_y = fig_df.iloc[0]['circles']
+        elif '1probe' in column_names:
+            slope_start_x = fig_df.index[0]
+            slope_start_y = fig_df.iloc[0]['1probe']
+        print(f'slope_start_x: {slope_start_x}')
+        print(f'slope_start_y: {slope_start_y}')
+        ax.plot([slope_start_x, slope_start_x * 100], [slope_start_y, slope_start_y / 100], c='r',
                 label='-1 slope', linestyle='dashed')
+        leg_handle = mlines.Line2D([], [], color='r', label='-1 slope', linestyle='dashed',
+                                   # marker='.', linewidth=.5, markersize=4
+                                   )
+        legend_handles_list.append(leg_handle)
+
+
+    ax.legend(handles=legend_handles_list, fontsize=6,
+              # title='ISI',
+              framealpha=.5)
 
     if fig_title is not None:
         plt.title(fig_title)
@@ -2109,6 +2127,7 @@ def c_plots(save_path, isi_name_list=None, show_plots=True, verbose=True):
 
 
 def d_average_participant(root_path, run_dir_names_list,
+                          thr_df_name='psignifit_thresholds',
                           error_type=None,
                           trim_n=None,
                           verbose=True):
@@ -2124,6 +2143,7 @@ def d_average_participant(root_path, run_dir_names_list,
 
     :param root_path: dir containing run folders
     :param run_dir_names_list: names of run folders
+    :param thr_df_name: Name of threshold dataframe.  If no name is given it will use 'psignifit_thresholds'.
     :param error_type: Default: None. Can pass sd or se for standard deviation or error.
     :param trim_n: default None.  If int is passed, will call function trim_n_high_n_low(),
             which trims the n highest and lowest values.
@@ -2132,21 +2152,12 @@ def d_average_participant(root_path, run_dir_names_list,
     :returns: ave_psignifit_thr_df: (trimmed?) mean threshold for each separation and ISI.
     """
 
-    print("\n***running d_average_participant()***\n")
-
-    """ d_average_participant: take psignifit_thresholds.csv
-    in each participant run folder and make master lists  
-    MASTER_psignifit_thresholds.csv
-
-    Get mean threshold across 6 run conditions saved as
-    MASTER_ave_thresh.csv
-    
-    Save master lists to folder containing the six runs (root_path)."""
+    print("\n***running d_average_participant()***")
 
     all_psignifit_list = []
     for run_idx, run_name in enumerate(run_dir_names_list):
 
-        this_psignifit_df = pd.read_csv(f'{root_path}{os.sep}{run_name}{os.sep}psignifit_thresholds.csv')
+        this_psignifit_df = pd.read_csv(f'{root_path}{os.sep}{run_name}{os.sep}{thr_df_name}.csv')
         print(f'\n{run_idx}. {run_name} - this_psignifit_df:\n{this_psignifit_df}')
 
         if 'Unnamed: 0' in list(this_psignifit_df):
@@ -2169,7 +2180,7 @@ def d_average_participant(root_path, run_dir_names_list,
     # todo: since I added extra ISI conditions, ISI conds are not in ascending order.
     #  Perhaps re-order columns before saving?
 
-    all_data_psignifit_df.to_csv(f'{root_path}{os.sep}MASTER_psignifit_thresholds.csv', index=False)
+    all_data_psignifit_df.to_csv(f'{root_path}{os.sep}MASTER_{thr_df_name}.csv', index=False)
     if verbose:
         print(f'\nall_data_psignifit_df:\n{all_data_psignifit_df}')
 
@@ -2234,50 +2245,27 @@ def d_average_participant(root_path, run_dir_names_list,
 
         print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
 
-    # elif len(groupby_sep_df.columns) ==
     else:
-        # groupby_sep_df = get_means_df
-        groupby_sep_df = get_means_df.drop('stack', axis=1)
 
-        if len(groupby_sep_df.columns) == 2:
-            # for Exp3_Ricco - group by separation
-            # todo: I no longer need this as ricco_v2 gets picked up above (stair_names)
-            ave_psignifit_thr_df = groupby_sep_df.groupby('separation', sort=True).mean()
+        # for Exp2_Bloch_NM_v2
+        if thr_df_name is 'long_thr_df':
+            groupby_sep_df = get_means_df.drop('stack', axis=1)
+            ave_psignifit_thr_df = groupby_sep_df.groupby(['cond_type', 'dur_ms', 'ISI'], sort=False).mean()
 
-            if verbose:
-                print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
-
-            if error_type in [False, None]:
-                error_bars_df = None
-            elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
-                error_bars_df = groupby_sep_df.groupby('separation', sort=True).sem()
-            elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
-                error_bars_df = groupby_sep_df.groupby('separation', sort=True).std()
-            else:
-                raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
-                                 f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standard_error']\n"
-                                 f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
-                                 f"'deviation', 'standard_deviation']")
-            print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
+        if verbose:
+            print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
+        if error_type in [False, None]:
+            error_bars_df = None
+        elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
+            error_bars_df = groupby_sep_df.groupby(['cond_type', 'dur_ms', 'ISI'], sort=False).sem()
+        elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
+            error_bars_df = groupby_sep_df.groupby(['cond_type', 'dur_ms', 'ISI'], sort=False).std()
         else:
-            # for Exp2_Bloch - I can drop separation and don't groupby
-            groupby_sep_df = groupby_sep_df.drop('separation', axis=1)
-            ave_psignifit_thr_df = groupby_sep_df.mean()
-
-            if verbose:
-                print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
-            if error_type in [False, None]:
-                error_bars_df = None
-            elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
-                error_bars_df = groupby_sep_df.sem()
-            elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
-                error_bars_df = groupby_sep_df.std()
-            else:
-                raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
-                                 f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standard_error']\n"
-                                 f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
-                                 f"'deviation', 'standard_deviation']")
-            print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
+            raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
+                             f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standard_error']\n"
+                             f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
+                             f"'deviation', 'standard_deviation']")
+        print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
 
     # save csv with average values
     # todo: since I added extra ISI conditions, ISI conds are not in ascending order.
@@ -2362,9 +2350,16 @@ def e_average_exp_data(exp_path, p_names_list,
 
     # join all participants' data and save as master csv
     all_exp_thr_df = pd.concat(all_p_ave_list, ignore_index=True)
-    all_exp_thr_df.to_csv(f'{exp_path}{os.sep}MASTER_exp_thr.csv', index=False)
+    cols_list = list(all_exp_thr_df.columns)
+    if cols_list == ['participant', 'stair_names', 'congruent', 'separation',
+                     'ISI_6', 'ISI_9', 'ISI_1', 'ISI_4', 'ISI_8', 'ISI_10', 'ISI_12']:
+        new_cols_list = ['participant', 'stair_names', 'congruent', 'separation',
+                         'ISI_1', 'ISI_4', 'ISI_6', 'ISI_8', 'ISI_9', 'ISI_10', 'ISI_12']
+        all_exp_thr_df = all_exp_thr_df[new_cols_list]
     if verbose:
-        print(f'\nall_exp_thr_df:\n{all_exp_thr_df}')
+        print(f'\nall_exp_thr_df:{list(all_exp_thr_df.columns)}\n{all_exp_thr_df}')
+    all_exp_thr_df.to_csv(f'{exp_path}{os.sep}MASTER_exp_thr.csv', index=False)
+
 
     # # get means and errors
     groupby_sep_df = all_exp_thr_df.drop('participant', axis=1)

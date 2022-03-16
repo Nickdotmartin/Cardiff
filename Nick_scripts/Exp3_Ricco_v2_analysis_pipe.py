@@ -17,7 +17,7 @@ from psignifit_tools import get_psignifit_threshold_df
 exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Exp3_Ricco_NM_v2'
 # participant_list = ['Nick_test']  # , 'bb', 'cc', 'dd', 'ee']
 participant_list = ['Nick']  # , 'bb', 'cc', 'dd', 'ee']
-n_runs = 1
+n_runs = 3
 
 p_idx_plus = 1
 
@@ -163,7 +163,7 @@ for p_idx, participant_name in enumerate(participant_list):
         # plot with log-log axes
         simple_log_log_plot(thr_df, x_col='area', y_col='delta_thr', hue_col='cond',
                          x_ticks_vals=None, x_tick_names=None,
-                         x_axis_label='log(area)',
+                         x_axis_label='log(area mm) - circles condition',
                          y_axis_label='log(∆ threshold)',
                          fig_title='Ricco_v2: log(area) v log(thr)',
                          save_as=f'{save_path}{os.sep}ricco_v2_log_area_log_delta.png')
@@ -215,7 +215,7 @@ for p_idx, participant_name in enumerate(participant_list):
                            fixed_y_range=False,
                            x_tick_vals=x_values,
                            x_tick_labels=x_labels,
-                           x_axis_label='Probe cond',
+                           x_axis_label='Separation (2probe cond)',
                            y_axis_label='Threshold',
                            log_log_axes=False,
                            neg1_slope=False,
@@ -241,8 +241,8 @@ for p_idx, participant_name in enumerate(participant_list):
                            fixed_y_range=False,
                            x_tick_vals=area_values,
                            x_tick_labels=None,
-                           x_axis_label='area',
-                           y_axis_label='∆ Threshold',
+                           x_axis_label='log(area mm) - circles condition',
+                           y_axis_label='log(∆ Threshold)',
                            log_log_axes=True,
                            neg1_slope=True,
                            fig_title=fig_title, save_name=save_name,

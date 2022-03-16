@@ -14,8 +14,8 @@ from psignifit_tools import get_psignifit_threshold_df
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
 exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Exp2_Bloch_NM_v2'
-participant_list = ['Nick_60hz']  # , 'bb', 'cc', 'dd', 'ee']
-n_runs = 1
+participant_list = ['Nick']  # , 'bb', 'cc', 'dd', 'ee']
+n_runs = 3
 
 p_idx_plus = 1
 
@@ -60,10 +60,6 @@ for p_idx, participant_name in enumerate(participant_list):
         # cond_types = run_data_df['cond_type'].unique()
         # print(f'cond_types: {cond_types}')
         #
-        # # sep_list = [0]*len(cond_types)
-        # # print(f'sep_list: {sep_list}')
-        # # cols_to_add_dict = {'separation': sep_list,
-        # #                     }
         #
         # '''get psignifit thresholds df - use stairs as sep levels rather than using groups'''
         # thr_df = get_psignifit_threshold_df(root_path=root_path,
@@ -77,9 +73,11 @@ for p_idx, participant_name in enumerate(participant_list):
         #                                     verbose=True)
         # print(f'thr_df: {type(thr_df)}\n{thr_df}')
 
-        # # Bloch doesn't currently work with b3_plot_staircase or c_plots
-        # b3_plot_staircase(run_data_path, show_plots=True)
-        # c_plots(save_path=save_path, isi_name_list=isi_name_list, show_plots=True)
+        # todo: get delta_thr here so I can calculate averages with it.
+
+        '''# Bloch doesn't currently work with b3_plot_staircase or c_plots
+        b3_plot_staircase(run_data_path, show_plots=True)
+        c_plots(save_path=save_path, isi_name_list=isi_name_list, show_plots=True)'''
 
         run_data_path = f'{save_path}{os.sep}{p_name}_output.csv'
         run_data_df = pd.read_csv(run_data_path,
@@ -107,152 +105,148 @@ for p_idx, participant_name in enumerate(participant_list):
                                    new_col_name='ISI', strip_from_cols='ISI_', verbose=True)
         print(f'long_thr_df:\n{long_thr_df}')
 
-        # sep_list = thr_df['separation'].unique()
-        # sep_vals_list = [i for i in sep_list]
-        # sep_name_list = ['1pr' if i == -1 else f'sep{i}' for i in sep_list]
-        # print(f'sep_vals_list: {sep_vals_list}')
-        # print(f'sep_name_list: {sep_name_list}\n')
-
         # basic plot with regular axes
         run_thr_plot(long_thr_df, x_col='ISI', y_col='probeLum', hue_col='cond_type',
                      # x_ticks_vals=isi_list,
                      x_tick_names=isi_labels_list,
-                     x_axis_label='Probe cond (isi)',
+                     x_axis_label='ISI (2probe cond)',
                      y_axis_label='Probe Luminance',
                      fig_title='Bloch_v2: probe cond vs thr',
                      save_as=f'{save_path}{os.sep}bloch_v2_cond_v_thr.png')
         plt.show()
 
         # not sure I actually need to do a log-log plot for duration.
-        # print(f'long_thr_df:\n{long_thr_df}')
-        #
-        # # check for 'area' and 'delta_thr' col
-        # col_names = long_thr_df.columns.to_list()
-        #
-        # if 'dur_ms' not in col_names:
-        #     # convert separation into area (units are pixels)
-        #     dur_dict = {-2.0: {'frames': 2, 'duration': 8.333333333},
-        #                 0.0: {'frames': 4, 'duration': 16.66666667},
-        #                 8.33: {'frames': 6, 'duration': 25},
-        #                 16.67: {'frames': 8, 'duration': 33.33333333},
-        #                 25.0: {'frames': 10, 'duration': 41.66666667},
-        #                 37.5: {'frames': 13, 'duration': 54.16666667},
-        #                 50.0: {'frames': 16, 'duration': 66.66666667},
-        #                 100.0: {'frames': 28, 'duration': 116.6666667},
-        #                 200.0: {'frames': 52, 'duration': 216.6666667},
-        #                 }
-        #     ISI_col = long_thr_df['ISI'].to_list()
-        #     ISI_col = [float(i) for i in ISI_col]
-        #     print(f'ISI_col: {ISI_col}')
-        #     dur_col = [dur_dict[i]['duration'] for i in ISI_col]
-        #     print(f'dur_col: {dur_col}')
-        #     long_thr_df.insert(1, 'dur_ms', dur_col)
-        #
-        #     thr_col = long_thr_df['probeLum'].to_list()
-        #     bgLum = 21.2
-        #     delta_thr_col = [(i-bgLum)/bgLum for i in thr_col]
-        #     long_thr_df.insert(4, 'delta_thr', delta_thr_col)
-        #
-        #     if 'stair_name' in col_names:
-        #         long_thr_df.drop('stair_name', axis=1, inplace=True)
-        #
-        #     long_thr_df_path = f'{save_path}{os.sep}long_thr_df.csv'
-        #     # long_thr_df.to_csv(long_thr_df_path, index=False)
-        #     # print(f'long_thr_df:\n{long_thr_df}')
-        #
-        #
-        # # plot with log-log axes
-        # simple_log_log_plot(long_thr_df, x_col='dur_ms', y_col='delta_thr', hue_col='cond_type',
-        #                     x_ticks_vals=None, x_tick_names=None,
-        #                     x_axis_label='log(duration)',
-        #                     y_axis_label='log(∆ threshold)',
-        #                     fig_title='Bloch_v2: log(area) v log(thr)',
-        #                     show_neg1slope=False,
-        #                     save_as=f'{save_path}{os.sep}bloch_v2_log_dur_log_delta.png')
-        # plt.show()
-#         fps = run_data_df['3_fps'].iloc[0]
-#         one_frame = 1000/fps
-#         probe_dur = round(2*one_frame, 3)
-#         print(f'probe_dur: {probe_dur} at {fps} fps')
-#
-#         thr_list = thr_df.iloc[0][1:].tolist()
-#         print(f'thr_df:\n{thr_df}')
-#         print(f'thr_list: {thr_list}')
-#
-#         isi_vals_list = [float(i[4:]) for i in thr_df_cols[1:]]
-#         isi_vals_list = [110 if i == -99.0 else i for i in isi_vals_list]
-#         isi_name_list = ['1pr' if i == 110 else f'ISI{i}' for i in isi_vals_list]
-#         print(f'isi_vals_list: {isi_vals_list}')
-#         print(f'isi_name_list: {isi_name_list}')
-#
-#         fig, ax = plt.subplots(figsize=(10, 6))
-#         sns.lineplot(x=isi_vals_list, y=thr_list, marker='o')
-#         ax.set_xticks(isi_vals_list)
-#         ax.set_xticklabels(isi_name_list)
-#         ax.set_xlabel('Inter-stimulus Interval')
-#         ax.set_ylabel('Probe Luminance')
-#         plt.title(f'Bloch: {probe_dur}ms probes with varying ISI')
-#         plt.savefig(f'{save_path}{os.sep}bloch_thr.png')
-#         plt.show()
-#         print('*** finished threshold plot ***')
-#
-#     '''d'''
-#     trim_n = None
-#     if len(run_folder_names) == 12:
-#         trim_n = 1
-#     d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-#                           trim_n=trim_n, error_type='SE')
-#
-#
-#     # making average plot
-#     all_df_path = f'{root_path}/MASTER_TM1_thresholds.csv'
-#     p_ave_path = f'{root_path}/MASTER_ave_TM_thresh.csv'
-#     err_path = f'{root_path}/MASTER_ave_TM_thr_error_SE.csv'
-#     n_trimmed = trim_n
-#     if n_trimmed == None:
-#         all_df_path = f'{root_path}/MASTER_psignifit_thresholds.csv'
-#         p_ave_path = f'{root_path}/MASTER_ave_thresh.csv'
-#         err_path = f'{root_path}/MASTER_ave_thr_error_SE.csv'
-#
-#     exp_ave = False
-#
-#     # load data and change order to put 1pr last
-#     print('*** making average plot ***')
-#     fig_df = pd.read_csv(p_ave_path)
-#     fig_df.columns = ['cond', 'thr']
-#     fig_df_idx = fig_df.index.tolist()
-#     fig_df_idx.append(fig_df_idx.pop(0))
-#     print(f'fig_fd_idx: {fig_df_idx}')
-#     fig_df = fig_df.reindex(fig_df_idx)
-#     fig_df = fig_df.set_index('cond')
-#
-#
-#     error_df = pd.read_csv(err_path)
-#     error_df.columns = ['cond', 'thr']
-#     error_df = error_df.reindex(fig_df_idx)
-#     print(f'fig_df:\n{fig_df}')
-#     print(f'error_df:\n{error_df}')
-#
-#     isi_vals_list = fig_df.index.tolist()
-#     isi_vals_list = [float(i[4:]) for i in isi_vals_list]
-#     isi_vals_list = [110 if i == -99.0 else int(i) for i in isi_vals_list]
-#     isi_name_list = ['1pr' if i == 110 else i for i in isi_vals_list]
-#     print(f'isi_vals_list: {isi_vals_list}')
-#     print(f'isi_name_list: {isi_name_list}')
-#
-#     fig_title = 'Participant average thresholds - Bloch'
-#     save_name = 'ave_thr_all_runs.png'
-#     plot_runs_ave_w_errors(fig_df=fig_df, error_df=error_df,
-#                            jitter=True, error_caps=True, alt_colours=False,
-#                            legend_names=None,
-#                            x_tick_vals=isi_vals_list,
-#                            x_tick_labels=isi_name_list,
-#                            even_spaced_x=False, fixed_y_range=False,
-#                            x_axis_label='ISI',
-#                            fig_title=fig_title, save_name=save_name,
-#                            save_path=root_path, verbose=True)
-#     plt.show()
-#     print('*** finished average plot ***')
+        print(f'long_thr_df:\n{long_thr_df}')
+
+        # check for 'area' and 'delta_thr' col
+        col_names = long_thr_df.columns.to_list()
+
+        if 'dur_ms' not in col_names:
+            # convert separation into area (units are pixels)
+            dur_dict = {-2.0: {'frames': 2, 'duration': 8.333333333},
+                        0.0: {'frames': 4, 'duration': 16.66666667},
+                        8.33: {'frames': 6, 'duration': 25},
+                        16.67: {'frames': 8, 'duration': 33.33333333},
+                        25.0: {'frames': 10, 'duration': 41.66666667},
+                        37.5: {'frames': 13, 'duration': 54.16666667},
+                        50.0: {'frames': 16, 'duration': 66.66666667},
+                        100.0: {'frames': 28, 'duration': 116.6666667},
+                        200.0: {'frames': 52, 'duration': 216.6666667},
+                        }
+            ISI_col = long_thr_df['ISI'].to_list()
+            ISI_col = [float(i) for i in ISI_col]
+            print(f'ISI_col: {ISI_col}')
+            dur_col = [dur_dict[i]['duration'] for i in ISI_col]
+            print(f'dur_col: {dur_col}')
+            long_thr_df.insert(1, 'dur_ms', dur_col)
+
+            thr_col = long_thr_df['probeLum'].to_list()
+            bgLum = 21.2
+            delta_thr_col = [(i-bgLum)/bgLum for i in thr_col]
+            long_thr_df.insert(4, 'delta_thr', delta_thr_col)
+
+            if 'stair_name' in col_names:
+                long_thr_df.drop('stair_name', axis=1, inplace=True)
+
+            long_thr_df_path = f'{save_path}{os.sep}long_thr_df.csv'
+            long_thr_df.to_csv(long_thr_df_path, index=False)
+            print(f'long_thr_df:\n{long_thr_df}')
+
+
+        # plot with log-log axes
+        simple_log_log_plot(long_thr_df, x_col='dur_ms', y_col='delta_thr', hue_col='cond_type',
+                            x_ticks_vals=None, x_tick_names=None,
+                            x_axis_label='log(duration ms) - 1probe condition',
+                            y_axis_label='log(∆ threshold)',
+                            fig_title='Bloch_v2: log(area) v log(thr)',
+                            show_neg1slope=True,
+                            save_as=f'{save_path}{os.sep}bloch_v2_log_dur_log_delta.png')
+        plt.show()
+
+
+    '''d'''
+    trim_n = None
+    if len(run_folder_names) == 12:
+        trim_n = 1
+    thr_df_name = 'long_thr_df'
+    # d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
+    #                       thr_df_name=thr_df_name, trim_n=trim_n, error_type='SE')
+
+
+    # making average plot
+    all_df_path = f'{root_path}/MASTER_TM1_thresholds.csv'
+    p_ave_path = f'{root_path}/MASTER_ave_TM_thresh.csv'
+    err_path = f'{root_path}/MASTER_ave_TM_thr_error_SE.csv'
+    n_trimmed = trim_n
+    if n_trimmed == None:
+        all_df_path = f'{root_path}/MASTER_{thr_df_name}.csv'
+        p_ave_path = f'{root_path}/MASTER_ave_thresh.csv'
+        err_path = f'{root_path}/MASTER_ave_thr_error_SE.csv'
+
+    exp_ave = False
+
+    # load data and change order to put 1pr last
+    print('*** making average plot ***')
+    # reshape dfs so that the different conds are in separate columns.
+    ave_df = pd.read_csv(p_ave_path)
+    print(f'ave_df:\n{ave_df}')
+
+    wide_df = ave_df.pivot(index=['ISI'], columns='cond_type', values='probeLum')
+    print(f'wide_df:\n{wide_df}')
+
+    x_values = wide_df.index.get_level_values('ISI').to_list()
+    x_values = [int(i) if i.is_integer() else i for i in x_values]
+    print(f'x_values: {x_values}')
+    x_labels = ['conc' if i == -2.0 else i for i in x_values]
+    print(f'x_labels: {x_labels}')
+
+    error_df = pd.read_csv(err_path)
+    wide_err_df = error_df.pivot(index=['ISI'], columns='cond_type', values='probeLum')
+    print(f'wide_err_df:\n{wide_err_df}')
+
+    fig_title = 'Participant average thresholds - Bloch_v2'
+    save_name = 'bloch_v2_sep_v_thr.png'
+    plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
+                           jitter=False, error_caps=True, alt_colours=False,
+                           legend_names=None,
+                           even_spaced_x=True,
+                           fixed_y_range=False,
+                           x_tick_vals=x_values,
+                           x_tick_labels=x_labels,
+                           x_axis_label='ISI (2probe condition)',
+                           y_axis_label='Threshold',
+                           log_log_axes=False,
+                           neg1_slope=False,
+                           fig_title=fig_title, save_name=save_name,
+                           save_path=root_path, verbose=True)
+    plt.show()
+
+    wide_df = ave_df.pivot(index=['dur_ms'], columns='cond_type', values='delta_thr')
+    print(f'wide_df:\n{wide_df}')
+
+    error_df = pd.read_csv(err_path)
+    wide_err_df = error_df.pivot(index=['dur_ms'], columns='cond_type', values='delta_thr')
+    print(f'wide_err_df:\n{wide_err_df}')
+
+    fig_title = 'Participant average ∆thresholds - Bloch_v2'
+    save_name = 'bloch_v2_log_dur_log_delta.png'
+    plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
+                           jitter=False, error_caps=True, alt_colours=False,
+                           legend_names=None,
+                           even_spaced_x=False,
+                           fixed_y_range=False,
+                           x_tick_vals=None,
+                           x_tick_labels=None,
+                           x_axis_label='log(duration ms) - 1probe condition',
+                           y_axis_label='log(∆ Threshold)',
+                           log_log_axes=True,
+                           neg1_slope=True,
+                           fig_title=fig_title, save_name=save_name,
+                           save_path=root_path, verbose=True)
+    plt.show()
+    print('*** finished average plot ***')
+
+
 #
 #     make_average_plots(all_df_path=all_df_path,
 #                        ave_df_path=p_ave_path,
