@@ -28,13 +28,13 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'ASUS_2_13_240Hz'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz'
+monitor_name = 'Asus_VG24'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz'
 display_number = 1  # 0 indexed, 1 for external display
 
 # Store info about the experiment session
 expName = 'Exp3_Ricco_NM_v2'  # from the Builder filename that created this script
 
-expInfo = {'1_Participant': 'Nick_1',
+expInfo = {'1_Participant': 'Nick_test_size',
            '2_Probe_dur_in_frames_at_240hz': [2, 50, 100],
            '3_fps': [240, 144, 60],
            # '4_ISI_dur_in_ms': [100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0],
@@ -475,6 +475,7 @@ for step in range(n_trials_per_stair):
 
         print(f'\tbgLum: {bgLum}, bgColor255: {bgColor255}, bgcolor: {bgcolor}\n')
         print(f'\t\twin.colorSpace: {win.colorSpace}, bgColor255: {bgColor255}, bgcolor: {bgcolor}\n')
+
 
         # dist_from_fix is a constant giving distance form fixation,
         # dist_from_fix was previously 2 identical variables x_prob & y_prob.

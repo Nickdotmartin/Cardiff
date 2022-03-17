@@ -444,7 +444,7 @@ def simple_log_log_plot(thr_df, x_col='area', y_col='weber_thr', hue_col='cond',
 
     # add guideline with slope of -1 which crosses through the circles 1probe weber_thr value.
     if show_neg1slope:
-        if x_col == 'area':
+        if x_col == 'area_deg':
             slope_start_x = thr_df.loc[thr_df['stair_names'] == '-1_circles', x_col].item()
             slope_start_y = thr_df.loc[thr_df['stair_names'] == '-1_circles', y_col].item()
         elif x_col == 'dur_ms':

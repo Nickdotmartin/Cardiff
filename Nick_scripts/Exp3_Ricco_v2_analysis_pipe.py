@@ -110,7 +110,6 @@ for p_idx, participant_name in enumerate(participant_list):
         # b3_plot_staircase(run_data_path, show_plots=True)
         # # c_plots(save_path=save_path, isi_name_list=isi_name_list, show_plots=True)
 
-        # thr_df_path = f'{save_path}{os.sep}test1.csv'
         thr_df_path = f'{save_path}{os.sep}psignifit_thresholds.csv'
         # thr_df_path = f'{save_path}{os.sep}{thr_save_name}.csv'
         thr_df = pd.read_csv(thr_df_path)
@@ -138,21 +137,38 @@ for p_idx, participant_name in enumerate(participant_list):
 
         print(f'thr_df:\n{thr_df}')
 
-        # check for 'area' and 'weber_thr' col
-        col_names = thr_df.columns.to_list()
 
-        if 'area' not in col_names:
-            # convert separation into area (units are pixels)
-            area_dict = {-1: {'radius': 2.15, 'area': 14.522012041218817},
-                         0: {'radius': 2.5, 'area': 19.634954084936208},
-                         1: {'radius': 2.8, 'area': 24.630086404143974},
-                         2: {'radius': 3.4, 'area': 36.316811075498},
-                         3: {'radius': 4.1, 'area': 52.81017250684442},
-                         6: {'radius': 6.1, 'area': 116.89866264007618},
-                         18: {'radius': 14.6, 'area': 669.6618900392003}}
+
+        # convert separation into area (units are pixels, mm and degrees are diagonal pixels)
+        area_dict = {-1: {'pixels': {'radius': 2.15, 'area': 14.522012041218817},
+                          'mm': {'radius': 0.8413797298077994, 'area': 2.2239957992466994},
+                          'degrees': {'radius': 0.08456630129684849, 'area': 0.022466972046542525}},
+                     0: {'pixels': {'radius': 2.5, 'area': 19.634954084936208},
+                         'mm': {'radius': 0.9783485230323249, 'area': 3.0070251477105185},
+                         'degrees': {'radius': 0.09833290848470753, 'area': 0.030377193140268415}},
+                     1: {'pixels': {'radius': 2.8, 'area': 24.630086404143974},
+                         'mm': {'radius': 1.095750345796204, 'area': 3.7720123452880747},
+                         'degrees': {'radius': 0.11013285750287244, 'area': 0.03810515107515271}},
+                     2: {'pixels': {'radius': 3.4, 'area': 36.316811075498},
+                         'mm': {'radius': 1.3305539913239617, 'area': 5.561793713205374},
+                         'degrees': {'radius': 0.13373275553920227, 'area': 0.05618565643224048}},
+                     3: {'pixels': {'radius': 4.1, 'area': 52.81017250684442},
+                         'mm': {'radius': 1.6044915777730129, 'area': 8.087694837282212},
+                         'degrees': {'radius': 0.16126596991492034, 'area': 0.08170249867006593}},
+                     6: {'pixels': {'radius': 6.1, 'area': 116.89866264007618},
+                         'mm': {'radius': 2.3871703961988726, 'area': 17.902624919409345},
+                         'degrees': {'radius': 0.2399322967026864, 'area': 0.18085365707990209}},
+                     18: {'pixels': {'radius': 14.6, 'area': 669.6618900392003},
+                          'mm': {'radius': 5.713555374508777, 'area': 102.55639687775587},
+                          'degrees': {'radius': 0.574264185550692, 'area': 1.0360323983647386}}}
+
+        # check for 'area' and 'weber_thr' col
+        # old area was given in pixels
+        col_names = thr_df.columns.to_list()
+        if 'area_deg' not in col_names:
             sep_col = thr_df['separation'].to_list()
-            area_col = [area_dict[i]['area'] for i in sep_col]
-            thr_df.insert(3, 'area', area_col)
+            area_col = [area_dict[i]['degrees']['area'] for i in sep_col]
+            thr_df.insert(3, 'area_deg', area_col)
 
         if 'weber_thr' not in col_names:
             thr_col = thr_df['ISI_0'].to_list()
@@ -169,9 +185,9 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
         # plot with log-log axes
-        simple_log_log_plot(thr_df, x_col='area', y_col='weber_thr', hue_col='cond',
+        simple_log_log_plot(thr_df, x_col='area_deg', y_col='weber_thr', hue_col='cond',
                          x_ticks_vals=None, x_tick_names=None,
-                         x_axis_label='log(area mm) - circles condition',
+                         x_axis_label='log(area degrees$^2$) - circles condition',
                          y_axis_label='log(∆I/I)',
                          fig_title='Ricco_v2: log(area) v log(∆I/I)',
                          save_as=f'{save_path}{os.sep}ricco_v2_log_area_log_weber.png')
@@ -231,13 +247,14 @@ for p_idx, participant_name in enumerate(participant_list):
                            save_path=root_path, verbose=True)
     plt.show()
 
-    wide_df = fig_df.pivot(index=['area', 'separation'], columns='cond', values='weber_thr')
+    wide_df = fig_df.pivot(index=['area_deg', 'separation'], columns='cond', values='weber_thr')
     print(f'wide_df:\n{wide_df}')
 
-    area_values = wide_df.index.get_level_values('area').to_list()
+    area_values = wide_df.index.get_level_values('area_deg').to_list()
     print(f'area_values: {area_values}')
 
     error_df = pd.read_csv(err_path)
+    print(f'error_df:\n{error_df}')
     wide_err_df = error_df.pivot(index=['area', 'separation'], columns='cond', values='weber_thr')
 
     fig_title = 'Participant average ∆I/I thresholds - Ricco_v2'
@@ -249,7 +266,7 @@ for p_idx, participant_name in enumerate(participant_list):
                            fixed_y_range=False,
                            x_tick_vals=area_values,
                            x_tick_labels=None,
-                           x_axis_label='log(area mm) - circles condition',
+                           x_axis_label='log(area degrees$^2$) - circles condition',
                            y_axis_label='log(∆I/I)',
                            log_log_axes=True,
                            neg1_slope=True,
