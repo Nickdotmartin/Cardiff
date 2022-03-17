@@ -58,7 +58,7 @@ for p_idx, participant_name in enumerate(participant_list):
     #     run_data_df = pd.read_csv(run_data_path, usecols=
     #                               ['trial_number', 'stair', 'stair_name', 'step',
     #                                'separation', 'cond_type', 'ISI', 'corner',
-    #                                'probeLum', 'delta_lum', 'trial_response', '3_fps'])
+    #                                'probeLum', 'weber_lum', 'trial_response', '3_fps'])
     #     print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}\n")
     #
     #     # extract values from dataframe
@@ -98,10 +98,12 @@ for p_idx, participant_name in enumerate(participant_list):
     #
         '''b3'''
         run_data_path = f'{save_path}{os.sep}{p_name}_output.csv'
-        run_data_df = pd.read_csv(run_data_path, usecols=
-                                  ['trial_number', 'stair', 'stair_name', 'step',
-                                   'separation', 'cond_type', 'ISI', 'corner',
-                                   'probeLum', 'delta_lum', 'trial_response', '3_fps'])
+        run_data_df = pd.read_csv(run_data_path,
+                                  # usecols=
+                                  # ['trial_number', 'stair', 'stair_name', 'step',
+                                  #  'separation', 'cond_type', 'ISI', 'corner',
+                                  #  'probeLum', 'weber_lum', 'trial_response', '3_fps']
+                                  )
         print(f'run_data_df:\n{run_data_df}')
 
         # Ricco doesn't currently work with b3_plot_staircase or c_plots
@@ -112,6 +114,10 @@ for p_idx, participant_name in enumerate(participant_list):
         thr_df_path = f'{save_path}{os.sep}psignifit_thresholds.csv'
         # thr_df_path = f'{save_path}{os.sep}{thr_save_name}.csv'
         thr_df = pd.read_csv(thr_df_path)
+
+        if 'delta_thr' in list(thr_df.columns):
+            thr_df.drop('delta_thr', axis=1, inplace=True)
+
         print(f'thr_df:\n{thr_df}\n')
 
         sep_list = thr_df['separation'].unique()
@@ -132,7 +138,7 @@ for p_idx, participant_name in enumerate(participant_list):
 
         print(f'thr_df:\n{thr_df}')
 
-        # check for 'area' and 'delta_thr' col
+        # check for 'area' and 'weber_thr' col
         col_names = thr_df.columns.to_list()
 
         if 'area' not in col_names:
@@ -148,25 +154,27 @@ for p_idx, participant_name in enumerate(participant_list):
             area_col = [area_dict[i]['area'] for i in sep_col]
             thr_df.insert(3, 'area', area_col)
 
+        if 'weber_thr' not in col_names:
             thr_col = thr_df['ISI_0'].to_list()
             bgLum = 21.2
-            delta_thr_col = [(i-bgLum)/bgLum for i in thr_col]
-            thr_df.insert(4, 'delta_thr', delta_thr_col)
+            # delta_thr_col = [(i-bgLum)/bgLum for i in thr_col]
+            weber_thr_col = [(i-bgLum)/i for i in thr_col]
+            thr_df.insert(4, 'weber_thr', weber_thr_col)
 
-            if 'stair_name' in col_names:
-                thr_df.drop('stair_name', axis=1, inplace=True)
+        if 'stair_name' in col_names:
+            thr_df.drop('stair_name', axis=1, inplace=True)
 
-            thr_df.to_csv(thr_df_path, index=False)
-            print(f'thr_df:\n{thr_df}')
+        print(f'thr_df:\n{thr_df}')
+        thr_df.to_csv(thr_df_path, index=False)
 
 
         # plot with log-log axes
-        simple_log_log_plot(thr_df, x_col='area', y_col='delta_thr', hue_col='cond',
+        simple_log_log_plot(thr_df, x_col='area', y_col='weber_thr', hue_col='cond',
                          x_ticks_vals=None, x_tick_names=None,
                          x_axis_label='log(area mm) - circles condition',
-                         y_axis_label='log(∆ threshold)',
-                         fig_title='Ricco_v2: log(area) v log(thr)',
-                         save_as=f'{save_path}{os.sep}ricco_v2_log_area_log_delta.png')
+                         y_axis_label='log(∆I/I)',
+                         fig_title='Ricco_v2: log(area) v log(∆I/I)',
+                         save_as=f'{save_path}{os.sep}ricco_v2_log_area_log_weber.png')
         plt.show()
 
 
@@ -174,8 +182,8 @@ for p_idx, participant_name in enumerate(participant_list):
     trim_n = None
     if len(run_folder_names) == 12:
         trim_n = 1
-    # d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-    #                       trim_n=trim_n, error_type='SE')
+    d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
+                          trim_n=trim_n, error_type='SE')
 
     # making average plot
     all_df_path = f'{root_path}/MASTER_TM1_thresholds.csv'
@@ -223,17 +231,17 @@ for p_idx, participant_name in enumerate(participant_list):
                            save_path=root_path, verbose=True)
     plt.show()
 
-    wide_df = fig_df.pivot(index=['area', 'separation'], columns='cond', values='delta_thr')
+    wide_df = fig_df.pivot(index=['area', 'separation'], columns='cond', values='weber_thr')
     print(f'wide_df:\n{wide_df}')
 
     area_values = wide_df.index.get_level_values('area').to_list()
     print(f'area_values: {area_values}')
 
     error_df = pd.read_csv(err_path)
-    wide_err_df = error_df.pivot(index=['area', 'separation'], columns='cond', values='delta_thr')
+    wide_err_df = error_df.pivot(index=['area', 'separation'], columns='cond', values='weber_thr')
 
-    fig_title = 'Participant average ∆thresholds - Ricco_v2'
-    save_name = 'ricco_v2_log_area_log_delta.png'
+    fig_title = 'Participant average ∆I/I thresholds - Ricco_v2'
+    save_name = 'ricco_v2_log_area_log_weber.png'
     plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
                            jitter=False, error_caps=True, alt_colours=False,
                            legend_names=None,
@@ -242,7 +250,7 @@ for p_idx, participant_name in enumerate(participant_list):
                            x_tick_vals=area_values,
                            x_tick_labels=None,
                            x_axis_label='log(area mm) - circles condition',
-                           y_axis_label='log(∆ Threshold)',
+                           y_axis_label='log(∆I/I)',
                            log_log_axes=True,
                            neg1_slope=True,
                            fig_title=fig_title, save_name=save_name,

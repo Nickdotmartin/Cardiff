@@ -467,9 +467,9 @@ for step in range(n_trials_per_stair):
         corner = np.random.choice([45, 135, 225, 315])
         print(f'\tcorner: {corner}, flow_dir: {flow_dir}, target_jump: {target_jump}')
 
-        delta_lum = (probeLum-bgLum)/bgLum
+        weber_lum = (probeLum-bgLum)/probeLum
 
-        print(f'\t\tprobeLum: {probeLum}, bgLum: {bgLum}, delta_lum: {delta_lum}\n')
+        print(f'\t\tprobeLum: {probeLum}, bgLum: {bgLum}, weber_lum: {weber_lum}\n')
 
         print(f'probeLum: {probeLum}, probeColor255: {probeColor255}, probeColor1: {probeColor1}\n')
 
@@ -824,7 +824,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('bgLum', bgLum)
         thisExp.addData('bgcolor', bgcolor)
         thisExp.addData('bgColor255', bgColor255)
-        thisExp.addData('delta_lum', delta_lum)
+        thisExp.addData('weber_lum', weber_lum)
 
         thisExp.nextEntry()
         thisStair.newValue(resp.corr)  # so that the staircase adjusts itself

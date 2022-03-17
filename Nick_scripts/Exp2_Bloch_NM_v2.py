@@ -464,9 +464,9 @@ for step in range(n_trials_per_stair):
         print(f' ISI_cond: {ISI_cond}, ISI_fr: {ISI_fr}, ISI_time: {ISI_time}')
         print(f'\tcorner: {corner}, flow_dir: {flow_dir}, target_jump: {target_jump}')
 
-        delta_lum = (probeLum-bgLum)/bgLum
+        weber_lum = (probeLum-bgLum)/probeLum
 
-        print(f'\t\tprobeLum: {probeLum}, bgLum: {bgLum}, delta_lum: {delta_lum}')
+        print(f'\t\tprobeLum: {probeLum}, bgLum: {bgLum}, weber_lum: {weber_lum}')
         print(f'\t\t\tprobeColor255: {probeColor255}, probeColor1: {probeColor1}')
         print(f'\t\t\t\twin.colorSpace: {win.colorSpace}, bgColor255: {bgColor255}, bgcolor: {bgcolor}\n')
 
@@ -865,7 +865,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('bgLum', bgLum)
         thisExp.addData('bgcolor', bgcolor)
         thisExp.addData('bgColor255', bgColor255)
-        thisExp.addData('delta_lum', delta_lum)
+        thisExp.addData('weber_lum', weber_lum)
 
         thisExp.nextEntry()
 

@@ -73,19 +73,12 @@ for p_idx, participant_name in enumerate(participant_list):
         #                                     verbose=True)
         # print(f'thr_df: {type(thr_df)}\n{thr_df}')
 
-        # todo: get delta_thr here so I can calculate averages with it.
-
         '''# Bloch doesn't currently work with b3_plot_staircase or c_plots
         b3_plot_staircase(run_data_path, show_plots=True)
         c_plots(save_path=save_path, isi_name_list=isi_name_list, show_plots=True)'''
 
         run_data_path = f'{save_path}{os.sep}{p_name}_output.csv'
-        run_data_df = pd.read_csv(run_data_path,
-                                  # usecols=
-                                  # ['trial_number', 'stair', 'stair_name', 'step',
-                                  #  'separation', 'cond_type', 'ISI', 'corner',
-                                  #  'probeLum', 'delta_lum', 'trial_response', '3_fps']
-                                  )
+        run_data_df = pd.read_csv(run_data_path)
         print(f'run_data_df:\n{run_data_df}')
         isi_list = list(run_data_df['ISI'].unique())
         isi_name_list = [f'ISI_{i}' for i in isi_list]
@@ -142,8 +135,9 @@ for p_idx, participant_name in enumerate(participant_list):
 
             thr_col = long_thr_df['probeLum'].to_list()
             bgLum = 21.2
-            delta_thr_col = [(i-bgLum)/bgLum for i in thr_col]
-            long_thr_df.insert(4, 'delta_thr', delta_thr_col)
+            weber_thr_col = [(i-bgLum)/i for i in thr_col]
+            # delta_thr_col = [(i-bgLum)/bgLum for i in thr_col]
+            long_thr_df.insert(4, 'weber_thr', weber_thr_col)
 
             if 'stair_name' in col_names:
                 long_thr_df.drop('stair_name', axis=1, inplace=True)
@@ -154,13 +148,13 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
         # plot with log-log axes
-        simple_log_log_plot(long_thr_df, x_col='dur_ms', y_col='delta_thr', hue_col='cond_type',
+        simple_log_log_plot(long_thr_df, x_col='dur_ms', y_col='weber_thr', hue_col='cond_type',
                             x_ticks_vals=None, x_tick_names=None,
                             x_axis_label='log(duration ms) - 1probe condition',
-                            y_axis_label='log(∆ threshold)',
-                            fig_title='Bloch_v2: log(area) v log(thr)',
+                            y_axis_label='log(∆I/I)',
+                            fig_title='Bloch_v2: log(area) v log(∆I/I)',
                             show_neg1slope=True,
-                            save_as=f'{save_path}{os.sep}bloch_v2_log_dur_log_delta.png')
+                            save_as=f'{save_path}{os.sep}bloch_v2_log_dur_log_weber.png')
         plt.show()
 
 
@@ -169,8 +163,8 @@ for p_idx, participant_name in enumerate(participant_list):
     if len(run_folder_names) == 12:
         trim_n = 1
     thr_df_name = 'long_thr_df'
-    # d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-    #                       thr_df_name=thr_df_name, trim_n=trim_n, error_type='SE')
+    d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
+                          thr_df_name=thr_df_name, trim_n=trim_n, error_type='SE')
 
 
     # making average plot
@@ -221,15 +215,15 @@ for p_idx, participant_name in enumerate(participant_list):
                            save_path=root_path, verbose=True)
     plt.show()
 
-    wide_df = ave_df.pivot(index=['dur_ms'], columns='cond_type', values='delta_thr')
+    wide_df = ave_df.pivot(index=['dur_ms'], columns='cond_type', values='weber_thr')
     print(f'wide_df:\n{wide_df}')
 
     error_df = pd.read_csv(err_path)
-    wide_err_df = error_df.pivot(index=['dur_ms'], columns='cond_type', values='delta_thr')
+    wide_err_df = error_df.pivot(index=['dur_ms'], columns='cond_type', values='weber_thr')
     print(f'wide_err_df:\n{wide_err_df}')
 
-    fig_title = 'Participant average ∆thresholds - Bloch_v2'
-    save_name = 'bloch_v2_log_dur_log_delta.png'
+    fig_title = 'Participant average ∆I/I thresholds - Bloch_v2'
+    save_name = 'bloch_v2_log_dur_log_weber.png'
     plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
                            jitter=False, error_caps=True, alt_colours=False,
                            legend_names=None,
@@ -238,7 +232,7 @@ for p_idx, participant_name in enumerate(participant_list):
                            x_tick_vals=None,
                            x_tick_labels=None,
                            x_axis_label='log(duration ms) - 1probe condition',
-                           y_axis_label='log(∆ Threshold)',
+                           y_axis_label='log(∆I/I)',
                            log_log_axes=True,
                            neg1_slope=True,
                            fig_title=fig_title, save_name=save_name,

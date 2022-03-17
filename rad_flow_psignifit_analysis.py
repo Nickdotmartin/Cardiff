@@ -398,7 +398,7 @@ def run_thr_plot(thr_df, x_col='separation', y_col='ISI_0', hue_col='cond',
     return fig
 
 
-def simple_log_log_plot(thr_df, x_col='area', y_col='delta_thr', hue_col='cond',
+def simple_log_log_plot(thr_df, x_col='area', y_col='weber_thr', hue_col='cond',
                         x_ticks_vals=None, x_tick_names=None,
                         x_axis_label='log(area)',
                         y_axis_label='log(∆ threshold)',
@@ -442,7 +442,7 @@ def simple_log_log_plot(thr_df, x_col='area', y_col='delta_thr', hue_col='cond',
     # ax.set(xlim=(10, 10000), ylim=(.01, 10))
     ax.set(xscale="log", yscale="log")
 
-    # add guideline with slope of -1 which crosses through the circles 1probe delta_thr value.
+    # add guideline with slope of -1 which crosses through the circles 1probe weber_thr value.
     if show_neg1slope:
         if x_col == 'area':
             slope_start_x = thr_df.loc[thr_df['stair_names'] == '-1_circles', x_col].item()
@@ -451,7 +451,7 @@ def simple_log_log_plot(thr_df, x_col='area', y_col='delta_thr', hue_col='cond',
             # slope_start_y = thr_df.loc[thr_df['stair_names'] == '-1_circles', y_col].item()
             # slope_start_x = thr_df.loc[thr_df['stair_names'] == '-1_circles', x_col].item()
             slope_start_x = thr_df.iloc[0]['dur_ms']
-            slope_start_y = thr_df.iloc[0]['delta_thr']
+            slope_start_y = thr_df.iloc[0]['weber_thr']
         print(f'slope_start_x: {slope_start_x}')
         print(f'slope_start_y: {slope_start_y}')
         ax.plot([slope_start_x, slope_start_x*100], [slope_start_y, slope_start_y/100], c='r',
@@ -671,7 +671,7 @@ def plot_runs_ave_w_errors(fig_df, error_df,
         ax.set(xscale="log", yscale="log")
 
     if neg1_slope:
-        # add guideline with slope of -1 which crosses through the circles 1probe delta_thr value.
+        # add guideline with slope of -1 which crosses through the circles 1probe weber_thr value.
         if 'circles' in column_names:
             slope_start_x = fig_df.index[0][0]
             slope_start_y = fig_df.iloc[0]['circles']
@@ -2238,7 +2238,7 @@ def d_average_participant(root_path, run_dir_names_list,
             error_bars_df['separation'] = sep_values
             error_bars_df['area'] = area_values
             error_bars_df.reset_index()
-            col_order = ['cond', 'separation', 'stair_names', 'area', 'delta_thr', 'ISI_0']
+            col_order = ['cond', 'separation', 'stair_names', 'area', 'weber_thr', 'ISI_0']
             error_bars_df.reset_index(inplace=True)
             error_bars_df = error_bars_df[col_order]
             error_bars_df.set_index(['cond', 'separation'], inplace=True)
