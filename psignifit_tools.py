@@ -242,6 +242,8 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
         fit_curve_plot = ps.psigniplot.plotPsych(res, showImediate=False)
 
         if save_plot:
+            # plot_path = os.path.join(root_path, p_run_name, thr_filename)
+
             print(f'saving plot to: {save_path}{os.sep}{dset_name}_psig.png')
             plt.savefig(f'{save_path}{os.sep}{dset_name}_psig.png')
 
@@ -337,7 +339,7 @@ def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
 
     if verbose:
         print(f'\nresults_np:|bin min|n_correct|n_trials\n{results_np}')
-        print('\nbin_data_dict:')
+        print(f'\nbin_data_dict: ')
         for k, v in bin_data_dict.items():
             print(k, v)
 
@@ -454,15 +456,20 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
 
             # # for all in one function
             # # # # #
+            print(f'root_path: {root_path}')
+            save_path = os.path.join(root_path, p_run_name)
+            # save_path = f'{root_path}{os.sep}{p_run_name}'
+            print(f'save_path: {save_path}')
 
-            fit_curve_plot, psignifit_dict = results_to_psignifit(csv_path=sep_df, save_path=root_path,
+            fit_curve_plot, psignifit_dict = results_to_psignifit(csv_path=sep_df,
+                                                                  save_path=save_path,
                                                                   isi=isi, sep=sep, p_run_name=p_run_name,
                                                                   sep_col=sep_col, stair_levels=[sep],
                                                                   thr_col='probeLum', resp_col='trial_response',
                                                                   quartile_bins=q_bins, n_bins=n_bins,
                                                                   save_np=False, target_threshold=.75,
                                                                   sig_name='norm', est_type='MAP',
-                                                                  save_plot=False, show_plot=False,
+                                                                  save_plot=True, show_plot=True,
                                                                   verbose=verbose
                                                                   )
 

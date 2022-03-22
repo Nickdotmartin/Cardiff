@@ -23,19 +23,21 @@ For lines there is no separation, probe length varies by sep.
 For circles there is no separation, probe area varies by sep.
 '''
 
+# todo: add extra long sep=36 to go outside RA
+
 # Ensure that relative paths start from the same directory as this script
 _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'Asus_VG24'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz'
+monitor_name = 'NickMac'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz'
 display_number = 1  # 0 indexed, 1 for external display
 
 # Store info about the experiment session
 expName = 'Exp3_Ricco_NM_v2'  # from the Builder filename that created this script
 
 expInfo = {'1_Participant': 'Nick_test_size',
-           '2_Probe_dur_in_frames_at_240hz': [2, 50, 100],
+           '2_Probe_dur_in_frames_at_240hz': [2, 29, 50, 100],
            '3_fps': [240, 144, 60],
            # '4_ISI_dur_in_ms': [100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0],
            # '5_Probe_orientation': ['tangent', 'radial'],
@@ -74,7 +76,7 @@ prelim_bg_flow_fr = int(prelim_bg_flow_ms * fps / 1000)
 
 '''Sort separation and condition types'''
 # Distances between probes & flow direction
-separation_values = [-1, 0, 1, 2, 3, 6, 18]
+separation_values = [-1, 0, 1, 2, 3, 6, 18, 36]
 # separation_values = [18]
 print(f'separation_values: {separation_values}')
 # # I now have three versions of each condition - 2probe, line and area.
@@ -826,6 +828,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('bgcolor', bgcolor)
         thisExp.addData('bgColor255', bgColor255)
         thisExp.addData('weber_lum', weber_lum)
+        thisExp.addData('expName', expName)
 
         thisExp.nextEntry()
         thisStair.newValue(resp.corr)  # so that the staircase adjusts itself

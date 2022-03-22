@@ -1411,6 +1411,8 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
 
     if isi_list is None:
         raise ValueError('Please pass a list of isi values to identify directories containing data.')
+    else:
+        print(f'isi_list: {isi_list}')
 
     all_data = []
 
@@ -1420,6 +1422,11 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
                    f'{p_name}.csv'
         if verbose:
             print(f"filepath: {filepath}")
+
+        if not os.path.isfile(filepath):
+            raise FileNotFoundError(filepath)
+            # print(f'\n\nFileNotFound: {filepath}.\n'
+            #       f'Continue looping through other files.\n')
 
         # load data
         this_isi_df = pd.read_csv(filepath)
@@ -1439,15 +1446,35 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
         this_isi_df.insert(0, 'ISI', isi)
         this_isi_df.insert(1, 'srtd_trial_idx', trial_numbers)
         if verbose:
-            print(f'df sorted by stair:\n{this_isi_df.head()}')
+            print(f'df sorted by stair: {type(this_isi_df)}\n{this_isi_df}')
 
         # get column names to use on all_data_df
         column_names = list(this_isi_df)
+        if verbose:
+            print(f'column_names: {len(column_names)}\n{column_names}')
+
+        # I've changed column names lately, so there are some extra ones.  In which case, just use old cols.
+        if 'actual_bg_color' in column_names:
+            print("getting rid of extra columns (e.g., 'actual_bg_color', "
+                  "'bgcolor_to_rgb1', 'bgLumP', 'bgLum', 'bgColor255')")
+            cols_to_use = ['ISI', 'srtd_trial_idx', 'trial_number', 'stair',
+                           'stair_name', 'step', 'separation', 'congruent',
+                           'flow_dir', 'probe_jump', 'corner', 'probeLum',
+                           'trial_response', 'resp.rt', 'probeColor1', 'probeColor255',
+                           'probe_ecc', 'BGspeed', 'orientation', 'ISI_actual_ms',
+                           'ISI_frames', '1_Participant', '2_Probe_dur_in_frames_at_240hz',
+                           '3_fps', '4_ISI_dur_in_ms', '5_Probe_orientation',
+                           '6_Probe_size', '7_Trials_counter', '8_Background',
+                           'date', 'time', 'stair_list', 'n_trials_per_stair']
+            this_isi_df = this_isi_df[cols_to_use]
+            column_names = cols_to_use
 
         # add to all_data
         all_data.append(this_isi_df)
 
     # create all_data_df - reshape to 2d
+    if verbose:
+        print(f'all_data: {type(all_data)}\n{all_data}')
     all_data_shape = np.shape(all_data)
     sheets, rows, columns = np.shape(all_data)
     all_data = np.reshape(all_data, newshape=(sheets*rows, columns))

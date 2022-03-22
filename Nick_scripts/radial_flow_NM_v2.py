@@ -803,6 +803,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('bgLum', bgLum)
         thisExp.addData('bgColor255', bgColor255)
         thisExp.addData('weber_thr', (probeLum-bgLum)/probeLum)
+        thisExp.addData('expName', expName)
 
         thisExp.nextEntry()
 
