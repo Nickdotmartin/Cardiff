@@ -64,20 +64,20 @@ for p_idx, participant_name in enumerate(participant_list):
                                              "probeLum", "trial_response"])
         print(f"run_data_df:\n{run_data_df}")
 
-        '''get psignifit thresholds df'''
-        cols_to_add_dict = {'stair_names': [18, -18, 6, -6, 3, -3, 2, -2, 1, -1, 0, -0.1],
-                            'congruent':  [1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1],
-                            'separation': [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]}
-        thr_df = get_psignifit_threshold_df(root_path=root_path,
-                                            p_run_name=run_dir,
-                                            csv_name=run_data_df,
-                                            n_bins=10, q_bins=True,
-                                            sep_col='stair',
-                                            isi_list=isi_list,
-                                            sep_list=stair_list,
-                                            cols_to_add_dict=cols_to_add_dict,
-                                            verbose=verbose)
-        print(f'thr_df:\n{thr_df}')
+        # '''get psignifit thresholds df'''
+        # cols_to_add_dict = {'stair_names': [18, -18, 6, -6, 3, -3, 2, -2, 1, -1, 0, -0.1],
+        #                     'congruent':  [1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1],
+        #                     'separation': [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]}
+        # thr_df = get_psignifit_threshold_df(root_path=root_path,
+        #                                     p_run_name=run_dir,
+        #                                     csv_name=run_data_df,
+        #                                     n_bins=10, q_bins=True,
+        #                                     sep_col='stair',
+        #                                     isi_list=isi_list,
+        #                                     sep_list=stair_list,
+        #                                     cols_to_add_dict=cols_to_add_dict,
+        #                                     verbose=verbose)
+        # print(f'thr_df:\n{thr_df}')
         #
         # '''b3'''
         # b3_plot_staircase(run_data_path, show_plots=show_plots, verbose=verbose)

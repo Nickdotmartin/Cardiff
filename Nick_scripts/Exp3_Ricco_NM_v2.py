@@ -23,14 +23,12 @@ For lines there is no separation, probe length varies by sep.
 For circles there is no separation, probe area varies by sep.
 '''
 
-# todo: add extra long sep=36 to go outside RA
-
 # Ensure that relative paths start from the same directory as this script
 _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'NickMac'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz'
+monitor_name = 'HP_24uh'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz'
 display_number = 1  # 0 indexed, 1 for external display
 
 # Store info about the experiment session
@@ -242,10 +240,58 @@ sep18_vert = [(-10, 8), (-10, 10), (-9, 10), (-9, 11), (-7, 11), (-7, 9),
               (0, -2), (-1, -2), (-1, -1), (-2, -1), (-2, 0), (-3, 0), (-3, 1),
               (-4, 1), (-4, 2), (-5, 2), (-5, 3), (-6, 3), (-6, 4), (-7, 4),
               (-7, 5), (-8, 5), (-8, 6), (-9, 6), (-9, 7), (-10, 7)]
-probe_vert_list = [oneP_vert, sep0_vert, sep1_vert, sep2_vert, sep3_vert, sep6_vert, sep18_vert]
-probe_name_list = ['oneP', 'sep0', 'sep1', 'sep2', 'sep3', 'sep6', 'sep18']
+
+# starts clockwise round probe1 from bottom left
+sep36_vert = [(-20, 18), (-20, 20), (-19, 20), (-19, 21), (-17, 21),
+              # then down and right diagonally towards mid point
+              (-17, 19), (-16, 19), (-16, 18), (-15, 18),
+              (-15, 17), (-14, 17), (-14, 16), (-13, 16),
+              (-13, 15), (-12, 15), (-12, 14), (-11, 14),
+              (-11, 13), (-10, 13), (-10, 12), (-9, 12),
+              (-9, 11), (-8, 11), (-8, 10), (-7, 10),
+              (-7, 9), (-6, 9), (-6, 8), (-5, 8),
+              (-5, 7), (-4, 7), (-4, 6), (-3, 6),
+              (-3, 5), (-2, 5), (-2, 4), (-1, 4),
+              (-1, 3), (0, 3), (0, 2), (1, 2),
+              # (1, 1) is up and right one from bottom right of white spot
+              (1, 1), (2, 1), (2, 0), (3, 0),
+              (3, -1), (4, -1), (4, -2), (5, -2),
+              (5, -3), (6, -3), (6, -4), (7, -4),
+              (7, -5), (8, -5), (8, -6), (9, -6),
+              (9, -7), (10, -7), (10, -8), (11, -8),
+              (11, -9), (12, -9), (12, -10), (13, -10),
+              (13, -11), (14, -11), (14, -12), (15, -12),
+              (15, -13), (16, -13), (16, -14), (17, -14 ),
+              (17, -15), (18, -15), (18, -16), (19, -16),
+              # round probe2, (16, -19) is bottom left of probe2
+              (19, -18), (18, -18), (18, -19), (16, -19),
+              # then back up and left along diagonal
+              (16, -18), (15, -18), (15, -17), (14, -17),
+              (14, -16), (13, -16), (13, -15), (12, -15),
+              (12, -14), (11, -14), (11, -13), (10, -13),
+              (10, -12), (9, -12), (9, -11), (8, -11),
+              (8, -10), (7, -10), (7, -9), (6, -9),
+              (6, -8), (5, -8), (5, -7), (4, -7),
+              (4, -6), (3, -6), (3, -5), (2, -5),
+              (2, -4), (1, -4), (1, -3), (0, -3),
+              (0, -2), (-1, -2),
+              # (-1, 1) is down and left one from bottom right of white spot
+              (-1, -1), (-2, -1), (-2, 0), (-3, 0),
+              (-3, 1), (-4, 1), (-4, 2), (-5, 2),
+              (-5, 3), (-6, 3), (-6, 4), (-7, 4),
+              (-7, 5), (-8, 5), (-8, 6), (-9, 6),
+              (-9, 7), (-10, 7), (-10, 8), (-11, 8),
+              (-11, 9), (-12, 9), (-12, 10), (-13, 10),
+              (-13, 11), (-14, 11), (-14, 12), (-15, 12),
+              (-15, 13), (-16, 13), (-16, 14), (-17, 14),
+              (-17, 15), (-18, 15), (-18, 16), (-19, 16),
+              (-19, 17), (-20, 17),
+              ]  # bottom left of probe1 is (-20, 18),
+
+probe_vert_list = [oneP_vert, sep0_vert, sep1_vert, sep2_vert, sep3_vert, sep6_vert, sep18_vert, sep36_vert]
+probe_name_list = ['oneP', 'sep0', 'sep1', 'sep2', 'sep3', 'sep6', 'sep18', 'sep36_vert']
 # radii of circles for circle_probes
-circle_rad_list = [2.15, 2.5, 2.8, 3.4, 4.1, 6.1, 14.6]
+circle_rad_list = [2.15, 2.5, 2.8, 3.4, 4.1, 6.1, 14.6, 27.3]
 # circle_rad_list = [14.6]
 
 
@@ -697,7 +743,6 @@ for step in range(n_trials_per_stair):
                         # print('drawing probe2')
                         probe2.draw()
                     trials_counter.draw()
-
 
                 # # ISI
                 # if t_ISI >= frameN > t_interval_1:
