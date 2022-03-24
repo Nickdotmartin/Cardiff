@@ -27,42 +27,42 @@ n_runs = 1
 p_idx_plus = 1
 
 
-for p_idx, participant_name in enumerate(participant_list):
-    # if participant_name is 'Nick':
-    #     p_idx_plus = 5
-
-    root_path = f'{exp_path}/{participant_name}'
-
-    run_folder_names = [f'{participant_name}_{i+p_idx_plus}' for i in list(range(n_runs))]
-    print(f'run_folder_names: {run_folder_names}')
-
-    for run_idx, run_dir in enumerate(run_folder_names):
-
-        # add run number , e.g., add five to access Nick_5 on the zeroth iteration
-        r_idx_plus = run_idx + p_idx_plus
-        # if participant_name is 'Nick':
-        #     r_idx_plus = run_idx + 5
-
-        print(f'\nrun_idx {run_idx}: running analysis for '
-              f'{participant_name}, {run_dir}, {participant_name}_{r_idx_plus}\n')
-        save_path = f'{root_path}{os.sep}{run_dir}'
-
-        # don't delete this (p_name = participant_name),
-        # needed to ensure names go name1, name2, name3 not name1, name12, name123
-        p_name = participant_name
-
-        '''a'''
-        p_name = f'{participant_name}_{r_idx_plus}'
-
-        # a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=isi_list, verbose=verbose)
-
-        run_data_path = f'{save_path}{os.sep}ALL_ISIs_sorted.xlsx'
-        run_data_df = pd.read_excel(run_data_path, engine='openpyxl',
-                                    usecols=["ISI", "stair", "stair_name",
-                                             "step", "separation", "congruent",
-                                             "flow_dir", "probe_jump", "corner",
-                                             "probeLum", "trial_response"])
-        print(f"run_data_df:\n{run_data_df}")
+# for p_idx, participant_name in enumerate(participant_list):
+#     # if participant_name is 'Nick':
+#     #     p_idx_plus = 5
+#
+#     root_path = f'{exp_path}/{participant_name}'
+#
+#     run_folder_names = [f'{participant_name}_{i+p_idx_plus}' for i in list(range(n_runs))]
+#     print(f'run_folder_names: {run_folder_names}')
+#
+#     for run_idx, run_dir in enumerate(run_folder_names):
+#
+#         # add run number , e.g., add five to access Nick_5 on the zeroth iteration
+#         r_idx_plus = run_idx + p_idx_plus
+#         # if participant_name is 'Nick':
+#         #     r_idx_plus = run_idx + 5
+#
+#         print(f'\nrun_idx {run_idx}: running analysis for '
+#               f'{participant_name}, {run_dir}, {participant_name}_{r_idx_plus}\n')
+#         save_path = f'{root_path}{os.sep}{run_dir}'
+#
+#         # don't delete this (p_name = participant_name),
+#         # needed to ensure names go name1, name2, name3 not name1, name12, name123
+#         p_name = participant_name
+#
+#         '''a'''
+#         p_name = f'{participant_name}_{r_idx_plus}'
+#
+#         # a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=isi_list, verbose=verbose)
+#
+#         run_data_path = f'{save_path}{os.sep}ALL_ISIs_sorted.xlsx'
+#         run_data_df = pd.read_excel(run_data_path, engine='openpyxl',
+#                                     usecols=["ISI", "stair", "stair_name",
+#                                              "step", "separation", "congruent",
+#                                              "flow_dir", "probe_jump", "corner",
+#                                              "probeLum", "trial_response"])
+#         print(f"run_data_df:\n{run_data_df}")
 
         # '''get psignifit thresholds df'''
         # cols_to_add_dict = {'stair_names': [18, -18, 6, -6, 3, -3, 2, -2, 1, -1, 0, -0.1],
@@ -85,7 +85,7 @@ for p_idx, participant_name in enumerate(participant_list):
         # '''c I don't actually need any of these, instead sort get psignifit thr ands make plots from those.'''
         # c_plots(save_path=save_path, isi_name_list=isi_names_list, show_plots=show_plots, verbose=verbose)
 
-    '''d'''
+    # '''d'''
     # # run_folder_names = ['Nick_1', 'Nick_2', 'Nick_3', 'Nick_4'], 'Nick_5', 'Nick_6',
     # #                     'Nick_7', 'Nick_8', 'Nick_9', 'Nick_10', 'Nick_11', 'Nick_12']
     # trim_n = None
@@ -111,25 +111,29 @@ for p_idx, participant_name in enumerate(participant_list):
     #                    exp_ave=False,
     #                    show_plots=True, verbose=True)
 
-# participant_list = ['Simon', 'Nick', 'Kim']
-#
-# # get averages_over_participants
-# e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
-#                    error_type='SE', use_trimmed=False, verbose=True)
-#
-#
-# # testing make_average_plots for experiment averages
-# all_df_path = f'{exp_path}/MASTER_exp_thr.csv'
-# exp_ave_path = f'{exp_path}/MASTER_exp_ave_thr.csv'
-# err_path = f'{exp_path}/MASTER_ave_thr_error_SE.csv'
-# n_trimmed = None
-# exp_ave = True
-#
-# make_average_plots(all_df_path=all_df_path,
-#                    ave_df_path=exp_ave_path,
-#                    error_bars_path=err_path,
-#                    n_trimmed=n_trimmed,
-#                    exp_ave=exp_ave,
-#                    show_plots=True, verbose=True)
+print(f'exp_path: {exp_path}')
+print('\nget exp_average_data')
+participant_list = ['Simon', 'Simon_bgspeed_double', 'Simon_bgspeed_half']
+n_trimmed = None
+use_trimmed = False
+e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
+                   error_type='SE', use_trimmed=use_trimmed, verbose=True)
+
+
+all_df_path = f'{exp_path}/MASTER_exp_thr.csv'
+exp_ave_path = f'{exp_path}/MASTER_exp_ave_thr.csv'
+err_path = f'{exp_path}/MASTER_ave_thr_error_SE.csv'
+n_trimmed = None
+exp_ave=True
+
+make_average_plots(all_df_path=all_df_path,
+                   ave_df_path=exp_ave_path,
+                   error_bars_path=err_path,
+                   error_type='SE',
+                   n_trimmed=n_trimmed,
+                   exp_ave=exp_ave,
+                   show_plots=True, verbose=True)
+
+
 
 print('\nrad_flow_analysis_pipe finished')

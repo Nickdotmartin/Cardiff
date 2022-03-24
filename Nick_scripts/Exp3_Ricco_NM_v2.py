@@ -34,7 +34,7 @@ display_number = 1  # 0 indexed, 1 for external display
 # Store info about the experiment session
 expName = 'Exp3_Ricco_NM_v2'  # from the Builder filename that created this script
 
-expInfo = {'1_Participant': 'Nick_test_size',
+expInfo = {'1_Participant': 'Nick_60hz_120ms_dur',
            '2_Probe_dur_in_frames_at_240hz': [2, 29, 50, 100],
            '3_fps': [240, 144, 60],
            # '4_ISI_dur_in_ms': [100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0],
@@ -386,7 +386,7 @@ if trials_counter:
 
 # BREAKS
 total_n_trials = int(n_trials_per_stair * n_stairs)
-take_break = int(total_n_trials/7)+1
+take_break = int(total_n_trials/8)+1
 print(f"take_break every {take_break} trials.")
 breaks = visual.TextStim(win=win, name='breaks',
                          text="turn on the light and take at least 30-seconds break.\n\n"

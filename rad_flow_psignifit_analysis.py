@@ -398,16 +398,16 @@ def run_thr_plot(thr_df, x_col='separation', y_col='ISI_0', hue_col='cond',
     return fig
 
 
-def simple_log_log_plot(thr_df, x_col='area', y_col='weber_thr', hue_col='cond',
+def simple_log_log_plot(thr_df, x_col='area_deg', y_col='weber_thr', hue_col='cond',
                         x_ticks_vals=None, x_tick_names=None,
-                        x_axis_label='log(area)',
+                        x_axis_label='log(area_deg)',
                         y_axis_label='log(∆ threshold)',
-                        fig_title='Ricco_v2: log(area) v log(thr)',
+                        fig_title='Ricco_v2: log(area_deg) v log(thr)',
                         show_neg1slope=True,
                         save_as=None):
     """
     Function to make a simple plot from one run showing lineplots for circles, lines and 2probe data.
-    Data is plotted on log-log axis (log(∆thr) and log(area).
+    Data is plotted on log-log axis (log(∆thr) and log(area_deg).
     Single threshold values so no error bars.
 
     :param thr_df: dataframe from one run
@@ -424,7 +424,7 @@ def simple_log_log_plot(thr_df, x_col='area', y_col='weber_thr', hue_col='cond',
     :param save_as: path and filename to save to
     :return: figure
     """
-    print('*** running simple_log_log_plot (x=log(area), y=log(∆thr)) ***')
+    print('*** running simple_log_log_plot (x=log(area_deg), y=log(∆thr)) ***')
     print(f'thr_df:\n{thr_df}')
     fig, ax = plt.subplots(figsize=(6, 6))
     sns.lineplot(data=thr_df, x=x_col, y=y_col, hue=hue_col, marker='o', ax=ax)
@@ -2230,23 +2230,31 @@ def d_average_participant(root_path, run_dir_names_list,
         if 'congruent' in groupby_sep_df.columns:
             groupby_sep_df = groupby_sep_df.drop('congruent', axis=1)
 
-        if 'area' in groupby_sep_df.columns:
+        if 'area_deg' in groupby_sep_df.columns:
             # for ricco_v2 experiment
+            # print(f"\nwhatabouthtis:\n{groupby_sep_df.groupby(['cond', 'separation'], sort=True).sem()}")
+
             ave_psignifit_thr_df = groupby_sep_df.groupby(['cond', 'separation'], sort=False).mean()
+            # print(f'\njust made ave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
             stair_names = groupby_sep_df['stair_names'].unique()
             ave_psignifit_thr_df.insert(0, 'stair_names', stair_names)
             cond_values = ave_psignifit_thr_df.index.get_level_values('cond').to_list()
             sep_values = ave_psignifit_thr_df.index.get_level_values('separation').to_list()
-            area_values = ave_psignifit_thr_df['area'].to_list()
+            area_values = ave_psignifit_thr_df['area_deg'].to_list()
 
             print(f'\ncond_values:\n{cond_values}')
             print(f'sep_values:\n{sep_values}')
+            # print('just made ave_psignifit_thr_df')
         else:
             groupby_sep_df = groupby_sep_df.drop('separation', axis=1)
             ave_psignifit_thr_df = groupby_sep_df.groupby('stair_names', sort=True).mean()
 
         if verbose:
             print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
+            # print(f'\ngroupby_sep_df:\n{groupby_sep_df}')
+
+        # groupby_sep_df = groupby_sep_df.drop(['separation', 'cond', 'area_deg'], axis=1)
+        # print(f'\ngroupby_sep_df:\n{groupby_sep_df}')
 
         if error_type in [False, None]:
             error_bars_df = None
@@ -2259,7 +2267,11 @@ def d_average_participant(root_path, run_dir_names_list,
                              f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standard_error']\n"
                              f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
                              f"'deviation', 'standard_deviation']")
+        # print('just made error_bars_df')
+
         if 'area' in error_bars_df.columns.to_list():
+            print(f'\nerror_bars_df:\n{error_bars_df}')
+
             # for ricco_v2 exp - change order to match ave_psignifit_thr_df
             error_bars_df.insert(0, 'cond', cond_values)
             error_bars_df['separation'] = sep_values
