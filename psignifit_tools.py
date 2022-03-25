@@ -469,7 +469,7 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
                                                                   quartile_bins=q_bins, n_bins=n_bins,
                                                                   save_np=False, target_threshold=.75,
                                                                   sig_name='norm', est_type='MAP',
-                                                                  save_plot=False, show_plot=True,
+                                                                  save_plot=False, show_plot=False,
                                                                   verbose=verbose
                                                                   )
 

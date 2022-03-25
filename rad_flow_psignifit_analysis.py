@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import math
 
 """
 This page contains python functions to analyse the radial_flow.py experiment.
@@ -424,7 +425,7 @@ def simple_log_log_plot(thr_df, x_col='area_deg', y_col='weber_thr', hue_col='co
     :param save_as: path and filename to save to
     :return: figure
     """
-    print('*** running simple_log_log_plot (x=log(area_deg), y=log(∆thr)) ***')
+    print('\n*** running simple_log_log_plot (x=log(area_deg), y=log(∆thr)) ***')
     print(f'thr_df:\n{thr_df}')
     fig, ax = plt.subplots(figsize=(6, 6))
     sns.lineplot(data=thr_df, x=x_col, y=y_col, hue=hue_col, marker='o', ax=ax)
@@ -434,12 +435,18 @@ def simple_log_log_plot(thr_df, x_col='area_deg', y_col='weber_thr', hue_col='co
         ax.set_xticklabels(x_tick_names)
     ax.set_xlabel(x_axis_label)
     ax.set_ylabel(y_axis_label)
-    x_min = thr_df[x_col].min()*.9  # -1  # or use 5
-    y_min = thr_df[y_col].min()*.9  # -.01  # .01
-    print(f'x_min: {x_min}')
-    print(f'y_min: {y_min}')
-    ax.set(xlim=(x_min, x_min*100), ylim=(y_min, y_min*100))
-    # ax.set(xlim=(10, 10000), ylim=(.01, 10))
+
+    # set scale for axes (same on each)
+    x_min = thr_df[x_col].min()*.9
+    x_max = thr_df[x_col].max()*1.1
+    x_ratio = x_max / x_min
+    y_min = thr_df[y_col].min()*.9
+    y_max = thr_df[y_col].max()*1.1
+    y_ratio = y_max / y_min
+    largest_diff = max([x_ratio, y_ratio])
+    axis_range = 10 ** math.ceil(math.log10(largest_diff))
+
+    ax.set(xlim=(x_min, x_min*axis_range), ylim=(y_min, y_min*axis_range))
     ax.set(xscale="log", yscale="log")
 
     # add guideline with slope of -1 which crosses through the circles 1probe weber_thr value.
@@ -2247,11 +2254,11 @@ def d_average_participant(root_path, run_dir_names_list,
             # print('just made ave_psignifit_thr_df')
         else:
             groupby_sep_df = groupby_sep_df.drop('separation', axis=1)
-            ave_psignifit_thr_df = groupby_sep_df.groupby('stair_names', sort=True).mean()
+            ave_psignifit_thr_df = groupby_sep_df.groupby('stair_names', sort=False).mean()
 
         if verbose:
             print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
-            # print(f'\ngroupby_sep_df:\n{groupby_sep_df}')
+            print(f'\ngroupby_sep_df:\n{groupby_sep_df}')
 
         # groupby_sep_df = groupby_sep_df.drop(['separation', 'cond', 'area_deg'], axis=1)
         # print(f'\ngroupby_sep_df:\n{groupby_sep_df}')
@@ -2259,9 +2266,9 @@ def d_average_participant(root_path, run_dir_names_list,
         if error_type in [False, None]:
             error_bars_df = None
         elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
-            error_bars_df = groupby_sep_df.groupby('stair_names', sort=True).sem()
+            error_bars_df = groupby_sep_df.groupby('stair_names', sort=False).sem()
         elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
-            error_bars_df = groupby_sep_df.groupby('stair_names', sort=True).std()
+            error_bars_df = groupby_sep_df.groupby('stair_names', sort=False).std()
         else:
             raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
                              f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standard_error']\n"
@@ -2269,12 +2276,25 @@ def d_average_participant(root_path, run_dir_names_list,
                              f"'deviation', 'standard_deviation']")
         # print('just made error_bars_df')
 
-        if 'area' in error_bars_df.columns.to_list():
+        if 'area_deg' in error_bars_df.columns.to_list():
             print(f'\nerror_bars_df:\n{error_bars_df}')
 
+            # getting sep and col vals from here, not above, as order changes if conds have NaNs due to only 1 run.
+            stair_names_list = error_bars_df.index.get_level_values('stair_names').to_list()
+            print(f'\nstair_names_list:\n{stair_names_list}')
+            sep_vals = []
+            cond_vals = []
+            for name in stair_names_list:
+                x = name.split("_")
+                sep_vals.append(int(x[0]))
+                cond_vals.append(x[1])
+            print(f'\nsep_vals:\n{sep_vals}')
+            print(f'\ncond_vals:\n{cond_vals}')
+
+
             # for ricco_v2 exp - change order to match ave_psignifit_thr_df
-            error_bars_df.insert(0, 'cond', cond_values)
-            error_bars_df['separation'] = sep_values
+            error_bars_df.insert(0, 'cond', cond_vals)
+            error_bars_df['separation'] = sep_vals
             error_bars_df['area'] = area_values
             error_bars_df.reset_index()
             col_order = ['cond', 'separation', 'stair_names', 'area', 'weber_thr', 'ISI_0']
@@ -2282,7 +2302,7 @@ def d_average_participant(root_path, run_dir_names_list,
             error_bars_df = error_bars_df[col_order]
             error_bars_df.set_index(['cond', 'separation'], inplace=True)
 
-        print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
+            print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
 
     else:
 
@@ -2405,6 +2425,7 @@ def e_average_exp_data(exp_path, p_names_list,
     groupby_sep_df = groupby_sep_df.drop('separation', axis=1)
     groupby_sep_df = groupby_sep_df.drop('congruent', axis=1)
 
+    # todo: should I change sort to False for groupby?  Cause probelems in d_average_participants for error_df if there was only a single run of a condition so error was NaN and somehow order chnaged.
     exp_ave_thr_df = groupby_sep_df.groupby('stair_names', sort=True).mean()
     if verbose:
         print(f'\nexp_ave_thr_df:\n{exp_ave_thr_df}')

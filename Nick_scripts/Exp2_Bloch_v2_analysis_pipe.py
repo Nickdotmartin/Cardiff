@@ -14,7 +14,7 @@ from psignifit_tools import get_psignifit_threshold_df
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
 exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Exp2_Bloch_NM_v2'
-participant_list = ['Nick']  # , 'bb', 'cc', 'dd', 'ee']
+participant_list = ['Nick_light_on']  # 'Nick', 'bb', 'cc', 'dd', 'ee']
 n_runs = 3
 
 p_idx_plus = 1
@@ -37,41 +37,41 @@ for p_idx, participant_name in enumerate(participant_list):
         # '''a'''
         p_name = f'{participant_name}_{run_idx+1}'
 
-        # # for first run, some files are saved just as name not name1
-        # run_data_path = f'{save_path}{os.sep}{p_name}_output.csv'
-        # if not os.path.isfile(run_data_path):
-        #     raise FileNotFoundError(run_data_path)
-        # print(f'run_data_path: {run_data_path}')
-        #
-        # run_data_df = pd.read_csv(run_data_path)
-        # # remove any Unnamed columns
-        # if any("Unnamed" in i for i in list(run_data_df.columns)):
-        #     unnamed_col = [i for i in list(run_data_df.columns) if "Unnamed" in i][0]
-        #     run_data_df.drop(unnamed_col, axis=1, inplace=True)
-        # run_data_df.sort_values(by=['stair', 'step'], inplace=True, ignore_index=True)
-        #
-        # # save sorted csv
-        # run_data_df.to_csv(run_data_path, index=False)
-        # print(f"run_data_df: {run_data_df.columns}\n{run_data_df}")
-        #
-        # # extract values from dataframe
-        # isi_list = run_data_df['ISI'].unique()
-        # print(f'isi_list: {isi_list}')
-        # cond_types = run_data_df['cond_type'].unique()
-        # print(f'cond_types: {cond_types}')
-        #
-        #
-        # '''get psignifit thresholds df - use stairs as sep levels rather than using groups'''
-        # thr_df = get_psignifit_threshold_df(root_path=root_path,
-        #                                     p_run_name=run_dir,
-        #                                     csv_name=run_data_df,
-        #                                     n_bins=10, q_bins=True,
-        #                                     isi_list=isi_list,
-        #                                     sep_col='cond_type',
-        #                                     sep_list=cond_types,
-        #                                     cols_to_add_dict=None,
-        #                                     verbose=True)
-        # print(f'thr_df: {type(thr_df)}\n{thr_df}')
+        # for first run, some files are saved just as name not name1
+        run_data_path = f'{save_path}{os.sep}{p_name}_output.csv'
+        if not os.path.isfile(run_data_path):
+            raise FileNotFoundError(run_data_path)
+        print(f'run_data_path: {run_data_path}')
+
+        run_data_df = pd.read_csv(run_data_path)
+        # remove any Unnamed columns
+        if any("Unnamed" in i for i in list(run_data_df.columns)):
+            unnamed_col = [i for i in list(run_data_df.columns) if "Unnamed" in i][0]
+            run_data_df.drop(unnamed_col, axis=1, inplace=True)
+        run_data_df.sort_values(by=['stair', 'step'], inplace=True, ignore_index=True)
+
+        # save sorted csv
+        run_data_df.to_csv(run_data_path, index=False)
+        print(f"run_data_df: {run_data_df.columns}\n{run_data_df}")
+
+        # extract values from dataframe
+        isi_list = run_data_df['ISI'].unique()
+        print(f'isi_list: {isi_list}')
+        cond_types = run_data_df['cond_type'].unique()
+        print(f'cond_types: {cond_types}')
+
+
+        '''get psignifit thresholds df - use stairs as sep levels rather than using groups'''
+        thr_df = get_psignifit_threshold_df(root_path=root_path,
+                                            p_run_name=run_dir,
+                                            csv_name=run_data_df,
+                                            n_bins=10, q_bins=True,
+                                            isi_list=isi_list,
+                                            sep_col='cond_type',
+                                            sep_list=cond_types,
+                                            cols_to_add_dict=None,
+                                            verbose=True)
+        print(f'thr_df: {type(thr_df)}\n{thr_df}')
 
         '''# Bloch doesn't currently work with b3_plot_staircase or c_plots
         b3_plot_staircase(run_data_path, show_plots=True)
