@@ -35,7 +35,8 @@ display_number = 1  # 0 indexed, 1 for external display
 expName = 'Exp3_Ricco_NM_v2'  # from the Builder filename that created this script
 
 expInfo = {'1_Participant': 'Nick_60hz_120ms_dur',
-           '2_Probe_dur_in_frames_at_240hz': [2, 29, 50, 100],
+           # 12 frames is 66ms, 29 frames is 120ms,
+           '2_Probe_dur_in_frames_at_240hz': [12, 2, 50, 100],
            '3_fps': [240, 144, 60],
            # '4_ISI_dur_in_ms': [100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0],
            # '5_Probe_orientation': ['tangent', 'radial'],
