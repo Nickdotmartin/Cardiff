@@ -15,8 +15,8 @@ from psignifit_tools import get_psignifit_threshold_df
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
 exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Exp3_Ricco_NM_v2'
-participant_list = ['Nick']  # 'Nick_120ms_dur', 'bb', 'cc', 'dd', 'ee']
-n_runs = 4
+participant_list = ['Nick_66ms_dur']  # 'Nick''Nick_120ms_dur', 'bb', 'cc', 'dd', 'ee']
+n_runs = 3
 
 p_idx_plus = 1
 
@@ -196,91 +196,92 @@ for p_idx, participant_name in enumerate(participant_list):
     #
     #
     # '''d'''
-    trim_n = None
-    if len(run_folder_names) == 12:
-        trim_n = 1
-
-    # run_folder_names = ['Nick_1', 'Nick_2', 'Nick_3']
+    # trim_n = None
+    # if len(run_folder_names) == 12:
+    #     trim_n = 1
+    #
+    # # run_folder_names = ['Nick_1', 'Nick_2', 'Nick_3']
     # d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
     #                       trim_n=trim_n, error_type='SE')
 
-    # making average plot
-    all_df_path = f'{root_path}/MASTER_TM1_thresholds.csv'
-    p_ave_path = f'{root_path}/MASTER_ave_TM_thresh.csv'
-    err_path = f'{root_path}/MASTER_ave_TM_thr_error_SE.csv'
-    n_trimmed = trim_n
-    if n_trimmed is None:
-        all_df_path = f'{root_path}/MASTER_psignifit_thresholds.csv'
-        p_ave_path = f'{root_path}/MASTER_ave_thresh.csv'
-        err_path = f'{root_path}/MASTER_ave_thr_error_SE.csv'
-
-    exp_ave = False
-
-
-    # load data and change order to put 1pr last
-    print('*** making average plot ***')
-    # reshape dfs so that the different conds are in separate columns.
-    fig_df = pd.read_csv(p_ave_path)
-    print(f'fig_df:\n{fig_df}')
-
-    wide_df = fig_df.pivot(index=['separation'], columns='cond', values='ISI_0')
-    print(f'wide_df:\n{wide_df}')
-
-    x_values = wide_df.index.get_level_values('separation').to_list()
-    x_labels = ['1pr' if i == -1 else i for i in x_values]
-    print(f'x_values: {x_values}')
-
-    error_df = pd.read_csv(err_path)
-    print(f'error_df:\n{error_df}')
-    wide_err_df = error_df.pivot(index=['separation'], columns='cond', values='ISI_0')
-
-    fig_title = 'Participant average thresholds - Ricco_v2'
-    save_name = 'ricco_v2_sep_v_thr.png'
-    plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
-                           jitter=False, error_caps=True, alt_colours=False,
-                           legend_names=None,
-                           even_spaced_x=True,
-                           fixed_y_range=False,
-                           x_tick_vals=x_values,
-                           x_tick_labels=x_labels,
-                           x_axis_label='Separation (2probe cond)',
-                           y_axis_label='Threshold',
-                           log_log_axes=False,
-                           neg1_slope=False,
-                           fig_title=fig_title, save_name=save_name,
-                           save_path=root_path, verbose=True)
-    plt.show()
-
-    wide_df = fig_df.pivot(index=['area_deg', 'separation'], columns='cond', values='weber_thr')
-    print(f'wide_df:\n{wide_df}')
-
-    area_values = wide_df.index.get_level_values('area_deg').to_list()
-    print(f'area_values: {area_values}')
-
-    error_df = pd.read_csv(err_path)
-    # replace NaN with zero
-    error_df['weber_thr'] = error_df['weber_thr'].fillna(0)
-    print(f'error_df:\n{error_df}')
-    wide_err_df = error_df.pivot(index=['area', 'separation'], columns='cond', values='weber_thr')
-    print(f'wide_err_df:\n{wide_err_df}')
-
-    fig_title = 'Participant average ∆I/I thresholds - Ricco_v2'
-    save_name = 'ricco_v2_log_area_log_weber.png'
-    plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
-                           jitter=False, error_caps=True, alt_colours=False,
-                           legend_names=None,
-                           even_spaced_x=False,
-                           fixed_y_range=False,
-                           x_tick_vals=area_values,
-                           x_tick_labels=None,
-                           x_axis_label='log(area degrees$^2$) - circles condition',
-                           y_axis_label='log(∆I/I)',
-                           log_log_axes=True,
-                           neg1_slope=True,
-                           fig_title=fig_title, save_name=save_name,
-                           save_path=root_path, verbose=True)
-    plt.show()
-    print('*** finished average plot ***')
+    # # making average plot
+    # all_df_path = f'{root_path}/MASTER_TM1_thresholds.csv'
+    # p_ave_path = f'{root_path}/MASTER_ave_TM_thresh.csv'
+    # err_path = f'{root_path}/MASTER_ave_TM_thr_error_SE.csv'
+    # n_trimmed = trim_n
+    # if n_trimmed is None:
+    #     all_df_path = f'{root_path}/MASTER_psignifit_thresholds.csv'
+    #     p_ave_path = f'{root_path}/MASTER_ave_thresh.csv'
+    #     err_path = f'{root_path}/MASTER_ave_thr_error_SE.csv'
+    #
+    # exp_ave = False
+    #
+    #
+    # # load data and change order to put 1pr last
+    # print('*** making average plot ***')
+    # print(f'root_path: {root_path}')
+    # # reshape dfs so that the different conds are in separate columns.
+    # fig_df = pd.read_csv(p_ave_path)
+    # print(f'fig_df:\n{fig_df}')
+    #
+    # wide_df = fig_df.pivot(index=['separation'], columns='cond', values='ISI_0')
+    # print(f'wide_df:\n{wide_df}')
+    #
+    # x_values = wide_df.index.get_level_values('separation').to_list()
+    # x_labels = ['1pr' if i == -1 else i for i in x_values]
+    # print(f'x_values: {x_values}')
+    #
+    # error_df = pd.read_csv(err_path)
+    # print(f'error_df:\n{error_df}')
+    # wide_err_df = error_df.pivot(index=['separation'], columns='cond', values='ISI_0')
+    #
+    # fig_title = 'Participant average thresholds - Ricco_v2'
+    # save_name = 'ricco_v2_sep_v_thr.png'
+    # plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
+    #                        jitter=False, error_caps=True, alt_colours=False,
+    #                        legend_names=None,
+    #                        even_spaced_x=True,
+    #                        fixed_y_range=False,
+    #                        x_tick_vals=x_values,
+    #                        x_tick_labels=x_labels,
+    #                        x_axis_label='Separation (2probe cond)',
+    #                        y_axis_label='Threshold',
+    #                        log_log_axes=False,
+    #                        neg1_slope=False,
+    #                        fig_title=fig_title, save_name=save_name,
+    #                        save_path=root_path, verbose=True)
+    # plt.show()
+    #
+    # wide_df = fig_df.pivot(index=['area_deg', 'separation'], columns='cond', values='weber_thr')
+    # print(f'wide_df:\n{wide_df}')
+    #
+    # area_values = wide_df.index.get_level_values('area_deg').to_list()
+    # print(f'area_values: {area_values}')
+    #
+    # error_df = pd.read_csv(err_path)
+    # # replace NaN with zero
+    # error_df['weber_thr'] = error_df['weber_thr'].fillna(0)
+    # print(f'error_df:\n{error_df}')
+    # wide_err_df = error_df.pivot(index=['area', 'separation'], columns='cond', values='weber_thr')
+    # print(f'wide_err_df:\n{wide_err_df}')
+    #
+    # fig_title = 'Participant average ∆I/I thresholds - Ricco_v2'
+    # save_name = 'ricco_v2_log_area_log_weber.png'
+    # plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
+    #                        jitter=False, error_caps=True, alt_colours=False,
+    #                        legend_names=None,
+    #                        even_spaced_x=False,
+    #                        fixed_y_range=False,
+    #                        x_tick_vals=area_values,
+    #                        x_tick_labels=None,
+    #                        x_axis_label='log(area degrees$^2$) - circles condition',
+    #                        y_axis_label='log(∆I/I)',
+    #                        log_log_axes=True,
+    #                        neg1_slope=True,
+    #                        fig_title=fig_title, save_name=save_name,
+    #                        save_path=root_path, verbose=True)
+    # plt.show()
+    # print('*** finished average plot ***')
 
     # # make_average_plots() doesn't really work here.
     # make_average_plots(all_df_path=all_df_path,
