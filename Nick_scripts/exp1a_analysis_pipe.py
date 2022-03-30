@@ -35,7 +35,7 @@ for p_idx, participant_name in enumerate(participant_list):
 
         for run_idx, run_dir in enumerate(run_folder_names):
 
-            # check whether scripts a, b3 and c have been done for the this run for this participant
+            # check whether scripts a, b3 and c have been done for this run for this participant
             check_last_c_plots_fig = f'{root_path}/{run_dir}/g2_dataDivOneProbe.png'
             if os.path.isfile(check_last_c_plots_fig):
                 print(f'\nalready completed: {check_last_c_plots_fig}')
@@ -123,7 +123,7 @@ all_df_path = f'{exp_path}/MASTER_exp_thr.csv'
 exp_ave_path = f'{exp_path}/MASTER_exp_ave_thr.csv'
 err_path = f'{exp_path}/MASTER_ave_thr_error_SE.csv'
 n_trimmed = None
-exp_ave=True
+exp_ave = True
 
 make_average_plots(all_df_path=all_df_path,
                    ave_df_path=exp_ave_path,

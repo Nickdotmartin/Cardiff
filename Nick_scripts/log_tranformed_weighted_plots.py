@@ -31,7 +31,7 @@ dur_df = pd.read_excel(area_dur_path, engine='openpyxl', sheet_name='duration',
                        nrows=8)
 print(f'dur_df:\n{dur_df}\n')
 
-x_dur_frames = dur_df['duration_fr'].to_list() # [1:]
+x_dur_frames = dur_df['duration_fr'].to_list()  # [1:]
 x_dur_ms = [i*oneFrame_dur_ms for i in x_dur_frames]
 # print(f'x_dur_ms: {x_dur_ms}\n')
 thr_var = bloch_df['thr'].to_list()
@@ -63,7 +63,7 @@ print(f'x_var: {x_var}\n')
 
 thr_multiplier = dur_df['prop_active'].to_list()
 print(f'thr_multiplier: {thr_multiplier}\n')
-y_var = [a*b for a, b in zip(delta_thr, thr_multiplier)] # [1:]
+y_var = [a*b for a, b in zip(delta_thr, thr_multiplier)]  # [1:]
 print(f'y_var: {y_var}\n')
 
 fig, ax = plt.subplots()
@@ -91,7 +91,7 @@ print(f'area_df:\n{area_df}\n')
 this_area_df = area_df[area_df['area_type'] == 'circle_calc']
 print(f'this_area_df:\n{this_area_df}\n')
 
-x_area_pix = this_area_df['area'].to_list() # [1:]
+x_area_pix = this_area_df['area'].to_list()  # [1:]
 x_area_mm = [i*onePixel_width_mm for i in x_area_pix]
 print(f'x_area_mm: {x_area_mm}\n')
 
@@ -125,7 +125,7 @@ print(f'x_var: {x_var}\n')
 
 thr_multiplier = this_area_df['prop_active'].to_list()
 print(f'thr_multiplier: {thr_multiplier}\n')
-y_var = [a*b for a,b in zip(delta_thr, thr_multiplier)] # [1:]
+y_var = [a*b for a, b in zip(delta_thr, thr_multiplier)]  # [1:]
 print(f'y_var: {y_var}\n')
 
 fig, ax = plt.subplots()
@@ -155,13 +155,13 @@ all_delta_df = (all_thr_df-bgLum)/bgLum
 print(f'all_delta_df:\n{all_delta_df}\n')
 
 area_x_dur_df = pd.read_excel(area_dur_path, engine='openpyxl', sheet_name='area_x_frames',
-                       usecols=['separation', 'Concurrent', 'ISI0', 'ISI2', 'ISI4', 'ISI6', 'ISI9', 'ISI12', 'ISI24'],
-                       nrows=8, index_col='separation')
+                              usecols=['separation', 'Concurrent', 'ISI0', 'ISI2', 'ISI4', 'ISI6', 'ISI9', 'ISI12', 'ISI24'],
+                              nrows=8, index_col='separation')
 print(f'area_x_dur_df:\n{area_x_dur_df}\n')
 
 all_weights_df = pd.read_excel(area_dur_path, engine='openpyxl', sheet_name='all_weights',
-                       usecols=['separation', 'Concurrent', 'ISI0', 'ISI2', 'ISI4', 'ISI6', 'ISI9', 'ISI12', 'ISI24'],
-                       nrows=8, index_col='separation')
+                               usecols=['separation', 'Concurrent', 'ISI0', 'ISI2', 'ISI4', 'ISI6', 'ISI9', 'ISI12', 'ISI24'],
+                               nrows=8, index_col='separation')
 all_weights_df.insert(0, 'area', x_area_mm)
 all_weights_df.set_index('area', drop=True, inplace=True)
 print(f'all_weights_df:\n{all_weights_df}\n')

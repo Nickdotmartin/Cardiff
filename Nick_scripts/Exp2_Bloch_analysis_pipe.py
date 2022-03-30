@@ -136,7 +136,7 @@ for p_idx, participant_name in enumerate(participant_list):
     p_ave_path = f'{root_path}/MASTER_ave_TM_thresh.csv'
     err_path = f'{root_path}/MASTER_ave_TM_thr_error_SE.csv'
     n_trimmed = trim_n
-    if n_trimmed == None:
+    if n_trimmed is None:
         all_df_path = f'{root_path}/MASTER_psignifit_thresholds.csv'
         p_ave_path = f'{root_path}/MASTER_ave_thresh.csv'
         err_path = f'{root_path}/MASTER_ave_thr_error_SE.csv'
@@ -207,7 +207,7 @@ exp_ave = True
 make_average_plots(all_df_path=all_df_path,
                    ave_df_path=exp_ave_path,
                    error_bars_path=err_path,
-                   error_type='SE',
+                   # error_type='SE',
                    n_trimmed=n_trimmed,
                    exp_ave=exp_ave,
                    show_plots=True, verbose=True)

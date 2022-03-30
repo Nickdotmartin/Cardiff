@@ -186,7 +186,6 @@ def fig_colours(n_conditions):
         use_colours = 'tab20'
     elif n_conditions > 20:
         raise ValueError(f"\tERROR - more classes ({n_conditions}) than colours!?!?!?")
-        print("\tERROR - more classes than colours!?!?!?")
     sns.set_palette(palette=use_colours, n_colors=n_conditions)
     my_colours = sns.color_palette()
 

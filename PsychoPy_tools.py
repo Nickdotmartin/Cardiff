@@ -17,7 +17,7 @@ def check_correct_monitor(monitor_name, actual_size, actual_fps, verbose=False):
 
     :param monitor_name: (str) name given to monitor in psychopy monitor centre.
     This function wil use monitor_name to load the monitor configuration from
-    the monitor centre and get the expect size and fps.
+    the monitor centre and get the expected size and fps.
     :param actual_size: (list) From win.size, gives the size in pixels [width, height].
     :param actual_fps: (np.float) Ude win.getActualFrameRate() to get the actual 
     frame rate as a np.float.
@@ -104,8 +104,7 @@ def check_correct_monitor(monitor_name, actual_size, actual_fps, verbose=False):
         print("check_correct_monitor() complete")
 
 
-def get_pixel_mm_deg_values(monitor_name='ASUS_2_13_240Hz', n_pixels=1,
-                            use_diagonal=True, ):
+def get_pixel_mm_deg_values(monitor_name='ASUS_2_13_240Hz', n_pixels=1):
     """
     use psychopy's monitor tools to convert pixels to mm or degrees at a certain viewing distance.
     Choose horizontal or diagonal pixels.
@@ -144,7 +143,7 @@ def get_pixel_mm_deg_values(monitor_name='ASUS_2_13_240Hz', n_pixels=1,
     len_of_diag_to_w = 1 * np.sqrt(2)
     # print(f'len_of_diag_to_w: {len_of_diag_to_w}')
     diag_deg = monitorunittools.pix2deg(pixels=n_pixels * len_of_diag_to_w,
-                                            monitor=this_monitor)
+                                        monitor=this_monitor)
     print(f'diag_deg: {diag_deg}')
     # diag_deg: 0.039333163393883014
 

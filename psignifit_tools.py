@@ -299,7 +299,7 @@ def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
         not be of equal size intervals but will have equal value count.  If False,
         will use pd.cut for bins of equal size based on values, but value count may vary.
     :param n_bins: default 10.
-    :param save_np: default: False.  If True will save the numpy array to save_path
+    :param save_np: default: False.  If True, save the numpy array to save_path
     :param save_path: path to save plot and dict
     :param target_threshold: threshold if this percentage correct
     :param sig_name: default: 'norm', can also choose 'logistic'.
@@ -373,12 +373,13 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
     :param p_run_name: Name of this run directory where csv is stored (e.g., P6a-Kim or P6b-Kim etc)
     :param csv_name: Dataframe to analyse or Name of results csv to load (e.g., Kim1, Kim2 etc)
     :param n_bins: Default=10. Number of bins to use.
-    :param q_bins: Default=True. If True will use quartile bins, if false will use equally space bins.
+    :param q_bins: Default=True. If True, uses quartile bins, if false will use equally space bins.
     :param sep_col: name of column containing separations: use 'stair' if there
         is no separation column.    
     :param isi_list: Default=None. list of ISI values.  If None passed will use default values.
     :param sep_list: Default=None.  List of separation values.  If None passed will use defualts.
-    :param group: Default=None.  Pass a group id for exp1a to differentiate between identical stairs (e.g., 1&2, 3&4 etc).
+    :param group: Default=None.  Pass a group id for exp1a to differentiate between
+                    identical stairs  (e.g., 1&2, 3&4 etc).
     :param cols_to_add_dict: add dictionary of columns to insert to finished df (header=key, column=value)
     :param save_name: Pass a name to save output or if None will save as 'psignifit_thresholds'.
     :param verbose: Print progress to screen

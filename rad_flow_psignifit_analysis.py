@@ -78,7 +78,7 @@ def trim_n_high_n_low(all_data_df, trim_from_ends=None, reference_col='separatio
 
     :param all_data_df: Dataset to be trimmed.
     :param trim_from_ends: number of values to trim from each end of the distribution.
-    :param reference_col: Idx column containing repeated conditions (e.g., separation has same label for each stack).
+    :param reference_col: Idx column containing repeated conditions (e.g., separation has the same label for each stack).
     :param stack_col_id: idx column showing different runs/groups etc (e.g., stack)
     :param verbose: in true will print progress to screen.
 
@@ -204,7 +204,7 @@ def make_long_df(wide_df,
     columns showing ISIs (cols_to_change), this puts them all into one column (new_col_name).
 
     :param wide_df: dataframe to be changed.
-    :param cols_to_keep: Columns to use for indexing (e.g., ['congruent', 'separation'...etc]
+    :param cols_to_keep: Columns to use for indexing (e.g., ['congruent', 'separation'...etc]).
     :param cols_to_change: List of columns showing data at different levels e.g., [ISI_1, ISI_4, ISI_6...etc].
     :param cols_to_change_show: What is being measured in repeated cols, e.g., probeLum.
     :param new_col_name: name for new col describing levels e.g. isi
@@ -264,10 +264,11 @@ def fig_colours(n_conditions, alternative_colours=False):
     if alternative_colours:
         use_colours = 'husl'
 
-    if 10 < n_conditions < 21:
-        use_colours = 'tab20'
-    elif n_conditions > 20:
+    if n_conditions > 20:
         use_colour = 'spectral'
+    elif 10 < n_conditions < 21:
+        use_colours = 'tab20'
+
 
     use_cmap = False
 
@@ -280,7 +281,7 @@ def fig_colours(n_conditions, alternative_colours=False):
 def multi_plot_shape(n_figs, min_rows=1):
     """
     Function to make multi-plot figure with right number of rows and cols, 
-    to fit n_figs, but with smallest shape for landscape.
+    to fit n_figs, but with the smallest shape for landscape.
     :param n_figs: Number of plots I need to make.
     :param min_rows: Minimum number of rows (sometimes won't work with just 1)
 
@@ -376,8 +377,8 @@ def run_thr_plot(thr_df, x_col='separation', y_col='ISI_0', hue_col='cond',
     :param hue_col: column to use for hue (different coloured lines on plot)
     :param x_ticks_vals: values to place on x-axis ticks
     :param x_tick_names: labels for x-tick values
-    :param x_axis_label: x axis label
-    :param y_axis_label: y axis label
+    :param x_axis_label: x-axis label
+    :param y_axis_label: y-axis label
     :param fig_title: figure title
     :param save_as: path and filename to save to
     :return: figure
@@ -408,7 +409,7 @@ def simple_log_log_plot(thr_df, x_col='area_deg', y_col='weber_thr', hue_col='co
                         save_as=None):
     """
     Function to make a simple plot from one run showing lineplots for circles, lines and 2probe data.
-    Data is plotted on log-log axis (log(∆thr) and log(area_deg).
+    Data is plotted on log-log axis (log(∆thr) and log(area_deg)).
     Single threshold values so no error bars.
 
     :param thr_df: dataframe from one run
@@ -417,8 +418,8 @@ def simple_log_log_plot(thr_df, x_col='area_deg', y_col='weber_thr', hue_col='co
     :param hue_col: column to use for hue (different coloured lines on plot)
     :param x_ticks_vals: values to place on x-axis ticks
     :param x_tick_names: labels for x-tick values
-    :param x_axis_label: x axis label
-    :param y_axis_label: y axis label
+    :param x_axis_label: x-axis label
+    :param y_axis_label: y-axis label
     :param fig_title: figure title
     :param show_neg1slope: If True, plots a line with slope=-1 starting from
             first datapoint of circles.
@@ -572,9 +573,12 @@ def plot_runs_ave_w_errors(fig_df, error_df,
     :param x_tick_labels: labels for x-axis.
     :param even_spaced_x: If True, x-ticks are evenly spaced,
         if False they will be spaced according to numeric value (e.g., 0, 1, 2, 3, 6, 18).
-    :param fixed_y_range: default=False. If True, it use full range of y values
+    :param fixed_y_range: default=False. If True, it uses full range of y values
         (e.g., 0:110) or can pass a tuple to set y_limits.
     :param x_axis_label: Label for x-axis.  If None passed, will use 'Probe separation in diagonal pixels'.
+    :param y_axis_label: Label for y-axis.  If None passed, will use 'Probe Luminance'.
+    :param log_log_axes: If True, both axes are in log scale, else in normal scale.
+    :param neg_1_slope: If True, adds a reference line with slope=-1.
     :param fig_title: Title for figure.
     :param save_name: filename of plot.
     :param save_path: path to folder where plots will be saved.
@@ -2426,7 +2430,9 @@ def e_average_exp_data(exp_path, p_names_list,
     groupby_sep_df = groupby_sep_df.drop('separation', axis=1)
     groupby_sep_df = groupby_sep_df.drop('congruent', axis=1)
 
-    # todo: should I change sort to False for groupby?  Cause probelems in d_average_participants for error_df if there was only a single run of a condition so error was NaN and somehow order chnaged.
+    # todo: should I change sort to False for groupby?  Cause probelems in
+    #  d_average_participants for error_df if there was only a single run of a
+    #  condition so error was NaN and somehow order changed.
     exp_ave_thr_df = groupby_sep_df.groupby('stair_names', sort=True).mean()
     if verbose:
         print(f'\nexp_ave_thr_df:\n{exp_ave_thr_df}')

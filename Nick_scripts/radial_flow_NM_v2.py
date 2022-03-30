@@ -96,7 +96,7 @@ this study does not include the two single probe conditions (labeled 99 in previ
 separations = list(np.repeat(separation_values, 2))
 n_stairs = len(separations)
 
-# # main contrast is whether the background and target motion is in same or opposite directions
+# # main contrast is whether the background and target motion is in same or opposite direction.
 # congruence_list: 1=congruent/same, -1=incongruent/different
 congruence_list = [1, -1]*len(separation_values)
 

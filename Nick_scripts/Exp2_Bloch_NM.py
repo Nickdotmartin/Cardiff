@@ -406,7 +406,7 @@ for step in range(n_trials_per_stair):
 
         # PROBE
         # target_jump = np.random.choice([1, -1])  # direction in which the probe jumps : CW or CCW
-        # don't need target jump, both probes in same position
+        # don't need target_jump, both probes in same position
         # target_jump = congruent * flow_dir
         target_jump = flow_dir
 

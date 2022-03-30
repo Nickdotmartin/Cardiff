@@ -193,7 +193,7 @@ exp_ave = True
 make_average_plots(all_df_path=all_df_path,
                    ave_df_path=exp_ave_path,
                    error_bars_path=err_path,
-                   error_type='SE',
+                   # error_type='SE',
                    n_trimmed=n_trimmed,
                    exp_ave=exp_ave,
                    show_plots=True, verbose=True)

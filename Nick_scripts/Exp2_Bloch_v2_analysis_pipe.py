@@ -108,7 +108,7 @@ for p_idx, participant_name in enumerate(participant_list):
                      save_as=f'{save_path}{os.sep}bloch_v2_cond_v_thr.png')
         plt.show()
 
-        # not sure I actually need to do a log-log plot for duration.
+        # I'm not sure I actually need to do a log-log plot for duration.
         print(f'long_thr_df:\n{long_thr_df}')
 
         # check for 'area' and 'delta_thr' col
@@ -172,7 +172,7 @@ for p_idx, participant_name in enumerate(participant_list):
     p_ave_path = f'{root_path}/MASTER_ave_TM_thresh.csv'
     err_path = f'{root_path}/MASTER_ave_TM_thr_error_SE.csv'
     n_trimmed = trim_n
-    if n_trimmed == None:
+    if n_trimmed is None:
         all_df_path = f'{root_path}/MASTER_{thr_df_name}.csv'
         p_ave_path = f'{root_path}/MASTER_ave_thresh.csv'
         err_path = f'{root_path}/MASTER_ave_thr_error_SE.csv'

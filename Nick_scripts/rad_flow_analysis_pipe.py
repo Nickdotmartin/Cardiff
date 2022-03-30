@@ -124,7 +124,7 @@ all_df_path = f'{exp_path}/MASTER_exp_thr.csv'
 exp_ave_path = f'{exp_path}/MASTER_exp_ave_thr.csv'
 err_path = f'{exp_path}/MASTER_ave_thr_error_SE.csv'
 n_trimmed = None
-exp_ave=True
+exp_ave = True
 
 make_average_plots(all_df_path=all_df_path,
                    ave_df_path=exp_ave_path,

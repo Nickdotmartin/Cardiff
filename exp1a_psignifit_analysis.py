@@ -182,10 +182,11 @@ def fig_colours(n_conditions, alternative_colours=False):
     if alternative_colours:
         use_colours = 'husl'
 
-    if 10 < n_conditions < 21:
-        use_colours = 'tab20'
-    elif n_conditions > 20:
+    if n_conditions > 20:
         use_colour = 'spectral'
+    elif 10 < n_conditions < 21:
+        use_colours = 'tab20'
+
 
     use_cmap = False
 
@@ -382,7 +383,7 @@ def make_long_df(wide_df, wide_stubnames='ISI',
 
 # # # all ISIs on one axis - pos sep only, plus single probe
 # FIGURE 1 - shows one axis (x=separation (0-18), y=probeLum) with all ISIs added.
-# it also seems that for isi=99 there are simple dots added at -1 on the x axis.
+# it also seems that for isi=99 there are simple dots added at -1 on the x-axis.
 
 def plot_pos_sep_and_1probe(pos_sep_and_1probe_df,
                             thr_col='probeLum',
@@ -509,7 +510,7 @@ def plot_1probe_w_errors(fig_df, error_df, split_1probe=True,
     :param legend_names: Names of different lines (e.g., ISI names)
     :param x_tick_vals: Positions on x-axis.
     :param x_tick_labels: labels for x-axis.
-    :param fixed_y_range: default=False. If True will use full range of y values
+    :param fixed_y_range: default=False. If True, it will use full range of y values
         (e.g., 0:110) or can pass a tuple to set y_limits.
     :param fig_title: Title for figure
     :param save_name: filename of plot
@@ -631,7 +632,7 @@ def plot_w_errors_no_1probe(wide_df, x_var, y_var, lines_var,
     """
     Function to plot pointplot with error bars.  Use this for plots unless
     there is a need for the separate 1probe condition.  Note: x-axis is categorical
-    so its not easy to move ticks.  If I want to do this, use plot_1probe_w_errors().
+    so it's not easy to move ticks.  If I want to do this, use plot_1probe_w_errors().
 
     :param wide_df: wide form dataframe with data from multiple runs
     :param x_var: Name of variable to go on x-axis (should be consistent with wide_df)
@@ -645,7 +646,7 @@ def plot_w_errors_no_1probe(wide_df, x_var, y_var, lines_var,
         not numerical; so all x-ticks are evenly spaced.  For variable x-axis use plot_1probe_w_errors().
     :param alt_colours: Default=True.  Use alternative colours to differentiate
         from other plots e.g., colours associated with Sep not ISI.
-    :param fixed_y_range: If True it will fix y-axis to 0:110.  Otherwise uses adaptive range.
+    :param fixed_y_range: If True it will fix y-axis to 0:110.  Otherwise, uses adaptive range.
     :param jitter: Points on x-axis.
     :param error_caps: Whether to have caps on error bars.
     :param fig1b_title: Title for figure
@@ -823,7 +824,7 @@ def plot_diff_from_concurrent(thr_df_path, div_by_1probe=False,
         print(f'thr_df:\n{thr_df}')
 
     # diff_from_conc_df is an ISI x Sep df where the concurrent column is subtracted from all columns.
-    # therefore the first column has zero for al values,
+    # therefore, the first column has zero for al values,
     # and all other columns show the difference between an ISI and concurrent.
     diff_from_conc_df = thr_df.iloc[:, :].sub(thr_df.Concurrent, axis=0)
     print(f'diff_from_conc_df:\n{diff_from_conc_df}')
@@ -1159,6 +1160,7 @@ def plot_8_sep_thr(all_thr_df, exp_ave=False, fig_title=None, save_name=None, sa
                         (e.g., MASTER_thresholds.csv or MASTER_exp_thr.csv)
     :param exp_ave: Use True for experiment thr from multiple participants or
                     False for thr from multiple runs from a single participant.
+    :param fig_title: Title for figure.
     :param save_name: File name to save plot.
     :param save_path: Directory to save plot into.
     :param verbose: print progress to screen,
@@ -1266,7 +1268,7 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
             file is .../aa_output.csv, participant name is 'aa'.
     :param run_dir: directory where isi folders are stored.
     :param isi_list: List of isi values, may differ between experiments.
-    :param save_all_data: If True, will save all_data_df as an xlsx.
+    :param save_all_data: If True, will save all_data_df as a xlsx.
     :param verbose: If True, will print progress to screen.
 
     :return: RUNDATA-sorted.xlsx: A pandas DataFrame with n xlsx file of all data for one run of all ISIs.
