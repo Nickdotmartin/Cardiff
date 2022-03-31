@@ -8,7 +8,7 @@ from rad_flow_psignifit_analysis_check import c_plots, d_average_participant, ma
 # # then run script d to get master lists and averages
 exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/rad_flow_2_check'
 stair_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-participant_list = ['Simon']  # , 'Nick_half_speed']
+participant_list = ['Nick_half_speed']  # , 'Nick_half_speed']
 isi_list = [1, 4, 6, 9]
 isi_names_list = ['ISI_1', 'ISI_4', 'ISI_6', 'ISI_9']
 
@@ -16,7 +16,7 @@ isi_names_list = ['ISI_1', 'ISI_4', 'ISI_6', 'ISI_9']
 verbose = True
 show_plots = True
 
-n_runs = 6
+n_runs = 3
 # if the first folder to analyse is 1, p_idx_plus = 1.  If the forst folder is 5, use 5 etc.
 p_idx_plus = 1
 
@@ -75,9 +75,11 @@ for p_idx, participant_name in enumerate(participant_list):
         print(f'thr_df:\n{thr_df}')
 
         '''b3'''
+        # todo: values from psignifit seems to makes sense alongside staircases.
         b3_plot_staircase(run_data_path, show_plots=show_plots, verbose=verbose)
 
         '''c I don't actually need any of these, instead sort get psignifit thr ands make plots from those.'''
+        # todo: I've changed multi_batman_plot() to make it more easily readable.
         c_plots(save_path=save_path, isi_name_list=isi_names_list, show_plots=show_plots, verbose=verbose)
 
     '''d participant averages'''

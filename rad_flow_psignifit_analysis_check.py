@@ -501,6 +501,9 @@ def plot_data_unsym_batman(pos_and_neg_sep_df,
     """
     if verbose:
         print("\n*** running plot_data_unsym_batman() ***")
+        print(f"\npos_and_neg_sep_df:\n{pos_and_neg_sep_df}")
+        print(f"\nx_tick_values: {x_tick_values}")
+        print(f"x_tick_labels: {x_tick_labels}")
 
     # get plot details
     if isi_name_list is None:
@@ -541,6 +544,9 @@ def plot_data_unsym_batman(pos_and_neg_sep_df,
     if save_path is not None:
         if save_name is not None:
             plt.savefig(f'{save_path}{os.sep}{save_name}')
+
+    if verbose:
+        print("\n*** finished plot_data_unsym_batman() ***\n")
 
     return fig
 
@@ -784,12 +790,20 @@ def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'
         if list(long_df[x_axis])[0] in orig_x_vals:
             x_space_dict = dict(zip(orig_x_vals, new_x_vals))
         else:
-            x_space_dict = dict(zip(set(list(long_df[x_axis])), new_x_vals))
+            print("warning: x_tick_vals don't appear in long_df")
+            found_x_vals = sorted(set(list(long_df[x_axis])))
+            print(f'found_x_vals (from df): {found_x_vals}')
+            x_space_dict = dict(zip(found_x_vals, new_x_vals))
 
         # add column with new evenly spaced x-values, relating to original x_values
         spaced_x = [x_space_dict[i] for i in list(long_df[x_axis])]
         long_df.insert(0, 'spaced_x', spaced_x)
         data_for_x = 'spaced_x'
+        print(f"idiot check. ")
+        print(f'orig_x_vals: {orig_x_vals}')
+        print(f'new_x_vals: {new_x_vals}')
+        print(f'x_space_dict: {x_space_dict}')
+
 
     # for jittering values on x-axis
     if jitter:
@@ -818,6 +832,14 @@ def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'
         # print(f'orig_x_vals: {orig_x_vals}')
         # print(f'new_x_vals: {new_x_vals}')
 
+    # print(f"idiot check")
+    # grouped_df = long_df.copy()
+    # grouped_df = grouped_df.drop(columns=['jitter_x', 'spaced_x'])
+    # # grouped_df = grouped_df.groupby(by=['congruent', 'separation', 'ISI']).mean()
+    # grouped_df = grouped_df.groupby(by=['ISI', 'separation', 'congruent']).mean()
+    # # grouped_df.pivot(index=['congruent', 'separation'], columns=["ISI"], values="probeLum")
+    # print(f"grouped_df\n{grouped_df}")
+
     # initialize plot
     my_colours = fig_colours(n_conditions=len(set(list(long_df[hue_var]))))
     fig, ax = plt.subplots(figsize=(10, 6))
@@ -825,6 +847,7 @@ def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'
     # with error bards for d_averages example
     sns.lineplot(data=long_df, x=data_for_x, y=y_axis, hue=hue_var,
                  style=style_var, style_order=style_order,
+                 estimator='mean',
                  ci=conf_interval, err_style='bars', err_kws={'elinewidth': .7, 'capsize': 5},
                  palette=my_colours, ax=ax)
 
@@ -835,7 +858,7 @@ def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'
         ax.set_xticks(new_x_vals)
         ax.set_xticklabels(orig_x_vals)
     else:
-        ax.set_xticks(x_tick_vals)
+        ax.set_xticklabels(x_tick_vals)
 
     plt.xlabel(x_axis)
     plt.title(fig_title)
@@ -876,7 +899,7 @@ def plot_diff(ave_thr_df, stair_names_col='stair_names', fig_title=None, save_pa
 
     # get rows to slice for each df to be in ascending order
     # if stair_names_col in list(ave_thr_df.columns):
-    cong_rows = sorted(ave_thr_df.index[ave_thr_df['stair_names'] >= 0].tolist())
+    cong_rows = sorted(ave_thr_df.index[ave_thr_df['stair_names'] >= 0].tolist(), reverse=True)
     incong_rows = sorted(ave_thr_df.index[ave_thr_df['stair_names'] < 0].tolist(), reverse=True)
     # else:
     #     cong_rows = sorted(ave_thr_df.index[ave_thr_df.index >= 0].tolist())
@@ -1007,23 +1030,29 @@ def multi_batman_plots(mean_df, thr1_df, thr2_df,
                     sns.lineplot(ax=axes[row_idx, col_idx], data=mean_df,
                                  x='separation', y=isi_name_list[ax_counter],
                                  color=my_colours[ax_counter],
-                                 linewidth=2, linestyle="dotted", markers=True)
+                                 linewidth=.5,
+                                 # linestyle="dotted",
+                                 markers=True)
 
                     sns.lineplot(ax=axes[row_idx, col_idx], data=thr1_df,
                                  x='separation', y=isi_name_list[ax_counter],
                                  color=my_colours[ax_counter],
-                                 linewidth=.5, marker="v")
+                                 # linewidth=.5,
+                                 linestyle="dashed",
+                                 marker="v")
 
                     sns.lineplot(ax=axes[row_idx, col_idx], data=thr2_df,
                                  x='separation', y=isi_name_list[ax_counter],
                                  color=my_colours[ax_counter],
-                                 linewidth=.5, marker="o")
+                                 # linewidth=.5,
+                                 linestyle="dotted",
+                                 marker="o")
 
                     ax.set_title(isi_name_list[ax_counter])
                     ax.set_xticks(x_tick_vals)
                     ax.set_xticklabels(x_tick_labels)
                     ax.xaxis.set_tick_params(labelsize=6)
-                    ax.set_ylim([40, 90])
+                    # ax.set_ylim([40, 90])
 
                     if row_idx == 1:
                         ax.set_xlabel('Probe separation (pixels)')
@@ -1042,13 +1071,19 @@ def multi_batman_plots(mean_df, thr1_df, thr2_df,
 
                     # artist for legend
                     st1 = mlines.Line2D([], [], color=my_colours[ax_counter],
-                                        marker='v', linewidth=.5,
+                                        marker='v',
+                                        # linewidth=.5,
+                                        linestyle="dashed",
                                         markersize=4, label='Congruent')
                     st2 = mlines.Line2D([], [], color=my_colours[ax_counter],
-                                        marker='o', linewidth=.5,
+                                        marker='o',
+                                        # linewidth=.5,
+                                        linestyle="dotted",
                                         markersize=4, label='Incongruent')
                     mean_line = mlines.Line2D([], [], color=my_colours[ax_counter],
-                                              marker=None, linewidth=2, linestyle="dotted",
+                                              marker=None,
+                                              linewidth=.5,
+                                              # linestyle="dotted",
                                               label='mean')
                     ax.legend(handles=[st1, st2, mean_line], fontsize=6)
 
@@ -1066,23 +1101,27 @@ def multi_batman_plots(mean_df, thr1_df, thr2_df,
             sns.lineplot(ax=axes[row_idx], data=mean_df,
                          x='separation', y=isi_name_list[row_idx],
                          color=my_colours[row_idx],
-                         linewidth=2, linestyle="dotted", markers=True)
+                         linewidth=.5,
+                         # linestyle="dotted",
+                         markers=True)
 
             sns.lineplot(ax=axes[row_idx], data=thr1_df,
                          x='separation', y=isi_name_list[row_idx],
-                         color=my_colours[row_idx],
-                         linewidth=.5, marker="v")
+                         color=my_colours[row_idx], linestyle="dashed",
+                         # linewidth=.5,
+                         marker="v")
 
             sns.lineplot(ax=axes[row_idx], data=thr2_df,
                          x='separation', y=isi_name_list[row_idx],
-                         color=my_colours[row_idx],
-                         linewidth=.5, marker="o")
+                         color=my_colours[row_idx], linestyle="dotted",
+                         # linewidth=.5,
+                         marker="o")
 
             ax.set_title(isi_name_list[row_idx])
             ax.set_xticks(x_tick_vals)
             ax.set_xticklabels(x_tick_labels)
             ax.xaxis.set_tick_params(labelsize=6)
-            ax.set_ylim([40, 90])
+            # ax.set_ylim([40, 90])
 
             ax.set_xlabel('Probe separation (pixels)')
             ax.set_ylabel('Probe Luminance')
@@ -1094,13 +1133,19 @@ def multi_batman_plots(mean_df, thr1_df, thr2_df,
 
             # artist for legend
             st1 = mlines.Line2D([], [], color=my_colours[row_idx],
-                                marker='v', linewidth=.5,
+                                marker='v',
+                                # linewidth=.5,
+                                linestyle="dashed",
                                 markersize=4, label='Congruent')
             st2 = mlines.Line2D([], [], color=my_colours[row_idx],
-                                marker='o', linewidth=.5,
+                                marker='o',
+                                # linewidth=.5,
+                                linestyle="dotted",
                                 markersize=4, label='Incongruent')
             mean_line = mlines.Line2D([], [], color=my_colours[row_idx],
-                                      marker=None, linewidth=2, linestyle="dotted",
+                                      marker=None,
+                                      linewidth=.5,
+                                      # linestyle="dotted",
                                       label='mean')
             ax.legend(handles=[st1, st2, mean_line], fontsize=6)
 
@@ -1162,7 +1207,7 @@ def multi_pos_sep_per_isi(ave_thr_df, error_df,
               f'error_df:\n{error_df}')
         print(f'max_thr: {max_thr}\nmin_thr: {min_thr}')
 
-    cong_rows = sorted(ave_thr_df.index[ave_thr_df[stair_names_col] >= 0].tolist())
+    cong_rows = sorted(ave_thr_df.index[ave_thr_df[stair_names_col] >= 0].tolist(), reverse=True)
     incong_rows = sorted(ave_thr_df.index[ave_thr_df[stair_names_col] < 0].tolist(), reverse=True)
     if verbose:
         print(f'\ncong_rows: {cong_rows}')
@@ -1996,6 +2041,8 @@ def c_plots(save_path, isi_name_list=None, show_plots=True, verbose=True):
 
     # load df mean of last n probeLum values (14 stairs x 8 isi).
     thr_csv_name = f'{save_path}{os.sep}psignifit_thresholds.csv'
+
+    # todo: this psig_thr_df is in stair order (e.g., sep: 18, -18, 6, -6 etc)
     psig_thr_df = pd.read_csv(thr_csv_name)
     if verbose:
         print(f'psig_thr_df:\n{psig_thr_df}')
@@ -2017,10 +2064,13 @@ def c_plots(save_path, isi_name_list=None, show_plots=True, verbose=True):
 
     psig_thr_df.columns = ['stair_names']+isi_name_list
     if verbose:
+        # todo: still in stair order  (e.g., sep: 18, -18, 6, -6 etc)
         print(f'\npsig_thr_df:\n{psig_thr_df}')
+
 
     if verbose:
         print('\npreparing data for batman plots')
+
     # note: for sym_sep_list just a single value of zero, no -.10
     symm_sep_indices = [0, 1, 2, 3, 4, 5, 4, 3, 2, 1, 0]
     sym_sep_list = [-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18]
@@ -2038,6 +2088,8 @@ def c_plots(save_path, isi_name_list=None, show_plots=True, verbose=True):
 
     # subtract the dfs from each other, then for each column get the sum of abs values
     diff_val = np.sum(abs(psig_cong_sym_df - psig_incong_sym_df), axis=0)
+    diff_val.drop(index='stair_names', inplace=True)
+
     # take the mean of these across all ISIs to get single value
     mean_diff_val = float(np.mean(diff_val))
 
@@ -2085,19 +2137,20 @@ def c_plots(save_path, isi_name_list=None, show_plots=True, verbose=True):
                   '(positive values for congruent probe/flow motion, ' \
                   'negative for incongruent).'
 
-    psig_thr_df = psig_thr_df.sort_values(by=['stair_names'])
-    psig_thr_df.drop('stair_names', axis=1, inplace=True)
-    psig_thr_df.reset_index(drop=True, inplace=True)
-    psig_thr_idx_list = list(psig_thr_df.index)
+    psig_sorted_df = psig_thr_df.sort_values(by=['stair_names'])
+    psig_sorted_df.drop('stair_names', axis=1, inplace=True)
+    psig_sorted_df.reset_index(drop=True, inplace=True)
+    psig_thr_idx_list = list(psig_sorted_df.index)
     stair_names_list = sorted(stair_names_list)
     stair_names_list = ['-0' if i == -.10 else int(i) for i in stair_names_list]
 
     if verbose:
-        print(f'\npsig_thr_df:\n{psig_thr_df}')
+        # todo: plot has now changed order to stair_NAMES (e.g., sep: -18, -6, -3 etc)
+        print(f'\npsig_sorted_df:\n{psig_sorted_df}')
         print(f'\npsig_thr_idx_list: {psig_thr_idx_list}')
         print(f'\nstair_names_list: {stair_names_list}')
 
-    plot_data_unsym_batman(pos_and_neg_sep_df=psig_thr_df,
+    plot_data_unsym_batman(pos_and_neg_sep_df=psig_sorted_df,
                            fig_title=fig_3_title,
                            save_path=save_path,
                            save_name=fig3_save_name,
@@ -2111,7 +2164,8 @@ def c_plots(save_path, isi_name_list=None, show_plots=True, verbose=True):
 
     #########
     # fig to compare congruent and incongruent thr for each ISI
-
+    print(f"sanity check\npsig_thr_df\n{psig_thr_df}")
+    # todo: plots now go back to using original df (not sorted df)
     if 'congruent' not in list(psig_thr_df.columns):
         psig_thr_df.insert(0, 'congruent', cong_col_s)
     if 'separation' not in list(psig_thr_df.columns):
@@ -2308,6 +2362,7 @@ def d_average_participant(root_path, run_dir_names_list,
             error_bars_df.set_index(['cond', 'separation'], inplace=True)
 
             print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
+        print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
 
     else:
 
@@ -2529,6 +2584,9 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         print(f"\nstair_names_list: {stair_names_list}")
         print(f"stair_names_labels: {stair_names_labels}")
 
+        # todo: wtach out as dfs are in stair order (18, -18, 6, -6 etc),
+        #  but I have sorted the stair_names lists and labels to be in ascending order (-18, -6, -3 etc)
+
     """part 3. main Figures (these are the ones saved in the matlab script)
     Fig1: plot average threshold for each ISI and sep.
     Fig2: divide all 2probe conds (pos_sep) by one_probe condition for each participant.
@@ -2539,16 +2597,22 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     print(f"\nfig_1a")
     if n_trimmed is not None:
         fig_1a_title = f'{ave_over} average thresholds per ISI across all runs (trim={n_trimmed}).\n' \
-                       f'(positive values for congruent probe/flow motion, negative for incongruent).'
+                       f'positive=congruent probe/flow motion, negative=incongruent. Bars=SE.'
         fig_1a_savename = f'ave_TM_thr_pos_and_neg.png'
     else:
         fig_1a_title = f'{ave_over} average threshold per ISI across all runs.\n' \
-                       f'(positive values for congruent probe/flow motion, negative for incongruent).'
+                       f'positive=congruent probe/flow motion, negative=incongruent. Bars=SE.'
         fig_1a_savename = f'ave_thr_pos_and_neg.png'
 
     # use ave_w_sep_idx_df for fig 1a and heatmap
     ave_w_sep_idx_df = ave_df.set_index('stair_names')
+    ave_w_sep_idx_df.sort_index(inplace=True)
 
+    print(f"idiot check\n"
+          f"ave_w_sep_idx_df:\n{ave_w_sep_idx_df}")
+
+    # todo: this first plot is wrong - df is in stair order not stairName order.
+    #  It is now Sorted and working
     # if I delete this messy plot, I can also delete the function that made it.
     plot_runs_ave_w_errors(fig_df=ave_w_sep_idx_df, error_df=error_bars_df,
                            jitter=True, error_caps=True, alt_colours=False,
@@ -2564,17 +2628,21 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     print(f"\nfig_1b")
     if n_trimmed is not None:
-        fig_1b_title = f'{ave_over} average thresholds per separation across all runs (trim={n_trimmed}).'
+        fig_1b_title = f'{ave_over} average thresholds per separation across all runs (trim={n_trimmed}).\n' \
+                       f'Bars=.68 CI'
         fig_1b_savename = f'ave_TM_thr_all_runs_sep.png'
     else:
-        fig_1b_title = f'{ave_over} average threshold per separation across all runs'
+        fig_1b_title = f'{ave_over} average threshold per separation across all runs\n' \
+                       f'Bars=.68 CI'
         fig_1b_savename = f'ave_thr_all_runs_sep.png'
+
+        # TODO: I've added a mean function to the computation of the figure from long_form_df (I assumed this was automatic).
+        #tod: It also seems that using evenly_spaced_x is fuckng it up.  Not sure why.
 
     plot_w_errors_either_x_axis(wide_df=all_df, cols_to_keep=['congruent', 'separation'],
                                 cols_to_change=isi_name_list,
                                 cols_to_change_show='probeLum', new_col_name='ISI',
-                                strip_from_cols='ISI_',
-                                x_axis='ISI', y_axis='probeLum',
+                                strip_from_cols='ISI_', x_axis='ISI', y_axis='probeLum',
                                 hue_var='separation', style_var='congruent', style_order=[1, -1],
                                 error_bars=True, even_spaced_x=True, jitter=.01,
                                 fig_title=fig_1b_title, fig_savename=fig_1b_savename,
@@ -2585,10 +2653,12 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     print(f"\nfig_1c")
     if n_trimmed is not None:
-        fig_1c_title = f'{ave_over} average thresholds per ISI across all runs (trim={n_trimmed}).'
+        fig_1c_title = f'{ave_over} average thresholds per ISI across all runs (trim={n_trimmed}).\n' \
+                       f'Bars=.68 CI'
         fig_1c_savename = f'ave_TM_thr_all_runs_isi.png'
     else:
-        fig_1c_title = f'{ave_over} average threshold per ISI across all runs'
+        fig_1c_title = f'{ave_over} average threshold per ISI across all runs\n' \
+                       f'Bars=.68 CI'
         fig_1c_savename = f'ave_thr_all_runs_isi.png'
 
     plot_w_errors_either_x_axis(wide_df=all_df, cols_to_keep=['congruent', 'separation'],
@@ -2610,12 +2680,15 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     # figure 1d multiple plots with single line.
     print("\n\nfig_1d 1d: one ax per ISI, pos_sep, compare congruent and incongruent.")
     if n_trimmed is not None:
-        fig_1d_title = f'{ave_over} Congruent and Incongruent thresholds for each ISI (trim={n_trimmed}).'
+        fig_1d_title = f'{ave_over} Congruent and Incongruent thresholds for each ISI (trim={n_trimmed}).\n' \
+                       f'Bars=SE'
         fig_1d_savename = f'ave_TM_pos_sep_per_isi.png'
     else:
-        fig_1d_title = f'{ave_over} Congruent and Incongruent thresholds for each ISI'
+        fig_1d_title = f'{ave_over} Congruent and Incongruent thresholds for each ISI\n' \
+                       f'Bars=SE'
         fig_1d_savename = f'ave_thr_pos_sep_per_isi.png'
 
+    # todo: congruent columns were in wrong order. now fixed.
     multi_pos_sep_per_isi(ave_thr_df=ave_df, error_df=error_bars_df,
                           stair_names_col='stair_names',
                           even_spaced_x=True, error_caps=True,
@@ -2627,13 +2700,13 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     plt.close()
 
     print('\nfig2a: Mean participant difference between congruent and incongruent conditions (x-axis=Sep)')
+    # todo: congruent indices were in wrong order - now sorted
     if n_trimmed is not None:
-        fig_2a_title = f'{ave_over} Mean Difference Between Congruent and Incongruent Conditions (x-axis=Sep).\n' \
-                '(Positive=congruent has higher threshold). (trim={n_trimmed}).'
+        fig_2a_title = f'{ave_over} Mean Difference (Congruent - Incongruent Conditions).\n' \
+                       f'(x-axis=Sep)  trim={n_trimmed}.'
         fig_2a_savename = f'ave_TM_diff_x_sep.png'
     else:
-        fig_2a_title = f'{ave_over} Mean Difference Between Congruent and Incongruent Conditions (x-axis=Sep).\n' \
-                '(Positive=congruent has higher threshold).'
+        fig_2a_title = f'{ave_over} Mean Difference (Congruent - Incongruent Conditions).\n(x-axis=Sep)'
         fig_2a_savename = f'ave_diff_x_sep.png'
 
     plot_diff(ave_df, stair_names_col='stair_names',
@@ -2642,6 +2715,8 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     if show_plots:
         plt.show()
     plt.close()
+
+
     print('\nfig2b: Mean participant difference between congruent and incongruent conditions (x-axis=ISI)')
 
     if n_trimmed is not None:
