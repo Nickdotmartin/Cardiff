@@ -6,17 +6,20 @@ from rad_flow_psignifit_analysis import c_plots, d_average_participant, make_ave
 
 # # loop through run folders with first 5 scripts (a, b1, b2, b3, c)
 # # then run script d to get master lists and averages
-exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/rad_flow_2'
+exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp'
+# exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/rad_flow_2'
 stair_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-participant_list = ['Simon']  # , 'Nick_half_speed']
-isi_list = [1, 4, 6, 9]
-isi_names_list = ['ISI_1', 'ISI_4', 'ISI_6', 'ISI_9']
+participant_list = ['Nick', 'Simon']  # , 'Nick_half_speed']
+# isi_list = [1, 4, 6, 9]
+# isi_names_list = ['ISI_1', 'ISI_4', 'ISI_6', 'ISI_9']
+isi_list = [6, 9]
+isi_names_list = ['ISI_6', 'ISI_9']
 
 
 verbose = True
 show_plots = True
 
-n_runs = 6
+n_runs = 12
 # if the first folder to analyse is 1, p_idx_plus = 1.  If the forst folder is 5, use 5 etc.
 p_idx_plus = 1
 
@@ -59,7 +62,6 @@ for p_idx, participant_name in enumerate(participant_list):
         print(f"run_data_df:\n{run_data_df}")
 
         '''get psignifit thresholds df'''
-        # todo: check order of added columns.  YES - all correct
         cols_to_add_dict = {'stair_names': [18, -18, 6, -6, 3, -3, 2, -2, 1, -1, 0, -0.1],
                             'congruent':  [1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1],
                             'separation': [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]}
@@ -75,38 +77,34 @@ for p_idx, participant_name in enumerate(participant_list):
         print(f'thr_df:\n{thr_df}')
 
         '''b3'''
-        # todo: values from psignifit seems to makes sense alongside staircases.
         b3_plot_staircase(run_data_path, show_plots=show_plots, verbose=verbose)
 
         '''c I don't actually need any of these, instead sort get psignifit thr ands make plots from those.'''
-        # todo: I've changed multi_batman_plot() to make it more easily readable.
         c_plots(save_path=save_path, isi_name_list=isi_names_list, show_plots=show_plots, verbose=verbose)
 
-    # '''d participant averages'''
-    # # run_folder_names = ['Nick_1', 'Nick_2', 'Nick_3', 'Nick_4'], 'Nick_5', 'Nick_6',
-    # #                     'Nick_7', 'Nick_8', 'Nick_9', 'Nick_10', 'Nick_11', 'Nick_12']
-    # trim_n = None
-    # if len(run_folder_names) == 12:
-    #     trim_n = 1
-    # d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-    #                       trim_n=trim_n, error_type='SE', verbose=verbose)
-    #
-    # all_df_path = f'{root_path}/MASTER_TM1_thresholds.csv'
-    # p_ave_path = f'{root_path}/MASTER_ave_TM_thresh.csv'
-    # err_path = f'{root_path}/MASTER_ave_TM_thr_error_SE.csv'
-    # n_trimmed = trim_n
-    # if n_trimmed is None:
-    #     all_df_path = f'{root_path}/MASTER_psignifit_thresholds.csv'
-    #     p_ave_path = f'{root_path}/MASTER_ave_thresh.csv'
-    #     err_path = f'{root_path}/MASTER_ave_thr_error_SE.csv'
-    # exp_ave = False
-    #
-    # make_average_plots(all_df_path=all_df_path,
-    #                    ave_df_path=p_ave_path,
-    #                    error_bars_path=err_path,
-    #                    n_trimmed=n_trimmed,
-    #                    exp_ave=False,
-    #                    show_plots=True, verbose=True)
+    '''d participant averages'''
+    trim_n = None
+    if len(run_folder_names) == 12:
+        trim_n = 1
+    d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
+                          trim_n=trim_n, error_type='SE', verbose=verbose)
+
+    all_df_path = f'{root_path}/MASTER_TM1_thresholds.csv'
+    p_ave_path = f'{root_path}/MASTER_ave_TM_thresh.csv'
+    err_path = f'{root_path}/MASTER_ave_TM_thr_error_SE.csv'
+    n_trimmed = trim_n
+    if n_trimmed is None:
+        all_df_path = f'{root_path}/MASTER_psignifit_thresholds.csv'
+        p_ave_path = f'{root_path}/MASTER_ave_thresh.csv'
+        err_path = f'{root_path}/MASTER_ave_thr_error_SE.csv'
+    exp_ave = False
+
+    make_average_plots(all_df_path=all_df_path,
+                       ave_df_path=p_ave_path,
+                       error_bars_path=err_path,
+                       n_trimmed=n_trimmed,
+                       exp_ave=False,
+                       show_plots=True, verbose=True)
 
 # print(f'exp_path: {exp_path}')
 # print('\nget exp_average_data')
