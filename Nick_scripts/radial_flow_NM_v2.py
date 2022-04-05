@@ -36,14 +36,15 @@ display_number = 1  # 0 indexed, 1 for external display
 # Store info about the experiment session
 expName = 'rad_flow_2'  # from the Builder filename that created this script
 
-expInfo = {'1_Participant': 'NM_test_rad_flow_2',
+expInfo = {'1_Participant': 'Nick_60hz_test_1',
            '2_Probe_dur_in_frames_at_240hz': [2, 50],
            '3_fps': [240, 144, 60],
            '4_ISI_dur_in_ms': [100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0],
            '5_Probe_orientation': ['radial', 'tangent'],
            '6_Probe_size': ['5pixels', '6pixels', '3pixels'],
            '7_Trials_counter': [True, False],
-           '8_Background': ['flow_rad', 'None']
+           '8_Background': ['flow_rad', 'None'],
+           '9_bg_speed_cond': ['Normal', 'Half-speed']
            }
 
 # GUI
@@ -62,6 +63,7 @@ orientation = expInfo['5_Probe_orientation']
 Probe_size = expInfo['6_Probe_size']
 trials_counter = expInfo['7_Trials_counter']
 background = expInfo['8_Background']
+bg_speed_cond = expInfo['9_bg_speed_cond']
 
 # ISI timing in ms and frames
 '''ISI can be given (roughly) in ms, for any monitor it will try to match that value in frames.
@@ -263,7 +265,12 @@ probeMask4 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
 
 # BACKGROUND
 # flow_dots
-flow_speed = 0.2
+if bg_speed_cond is 'Normal':
+    flow_speed = 0.2
+if bg_speed_cond is 'Half-speed':
+    flow_speed = 0.1
+else:
+    raise ValueError(f'background speed should be selected from drop down menu: Normal or Half-speed')
 nDots = 10000
 flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
                                     units='pix', nElements=nDots, sizes=10,

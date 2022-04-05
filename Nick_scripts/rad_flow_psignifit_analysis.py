@@ -452,11 +452,13 @@ def simple_log_log_plot(thr_df, x_col='area_deg', y_col='weber_thr', hue_col='co
     # add guideline with slope of -1 which crosses through the circles 1probe weber_thr value.
     if show_neg1slope:
         if x_col == 'area_deg':
-            slope_start_x = thr_df.loc[thr_df['stair_names'] == '-1_circles', x_col].item()
-            slope_start_y = thr_df.loc[thr_df['stair_names'] == '-1_circles', y_col].item()
+            if '-1_circles' in thr_df['stair_names'].unique():
+                start_point = '-1_circles'
+            elif '-1_lines' in thr_df['stair_names'].unique():
+                start_point = '-1_lines'
+            slope_start_x = thr_df.loc[thr_df['stair_names'] == start_point, x_col].item()
+            slope_start_y = thr_df.loc[thr_df['stair_names'] == start_point, y_col].item()
         elif x_col == 'dur_ms':
-            # slope_start_y = thr_df.loc[thr_df['stair_names'] == '-1_circles', y_col].item()
-            # slope_start_x = thr_df.loc[thr_df['stair_names'] == '-1_circles', x_col].item()
             slope_start_x = thr_df.iloc[0]['dur_ms']
             slope_start_y = thr_df.iloc[0]['weber_thr']
         print(f'slope_start_x: {slope_start_x}')
