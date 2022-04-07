@@ -17,38 +17,29 @@ This script takes:
 the background from radial_flow_v2_NM and the probes from 'from_Martin"FlowParsing' 
 and combines then so we can test that we do get flowParsing effects."""
 
-# todo: This script uses colorspace=rgb, but it should be rgb255.
-#  I'll keep it as is for now, but I need to use these vals below for bglum and deltaLum.
-#  flow_bgcolor = [-0.1, -0.1, -0.1]  # dark grey converts to:
-#  rgb: -0.1 = rgb1: .45 = rgb255: 114.75 = lum: 47.8.
-#  for future ref, to match exp1 it should be flow_bgcolor = [-0.6, -0.6, -0.6]  # dark grey
+'''This script uses colorspace=rgb, but it should be rgb255.
+I'll keep it as is for now, but I need to use these vals below for bglum and deltaLum.
+flow_bgcolor = [-0.1, -0.1, -0.1]  # dark grey converts to:
+rgb: -0.1 = rgb1: .45 = rgb255: 114.75 = lum: 47.8.
+for future ref, to match exp1 it should be flow_bgcolor = [-0.6, -0.6, -0.6]  # dark grey'''
 
 # Ensure that relative paths start from the same directory as this script
 _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'HP_24uh'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz'
+monitor_name = 'Asus_VG24'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz'
 display_number = 1  # 0 indexed, 1 for external display
 
 # Store info about the experiment session
 expName = 'FlowParsing'  # from the Builder filename that created this script
 
-expInfo = {'1_Participant': 'Nick_flowParsing_1',
-           # '2_Probe_dur_in_frames_at_240hz': [2, 50],
+expInfo = {'1_Participant': 'Nick_test',
            '3_fps': [240, 144, 60],
-           # '4_ISI_dur_in_ms': [100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0],
-           # '5_Probe_orientation': ['radial', 'tangent'],
-           # '6_Probe_size': ['5pixels', '6pixels', '3pixels'],
+           '4_Probe duration in frames': ['12', '3', '6', '12', '18', '24', '30', '36', '120'],
            '7_Trials_counter': [True, False],
            '8_Background': ['flow_rad', 'None'],
            '9_bg_speed_cond': ['Normal', 'Half-speed'],
-
-           '2. Repetitions': '20',
-           '3. Areas(2 or 4)': '4',
-           '4. Stim duration in frames': ['18', '3', '6', '12', '18', '24', '30', '36'],
-           '5. Surrounding motion': ['jitter', 'static'],
-           '6. Dots life in frames': '100'
            }
 
 # GUI
@@ -61,46 +52,16 @@ expInfo['time'] = datetime.now().strftime("%H:%M:%S")
 
 # GUI SETTINGS
 participant_name = expInfo['1_Participant']
-# probe_duration = int(expInfo['2_Probe_dur_in_frames_at_240hz'])
 fps = int(expInfo['3_fps'])
-probe_duration = fps
-
-# orientation = expInfo['5_Probe_orientation']
-# Probe_size = expInfo['6_Probe_size']
 trials_counter = expInfo['7_Trials_counter']
 background = expInfo['8_Background']
 bg_speed_cond = expInfo['9_bg_speed_cond']
 
-# from_Mastin_FlowParsing
-participant = (expInfo['1. participant'])
-n_trials_per_stair = int((expInfo['2. Repetitions']))
-nAFC = float(expInfo['3. Areas(2 or 4)'])
-lifeDots = int(expInfo['6. Dots life in frames'])
-stimDur = int(expInfo['4. Stim duration in frames'])
-stim_dur_txt = f'stimDur{stimDur}-'
-print(f'stim_dur_txt: {stim_dur_txt}')
-if expInfo['5. Surrounding motion'] == 'jitter':
-    jitter = 1
-elif expInfo['5. Surrounding motion'] == 'static':
-    jitter = 0
-
-# # ISI timing in ms and frames
-# '''ISI can be given (roughly) in ms, for any monitor it will try to match that value in frames.
-# The script uses on frames so ISI will be used in that format.
-# The actual ms timing is given for record.
-# This means that the experiment should have similar ms timings on monitors with different fps
-# milliseconds: [100, 50, 41.66, 37.5, 33.34, 25, 16.67, 8.33, 0]
-# frames@240hz: [24,  12,  10,    9,    8,     6,  4,    2,    0]
-# '''
-# ISI_selected_ms = float(expInfo['4_ISI_dur_in_ms'])
-# ISI_frames = int(ISI_selected_ms * fps / 1000)
-# ISI_actual_ms = (1/fps) * ISI_frames * 1000
-# ISI = ISI_frames
-# print(f"\nSelected {ISI_selected_ms}ms ISI.\n"
-#       f"At {fps}Hz this is {ISI_frames} frames which each take {ISI_actual_ms}ms.\n")
+n_trials_per_stair = 25  # int((expInfo['2. Repetitions']))
+nAFC = 4  # float(expInfo['3. Areas(2 or 4)'])
+probe_duration = int(expInfo['4_Probe duration in frames'])
 
 # VARIABLES
-n_trials_per_stair = 25
 probe_ecc = 4
 
 # background motion to start 70ms before probe1 (e.g., 17frames at 240Hz).
@@ -109,24 +70,15 @@ prelim_bg_flow_fr = int(prelim_bg_flow_ms * fps / 1000)
 
 probeSpeed = 0
 
-
-# # Distances between probes & flow direction
-# separation_values = [18, 6, 3, 2, 1, 0]
-# '''each separation value appears in 2 stairs, e.g.,
-# stair1 will be sep=18, flow_dir=inwards; stair2 will be sep=18, flow_dir=outwards etc.
-# e.g., separations = [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]
-# this study does not include the two single probe conditions (labeled 99 in previous exp)
-# '''
-# separations = list(np.repeat(separation_values, 2))
-# n_stairs = len(separations)
-
-# todo: change n_stair to 4.  flow_in probe_in, flow_in probe_out, flow_out probe_in, flow_out probe_out.
-n_stairs = 4  # [1, 2, 0]
+# # ISI timing in ms and frames
+'''milliseconds: [100, 50, 41.66, 37.5, 33.34, 25, 16.67, 8.33, 0]
+   frames@240hz: [24,  12,  10,    9,    8,     6,  4,    2,    0]
+'''
 
 
-# # main contrast is whether the background and target motion is in same or opposite direction.
-# congruence_list: 1=congruent/same, -1=incongruent/different
-# congruence_list = [1, -1]*len(separation_values)
+
+# flow_in probe_in, flow_in probe_out, flow_out probe_in, flow_out probe_out.
+n_stairs = 4
 flow_directions = [1, 1, -1, -1]
 probe_directions = [1, -1, 1, -1]
 congruence_list = [1, -1, -1, 1]
@@ -139,6 +91,7 @@ congruence_list = [1, -1, -1, 1]
 #            f'{participant_name}'
 filename = f'{_thisDir}{os.sep}' \
            f'{expName}{os.sep}' \
+           f'probeDur{probe_duration}{os.sep}' \
            f'{participant_name}{os.sep}' \
            f'{participant_name}'
 
@@ -243,7 +196,7 @@ try:
                           actual_fps=win.getActualFrameRate(),
                           verbose=True)
     print('\nsize of a single pixel at 57cm')
-    get_pixel_mm_deg_values(monitor_name=monitor_name, use_diagonal=False)
+    get_pixel_mm_deg_values(monitor_name=monitor_name)
     print('Monitor setting all correct')
 except ValueError:
     print("Value error when running check_correct_monitor()")
@@ -263,27 +216,10 @@ else:
 
 
 # PROBEs
-# # probe sizes choice
-# if expInfo['6_Probe_size'] == '6pixels':  # 6 pixels
-#     probeVert = [(0, 0), (1, 0), (1, 1), (2, 1),
-#                  (2, -2), (-1, -2), (-1, -1), (0, -1)]
-# elif expInfo['6_Probe_size'] == '3pixels':  # 3 pixels
-#     probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, 0), (1, 0), (1, -1),
-#                  (0, -1), (0, -2), (-1, -2), (-1, -2), (-1, -1), (0, -1)]
-# else:  # 5 pixels
-#     # default setting is expInfo['6_Probe_size'] == '5pixels':
-#     expInfo['6_Probe_size'] = '5pixels'
-#     probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
-#                  (1, -2), (-1, -2), (-1, -1), (0, -1)]
-#
-# probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, -1.0, 1.0),
-#                           lineWidth=0, opacity=1, size=1, interpolate=False)
-# probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor=[-1.0, 1.0, -1.0],
-#                           lineWidth=0, opacity=1, size=1, interpolate=False)
-raisedCosTexture0 = visual.filters.makeMask(256, shape='raisedCosine', 
+raisedCosTexture0 = visual.filters.makeMask(256, shape='raisedCosine',
                                             fringeWidth=0.8, radius=[1.0, 1.0])
-probe = visual.GratingStim(win, mask=raisedCosTexture0, tex=None, contrast=0.5, 
-                           size=(30, 30), units='pix', color='green', pos=[-200, 100])
+probe = visual.GratingStim(win, mask=raisedCosTexture0, contrast=0.5,
+                           size=(30, 30), units='pix', color='green',)
 
 # MASK BEHIND PROBES
 raisedCosTexture1 = visual.filters.makeMask(256, shape='raisedCosine',
@@ -301,11 +237,12 @@ probeMask4 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
 
 # BACKGROUND
 # flow_dots
-if bg_speed_cond is 'Normal':
+if bg_speed_cond == 'Normal':
     flow_speed = 0.2
-if bg_speed_cond is 'Half-speed':
+elif bg_speed_cond == 'Half-speed':
     flow_speed = 0.1
 else:
+    print(f"bg_speed_cond: {bg_speed_cond}")
     raise ValueError(f'background speed should be selected from drop down menu: Normal or Half-speed')
 nDots = 10000
 flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
@@ -345,28 +282,12 @@ maxDist = 5
 # MOUSE - Hide cursor
 myMouse = event.Mouse(visible=False)
 
-# INSTRUCTION
-# instructions = visual.TextStim(win=win, name='instructions',
-#                                text="\n\n\nPlease maintain focus on the black cross at the centre of the screen.\n\n"
-#                                     "A small white probe will briefly flash on screen,\n"
-#                                     "press the key related to the location of the probe:\n\n"
-#                                     "[4] top-left\t\t\t[5] top-right\n\n\n\n"
-#                                     "[1] bottom-left\t\t\t[2] bottom-right.\n\n\n"
-#                                     "Do not rush, aim to be as accurate as possible,\n"
-#                                     "but if you did not see the probe, please guess.\n\n"
-#                                     "If you pressed a wrong key by mistake, you can:\n"
-#                                     "continue or\n"
-#                                     "press [r] or [9] to redo the previous trial.\n\n"
-#                                     "Press any key to start.",
-#                                font='Arial', height=20,
-#                                colorSpace='rgb', color=[1, 1, 1],
-#                                )
 # INSTRUCTIONS
 instructions = visual.TextStim(win=win, name='instructions',
-                               text="Press [i] if you see the probe moving inward, "
-                                    "and [o] if you see the probe moving outward \."
-                                    "\n\n[Space bar] to start",
-                               font='Arial', pos=[0, 0], height=0.1, wrapWidth=None,
+                               text="Press [i] if you see the probe moving inward,\n"
+                                    "Press [o] if you see the probe moving outward.\n"
+                                    "\n\nPress [Space bar] to start",
+                               font='Arial', pos=[0, 0], height=20, wrapWidth=None,
                                ori=0, color=[1, 1, 1], colorSpace='rgb',
                                opacity=1, languageStyle='LTR', depth=0.0)
 while not event.getKeys():
@@ -423,25 +344,14 @@ for stair_idx in expInfo['stair_list']:
     thisInfo = copy.copy(expInfo)
     thisInfo['stair_idx'] = stair_idx
 
-    # stair_name will be pos or neg sep value for congruence (e.g., 18, -18, 6, -6 etc)
-    # however, change -0 to -.1 to avoid confusion with 0.
-    # stair_name = separations[stair_idx] * congruence_list[stair_idx]
-    stair_name = f'{stair_idx}_fl{flow_directions[stair_idx]}_pr{probe_directions[stair_idx]}_con{congruence_list[stair_idx]}'
+    stair_name = \
+        f'{stair_idx}_fl{flow_directions[stair_idx]}_pr{probe_directions[stair_idx]}_con{congruence_list[stair_idx]}'
 
-    # if separations[stair_idx] + congruence_list[stair_idx] == -1:
-    #     stair_name = -.1
-
-    thisStair = Staircase(name=f'{stair_name}',
-                          type='simple',
-                          value=stairStart,
+    thisStair = Staircase(name=f'{stair_name}', type='simple', value=stairStart,
                           C=stairStart * 0.6,  # step_size, typically 60% of reference stimulus
-                          minRevs=3,
-                          minTrials=n_trials_per_stair,
-                          minVal=miniVal,
+                          minRevs=3, minTrials=n_trials_per_stair, minVal=miniVal,
                           # maxVal=maxiVal,
-                          targetThresh=0.75,
-                          extraInfo=thisInfo
-                          )
+                          targetThresh=0.75, extraInfo=thisInfo)
     stairs.append(thisStair)
 
 
@@ -459,22 +369,12 @@ for step in range(n_trials_per_stair):
         trialClock.reset()
 
         stair_idx = thisStair.extraInfo['stair_idx']
-        # sep = separations[stair_idx]
-        # congruence is balanced with separation values
         congruent = congruence_list[stair_idx]
-        # flow_dir = np.random.choice([1, -1])
         flow_dir = flow_directions[stair_idx]
-
-        # PROBE
-        # probeDir = np.random.choice([1, -1])  # direction in which the probe jumps : CW or CCW
-        # probeDir = congruent * flow_dir
         probeDir = probe_directions[stair_idx]
 
         probeSpeed = thisStair.next()
         probeSpeed = probeSpeed * probeDir
-
-        # probe and flow speed
-        radSpeed = -0.02
 
         contrastprobe = 0.5
         probeLum = contrastprobe
@@ -489,17 +389,6 @@ for step in range(n_trials_per_stair):
         y_flow = y / z
 
 
-        # Make variable for whether probeDir and flow dir are the same
-        # (e.g., both inward or both outward = 1, else -1)
-        trgt_flow_same = flow_dir*probeDir
-
-        # staircase varies probeLum
-        # probeLum = thisStair.next()
-        # probeColor255 = probeLum * LumColor255Factor
-        # probeColor1 = (probeColor255 * Color255Color1Factor) - 1
-        # probe1.color = [probeColor1, probeColor1, probeColor1]
-        # probe2.color = [probeColor1, probeColor1, probeColor1]
-
         # PROBE LOCATIONS
         # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
         corner = np.random.choice([45, 135, 225, 315])
@@ -510,7 +399,6 @@ for step in range(n_trials_per_stair):
         dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
         # x_prob = y_prob = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
 
-        # print(f'probeLum: {probeLum}, probeColor255: {probeColor255}, probeColor1: {probeColor1}')
         print(f'\tbgLum: {bgLum}, bgColor255: {bgColor255}, bgcolor: {bgcolor}')
         print(f'\t\twin.colorSpace: {win.colorSpace}\n')
         # actual_bg_color = bgcolor[0]
@@ -522,7 +410,24 @@ for step in range(n_trials_per_stair):
         # check_bg_back_to_255 = check_bgcol_rgb * LumColor255Factor
         # print(f'check_bg_back_to_255: {check_bg_back_to_255}')
 
+        # setting x and y positions depending on the side
+        # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
+        if corner == 45:
+            x_position = dist_from_fix
+            y_position = dist_from_fix
+        elif corner == 135:
+            x_position = -dist_from_fix
+            y_position = dist_from_fix
+        elif corner == 225:
+            x_position = -dist_from_fix
+            y_position = -dist_from_fix
+        elif corner == 315:
+            x_position = dist_from_fix
+            y_position = -dist_from_fix
 
+        # probe position reset
+        probe_x = 0
+        probe_y = 0
 
         # probe mask locations
         probeMask1.setPos([dist_from_fix+1, dist_from_fix+1])
@@ -530,127 +435,16 @@ for step in range(n_trials_per_stair):
         probeMask3.setPos([-dist_from_fix-1, -dist_from_fix-1])
         probeMask4.setPos([dist_from_fix+1, -dist_from_fix-1])
 
-        # todo: I'm this far with merging the scripts.  Need to look at probe motion.
-        #  Unfortunately, the flowParsing script is top, bottom, left, right rather than  4 diagonals.
-
-        # set probe ori
-        if corner == 45:
-            # in top-right corner, both x and y increase (right and up)
-            p1_x = dist_from_fix * 1
-            p1_y = dist_from_fix * 1
-            #  'orientation' here refers to the relationship between probes,
-            #  whereas probe1.ori refers to rotational angle of probe stimulus
-            if orientation == 'tangent':
-                if probeDir == 1:  # CCW
-                    probe1.ori = 0
-                    probe2.ori = 180
-                    # probe2 is left and up from probe1
-                    probe2.pos = [p1_x - sep + 1, p1_y + sep]
-                elif probeDir == -1:  # CW
-                    probe1.ori = 180
-                    probe2.ori = 0
-                    # probe2 is right and down from probe1
-                    probe2.pos = [p1_x + sep - 1, p1_y - sep]
-            elif orientation == 'radial':
-                if probeDir == 1:  # inward
-                    probe1.ori = 270
-                    probe2.ori = 90
-                    # probe2 is left and down from probe1
-                    probe2.pos = [p1_x - sep + 1, p1_y - sep]
-                elif probeDir == -1:  # outward
-                    probe1.ori = 90
-                    probe2.ori = 270
-                    # probe2 is right and up from probe1
-                    probe2.pos = [p1_x + sep - 1, p1_y + sep]
-        elif corner == 135:
-            # in top-left corner, x decreases (left) and y increases (up)
-            p1_x = dist_from_fix * -1
-            p1_y = dist_from_fix * 1
-            if orientation == 'tangent':
-                if probeDir == 1:  # CCW
-                    probe1.ori = 90
-                    probe2.ori = 270
-                    # probe2 is right and up from probe1
-                    probe2.pos = [p1_x + sep - 1, p1_y + sep]
-                elif probeDir == -1:  # CW
-                    probe1.ori = 270
-                    probe2.ori = 90
-                    # probe2 is left and down from probe1
-                    probe2.pos = [p1_x - sep + 1, p1_y - sep]
-            elif orientation == 'radial':
-                if probeDir == 1:  # inward
-                    probe1.ori = 180
-                    probe2.ori = 0
-                    # probe2 is right and down from probe1
-                    probe2.pos = [p1_x + sep - 1, p1_y - sep]
-                elif probeDir == -1:  # outward
-                    probe1.ori = 0
-                    probe2.ori = 180
-                    # probe2 is left and up from probe1
-                    probe2.pos = [p1_x - sep + 1, p1_y + sep]
-        elif corner == 225:
-            # in bottom left corner, both x and y decrease (left and down)
-            p1_x = dist_from_fix * -1
-            p1_y = dist_from_fix * -1
-            if orientation == 'tangent':
-                if probeDir == 1:  # CCW
-                    probe1.ori = 180
-                    probe2.ori = 0
-                    probe2.pos = [p1_x + sep - 1, p1_y - sep]
-                elif probeDir == -1:  # CW
-                    probe1.ori = 0
-                    probe2.ori = 180
-                    probe2.pos = [p1_x - sep + 1, p1_y + sep]
-            elif orientation == 'radial':
-                if probeDir == 1:  # inward
-                    probe1.ori = 90
-                    probe2.ori = 270
-                    # probe2 is right and up from probe1
-                    probe2.pos = [p1_x + sep - 1, p1_y + sep]
-                elif probeDir == -1:  # outward
-                    probe1.ori = 270
-                    probe2.ori = 90
-                    # probe2 is left and down from probe1
-                    probe2.pos = [p1_x - sep + 1, p1_y - sep]
-        else:
-            corner = 315
-            # in bottom-right corner, x increases (right) and y decreases (down)
-            p1_x = dist_from_fix * 1
-            p1_y = dist_from_fix * -1
-            if orientation == 'tangent':
-                if probeDir == 1:  # CCW
-                    probe1.ori = 270
-                    probe2.ori = 90
-                    probe2.pos = [p1_x - sep + 1, p1_y - sep]
-                elif probeDir == -1:  # CW
-                    probe1.ori = 90
-                    probe2.ori = 270
-                    probe2.pos = [p1_x + sep - 1, p1_y + sep]
-            elif orientation == 'radial':
-                if probeDir == 1:  # inward
-                    probe1.ori = 0
-                    probe2.ori = 180
-                    # probe2 is left and up from probe1
-                    probe2.pos = [p1_x - sep + 1, p1_y + sep]
-                elif probeDir == -1:  # outward
-                    probe1.ori = 180
-                    probe2.ori = 0
-                    # probe2 is right and down from probe1
-                    probe2.pos = [p1_x + sep - 1, p1_y - sep]
-
-        probe1.pos = [p1_x, p1_y]
-
 
         # timing in frames
         # fixation time is now 70ms shorted than previously.
         t_fixation = 1 * (fps - prelim_bg_flow_fr)  # 240 frames - 70ms for fixation, e.g., <1 second.
         t_bg_motion = t_fixation + prelim_bg_flow_fr  # bg_motion prior to probe for 70ms
         t_interval_1 = t_bg_motion + probe_duration  # probes appear during probe_duration (e.g., 240ms, 1 second).
-        # t_ISI = t_interval_1 + ISI
-        # t_interval_2 = t_ISI + probe_duration
-        # essentially unlimited time to respond
-        # t_response = t_interval_2 + 10000 * fps
         t_response = t_interval_1 + 10000 * fps
+
+        # count frames
+        nb_frames_motion = 0
 
         # repeat the trial if [r] has been pressed
         repeat = True
@@ -735,55 +529,29 @@ for step in range(n_trials_per_stair):
 
                     fixation.setRadius(3)
                     fixation.draw()
-                    probe1.draw()
+                    # probe1.draw()
+                    # probe.draw()
                     trials_counter.draw()
 
 
-                # # ISI
-                # if t_ISI >= frameN > t_interval_1:
-                #     if background == 'flow_rad':
-                #         # radial flow_dots motion
-                #         z = z + flow_speed * flow_dir
-                #         WrapPoints(z, minDist, maxDist)
-                #         x_flow = x / z
-                #         y_flow = y / z
-                #
-                #         flow_dots.xys = np.array([x_flow, y_flow]).transpose()
-                #         flow_dots.draw()
-                #
-                #         probeMask1.draw()
-                #         probeMask2.draw()
-                #         probeMask3.draw()
-                #         probeMask4.draw()
-                #         dotsMask.draw()
-                #
-                #     fixation.setRadius(3)
-                #     fixation.draw()
-                #     trials_counter.draw()
-                #
-                # # PROBE 2
-                # if t_interval_2 >= frameN > t_ISI:
-                #     # after ISI but before end of probe2 interval
-                #     if background == 'flow_rad':
-                #         # radial flow_dots motion
-                #         z = z + flow_speed * flow_dir
-                #         WrapPoints(z, minDist, maxDist)
-                #         x_flow = x / z
-                #         y_flow = y / z
-                #
-                #         flow_dots.xys = np.array([x_flow, y_flow]).transpose()
-                #         flow_dots.draw()
-                #
-                #         probeMask1.draw()
-                #         probeMask2.draw()
-                #         probeMask3.draw()
-                #         probeMask4.draw()
-                #         dotsMask.draw()
-                #
-                #     fixation.setRadius(3)
-                #     fixation.draw()
-                #     probe2.draw()
-                #     trials_counter.draw()
+                    # draw probe if 1st interval
+                    if corner == 45:  # top-right
+                        probe_y = probe_y - probeSpeed
+                        probe_x = probe_x - probeSpeed
+                    elif corner == 135:  # top-left
+                        probe_y = probe_y - probeSpeed
+                        probe_x = probe_x + probeSpeed
+                    elif corner == 225:  # botom-left
+                        probe_y = probe_y + probeSpeed
+                        probe_x = probe_x + probeSpeed
+                    elif corner == 315:  # bottom-right
+                        probe_y = probe_y + probeSpeed
+                        probe_x = probe_x - probeSpeed
+                    probe.setPos([x_position + probe_x, y_position + probe_y])
+                    probe.draw()
+
+                    nb_frames_motion = nb_frames_motion + 1
+
 
                 # ANSWER
                 # if frameN > t_interval_2:
@@ -806,8 +574,6 @@ for step in range(n_trials_per_stair):
                     # ANSWER
                     # todo: check if there is a better way to get key responses and RTs
                     resp = event.BuilderKeyResponse()
-                    # theseKeys = event.getKeys(keyList=['num_5', 'num_4', 'num_1',
-                    #                                    'num_2', 'w', 'q', 'a', 's'])
                     theseKeys = event.getKeys(keyList=['i', 'o'])
                     if len(theseKeys) > 0:  # at least one key was pressed
                         resp.keys = theseKeys[-1]  # just the last key pressed
@@ -816,18 +582,6 @@ for step in range(n_trials_per_stair):
                         # default assume response incorrect unless meets criteria below
                         resp.corr = 0
 
-                        # if corner == 45:
-                        #     if (resp.keys == 'w') or (resp.keys == 'num_5'):
-                        #         resp.corr = 1
-                        # elif corner == 135:
-                        #     if (resp.keys == 'q') or (resp.keys == 'num_4'):
-                        #         resp.corr = 1
-                        # elif corner == 225:
-                        #     if (resp.keys == 'a') or (resp.keys == 'num_1'):
-                        #         resp.corr = 1
-                        # elif corner == 315:
-                        #     if (resp.keys == 's') or (resp.keys == 'num_2'):
-                        #         resp.corr = 1
                         if probeDir == 1:
                             if (resp.keys == str('i')) or (resp.keys == 'i'):
                                 resp.corr = 1
@@ -835,8 +589,6 @@ for step in range(n_trials_per_stair):
                             else:
                                 resp.corr = 0
                                 answer = 'o'
-                            # a response ends the routine
-                            continueRoutine = False
                         elif probeDir == -1:
                             if (resp.keys == str('i')) or (resp.keys == 'i'):
                                 resp.corr = 0
@@ -845,6 +597,7 @@ for step in range(n_trials_per_stair):
                                 resp.corr = 1
                                 answer = 'o'
                         repeat = False
+                        # a response ends the routine
                         continueRoutine = False
 
                 # regardless of frameN
@@ -868,27 +621,17 @@ for step in range(n_trials_per_stair):
         thisExp.addData('stair', stair_idx)
         thisExp.addData('stair_name', thisStair)
         thisExp.addData('step', step)
-        # thisExp.addData('separation', sep)
-        thisExp.addData('congruent', congruent)
+        thisExp.addData('probeLum', probeLum)
+        thisExp.addData('corner', corner)
+        thisExp.addData('probe_duration', probe_duration)
         thisExp.addData('flow_dir', flow_dir)
         thisExp.addData('probe_jump', probeDir)
-        thisExp.addData('corner', corner)
-        thisExp.addData('probeLum', probeLum)
+        thisExp.addData('congruent', congruent)
         thisExp.addData('trial_response', resp.corr)
+        thisExp.addData('probeSpeed', probeSpeed)
         thisExp.addData('resp.rt', resp.rt)
-        # thisExp.addData('probeColor1', probeColor1)
-        # thisExp.addData('probeColor255', probeColor255)
-        thisExp.addData('probe_ecc', probe_ecc)
         thisExp.addData('BGspeed', flow_speed)
-        # thisExp.addData('orientation', orientation)
-        # thisExp.addData('ISI_actual_ms', ISI_actual_ms)
-        # thisExp.addData('ISI_frames', ISI_frames)
-        thisExp.addData('actual_bg_color', actual_bg_color)
-        thisExp.addData('bgcolor_to_rgb1', bgcolor_to_rgb1)
-        thisExp.addData('bgLumP', bgLumP)
         thisExp.addData('bgLum', bgLum)
-        thisExp.addData('bgColor255', bgColor255)
-        thisExp.addData('weber_thr', (probeLum-bgLum)/probeLum)
         thisExp.addData('expName', expName)
 
         thisExp.nextEntry()

@@ -41,8 +41,8 @@ expName = 'FlowParsing'  # from the Builder filename that created this script
 expInfo = {'1. participant': 'Nick_test',
            '2. Repetitions': '20',
            '3. Areas(2 or 4)': '4',
-           '4. Stim duration in frames':['18', '3', '6', '12', '18', '24', '30', '36'],
-           '5. Surrounding motion': ['jitter', 'static'],
+           '4. Stim duration in frames':['18', '3', '6', '12', '18', '24', '30', '36', '120'],
+           '5. Surrounding motion': ['static', 'jitter'],
            '6. Dots life in frames': '100'}
 
 # GUI

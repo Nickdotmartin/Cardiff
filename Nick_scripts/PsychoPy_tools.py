@@ -111,8 +111,6 @@ def get_pixel_mm_deg_values(monitor_name='ASUS_2_13_240Hz', n_pixels=1):
     :param monitor_name: default='Asus_VG24', monitor in lab 2.13.
             str - should match saved file in psychopy's monitor centre.
     :param n_pixels: default = 1.
-    :param use_diagonal: default True.  if False, uses monitor centre (horizontal) pixel size.
-        If True, calculates length of diagonal assuming pixel is square (It probably isn;t).
     """
 
     # # this_monitor = monitors.Monitor('NickMac')
@@ -158,5 +156,5 @@ def get_pixel_mm_deg_values(monitor_name='ASUS_2_13_240Hz', n_pixels=1):
 
 # monitor_name = 'Asus_VG24'
 
-# get_pixel_mm_deg_values(use_diagonal=False)
+# get_pixel_mm_deg_values()
 

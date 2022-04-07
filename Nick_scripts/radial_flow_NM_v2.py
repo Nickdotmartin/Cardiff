@@ -210,7 +210,7 @@ try:
                           actual_fps=win.getActualFrameRate(),
                           verbose=True)
     print('\nsize of a single pixel at 57cm')
-    get_pixel_mm_deg_values(monitor_name=monitor_name, use_diagonal=False)
+    get_pixel_mm_deg_values(monitor_name=monitor_name)
     print('Monitor setting all correct')
 except ValueError:
     print("Value error when running check_correct_monitor()")
