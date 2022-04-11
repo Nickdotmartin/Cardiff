@@ -52,22 +52,31 @@ def switch_path(orig_path, change_to):
         old_prefix = wind_oneD_path
     else:
         raise TypeError(f'orig_path not recognised: {orig_path}')
-
     print(f"old_prefix: {old_prefix}")
+
+    # keep suffix, and set as OLD filepath type
     characters_to_snip = len(old_prefix) + 1
     suffix_to_keep = orig_path[characters_to_snip:]
+    if old_prefix in [mac_path, mac_oneD_path]:
+        suffix_to_keep = pathlib.PurePosixPath(suffix_to_keep)
+    else:
+        suffix_to_keep = pathlib.PureWindowsPath(suffix_to_keep)
     print(f"suffix_to_keep: {suffix_to_keep}")
+
 
     # orig_path to change_to
     if change_to.lower() in ['mac', 'mac_path']:
-        new_prefix = mac_path
+        new_prefix = pathlib.PurePosixPath(mac_path)
         print(f"new_prefix ({change_to.lower()}): {new_prefix}")
         suffix_to_keep = pathlib.Path(suffix_to_keep).as_posix()
+        print(f"suffix_to_keep: {suffix_to_keep}")
+        # suffix_to_keep = pathlib.PurePosixPath(suffix_to_keep)
+        # print(f"suffix_to_keep: {suffix_to_keep}")
         join_paths = f'{new_prefix}/{suffix_to_keep}'
         new_path = pathlib.PurePosixPath(join_paths)
 
     elif change_to.lower() in ['mac_oned', 'mac_oned_path', 'mac_onedrive', 'mac_one_drive', 'mac_one_d']:
-        new_prefix = mac_oneD_path
+        new_prefix = pathlib.PurePosixPath(mac_oneD_path)
         print(f"new_prefix ({change_to.lower()}): {new_prefix}")
         suffix_to_keep = pathlib.Path(suffix_to_keep).as_posix()
         join_paths = f'{new_prefix}/{suffix_to_keep}'
