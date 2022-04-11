@@ -132,6 +132,7 @@ bgLum = maxLum * bgLumP / 100
 
 #  rgb: -0.1 = rgb1: .45 = rgb255: 114.75 = lum: 47.8
 flow_bgcolor = [-0.1, -0.1, -0.1]
+# flow_bgcolor = [-0.6, -0.6, -0.6]  # these values would be equivalent to exp1a if used with colorSpace='rgb'
 # flow_bgcolor = [bgColor255, bgColor255, bgColor255]  # these values would be equivalent to exp1a if used with colorSpace='rgb255'
 
 if background == 'flow_rad':
@@ -143,6 +144,7 @@ else:
     bgcolor = flow_bgcolor
 
 # get ACTUAL bgcolor details
+# todo: are these values corrrect?
 actual_bg_color = bgcolor[0]
 print(f'actual_bg_color: {actual_bg_color}')
 bgcolor_to_rgb255 = (actual_bg_color + 1) * 127.5

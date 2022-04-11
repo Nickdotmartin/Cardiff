@@ -135,7 +135,8 @@ minLum = 0.12  # 0 RGB
 
 #  rgb: -0.1 = rgb1: .45 = rgb255: 114.75 = lum: 47.8
 flow_bgcolor = [-0.1, -0.1, -0.1]  # dark grey
-# flow_bgcolor = [-0.6, -0.6, -0.6]  # these values would be equivalent to exp1a
+# flow_bgcolor = [-0.6, -0.6, -0.6]  # these values would be equivalent to exp1a if used with colorSpace='rgb'
+# flow_bgcolor = [bgColor255, bgColor255, bgColor255]  # these values would be equivalent to exp1a if used with colorSpace='rgb255'
 
 if background == 'flow_rad':
     # background colour: use darker grey.  set once here and use elsewhere

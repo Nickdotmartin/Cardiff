@@ -161,6 +161,8 @@ if background == 'flow_rad':
     bgcolor = flow_bgcolor
 else:
     bgcolor = bgColor255
+    # bgcolor = 114.75  # equivellent to rad_flow if used with colorSpace='rgb255'
+    # bgcolor = flow_bgcolor  # equivellent to rad_flow if used with colorSpace='rgb'
 
 print(f"bgLum: {bgLum}, bgColor255: {bgColor255}, bgcolor: {bgcolor}")
 
