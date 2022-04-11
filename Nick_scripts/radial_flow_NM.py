@@ -132,14 +132,14 @@ bgLum = maxLum * bgLumP / 100
 
 #  rgb: -0.1 = rgb1: .45 = rgb255: 114.75 = lum: 47.8
 flow_bgcolor = [-0.1, -0.1, -0.1]
-# flow_bgcolor = [-0.6, -0.6, -0.6]  # these values would be equivalent to exp1a
+# flow_bgcolor = [bgColor255, bgColor255, bgColor255]  # these values would be equivalent to exp1a if used with colorSpace='rgb255'
 
 if background == 'flow_rad':
     # background colour: use darker grey.  set once here and use elsewhere
     bgcolor = flow_bgcolor
 else:
     # bgColor255 = bgLum * LumColor255Factor
-    # bgcolor = bgColor255
+    # bgcolor = [bgColor255, bgColor255, bgColor255]
     bgcolor = flow_bgcolor
 
 # get ACTUAL bgcolor details
@@ -158,7 +158,11 @@ print(f'bgLumP: {bgLumP}')
 bgLum = bgcolor_to_lum
 print(f'bgLum: {bgLum}')
 bgColor255 = bgcolor_to_rgb255
+# bgColor255 = bgLum * LumColor255Factor
 print(f'bgColor255: {bgColor255}')
+
+print(f"bgLum: {bgLum}, bgColor255: {bgColor255}, bgcolor: {bgcolor}")
+
 
 # MONITOR SPEC
 thisMon = monitors.Monitor(monitor_name)
@@ -190,6 +194,7 @@ mon.save()
 # WINDOW SPEC
 win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     colorSpace='rgb',
+                    # colorSpace='rgb255',
                     color=bgcolor,  # bgcolor from Martin's flow script, not bgColor255
                     winType='pyglet',  # I've added pyglet to make it work on pycharm/mac
                     pos=[1, -1],  # pos gives position of top-left of screen
@@ -263,7 +268,7 @@ probeMask4 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
 # flow_dots
 if bg_speed_cond is 'Normal':
     flow_speed = 0.2
-if bg_speed_cond is 'Half-speed':
+elif bg_speed_cond is 'Half-speed':
     flow_speed = 0.1
 else:
     raise ValueError(f'background speed should be selected from drop down menu: Normal or Half-speed')
@@ -443,6 +448,11 @@ for step in range(n_trials_per_stair):
         corner = np.random.choice([45, 135, 225, 315])
 
         print(f'\tcorner: {corner}, flow_dir: {flow_dir}, target_jump: {target_jump}')
+
+        print(f'probeLum: {probeLum}, probeColor255: {probeColor255}, probeColor1: {probeColor1}')
+        print(f'\tbgLum: {bgLum}, bgColor255: {bgColor255}, bgcolor: {bgcolor}')
+        print(f'\t\twin.colorSpace: {win.colorSpace}\n')
+
         # dist_from_fix is a constant giving distance form fixation,
         # dist_from_fix was previously 2 identical variables x_prob & y_prob.
         dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))

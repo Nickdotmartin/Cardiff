@@ -141,6 +141,12 @@ if background == 'flow_rad':
     bgcolor = flow_bgcolor
 else:
     bgcolor = bgColor255
+    # bgcolor = flow_bgcolor  # equivellent to rad_flow if used with colorSpace='rgb'
+
+
+
+
+print(f"bgLum: {bgLum}, bgColor255: {bgColor255}, bgcolor: {bgcolor}")
 
 
 # MONITOR SPEC
@@ -172,7 +178,6 @@ mon.save()
 # WINDOW SPEC
 win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     # colorSpace='rgb',
-                    # color=bgcolor,  # bgcolor from Martin's flow script, not bgColor255
                     colorSpace='rgb255',
                     color=bgcolor,  # bgcolor from Martin's flow script, not bgColor255
                     winType='pyglet',  # I've added pyglet to make it work on pycharm/mac
@@ -520,12 +525,9 @@ for step in range(n_trials_per_stair):
 
         weber_lum = (probeLum-bgLum)/probeLum
 
-        print(f'\t\tprobeLum: {probeLum}, bgLum: {bgLum}, weber_lum: {weber_lum}\n')
-
-        print(f'probeLum: {probeLum}, probeColor255: {probeColor255}, probeColor1: {probeColor1}\n')
-
-        print(f'\tbgLum: {bgLum}, bgColor255: {bgColor255}, bgcolor: {bgcolor}\n')
-        print(f'\t\twin.colorSpace: {win.colorSpace}, bgColor255: {bgColor255}, bgcolor: {bgcolor}\n')
+        print(f'\t\tprobeLum: {probeLum}, bgLum: {bgLum}, weber_lum: {weber_lum}')
+        print(f'\t\t\tprobeColor255: {probeColor255}, probeColor1: {probeColor1}')
+        print(f'\t\t\t\twin.colorSpace: {win.colorSpace}, bgColor255: {bgColor255}, bgcolor: {bgcolor}\n')
 
 
         # dist_from_fix is a constant giving distance form fixation,

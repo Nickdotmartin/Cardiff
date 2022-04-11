@@ -162,6 +162,8 @@ if background == 'flow_rad':
 else:
     bgcolor = bgColor255
 
+print(f"bgLum: {bgLum}, bgColor255: {bgColor255}, bgcolor: {bgcolor}")
+
 
 # MONITOR SPEC
 thisMon = monitors.Monitor(monitor_name)
@@ -192,8 +194,8 @@ mon.save()
 # WINDOW SPEC
 win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     # colorSpace='rgb',
-                    # color=bgcolor,  # bgcolor from Martin's flow script, not bgColor255
                     colorSpace='rgb255',
+                    # color=bgcolor,  # bgcolor from Martin's flow script, not bgColor255
                     color=bgcolor,  # bgcolor from Martin's flow script, not bgColor255
                     winType='pyglet',  # I've added pyglet to make it work on pycharm/mac
                     pos=[1, -1],  # pos gives position of top-left of screen

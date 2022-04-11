@@ -162,6 +162,9 @@ print(f'bgLum: {bgLum}')
 bgColor255 = bgcolor_to_rgb255
 print(f'bgColor255: {bgColor255}')
 
+print(f"bgLum: {bgLum}, bgColor255: {bgColor255}, bgcolor: {bgcolor}")
+
+
 
 # MONITOR SPEC
 thisMon = monitors.Monitor(monitor_name)
@@ -267,7 +270,7 @@ probeMask4 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
 # flow_dots
 if bg_speed_cond is 'Normal':
     flow_speed = 0.2
-if bg_speed_cond is 'Half-speed':
+elif bg_speed_cond is 'Half-speed':
     flow_speed = 0.1
 else:
     raise ValueError(f'background speed should be selected from drop down menu: Normal or Half-speed')
