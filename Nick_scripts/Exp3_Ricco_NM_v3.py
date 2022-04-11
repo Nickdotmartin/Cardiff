@@ -62,7 +62,7 @@ orientation = 'tangent'
 # Probe_size = expInfo['6_Probe_size']
 trials_counter = expInfo['7_Trials_counter']
 background = expInfo['8_Background']
-if background is 'flow_rad':
+if background == 'flow_rad':
     orientation = 'radial'
 
 # VARIABLES

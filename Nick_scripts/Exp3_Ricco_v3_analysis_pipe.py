@@ -15,6 +15,10 @@ from psignifit_tools import get_psignifit_threshold_df
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
 exp_path = '/Users/nickmartin/Library/CloudStorage/OneDrive-CardiffUniversity/PycharmProjects/Cardiff/Exp3_Ricco_NM_v3'
+# exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\Cardiff_data\Exp3_Ricco_NM_v3'
+convert_path1 = os.path.normpath(exp_path)
+print(f"convert_path1: {convert_path1}")
+exp_path = convert_path1
 participant_list = ['Nick_60hz_2ms_dur_test']  # 'Nick''Nick_120ms_dur', 'bb', 'cc', 'dd', 'ee']
 n_runs = 1
 
