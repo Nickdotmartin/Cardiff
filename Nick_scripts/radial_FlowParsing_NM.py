@@ -84,16 +84,11 @@ probe_directions = [1, -1, 1, -1]
 congruence_list = [1, -1, -1, 1]
 
 # FILENAME
-# filename = f'{_thisDir}{os.sep}' \
-#            f'{expName}{os.sep}' \
-#            f'{participant_name}{os.sep}' \
-#            f'ISI_{ISI}_probeDur{probe_duration}{os.sep}' \
-#            f'{participant_name}'
 filename = f'{_thisDir}{os.sep}' \
            f'{expName}{os.sep}' \
-           f'probeDur{probe_duration}{os.sep}' \
            f'{participant_name}{os.sep}' \
-           f'{participant_name}'
+           f'probeDur{probe_duration}{os.sep}' \
+           f'{participant_name}_output'
 
 
 # Experiment Handler
@@ -309,7 +304,7 @@ if trials_counter:
 
 # BREAKS
 total_n_trials = int(n_trials_per_stair * n_stairs)
-take_break = int(total_n_trials/3)
+take_break = int(total_n_trials/3)+1
 print(f"take_break every {take_break} trials.")
 breaks = visual.TextStim(win=win, name='breaks',
                          text="turn on the light and take at least 30-seconds break.\n\n"
