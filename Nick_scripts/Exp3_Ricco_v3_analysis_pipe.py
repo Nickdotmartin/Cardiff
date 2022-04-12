@@ -14,8 +14,8 @@ from psignifit_tools import get_psignifit_threshold_df
 
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
-exp_path = '/Users/nickmartin/Library/CloudStorage/OneDrive-CardiffUniversity/PycharmProjects/Cardiff/Exp3_Ricco_NM_v3'
-# exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\Cardiff_data\Exp3_Ricco_NM_v3'
+# exp_path = '/Users/nickmartin/Library/CloudStorage/OneDrive-CardiffUniversity/PycharmProjects/Cardiff/Exp3_Ricco_NM_v3'
+exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects/Cardiff/Exp3_Ricco_NM_v3'
 convert_path1 = os.path.normpath(exp_path)
 print(f"convert_path1: {convert_path1}")
 exp_path = convert_path1
@@ -25,7 +25,8 @@ n_runs = 1
 p_idx_plus = 1
 
 for p_idx, participant_name in enumerate(participant_list):
-    root_path = f'{exp_path}/{participant_name}'
+    # root_path = f'{exp_path}/{participant_name}'
+    root_path = os.path.join(exp_path, participant_name)
 
     run_folder_names = [f'{participant_name}_{i+1}' for i in list(range(n_runs))]
     print(f'run_folder_names: {run_folder_names}')
@@ -209,15 +210,15 @@ for p_idx, participant_name in enumerate(participant_list):
     #                       trim_n=trim_n, error_type='SE')
 
     # # making average plot
-    # all_df_path = f'{root_path}/MASTER_TM1_thresholds.csv'
-    # p_ave_path = f'{root_path}/MASTER_ave_TM_thresh.csv'
-    # err_path = f'{root_path}/MASTER_ave_TM_thr_error_SE.csv'
+    # all_df_path = os.path.join(root_path, 'MASTER_TM1_thresholds.csv')
+    # p_ave_path = os.path.join(root_path, 'MASTER_ave_TM_thresh.csv')
+    # err_path = os.path.join(root_path, 'MASTER_ave_TM_thr_error_SE.csv')
     # n_trimmed = trim_n
     # if n_trimmed is None:
-    #     all_df_path = f'{root_path}/MASTER_psignifit_thresholds.csv'
-    #     p_ave_path = f'{root_path}/MASTER_ave_thresh.csv'
-    #     err_path = f'{root_path}/MASTER_ave_thr_error_SE.csv'
-    #
+    #     all_df_path = os.path.join(root_path, 'MASTER_psignifit_thresholds.csv')
+    #     p_ave_path = os.path.join(root_path, 'MASTER_ave_thresh.csv')
+    #     err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
+
     # exp_ave = False
     #
     #
@@ -303,9 +304,9 @@ for p_idx, participant_name in enumerate(participant_list):
 #                    error_type='SE', use_trimmed=True, verbose=True)
 #
 #
-# all_df_path = f'{exp_path}/MASTER_exp_thr.csv'
-# exp_ave_path = f'{exp_path}/MASTER_exp_ave_thr.csv'
-# err_path = f'{exp_path}/MASTER_ave_thr_error_SE.csv'
+# all_df_path = os.path.join(exp_path, 'MASTER_exp_thr.csv')
+# exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
+# err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
 # n_trimmed = None
 # exp_ave = True
 #

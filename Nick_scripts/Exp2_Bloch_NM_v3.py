@@ -27,7 +27,7 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'ASUS_2_13_240Hz'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz'
+monitor_name = 'Asus_VG24'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18'
 display_number = 1  # 0 indexed, 1 for external display
 
 # Store info about the experiment session
@@ -154,17 +154,17 @@ bgLumP = 20
 bgLum = maxLum * bgLumP / 100  # bgLum is 20% of max lum == 21.2
 # NEW using bgColor255 now, not just bgLum.
 bgColor255 = bgLum * LumColor255Factor
-flow_bgcolor = [-0.1, -0.1, -0.1]  # darkgrey
+# flow_bgcolor = [-0.1, -0.1, -0.1]  # darkgrey
+#
+# if background == 'flow_rad':
+#     background colour: use darker grey.  set once here and use elsewhere
+    # bgcolor = flow_bgcolor
+# else:
+# bgcolor = bgColor255
+# bgcolor = 114.75  # equivellent to rad_flow if used with colorSpace='rgb255'
+# bgcolor = flow_bgcolor  # equivellent to rad_flow if used with colorSpace='rgb'
 
-if background == 'flow_rad':
-    # background colour: use darker grey.  set once here and use elsewhere
-    bgcolor = flow_bgcolor
-else:
-    bgcolor = bgColor255
-    # bgcolor = 114.75  # equivellent to rad_flow if used with colorSpace='rgb255'
-    # bgcolor = flow_bgcolor  # equivellent to rad_flow if used with colorSpace='rgb'
-
-print(f"bgLum: {bgLum}, bgColor255: {bgColor255}, bgcolor: {bgcolor}")
+print(f"bgLum: {bgLum}, bgColor255: {bgColor255}")
 
 
 # MONITOR SPEC
@@ -196,9 +196,9 @@ mon.save()
 # WINDOW SPEC
 win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     # colorSpace='rgb',
-                    colorSpace='rgb255',
                     # color=bgcolor,  # bgcolor from Martin's flow script, not bgColor255
-                    color=bgcolor,  # bgcolor from Martin's flow script, not bgColor255
+                    colorSpace='rgb255',
+                    color=bgColor255,
                     winType='pyglet',  # I've added pyglet to make it work on pycharm/mac
                     pos=[1, -1],  # pos gives position of top-left of screen
                     units='pix',
@@ -227,10 +227,10 @@ trialClock = core.Clock()
 
 # ELEMENTS
 # fixation bull eye
-if background == 'flow_rad':
-    fixation = visual.Circle(win, radius=2, units='pix', lineColor='black', fillColor='black')
-else:
-    fixation = visual.Circle(win, radius=2, units='pix', lineColor='white', fillColor='black')
+# if background == 'flow_rad':
+#     fixation = visual.Circle(win, radius=2, units='pix', lineColor='black', fillColor='black')
+# else:
+fixation = visual.Circle(win, radius=2, units='pix', lineColor='white', fillColor='black')
 
 
 # PROBEs
@@ -258,24 +258,24 @@ raisedCosTexture1 = visual.filters.makeMask(256, shape='raisedCosine',
                                             fringeWidth=0.3, radius=[1.0, 1.0])
 mask_size = 150
 probeMask1 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
-                                size=(mask_size, mask_size), units='pix', color=bgcolor)
+                                size=(mask_size, mask_size), units='pix', color=bgColor255)
 probeMask2 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
-                                size=(mask_size, mask_size), units='pix', color=bgcolor)
+                                size=(mask_size, mask_size), units='pix', color=bgColor255)
 probeMask3 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
-                                size=(mask_size, mask_size), units='pix', color=bgcolor)
+                                size=(mask_size, mask_size), units='pix', color=bgColor255)
 probeMask4 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
-                                size=(mask_size, mask_size), units='pix', color=bgcolor)
+                                size=(mask_size, mask_size), units='pix', color=bgColor255)
 
 
 # BACKGROUND
-# flow_dots
-flow_speed = 0.2
-nDots = 10000
-flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
-                                    units='pix', nElements=nDots, sizes=10,
-                                    colors=[flow_bgcolor[0]-0.3,
-                                            flow_bgcolor[1],
-                                            flow_bgcolor[2]-0.3])
+# # flow_dots
+# flow_speed = 0.2
+# nDots = 10000
+# flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
+#                                     units='pix', nElements=nDots, sizes=10,
+#                                     colors=[flow_bgcolor[0]-0.3,
+#                                             flow_bgcolor[1],
+#                                             flow_bgcolor[2]-0.3])
 
 """full screen mask to blend off edges and fade to black
 Create a raisedCosine mask array and assign it to a Grating stimulus (grey outside, transparent inside)
@@ -290,19 +290,19 @@ dotsMask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
 # changed dotsmask color from grey
 # above fades to black round edges which makes screen edges less visible
 
-"""function for wrapping flow_dots back into volume
-its is used as WrapPoints(z, minDist, maxDist)
-Any dots with a z (depth) value out of bounds are transformed to be in bounds"""
-def WrapPoints(ii, imin, imax):
-    lessthanmin = (ii < imin)
-    ii[lessthanmin] = ii[lessthanmin] + (imax-imin)
-    morethanmax = (ii > imax)
-    ii[morethanmax] = ii[morethanmax] - (imax-imin)
-
-
-taille = 5000  # french for 'size', 'cut', 'trim', 'clip' etc
-minDist = 0.5
-maxDist = 5
+# """function for wrapping flow_dots back into volume
+# its is used as WrapPoints(z, minDist, maxDist)
+# Any dots with a z (depth) value out of bounds are transformed to be in bounds"""
+# def WrapPoints(ii, imin, imax):
+#     lessthanmin = (ii < imin)
+#     ii[lessthanmin] = ii[lessthanmin] + (imax-imin)
+#     morethanmax = (ii > imax)
+#     ii[morethanmax] = ii[morethanmax] - (imax-imin)
+#
+#
+# taille = 5000  # french for 'size', 'cut', 'trim', 'clip' etc
+# minDist = 0.5
+# maxDist = 5
 
 
 # MOUSE - Hide cursor
@@ -323,7 +323,8 @@ instructions = visual.TextStim(win=win, name='instructions',
                                     "Press any key to start.",
                                font='Arial', height=20,
                                # colorSpace='rgb',
-                               color=[1, 1, 1],
+                               # color=[1, 1, 1],
+                               color='white'
                                )
 while not event.getKeys():
     fixation.setRadius(3)
@@ -335,12 +336,14 @@ while not event.getKeys():
 trials_counter = visual.TextStim(win=win, name='trials_counter', text="???",
                                  font='Arial', height=20,
                                  # default set to black (e.g., invisible)
-                                 color=[-1.0, -1.0, -1.0],
+                                 # color=[-1.0, -1.0, -1.0],
+                                 color='black',
                                  pos=[-widthPix*.45, -heightPix*.45]
                                  )
 if trials_counter:
     # if trials counter yes, change colour to white.
-    trials_counter.color = [1, 1, 1]
+    # trials_counter.color = [1, 1, 1]
+    trials_counter.color = 'white'
 
 # BREAKS
 total_n_trials = int(n_trials_per_stair * n_stairs)
@@ -351,7 +354,8 @@ breaks = visual.TextStim(win=win, name='breaks',
                               "When you are ready to continue, press any key.",
                          font='Arial', height=20,
                          # colorSpace='rgb',
-                         color=[1, 1, 1])
+                         # color=[1, 1, 1],
+                         color='white')
 
 end_of_exp = visual.TextStim(win=win, name='end_of_exp',
                              text="You have completed this experiment.\n"
@@ -387,9 +391,9 @@ for stair_idx in expInfo['stair_list']:
     """
     # stair_name = isi_vals_list[stair_idx]
     stair_name = stair_names_list[stair_idx]
-    if background == 'flow_rad':
-        # stair_name = isi_vals_list[stair_idx] * flow_dir_list[stair_idx]
-        stair_name = stair_names_list[stair_idx] * flow_dir_list[stair_idx]
+    # if background == 'flow_rad':
+    #     # stair_name = isi_vals_list[stair_idx] * flow_dir_list[stair_idx]
+    #     stair_name = stair_names_list[stair_idx] * flow_dir_list[stair_idx]
 
     thisStair = Staircase(name=f'{stair_name}',
                           type='simple',
@@ -446,13 +450,13 @@ for step in range(n_trials_per_stair):
         target_jump = flow_dir
 
 
-        # flow_dots
-        x = np.random.rand(nDots) * taille - taille / 2
-        y = np.random.rand(nDots) * taille - taille / 2
-        z = np.random.rand(nDots) * (maxDist - minDist) + minDist
-        # z was called z_flow but is actually z position like x and y
-        x_flow = x / z
-        y_flow = y / z
+        # # flow_dots
+        # x = np.random.rand(nDots) * taille - taille / 2
+        # y = np.random.rand(nDots) * taille - taille / 2
+        # z = np.random.rand(nDots) * (maxDist - minDist) + minDist
+        # # z was called z_flow but is actually z position like x and y
+        # x_flow = x / z
+        # y_flow = y / z
 
 
         # Make variable for whether target_jump and flow dir are the same
@@ -477,7 +481,10 @@ for step in range(n_trials_per_stair):
 
         print(f'\t\tprobeLum: {probeLum}, bgLum: {bgLum}, weber_lum: {weber_lum}')
         print(f'\t\t\tprobeColor255: {probeColor255}, probeColor1: {probeColor1}')
-        print(f'\t\t\t\twin.colorSpace: {win.colorSpace}, bgColor255: {bgColor255}, bgcolor: {bgcolor}\n')
+        print(f'\t\t\t\twin.colorSpace: {win.colorSpace}, bgColor255: {bgColor255}\n')
+
+        bgColor1 = (bgColor255 * Color255Color1Factor) - 1
+        print(f' bgColor1: {bgColor1}')
 
 
         # dist_from_fix is a constant giving distance form fixation,
@@ -665,15 +672,15 @@ for step in range(n_trials_per_stair):
                     # before fixation has finished
                     trials_counter.text = f"{trial_number}/{total_n_trials}"
 
-                    if background == 'flow_rad':
-                        # draw flow_dots but with no motion
-                        flow_dots.xys = np.array([x_flow, y_flow]).transpose()
-                        flow_dots.draw()
-                        probeMask1.draw()
-                        probeMask2.draw()
-                        probeMask3.draw()
-                        probeMask4.draw()
-                        dotsMask.draw()
+                    # if background == 'flow_rad':
+                    #     # draw flow_dots but with no motion
+                    #     flow_dots.xys = np.array([x_flow, y_flow]).transpose()
+                    #     flow_dots.draw()
+                    #     probeMask1.draw()
+                    #     probeMask2.draw()
+                    #     probeMask3.draw()
+                    #     probeMask4.draw()
+                    #     dotsMask.draw()
 
                     fixation.setRadius(3)
                     fixation.draw()
@@ -682,21 +689,21 @@ for step in range(n_trials_per_stair):
                 # Background motion prior to probe1
                 if t_bg_motion >= frameN > t_fixation:
                     # after fixation, before end of background motion
-                    if background == 'flow_rad':
-                        # radial flow_dots motion
-                        z = z + flow_speed * flow_dir
-                        WrapPoints(z, minDist, maxDist)
-                        x_flow = x / z
-                        y_flow = y / z
-
-                        flow_dots.xys = np.array([x_flow, y_flow]).transpose()
-                        flow_dots.draw()
-
-                        probeMask1.draw()
-                        probeMask2.draw()
-                        probeMask3.draw()
-                        probeMask4.draw()
-                        dotsMask.draw()
+                    # if background == 'flow_rad':
+                    #     # radial flow_dots motion
+                    #     z = z + flow_speed * flow_dir
+                    #     WrapPoints(z, minDist, maxDist)
+                    #     x_flow = x / z
+                    #     y_flow = y / z
+                    #
+                    #     flow_dots.xys = np.array([x_flow, y_flow]).transpose()
+                    #     flow_dots.draw()
+                    #
+                    #     probeMask1.draw()
+                    #     probeMask2.draw()
+                    #     probeMask3.draw()
+                    #     probeMask4.draw()
+                    #     dotsMask.draw()
 
                     fixation.setRadius(3)
                     fixation.draw()
@@ -707,21 +714,21 @@ for step in range(n_trials_per_stair):
                 # PROBE 1
                 if t_interval_1 >= frameN > t_bg_motion:
                     # after background motion, before end of probe1 interval
-                    if background == 'flow_rad':
-                        # radial flow_dots motion
-                        z = z + flow_speed * flow_dir
-                        WrapPoints(z, minDist, maxDist)
-                        x_flow = x / z
-                        y_flow = y / z
-
-                        flow_dots.xys = np.array([x_flow, y_flow]).transpose()
-                        flow_dots.draw()
-
-                        probeMask1.draw()
-                        probeMask2.draw()
-                        probeMask3.draw()
-                        probeMask4.draw()
-                        dotsMask.draw()
+                    # if background == 'flow_rad':
+                    #     # radial flow_dots motion
+                    #     z = z + flow_speed * flow_dir
+                    #     WrapPoints(z, minDist, maxDist)
+                    #     x_flow = x / z
+                    #     y_flow = y / z
+                    #
+                    #     flow_dots.xys = np.array([x_flow, y_flow]).transpose()
+                    #     flow_dots.draw()
+                    #
+                    #     probeMask1.draw()
+                    #     probeMask2.draw()
+                    #     probeMask3.draw()
+                    #     probeMask4.draw()
+                    #     dotsMask.draw()
 
                     fixation.setRadius(3)
                     fixation.draw()
@@ -731,21 +738,21 @@ for step in range(n_trials_per_stair):
 
                 # ISI
                 if t_ISI >= frameN > t_interval_1:
-                    if background == 'flow_rad':
-                        # radial flow_dots motion
-                        z = z + flow_speed * flow_dir
-                        WrapPoints(z, minDist, maxDist)
-                        x_flow = x / z
-                        y_flow = y / z
-
-                        flow_dots.xys = np.array([x_flow, y_flow]).transpose()
-                        flow_dots.draw()
-
-                        probeMask1.draw()
-                        probeMask2.draw()
-                        probeMask3.draw()
-                        probeMask4.draw()
-                        dotsMask.draw()
+                    # if background == 'flow_rad':
+                    #     # radial flow_dots motion
+                    #     z = z + flow_speed * flow_dir
+                    #     WrapPoints(z, minDist, maxDist)
+                    #     x_flow = x / z
+                    #     y_flow = y / z
+                    #
+                    #     flow_dots.xys = np.array([x_flow, y_flow]).transpose()
+                    #     flow_dots.draw()
+                    #
+                    #     probeMask1.draw()
+                    #     probeMask2.draw()
+                    #     probeMask3.draw()
+                    #     probeMask4.draw()
+                    #     dotsMask.draw()
 
                     fixation.setRadius(3)
                     fixation.draw()
@@ -759,21 +766,21 @@ for step in range(n_trials_per_stair):
                 # PROBE 2
                 if t_interval_2 >= frameN > t_ISI:
                     # after ISI but before end of probe2 interval
-                    if background == 'flow_rad':
-                        # radial flow_dots motion
-                        z = z + flow_speed * flow_dir
-                        WrapPoints(z, minDist, maxDist)
-                        x_flow = x / z
-                        y_flow = y / z
-
-                        flow_dots.xys = np.array([x_flow, y_flow]).transpose()
-                        flow_dots.draw()
-
-                        probeMask1.draw()
-                        probeMask2.draw()
-                        probeMask3.draw()
-                        probeMask4.draw()
-                        dotsMask.draw()
+                    # if background == 'flow_rad':
+                    #     # radial flow_dots motion
+                    #     z = z + flow_speed * flow_dir
+                    #     WrapPoints(z, minDist, maxDist)
+                    #     x_flow = x / z
+                    #     y_flow = y / z
+                    #
+                    #     flow_dots.xys = np.array([x_flow, y_flow]).transpose()
+                    #     flow_dots.draw()
+                    #
+                    #     probeMask1.draw()
+                    #     probeMask2.draw()
+                    #     probeMask3.draw()
+                    #     probeMask4.draw()
+                    #     dotsMask.draw()
 
                     fixation.setRadius(3)
                     fixation.draw()
@@ -787,16 +794,16 @@ for step in range(n_trials_per_stair):
                 # ANSWER
                 if frameN > t_interval_2:
                     # after probe 2 interval
-                    if background == 'flow_rad':
-                        # draw flow_dots but with no motion
-                        flow_dots.draw()
-                        probeMask1.draw()
-                        probeMask2.draw()
-                        probeMask3.draw()
-                        probeMask4.draw()
-                        dotsMask.draw()
+                    # if background == 'flow_rad':
+                    #     # draw flow_dots but with no motion
+                    #     flow_dots.draw()
+                    #     probeMask1.draw()
+                    #     probeMask2.draw()
+                    #     probeMask3.draw()
+                    #     probeMask4.draw()
+                    #     dotsMask.draw()
 
-                    fixation.setRadius(2)
+                    fixation.setRadius(3)
                     fixation.draw()
                     trials_counter.draw()
 
@@ -857,22 +864,21 @@ for step in range(n_trials_per_stair):
         thisExp.addData('trial_response', resp.corr)
         thisExp.addData('resp.rt', resp.rt)
         # thisExp.addData('congruent', congruent)
-        thisExp.addData('flow_dir', flow_dir)
+        # thisExp.addData('flow_dir', flow_dir)
         thisExp.addData('probe_jump', target_jump)
         thisExp.addData('corner', corner)
         thisExp.addData('probeColor1', probeColor1)
         thisExp.addData('probeColor255', probeColor255)
         thisExp.addData('probe_ecc', probe_ecc)
-        thisExp.addData('BGspeed', flow_speed)
+        # thisExp.addData('BGspeed', flow_speed)
         thisExp.addData('orientation', orientation)
         thisExp.addData('ISI_frames', ISI_fr)
         thisExp.addData('ISI_actual_ms', ISI_actual_ms)
         thisExp.addData('dur_fr', dur_fr)
         thisExp.addData('dur_ms', dur_ms)
         thisExp.addData('rotate_probe2', rotate_probe2)
-        thisExp.addData('flow_dir', flow_dir)
         thisExp.addData('bgLum', bgLum)
-        thisExp.addData('bgcolor', bgcolor)
+        # thisExp.addData('bgcolor', bgcolor)
         thisExp.addData('bgColor255', bgColor255)
         thisExp.addData('weber_lum', weber_lum)
         thisExp.addData('expName', expName)
