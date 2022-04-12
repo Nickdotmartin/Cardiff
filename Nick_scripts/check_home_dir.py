@@ -35,6 +35,11 @@ def switch_path(orig_path, change_to):
     :return: New path with updated prefix.
     '''
 
+    # todo: add a function so I can just say I want to access a file in one drive,
+    #  then use platform.system() to resolve root path.
+    #  The output of platform.system() is as follows:
+    #   Linux: Linux, Mac: Darwin, Windows: Windows
+
     # root paths to use
     mac_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff'
     mac_oneD_path = '/Users/nickmartin/Library/CloudStorage/OneDrive-CardiffUniversity/PycharmProjects/Cardiff'
