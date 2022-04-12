@@ -7,7 +7,7 @@ from math import *
 
 import numpy as np
 from psychopy import __version__ as psychopy_version
-from psychopy import gui, visual, core, data, event, monitors
+from psychopy import gui, visual, core, data, event, monitors, colors
 
 from PsychoPy_tools import check_correct_monitor, get_pixel_mm_deg_values
 from kestenSTmaxVal import Staircase
@@ -486,6 +486,24 @@ for step in range(n_trials_per_stair):
         bgColor1 = (bgColor255 * Color255Color1Factor) - 1
         print(f' bgColor1: {bgColor1}')
 
+        # print(f": {probe1.Color}")
+        check_bg_color = colors.Color(color=bgColor255, space='rgb255')
+        print(f"check_bg_color: {check_bg_color}")
+        print(f"check_bg_color.rgb: {check_bg_color.rgb}")
+        print(f"check_bg_color.rgb1: {check_bg_color.rgb1}")
+        print(f"check_bg_color.rgb255: {check_bg_color.rgb255}")
+        print(f"check_bg_color.validate: {colors.isValidColor(color=bgColor255, space='rgb255')}")
+        print(f"check_bg_color.validate: {colors.isValidColor(color=bgColor255, space='rgb')}")
+        print(f"check_bg_color.validate: {colors.isValidColor(color=bgColor255, space='rgb1')}")
+
+        check_pr1_color = colors.Color(color=probeColor1, space='rgb255')
+        print(f"check_pr1_color: {check_pr1_color}")
+        print(f"check_pr1_color.rgb: {check_pr1_color.rgb}")
+        print(f"check_pr1_color.rgb1: {check_pr1_color.rgb1}")
+        print(f"check_pr1_color.rgb255: {check_pr1_color.rgb255}")
+        print(f"check_pr1_color.validate: {colors.isValidColor(color=probeColor1, space='rgb255')}")
+        print(f"check_pr1_color.validate: {colors.isValidColor(color=probeColor1, space='rgb')}")
+        print(f"check_pr1_color.validate: {colors.isValidColor(color=probeColor1, space='rgb1')}")
 
         # dist_from_fix is a constant giving distance form fixation,
         # dist_from_fix was previously 2 identical variables x_prob & y_prob.
