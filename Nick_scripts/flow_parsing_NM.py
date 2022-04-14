@@ -618,7 +618,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('step', step)
         thisExp.addData('probeLum', probeLum)
         thisExp.addData('corner', corner)
-        thisExp.addData('probe_duration', probe_duration)
+        thisExp.addData('probe_dur', probe_duration)
         thisExp.addData('flow_dir', flow_dir)
         thisExp.addData('probe_jump', probeDir)
         thisExp.addData('congruent', congruent)
