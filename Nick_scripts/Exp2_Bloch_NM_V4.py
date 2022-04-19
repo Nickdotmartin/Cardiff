@@ -188,7 +188,6 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     fullscr=use_full_screen)
 
 # # check correct monitor details (fps, size) have been accessed.
-
 actual_fps = win.getActualFrameRate(nIdentical=240, nMaxFrames=240,
                                     nWarmUpFrames=10, threshold=1)
 print(f'actual_fps: {actual_fps}')
@@ -304,8 +303,8 @@ expInfo['stair_list'] = list(range(n_stairs))
 expInfo['n_trials_per_stair'] = n_trials_per_stair
 
 stairStart = maxLum
-miniVal = bgLum
-maxiVal = maxLum
+miniVal = bgLum  # 21.2
+maxiVal = maxLum  # 106
 
 print('\nexpInfo (dict)')
 for k, v in expInfo.items():
