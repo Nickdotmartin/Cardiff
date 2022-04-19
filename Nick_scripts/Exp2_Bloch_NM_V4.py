@@ -7,7 +7,7 @@ from math import *
 
 import numpy as np
 from psychopy import __version__ as psychopy_version
-from psychopy import gui, visual, core, data, event, monitors, colors
+from psychopy import gui, visual, core, data, event, monitors
 
 from PsychoPy_tools import check_correct_monitor, get_pixel_mm_deg_values
 from kestenSTmaxVal import Staircase
@@ -15,7 +15,7 @@ from kestenSTmaxVal import Staircase
 '''
 This script is a follow on from exp1a (but uses radial_flow_NM_v2 as its basis):
 Exp2_Bloch_NM - no spatial separation - just temporal - test Bloch.
-two probe conditons:
+two probe conditions:
 1. 2probe - same stimuli as exp1a but probe 2 in exact same place as probe 1.  
     Probes presented for 2frames, with ISI as in exp1a.
 2. 1probe - same as 1probe stimuli from exp1.
@@ -144,8 +144,8 @@ bgColor255 = bgLum * LumColor255Factor
 """
 To relate rgb255 to rad_flow experiments using rgb...
 flow_bgcolor = [-0.1, -0.1, -0.1]  # darkgrey
-bgcolor = 114.75  # equivellent to rad_flow if used with colorSpace='rgb255'
-bgcolor = flow_bgcolor  # equivellent to rad_flow if used with colorSpace='rgb'
+bgcolor = 114.75  # equivalent to rad_flow if used with colorSpace='rgb255'
+bgcolor = flow_bgcolor  # equivalent to rad_flow if used with colorSpace='rgb'
 """
 
 print(f"bgLum: {bgLum}, bgColor255: {bgColor255}")
@@ -377,18 +377,6 @@ for step in range(n_trials_per_stair):
         # target_jump = congruent * flow_dir
         target_jump = flow_dir
 
-        # # flow_dots
-        # x = np.random.rand(nDots) * taille - taille / 2
-        # y = np.random.rand(nDots) * taille - taille / 2
-        # z = np.random.rand(nDots) * (maxDist - minDist) + minDist
-        # # z was called z_flow but is actually z position like x and y
-        # x_flow = x / z
-        # y_flow = y / z
-
-        # Make variable for whether target_jump and flow dir are the same
-        # (e.g., both inward or both outward = 1, else -1)
-        # trgt_flow_same = flow_dir*target_jump
-
         # staircase varies probeLum
         probeLum = thisStair.next()
         probeColor255 = probeLum * LumColor255Factor
@@ -477,7 +465,6 @@ for step in range(n_trials_per_stair):
                     probe1.ori = 90
                     probe2.ori = probe1.ori
                     probe2.pos = [p1_x, p1_y]
-
 
         probe1.pos = [p1_x, p1_y]
 
