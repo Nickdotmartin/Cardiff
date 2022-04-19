@@ -34,7 +34,6 @@ def check_correct_monitor(monitor_name, actual_size, actual_fps, verbose=False):
               f"verbose={verbose}")
 
     this_monitor = monitors.Monitor(monitor_name)
-    actual_frame_rate = int(actual_fps)
     monitor_dict = {'mon_name': monitor_name,
                     'size': this_monitor.getSizePix(),
                     'notes': this_monitor.getNotes()}
@@ -52,53 +51,63 @@ def check_correct_monitor(monitor_name, actual_size, actual_fps, verbose=False):
                          f"size ({monitor_dict['size']}).")
 
     # FRAME RATE CHECK
-    # search for refresh rate in notes
-    if monitor_dict['notes'] is None:
-        print('No fps info found in monitor dict notes.')
-        raise ValueError
-    else:  # if monitor_dict['notes'] is not None:
-        notes = monitor_dict['notes'].lower()
-
-        # check for 'hz' in notes, and that it only occurs once
-        if "hz" in notes:
-            if notes.count('hz') == 1:
-                find_hz = notes.find("hz")
-
-                # if hz are last two characters, use -2 for the 2 letters 'hz'
-                if find_hz == -1:
-                    find_hz = len(notes) - 2
-
-                slice = notes[:find_hz]  # slice text upto 'hz'
-
-                # remove any space between int and 'hz'
-                if slice[-1] == " ":
-                    slice = slice[:-1]
-
-                # to find how many ints there are, look for white space
-                whitespaces = []
-                for index, character in enumerate(slice):
-                    if character == " ":
-                        whitespaces.append(index)
-
-                # if there are no whitespaces, just use this slice
-                if len(whitespaces) == 0:
-                    convert_this = slice
-                else:
-                    # slice from space before 'hz' to just leave numbers
-                    convert_this = slice[whitespaces[-1]:]
-
-                converted = int(convert_this)
-                expected_fps = converted
-        if verbose:
-            print(f"expected_fps: {expected_fps}")
-
-    # check fps
-    margin = 5
-    if expected_fps in list(range(actual_frame_rate-margin, actual_frame_rate+margin)):
-        print("expected_fps matches actual frame rate")
+    if actual_fps is None:
+        print('failed to calculate actual frame rate')
     else:
-        raise ValueError(f"expected_fps ({expected_fps}) does not match actual "
-                         f"frame rate ({actual_frame_rate})")
+        actual_frame_rate = int(actual_fps)
+        print(f'actual_frame_rate: {actual_frame_rate}')
+
+        # search for refresh rate in notes
+        if monitor_dict['notes'] is None:
+            print('No monitor dict notes containing fps/Hz info.')
+            # raise ValueError
+        else:  # if monitor_dict['notes'] is not None:
+            notes = monitor_dict['notes'].lower()
+
+            # check for 'hz' in notes, and that it only occurs once
+            if "hz" in notes:
+                if notes.count('hz') == 1:
+                    find_hz = notes.find("hz")
+
+                    # if hz are last two characters, use -2 for the 2 letters 'hz'
+                    if find_hz == -1:
+                        find_hz = len(notes) - 2
+
+                    slice = notes[:find_hz]  # slice text upto 'hz'
+
+                    # remove any space between int and 'hz'
+                    if slice[-1] == " ":
+                        slice = slice[:-1]
+
+                    # to find how many ints there are, look for white space
+                    whitespaces = []
+                    for index, character in enumerate(slice):
+                        if character == " ":
+                            whitespaces.append(index)
+
+                    # if there are no whitespaces, just use this slice
+                    if len(whitespaces) == 0:
+                        convert_this = slice
+                    else:
+                        # slice from space before 'hz' to just leave numbers
+                        convert_this = slice[whitespaces[-1]:]
+
+                    converted = int(convert_this)
+                    expected_fps = converted
+
+                if verbose:
+                    print(f"expected_fps: {expected_fps}")
+
+                # check fps
+                margin = 5
+                if expected_fps in list(range(actual_frame_rate - margin, actual_frame_rate + margin)):
+                    print("expected_fps matches actual frame rate")
+                else:
+                    raise ValueError(f"expected_fps ({expected_fps}) does not match actual "
+                                     f"frame rate ({actual_frame_rate})")
+
+            else:
+                print('No fps/Hz info found in monitor dict notes.')
 
     if verbose:
         print("check_correct_monitor() complete")
