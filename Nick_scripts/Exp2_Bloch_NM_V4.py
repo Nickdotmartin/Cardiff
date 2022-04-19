@@ -32,7 +32,7 @@ monitor_name = 'asus_cal'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_
 # Store info about the experiment session
 expName = 'Exp2_Bloch_NM_v4'  # from the Builder filename that created this script
 
-expInfo = {'1_Participant': 'Nick_60hz_test',
+expInfo = {'1_Participant': 'Nick_test',
            '2_Probe_dur_in_frames_at_240hz': [2, 50],
            '3_fps': [240, 144, 60],
            '4_Trials_counter': [True, False]}
