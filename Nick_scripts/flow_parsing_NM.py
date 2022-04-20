@@ -34,6 +34,9 @@ display_number = 1  # 0 indexed, 1 for external display
 # Store info about the experiment session
 expName = 'FlowParsing'  # from the Builder filename that created this script
 
+# todo: change input details.  Participant name (Which creates a folder to save to if needed); and Run_number.
+#  which is concatenated so that for 'Nick' and '3' would save to Nick > Nick_3 > Nick_3 output.
+
 expInfo = {'1_Participant': 'Nick_test',
            '3_fps': [240, 144, 60],
            '4_Probe duration in frames': ['12', '3', '6', '12', '18', '24', '30', '36', '120'],

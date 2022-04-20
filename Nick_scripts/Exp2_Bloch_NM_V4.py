@@ -65,7 +65,7 @@ frames@240hz: [24,  12,  10,    9,    8,     6,  4,    2,    0]
 
 # -2 is the 1pr condition
 # ISI_ms_list = [-2, 0, 8.33, 16.67, 25, 37.5, 50, 100, 200]
-ISI_ms_list = [-2, 0, 8.33, 16.67, 25, 37.5]  # , 50, 100, 200]
+ISI_ms_list = [-2, 0, 8.33, 16.67, 25, 37.5, 50, 100]  # , 200]
 print(f'ISI_ms_list: {ISI_ms_list}')
 
 isi_fr_list = [-2 if i == -2 else int(i * fps / 1000) for i in ISI_ms_list]

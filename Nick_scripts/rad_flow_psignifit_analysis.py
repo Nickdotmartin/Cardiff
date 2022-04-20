@@ -694,6 +694,9 @@ def plot_runs_ave_w_errors(fig_df, error_df,
         elif '1probe' in column_names:
             slope_start_x = fig_df.index[0]
             slope_start_y = fig_df.iloc[0]['1probe']
+        elif 'lines' in column_names:
+            slope_start_x = fig_df.index[0][0]
+            slope_start_y = fig_df.iloc[0]['lines']
         print(f'slope_start_x: {slope_start_x}')
         print(f'slope_start_y: {slope_start_y}')
         ax.plot([slope_start_x, slope_start_x * 100], [slope_start_y, slope_start_y / 100], c='r',
