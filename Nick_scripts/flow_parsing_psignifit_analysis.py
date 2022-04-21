@@ -1520,7 +1520,10 @@ def a_data_extraction(p_name, run_dir, dur_list, save_all_data=True, verbose=Tru
             # print(f"\nsaving all_data_df to save_excel_path:\n{save_excel_path}")
             print(f"\nsaving all_data_df to save_csv_path:\n{save_csv_path}")
         # all_data_df.to_excel(save_excel_path, index=False)
-        all_data_df.to_csv(save_csv_path, index=False)
+        convert_path1 = os.path.normpath(save_csv_path)
+        print(f"convert_path1: {convert_path1}")
+
+        all_data_df.to_csv(convert_path1, index=False)
 
     print("\n***finished a_data_extraction()***\n")
 

@@ -8,24 +8,25 @@ from flow_parsing_psignifit_analysis import a_data_extraction  #, b3_plot_stairc
 # # then run script d to get master lists and averages
 # exp_path = '/Users/nickmartin/Library/CloudStorage/OneDrive-CardiffUniversity/PycharmProjects/Cardiff/flow_parsing'
 exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing"
-
-stair_list = [3, 2, 1, 0]
-participant_list = ['Nick_test']
-probe_dur_list = [12, 6]
+print(f"exp_path: {exp_path}")
+convert_path1 = os.path.normpath(exp_path)
+print(f"convert_path1: {convert_path1}")
+exp_path = convert_path1
+stair_list = [0, 1]
+participant_list = ['Nick']
+# probe_dur_list = [4, 6, 9]
+probe_dur_list = [9]
 
 verbose = True
 show_plots = True
 
-n_runs = 1
+n_runs = 3
 # if the first folder to analyse is 1, p_idx_plus = 1.  If the forst folder is 5, use 5 etc.
 p_idx_plus = 1
 
 
 for p_idx, participant_name in enumerate(participant_list):
-    # if participant_name is 'Nick':
-    #     p_idx_plus = 5
 
-    # root_path = f'{exp_path}/{participant_name}'
     root_path = os.path.join(exp_path, participant_name)
 
     run_folder_names = [f'{participant_name}_{i+p_idx_plus}' for i in list(range(n_runs))]
@@ -49,7 +50,7 @@ for p_idx, participant_name in enumerate(participant_list):
         '''a'''
         p_name = f'{participant_name}_{r_idx_plus}'
 
-        # run_data_df = a_data_extraction(p_name=p_name, run_dir=save_path, dur_list=probe_dur_list, verbose=verbose)
+        run_data_df = a_data_extraction(p_name=p_name, run_dir=save_path, dur_list=probe_dur_list, verbose=verbose)
         # print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}\n")
 
         run_data_path = os.path.join(save_path, 'ALL_durations_sorted.csv')
@@ -69,7 +70,7 @@ for p_idx, participant_name in enumerate(participant_list):
                                             stair_col='stair',
                                             dur_list=probe_dur_list,
                                             stair_list=stair_list,
-                                            target_threshold=.5,
+                                            target_threshold=.75,
                                             # cols_to_add_dict=cols_to_add_dict,
                                             verbose=verbose)
         print(f'thr_df:\n{thr_df}')
