@@ -18,7 +18,7 @@ convert_path1 = os.path.normpath(exp_path)
 print(f"convert_path1: {convert_path1}")
 exp_path = convert_path1
 
-participant_list = ['Nick']  # 'Nick', 'bb', 'cc', 'dd', 'ee']
+participant_list = ['Kim']  # 'Nick', 'bb', 'cc', 'dd', 'ee']
 n_runs = 3
 
 p_idx_plus = 1
