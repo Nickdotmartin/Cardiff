@@ -234,6 +234,7 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
         print('not making plots')
         fit_curve_plot = None
     else:
+        print(f'making plots (save_plots: {save_plot})')
         plt.figure()
         plt.title(f"{dset_name}: stair: {bin_data_dict['stair_levels']}\n"
                   f"threshPC: {target_threshold}, threshold: {threshold}, "
@@ -365,6 +366,7 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
                                sep_col='separation', isi_list=None, sep_list=None, 
                                group=None,
                                cols_to_add_dict=None, save_name=None,
+                               save_plots=False,
                                verbose=True):
     """
     Function to make a dataframe (stair x isi) of psignifit threshold values for an entire run.
@@ -382,6 +384,7 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
                     identical stairs  (e.g., 1&2, 3&4 etc).
     :param cols_to_add_dict: add dictionary of columns to insert to finished df (header=key, column=value)
     :param save_name: Pass a name to save output or if None will save as 'psignifit_thresholds'.
+    :param save_plots: If True, will save plots.
     :param verbose: Print progress to screen
 
     :return: Dataframe of thresholds from psignifit for each ISI and stair.
@@ -470,7 +473,7 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
                                                                   quartile_bins=q_bins, n_bins=n_bins,
                                                                   save_np=False, target_threshold=.75,
                                                                   sig_name='norm', est_type='MAP',
-                                                                  save_plot=False, show_plot=False,
+                                                                  save_plot=save_plots, show_plot=False,
                                                                   verbose=verbose
                                                                   )
 
