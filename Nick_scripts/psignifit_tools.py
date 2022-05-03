@@ -223,7 +223,7 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
     if verbose:
         print(f'\nthreshold: {threshold}')
 
-    slope_at_target = ps.getSlopePC(res, target_threshold)
+    slope_at_target = round(ps.getSlopePC(res, target_threshold), 2)
     if verbose:
         print(f'slope_at_target: {slope_at_target}')
 
@@ -236,17 +236,15 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
     else:
         print(f'making plots (save_plots: {save_plot})')
         plt.figure()
-        plt.title(f"{dset_name}: stair: {bin_data_dict['stair_levels']}\n"
-                  f"threshPC: {target_threshold}, threshold: {threshold}, "
-                  f"sig: {sig_name}, "
-                  f"est: {est_type}")
+        plt.title(f"{dset_name}: sig: {sig_name}, est: {est_type}\n"
+                  f"threshPC: {target_threshold}, threshold: {threshold}, slope: {slope_at_target}")
         fit_curve_plot = ps.psigniplot.plotPsych(res, showImediate=False)
 
         if save_plot:
-            # plot_path = os.path.join(root_path, p_run_name, thr_filename)
+            plot_path = os.path.join(save_path, f'{dset_name}_psig.png')
 
-            print(f'saving plot to: {save_path}{os.sep}{dset_name}_psig.png')
-            plt.savefig(f'{save_path}{os.sep}{dset_name}_psig.png')
+            print(f'saving plot to: {plot_path}')
+            plt.savefig(plot_path)
 
         if show_plot:
             plt.show()
@@ -366,7 +364,7 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
                                sep_col='separation', isi_list=None, sep_list=None, 
                                group=None,
                                cols_to_add_dict=None, save_name=None,
-                               save_plots=False,
+                               save_plots=True,
                                verbose=True):
     """
     Function to make a dataframe (stair x isi) of psignifit threshold values for an entire run.

@@ -1,5 +1,4 @@
 import os
-
 import matplotlib.lines as mlines
 import matplotlib.pyplot as plt
 import numpy as np
@@ -701,7 +700,7 @@ def plot_w_errors_no_1probe(wide_df, x_var, y_var, lines_var,
         ax.set_xticklabels(x_tick_labels)
     ax.set_xlabel(x_var)
 
-    if y_var is 'probeLum':
+    if y_var == 'probeLum':
         ax.set_ylabel('Probe Luminance')
     else:
         ax.set_ylabel(y_var)
@@ -1384,6 +1383,7 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
 """
 def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_response',
                       show_plots=True, save_plots=True, verbose=True):
+    # todo: add variable to load thresholds csv and mark psignifit threshold on staircase plot.
 
     """
     b3_plot_staircase.m: staircases-ISIxxx.png: xxx corresponds to isi conditions.
@@ -1415,7 +1415,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
         all_data_df = pd.read_csv(all_data_path)
     else:
         all_data_df = pd.read_excel(all_data_path, engine='openpyxl',
-                                    usecols=['ISI', 'stair', 'total_nTrials',
+                                    usecols=['ISI', 'separation', 'stair', 'total_nTrials',
                                              'probeLum', 'trial_response', 'resp.rt'])
 
     # get list of isi and stair values to loop through
@@ -1427,10 +1427,8 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
     sep_name_list = ['1pr' if i == 99 else f'sep{i}' for i in sep_list]
     # separation_title = ['18sep', '06sep', '03sep', '02sep', '01sep', '00sep', 'onePb']
 
-
     trials, columns = np.shape(all_data_df)
-    trials_per_stair = int(trials/len(isi_list)/len(stair_list))
-
+    trials_per_stair = int(trials / len(isi_list) / len(stair_list))
 
     if verbose:
         print(f"all_data_df:\n{all_data_df.head()}")
@@ -1466,42 +1464,43 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
     psignifit_thr_df.columns = isi_name_list
 
     # split into pos_sep, neg_sep and mean of pos and neg.
-    psig_pos_sep_df, psig_neg_sep_df = split_df_alternate_rows(psignifit_thr_df)
-    psig_thr_mean_df = pd.concat([psig_pos_sep_df, psig_neg_sep_df]).groupby(level=0).mean()
+    psig_odd_stair_df, psig_even_stair_df = split_df_alternate_rows(psignifit_thr_df)
+    psig_thr_mean_df = pd.concat([psig_odd_stair_df, psig_even_stair_df]).groupby(level=0).mean()
 
     # add sep column in
     rows, cols = psig_thr_mean_df.shape
-    if len(sep_list) == rows*2:
+    if len(sep_list) == rows * 2:
         # takes every other item
         sep_list = sep_list[::2]
     print(f'sep_list: {sep_list}')
 
     psig_thr_mean_df.insert(0, 'separation', sep_list)
-    psig_pos_sep_df.insert(0, 'separation', sep_list)
-    psig_neg_sep_df.insert(0, 'separation', sep_list)
+    psig_odd_stair_df.insert(0, 'separation', sep_list)
+    psig_even_stair_df.insert(0, 'separation', sep_list)
     if verbose:
-        print(f'\npsig_pos_sep_df:\n{psig_pos_sep_df}')
-        print(f'\npsig_neg_sep_df:\n{psig_neg_sep_df}')
+        print(f'\npsig_odd_stair_df:\n{psig_odd_stair_df}')
+        print(f'\npsig_even_stair_df:\n{psig_even_stair_df}')
         print(f'\npsig_thr_mean_df:\n{psig_thr_mean_df}')
 
-    # the values listed as separation=20 are actually for the single probe cond.
-    # Chop last row off and add values later.
-    psig_thr_mean_df, mean_1probe_df = \
-        psig_thr_mean_df.drop(psig_thr_mean_df.tail(1).index), psig_thr_mean_df.tail(1)
-    psig_pos_sep_df, thr1_1probe_df = \
-        psig_pos_sep_df.drop(psig_pos_sep_df.tail(1).index), psig_pos_sep_df.tail(1)
-    psig_neg_sep_df, thr2_1probe_df = \
-        psig_neg_sep_df.drop(psig_neg_sep_df.tail(1).index), psig_neg_sep_df.tail(1)
-    if verbose:
-        print(f'\npsig_thr_mean_df (chopped off one_probe):\n{psig_thr_mean_df}')
-
-    # put the one_probe values into a df to use later
-    one_probe_df = pd.concat([mean_1probe_df, thr1_1probe_df, thr2_1probe_df],
-                             ignore_index=True)
-    one_probe_df.insert(0, 'dset', ['mean', 'group1', 'group2'])
-    one_probe_df.insert(0, 'x_val', [-1, -1, -1])
-    if verbose:
-        print(f'one_probe_df:\n{one_probe_df}')
+    '''I'm no longer pltting psignifit thr here, so I don't need this.'''
+    # # the values listed as separation=20 are actually for the single probe cond.
+    # # Chop last row off and add values later.
+    # psig_thr_mean_df, mean_1probe_df = \
+    #     psig_thr_mean_df.drop(psig_thr_mean_df.tail(1).index), psig_thr_mean_df.tail(1)
+    # psig_odd_stair_df, thr1_1probe_df = \
+    #     psig_odd_stair_df.drop(psig_odd_stair_df.tail(1).index), psig_odd_stair_df.tail(1)
+    # psig_even_stair_df, thr2_1probe_df = \
+    #     psig_even_stair_df.drop(psig_even_stair_df.tail(1).index), psig_even_stair_df.tail(1)
+    # if verbose:
+    #     print(f'\npsig_thr_mean_df (chopped off one_probe):\n{psig_thr_mean_df}')
+    #
+    # # put the one_probe values into a df to use later
+    # one_probe_df = pd.concat([mean_1probe_df, thr1_1probe_df, thr2_1probe_df],
+    #                          ignore_index=True)
+    # one_probe_df.insert(0, 'dset', ['mean', 'group1', 'group2'])
+    # one_probe_df.insert(0, 'x_val', [-1, -1, -1])
+    # if verbose:
+    #     print(f'one_probe_df:\n{one_probe_df}')
 
     # make empty arrays to save reversal n_reversals
     n_reversals_np = np.zeros(shape=[len(stair_list), len(isi_list)])
@@ -1512,6 +1511,14 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
         # get df for this isi only
         isi_df = all_data_df[all_data_df['ISI'] == isi]
         isi_name = isi_name_list[isi_idx]
+
+        # psignifit series for this isi only
+        isi_name = isi_name_list[isi_idx]
+        print(f'\nisi_name: {isi_name}')
+        psig_odd_isi_S = psig_odd_stair_df.loc[:, ['separation', isi_name]]
+        psig_even_isi_S = psig_even_stair_df.loc[:, ['separation', isi_name]]
+        print(f"psig_odd_isi_S:\n{psig_odd_isi_S}")
+        print(f"psig_even_isi_S:\n{psig_even_isi_S}")
 
         # initialise 8 plot figure
         # # this is a figure showing n_reversals per staircase condition.
@@ -1525,21 +1532,25 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
                 # for the first seven plots...
                 if ax_counter < 7:
                     # # get pairs of stairs (e.g., [[18, -18], [6, -6], ...etc)
-                    stair_odd = (ax_counter*2)+1  # 1, 3, 5, 7, 9, 11, 13
+                    stair_odd = (ax_counter * 2) + 1  # 1, 3, 5, 7, 9, 11, 13
                     stair_odd_df = isi_df[isi_df['stair'] == stair_odd]
                     stair_odd_df.insert(0, 'step', list(range(trials_per_stair)))
-                    final_lum_odd = stair_odd_df.loc[stair_odd_df['step'] == trials_per_stair-1, 'probeLum'].item()
+                    final_lum_odd = stair_odd_df.loc[stair_odd_df['step'] == trials_per_stair - 1, 'probeLum'].item()
                     n_reversals_odd = trials_per_stair - stair_odd_df[resp_col].sum()
 
-                    stair_even = (ax_counter+1)*2  # 2, 4, 6, 8, 10, 12, 14
+                    stair_even = (ax_counter + 1) * 2  # 2, 4, 6, 8, 10, 12, 14
                     stair_even_df = isi_df[isi_df['stair'] == stair_even]
                     stair_even_df.insert(0, 'step', list(range(trials_per_stair)))
-                    final_lum_even = stair_even_df.loc[stair_even_df['step'] == trials_per_stair-1, 'probeLum'].item()
+                    final_lum_even = stair_even_df.loc[stair_even_df['step'] == trials_per_stair - 1, 'probeLum'].item()
                     n_reversals_even = trials_per_stair - stair_even_df[resp_col].sum()
 
                     # append n_reversals to n_reversals_np to save later.
-                    n_reversals_np[stair_odd-1, isi_idx] = n_reversals_odd
-                    n_reversals_np[stair_even-1, isi_idx] = n_reversals_even
+                    n_reversals_np[stair_odd - 1, isi_idx] = n_reversals_odd
+                    n_reversals_np[stair_even - 1, isi_idx] = n_reversals_even
+
+                    # # psignifit threshold
+                    psig_odd_thr = psig_odd_isi_S[isi_name][ax_counter]
+                    psig_even_thr = psig_even_isi_S[isi_name][ax_counter]
 
                     if verbose:
                         print(f'\nstair_odd_df (stair={stair_odd}, isi_name={isi_name}:\n{stair_odd_df.head()}')
@@ -1548,6 +1559,10 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
                         print(f'\nstair_even_df (stair={stair_even}, isi_name={isi_name}:\n{stair_even_df.tail()}')
                         print(f"final_lum_even: {final_lum_even}")
                         print(f"n_reversals_even: {n_reversals_even}")
+
+                        print(f"psig_odd_thr: {psig_odd_thr}")
+                        print(f"psig_even_thr: {psig_even_thr}")
+
 
                     '''
                     use multiplot method from figure 2 above.
@@ -1563,7 +1578,8 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
                                  color='tab:red',
                                  marker="v", markersize=5)
                     # line for final probeLum
-                    ax.axhline(y=final_lum_odd, linestyle="--", color='tab:red')
+                    ax.axhline(y=final_lum_odd, linestyle="dotted", color='tab:red')
+                    ax.axhline(y=psig_odd_thr, linestyle="dashed", color='tab:brown')
                     # text for n_reversals
                     ax.text(x=0.25, y=0.9, s=f'{n_reversals_odd} reversals',
                             color='tab:red',
@@ -1576,7 +1592,9 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
                                  color='tab:blue',
                                  # linewidth=3,
                                  marker="o", markersize=4)
-                    ax.axhline(y=final_lum_even, linestyle="-.", color='tab:blue')
+                    ax.axhline(y=final_lum_even, linestyle="dotted", color='tab:blue')
+                    ax.axhline(y=psig_even_thr, linestyle="dashed", color='royalblue')
+
                     ax.text(x=0.25, y=0.8, s=f'{n_reversals_even} reversals',
                             color='tab:blue',
                             # needs transform to appear with rest of plot.
@@ -1587,75 +1605,102 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
                     ax.set_ylim([0, 110])
 
                     # artist for legend
-                    if ax_counter == 0:
-                        st1 = mlines.Line2D([], [], color='tab:red',
-                                            marker='v',
-                                            markersize=5, label='group1')
-                        st1_last_val = mlines.Line2D([], [], color='tab:red',
-                                                     linestyle="--", marker=None,
-                                                     label='g1_last_val')
-                        st2 = mlines.Line2D([], [], color='tab:blue',
-                                            marker='o',
-                                            markersize=5, label='group2')
-                        st2_last_val = mlines.Line2D([], [], color='tab:blue',
-                                                     linestyle="-.", marker=None,
-                                                     label='g2_last_val')
-                        ax.legend(handles=[st1, st1_last_val, st2, st2_last_val],
-                                  fontsize=5, loc='lower right')
+                    # if ax_counter == 0:
+                    #     # st1 = mlines.Line2D([], [], color='tab:red',
+                    #     #                     marker='v',
+                    #     #                     markersize=5, label='group1')
+                    #     # st1_last_val = mlines.Line2D([], [], color='tab:red',
+                    #     #                              linestyle="dotted", marker=None,
+                    #     #                              label='g1_last_val')
+                    #     # st1_psig = mlines.Line2D([], [], color='tab:brown',
+                    #     #                              linestyle="dashed", marker=None,
+                    #     #                              label='g1_psig_thr')
+                    #     # st2 = mlines.Line2D([], [], color='tab:blue',
+                    #     #                     marker='o',
+                    #     #                     markersize=5, label='group2')
+                    #     # st2_last_val = mlines.Line2D([], [], color='tab:blue',
+                    #     #                              linestyle="dotted", marker=None,
+                    #     #                              label='g2_last_val')
+                    #     # st2_psig = mlines.Line2D([], [], color='royalblue',
+                    #     #                              linestyle="dashed", marker=None,
+                    #     #                              label='g2_psig_thr')
+                    #     # ax.legend(handles=[st1, st1_last_val, st1_psig, st2, st2_last_val, st2_psig],
+                    #     #           fontsize=5, loc='lower right')
 
                 else:
-                    """use the psignifit values from each stair pair (e.g., 18, -18) to
-                    get the mean threshold for each sep condition.
-                    """
-                    if verbose:
-                        print("\nEighth plot")
-                        print(f'psig_thr_mean_df:\n{psig_thr_mean_df}')
-                        print(f'\none_probe_df:\n{one_probe_df}')
-
-                    isi_thr_mean_df = pd.concat([psig_thr_mean_df['separation'], psig_thr_mean_df[isi_name]],
-                                                axis=1, keys=['separation', isi_name])
-                    if verbose:
-                        print(f'isi_thr_mean_df:\n{isi_thr_mean_df}')
-
-                    # line plot for thr1, th2 and mean thr
-                    sns.lineplot(ax=axes[row_idx, col_idx], data=isi_thr_mean_df,
-                                 x='separation', y=isi_name, color='lightgreen',
-                                 linewidth=3)
-
-                    sns.lineplot(ax=axes[row_idx, col_idx], data=psig_pos_sep_df,
-                                 x='separation', y=isi_name, color='red',
-                                 linestyle="--")
-                    sns.lineplot(ax=axes[row_idx, col_idx], data=psig_neg_sep_df,
-                                 x='separation', y=isi_name, color='blue',
-                                 linestyle="dotted")
-
-
-                    # scatter plot for single probe conditions
-                    sns.scatterplot(data=one_probe_df, x="x_val", y=isi_name,
-                                    hue='dset',
-                                    palette=['lightgreen', 'red', 'blue'])
-
-                    # artist for legend
-                    group1 = mlines.Line2D([], [], color='red',
-                                           linestyle="--", marker=None,
-                                           label='Group1 thr')
-
-                    group2 = mlines.Line2D([], [], color='blue',
-                                           linestyle="dotted", marker=None,
-                                           label='Group2 thr')
-                    mean_thr = mlines.Line2D([], [], color='lightgreen',
-                                             linestyle="solid", marker=None,
-                                             label='mean thr')
-                    ax.legend(handles=[group1, group2, mean_thr], fontsize=6,
-                              loc='lower right')
-
-                    # decorate plot
-                    ax.set_title(f'{isi_name} psignifit thresholds')
-                    ax.set_xticks([-2, -1, 0, 1, 2, 3, 6, 18])
-                    ax.set_xticklabels(['', '\n1probe', 0, 1, 2, 3, 6, 18])
-                    ax.set_xlabel('Probe separation')
-                    ax.set_ylim([0, 110])
-                    ax.set_ylabel('Probe Luminance')
+                    '''I'm no longer plotting the psignifit threshold here'''
+                    # """use the psignifit values from each stair pair (e.g., 18, -18) to
+                    # get the mean threshold for each sep condition.
+                    # """
+                    # if verbose:
+                    #     print("\nEighth plot")
+                    #     print(f'psig_thr_mean_df:\n{psig_thr_mean_df}')
+                    #     print(f'\none_probe_df:\n{one_probe_df}')
+                    #
+                    # isi_thr_mean_df = pd.concat([psig_thr_mean_df['separation'], psig_thr_mean_df[isi_name]],
+                    #                             axis=1, keys=['separation', isi_name])
+                    # if verbose:
+                    #     print(f'isi_thr_mean_df:\n{isi_thr_mean_df}')
+                    #
+                    # # line plot for thr1, th2 and mean thr
+                    # sns.lineplot(ax=axes[row_idx, col_idx], data=isi_thr_mean_df,
+                    #              x='separation', y=isi_name, color='lightgreen',
+                    #              linewidth=3)
+                    #
+                    # sns.lineplot(ax=axes[row_idx, col_idx], data=psig_odd_stair_df,
+                    #              x='separation', y=isi_name, color='red',
+                    #              linestyle="--")
+                    # sns.lineplot(ax=axes[row_idx, col_idx], data=psig_even_stair_df,
+                    #              x='separation', y=isi_name, color='blue',
+                    #              linestyle="--")
+                    #
+                    # # scatter plot for single probe conditions
+                    # sns.scatterplot(data=one_probe_df, x="x_val", y=isi_name,
+                    #                 hue='dset',
+                    #                 palette=['lightgreen', 'red', 'blue'])
+                    #
+                    # # artist for legend
+                    # group1 = mlines.Line2D([], [], color='red',
+                    #                        linestyle="--", marker=None,
+                    #                        label='Group1 thr')
+                    #
+                    # group2 = mlines.Line2D([], [], color='blue',
+                    #                        linestyle="--", marker=None,
+                    #                        label='Group2 thr')
+                    # mean_thr = mlines.Line2D([], [], color='lightgreen',
+                    #                          linestyle="solid", marker=None,
+                    #                          label='mean thr')
+                    # ax.legend(handles=[group1, group2, mean_thr], fontsize=6,
+                    #           loc='lower right')
+                    #
+                    # # decorate plot
+                    # ax.set_title(f'{isi_name} psignifit thresholds')
+                    # ax.set_xticks([-2, -1, 0, 1, 2, 3, 6, 18])
+                    # ax.set_xticklabels(['', '\n1probe', 0, 1, 2, 3, 6, 18])
+                    # ax.set_xlabel('Probe separation')
+                    # ax.set_ylim([0, 110])
+                    # ax.set_ylabel('Probe Luminance')
+                    st1 = mlines.Line2D([], [], color='tab:red',
+                                        marker='v',
+                                        markersize=5, label='group1')
+                    st1_last_val = mlines.Line2D([], [], color='tab:red',
+                                                 linestyle="dotted", marker=None,
+                                                 label='g1_last_val')
+                    st1_psig = mlines.Line2D([], [], color='tab:brown',
+                                             linestyle="dashed", marker=None,
+                                             label='g1_psig_thr')
+                    st2 = mlines.Line2D([], [], color='tab:blue',
+                                        marker='o',
+                                        markersize=5, label='group2')
+                    st2_last_val = mlines.Line2D([], [], color='tab:blue',
+                                                 linestyle="dotted", marker=None,
+                                                 label='g2_last_val')
+                    st2_psig = mlines.Line2D([], [], color='royalblue',
+                                             linestyle="dashed", marker=None,
+                                             label='g2_psig_thr')
+                    ax.legend(handles=[st1, st1_last_val, st1_psig, st2, st2_last_val, st2_psig],
+                              fontsize=8, loc='center')
+                    print('empty plot')
 
                 ax_counter += 1
 
