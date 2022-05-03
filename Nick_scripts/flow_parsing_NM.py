@@ -23,6 +23,8 @@ flow_bgcolor = [-0.1, -0.1, -0.1]  # dark grey converts to:
 rgb: -0.1 = rgb1: .45 = rgb255: 114.75 = lum: 47.8.
 for future ref, to match exp1 it should be flow_bgcolor = [-0.6, -0.6, -0.6]  # dark grey'''
 
+# todo: this code generally works - but I need to find the right speeds for these conditions./stimuli
+
 # Ensure that relative paths start from the same directory as this script
 _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
