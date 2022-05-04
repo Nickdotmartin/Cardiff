@@ -10,7 +10,9 @@ from check_home_dir import switch_path
 old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data'
 exp_path = switch_path(old_exp_path, 'wind_oneDrive')
 print(f"exp_path: {exp_path}")
-participant_list = ['aa', 'bb', 'cc', 'dd', 'ee']
+# participant_list = ['aa', 'bb', 'cc', 'dd', 'ee']
+participant_list = ['aa']
+
 n_runs = 6
 
 p_idx_plus = 1
@@ -93,7 +95,7 @@ for p_idx, participant_name in enumerate(participant_list):
         run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
         thr_path = os.path.join(save_path, 'psignifit_thresholds.csv')
 
-        b3_plot_staircase(run_data_path, show_plots=True)
+        b3_plot_staircase(run_data_path, show_plots=False)
 
         # '''c'''
         # c_plots(save_path=save_path, show_plots=True)

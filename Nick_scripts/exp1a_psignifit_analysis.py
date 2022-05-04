@@ -1708,8 +1708,10 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
 
         # show and close plots
         if save_plots:
-            savename = f'staircases_{isi_name}.png'
-            plt.savefig(f'{save_path}{os.sep}{savename}')
+            # savename = f'staircases_{isi_name}.png'
+            save_fig_path = os.path.join(save_path, f'staircases_{isi_name}.png')
+            print(f'saving fig to: {save_fig_path}')
+            plt.savefig(save_fig_path)
 
         if show_plots:
             plt.show()
