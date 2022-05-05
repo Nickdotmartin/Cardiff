@@ -543,7 +543,7 @@ def plot_data_unsym_batman(pos_and_neg_sep_df,
     # save plot
     if save_path is not None:
         if save_name is not None:
-            plt.savefig(f'{save_path}{os.sep}{save_name}')
+            plt.savefig(os.path.join(save_path, save_name))
 
     if verbose:
         print("\n*** finished plot_data_unsym_batman() ***\n")
@@ -714,7 +714,7 @@ def plot_runs_ave_w_errors(fig_df, error_df,
 
     if save_path is not None:
         if save_name is not None:
-            plt.savefig(f'{save_path}{os.sep}{save_name}')
+            plt.savefig(os.path.join(save_path, save_name))
 
     return fig
 
@@ -1136,7 +1136,7 @@ def multi_batman_plots(mean_df, thr1_df, thr2_df,
 
     if save_path is not None:
         if save_name is not None:
-            plt.savefig(f'{save_path}{os.sep}{save_name}')
+            plt.savefig(os.path.join(save_path, save_name))
 
     print("\n*** finished multi_batman_plots() ***")
 
@@ -1345,7 +1345,7 @@ def multi_pos_sep_per_isi(ave_thr_df, error_df,
 
     if save_path is not None:
         if save_name is not None:
-            plt.savefig(f'{save_path}{os.sep}{save_name}')
+            plt.savefig(os.path.join(save_path, save_name))
 
     print("\n*** finished multi_pos_sep_per_isi() ***")
 
@@ -1409,7 +1409,7 @@ def plot_thr_heatmap(heatmap_df,
 
     if save_path is not None:
         if save_name is not None:
-            plt.savefig(f'{save_path}{os.sep}{save_name}')
+            plt.savefig(os.path.join(save_path, save_name))
 
     return heatmap
 
@@ -1581,7 +1581,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
 
     '''the eighth plot is the last thr for each sep (+sep, -sep and mean).  
     get data from psignifit_thresholds.csv and reshape here'''
-    thr_csv_name = f'{save_path}{os.sep}psignifit_thresholds.csv'
+    thr_csv_name = os.path.join(save_path, 'psignifit_thresholds.csv')
     psignifit_thr_df = pd.read_csv(thr_csv_name)
     if verbose:
         print(f'\npsignifit_thr_df:\n{psignifit_thr_df}')
@@ -1774,9 +1774,9 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
 
         # show and close plots
         if save_plots:
-            savename = f'staircases_{isi_name}.png'
-            plt.savefig(f'{save_path}{os.sep}{savename}')
-
+            save_name = f'staircases_{isi_name}.png'
+            plt.savefig(os.path.join(save_path, save_name))
+            
         if show_plots:
             plt.show()
         plt.close()
@@ -1787,7 +1787,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
     n_reversals_df.set_index('stair', inplace=True)
     if verbose:
         print(f'n_reversals_df:\n{n_reversals_df}')
-    n_reversals_df.to_csv(f'{save_path}{os.sep}n_reversals.csv')
+    n_reversals_df.to_csv(os.path.join(save_path, 'n_reversals.csv'))
 
     print("\n***finished b3_plot_staircases()***\n")
 
@@ -1847,7 +1847,7 @@ def b3_plot_stair_sep0(all_data_path, thr_col='probeLum', resp_col='trial_respon
 
     '''the eighth plot is the last thr for each sep (+sep, -sep and mean).  
     get data from psignifit_thresholds.csv and reshape here'''
-    thr_csv_name = f'{save_path}{os.sep}psignifit_thresholds.csv'
+    thr_csv_name = os.path.join(save_path, 'psignifit_thresholds.csv')
     psignifit_thr_df = pd.read_csv(thr_csv_name)
     if verbose:
         print(f'\npsignifit_thr_df:\n{psignifit_thr_df}')
@@ -1952,9 +1952,9 @@ def b3_plot_stair_sep0(all_data_path, thr_col='probeLum', resp_col='trial_respon
 
     # show and close plots
     if save_plots:
-        # savename = f'staircases_{isi_name}.png'
-        savename = 'staircases_bloch.png'
-        plt.savefig(f'{save_path}{os.sep}{savename}')
+        # save_name = f'staircases_{isi_name}.png'
+        save_name = 'staircases.png'
+        plt.savefig(os.path.join(save_path, save_name))
 
     if show_plots:
         plt.show()
@@ -1972,7 +1972,7 @@ def b3_plot_stair_sep0(all_data_path, thr_col='probeLum', resp_col='trial_respon
     n_reversals_df.drop('del', inplace=True)
     if verbose:
         print(f'n_reversals_df:\n{n_reversals_df}')
-    n_reversals_df.to_csv(f'{save_path}{os.sep}n_reversals.csv')
+    n_reversals_df.to_csv(os.path.join(save_path, 'n_reversals.csv'))
 
     print("\n***finished b3_plot_stair_sep0()***\n")
 
@@ -2007,7 +2007,7 @@ def c_plots(save_path, isi_name_list=None, show_plots=True, verbose=True):
     print("\n*** running c_plots() ***\n")
 
     # load df mean of last n probeLum values (14 stairs x 8 isi).
-    thr_csv_name = f'{save_path}{os.sep}psignifit_thresholds.csv'
+    thr_csv_name = os.path.join(save_path, 'psignifit_thresholds.csv')
 
     # this psig_thr_df is in stair order (e.g., stairs 0, 1, 2, 3 == sep: 18, -18, 6, -6 etc)
     psig_thr_df = pd.read_csv(thr_csv_name)
@@ -2214,7 +2214,7 @@ def d_average_participant(root_path, run_dir_names_list,
     all_psignifit_list = []
     for run_idx, run_name in enumerate(run_dir_names_list):
 
-        this_psignifit_df = pd.read_csv(f'{root_path}{os.sep}{run_name}{os.sep}{thr_df_name}.csv')
+        this_psignifit_df = pd.read_csv(os.path.join(root_path, run_name, thr_df_name, '.csv'))
         print(f'\n{run_idx}. {run_name} - this_psignifit_df:\n{this_psignifit_df}')
 
         if 'Unnamed: 0' in list(this_psignifit_df):
@@ -2236,7 +2236,7 @@ def d_average_participant(root_path, run_dir_names_list,
     # todo: since I added extra ISI conditions, ISI conds are not in ascending order.
     #  Perhaps re-order columns before saving?
 
-    all_data_psignifit_df.to_csv(f'{root_path}{os.sep}MASTER_{thr_df_name}.csv', index=False)
+    all_data_psignifit_df.to_csv(os.path.join(root_path, f'MASTER_{thr_df_name}.csv'), index=False)
     if verbose:
         print(f'\nall_data_psignifit_df:\n{all_data_psignifit_df}')
 
@@ -2247,7 +2247,7 @@ def d_average_participant(root_path, run_dir_names_list,
                                        reference_col='stair_names',
                                        stack_col_id='stack',
                                        verbose=verbose)
-        trimmed_df.to_csv(f'{root_path}{os.sep}MASTER_TM{trim_n}_thresholds.csv', index=False)
+        trimmed_df.to_csv(os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv'), index=False)
 
         get_means_df = trimmed_df
     else:
@@ -2329,7 +2329,7 @@ def d_average_participant(root_path, run_dir_names_list,
     else:
 
         # for Exp2_Bloch_NM_v2
-        if thr_df_name is 'long_thr_df':
+        if thr_df_name == 'long_thr_df':
             groupby_sep_df = get_means_df.drop('stack', axis=1)
             ave_psignifit_thr_df = groupby_sep_df.groupby(['cond_type', 'dur_ms', 'ISI'], sort=False).mean()
 
@@ -2352,13 +2352,11 @@ def d_average_participant(root_path, run_dir_names_list,
     # todo: since I added extra ISI conditions, ISI conds are not in ascending order.
     #  Perhaps re-order columns before saving?
     if trim_n is not None:
-        ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM_thresh.csv')
-        error_bars_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM_thr_error_{error_type}.csv')
-
+        ave_psignifit_thr_df.to_csv(os.path.join(root_path, 'MASTER_ave_TM_thresh.csv'))
+        error_bars_df.to_csv(os.path.join(root_path, f'MASTER_ave_TM_thr_error_{error_type}.csv'))
     else:
-        ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_thresh.csv')
-        error_bars_df.to_csv(f'{root_path}{os.sep}MASTER_ave_thr_error_{error_type}.csv')
-
+        ave_psignifit_thr_df.to_csv(os.path.join(root_path, 'MASTER_ave_thresh.csv'))
+        error_bars_df.to_csv(os.path.join(root_path, f'MASTER_ave_thr_error_{error_type}.csv'))
     print("\n*** finished d_average_participant()***\n")
 
     return ave_psignifit_thr_df, error_bars_df
@@ -2408,7 +2406,8 @@ def e_average_exp_data(exp_path, p_names_list,
         if use_trimmed:
             ave_df_name = 'MASTER_ave_TM_thresh'
 
-        this_p_ave_df = pd.read_csv(f'{exp_path}{os.sep}{p_name}{os.sep}{ave_df_name}.csv')
+        this_ave_df_path = os.path.join(exp_path, p_name, f'{ave_df_name}.csv')
+        this_p_ave_df = pd.read_csv(this_ave_df_path)
 
         if verbose:
             print(f'{p_idx}. {p_name} - this_p_ave_df:\n{this_p_ave_df}')
@@ -2417,6 +2416,8 @@ def e_average_exp_data(exp_path, p_names_list,
             this_p_ave_df.drop('Unnamed: 0', axis=1, inplace=True)
 
         stair_names_list = this_p_ave_df['stair_names'].tolist()
+        if verbose:
+            print(f'stair_names_list: {stair_names_list}')
         cong_list = [-1 if x < 0 else 1 for x in stair_names_list]
         sep_list = [0 if x == -.10 else abs(int(x)) for x in stair_names_list]
 
@@ -2437,7 +2438,7 @@ def e_average_exp_data(exp_path, p_names_list,
         all_exp_thr_df = all_exp_thr_df[new_cols_list]
     if verbose:
         print(f'\nall_exp_thr_df:{list(all_exp_thr_df.columns)}\n{all_exp_thr_df}')
-    all_exp_thr_df.to_csv(f'{exp_path}{os.sep}MASTER_exp_thr.csv', index=False)
+    all_exp_thr_df.to_csv(os.path.join(exp_path, 'MASTER_exp_thr.csv'), index=False)
 
     # # get means and errors
     groupby_sep_df = all_exp_thr_df.drop('participant', axis=1)
@@ -2466,9 +2467,8 @@ def e_average_exp_data(exp_path, p_names_list,
         print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
 
     # save csv with average values
-    exp_ave_thr_df.to_csv(f'{exp_path}{os.sep}MASTER_exp_ave_thr.csv')
-    error_bars_df.to_csv(f'{exp_path}{os.sep}MASTER_ave_thr_error_{error_type}.csv')
-
+    exp_ave_thr_df.to_csv(os.path.join(exp_path, 'MASTER_exp_ave_thr.csv'))
+    error_bars_df.to_csv(os.path.join(exp_path, f'MASTER_ave_thr_error_{error_type}.csv'))
     print("\n*** finished e_average_over_participants()***\n")
 
     return exp_ave_thr_df, error_bars_df
