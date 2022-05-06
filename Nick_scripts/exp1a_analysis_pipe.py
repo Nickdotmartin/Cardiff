@@ -11,7 +11,7 @@ old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data'
 exp_path = switch_path(old_exp_path, 'wind_oneDrive')
 print(f"exp_path: {exp_path}")
 # participant_list = ['aa', 'bb', 'cc', 'dd', 'ee']
-participant_list = ['aa']
+participant_list = ['ee_psig_6_not_q']
 
 n_runs = 6
 
@@ -54,12 +54,11 @@ for p_idx, participant_name in enumerate(participant_list):
         # p_name = f'{participant_name}{run_idx+1}'
         isi_list = [-1, 0, 2, 4, 6, 9, 12, 24]
 
-        # for first run, some files are saved just as name not name1
-        # check_file = f'{save_path}{os.sep}ISI_-1_probeDur2/{p_name}.csv'
-        check_file = os.path.join(save_path, 'ISI_-1_probeDur2', f'{participant_name}_output.csv')
-
-        if not os.path.isfile(check_file):
-            raise FileNotFoundError(check_file)
+        # # for first run, some files are saved just as name not name1
+        # check_file = os.path.join(save_path, 'ISI_-1_probeDur2', f'{participant_name}_output.csv')
+        #
+        # if not os.path.isfile(check_file):
+        #     raise FileNotFoundError(check_file)
 
         # run_data_df = a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=isi_list, verbose=True)
 
@@ -76,18 +75,18 @@ for p_idx, participant_name in enumerate(participant_list):
         cols_to_add_dict = {'group': [1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2],
                             'separation': [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0, 20, 20]}
 
-        # '''get psignifit thresholds df - use stairs as sep levels rather than using groups'''
-        # thr_df = get_psignifit_threshold_df(root_path=root_path,
-        #                                     p_run_name=run_dir,
-        #                                     csv_name=run_data_df,
-        #                                     n_bins=10, q_bins=True,
-        #                                     sep_col='stair',
-        #                                     isi_list=isi_list,
-        #                                     sep_list=stair_list,
-        #                                     save_plots=True,
-        #                                     cols_to_add_dict=cols_to_add_dict,
-        #                                     verbose=True)
-        # print(f'thr_df:\n{thr_df}')
+        '''get psignifit thresholds df - use stairs as sep levels rather than using groups'''
+        thr_df = get_psignifit_threshold_df(root_path=root_path,
+                                            p_run_name=run_dir,
+                                            csv_name=run_data_df,
+                                            n_bins=6, q_bins=False,
+                                            sep_col='stair',
+                                            isi_list=isi_list,
+                                            sep_list=stair_list,
+                                            save_plots=True,
+                                            cols_to_add_dict=cols_to_add_dict,
+                                            verbose=True)
+        print(f'thr_df:\n{thr_df}')
 
 
         '''b3'''
