@@ -12,7 +12,8 @@ from psignifit_tools import results_to_psignifit
 print('test_all kim data with psignifit.')
 # # Loop through to build dfs of mean diff (e.g., stair1, stair2..)
 run_folder_names = ['P6a-Kim', 'P6b-Kim', 'P6c-Kim', 'P6d-Kim', 'P6e-Kim', 'P6f-Kim']
-root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/project_data/exp1a_data/n_bins_check'
+# root_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/project_data/exp1a_data/n_bins_check'
+root_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\exp1a_data\n_bins_check"
 # run_folder_names = ['P6a-Kim']
 
 participant_name = 'Kim'
@@ -116,7 +117,8 @@ n_bins_list = [25, 10, 9, 7, 6, 5]
 #             thr_filepath = os.path.join(bins_path, thr_filename)
 #             thr_df.to_csv(thr_filepath, index=False)
 
-
+output_lists = []
+isi_name_list = ["isi-1", "isi0", "isi2", "isi4", "isi6", "isi9", "isi12", "isi24"]
 # # get absolute differences
 for q_bins in q_bins_list:
 
@@ -143,11 +145,42 @@ for q_bins in q_bins_list:
             thr_filepath = os.path.join(bins_path, thr_filename)
             thr_df = pd.read_csv(thr_filepath)
 
-            print(thr_df)
+            print(f"{thr_filepath}\n{thr_df}")
 
+            # rathe than use difference values, I might just take the actual values
+            # and look for smallest std.dev.
             diff_list = thr_df.iloc[2].to_list()
             print(diff_list)
+            abs_diff_list = [abs(i) for i in diff_list[1:]]
+            print(abs_diff_list)
+            save_row = [run_dir] + [bin_type] + [n_bins] + abs_diff_list
+            output_lists.append(save_row)
 
+            # list13 = thr_df.iloc[0].to_list()
+            # print(f'list13: {list13}')
+            #
+            # for idx, thr in enumerate(list13[1:]):
+            #     isi_name = isi_name_list[idx]
+            #     row13 = [run_dir, f'{bin_type}{n_bins}', '13', isi_name, thr]
+            #     print(row13)
+            #     output_lists.append(row13)
+            #
+            # list14 = thr_df.iloc[1].to_list()
+            # for idx, thr in enumerate(list14[1:]):
+            #     isi_name = isi_name_list[idx]
+            #     row14 = [run_dir, f'{bin_type}{n_bins}', '14', isi_name, thr]
+            #     print(row14)
+            #     output_lists.append(row14)
+            #     output_lists.append(row14)
+
+
+print(output_lists)
+output_df = pd.DataFrame(data=output_lists, columns=['run', 'bin_type', 'n_bins',
+                                                     "isi-1", "isi0", "isi2", "isi4", "isi6", "isi9", "isi12", "isi24"])
+# output_df = pd.DataFrame(data=output_lists, columns=['run', 'bin_cond', 'stair', 'isi', 'thr'])
+print(f'outout_df:\n{output_df}')
+output_path = os.path.join(root_path, 'compare_n_bins_diff.csv')
+output_df.to_csv(output_path)
 
 # print('make batman plots')
 # row_indices = [0, 1, 2, 3, 4, 5, 4, 3, 2, 1, 0, 6]

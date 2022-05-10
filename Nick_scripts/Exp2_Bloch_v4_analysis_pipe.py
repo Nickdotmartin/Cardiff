@@ -156,7 +156,7 @@ for p_idx, participant_name in enumerate(participant_list):
                             x_ticks_vals=None, x_tick_names=None,
                             x_axis_label='log(duration ms) - 1probe condition',
                             y_axis_label='log(∆I/I)',
-                            fig_title='Bloch_v3: log(area) v log(∆I/I)',
+                            fig_title='Bloch_v3: log(duration) v log(∆I/I)',
                             show_neg1slope=True,
                             save_as=f'{save_path}{os.sep}bloch_v3_log_dur_log_weber.png')
         plt.show()
