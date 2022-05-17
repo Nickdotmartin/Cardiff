@@ -425,7 +425,7 @@ def simple_log_log_plot(thr_df, x_col='area_deg', y_col='weber_thr', hue_col='co
     :param save_as: path and filename to save to
     :return: figure
     """
-    print('\n*** running simple_log_log_plot (x=log(area_deg), y=log(∆thr)) ***')
+    print(f'\n*** running simple_log_log_plot (x=log({x_col}), y=log(∆{y_col})) ***')
     print(f'thr_df:\n{thr_df}')
     fig, ax = plt.subplots(figsize=(6, 6))
     sns.lineplot(data=thr_df, x=x_col, y=y_col, hue=hue_col, marker='o', ax=ax)
@@ -460,6 +460,9 @@ def simple_log_log_plot(thr_df, x_col='area_deg', y_col='weber_thr', hue_col='co
             slope_start_y = thr_df.loc[thr_df['stair_names'] == start_point, y_col].item()
         elif x_col == 'dur_ms':
             slope_start_x = thr_df.iloc[0]['dur_ms']
+            slope_start_y = thr_df.iloc[0]['weber_thr']
+        elif x_col == 'length':
+            slope_start_x = thr_df.iloc[0]['length']
             slope_start_y = thr_df.iloc[0]['weber_thr']
         print(f'slope_start_x: {slope_start_x}')
         print(f'slope_start_y: {slope_start_y}')
@@ -2214,7 +2217,7 @@ def d_average_participant(root_path, run_dir_names_list,
     all_psignifit_list = []
     for run_idx, run_name in enumerate(run_dir_names_list):
 
-        this_psignifit_df = pd.read_csv(os.path.join(root_path, run_name, thr_df_name, '.csv'))
+        this_psignifit_df = pd.read_csv(os.path.join(root_path, run_name, f'{thr_df_name}.csv'))
         print(f'\n{run_idx}. {run_name} - this_psignifit_df:\n{this_psignifit_df}')
 
         if 'Unnamed: 0' in list(this_psignifit_df):
