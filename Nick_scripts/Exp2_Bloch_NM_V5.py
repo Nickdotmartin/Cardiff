@@ -491,14 +491,15 @@ for step in range(n_trials_per_stair):
 
         print(f't_fixation: {t_fixation}fr; {t_fixation*(1/fps)*1000}ms\n'
               f't_bg_motion: {t_bg_motion}fr; {t_bg_motion*(1/fps)*1000}ms\n'
-              f'\tbg_mot_dur: {bg_mot_dur}fr; {bg_mot_dur*(1/fps)*1000}ms\n'
               f't_interval_1: {t_interval_1}fr; {t_interval_1*(1/fps)*1000}ms\n'
-              f'\tint_1_dur: {int_1_dur}fr; {int_1_dur*(1/fps)*1000}ms\n'
               f't_ISI: {t_ISI}fr; {t_ISI*(1/fps)*1000}ms\n'
-              f'\tisi_dur: {isi_dur}fr; {isi_dur*(1/fps)*1000}ms\n'
               f't_interval_2: {t_interval_2}fr; {t_interval_2*(1/fps)*1000}ms\n'
-              f'\tint_2_dur: {int_2_dur}fr; {int_2_dur*(1/fps)*1000}ms\n'
               f't_response: {t_response}fr; {t_response*(1/fps)*1000}ms\n'
+                            
+              f'\tbg_mot_dur: {bg_mot_dur}fr; {bg_mot_dur*(1/fps)*1000}ms\n'
+              f'\tint_1_dur: {int_1_dur}fr; {int_1_dur*(1/fps)*1000}ms\n'
+              f'\tisi_dur: {isi_dur}fr; {isi_dur*(1/fps)*1000}ms\n'
+              f'\tint_2_dur: {int_2_dur}fr; {int_2_dur*(1/fps)*1000}ms\n'
               f'\tresp_dur: {resp_dur}fr; {resp_dur*(1/fps)*1000}ms\n')
 
         # repeat the trial if [r] has been pressed

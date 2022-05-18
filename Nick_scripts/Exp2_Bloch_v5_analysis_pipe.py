@@ -13,7 +13,7 @@ from psignifit_tools import get_psignifit_threshold_df
 
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
-exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp2_Bloch_NM_v4"
+exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp2_Bloch_NM_v5"
 convert_path1 = os.path.normpath(exp_path)
 print(f"convert_path1: {convert_path1}")
 exp_path = convert_path1
@@ -26,12 +26,12 @@ p_idx_plus = 1
 for p_idx, participant_name in enumerate(participant_list):
     root_path = os.path.join(exp_path, participant_name)
 
-    run_folder_names = [f'{participant_name}_{i+1}' for i in list(range(n_runs))]
+    run_folder_names = [f'{participant_name}_{i+p_idx_plus}' for i in list(range(n_runs))]
     print(f'run_folder_names: {run_folder_names}')
 
     for run_idx, run_dir in enumerate(run_folder_names):
 
-        print(f'\nrunning analysis for {participant_name}, {run_dir}, {participant_name}{run_idx+1}\n')
+        print(f'\nrunning analysis for {participant_name}, {run_dir}, {participant_name}{run_idx+p_idx_plus}\n')
         save_path = f'{root_path}{os.sep}{run_dir}'
 
         # don't delete this (participant_name = participant_name),
@@ -39,7 +39,7 @@ for p_idx, participant_name in enumerate(participant_list):
         p_name = participant_name
 
         # '''a'''
-        p_name = f'{participant_name}_{run_idx+1}'
+        p_name = f'{participant_name}_{run_idx+p_idx_plus}'
 
         # for first run, some files are saved just as name not name1
         run_data_path = f'{save_path}{os.sep}{p_name}_output.csv'
@@ -108,8 +108,8 @@ for p_idx, participant_name in enumerate(participant_list):
                      x_tick_names=isi_labels_list,
                      x_axis_label='ISI (2probe cond)',
                      y_axis_label='Probe Luminance',
-                     fig_title='Bloch_v3: probe cond vs thr',
-                     save_as=f'{save_path}{os.sep}bloch_v3_cond_v_thr.png')
+                     fig_title='Bloch_v5: probe cond vs thr',
+                     save_as=f'{save_path}{os.sep}bloch_v5_cond_v_thr.png')
         plt.show()
 
         # I'm not sure I actually need to do a log-log plot for duration.
@@ -127,9 +127,7 @@ for p_idx, participant_name in enumerate(participant_list):
                         25.0: {'frames': 10, 'duration': 41.66666667},
                         37.5: {'frames': 13, 'duration': 54.16666667},
                         50.0: {'frames': 16, 'duration': 66.66666667},
-                        100.0: {'frames': 28, 'duration': 116.6666667},
-                        200.0: {'frames': 52, 'duration': 216.6666667},
-                        }
+                        100.0: {'frames': 28, 'duration': 116.6666667}}
             ISI_col = long_thr_df['ISI'].to_list()
             ISI_col = [float(i) for i in ISI_col]
             print(f'ISI_col: {ISI_col}')
@@ -156,9 +154,9 @@ for p_idx, participant_name in enumerate(participant_list):
                             x_ticks_vals=None, x_tick_names=None,
                             x_axis_label='log(duration ms) - 1probe condition',
                             y_axis_label='log(∆I/I)',
-                            fig_title='Bloch_v3: log(duration) v log(∆I/I)',
+                            fig_title='Bloch_v5: log(duration) v log(∆I/I)',
                             show_neg1slope=True,
-                            save_as=f'{save_path}{os.sep}bloch_v3_log_dur_log_weber.png')
+                            save_as=f'{save_path}{os.sep}bloch_v5_log_dur_log_weber.png')
         plt.show()
 
 
@@ -202,8 +200,8 @@ for p_idx, participant_name in enumerate(participant_list):
     wide_err_df = error_df.pivot(index=['ISI'], columns='cond_type', values='probeLum')
     print(f'wide_err_df:\n{wide_err_df}')
 
-    fig_title = 'Participant average thresholds - Bloch_v3'
-    save_name = 'bloch_v3_sep_v_thr.png'
+    fig_title = 'Participant average thresholds - Bloch_v5'
+    save_name = 'bloch_v5_sep_v_thr.png'
     plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
                            jitter=False, error_caps=True, alt_colours=False,
                            legend_names=None,
@@ -226,8 +224,8 @@ for p_idx, participant_name in enumerate(participant_list):
     wide_err_df = error_df.pivot(index=['dur_ms'], columns='cond_type', values='weber_thr')
     print(f'wide_err_df:\n{wide_err_df}')
 
-    fig_title = 'Participant average ∆I/I thresholds - Bloch_v3'
-    save_name = 'bloch_v3_log_dur_log_weber.png'
+    fig_title = 'Participant average ∆I/I thresholds - Bloch_v5'
+    save_name = 'bloch_v5_log_dur_log_weber.png'
     plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
                            jitter=False, error_caps=True, alt_colours=False,
                            legend_names=None,
