@@ -3,6 +3,7 @@ from psychopy import gui, visual, core, data, event, logging, monitors
 from psychopy import __version__ as psychopy_version
 # import psychopy
 import os
+import numpy as np
 from numpy import deg2rad
 from numpy.random import shuffle
 import random
@@ -20,7 +21,7 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'Asus_VG24'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18'
+monitor_name = 'asus_cal'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18'
 # gamma set at 2.1  [####### this comment is incorrect, its set above i think ############]
 display_number = 1  # 0 indexed, 1 for external display
 
@@ -40,7 +41,7 @@ expName = 'monitor_resp_times_stim'  # from the Builder filename that created th
 
 expInfo = {'1. Participant': 'mon_resp_time_stim',
            '2. Probe duration in frames at 240hz': 2,
-           '3. fps': [60, 144, 240],
+           '3. fps': [240, 60, 144],
            '5. Probe orientation': ['tangent'],
            '6. Probe size': ['5pixels', '6pixels', '3pixels'],
            '7. Background lum in percent of maxLum': 20,
@@ -69,16 +70,23 @@ orientation = expInfo['5. Probe orientation']
 # Distances between probes
 # 99 values for single probe condition
 # separations = [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0, 99, 99]
-sep_vals = [0, 1, 3, 18]
-ISI_vals = [-1, 0, 2, 4, 12, 24]
+#sep_vals = [0, 1, 3, 18]
+#ISI_vals = [-1, 0, 2, 4, 12, 24]
 
-ISI_list = [-1, 0, 2, 4, 12, 24, -1, 0, 2, 4, 12, 24, -1, 0, 2, 4, 12, 24, -1, 0, 2, 4, 12, 24]
-sep_list = [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 18, 18, 18, 18, 18, 18]
+#ISI_list = [-1, 0, 2, 4, 12, 24, -1, 0, 2, 4, 12, 24, -1, 0, 2, 4, 12, 24, -1, 0, 2, 4, 12, 24]
+#sep_list = [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 18, 18, 18, 18, 18, 18]
+#stairs = list(range(len(sep_list)))
+
+sep_vals = [6, 3, 0, 1, 18, 2, 99]
+ISI_vals = [-1, 0, 9, 2, 4, 6, 12, 24]
+
+sep_list = list(np.repeat(sep_vals, len(ISI_vals)))
+ISI_list = list(np.tile(ISI_vals, len(sep_vals)))
 stairs = list(range(len(sep_list)))
 
-# for idx, (this_stair, isi, sep) in enumerate(zip(stairs, ISI_list, sep_list)):
-#     print(idx, this_stair, isi, sep)
-#
+for idx, (this_stair, isi, sep) in enumerate(zip(stairs, ISI_list, sep_list)):
+    print(idx, this_stair, isi, sep)
+
 cond_dict = {i: {'sep': sep, 'isi': isi} for (i, sep, isi) in zip(stairs, sep_list, ISI_list)}
 # print(cond_dict)
 #
@@ -134,8 +142,8 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     pos=[1, -1],  # pos gives position of top-left of screen
                     units='pix',
                     screen=display_number,
-                    allowGUI=True,
-                    fullscr=False,
+                    allowGUI=False,
+                    fullscr=True,
                     )
 
 print(f"type(win.getActualFrameRate()): {type(win.getActualFrameRate())} {win.getActualFrameRate()}")
@@ -197,8 +205,8 @@ while not event.getKeys():
 trials_counter = visual.TextStim(win=win, name='trials_counter', text="???",
                                  font='Arial', height=20,
                                  # default set to black (e.g., invisible)
-                                 color='black',
-                                 pos=[-widthPix*.45, -heightPix*.45])
+                                 color='white',
+                                 pos=[-widthPix*.20, -heightPix*.20])
 if trials_counter:
     # if trials counter yes, change colour to white.
     trials_counter.color = 'white'
@@ -308,7 +316,7 @@ while this_cond < n_conds:
 
     # timing in frames
     # if ISI >= 0:
-    t_fixation = 1 * fps
+    t_fixation =  fps/10  # 1 * fps
     t_interval_1 = t_fixation + probe_duration
     t_ISI = t_interval_1 + ISI
     t_interval_2 = t_ISI + probe_duration

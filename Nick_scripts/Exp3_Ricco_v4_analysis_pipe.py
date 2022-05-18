@@ -18,8 +18,8 @@ exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardi
 convert_path1 = os.path.normpath(exp_path)
 print(f"convert_path1: {convert_path1}")
 exp_path = convert_path1
-participant_list = ['Kim', 'Simon', 'Nick']  # 'Nick''Nick_120ms_dur', 'bb', 'cc', 'dd', 'ee']
-n_runs = 3
+participant_list = ['Simon']  # 'Nick''Kim', 'bb', 'cc', 'dd', 'ee']
+n_runs = 6
 
 p_idx_plus = 1
 
@@ -54,50 +54,50 @@ for p_idx, participant_name in enumerate(participant_list):
             run_data_df.drop(unnamed_col, axis=1, inplace=True)
         run_data_df.sort_values(by=['stair', 'step'], inplace=True, ignore_index=True)
 
-        # # # save sorted csv
-        # run_data_df.to_csv(run_data_path, index=False)
-        #
-        # run_data_df = pd.read_csv(run_data_path, usecols=
-        #                           ['trial_number', 'stair', 'stair_name', 'step',
-        #                            'separation', 'cond_type', 'ISI', 'corner',
-        #                            'probeLum',
-        #                            # 'weber_lum',
-        #                            'trial_response', '3_fps'])
-        # print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}\n")
-        #
-        # # extract values from dataframe
-        # separation_values = run_data_df['separation'].unique()
-        # stair_list = run_data_df['stair'].unique()
-        # isi_list = run_data_df['ISI'].unique()
-        # print(f'separation_values: {separation_values}')
-        # print(f'isi_list: {isi_list}')
-        # print(f'stair_list: {stair_list}')
-        #
-        # cond_types = run_data_df['cond_type'].unique()
-        # sep_vals_list = list(np.repeat(separation_values, len(cond_types)))
-        # cond_type_list = list(np.tile(cond_types, len(separation_values)))
-        # print(f'cond_types: {cond_types}')
-        # print(f'sep_vals_list: {sep_vals_list}')
-        # print(f'cond_type_list: {cond_type_list}')
-        #
-        # stair_names_list = run_data_df['stair_name'].unique()
-        # print(f'stair_names_list: {stair_names_list}')
-        # cols_to_add_dict = {'stair_names': stair_names_list,
-        #                     'separation': sep_vals_list,
-        #                     'cond': cond_type_list}
-        #
-        # thr_save_name = 'psignifit_thresholds'
-        # thr_df = get_psignifit_threshold_df(root_path=root_path,
-        #                                     p_run_name=run_dir,
-        #                                     csv_name=run_data_df,
-        #                                     n_bins=10, q_bins=True,
-        #                                     sep_col='stair_name',
-        #                                     isi_list=isi_list,
-        #                                     sep_list=stair_names_list,
-        #                                     cols_to_add_dict=cols_to_add_dict,
-        #                                     save_name=thr_save_name,
-        #                                     verbose=True)
-        # print(f'thr_df: {type(thr_df)}\n{thr_df}')
+        # # save sorted csv
+        run_data_df.to_csv(run_data_path, index=False)
+
+        run_data_df = pd.read_csv(run_data_path, usecols=
+                                  ['trial_number', 'stair', 'stair_name', 'step',
+                                   'separation', 'cond_type', 'ISI', 'corner',
+                                   'probeLum',
+                                   # 'weber_lum',
+                                   'trial_response', '3_fps'])
+        print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}\n")
+
+        # extract values from dataframe
+        separation_values = run_data_df['separation'].unique()
+        stair_list = run_data_df['stair'].unique()
+        isi_list = run_data_df['ISI'].unique()
+        print(f'separation_values: {separation_values}')
+        print(f'isi_list: {isi_list}')
+        print(f'stair_list: {stair_list}')
+
+        cond_types = run_data_df['cond_type'].unique()
+        sep_vals_list = list(np.repeat(separation_values, len(cond_types)))
+        cond_type_list = list(np.tile(cond_types, len(separation_values)))
+        print(f'cond_types: {cond_types}')
+        print(f'sep_vals_list: {sep_vals_list}')
+        print(f'cond_type_list: {cond_type_list}')
+
+        stair_names_list = run_data_df['stair_name'].unique()
+        print(f'stair_names_list: {stair_names_list}')
+        cols_to_add_dict = {'stair_names': stair_names_list,
+                            'separation': sep_vals_list,
+                            'cond': cond_type_list}
+
+        thr_save_name = 'psignifit_thresholds'
+        thr_df = get_psignifit_threshold_df(root_path=root_path,
+                                            p_run_name=run_dir,
+                                            csv_name=run_data_df,
+                                            n_bins=9, q_bins=True,
+                                            sep_col='stair_name',
+                                            isi_list=isi_list,
+                                            sep_list=stair_names_list,
+                                            cols_to_add_dict=cols_to_add_dict,
+                                            save_name=thr_save_name,
+                                            verbose=True)
+        print(f'thr_df: {type(thr_df)}\n{thr_df}')
 
 
         '''b3'''

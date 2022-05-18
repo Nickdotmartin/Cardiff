@@ -66,7 +66,7 @@ for p_idx, participant_name in enumerate(participant_list):
         thr_df = get_psignifit_threshold_df(root_path=root_path,
                                             p_run_name=run_dir,
                                             csv_name=run_data_df,
-                                            n_bins=10, q_bins=True,
+                                            n_bins=9, q_bins=True,
                                             stair_col='stair',
                                             dur_list=probe_dur_list,
                                             stair_list=stair_list,

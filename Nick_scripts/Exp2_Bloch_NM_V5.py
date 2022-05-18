@@ -30,7 +30,7 @@ os.chdir(_thisDir)
 monitor_name = 'Asus_VG24'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18'
 
 # Store info about the experiment session
-expName = 'Exp2_Bloch_NM_v4'  # from the Builder filename that created this script
+expName = 'Exp2_Bloch_NM_v5'  # from the Builder filename that created this script
 
 expInfo = {'1_Participant': 'Nick_test',
            '2_Probe_dur_in_frames_at_240hz': [2, 50],
@@ -65,7 +65,9 @@ frames@240hz: [24,  12,  10,    9,    8,     6,  4,    2,    0]
 
 # -2 is the 1pr condition
 # ISI_ms_list = [-2, 0, 8.33, 16.67, 25, 37.5, 50, 100, 200]
-ISI_ms_list = [-2, 0, 8.33, 16.67, 25, 37.5, 50, 100]  # , 200]
+ISI_ms_list = [-2, 0, 8.3333334,
+               16.6666667,
+               25, 37.5, 50, 100]  # , 200]
 print(f'ISI_ms_list: {ISI_ms_list}')
 
 isi_fr_list = [-2 if i == -2 else int(i * fps / 1000) for i in ISI_ms_list]
@@ -93,6 +95,8 @@ print(f'isi_fr_vals_list: {isi_fr_vals_list}')
 dur_fr_list = [i + 4 for i in isi_fr_vals_list]
 one_frame_ms = 1000 / fps
 dur_ms_list = [i * one_frame_ms for i in dur_fr_list]
+print(f'dur_fr_list: {dur_fr_list}')
+print(f'dur_ms_list: {dur_ms_list}')
 
 n_stairs = len(isi_vals_list)
 
@@ -363,6 +367,7 @@ for step in range(n_trials_per_stair):
         if ISI_cond == -2:
             ISI_time = 0
             ISI_actual_ms = 0
+            ISI_fr = 0
         else:
             ISI_time = ISI_cond
             ISI_actual_ms = (1000 / fps) * ISI_fr
@@ -473,7 +478,7 @@ for step in range(n_trials_per_stair):
         t_fixation = 1 * (fps - prelim_bg_flow_fr)
         t_bg_motion = t_fixation + prelim_bg_flow_fr
         t_interval_1 = t_bg_motion + probe_duration
-        t_ISI = t_interval_1 + ISI_time
+        t_ISI = t_interval_1 + ISI_fr
         t_interval_2 = t_ISI + probe_duration
         # essentially unlimited time to respond
         t_response = t_interval_2 + 10000 * fps
