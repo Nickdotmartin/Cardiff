@@ -1494,7 +1494,7 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
                            'flow_dir', 'probe_jump', 'corner', 'probeLum',
                            'trial_response', 'resp.rt', 'probeColor1', 'probeColor255',
                            'probe_ecc', 'BGspeed', 'orientation', 'ISI_actual_ms',
-                           'ISI_frames', '1_Participant', '2_Probe_dur_in_frames_at_240hz',
+                           '1_Participant', '2_Probe_dur_in_frames_at_240hz',
                            '3_fps', '4_ISI_dur_in_ms', '5_Probe_orientation',
                            '6_Probe_size', '7_Trials_counter', '8_Background',
                            'date', 'time', 'stair_list', 'n_trials_per_stair']
