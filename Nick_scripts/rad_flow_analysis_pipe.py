@@ -8,20 +8,19 @@ from rad_flow_psignifit_analysis import c_plots, d_average_participant, make_ave
 # # then run script d to get master lists and averages
 # exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp'
 # exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/rad_flow_2'
-exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_half'
+exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2'
 stair_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-participant_list = ['Simon_half']  # , 'Nick_half_speed']
+participant_list = ['Nick']  # , 'Nick_half_speed']
 # isi_list = [1, 4, 6, 9]
-# isi_names_list = ['ISI_1', 'ISI_4', 'ISI_6', 'ISI_9']
-isi_list = [4, 6]
-isi_names_list = ['ISI_4', 'ISI_6']
+isi_list = [6, 9]
+isi_names_list = [f'ISI_{i}' for i in isi_list]
 
 exp_path = os.path.normpath(exp_path)
 
 verbose = True
 show_plots = True
 
-n_runs = 10
+n_runs = 6
 # if the first folder to analyse is 1, p_idx_plus = 1.  If the forst folder is 5, use 5 etc.
 p_idx_plus = 1
 
@@ -44,45 +43,45 @@ for p_idx, participant_name in enumerate(participant_list):
 
         print(f'\nrun_idx {run_idx}: running analysis for '
               f'{participant_name}, {run_dir}, {participant_name}_{r_idx_plus}\n')
-        # save_path = f'{root_path}{os.sep}{run_dir}'
-        #
-        # # don't delete this (p_name = participant_name),
-        # # needed to ensure names go name1, name2, name3 not name1, name12, name123
-        # p_name = participant_name
-        #
-        # '''a'''
-        # p_name = f'{participant_name}_{r_idx_plus}'
-        #
-        # a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=isi_list, verbose=verbose)
-        #
-        # run_data_path = f'{save_path}{os.sep}ALL_ISIs_sorted.xlsx'
-        # run_data_df = pd.read_excel(run_data_path, engine='openpyxl',
-        #                             usecols=["ISI", "stair", "stair_name",
-        #                                      "step", "separation", "congruent",
-        #                                      "flow_dir", "probe_jump", "corner",
-        #                                      "probeLum", "trial_response"])
-        # print(f"run_data_df:\n{run_data_df}")
-        #
-        # '''get psignifit thresholds df'''
-        # cols_to_add_dict = {'stair_names': [18, -18, 6, -6, 3, -3, 2, -2, 1, -1, 0, -0.1],
-        #                     'congruent':  [1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1],
-        #                     'separation': [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]}
-        # thr_df = get_psignifit_threshold_df(root_path=root_path,
-        #                                     p_run_name=run_dir,
-        #                                     csv_name=run_data_df,
-        #                                     n_bins=9, q_bins=True,
-        #                                     sep_col='stair',
-        #                                     isi_list=isi_list,
-        #                                     sep_list=stair_list,
-        #                                     cols_to_add_dict=cols_to_add_dict,
-        #                                     verbose=verbose)
-        # print(f'thr_df:\n{thr_df}')
-        #
-        # '''b3'''
-        # b3_plot_staircase(run_data_path, show_plots=show_plots, verbose=verbose)
-        #
-        # '''c I don't actually need any of these, instead sort get psignifit thr ands make plots from those.'''
-        # c_plots(save_path=save_path, isi_name_list=isi_names_list, show_plots=show_plots, verbose=verbose)
+        save_path = f'{root_path}{os.sep}{run_dir}'
+
+        # don't delete this (p_name = participant_name),
+        # needed to ensure names go name1, name2, name3 not name1, name12, name123
+        p_name = participant_name
+
+        '''a'''
+        p_name = f'{participant_name}_{r_idx_plus}'
+
+        a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=isi_list, verbose=verbose)
+
+        run_data_path = f'{save_path}{os.sep}ALL_ISIs_sorted.xlsx'
+        run_data_df = pd.read_excel(run_data_path, engine='openpyxl',
+                                    usecols=["ISI", "stair", "stair_name",
+                                             "step", "separation", "congruent",
+                                             "flow_dir", "probe_jump", "corner",
+                                             "probeLum", "trial_response"])
+        print(f"run_data_df:\n{run_data_df}")
+
+        '''get psignifit thresholds df'''
+        cols_to_add_dict = {'stair_names': [18, -18, 6, -6, 3, -3, 2, -2, 1, -1, 0, -0.1],
+                            'congruent':  [1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1],
+                            'separation': [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]}
+        thr_df = get_psignifit_threshold_df(root_path=root_path,
+                                            p_run_name=run_dir,
+                                            csv_name=run_data_df,
+                                            n_bins=9, q_bins=True,
+                                            sep_col='stair',
+                                            isi_list=isi_list,
+                                            sep_list=stair_list,
+                                            cols_to_add_dict=cols_to_add_dict,
+                                            verbose=verbose)
+        print(f'thr_df:\n{thr_df}')
+
+        '''b3'''
+        b3_plot_staircase(run_data_path, show_plots=show_plots, verbose=verbose)
+
+        '''c I don't actually need any of these, instead sort get psignifit thr ands make plots from those.'''
+        c_plots(save_path=save_path, isi_name_list=isi_names_list, show_plots=show_plots, verbose=verbose)
 
     '''d participant averages'''
     trim_n = None
