@@ -12,18 +12,35 @@ This script will:
 2. Allow me to inspect (e.g., visualise frames) to select/trim to 100 frames that include both probes for all ISIs.
 Note the longest ISI is 24 frames/100ms, which will equate to 96 frames here at 960Hz.
 The id of the first frame to be stored for each video.
+I will actually skip back 5 frames prior to this to makes sure I get the full rise.
 
 3. Allow me to inspect and identify the co-ordinates for bounding boxes for each probe.
 Martin used 11x11 pixels, although our boxes might be a different size depending on how the camera has captured this.
+for now my box is 5x5 pixels.
 
 a) start frame
 b) bounding box for probe 1
 c) bounding box for probe 2
 
 4. The actual analysis involves recoding the mean intensity of the pixels in each box, across 100 frames.
+Note, Martin used the max intensity rather than the mean.  I should do both.
+He then reports the mean intensity as the mean of the two boxes. 
+That can't be right - as when only one probe is present, the mean will be lowered??? 
 
 5. Seaborn plots of the data.  Frames on x-axis, mean intensity on y axis.
 
+
+approx durations for the action in frames
+@ 240   @240    @960
+ISI_fr  p1+ISI  @960
+-1      0       0
+0       2       8
+2       4       16
+4       6       24
+6       8       32          
+9       11      44
+12      14      56
+24      26      104
 '''
 
 videos_dir = r"C:\Users\sapnm4\Videos\monitor_calibration_videos"
@@ -74,16 +91,22 @@ ISI_vals = [-1, 0, 9, 2, 4, 6, 12, 24]
 
 # # part 2
 '''
-Once I have made an xlsx document storing the first useful frame of each video I will load it here.
+part 2
 
-I then also need to visualise frames and be able to try cropping ROIs and displaying them on the screen.
-
-Hopefully I can simply store a single tuple for the ROI (e.g., top-left corner)
-
+I am manually using this bit of code to get the co-ordinates for the bounding boxes.
 '''
-isi = -1
-sep = 18
-frame = 230
+
+isi = 2
+sep = 2
+frame = 159
+ROI_size = 5  # 5
+enlarge_scale = 10
+
+p1_tl = 171, 435
+# p1_tl = 172, 435
+
+p2_tl = 168, 440
+
 
 root_dir = r"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\mon_cali_images"
 cond_dir = rf"ISI{isi}_sep{sep}\all_full_frames"
@@ -106,48 +129,41 @@ fixation = 20, 290
 crop_size = 190
 crop = img[fixation[0]:fixation[0]+crop_size, fixation[1]:fixation[1]+crop_size]
 print(f'cropped: ({fixation[0]}: {fixation[0]+crop_size}, {fixation[1]}: {fixation[1]+crop_size})')
+cv2.imshow('original', img)
+cv2.imshow('cropped', crop)
 
-ROI_size = 50  # 5
-
-p1_tl = 171, 435
 
 p1_box = img[p1_tl[0]: p1_tl[0]+ROI_size, p1_tl[1]: p1_tl[1]+ROI_size]
 print(f'p1_box: ({p1_tl[0]}: {p1_tl[0]+ROI_size}, {p1_tl[1]}: {p1_tl[1]+ROI_size})')
-
-# cv2.imshow('original', img)
-# cv2.imshow('cropped', crop)
 # cv2.imshow('p1_box', p1_box)
-scale = 10
-w = int(p1_box.shape[1] * scale)
-h = int(p1_box.shape[0] * scale)
+
+w = int(p1_box.shape[1] * enlarge_scale)
+h = int(p1_box.shape[0] * enlarge_scale)
 big_p1_box = cv2.resize(p1_box, (w, h))
 cv2.imshow('big_p1_box', big_p1_box)
-
-p2_tl = 130, 440
 
 p2_box = img[p2_tl[0]: p2_tl[0]+ROI_size, p2_tl[1]: p2_tl[1]+ROI_size]
 print(f'p2_box: ({p2_tl[0]}: {p2_tl[0]+ROI_size}, {p2_tl[1]}: {p2_tl[1]+ROI_size})')
 
 print(f'p2_box array: \n{p2_box}')
 
-cv2.imshow('original', img)
-cv2.imshow('cropped', crop)
+
 # cv2.imshow('p2_box', p2_box)
-scale = 10
-w = int(p2_box.shape[1] * scale)
-h = int(p2_box.shape[0] * scale)
+w = int(p2_box.shape[1] * enlarge_scale)
+h = int(p2_box.shape[0] * enlarge_scale)
 big_p2_box = cv2.resize(p2_box, (w, h))
 cv2.imshow('big_p2_box', big_p2_box)
 
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 
-
-cv2.waitKey(0)
-cv2.destroyAllWindows()
-
-
 '''
+Once I have made an xlsx document storing the first useful frame of each video I will load it here.
+
+I then also need to visualise frames and be able to try cropping ROIs and displaying them on the screen.
+
+Hopefully I can simply store a single tuple for the ROI (e.g., top-left corner)
+
 add something to convert images to greyscale - perhaps when saving bounding boxes.
 Or infact
 1. convert bounding box to grey - save image

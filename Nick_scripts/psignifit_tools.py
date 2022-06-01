@@ -215,6 +215,22 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
                 print(f"{k}: {v}")
 
     # get threshold
+    # todo: get confidence intervals and save them in a csv.  also add conf interval to the plot.
+    '''
+    https://github.com/wichmann-lab/python-psignifit/wiki/How-to-Get-Thresholds-and-Slopes
+    The only change you may observe is that the getThreshold function always returns a tuple 
+    with the point estimate and confidence intervals. This could not be avoided as python functions 
+    are not told which of their outputs are used by the calling program. 
+    The warnings about these confidence intervals being a rough worst case approximation still 
+    applies as spelled out in detail for the MATLAB version.
+
+    To get only the threshold call:
+    ps.getThreshold(res,percentCorrect)[0]
+    
+    so I probably can add conf_int = threshold[1]
+    
+    READ THEIR psignifit 4 PAPER FIRST
+    '''
     threshold = ps.getThreshold(res, target_threshold)
     if options['estimateType'] == 'mean':
         threshold = round(threshold[0][0], 2)

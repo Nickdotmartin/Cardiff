@@ -20,7 +20,7 @@ exp_path = os.path.normpath(exp_path)
 verbose = True
 show_plots = True
 
-n_runs = 6
+n_runs = 1
 # if the first folder to analyse is 1, p_idx_plus = 1.  If the forst folder is 5, use 5 etc.
 p_idx_plus = 1
 
@@ -52,7 +52,7 @@ for p_idx, participant_name in enumerate(participant_list):
         '''a'''
         p_name = f'{participant_name}_{r_idx_plus}'
 
-        a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=isi_list, verbose=verbose)
+        # a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=isi_list, verbose=verbose)
 
         run_data_path = f'{save_path}{os.sep}ALL_ISIs_sorted.xlsx'
         run_data_df = pd.read_excel(run_data_path, engine='openpyxl',
@@ -77,35 +77,38 @@ for p_idx, participant_name in enumerate(participant_list):
                                             verbose=verbose)
         print(f'thr_df:\n{thr_df}')
 
-        '''b3'''
-        b3_plot_staircase(run_data_path, show_plots=show_plots, verbose=verbose)
+    #     '''b3'''
+    #     b3_plot_staircase(run_data_path, show_plots=show_plots, verbose=verbose)
+    #
+    #     '''c I don't actually need any of these, instead sort get psignifit thr ands make plots from those.'''
+    #     c_plots(save_path=save_path, isi_name_list=isi_names_list, show_plots=show_plots, verbose=verbose)
+    #
+    # '''d participant averages'''
+    # trim_n = None
+    # if len(run_folder_names) == 12:
+    #     trim_n = 1
+    # d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
+    #                       trim_n=trim_n, error_type='SE', verbose=verbose)
+    #
+    # all_df_path = f'{root_path}/MASTER_TM1_thresholds.csv'
+    # p_ave_path = f'{root_path}/MASTER_ave_TM_thresh.csv'
+    # err_path = f'{root_path}/MASTER_ave_TM_thr_error_SE.csv'
+    # n_trimmed = trim_n
+    # if n_trimmed is None:
+    #     all_df_path = f'{root_path}/MASTER_psignifit_thresholds.csv'
+    #     p_ave_path = f'{root_path}/MASTER_ave_thresh.csv'
+    #     err_path = f'{root_path}/MASTER_ave_thr_error_SE.csv'
+    # exp_ave = False
+    #
+    # make_average_plots(all_df_path=all_df_path,
+    #                    ave_df_path=p_ave_path,
+    #                    error_bars_path=err_path,
+    #                    n_trimmed=n_trimmed,
+    #                    exp_ave=False,
+    #                    show_plots=True, verbose=True)
 
-        '''c I don't actually need any of these, instead sort get psignifit thr ands make plots from those.'''
-        c_plots(save_path=save_path, isi_name_list=isi_names_list, show_plots=show_plots, verbose=verbose)
 
-    '''d participant averages'''
-    trim_n = None
-    if len(run_folder_names) == 12:
-        trim_n = 1
-    d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-                          trim_n=trim_n, error_type='SE', verbose=verbose)
 
-    all_df_path = f'{root_path}/MASTER_TM1_thresholds.csv'
-    p_ave_path = f'{root_path}/MASTER_ave_TM_thresh.csv'
-    err_path = f'{root_path}/MASTER_ave_TM_thr_error_SE.csv'
-    n_trimmed = trim_n
-    if n_trimmed is None:
-        all_df_path = f'{root_path}/MASTER_psignifit_thresholds.csv'
-        p_ave_path = f'{root_path}/MASTER_ave_thresh.csv'
-        err_path = f'{root_path}/MASTER_ave_thr_error_SE.csv'
-    exp_ave = False
-
-    make_average_plots(all_df_path=all_df_path,
-                       ave_df_path=p_ave_path,
-                       error_bars_path=err_path,
-                       n_trimmed=n_trimmed,
-                       exp_ave=False,
-                       show_plots=True, verbose=True)
 
 # print(f'exp_path: {exp_path}')
 # print('\nget exp_average_data')
