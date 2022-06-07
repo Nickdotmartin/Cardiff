@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from rad_flow_psignifit_analysis import make_long_df
 
 
 '''
@@ -314,22 +315,103 @@ results_path = os.path.normpath(results_path)
 results_df = pd.read_csv(results_path)
 print(f'results_df:\n{results_df}')
 
+print(f'headers:\n{results_df.columns}')
+
+
 # loop through conditions
 cond_list = list(results_df['filename'].unique())
 print(f'cond_list:\n{cond_list}')
 
-# for cond_name in cond_list:
-cond_name = cond_list[0]
+# cond_name = cond_list[0]
+for cond_name in cond_list:
 
-cond_df = results_df[results_df['filename'] == cond_name]
-print(f'cond_df:\n{cond_df}')
+    cond_df = results_df[results_df['filename'] == cond_name]
+    print(f'cond_df:\n{cond_df}')
 
-# 1. p1, p2, joint mean on same plot
-# 2. p1, p2, joint max on same plot
+    # 1. p1, p2, joint mean on same plot
 
-# loop through isis
-# 3. by isi - joint means
-# 4. by isi - joint max
+    long_df = make_long_df(wide_df=cond_df,
+                           cols_to_keep=['filename', 'idx'],
+                           cols_to_change=['p1_mean', 'p2_mean', 'joint_mean'],
+                           cols_to_change_show='mean_lum',
+                           new_col_name='loc', strip_from_cols='_mean', verbose=True)
+    print(f'long_df:\n{long_df}')
+
+    fig, ax = plt.subplots(figsize=(6, 6))
+    sns.lineplot(data=long_df, x='idx', y='mean_lum', hue='loc', ax=ax)
+    ax.set_xlabel('frames @ 960Hz')
+    ax.set_ylabel('luminance')
+    plt.title(f'{cond_name}: mean luminance')
+    fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\mon_cali_images\cond_figs"
+    if not os.path.isdir(fig_dir):
+        os.makedirs(fig_dir)
+    fig_savename = f'{cond_name}_mean_lum.png'
+    fig_path = os.path.join(fig_dir, fig_savename)
+    plt.savefig(fig_path)
+    plt.show()
+    plt.close()
+
+    # 2. p1, p2, joint max on same plot
+    long_df = make_long_df(wide_df=cond_df,
+                           cols_to_keep=['filename', 'idx'],
+                           cols_to_change=['p1_max', 'p2_max', 'joint_max'],
+                           cols_to_change_show='max_lum',
+                           new_col_name='loc', strip_from_cols='_max', verbose=True)
+    print(f'long_df:\n{long_df}')
+
+    fig, ax = plt.subplots(figsize=(6, 6))
+    sns.lineplot(data=long_df, x='idx', y='max_lum', hue='loc', ax=ax)
+    ax.set_xlabel('frames @ 960Hz')
+    ax.set_ylabel('luminance')
+    plt.title(f'{cond_name}: max luminance')
+    fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\mon_cali_images\cond_figs"
+    if not os.path.isdir(fig_dir):
+        os.makedirs(fig_dir)
+    fig_savename = f'{cond_name}_max_lum.png'
+    fig_path = os.path.join(fig_dir, fig_savename)
+    plt.savefig(fig_path)
+    plt.show()
+    plt.close()
+
+    # loop through isis
+    isi_list = list(results_df['isi'].unique())
+    print(f'isi_list:\n{isi_list}')
 
 
+for isi in isi_list:
 
+    isi_df = results_df[results_df['isi'] == isi]
+    print(f'isi_df:\n{isi_df}')
+
+    # 3. by isi - joint means
+
+    fig, ax = plt.subplots(figsize=(6, 6))
+    sns.lineplot(data=isi_df, x='idx', y='joint_mean', hue='filename', ax=ax)
+    ax.set_xlabel('frames @ 960Hz')
+    ax.set_ylabel('luminance')
+    plt.title(f'{isi}: mean luminance')
+    fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\mon_cali_images\isi_figs"
+    if not os.path.isdir(fig_dir):
+        os.makedirs(fig_dir)
+    fig_savename = f'isi{isi}_mean_lum.png'
+    fig_path = os.path.join(fig_dir, fig_savename)
+    plt.savefig(fig_path)
+    plt.show()
+    plt.close()
+
+    # 4. by isi - joint max
+    fig, ax = plt.subplots(figsize=(6, 6))
+    sns.lineplot(data=isi_df, x='idx', y='joint_max', hue='filename', ax=ax)
+    ax.set_xlabel('frames @ 960Hz')
+    ax.set_ylabel('luminance')
+    plt.title(f'{isi}: max luminance')
+    fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\mon_cali_images\isi_figs"
+    if not os.path.isdir(fig_dir):
+        os.makedirs(fig_dir)
+    fig_savename = f'isi{isi}_max_lum.png'
+    fig_path = os.path.join(fig_dir, fig_savename)
+    plt.savefig(fig_path)
+    plt.show()
+    plt.close()
+
+print('finished plotting monitor calibration')
