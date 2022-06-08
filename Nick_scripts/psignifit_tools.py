@@ -158,7 +158,8 @@ def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='sta
 
 def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
                   sig_name='norm', est_type='MAP', n_blocks=None,
-                  save_plot=True, show_plot=False, verbose=True):
+                  conf_int=True,
+                  save_plots=True, show_plots=False, verbose=True):
 
     """
     Will run psignifit on data_np to fit curve and output dict.
@@ -173,8 +174,8 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
     :param n_blocks: default: None. Pass a value to set the number of unique
         probeLum values in the array or number of bins if greater than 25.
         e.g., if you want to have 30 bins enter 30.
-    :param save_plot: default: True.
-    :param show_plot: default: False.  Display plot on sceen. Useful if doing a
+    :param save_plots: default: True.
+    :param show_plots: default: False.  Display plot on sceen. Useful if doing a
         single pot or not saving, but don't use for multiple plots as it slows
         things down and eats memory.
     :param verbose:
@@ -200,6 +201,9 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
 
     # set percent correct corresponding to the threshold
     options['threshPC'] = target_threshold
+
+    if conf_int:
+        options['confP'] = [.95]
 
     if verbose:
         print(f'data_np:\n{data_np}')
@@ -231,11 +235,23 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
     
     READ THEIR psignifit 4 PAPER FIRST
     '''
-    threshold = ps.getThreshold(res, target_threshold)
-    if options['estimateType'] == 'mean':
-        threshold = round(threshold[0][0], 2)
+
+    if conf_int:
+        [threshold, CI] = ps.getThreshold(res, target_threshold)
+        if options['estimateType'] == 'mean':
+            threshold = round(threshold[0], 2)
+        else:
+            threshold = round(threshold, 2)
+
+        CI = list(CI[0])
+
+        print(f'\nCI:\n{CI}\nfor options.confP: {options["confP"]}')
     else:
-        threshold = round(threshold[0], 2)
+        threshold = ps.getThreshold(res, target_threshold)
+        if options['estimateType'] == 'mean':
+            threshold = round(threshold[0][0], 2)
+        else:
+            threshold = round(threshold[0], 2)
     if verbose:
         print(f'\nthreshold: {threshold}')
 
@@ -246,23 +262,28 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
     # # # 4. Plot psychometric function
     dset_name = bin_data_dict['dset_name']
 
-    if (show_plot is False) & (save_plot is False):
+    if (show_plots is False) & (save_plots is False):
         print('not making plots')
         fit_curve_plot = None
     else:
-        print(f'making plots (save_plots: {save_plot})')
+        print(f'making plots (save_plots: {save_plots})')
         plt.figure()
         plt.title(f"{dset_name}: sig: {sig_name}, est: {est_type}\n"
                   f"threshPC: {target_threshold}, threshold: {threshold}, slope: {slope_at_target}")
-        fit_curve_plot = ps.psigniplot.plotPsych(res, showImediate=False)
+        if conf_int:
+            plotOptions = dict()
+            plotOptions['CIthresh'] = True
+            fit_curve_plot = ps.psigniplot.plotPsych(res, CIthresh=True)
+        else:
+            fit_curve_plot = ps.psigniplot.plotPsych(res, showImediate=False)
 
-        if save_plot:
+        if save_plots:
             plot_path = os.path.join(save_path, f'{dset_name}_psig.png')
 
             print(f'saving plot to: {plot_path}')
             plt.savefig(plot_path)
 
-        if show_plot:
+        if show_plots:
             plt.show()
         plt.close()
 
@@ -272,11 +293,12 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
 
     psignifit_dict = {'data': data_np, 'csv_path': bin_data_dict['csv_path'],
                       'dset_name': dset_name,
-                      'save_path': save_path, 'save_plot': save_plot,
+                      'save_path': save_path, 'save_plots': save_plots,
                       'sig_name': sig_name, 'est_type': est_type,
                       'exp_type': options['expType'], 'expN': options['expN'],
                       'target_threshold': target_threshold,
-                      'Threshold': threshold, 'slope_at_target': slope_at_target}
+                      'Threshold': threshold, 'slope_at_target': slope_at_target,
+                      'CI': CI}
 
     print('\n*** finished run_psignifit() ***\n')
 
@@ -292,7 +314,8 @@ def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
                          quartile_bins=False, n_bins=10, save_np=False,
                          target_threshold=.75,
                          sig_name='norm', est_type='MAP',
-                         save_plot=True, show_plot=False,
+                         conf_int=True,
+                         save_plots=True, show_plots=False,
                          verbose=True):
     """
     Function to fit curve with psignifit to raw_data.csv in one go.  It calls
@@ -319,8 +342,8 @@ def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
     :param target_threshold: threshold if this percentage correct
     :param sig_name: default: 'norm', can also choose 'logistic'.
     :param est_type: default: 'MAP' (maximum a postieriori), can also choose 'mean' (posterior mean).
-    :param save_plot: default: True.
-    :param show_plot: default: False.  Display plot on sceen. Useful if doing a
+    :param save_plots: default: True.
+    :param show_plots: default: False.  Display plot on sceen. Useful if doing a
         single pot or not saving, but don't use for multiple plots as it slows
         things down and eats memory.
     :param verbose: if True will print progress to screen
@@ -364,8 +387,9 @@ def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
                                                    target_threshold=target_threshold,
                                                    sig_name=sig_name,
                                                    est_type=est_type,
-                                                   save_plot=save_plot,
-                                                   show_plot=show_plot,
+                                                   conf_int=conf_int,
+                                                   save_plots=save_plots,
+                                                   show_plots=show_plots,
                                                    verbose=True)
 
     print('\n*** finished results_to_psignifit() ***\n')
@@ -379,8 +403,9 @@ def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
 def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bins=True,
                                sep_col='separation', isi_list=None, sep_list=None, 
                                group=None,
+                               conf_int=True,
                                cols_to_add_dict=None, save_name=None,
-                               save_plots=True,
+                               show_plots=False, save_plots=True,
                                verbose=True):
     """
     Function to make a dataframe (stair x isi) of psignifit threshold values for an entire run.
@@ -415,6 +440,7 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
         # sep_list = [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]
 
     thr_array = np.zeros(shape=[len(sep_list), len(isi_list)])
+    CI_array = np.zeros(shape=[len(sep_list), len(isi_list)*2])
 
     # identify whether csv_name is actaully a csv_name or infact a dataframe ready to use.
     load_csv = True
@@ -487,7 +513,8 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
                                                                   quartile_bins=q_bins, n_bins=n_bins,
                                                                   save_np=False, target_threshold=.75,
                                                                   sig_name='norm', est_type='MAP',
-                                                                  save_plot=save_plots, show_plot=False,
+                                                                  conf_int=conf_int,
+                                                                  save_plots=save_plots, show_plots=show_plots,
                                                                   verbose=verbose
                                                                   )
 
@@ -495,19 +522,39 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
             threshold = psignifit_dict['Threshold']
             thr_array[sep_idx, isi_idx] = threshold
 
+            if conf_int:
+                CI = psignifit_dict['CI']
+                CI = [round(i, 2) for i in CI]
+                # CI_str = f'{str(CI[0])}_{str(CI[1])}'
+                CI_array[sep_idx, isi_idx*2] = CI[0]
+                CI_array[sep_idx, (isi_idx*2)+1] = CI[1]
+
     # save zeros df - run and q_bin in name.
     print(f'thr_array:\n{thr_array}')
+    if conf_int:
+        print(f'CI_array:\n{CI_array}')
 
     # make dataframe from array
     thr_df = pd.DataFrame(thr_array, columns=isi_name_list)
     thr_df.insert(0, sep_col, sep_list)
 
+    if conf_int:
+        CI_headers = [[f'{i}_lo@95', f'{i}_hi@95'] for i in isi_name_list]
+        CI_headers = [j for sub in CI_headers for j in sub]
+        print(CI_headers)
+        CI_df = pd.DataFrame(CI_array, columns=CI_headers)
+        CI_df.insert(0, sep_col, sep_list)
+
     if cols_to_add_dict is not None:
         for idx, (header, col_vals) in enumerate(cols_to_add_dict.items()):
             thr_df.insert(idx+1, header, col_vals)
+            if conf_int:
+                CI_df.insert(idx+1, header, col_vals)
 
     if verbose:
         print(f"thr_df:\n{thr_df}")
+        if conf_int:
+            print(f"CI_df:\n{CI_df}")
 
     # save threshold array
     if save_name is None:
@@ -522,6 +569,12 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
     thr_filepath = os.path.join(root_path, p_run_name, thr_filename)
     print(f'saving psignifit_thresholds.csv to {thr_filepath}')
     thr_df.to_csv(thr_filepath, index=False)
+
+    if conf_int:
+        CI_filename = f'psignifit_CI.csv'
+        CI_filepath = os.path.join(root_path, p_run_name, CI_filename)
+        print(f'saving psignifit_CI.csv to {CI_filepath}')
+        CI_df.to_csv(CI_filepath, index=False)
 
     print('\n*** finished get_psignifit_threshold_df() ***\n')
 

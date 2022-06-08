@@ -73,7 +73,8 @@ def split_df_alternate_rows(df):
 def trim_n_high_n_low(all_data_df, trim_from_ends=None, reference_col='separation',
                       stack_col_id='stack', verbose=True):
     """
-    Function for trimming the n highest and lowest values from each condition of a set with multiple runs.
+    Function for trimming the n highest and lowest values from each condition of
+    a set with multiple runs.
 
     :param all_data_df: Dataset to be trimmed.
     :param trim_from_ends: number of values to trim from each end of the distribution.
@@ -2246,8 +2247,12 @@ def d_average_participant(root_path, run_dir_names_list,
     """Part 2: trim highest and lowest values is required and get average vals and errors"""
     # # trim highest and lowest values
     if trim_n is not None:
+        if 'stair_names' in list(all_data_psignifit_df.columns):
+            ref_col = 'stair_names'
+        elif 'cond_type' in list(all_data_psignifit_df.columns):
+            ref_col = 'cond_type'
         trimmed_df = trim_n_high_n_low(all_data_psignifit_df, trim_from_ends=trim_n,
-                                       reference_col='stair_names',
+                                       reference_col=ref_col,
                                        stack_col_id='stack',
                                        verbose=verbose)
         trimmed_df.to_csv(os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv'), index=False)

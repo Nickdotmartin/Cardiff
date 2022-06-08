@@ -18,8 +18,8 @@ convert_path1 = os.path.normpath(exp_path)
 print(f"convert_path1: {convert_path1}")
 exp_path = convert_path1
 
-participant_list = ['Nick', 'Kim']  # 'Nick', 'bb', 'cc', 'dd', 'ee']
-n_runs = 3
+participant_list = ['Tony']  # 'Nick', 'bb', 'cc', 'dd', 'ee']
+n_runs = 12
 
 p_idx_plus = 1
 
@@ -41,123 +41,123 @@ for p_idx, participant_name in enumerate(participant_list):
         # '''a'''
         p_name = f'{participant_name}_{run_idx+p_idx_plus}'
 
-        # for first run, some files are saved just as name not name1
-        run_data_path = f'{save_path}{os.sep}{p_name}_output.csv'
-        if not os.path.isfile(run_data_path):
-            raise FileNotFoundError(run_data_path)
-        print(f'run_data_path: {run_data_path}')
-
-        run_data_df = pd.read_csv(run_data_path)
-        # remove any Unnamed columns
-        if any("Unnamed" in i for i in list(run_data_df.columns)):
-            unnamed_col = [i for i in list(run_data_df.columns) if "Unnamed" in i][0]
-            run_data_df.drop(unnamed_col, axis=1, inplace=True)
-        run_data_df.sort_values(by=['stair', 'step'], inplace=True, ignore_index=True)
-
-        # save sorted csv
-        run_data_df.to_csv(run_data_path, index=False)
-        print(f"run_data_df: {run_data_df.columns}\n{run_data_df}")
-
-        # extract values from dataframe
-        isi_list = run_data_df['ISI'].unique()
-        print(f'isi_list: {isi_list}')
-        cond_types = run_data_df['cond_type'].unique()
-        print(f'cond_types: {cond_types}')
-
-
-        '''get psignifit thresholds df - use stairs as sep levels rather than using groups'''
-        thr_df = get_psignifit_threshold_df(root_path=root_path,
-                                            p_run_name=run_dir,
-                                            csv_name=run_data_df,
-                                            n_bins=9, q_bins=True,
-                                            isi_list=isi_list,
-                                            sep_col='cond_type',
-                                            sep_list=cond_types,
-                                            cols_to_add_dict=None,
-                                            verbose=True)
-        print(f'thr_df: {type(thr_df)}\n{thr_df}')
-
-        '''# Bloch doesn't currently work with b3_plot_staircase or c_plots
-        b3_plot_staircase(run_data_path, show_plots=True)
-        c_plots(save_path=save_path, isi_name_list=isi_name_list, show_plots=True)'''
-
-        run_data_path = f'{save_path}{os.sep}{p_name}_output.csv'
-        run_data_df = pd.read_csv(run_data_path)
-        print(f'run_data_df:\n{run_data_df}')
-        isi_list = list(run_data_df['ISI'].unique())
-        isi_name_list = [f'ISI_{i}' for i in isi_list]
-        isi_labels_list = ['conc' if i == -2 else i for i in isi_list]
-        print(f'isi_list: {isi_list}')
-        print(f'isi_name_list: {isi_name_list}')
-        print(f'isi_labels_list: {isi_labels_list}')
-
-        thr_df_path = f'{save_path}{os.sep}psignifit_thresholds.csv'
-        thr_df = pd.read_csv(thr_df_path)
-        print(f'thr_df:\n{thr_df}')
-
-        long_thr_df = make_long_df(wide_df=thr_df,
-                                   cols_to_keep=['cond_type'],
-                                   cols_to_change=isi_name_list,
-                                   cols_to_change_show='probeLum',
-                                   new_col_name='ISI', strip_from_cols='ISI_', verbose=True)
-        print(f'long_thr_df:\n{long_thr_df}')
-
-        # basic plot with regular axes
-        run_thr_plot(long_thr_df, x_col='ISI', y_col='probeLum', hue_col='cond_type',
-                     # x_ticks_vals=isi_list,
-                     x_tick_names=isi_labels_list,
-                     x_axis_label='ISI (2probe cond)',
-                     y_axis_label='Probe Luminance',
-                     fig_title='Bloch_v5: probe cond vs thr',
-                     save_as=f'{save_path}{os.sep}bloch_v5_cond_v_thr.png')
-        plt.show()
-
-        # I'm not sure I actually need to do a log-log plot for duration.
-        print(f'long_thr_df:\n{long_thr_df}')
-
-        # check for 'area' and 'delta_thr' col
-        col_names = long_thr_df.columns.to_list()
-
-        if 'dur_ms' not in col_names:
-            # convert separation into area (units are pixels)
-            dur_dict = {-2.0: {'frames': 2, 'duration': 8.333333333},
-                        0.0: {'frames': 4, 'duration': 16.66666667},
-                        8.33: {'frames': 6, 'duration': 25},
-                        16.67: {'frames': 8, 'duration': 33.33333333},
-                        25.0: {'frames': 10, 'duration': 41.66666667},
-                        37.5: {'frames': 13, 'duration': 54.16666667},
-                        50.0: {'frames': 16, 'duration': 66.66666667},
-                        100.0: {'frames': 28, 'duration': 116.6666667}}
-            ISI_col = long_thr_df['ISI'].to_list()
-            ISI_col = [float(i) for i in ISI_col]
-            print(f'ISI_col: {ISI_col}')
-            dur_col = [dur_dict[i]['duration'] for i in ISI_col]
-            print(f'dur_col: {dur_col}')
-            long_thr_df.insert(1, 'dur_ms', dur_col)
-
-            thr_col = long_thr_df['probeLum'].to_list()
-            bgLum = 21.2
-            weber_thr_col = [(i-bgLum)/i for i in thr_col]
-            # delta_thr_col = [(i-bgLum)/bgLum for i in thr_col]
-            long_thr_df.insert(4, 'weber_thr', weber_thr_col)
-
-            if 'stair_name' in col_names:
-                long_thr_df.drop('stair_name', axis=1, inplace=True)
-
-            long_thr_df_path = f'{save_path}{os.sep}long_thr_df.csv'
-            long_thr_df.to_csv(long_thr_df_path, index=False)
-            print(f'long_thr_df:\n{long_thr_df}')
-
-
-        # plot with log-log axes
-        simple_log_log_plot(long_thr_df, x_col='dur_ms', y_col='weber_thr', hue_col='cond_type',
-                            x_ticks_vals=None, x_tick_names=None,
-                            x_axis_label='log(duration ms) - 1probe condition',
-                            y_axis_label='log(∆I/I)',
-                            fig_title='Bloch_v5: log(duration) v log(∆I/I)',
-                            show_neg1slope=True,
-                            save_as=f'{save_path}{os.sep}bloch_v5_log_dur_log_weber.png')
-        plt.show()
+        # # for first run, some files are saved just as name not name1
+        # run_data_path = f'{save_path}{os.sep}{p_name}_output.csv'
+        # if not os.path.isfile(run_data_path):
+        #     raise FileNotFoundError(run_data_path)
+        # print(f'run_data_path: {run_data_path}')
+        #
+        # run_data_df = pd.read_csv(run_data_path)
+        # # remove any Unnamed columns
+        # if any("Unnamed" in i for i in list(run_data_df.columns)):
+        #     unnamed_col = [i for i in list(run_data_df.columns) if "Unnamed" in i][0]
+        #     run_data_df.drop(unnamed_col, axis=1, inplace=True)
+        # run_data_df.sort_values(by=['stair', 'step'], inplace=True, ignore_index=True)
+        #
+        # # save sorted csv
+        # run_data_df.to_csv(run_data_path, index=False)
+        # print(f"run_data_df: {run_data_df.columns}\n{run_data_df}")
+        #
+        # # extract values from dataframe
+        # isi_list = run_data_df['ISI'].unique()
+        # print(f'isi_list: {isi_list}')
+        # cond_types = run_data_df['cond_type'].unique()
+        # print(f'cond_types: {cond_types}')
+        #
+        #
+        # '''get psignifit thresholds df - use stairs as sep levels rather than using groups'''
+        # thr_df = get_psignifit_threshold_df(root_path=root_path,
+        #                                     p_run_name=run_dir,
+        #                                     csv_name=run_data_df,
+        #                                     n_bins=9, q_bins=True,
+        #                                     isi_list=isi_list,
+        #                                     sep_col='cond_type',
+        #                                     sep_list=cond_types,
+        #                                     cols_to_add_dict=None,
+        #                                     verbose=True)
+        # print(f'thr_df: {type(thr_df)}\n{thr_df}')
+        #
+        # '''# Bloch doesn't currently work with b3_plot_staircase or c_plots
+        # b3_plot_staircase(run_data_path, show_plots=True)
+        # c_plots(save_path=save_path, isi_name_list=isi_name_list, show_plots=True)'''
+        #
+        # run_data_path = f'{save_path}{os.sep}{p_name}_output.csv'
+        # run_data_df = pd.read_csv(run_data_path)
+        # print(f'run_data_df:\n{run_data_df}')
+        # isi_list = list(run_data_df['ISI'].unique())
+        # isi_name_list = [f'ISI_{i}' for i in isi_list]
+        # isi_labels_list = ['conc' if i == -2 else i for i in isi_list]
+        # print(f'isi_list: {isi_list}')
+        # print(f'isi_name_list: {isi_name_list}')
+        # print(f'isi_labels_list: {isi_labels_list}')
+        #
+        # thr_df_path = f'{save_path}{os.sep}psignifit_thresholds.csv'
+        # thr_df = pd.read_csv(thr_df_path)
+        # print(f'thr_df:\n{thr_df}')
+        #
+        # long_thr_df = make_long_df(wide_df=thr_df,
+        #                            cols_to_keep=['cond_type'],
+        #                            cols_to_change=isi_name_list,
+        #                            cols_to_change_show='probeLum',
+        #                            new_col_name='ISI', strip_from_cols='ISI_', verbose=True)
+        # print(f'long_thr_df:\n{long_thr_df}')
+        #
+        # # basic plot with regular axes
+        # run_thr_plot(long_thr_df, x_col='ISI', y_col='probeLum', hue_col='cond_type',
+        #              # x_ticks_vals=isi_list,
+        #              x_tick_names=isi_labels_list,
+        #              x_axis_label='ISI (2probe cond)',
+        #              y_axis_label='Probe Luminance',
+        #              fig_title='Bloch_v5: probe cond vs thr',
+        #              save_as=f'{save_path}{os.sep}bloch_v5_cond_v_thr.png')
+        # plt.show()
+        #
+        # # I'm not sure I actually need to do a log-log plot for duration.
+        # print(f'long_thr_df:\n{long_thr_df}')
+        #
+        # # check for 'area' and 'delta_thr' col
+        # col_names = long_thr_df.columns.to_list()
+        #
+        # if 'dur_ms' not in col_names:
+        #     # convert separation into area (units are pixels)
+        #     dur_dict = {-2.0: {'frames': 2, 'duration': 8.333333333},
+        #                 0.0: {'frames': 4, 'duration': 16.66666667},
+        #                 8.3333334: {'frames': 6, 'duration': 25},
+        #                 16.6666667: {'frames': 8, 'duration': 33.33333333},
+        #                 25.0: {'frames': 10, 'duration': 41.66666667},
+        #                 37.5: {'frames': 13, 'duration': 54.16666667},
+        #                 50.0: {'frames': 16, 'duration': 66.66666667},
+        #                 100.0: {'frames': 28, 'duration': 116.6666667}}
+        #     ISI_col = long_thr_df['ISI'].to_list()
+        #     ISI_col = [float(i) for i in ISI_col]
+        #     print(f'ISI_col: {ISI_col}')
+        #     dur_col = [dur_dict[i]['duration'] for i in ISI_col]
+        #     print(f'dur_col: {dur_col}')
+        #     long_thr_df.insert(1, 'dur_ms', dur_col)
+        #
+        #     thr_col = long_thr_df['probeLum'].to_list()
+        #     bgLum = 21.2
+        #     weber_thr_col = [(i-bgLum)/i for i in thr_col]
+        #     # delta_thr_col = [(i-bgLum)/bgLum for i in thr_col]
+        #     long_thr_df.insert(4, 'weber_thr', weber_thr_col)
+        #
+        #     if 'stair_name' in col_names:
+        #         long_thr_df.drop('stair_name', axis=1, inplace=True)
+        #
+        #     long_thr_df_path = f'{save_path}{os.sep}long_thr_df.csv'
+        #     long_thr_df.to_csv(long_thr_df_path, index=False)
+        #     print(f'long_thr_df:\n{long_thr_df}')
+        #
+        #
+        # # plot with log-log axes
+        # simple_log_log_plot(long_thr_df, x_col='dur_ms', y_col='weber_thr', hue_col='cond_type',
+        #                     x_ticks_vals=None, x_tick_names=None,
+        #                     x_axis_label='log(duration ms) - 1probe condition',
+        #                     y_axis_label='log(∆I/I)',
+        #                     fig_title='Bloch_v5: log(duration) v log(∆I/I)',
+        #                     show_neg1slope=True,
+        #                     save_as=f'{save_path}{os.sep}bloch_v5_log_dur_log_weber.png')
+        # plt.show()
 
 
     '''d'''
@@ -194,6 +194,9 @@ for p_idx, participant_name in enumerate(participant_list):
     x_values = [int(i) if i.is_integer() else i for i in x_values]
     print(f'x_values: {x_values}')
     x_labels = ['conc' if i == -2.0 else i for i in x_values]
+    x_labels = [8.334 if i == 8.3333334 else i for i in x_labels]
+    x_labels = [16.167 if i == 16.6666667 else i for i in x_labels]
+
     print(f'x_labels: {x_labels}')
 
     error_df = pd.read_csv(err_path)

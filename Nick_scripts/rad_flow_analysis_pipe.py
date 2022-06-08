@@ -8,11 +8,14 @@ from rad_flow_psignifit_analysis import c_plots, d_average_participant, make_ave
 # # then run script d to get master lists and averages
 # exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/radial_flow_exp'
 # exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/rad_flow_2'
-exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2'
+# exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2'
+exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2_check'
+exp_path = os.path.normpath(exp_path)
+
 stair_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-participant_list = ['Nick']  # , 'Nick_half_speed']
+participant_list = ['Nick_half_speed']  # , 'Nick_half_speed']
 # isi_list = [1, 4, 6, 9]
-isi_list = [6, 9]
+isi_list = [1]
 isi_names_list = [f'ISI_{i}' for i in isi_list]
 
 exp_path = os.path.normpath(exp_path)
@@ -53,7 +56,7 @@ for p_idx, participant_name in enumerate(participant_list):
         p_name = f'{participant_name}_{r_idx_plus}'
 
         # a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=isi_list, verbose=verbose)
-
+        #
         run_data_path = f'{save_path}{os.sep}ALL_ISIs_sorted.xlsx'
         run_data_df = pd.read_excel(run_data_path, engine='openpyxl',
                                     usecols=["ISI", "stair", "stair_name",
@@ -73,16 +76,18 @@ for p_idx, participant_name in enumerate(participant_list):
                                             sep_col='stair',
                                             isi_list=isi_list,
                                             sep_list=stair_list,
+                                            conf_int=True,
                                             cols_to_add_dict=cols_to_add_dict,
+                                            show_plots=True,
                                             verbose=verbose)
         print(f'thr_df:\n{thr_df}')
+        #
+        # '''b3'''
+        # b3_plot_staircase(run_data_path, show_plots=show_plots, verbose=verbose)
+        #
+        # '''c I don't actually need any of these, instead sort get psignifit thr ands make plots from those.'''
+        # c_plots(save_path=save_path, isi_name_list=isi_names_list, show_plots=show_plots, verbose=verbose)
 
-    #     '''b3'''
-    #     b3_plot_staircase(run_data_path, show_plots=show_plots, verbose=verbose)
-    #
-    #     '''c I don't actually need any of these, instead sort get psignifit thr ands make plots from those.'''
-    #     c_plots(save_path=save_path, isi_name_list=isi_names_list, show_plots=show_plots, verbose=verbose)
-    #
     # '''d participant averages'''
     # trim_n = None
     # if len(run_folder_names) == 12:
