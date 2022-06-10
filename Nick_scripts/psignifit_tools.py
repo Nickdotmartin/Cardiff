@@ -202,6 +202,13 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
     # set percent correct corresponding to the threshold
     options['threshPC'] = target_threshold
 
+    '''psignifit recommend adjusting to a realistic (generous) range if an 
+    adaptive proccedure is used.
+    https://github.com/wichmann-lab/psignifit/wiki/Priors
+    '''
+    # options['stimulusRange'] = [21.2, 106]
+
+
     if conf_int:
         options['confP'] = [.95]
 
@@ -255,6 +262,8 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
     if verbose:
         print(f'\nthreshold: {threshold}')
 
+    # deviance = ps.getDeviance(res, 25)  # AttributeError: module 'psignifit' has no attribute 'getDeviance'
+
     slope_at_target = round(ps.getSlopePC(res, target_threshold), 2)
     if verbose:
         print(f'slope_at_target: {slope_at_target}')
@@ -273,7 +282,7 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
         if conf_int:
             plotOptions = dict()
             plotOptions['CIthresh'] = True
-            fit_curve_plot = ps.psigniplot.plotPsych(res, CIthresh=True)
+            fit_curve_plot = ps.psigniplot.plotPsych(res, CIthresh=True, showImediate=False)
         else:
             fit_curve_plot = ps.psigniplot.plotPsych(res, showImediate=False)
 

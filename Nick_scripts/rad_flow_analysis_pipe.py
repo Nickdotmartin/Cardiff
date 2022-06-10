@@ -13,9 +13,9 @@ exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardi
 exp_path = os.path.normpath(exp_path)
 
 stair_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-participant_list = ['Nick_half_speed']  # , 'Nick_half_speed']
-# isi_list = [1, 4, 6, 9]
-isi_list = [1]
+participant_list = ['Simon']  # , 'Nick_half_speed']
+isi_list = [1, 4, 6, 9]
+# isi_list = [1]
 isi_names_list = [f'ISI_{i}' for i in isi_list]
 
 exp_path = os.path.normpath(exp_path)
@@ -23,7 +23,7 @@ exp_path = os.path.normpath(exp_path)
 verbose = True
 show_plots = True
 
-n_runs = 1
+n_runs = 3
 # if the first folder to analyse is 1, p_idx_plus = 1.  If the forst folder is 5, use 5 etc.
 p_idx_plus = 1
 
@@ -78,9 +78,10 @@ for p_idx, participant_name in enumerate(participant_list):
                                             sep_list=stair_list,
                                             conf_int=True,
                                             cols_to_add_dict=cols_to_add_dict,
-                                            show_plots=True,
+                                            show_plots=False,
                                             verbose=verbose)
         print(f'thr_df:\n{thr_df}')
+
         #
         # '''b3'''
         # b3_plot_staircase(run_data_path, show_plots=show_plots, verbose=verbose)
