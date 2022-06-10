@@ -73,7 +73,8 @@ def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='sta
     if verbose:
         print(f"raw_data, stair_levels:{stair_levels}:\n{raw_data_df}")
 
-    dataset_name = f'{p_run_name}_ISI{isi}_sep{sep}_stair{stair_levels[0]}'
+    # dataset_name = f'{p_run_name}_ISI{isi}_sep{sep}_stair{stair_levels[0]}'
+    dataset_name = f'{p_run_name}_ISI{isi}_{sep_col}{stair_levels[0]}'
 
     # get useful info
     n_rows, n_cols = raw_data_df.shape

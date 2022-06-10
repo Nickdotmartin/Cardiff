@@ -25,7 +25,7 @@ show_plots = True
 
 n_runs = 3
 # if the first folder to analyse is 1, p_idx_plus = 1.  If the forst folder is 5, use 5 etc.
-p_idx_plus = 1
+p_idx_plus = 4
 
 
 for p_idx, participant_name in enumerate(participant_list):
