@@ -29,7 +29,7 @@ list_10_bit = [-1+2*(i/1023) for i in list(range(1024))]
 list_8_bit = [-1+2*((i//4)*4)/1023 for i in list(range(1024))]
 
 
-# print lists of equialent values from 10-bit and 8-bit lists
+# print lists of equivalent values from 10-bit and 8-bit lists
 for idx, (a_10, b_8) in enumerate(zip(list_10_bit, list_8_bit)):
     print(f"{idx}: 10-bit: {a_10}, 8-bit: {b_8}")
 
