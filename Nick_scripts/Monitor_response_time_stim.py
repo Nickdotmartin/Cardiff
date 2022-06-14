@@ -20,6 +20,9 @@ from kestenSTmaxVal import Staircase
 _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
+# todo: check monitor_name
+print('check mon name')
+
 # Monitor config from monitor centre
 monitor_name = 'asus_cal'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18'
 # gamma set at 2.1  [####### this comment is incorrect, its set above i think ############]
@@ -69,30 +72,54 @@ orientation = expInfo['5. Probe orientation']
 # VARIABLES
 # Distances between probes
 # 99 values for single probe condition
-# separations = [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0, 99, 99]
-#sep_vals = [0, 1, 3, 18]
-#ISI_vals = [-1, 0, 2, 4, 12, 24]
 
-#ISI_list = [-1, 0, 2, 4, 12, 24, -1, 0, 2, 4, 12, 24, -1, 0, 2, 4, 12, 24, -1, 0, 2, 4, 12, 24]
-#sep_list = [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 18, 18, 18, 18, 18, 18]
-#stairs = list(range(len(sep_list)))
+# old version
+# sep_vals = [6, 3, 1, 0]  # , 18, 2, 99]
+# ISI_vals = [-1, 0, 4, 9]  # , 2, 6, 12, 24]
+# sep_list = list(np.repeat(sep_vals, len(ISI_vals)))
+# ISI_list = list(np.tile(ISI_vals, len(sep_vals)))
 
-sep_vals = [6, 3, 0, 1, 18, 2, 99]
-ISI_vals = [-1, 0, 9, 2, 4, 6, 12, 24]
+'''the main conditions I need are these in sep_vals1 and ISI_vals 1
+The logic is to take these, then 4, then these again (to double check I get them).
+Then take a break.
+If there is time, then do 2 and 3.
+'''
+sep_vals1 = [6, 3, 1, 0]  # , 18, 2, 99]
+ISI_vals1 = [-1, 0, 4, 9]  # , 2, 6, 12, 24]
 
-sep_list = list(np.repeat(sep_vals, len(ISI_vals)))
-ISI_list = list(np.tile(ISI_vals, len(sep_vals)))
+sep_list1 = list(np.repeat(sep_vals1, len(ISI_vals1)))
+ISI_list1 = list(np.tile(ISI_vals1, len(sep_vals1)))
+
+sep_vals2 = [6, 3, 1, 0]  # , 18, 2, 99]
+ISI_vals2 = [-2, 6, 12, 24]
+sep_list2 = list(np.repeat(sep_vals2, len(ISI_vals2)))
+ISI_list2 = list(np.tile(ISI_vals2, len(sep_vals2)))
+
+sep_vals3 = [18, 2]
+ISI_vals3 = [-1, 0, 4, 9, 2, 6, 12, 24]
+sep_list3 = list(np.repeat(sep_vals3, len(ISI_vals3)))
+ISI_list3 = list(np.tile(ISI_vals3, len(sep_vals3)))
+
+sep_list4 = [99]
+ISI_vals4 = [0]
+sep_list4 = list(np.repeat(sep_list4, len(ISI_vals4)))
+ISI_list4 = list(np.tile(ISI_vals4, len(sep_list4)))
+
+sep_list = sep_list1 + sep_list4 + sep_list1 + sep_list2 + sep_list3
+ISI_list = ISI_list1 + ISI_list4 + ISI_list1 + ISI_list2 + ISI_list3
+print(f"sep_list ({len(sep_list)}): {sep_list}")
+print(f"ISI_list: {ISI_list}")
+
 stairs = list(range(len(sep_list)))
 
-for idx, (this_stair, isi, sep) in enumerate(zip(stairs, ISI_list, sep_list)):
-    print(idx, this_stair, isi, sep)
+# for idx, (this_stair, isi, sep) in enumerate(zip(stairs, ISI_list, sep_list)):
+#     print(idx, this_stair, isi, sep)
 
 cond_dict = {i: {'sep': sep, 'isi': isi} for (i, sep, isi) in zip(stairs, sep_list, ISI_list)}
-# print(cond_dict)
-#
+print(cond_dict)
+
 # for this_cond, cond_vals in cond_dict.items():
 #     print(this_cond, cond_vals)
-#     print(this_cond['sep'])
 
 
 # COLORS AND LUMINANCE
@@ -121,8 +148,7 @@ mon_dict = {'mon_name': monitor_name,
             'width': thisMon.getWidth(),
             'size': thisMon.getSizePix(),
             'dist': thisMon.getDistance(),
-            'notes': thisMon.getNotes()
-            }
+            'notes': thisMon.getNotes()}
 print(f"mon_dict: {mon_dict}")
 
 widthPix = mon_dict['size'][0]  # 1440  # 1280
@@ -211,7 +237,11 @@ if trials_counter:
     # if trials counter yes, change colour to white.
     trials_counter.color = 'white'
 
-
+frame_counter = visual.TextStim(win=win, name='frame_counter', text="???",
+                                 font='Arial', height=20,
+                                 # default set to black (e.g., invisible)
+                                 color='white',
+                                 pos=[-widthPix*.20, -heightPix*.22])
 
 # BREAKS
 breaks = visual.TextStim(win=win, name='breaks',
@@ -331,7 +361,7 @@ while this_cond < n_conds:
 
         # display Break before trials 120 and 240
         # if total_nTrials == 120+1 or total_nTrials == 240+1:
-        if this_cond == 120+1 or this_cond == 240+1:
+        if this_cond == 33:  #  or this_cond == 240+1:
             continueRoutine = False
             breaks.draw()
             win.flip()
@@ -352,6 +382,9 @@ while this_cond < n_conds:
                 trials_counter.text = f"({this_cond}/{n_conds}). sep: {sep}, ISI: {ISI}"
                 trials_counter.draw()
 
+                frame_counter.text = frameN
+                frame_counter.draw()
+
             # PROBE 1
             if t_interval_1 >= frameN > t_fixation:
                 probe1.draw()
@@ -363,11 +396,17 @@ while this_cond < n_conds:
                 fixation.draw()
                 trials_counter.draw()
 
+                frame_counter.text = frameN
+                frame_counter.draw()
+
             # ISI
             if t_ISI >= frameN > t_interval_1:
                 fixation.setRadius(3)
                 fixation.draw()
                 trials_counter.draw()
+
+                frame_counter.text = frameN
+                frame_counter.draw()
 
             # PROBE 2
             if t_interval_2 >= frameN > t_ISI:
@@ -378,11 +417,17 @@ while this_cond < n_conds:
                 fixation.draw()
                 trials_counter.draw()
 
+                frame_counter.text = frameN
+                frame_counter.draw()
+
             # ANSWER
             if frameN > t_interval_2:
                 fixation.setRadius(2)
                 fixation.draw()
                 trials_counter.draw()
+
+                frame_counter.text = frameN
+                frame_counter.draw()
 
 
                 # ANSWER
@@ -431,5 +476,6 @@ while this_cond < n_conds:
             if continueRoutine:
                 win.flip()
 
+# todo: check monitor_name
 
 print('testing finished')
