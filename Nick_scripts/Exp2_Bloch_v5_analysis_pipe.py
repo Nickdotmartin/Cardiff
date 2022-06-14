@@ -14,12 +14,14 @@ from psignifit_tools import get_psignifit_threshold_df
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
 exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp2_Bloch_NM_v5"
+# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp2_Bloch_NM_v3"
+
 convert_path1 = os.path.normpath(exp_path)
 print(f"convert_path1: {convert_path1}")
 exp_path = convert_path1
 
-participant_list = ['Tony']  # 'Nick', 'bb', 'cc', 'dd', 'ee']
-n_runs = 12
+participant_list = ['Nick_60hz_test']  # 'Nick', 'bb', 'cc', 'dd', 'ee']
+n_runs = 1
 
 p_idx_plus = 1
 
@@ -101,6 +103,11 @@ for p_idx, participant_name in enumerate(participant_list):
         #                            cols_to_change_show='probeLum',
         #                            new_col_name='ISI', strip_from_cols='ISI_', verbose=True)
         # print(f'long_thr_df:\n{long_thr_df}')
+
+        # long_thr_df_path = f'{save_path}{os.sep}long_thr_df.csv'
+        # long_thr_df = pd.read_csv(long_thr_df_path)
+        # print(f'\nlong_thr_df:\n{long_thr_df}')
+
         #
         # # basic plot with regular axes
         # run_thr_plot(long_thr_df, x_col='ISI', y_col='probeLum', hue_col='cond_type',
@@ -115,7 +122,7 @@ for p_idx, participant_name in enumerate(participant_list):
         # # I'm not sure I actually need to do a log-log plot for duration.
         # print(f'long_thr_df:\n{long_thr_df}')
         #
-        # # check for 'area' and 'delta_thr' col
+        # check for 'area' and 'delta_thr' col
         # col_names = long_thr_df.columns.to_list()
         #
         # if 'dur_ms' not in col_names:
@@ -149,7 +156,7 @@ for p_idx, participant_name in enumerate(participant_list):
         #     print(f'long_thr_df:\n{long_thr_df}')
         #
         #
-        # # plot with log-log axes
+        # # plot with log-log axes - Weber
         # simple_log_log_plot(long_thr_df, x_col='dur_ms', y_col='weber_thr', hue_col='cond_type',
         #                     x_ticks_vals=None, x_tick_names=None,
         #                     x_axis_label='log(duration ms) - 1probe condition',
@@ -158,92 +165,102 @@ for p_idx, participant_name in enumerate(participant_list):
         #                     show_neg1slope=True,
         #                     save_as=f'{save_path}{os.sep}bloch_v5_log_dur_log_weber.png')
         # plt.show()
+        #
+        # # # plot with log-log axes - log(i)
+        # # simple_log_log_plot(long_thr_df, x_col='dur_ms', y_col='probeLum', hue_col='cond_type',
+        # #                     x_ticks_vals=None, x_tick_names=None,
+        # #                     x_axis_label='log(duration ms) - 1probe condition',
+        # #                     y_axis_label='log(I)',
+        # #                     fig_title='Bloch_v5: log(duration) v log(I)',
+        # #                     show_neg1slope=True,
+        # #                     save_as=f'{save_path}{os.sep}bloch_v5_log_dur_log_thr.png')
+        # # plt.show()
 
 
-    '''d'''
-    trim_n = None
-    if len(run_folder_names) == 12:
-        trim_n = 1
-    thr_df_name = 'long_thr_df'
-    d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-                          thr_df_name=thr_df_name, trim_n=trim_n, error_type='SE')
-
-
-    # making average plot
-    all_df_path = os.path.join(root_path, 'MASTER_TM1_thresholds.csv')
-    p_ave_path = os.path.join(root_path, 'MASTER_ave_TM_thresh.csv')
-    err_path = os.path.join(root_path, 'MASTER_ave_TM_thr_error_SE.csv')
-
-    n_trimmed = trim_n
-    if n_trimmed is None:
-        all_df_path = os.path.join(root_path, f'MASTER_{thr_df_name}.csv')
-        p_ave_path = os.path.join(root_path, 'MASTER_ave_thresh.csv')
-        err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
-    exp_ave = False
-
-    # load data and change order to put 1pr last
-    print('*** making average plot ***')
-    # reshape dfs so that the different conds are in separate columns.
-    ave_df = pd.read_csv(p_ave_path)
-    print(f'ave_df:\n{ave_df}')
-
-    wide_df = ave_df.pivot(index=['ISI'], columns='cond_type', values='probeLum')
-    print(f'wide_df:\n{wide_df}')
-
-    x_values = wide_df.index.get_level_values('ISI').to_list()
-    x_values = [int(i) if i.is_integer() else i for i in x_values]
-    print(f'x_values: {x_values}')
-    x_labels = ['conc' if i == -2.0 else i for i in x_values]
-    x_labels = [8.334 if i == 8.3333334 else i for i in x_labels]
-    x_labels = [16.167 if i == 16.6666667 else i for i in x_labels]
-
-    print(f'x_labels: {x_labels}')
-
-    error_df = pd.read_csv(err_path)
-    wide_err_df = error_df.pivot(index=['ISI'], columns='cond_type', values='probeLum')
-    print(f'wide_err_df:\n{wide_err_df}')
-
-    fig_title = 'Participant average thresholds - Bloch_v5'
-    save_name = 'bloch_v5_sep_v_thr.png'
-    plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
-                           jitter=False, error_caps=True, alt_colours=False,
-                           legend_names=None,
-                           even_spaced_x=True,
-                           fixed_y_range=False,
-                           x_tick_vals=x_values,
-                           x_tick_labels=x_labels,
-                           x_axis_label='ISI (2probe condition)',
-                           y_axis_label='Threshold',
-                           log_log_axes=False,
-                           neg1_slope=False,
-                           fig_title=fig_title, save_name=save_name,
-                           save_path=root_path, verbose=True)
-    plt.show()
-
-    wide_df = ave_df.pivot(index=['dur_ms'], columns='cond_type', values='weber_thr')
-    print(f'wide_df:\n{wide_df}')
-
-    error_df = pd.read_csv(err_path)
-    wide_err_df = error_df.pivot(index=['dur_ms'], columns='cond_type', values='weber_thr')
-    print(f'wide_err_df:\n{wide_err_df}')
-
-    fig_title = 'Participant average ∆I/I thresholds - Bloch_v5'
-    save_name = 'bloch_v5_log_dur_log_weber.png'
-    plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
-                           jitter=False, error_caps=True, alt_colours=False,
-                           legend_names=None,
-                           even_spaced_x=False,
-                           fixed_y_range=False,
-                           x_tick_vals=None,
-                           x_tick_labels=None,
-                           x_axis_label='log(duration ms) - 1probe condition',
-                           y_axis_label='log(∆I/I)',
-                           log_log_axes=True,
-                           neg1_slope=True,
-                           fig_title=fig_title, save_name=save_name,
-                           save_path=root_path, verbose=True)
-    plt.show()
-    print('*** finished average plot ***')
+    # '''d'''
+    # trim_n = None
+    # if len(run_folder_names) == 12:
+    #     trim_n = 1
+    # thr_df_name = 'long_thr_df'
+    # d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
+    #                       thr_df_name=thr_df_name, trim_n=trim_n, error_type='SE')
+    #
+    #
+    # # making average plot
+    # all_df_path = os.path.join(root_path, 'MASTER_TM1_thresholds.csv')
+    # p_ave_path = os.path.join(root_path, 'MASTER_ave_TM_thresh.csv')
+    # err_path = os.path.join(root_path, 'MASTER_ave_TM_thr_error_SE.csv')
+    #
+    # n_trimmed = trim_n
+    # if n_trimmed is None:
+    #     all_df_path = os.path.join(root_path, f'MASTER_{thr_df_name}.csv')
+    #     p_ave_path = os.path.join(root_path, 'MASTER_ave_thresh.csv')
+    #     err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
+    # exp_ave = False
+    #
+    # # load data and change order to put 1pr last
+    # print('*** making average plot ***')
+    # # reshape dfs so that the different conds are in separate columns.
+    # ave_df = pd.read_csv(p_ave_path)
+    # print(f'ave_df:\n{ave_df}')
+    #
+    # wide_df = ave_df.pivot(index=['ISI'], columns='cond_type', values='probeLum')
+    # print(f'wide_df:\n{wide_df}')
+    #
+    # x_values = wide_df.index.get_level_values('ISI').to_list()
+    # x_values = [int(i) if i.is_integer() else i for i in x_values]
+    # print(f'x_values: {x_values}')
+    # x_labels = ['conc' if i == -2.0 else i for i in x_values]
+    # x_labels = [8.334 if i == 8.3333334 else i for i in x_labels]
+    # x_labels = [16.167 if i == 16.6666667 else i for i in x_labels]
+    #
+    # print(f'x_labels: {x_labels}')
+    #
+    # error_df = pd.read_csv(err_path)
+    # wide_err_df = error_df.pivot(index=['ISI'], columns='cond_type', values='probeLum')
+    # print(f'wide_err_df:\n{wide_err_df}')
+    #
+    # fig_title = 'Participant average thresholds - Bloch_v5'
+    # save_name = 'bloch_v5_sep_v_thr.png'
+    # plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
+    #                        jitter=False, error_caps=True, alt_colours=False,
+    #                        legend_names=None,
+    #                        even_spaced_x=True,
+    #                        fixed_y_range=False,
+    #                        x_tick_vals=x_values,
+    #                        x_tick_labels=x_labels,
+    #                        x_axis_label='ISI (2probe condition)',
+    #                        y_axis_label='Threshold',
+    #                        log_log_axes=False,
+    #                        neg1_slope=False,
+    #                        fig_title=fig_title, save_name=save_name,
+    #                        save_path=root_path, verbose=True)
+    # plt.show()
+    #
+    # wide_df = ave_df.pivot(index=['dur_ms'], columns='cond_type', values='weber_thr')
+    # print(f'wide_df:\n{wide_df}')
+    #
+    # error_df = pd.read_csv(err_path)
+    # wide_err_df = error_df.pivot(index=['dur_ms'], columns='cond_type', values='weber_thr')
+    # print(f'wide_err_df:\n{wide_err_df}')
+    #
+    # fig_title = 'Participant average ∆I/I thresholds - Bloch_v5'
+    # save_name = 'bloch_v5_log_dur_log_weber.png'
+    # plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
+    #                        jitter=False, error_caps=True, alt_colours=False,
+    #                        legend_names=None,
+    #                        even_spaced_x=False,
+    #                        fixed_y_range=False,
+    #                        x_tick_vals=None,
+    #                        x_tick_labels=None,
+    #                        x_axis_label='log(duration ms) - 1probe condition',
+    #                        y_axis_label='log(∆I/I)',
+    #                        log_log_axes=True,
+    #                        neg1_slope=True,
+    #                        fig_title=fig_title, save_name=save_name,
+    #                        save_path=root_path, verbose=True)
+    # plt.show()
+    # print('*** finished average plot ***')
 
 
     # # # make_average_plots() doesn't really work here.
