@@ -223,8 +223,8 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
     if verbose:
         print("res['options']")
         for k, v in res['options'].items():
-            if k in ['nblocks', 'stimulusRange']:
-                print(f"{k}: {v}")
+            # if k in ['nblocks', 'stimulusRange']:
+            print(f"{k}: {v}")
 
     # get threshold
     # todo: get confidence intervals and save them in a csv.  also add conf interval to the plot.
@@ -243,6 +243,15 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
     
     READ THEIR psignifit 4 PAPER FIRST
     '''
+
+    res_thresh, width, res_lambda, res_gamma, eta = res['Fit']
+    print(f'all_results:\n'
+          f'res_thresh: {res_thresh}\n'  # 
+          f'width: {width}\n'  # (difference between the 95 and the 5 percent point of the unscaled sigmoid)
+          f'res_lambda: {res_lambda}\n'  # upper asymptote/lapse rate
+          f'res_gamma: {res_gamma}\n'  # lower asymptote/guess rate
+          f'eta: {eta}\n'  # scaling the extra variance introduced (a value near zero indicates your data to be basically binomially distributed, whereas values near one indicate severely overdispersed data)
+          f'')
 
     if conf_int:
         [threshold, CI] = ps.getThreshold(res, target_threshold)
@@ -263,7 +272,6 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
     if verbose:
         print(f'\nthreshold: {threshold}')
 
-    # deviance = ps.getDeviance(res, 25)  # AttributeError: module 'psignifit' has no attribute 'getDeviance'
 
     slope_at_target = round(ps.getSlopePC(res, target_threshold), 2)
     if verbose:
@@ -308,7 +316,7 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
                       'exp_type': options['expType'], 'expN': options['expN'],
                       'target_threshold': target_threshold,
                       'Threshold': threshold, 'slope_at_target': slope_at_target,
-                      'CI': CI}
+                      'CI': CI, 'width': width, 'eta': eta}
 
     print('\n*** finished run_psignifit() ***\n')
 
@@ -451,6 +459,7 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
 
     thr_array = np.zeros(shape=[len(sep_list), len(isi_list)])
     CI_array = np.zeros(shape=[len(sep_list), len(isi_list)*2])
+    eta_array = np.zeros(shape=[len(sep_list), len(isi_list)])
 
     # identify whether csv_name is actaully a csv_name or infact a dataframe ready to use.
     load_csv = True
@@ -535,14 +544,20 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
             if conf_int:
                 CI = psignifit_dict['CI']
                 CI = [round(i, 2) for i in CI]
-                # CI_str = f'{str(CI[0])}_{str(CI[1])}'
                 CI_array[sep_idx, isi_idx*2] = CI[0]
                 CI_array[sep_idx, (isi_idx*2)+1] = CI[1]
+
+                # scaling the extra variance introduced
+                # (a value near zero indicates your data to be basically binomially distributed,
+                # whereas values near one indicate severely overdispersed data)
+                eta = psignifit_dict['eta']
+                eta_array[sep_idx, isi_idx] = eta
 
     # save zeros df - run and q_bin in name.
     print(f'thr_array:\n{thr_array}')
     if conf_int:
         print(f'CI_array:\n{CI_array}')
+        print(f'eta_array:\n{eta_array}')
 
     # make dataframe from array
     thr_df = pd.DataFrame(thr_array, columns=isi_name_list)
@@ -555,6 +570,9 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
         CI_df = pd.DataFrame(CI_array, columns=CI_headers)
         CI_df.insert(0, sep_col, sep_list)
 
+        eta_df = pd.DataFrame(eta_array, columns=isi_name_list)
+        eta_df.insert(0, sep_col, sep_list)
+
     if cols_to_add_dict is not None:
         for idx, (header, col_vals) in enumerate(cols_to_add_dict.items()):
             thr_df.insert(idx+1, header, col_vals)
@@ -565,6 +583,7 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
         print(f"thr_df:\n{thr_df}")
         if conf_int:
             print(f"CI_df:\n{CI_df}")
+            print(f"eta_df:\n{eta_df}")
 
     # save threshold array
     if save_name is None:
@@ -585,6 +604,11 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
         CI_filepath = os.path.join(root_path, p_run_name, CI_filename)
         print(f'saving psignifit_CI.csv to {CI_filepath}')
         CI_df.to_csv(CI_filepath, index=False)
+
+        eta_filename = f'psignifit_eta.csv'
+        eta_filepath = os.path.join(root_path, p_run_name, eta_filename)
+        print(f'saving psignifit_eta.csv to {eta_filepath}')
+        eta_df.to_csv(eta_filepath, index=False)
 
     print('\n*** finished get_psignifit_threshold_df() ***\n')
 
