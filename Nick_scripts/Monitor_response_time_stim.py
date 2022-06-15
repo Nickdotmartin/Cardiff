@@ -101,12 +101,15 @@ sep_list3 = list(np.repeat(sep_vals3, len(ISI_vals3)))
 ISI_list3 = list(np.tile(ISI_vals3, len(sep_vals3)))
 
 sep_list4 = [99]
-ISI_vals4 = [0]
-sep_list4 = list(np.repeat(sep_list4, len(ISI_vals4)))
-ISI_list4 = list(np.tile(ISI_vals4, len(sep_list4)))
+ISI_list4 = [0]
 
-sep_list = sep_list1 + sep_list4 + sep_list1 + sep_list2 + sep_list3
-ISI_list = ISI_list1 + ISI_list4 + ISI_list1 + ISI_list2 + ISI_list3
+sep_list5 = [400, 800, 2400]  # bloch
+ISI_list5 = [0, 0, 0]  # bloch
+
+# sep_list = sep_list1 + sep_list4 + sep_list5 + sep_list1 + sep_list2 + sep_list3
+# ISI_list = ISI_list1 + ISI_list4 + ISI_list5 + ISI_list1 + ISI_list2 + ISI_list3
+sep_list = sep_list5 + sep_list1 + sep_list4 + sep_list1 + sep_list2 + sep_list3
+ISI_list = ISI_list5 + ISI_list1 + ISI_list4 + ISI_list1 + ISI_list2 + ISI_list3
 print(f"sep_list ({len(sep_list)}): {sep_list}")
 print(f"ISI_list: {ISI_list}")
 
@@ -262,6 +265,15 @@ while this_cond < n_conds:
     ISI = cond_vals['isi']
     print(f"this_cond: {this_cond}: sep: {sep}, ISI: {ISI}")
 
+    if sep == 400:
+        probe_duration = 4
+    elif sep == 800:
+        probe_duration = 8
+    elif sep == 2400:
+        probe_duration = 24
+    else:
+        probe_duration = 2
+
 
     target_jump = 1  # random.choice([1, -1])
 
@@ -361,7 +373,7 @@ while this_cond < n_conds:
 
         # display Break before trials 120 and 240
         # if total_nTrials == 120+1 or total_nTrials == 240+1:
-        if this_cond == 33:  #  or this_cond == 240+1:
+        if this_cond == 36:  #  or this_cond == 240+1:
             continueRoutine = False
             breaks.draw()
             win.flip()
@@ -476,6 +488,6 @@ while this_cond < n_conds:
             if continueRoutine:
                 win.flip()
 
-# todo: check monitor_name
+# # todo: check monitor_name
 
 print('testing finished')
