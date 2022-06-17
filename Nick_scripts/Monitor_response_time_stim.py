@@ -91,7 +91,7 @@ sep_list1 = list(np.repeat(sep_vals1, len(ISI_vals1)))
 ISI_list1 = list(np.tile(ISI_vals1, len(sep_vals1)))
 
 sep_vals2 = [6, 3, 1, 0]  # , 18, 2, 99]
-ISI_vals2 = [-2, 6, 12, 24]
+ISI_vals2 = [2, 6, 12, 24]
 sep_list2 = list(np.repeat(sep_vals2, len(ISI_vals2)))
 ISI_list2 = list(np.tile(ISI_vals2, len(sep_vals2)))
 
@@ -391,7 +391,7 @@ while this_cond < n_conds:
             if t_fixation >= frameN > 0:
                 fixation.setRadius(3)
                 fixation.draw()
-                trials_counter.text = f"({this_cond}/{n_conds}). sep: {sep}, ISI: {ISI}"
+                trials_counter.text = f"({this_cond}/{n_conds}). ISI: {ISI}, sep: {sep}"
                 trials_counter.draw()
 
                 frame_counter.text = frameN
