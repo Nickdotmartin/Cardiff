@@ -24,7 +24,7 @@ os.chdir(_thisDir)
 print('check mon name')
 
 # Monitor config from monitor centre
-monitor_name = 'asus_cal'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18'
+monitor_name = 'HP_24uh'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18'
 # gamma set at 2.1  [####### this comment is incorrect, its set above i think ############]
 display_number = 1  # 0 indexed, 1 for external display
 
@@ -263,7 +263,7 @@ while this_cond < n_conds:
     cond_vals = cond_dict[this_cond]
     sep = cond_vals['sep']
     ISI = cond_vals['isi']
-    print(f"this_cond: {this_cond}: sep: {sep}, ISI: {ISI}")
+    print(f"\nthis_cond: {this_cond}: sep: {sep}, ISI: {ISI}")
 
     if sep == 400:
         probe_duration = 4
@@ -404,12 +404,15 @@ while this_cond < n_conds:
                 if ISI == -1:
                     if sep <= 18:
                         probe2.draw()
+                        print(f"probe1&2.draw(): {frameN}")
+
                 fixation.setRadius(3)
                 fixation.draw()
                 trials_counter.draw()
 
                 frame_counter.text = frameN
                 frame_counter.draw()
+                print(f"probe1: {frameN}")
 
             # ISI
             if t_ISI >= frameN > t_interval_1:
@@ -419,18 +422,26 @@ while this_cond < n_conds:
 
                 frame_counter.text = frameN
                 frame_counter.draw()
+                print(f"\tISI: {frameN}")
+
 
             # PROBE 2
             if t_interval_2 >= frameN > t_ISI:
                 if ISI >= 0:
                     if sep <= 18:
+                        # todo: get rid of change colour, just a test
+                        probe2.color = [1, -1, 1]
+
                         probe2.draw()
+                        print(f"probe2.draw(): {frameN}")
+
                 fixation.setRadius(3)
                 fixation.draw()
                 trials_counter.draw()
 
                 frame_counter.text = frameN
                 frame_counter.draw()
+
 
             # ANSWER
             if frameN > t_interval_2:
