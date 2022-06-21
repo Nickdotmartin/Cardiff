@@ -460,116 +460,116 @@ x_tick_locs = np.arange(0, 100, 8)
 x_tick_labels = np.arange(x_tick_label_start, 25 + x_tick_label_start, 2)
 
 
-# for cond_ver_name in conds_to_use:
-for cond_ver_name in cond_ver_list:
-
-    print(f'cond_ver_name:\n{cond_ver_name}')
-
-    split_txt = cond_ver_name.split("_")
-    print(f'split_txt:\n{split_txt}')
-
-    isi_name = split_txt[0]
-    print(f'isi_name:\n{isi_name}')
-    isi_val = int(isi_name[3:])
-    print(f'isi_val:\n{isi_val}')
-
-    sep_name = split_txt[1]
-    print(f'sep_name:\n{sep_name}')
-    sep_val = int(sep_name[3:])
-    print(f'sep_val:\n{sep_val}')
-
-    '''insert vertical lines marking start and finish of each probe.  
-    First probe should appear at frame 8 (@960)'''
-    vline_pr1_on = 8
-    vline_pr1_off = vline_pr1_on + 8
-
-    if sep_val == 400:
-        vline_pr1_off = vline_pr1_on + 16
-    if sep_val == 800:
-        vline_pr1_off = vline_pr1_on + 32
-    if sep_val == 2400:
-        vline_pr1_off = vline_pr1_on + 96
-
-    vline_pr2_on = 8 + probe2_dict[isi_val]
-    vline_pr2_off = vline_pr2_on + 8
-
-
-
-
-    cond_df = results_df[results_df['filename'] == cond_ver_name]
-    print(f'cond_df:\n{cond_df}')
-
-    # 1. p1, p2, joint mean on same plot
-    long_df = make_long_df(wide_df=cond_df,
-                           cols_to_keep=['filename', 'idx'],
-                           cols_to_change=['p1_mean', 'p2_mean', 'joint_mean'],
-                           cols_to_change_show='mean_lum',
-                           new_col_name='loc', strip_from_cols='_mean', verbose=True)
-    print(f'long_df:\n{long_df}')
-
-    fig, ax = plt.subplots(figsize=(6, 6))
-    sns.lineplot(data=long_df, x='idx', y='mean_lum', hue='loc', ax=ax)
-    ax.set_xlabel('frames @ 240Hz')
-    ax.set_ylabel('pixel values (0:255')
-
-    # probe on/off markers
-    plt.axvline(x=vline_pr1_on, color='grey', linestyle='--')
-    plt.axvline(x=vline_pr1_off, color='grey', linestyle='--')
-    if sep_val not in [99, 400, 800, 2400]:
-        plt.axvline(x=vline_pr2_on, color='grey', linestyle='-.')
-        plt.axvline(x=vline_pr2_off, color='grey', linestyle='-.')
-
-    ax.set_xticks(ticks=x_tick_locs, labels=x_tick_labels)
-    # add shaded background for frames at 240
-    x_bg = np.arange(0, 100, 4)
-    for x0, x1 in zip(x_bg[::2], x_bg[1::2]):
-        plt.axvspan(x0, x1, color='black', alpha=0.05, zorder=0, linewidth=None)
-
-    plt.title(f'{cond_ver_name}: mean luminance')
-    fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\mon_cali_images_June22\cond_figs\mean_lum"
-    if not os.path.isdir(fig_dir):
-        os.makedirs(fig_dir)
-    fig_savename = f'{cond_ver_name}_mean_lum.png'
-    fig_path = os.path.join(fig_dir, fig_savename)
-    plt.savefig(fig_path)
-    plt.show()
-    plt.close()
-
-    # 2. p1, p2, joint max on same plot
-    long_df = make_long_df(wide_df=cond_df,
-                           cols_to_keep=['filename', 'idx'],
-                           cols_to_change=['p1_max', 'p2_max', 'joint_max'],
-                           cols_to_change_show='max_lum',
-                           new_col_name='loc', strip_from_cols='_max', verbose=True)
-    print(f'long_df:\n{long_df}')
-
-    fig, ax = plt.subplots(figsize=(6, 6))
-    sns.lineplot(data=long_df, x='idx', y='max_lum', hue='loc', ax=ax)
-    ax.set_xlabel('frames @ 240Hz')
-    ax.set_ylabel('pixel values (0:255')
-
-    # probe on/off markers
-    plt.axvline(x=vline_pr1_on, color='grey', linestyle='--')
-    plt.axvline(x=vline_pr1_off, color='grey', linestyle='--')
-    if sep_val not in [99, 400, 800, 2400]:
-        plt.axvline(x=vline_pr2_on, color='grey', linestyle='-.')
-        plt.axvline(x=vline_pr2_off, color='grey', linestyle='-.')
-
-    ax.set_xticks(ticks=x_tick_locs, labels=x_tick_labels)
-    # add shaded background for frames at 240
-    x_bg = np.arange(0, 100, 4)
-    for x0, x1 in zip(x_bg[::2], x_bg[1::2]):
-        plt.axvspan(x0, x1, color='black', alpha=0.05, zorder=0, linewidth=None)
-
-    plt.title(f'{cond_ver_name}: max luminance')
-    fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\mon_cali_images_June22\cond_figs\max_lum"
-    if not os.path.isdir(fig_dir):
-        os.makedirs(fig_dir)
-    fig_savename = f'{cond_ver_name}_max_lum.png'
-    fig_path = os.path.join(fig_dir, fig_savename)
-    plt.savefig(fig_path)
-    plt.show()
-    plt.close()
+# # for cond_ver_name in conds_to_use:
+# for cond_ver_name in cond_ver_list:
+#
+#     print(f'cond_ver_name:\n{cond_ver_name}')
+#
+#     split_txt = cond_ver_name.split("_")
+#     print(f'split_txt:\n{split_txt}')
+#
+#     isi_name = split_txt[0]
+#     print(f'isi_name:\n{isi_name}')
+#     isi_val = int(isi_name[3:])
+#     print(f'isi_val:\n{isi_val}')
+#
+#     sep_name = split_txt[1]
+#     print(f'sep_name:\n{sep_name}')
+#     sep_val = int(sep_name[3:])
+#     print(f'sep_val:\n{sep_val}')
+#
+#     '''insert vertical lines marking start and finish of each probe.
+#     First probe should appear at frame 8 (@960)'''
+#     vline_pr1_on = 8
+#     vline_pr1_off = vline_pr1_on + 8
+#
+#     if sep_val == 400:
+#         vline_pr1_off = vline_pr1_on + 16
+#     if sep_val == 800:
+#         vline_pr1_off = vline_pr1_on + 32
+#     if sep_val == 2400:
+#         vline_pr1_off = vline_pr1_on + 96
+#
+#     vline_pr2_on = 8 + probe2_dict[isi_val]
+#     vline_pr2_off = vline_pr2_on + 8
+#
+#
+#
+#
+#     cond_df = results_df[results_df['filename'] == cond_ver_name]
+#     print(f'cond_df:\n{cond_df}')
+#
+#     # 1. p1, p2, joint mean on same plot
+#     long_df = make_long_df(wide_df=cond_df,
+#                            cols_to_keep=['filename', 'idx'],
+#                            cols_to_change=['p1_mean', 'p2_mean', 'joint_mean'],
+#                            cols_to_change_show='mean_lum',
+#                            new_col_name='loc', strip_from_cols='_mean', verbose=True)
+#     print(f'long_df:\n{long_df}')
+#
+#     fig, ax = plt.subplots(figsize=(6, 6))
+#     sns.lineplot(data=long_df, x='idx', y='mean_lum', hue='loc', ax=ax)
+#     ax.set_xlabel('frames @ 240Hz')
+#     ax.set_ylabel('pixel values (0:255')
+#
+#     # probe on/off markers
+#     plt.axvline(x=vline_pr1_on, color='grey', linestyle='--')
+#     plt.axvline(x=vline_pr1_off, color='grey', linestyle='--')
+#     if sep_val not in [99, 400, 800, 2400]:
+#         plt.axvline(x=vline_pr2_on, color='grey', linestyle='-.')
+#         plt.axvline(x=vline_pr2_off, color='grey', linestyle='-.')
+#
+#     ax.set_xticks(ticks=x_tick_locs, labels=x_tick_labels)
+#     # add shaded background for frames at 240
+#     x_bg = np.arange(0, 100, 4)
+#     for x0, x1 in zip(x_bg[::2], x_bg[1::2]):
+#         plt.axvspan(x0, x1, color='black', alpha=0.05, zorder=0, linewidth=None)
+#
+#     plt.title(f'{cond_ver_name}: mean luminance')
+#     fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\mon_cali_images_June22\cond_figs\mean_lum"
+#     if not os.path.isdir(fig_dir):
+#         os.makedirs(fig_dir)
+#     fig_savename = f'{cond_ver_name}_mean_lum.png'
+#     fig_path = os.path.join(fig_dir, fig_savename)
+#     plt.savefig(fig_path)
+#     plt.show()
+#     plt.close()
+#
+#     # 2. p1, p2, joint max on same plot
+#     long_df = make_long_df(wide_df=cond_df,
+#                            cols_to_keep=['filename', 'idx'],
+#                            cols_to_change=['p1_max', 'p2_max', 'joint_max'],
+#                            cols_to_change_show='max_lum',
+#                            new_col_name='loc', strip_from_cols='_max', verbose=True)
+#     print(f'long_df:\n{long_df}')
+#
+#     fig, ax = plt.subplots(figsize=(6, 6))
+#     sns.lineplot(data=long_df, x='idx', y='max_lum', hue='loc', ax=ax)
+#     ax.set_xlabel('frames @ 240Hz')
+#     ax.set_ylabel('pixel values (0:255')
+#
+#     # probe on/off markers
+#     plt.axvline(x=vline_pr1_on, color='grey', linestyle='--')
+#     plt.axvline(x=vline_pr1_off, color='grey', linestyle='--')
+#     if sep_val not in [99, 400, 800, 2400]:
+#         plt.axvline(x=vline_pr2_on, color='grey', linestyle='-.')
+#         plt.axvline(x=vline_pr2_off, color='grey', linestyle='-.')
+#
+#     ax.set_xticks(ticks=x_tick_locs, labels=x_tick_labels)
+#     # add shaded background for frames at 240
+#     x_bg = np.arange(0, 100, 4)
+#     for x0, x1 in zip(x_bg[::2], x_bg[1::2]):
+#         plt.axvspan(x0, x1, color='black', alpha=0.05, zorder=0, linewidth=None)
+#
+#     plt.title(f'{cond_ver_name}: max luminance')
+#     fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\mon_cali_images_June22\cond_figs\max_lum"
+#     if not os.path.isdir(fig_dir):
+#         os.makedirs(fig_dir)
+#     fig_savename = f'{cond_ver_name}_max_lum.png'
+#     fig_path = os.path.join(fig_dir, fig_savename)
+#     plt.savefig(fig_path)
+#     plt.show()
+#     plt.close()
 
 
 
@@ -599,6 +599,9 @@ print(f'key_results_df:\n{key_results_df}')
 
 # loop through isis
 isi_list = list(results_df['isi'].unique())
+
+isi_list = isi_list + ['1pr']
+
 print(f'isi_list:\n{isi_list}')
 
 
@@ -610,16 +613,19 @@ for isi in isi_list:
 
     vline_pr1_on = 8
     vline_pr1_off = vline_pr1_on + 8
-    vline_pr2_on = 8 + probe2_dict[isi]
-    vline_pr2_off = vline_pr2_on + 8
+    if isi not in [-1, '1pr']:
+        vline_pr2_on = 8 + probe2_dict[isi]
+        vline_pr2_off = vline_pr2_on + 8
 
     if isi == 0:
         # long probes are labelled sep 400, 800 etc shouldnt be here, so remove
         isi_df = key_results_df.loc[((key_results_df['isi'] == isi) & (key_results_df['sep'] < 25))]
 
-    if isi == -1:
-        # long probes are labelled sep 400, 800 etc should be here, so add
-        isi_df = key_results_df.loc[((key_results_df['isi'] == isi) | (key_results_df['sep'] > 25))]
+    if isi == '1pr':
+        isi_df = key_results_df.loc[key_results_df['sep'] > 25]
+        x_tick_locs = np.arange(0, 148, 8)
+        x_tick_labels = np.arange(x_tick_label_start, 37 + x_tick_label_start, 2)
+
 
     print(f'isi_df:\n{isi_df}')
 
@@ -633,7 +639,7 @@ for isi in isi_list:
     # probe on/off markers
     plt.axvline(x=vline_pr1_on, color='grey', linestyle='--')
     plt.axvline(x=vline_pr1_off, color='grey', linestyle='--')
-    if isi == -1:
+    if isi == '1pr':
         plt.axvline(x=vline_pr1_on + 16, color='grey', linestyle='-.')
         plt.axvline(x=vline_pr1_on + 32, color='grey', linestyle='-.')
         plt.axvline(x=vline_pr1_on + 96, color='grey', linestyle='-.')
@@ -644,7 +650,9 @@ for isi in isi_list:
     ax.set_xticks(ticks=x_tick_locs, labels=x_tick_labels)
 
     # add shaded background for frames at 240
-    x_bg = np.arange(0, 100, 4)
+    x_bg = np.arange(0, 108, 4)
+    if isi == '1pr':
+        x_bg = np.arange(0, 148, 4)
     for x0, x1 in zip(x_bg[::2], x_bg[1::2]):
         plt.axvspan(x0, x1, color='black', alpha=0.05, zorder=0, linewidth=None)
 
@@ -668,7 +676,7 @@ for isi in isi_list:
     # probe on/off markers
     plt.axvline(x=vline_pr1_on, color='grey', linestyle='--')
     plt.axvline(x=vline_pr1_off, color='grey', linestyle='--')
-    if isi == -1:
+    if isi == '1pr':
         plt.axvline(x=vline_pr1_on + 16, color='grey', linestyle='-.')
         plt.axvline(x=vline_pr1_on + 32, color='grey', linestyle='-.')
         plt.axvline(x=vline_pr1_on + 96, color='grey', linestyle='-.')
@@ -679,6 +687,8 @@ for isi in isi_list:
     ax.set_xticks(ticks=x_tick_locs, labels=x_tick_labels)
     # add shaded background for frames at 240
     x_bg = np.arange(0, 100, 4)
+    if isi == '1pr':
+        x_bg = np.arange(0, 148, 4)
     for x0, x1 in zip(x_bg[::2], x_bg[1::2]):
         plt.axvspan(x0, x1, color='black', alpha=0.05, zorder=0, linewidth=None)
 

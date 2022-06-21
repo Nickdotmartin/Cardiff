@@ -400,11 +400,12 @@ while this_cond < n_conds:
             # PROBE 1
             if t_interval_1 >= frameN > t_fixation:
                 probe1.draw()
+                print(f"probe1: {frameN}")
                 # SIMULTANEOUS CONDITION
                 if ISI == -1:
                     if sep <= 18:
                         probe2.draw()
-                        print(f"probe1&2.draw(): {frameN}")
+                        print(f"probe2.draw(): {frameN}")
 
                 fixation.setRadius(3)
                 fixation.draw()
@@ -412,7 +413,6 @@ while this_cond < n_conds:
 
                 frame_counter.text = frameN
                 frame_counter.draw()
-                print(f"probe1: {frameN}")
 
             # ISI
             if t_ISI >= frameN > t_interval_1:
