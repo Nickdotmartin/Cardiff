@@ -701,6 +701,9 @@ def plot_runs_ave_w_errors(fig_df, error_df,
         elif 'lines' in column_names:
             slope_start_x = fig_df.index[0][0]
             slope_start_y = fig_df.iloc[0]['lines']
+        elif 'weber_thr' in column_names:  # todo: be careful, this name is in a few dfs - not very discriminative
+            slope_start_x = fig_df.index[0]
+            slope_start_y = fig_df.iloc[0]['weber_thr']
         print(f'slope_start_x: {slope_start_x}')
         print(f'slope_start_y: {slope_start_y}')
         ax.plot([slope_start_x, slope_start_x * 100], [slope_start_y, slope_start_y / 100], c='r',
@@ -2371,6 +2374,7 @@ def d_average_participant(root_path, run_dir_names_list,
 
 
 def e_average_exp_data(exp_path, p_names_list,
+                       exp_type='rad_flow',
                        error_type='SE',
                        use_trimmed=True,
                        verbose=True):
@@ -2394,6 +2398,8 @@ def e_average_exp_data(exp_path, p_names_list,
 
     :param exp_path: dir containing participant folders
     :param p_names_list: names of participant's folders
+    :param exp_type: type of experiment.  This is because different columns etc
+        are required for radial_flow or Ricco etc.
     :param error_type: Default: None. Can pass sd or se for standard deviation or error.
     :param use_trimmed: default True.  If True, use trimmed_mean ave (MASTER_ave_TM_thresh),
          if False, use MASTER_ave_thresh.
@@ -2423,16 +2429,22 @@ def e_average_exp_data(exp_path, p_names_list,
         if 'Unnamed: 0' in list(this_p_ave_df):
             this_p_ave_df.drop('Unnamed: 0', axis=1, inplace=True)
 
-        stair_names_list = this_p_ave_df['stair_names'].tolist()
-        if verbose:
-            print(f'stair_names_list: {stair_names_list}')
-        cong_list = [-1 if x < 0 else 1 for x in stair_names_list]
-        sep_list = [0 if x == -.10 else abs(int(x)) for x in stair_names_list]
+
 
         rows, cols = this_p_ave_df.shape
         this_p_ave_df.insert(0, 'participant', [p_name] * rows)
-        this_p_ave_df.insert(2, 'congruent', cong_list)
-        this_p_ave_df.insert(3, 'separation', sep_list)
+
+
+        if exp_type in ['Ricco', 'Bloch']:
+            this_p_ave_df.rename(columns={'ISI_0': 'probeLum'}, inplace=True)
+        else:
+            stair_names_list = this_p_ave_df['stair_names'].tolist()
+            if verbose:
+                print(f'stair_names_list: {stair_names_list}')
+            sep_list = [0 if x == -.10 else abs(int(x)) for x in stair_names_list]
+            cong_list = [-1 if x < 0 else 1 for x in stair_names_list]
+            this_p_ave_df.insert(2, 'congruent', cong_list)
+            this_p_ave_df.insert(3, 'separation', sep_list)
 
         all_p_ave_list.append(this_p_ave_df)
 
@@ -2450,22 +2462,35 @@ def e_average_exp_data(exp_path, p_names_list,
 
     # # get means and errors
     groupby_sep_df = all_exp_thr_df.drop('participant', axis=1)
-    groupby_sep_df = groupby_sep_df.drop('separation', axis=1)
-    groupby_sep_df = groupby_sep_df.drop('congruent', axis=1)
+    if exp_type == 'Ricco':
+        groupby_sep_df = groupby_sep_df.drop('stair_names', axis=1)
+        groupby_col = 'separation'
+        sort_rows = True
+    elif exp_type == 'Bloch':
+        groupby_sep_df['stair_names'] = groupby_sep_df['cond_type'] + "_" + groupby_sep_df["ISI"].map(str)
+        groupby_sep_df = groupby_sep_df.drop('cond_type', axis=1)
+        groupby_col = 'stair_names'
+        sort_rows = False
+    else:
+        groupby_sep_df = groupby_sep_df.drop('separation', axis=1)
+        groupby_sep_df = groupby_sep_df.drop('congruent', axis=1)
+        # todo: should I change sort to False for groupby?  Causes problems in
+        #  d_average_participants for error_df if there was only a single run of a
+        #  condition so error was NaN and somehow order changed.
+        groupby_col = 'stair_names'
+        sort_rows = True
 
-    # todo: should I change sort to False for groupby?  Cause probelems in
-    #  d_average_participants for error_df if there was only a single run of a
-    #  condition so error was NaN and somehow order changed.
-    exp_ave_thr_df = groupby_sep_df.groupby('stair_names', sort=True).mean()
+
+    exp_ave_thr_df = groupby_sep_df.groupby(groupby_col, sort=sort_rows).mean()
     if verbose:
         print(f'\nexp_ave_thr_df:\n{exp_ave_thr_df}')
 
     if error_type in [False, None]:
         error_bars_df = None
     elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
-        error_bars_df = groupby_sep_df.groupby('stair_names', sort=True).sem()
+        error_bars_df = groupby_sep_df.groupby(groupby_col, sort=sort_rows).sem()
     elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
-        error_bars_df = groupby_sep_df.groupby('stair_names', sort=True).std()
+        error_bars_df = groupby_sep_df.groupby(groupby_col, sort=sort_rows).std()
     else:
         raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
                          f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standrad_error']\n"

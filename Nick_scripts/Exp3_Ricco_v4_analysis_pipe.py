@@ -25,23 +25,23 @@ n_runs = 1
 
 p_idx_plus = 1
 
-for p_idx, participant_name in enumerate(participant_list):
-    root_path = os.path.join(exp_path, participant_name)
-
-    run_folder_names = [f'{participant_name}_{i+p_idx_plus}' for i in list(range(n_runs))]
-    print(f'run_folder_names: {run_folder_names}')
-
-    for run_idx, run_dir in enumerate(run_folder_names):
-
-        save_path = f'{root_path}{os.sep}{run_dir}'
-
-        # don't delete this (participant_name = participant_name),
-        # needed to ensure names go name1, name2, name3 not name1, name12, name123
-        p_name = participant_name
-
-        # '''a'''
-        p_name = f'{participant_name}_{run_idx+p_idx_plus}'
-        print(f'\nrunning analysis for {participant_name}, {run_dir}, {p_name}\n')
+# for p_idx, participant_name in enumerate(participant_list):
+#     root_path = os.path.join(exp_path, participant_name)
+#
+#     run_folder_names = [f'{participant_name}_{i+p_idx_plus}' for i in list(range(n_runs))]
+#     print(f'run_folder_names: {run_folder_names}')
+#
+#     for run_idx, run_dir in enumerate(run_folder_names):
+#
+#         save_path = f'{root_path}{os.sep}{run_dir}'
+#
+#         # don't delete this (participant_name = participant_name),
+#         # needed to ensure names go name1, name2, name3 not name1, name12, name123
+#         p_name = participant_name
+#
+#         # '''a'''
+#         p_name = f'{participant_name}_{run_idx+p_idx_plus}'
+#         print(f'\nrunning analysis for {participant_name}, {run_dir}, {p_name}\n')
 
     #     # # for first run, some files are saved just as name not name1
     #     run_data_path = f'{save_path}{os.sep}{p_name}_output.csv'
@@ -264,7 +264,7 @@ for p_idx, participant_name in enumerate(participant_list):
     #
     # exp_ave = False
     #
-    #
+    # todo: wrap these plot functions for participant and experiment averages into a function
     # # load data and change order to put 1pr last
     # print('*** making average plot ***')
     # print(f'root_path: {root_path}')
@@ -319,11 +319,6 @@ for p_idx, participant_name in enumerate(participant_list):
     #                        save_path=root_path, verbose=True)
     # plt.show()
     #
-    #
-    #
-    #
-    #
-    #
     # wide_df = fig_df.pivot(index=['area_deg', 'separation'], columns='cond', values='weber_thr')
     # print(f'wide_df:\n{wide_df}')
     #
@@ -354,30 +349,111 @@ for p_idx, participant_name in enumerate(participant_list):
     #                        save_path=root_path, verbose=True)
     # plt.show()
     # print('*** finished average plot ***')
-#
-#     # # # make_average_plots() doesn't really work here.
-#     # # make_average_plots(all_df_path=all_df_path,
-#     # #                    ave_df_path=p_ave_path,
-#     # #                    error_bars_path=err_path,
-#     # #                    n_trimmed=n_trimmed,
-#     # #                    exp_ave=False,
-#     # #                    show_plots=True, verbose=True)
 
-# participant_list = ['Nick', 'Kim', 'Simon']
-# print(f'exp_path: {exp_path}')
-# print('\nget exp_average_data')
-#
-# # doesn't work with ricco and bloch data = make new version?
-# e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
-#                    error_type='SE', use_trimmed=False, verbose=True)
-#
-#
-# all_df_path = os.path.join(exp_path, 'MASTER_exp_thr.csv')
-# exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
-# err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
-# n_trimmed = None
-# exp_ave = True
-#
+
+participant_list = ['Nick', 'Kim', 'Simon']
+print(f'exp_path: {exp_path}')
+print('\nget exp_average_data')
+e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
+                   exp_type='Ricco',  # todo: add exp_type to Bloch _analysis_pipe
+                   error_type='SE', use_trimmed=False, verbose=True)
+
+
+all_df_path = os.path.join(exp_path, 'MASTER_exp_thr.csv')
+exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
+err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
+n_trimmed = None
+exp_ave = True
+
+# # making Experiment average plot
+print('*** making average plot ***')
+fig_df = pd.read_csv(exp_ave_path)
+print(f'fig_df:\n{fig_df}')
+
+sep_cond_values = fig_df['separation'].to_list()
+sep_cond_labels = ['1pr' if i == -1 else i for i in sep_cond_values]
+print(f'sep_cond_values: {sep_cond_values}')
+
+error_df = pd.read_csv(err_path)
+print(f'error_df:\n{error_df}')
+
+# # fig 1 - ave thr by sep
+ave_thr_by_sep_df = fig_df[['separation', 'probeLum']]
+ave_thr_by_sep_df.set_index('separation', inplace=True)
+err_thr_by_sep_df = error_df[['separation', 'probeLum']]
+err_thr_by_sep_df.set_index('separation', inplace=True)
+print(f'ave_thr_by_sep_df:\n{ave_thr_by_sep_df}')
+
+fig_title = 'Experiment average thresholds - Ricco_v4'
+save_name = 'ricco_v4_sep_v_thr.png'
+plot_runs_ave_w_errors(fig_df=ave_thr_by_sep_df, error_df=err_thr_by_sep_df,
+                       jitter=False, error_caps=True, alt_colours=False,
+                       legend_names=None,
+                       even_spaced_x=True,
+                       fixed_y_range=False,
+                       x_tick_vals=sep_cond_values,
+                       x_tick_labels=sep_cond_labels,
+                       x_axis_label='Separation (2probe cond)',
+                       y_axis_label='Threshold',
+                       log_log_axes=False,
+                       neg1_slope=False,
+                       fig_title=fig_title, save_name=save_name,
+                       save_path=exp_path, verbose=True)
+plt.show()
+
+# # fig 2 len v thr
+ave_thr_by_len_df = fig_df[['length', 'probeLum']]
+ave_thr_by_len_df.set_index('length', inplace=True)
+err_thr_by_len_df = error_df[['length', 'probeLum']]
+err_thr_by_len_df.set_index('length', inplace=True)
+print(f'ave_thr_by_len_df:\n{ave_thr_by_len_df}')
+length_values = fig_df['length'].to_list()
+print(f'length_values: {length_values}')
+fig_title = 'Participant average thresholds - Ricco_v4'
+save_name = 'ricco_v4_len_v_thr.png'
+plot_runs_ave_w_errors(fig_df=ave_thr_by_len_df, error_df=err_thr_by_len_df,
+                       jitter=False, error_caps=True, alt_colours=False,
+                       legend_names=None,
+                       even_spaced_x=True,
+                       fixed_y_range=False,
+                       x_tick_vals=length_values,
+                       x_tick_labels=length_values,
+                       x_axis_label='length (diagonal pixels)',
+                       y_axis_label='Threshold',
+                       log_log_axes=False,
+                       neg1_slope=False,
+                       fig_title=fig_title, save_name=save_name,
+                       save_path=exp_path, verbose=True)
+plt.show()
+
+# # fig 3: log area, log weber
+log_area_log_weber_df = fig_df[['area_deg', 'weber_thr']]
+log_area_log_weber_df.set_index('area_deg', inplace=True)
+err_log_area_log_weber_df = error_df[['area_deg', 'weber_thr']]
+err_log_area_log_weber_df.set_index('area_deg', inplace=True)
+print(f'log_area_log_weber_df:\n{log_area_log_weber_df}')
+print(f"check col names: {log_area_log_weber_df.columns.to_list()}")
+area_values = fig_df['area_deg'].to_list()
+print(f'area_values: {area_values}')
+fig_title = 'Participant average ∆I/I thresholds - Ricco_v4'
+save_name = 'ricco_v4_log_area_log_weber.png'
+plot_runs_ave_w_errors(fig_df=log_area_log_weber_df, error_df=err_log_area_log_weber_df,
+                       jitter=False, error_caps=True, alt_colours=False,
+                       legend_names=None,
+                       even_spaced_x=False,
+                       fixed_y_range=False,
+                       x_tick_vals=area_values,
+                       x_tick_labels=None,
+                       x_axis_label='log(area degrees$^2$) - circles condition',
+                       y_axis_label='log(∆I/I)',
+                       log_log_axes=True,
+                       neg1_slope=True,
+                       fig_title=fig_title, save_name=save_name,
+                       save_path=exp_path, verbose=True)
+plt.show()
+print('*** finished average plot ***')
+
+# todo: wrap these plot functions for participant and experiment averages into a function
 # make_average_plots(all_df_path=all_df_path,
 #                    ave_df_path=exp_ave_path,
 #                    error_bars_path=err_path,

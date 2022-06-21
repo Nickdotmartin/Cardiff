@@ -277,9 +277,9 @@ for p_idx, participant_name in enumerate(participant_list):
 #
 # participant_list = ['Nick', 'Kim', 'Simon']
 #
-# e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
-#                    error_type='SE', use_trimmed=True, verbose=True)
-#
+# e_average_exp_data(exp_path=exp_path, p_names_list=participant_list, exp_type='Bloch',
+#                    error_type='SE', use_trimmed=False, verbose=True)
+
 #
 # all_df_path = os.path.join(exp_path, 'MASTER_exp_thr.csv')
 # exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
@@ -287,6 +287,67 @@ for p_idx, participant_name in enumerate(participant_list):
 # n_trimmed = None
 # exp_ave = True
 #
+# # print('*** making average plot ***')
+# print('*** making average plot ***')
+# fig_df = pd.read_csv(exp_ave_path)
+# print(f'fig_df:\n{fig_df}')
+#
+# isi_vals_list = fig_df['ISI'].to_list()
+# isi_names_list = ['1pr' if i == -2 else int(i) for i in isi_vals_list]
+# print(f'isi_names_list: {isi_names_list}')
+#
+# error_df = pd.read_csv(err_path)
+# print(f'error_df:\n{error_df}')
+#
+# # # fig 1 - ave thr by sep
+# ave_thr_by_isi_df = fig_df[['ISI', 'probeLum']]
+# ave_thr_by_isi_df.set_index('ISI', inplace=True)
+# err_thr_by_isi_df = error_df[['ISI', 'probeLum']]
+# err_thr_by_isi_df.set_index('ISI', inplace=True)
+# print(f'ave_thr_by_sep_df:\n{ave_thr_by_isi_df}')
+#
+# fig_title = 'Participant average thresholds - Bloch_v5'
+# save_name = 'bloch_v5_isi_v_thr.png'
+# plot_runs_ave_w_errors(fig_df=ave_thr_by_isi_df, error_df=err_thr_by_isi_df,
+#                        jitter=False, error_caps=True, alt_colours=False,
+#                        legend_names=None,
+#                        even_spaced_x=True,
+#                        fixed_y_range=False,
+#                        x_tick_vals=isi_vals_list,
+#                        x_tick_labels=isi_names_list,
+#                        x_axis_label='ISI (2probe condition)',
+#                        y_axis_label='Threshold',
+#                        log_log_axes=False,
+#                        neg1_slope=False,
+#                        fig_title=fig_title, save_name=save_name,
+#                        save_path=exp_path, verbose=True)
+# plt.show()
+#
+# log_dur_log_weber_df = fig_df[['dur_ms', 'weber_thr']]
+# log_dur_log_weber_df.set_index('dur_ms', inplace=True)
+# err_log_dur_log_weber_df = error_df[['dur_ms', 'weber_thr']]
+# err_log_dur_log_weber_df.set_index('dur_ms', inplace=True)
+# print(f'log_area_log_weber_df:\n{log_dur_log_weber_df}')
+#
+# fig_title = 'Participant average ∆I/I thresholds - Bloch_v5'
+# save_name = 'bloch_v5_log_dur_log_weber.png'
+# plot_runs_ave_w_errors(fig_df=log_dur_log_weber_df, error_df=err_log_dur_log_weber_df,
+#                        jitter=False, error_caps=True, alt_colours=False,
+#                        legend_names=None,
+#                        even_spaced_x=False,
+#                        fixed_y_range=False,
+#                        x_tick_vals=None,
+#                        x_tick_labels=None,
+#                        x_axis_label='log(duration ms) - 1probe condition',
+#                        y_axis_label='log(∆I/I)',
+#                        log_log_axes=True,
+#                        neg1_slope=True,
+#                        fig_title=fig_title, save_name=save_name,
+#                        save_path=exp_path, verbose=True)
+# plt.show()
+# print('*** finished average plot ***')
+
+# todo: wrap these plot functions for participant and experiment averages into a function
 # make_average_plots(all_df_path=all_df_path,
 #                    ave_df_path=exp_ave_path,
 #                    error_bars_path=err_path,
