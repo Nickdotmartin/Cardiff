@@ -565,6 +565,8 @@ def plot_runs_ave_w_errors(fig_df, error_df,
                            y_axis_label=None,
                            log_log_axes=False,
                            neg1_slope=False,
+                           slope_ycol_name=None,
+                           slope_xcol_idx_depth=1,
                            fig_title=None, save_name=None, save_path=None,
                            verbose=True):
     """
@@ -589,6 +591,8 @@ def plot_runs_ave_w_errors(fig_df, error_df,
     :param y_axis_label: Label for y-axis.  If None passed, will use 'Probe Luminance'.
     :param log_log_axes: If True, both axes are in log scale, else in normal scale.
     :param neg_1_slope: If True, adds a reference line with slope=-1.
+    :param slope_ycol_name: Name of column to take the start of slope from
+    :param slope_xcol_idx_depth: Some dfs have 2 index cols, so input 2.
     :param fig_title: Title for figure.
     :param save_name: filename of plot.
     :param save_path: path to folder where plots will be saved.
@@ -692,18 +696,23 @@ def plot_runs_ave_w_errors(fig_df, error_df,
 
     if neg1_slope:
         # add guideline with slope of -1 which crosses through the circles 1probe weber_thr value.
-        if 'circles' in column_names:
+        slope_start_x = fig_df.index[0]
+        if slope_xcol_idx_depth == 2:
             slope_start_x = fig_df.index[0][0]
-            slope_start_y = fig_df.iloc[0]['circles']
-        elif '1probe' in column_names:
-            slope_start_x = fig_df.index[0]
-            slope_start_y = fig_df.iloc[0]['1probe']
-        elif 'lines' in column_names:
-            slope_start_x = fig_df.index[0][0]
-            slope_start_y = fig_df.iloc[0]['lines']
-        elif 'weber_thr' in column_names:  # todo: be careful, this name is in a few dfs - not very discriminative
-            slope_start_x = fig_df.index[0]
-            slope_start_y = fig_df.iloc[0]['weber_thr']
+        slope_start_y = fig_df.iloc[0][slope_ycol_name]
+
+        # if 'circles' in column_names:
+        #     slope_start_x = fig_df.index[0][0]
+        #     slope_start_y = fig_df.iloc[0]['circles']
+        # elif '1probe' in column_names:
+        #     slope_start_x = fig_df.index[0]
+        #     slope_start_y = fig_df.iloc[0]['1probe']
+        # elif 'lines' in column_names:
+        #     slope_start_x = fig_df.index[0][0]
+        #     slope_start_y = fig_df.iloc[0]['lines']
+        # elif 'weber_thr' in column_names:  # todo: be careful, this name is in a few dfs - not very discriminative
+        #     slope_start_x = fig_df.index[0]
+        #     slope_start_y = fig_df.iloc[0]['weber_thr']
         print(f'slope_start_x: {slope_start_x}')
         print(f'slope_start_y: {slope_start_y}')
         ax.plot([slope_start_x, slope_start_x * 100], [slope_start_y, slope_start_y / 100], c='r',
@@ -2421,6 +2430,10 @@ def e_average_exp_data(exp_path, p_names_list,
             ave_df_name = 'MASTER_ave_TM_thresh'
 
         this_ave_df_path = os.path.join(exp_path, p_name, f'{ave_df_name}.csv')
+        # # if trimmed mean doesn't exists (e.g., because participant hasn't done 12 runs)
+        if not os.path.isfile(this_ave_df_path):
+            this_ave_df_path = os.path.join(exp_path, p_name, 'MASTER_ave_thresh.csv')
+
         this_p_ave_df = pd.read_csv(this_ave_df_path)
 
         if verbose:

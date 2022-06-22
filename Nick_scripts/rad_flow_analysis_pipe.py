@@ -34,7 +34,17 @@ for p_idx, participant_name in enumerate(participant_list):
 
     root_path = f'{exp_path}/{participant_name}'
 
-    run_folder_names = [f'{participant_name}_{i+p_idx_plus}' for i in list(range(n_runs))]
+    # # manually get run_folder_names with n_runs
+    # run_folder_names = [f'{participant_name}_{i+p_idx_plus}' for i in list(range(n_runs))]
+
+    # # search to automatically get run_folder_names
+    dir_list = os.listdir(root_path)
+    run_folder_names = []
+    for i in range(13):
+        check_dir = f'{participant_name}_{i}'
+        if check_dir in dir_list:
+            run_folder_names.append(check_dir)
+
     print(f'run_folder_names: {run_folder_names}')
 
     for run_idx, run_dir in enumerate(run_folder_names):
