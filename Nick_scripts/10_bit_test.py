@@ -34,9 +34,17 @@ list_8_bit = [-1+2*((i//4)*4)/1023 for i in list(range(1024))]
 #     print(f"{idx}: 10-bit: {a_10}, 8-bit: {b_8}")
 
 
+# # If you want to display on external monitor, set this variable to True
+external_monitor=False
+
+use_screen = 0
+if external_monitor:
+    use_screen = 1
+
 # initialize pyglet window
 win = psychopy.visual.Window(size=[1024, 1024], units="pix", fullscr=True,
-                             color=[1, 1, 1], winType='pyglet', bpc=[10, 10, 10])
+                             color=[1, 1, 1], winType='pyglet', bpc=[10, 10, 10],
+                             screen=use_screen)
 
 # define line stimuli
 line = psychopy.visual.Line(win=win, units="pix")
