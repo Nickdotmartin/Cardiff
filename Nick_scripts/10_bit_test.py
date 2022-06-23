@@ -35,8 +35,8 @@ list_8_bit = [-1+2*((i//4)*4)/1023 for i in list(range(1024))]
 
 
 # initialize pyglet window
-win = psychopy.visual.Window(size=[1024, 1024], units="pix", fullscr=False,
-                             color=[1, 1, 1], winType='pyglet', screen=1)
+win = psychopy.visual.Window(size=[1024, 1024], units="pix", fullscr=True,
+                             color=[1, 1, 1], winType='pyglet', bpc=[10, 10, 10])
 
 # define line stimuli
 line = psychopy.visual.Line(win=win, units="pix")

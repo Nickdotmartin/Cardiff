@@ -24,28 +24,28 @@ n_runs = 7
 p_idx_plus = 1
 
 # # convert separation into area (units are pixels, mm and degrees are diagonal pixels)
-area_dict = {-1: {'pixels': {'radius': 2.15, 'area': 14.522012, 'length': 1.5},
+area_dict = {-1: {'pixels': {'radius': 2.15, 'area': 14.522012, 'length': 1.5, 'n_pixels': 5},
                   'mm': {'radius': 0.898865301409574, 'area': 2.5382775, 'length': 0.6271153},
                   'degrees': {'radius': 0.0936293639654774, 'area': 0.0275406, 'length': 0.0653228}},
-             0: {'pixels': {'radius': 2.5, 'area': 19.634954, 'length': 2.5},
+             0: {'pixels': {'radius': 2.5, 'area': 19.634954, 'length': 2.5, 'n_pixels': 10},
                  'mm': {'radius': 1.04519221, 'area': 3.4319599, 'length': 1.0451922},
                  'degrees': {'radius': 0.10887135, 'area': 0.0372372, 'length': 0.1088714}},
-             1: {'pixels': {'radius': 2.8, 'area': 24.630086, 'length': 3.5},
+             1: {'pixels': {'radius': 2.8, 'area': 24.630086, 'length': 3.5, 'n_pixels': 15},
                  'mm': {'radius': 1.17061528, 'area': 4.3050505, 'length': 1.4632691},
                  'degrees': {'radius': 0.12193592, 'area': 0.0467104, 'length': 0.1524199}},
-             2: {'pixels': {'radius': 3.4, 'area': 36.316811, 'length': 4.5},
+             2: {'pixels': {'radius': 3.4, 'area': 36.316811, 'length': 4.5, 'n_pixels': 20},
                  'mm': {'radius': 1.42146141, 'area': 6.3477530, 'length': 1.8813460},
                  'degrees': {'radius': 0.14806504, 'area': 0.0688739, 'length': 0.1959684}},
-             3: {'pixels': {'radius': 4.1, 'area': 52.810173, 'length': 5.5},
+             3: {'pixels': {'radius': 4.1, 'area': 52.810173, 'length': 5.5, 'n_pixels': 25},
                  'mm': {'radius': 1.71411523, 'area': 9.2305993, 'length': 2.2994229},
                  'degrees': {'radius': 0.17854902, 'area': 0.1001532, 'length': 0.2395170}},
-             6: {'pixels': {'radius': 6.1, 'area': 116.898663, 'length': 8.5},
+             6: {'pixels': {'radius': 6.1, 'area': 116.898663, 'length': 8.5, 'n_pixels': 40},
                  'mm': {'radius': 2.55026899, 'area': 20.4325163, 'length': 3.5536535},
                  'degrees': {'radius': 0.26564610, 'area': 0.2216954, 'length': 0.3701626}},
-             18: {'pixels': {'radius': 14.6, 'area': 669.661890, 'length': 20.5},
+             18: {'pixels': {'radius': 14.6, 'area': 669.661890, 'length': 20.5, 'n_pixels': 100},
                   'mm': {'radius': 6.10392251, 'area': 117.0490508, 'length': 8.5705761},
                   'degrees': {'radius': 0.63580870, 'area': 1.2699973, 'length': 0.8927451}},
-             36: {'pixels': {'radius': 27.3, 'area': 2341.397589, 'length': 38.5},
+             36: {'pixels': {'radius': 27.3, 'area': 2341.397589, 'length': 38.5, 'n_pixels': 190},
                   'mm': {'radius': 11.41349894, 'area': 409.2488603, 'length': 16.0959600},
                   'degrees': {'radius': 1.18887518, 'area': 4.4404031, 'length': 1.6766188}}}
 
@@ -151,114 +151,115 @@ for p_idx, participant_name in enumerate(participant_list):
     #     # b3_plot_staircase(run_data_path, show_plots=True)
     #     # # c_plots(save_path=save_path, isi_name_list=isi_name_list, show_plots=True)
 
-    #     thr_df_path = f'{save_path}{os.sep}psignifit_thresholds.csv'
-    #     # thr_df_path = f'{save_path}{os.sep}{thr_save_name}.csv'
-    #     thr_df = pd.read_csv(thr_df_path)
-    #
-    #     if 'delta_thr' in list(thr_df.columns):
-    #         thr_df.drop('delta_thr', axis=1, inplace=True)
-    #
-    #     print(f'thr_df:\n{thr_df}\n')
-    #
-    #     sep_list = thr_df['separation'].unique()
-    #     sep_vals_list = [i for i in sep_list]
-    #     sep_name_list = ['1pr' if i == -1 else f'sep{i}' for i in sep_list]
-    #     print(f'sep_vals_list: {sep_vals_list}')
-    #     print(f'sep_name_list: {sep_name_list}\n')
-    #
-    #     # basic plot with exp1 axes
-    #     run_thr_plot(thr_df, x_col='separation', y_col='ISI_0', hue_col='cond',
-    #                  x_ticks_vals=sep_vals_list, x_tick_names=sep_name_list,
-    #                  x_axis_label='Probe cond (separation)',
-    #                  y_axis_label='Probe Luminance',
-    #                  fig_title='Ricco_v4: probe cond vs thr',
-    #                  save_as=f'{save_path}{os.sep}ricco_v4_cond_v_thr.png')
-    #     plt.show()
-    #
-    #
-    #     # # probe length details
-    #     sep_to_pix_len_dict = {-1: 1.5, 0: 2.5, 1: 3.5, 2: 4.5, 3: 5.5, 6: 8.9, 18: 20.5}
-    #     pix_len_list = [area_dict[i]['pixels']['length'] for i in sep_vals_list]
-    #     pix_len_name_list = [str(i) for i in pix_len_list]
-    #     print(f'pix_len_list: {pix_len_list}')
-    #
-    #     # basic plot with exp1 axes
-    #     run_thr_plot(thr_df, x_col='separation', y_col='ISI_0', hue_col='cond',
-    #                  x_ticks_vals=sep_vals_list, x_tick_names=pix_len_list,
-    #                  x_axis_label='Probe length (diagonal pixels, width = 3)',
-    #                  y_axis_label='Probe Luminance',
-    #                  fig_title='Ricco_v4: probe len vs thr',
-    #                  save_as=f'{save_path}{os.sep}ricco_v4_len_v_thr.png')
-    #     plt.show()
-    #
-    #     print(f'thr_df:\n{thr_df}')
-    #
-    #
-    #
-    #     # check for 'area' and 'weber_thr' col
-    #     sep_list = thr_df['separation'].to_list()
-    #
-    #     # old area was given in pixels
-    #     col_names = thr_df.columns.to_list()
-    #     if 'area_deg' not in col_names:
-    #         area_col = [area_dict[i]['degrees']['area'] for i in sep_list]
-    #         thr_df.insert(3, 'area_deg', area_col)
-    #
-    #     if 'length' not in col_names:
-    #         pix_len_list = [area_dict[i]['pixels']['length'] for i in sep_list]
-    #         thr_df.insert(4, 'length', pix_len_list)
-    #
-    #     if 'weber_thr' not in col_names:
-    #         thr_col = thr_df['ISI_0'].to_list()
-    #         bgLum = 21.2
-    #         # delta_thr_col = [(i-bgLum)/bgLum for i in thr_col]
-    #         weber_thr_col = [(i-bgLum)/i for i in thr_col]
-    #         thr_df.insert(5, 'weber_thr', weber_thr_col)
-    #
-    #     if 'stair_name' in col_names:
-    #         thr_df.drop('stair_name', axis=1, inplace=True)
-    #
-    #     print(f'thr_df:\n{thr_df}')
-    #     thr_df.to_csv(thr_df_path, index=False)
-    #
-    #
-    #     # plot with log-log axes - length
-    #     simple_log_log_plot(thr_df, x_col='length', y_col='weber_thr', hue_col='cond',
-    #                      x_ticks_vals=None, x_tick_names=None,
-    #                      x_axis_label='log(diag pixel length)',
-    #                      y_axis_label='log(∆I/I)',
-    #                      fig_title='Ricco_v4: log(length) v log(∆I/I)',
-    #                      save_as=f'{save_path}{os.sep}ricco_v4_log_length_log_weber.png')
-    #     plt.show()
-    #
-    #     # plot with log-log axes - area
-    #     simple_log_log_plot(thr_df, x_col='area_deg', y_col='weber_thr', hue_col='cond',
-    #                      x_ticks_vals=None, x_tick_names=None,
-    #                      x_axis_label='log(area degrees$^2$) - circles condition',
-    #                      y_axis_label='log(∆I/I)',
-    #                      fig_title='Ricco_v4: log(area) v log(∆I/I)',
-    #                      save_as=f'{save_path}{os.sep}ricco_v4_log_area_log_weber.png')
-    #     plt.show()
-    #
-    #     # plot with log-log axes - log(i) NOT log(weber)
-    #     simple_log_log_plot(thr_df, x_col='area_deg', y_col='ISI_0', hue_col='cond',
-    #                      x_ticks_vals=None, x_tick_names=None,
-    #                      x_axis_label='log(area degrees$^2$) - circles condition',
-    #                      y_axis_label='log(I)',
-    #                      fig_title='Ricco_v4: log(area) v log(I)',
-    #                      save_as=f'{save_path}{os.sep}ricco_v4_log_area_log_thr.png')
-    #     plt.show()
+        thr_df_path = f'{save_path}{os.sep}psignifit_thresholds.csv'
+        # thr_df_path = f'{save_path}{os.sep}{thr_save_name}.csv'
+        thr_df = pd.read_csv(thr_df_path)
+
+        if 'delta_thr' in list(thr_df.columns):
+            thr_df.drop('delta_thr', axis=1, inplace=True)
+
+        print(f'thr_df:\n{thr_df}\n')
+
+        sep_list = thr_df['separation'].unique()
+        sep_vals_list = [i for i in sep_list]
+        sep_name_list = ['1pr' if i == -1 else f'sep{i}' for i in sep_list]
+        print(f'sep_vals_list: {sep_vals_list}')
+        print(f'sep_name_list: {sep_name_list}\n')
+
+        # basic plot with exp1 axes
+        run_thr_plot(thr_df, x_col='separation', y_col='ISI_0', hue_col='cond',
+                     x_ticks_vals=sep_vals_list, x_tick_names=sep_name_list,
+                     x_axis_label='Probe cond (separation)',
+                     y_axis_label='Probe Luminance',
+                     fig_title='Ricco_v4: probe cond vs thr',
+                     save_as=f'{save_path}{os.sep}ricco_v4_cond_v_thr.png')
+        plt.show()
+
+
+        # # probe length details
+        sep_to_pix_len_dict = {-1: 1.5, 0: 2.5, 1: 3.5, 2: 4.5, 3: 5.5, 6: 8.9, 18: 20.5}
+        pix_len_list = [area_dict[i]['pixels']['length'] for i in sep_vals_list]
+        pix_len_name_list = [str(i) for i in pix_len_list]
+        print(f'pix_len_list: {pix_len_list}')
+
+        # basic plot with exp1 axes
+        run_thr_plot(thr_df, x_col='separation', y_col='ISI_0', hue_col='cond',
+                     x_ticks_vals=sep_vals_list, x_tick_names=pix_len_list,
+                     x_axis_label='Probe length (diagonal pixels, width = 3)',
+                     y_axis_label='Probe Luminance',
+                     fig_title='Ricco_v4: probe len vs thr',
+                     save_as=f'{save_path}{os.sep}ricco_v4_len_v_thr.png')
+        plt.show()
+
+        print(f'thr_df:\n{thr_df}')
+
+
+
+        # check for 'area' and 'weber_thr' col
+        sep_list = thr_df['separation'].to_list()
+
+        # old area was given in pixels
+        col_names = thr_df.columns.to_list()
+        if 'n_pixels' not in col_names:
+            # area_col = [area_dict[i]['degrees']['area'] for i in sep_list]
+            area_col = [area_dict[i]['pixels']['n_pixels'] for i in sep_list]
+            thr_df.insert(3, 'n_pixels', area_col)
+
+        if 'length' not in col_names:
+            pix_len_list = [area_dict[i]['pixels']['length'] for i in sep_list]
+            thr_df.insert(4, 'length', pix_len_list)
+
+        if 'weber_thr' not in col_names:
+            thr_col = thr_df['ISI_0'].to_list()
+            bgLum = 21.2
+            # delta_thr_col = [(i-bgLum)/bgLum for i in thr_col]
+            weber_thr_col = [(i-bgLum)/i for i in thr_col]
+            thr_df.insert(5, 'weber_thr', weber_thr_col)
+
+        if 'stair_name' in col_names:
+            thr_df.drop('stair_name', axis=1, inplace=True)
+
+        print(f'thr_df:\n{thr_df}')
+        thr_df.to_csv(thr_df_path, index=False)
+
+
+        # plot with log-log axes - length
+        simple_log_log_plot(thr_df, x_col='length', y_col='weber_thr', hue_col='cond',
+                         x_ticks_vals=None, x_tick_names=None,
+                         x_axis_label='log(diag pixel length)',
+                         y_axis_label='log(∆I/I)',
+                         fig_title='Ricco_v4: log(length) v log(∆I/I)',
+                         save_as=f'{save_path}{os.sep}ricco_v4_log_length_log_weber.png')
+        plt.show()
+
+        # plot with log-log axes - area
+        simple_log_log_plot(thr_df, x_col='n_pixels', y_col='weber_thr', hue_col='cond',
+                         x_ticks_vals=None, x_tick_names=None,
+                         x_axis_label='log(n_pixels)',
+                         y_axis_label='log(∆I/I)',
+                         fig_title='Ricco_v4: log(area) v log(∆I/I)',
+                         save_as=f'{save_path}{os.sep}ricco_v4_log_area_log_weber.png')
+        plt.show()
+
+        # plot with log-log axes - log(i) NOT log(weber)
+        simple_log_log_plot(thr_df, x_col='n_pixels', y_col='ISI_0', hue_col='cond',
+                         x_ticks_vals=None, x_tick_names=None,
+                         x_axis_label='log(n_pixels)',
+                         y_axis_label='log(I)',
+                         fig_title='Ricco_v4: log(area) v log(I)',
+                         save_as=f'{save_path}{os.sep}ricco_v4_log_area_log_thr.png')
+        plt.show()
     #
     #
     # '''d'''
     trim_n = None
     if len(run_folder_names) == 12:
         trim_n = 1
-    #
-    # # # run_folder_names = ['Nick_1', 'Nick_2', 'Nick_3']
-    # d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-    #                       trim_n=trim_n, error_type='SE')
-    #
+
+    # # run_folder_names = ['Nick_1', 'Nick_2', 'Nick_3']
+    d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
+                          trim_n=trim_n, error_type='SE')
+
     # making average plot
     all_df_path = os.path.join(root_path, 'MASTER_TM1_thresholds.csv')
     p_ave_path = os.path.join(root_path, 'MASTER_ave_TM_thresh.csv')
@@ -286,6 +287,10 @@ for p_idx, participant_name in enumerate(participant_list):
         len_values = fig_df['length'].to_list()
         print(f'len_values: {len_values}')
         error_df.insert(4, 'length', len_values)
+    if 'n_pixels' not in error_df.columns:
+        area_values = fig_df['n_pixels'].to_list()
+        print(f'area_values: {area_values}')
+        error_df.insert(4, 'n_pixels', area_values)
     print(f'error_df:\n{error_df}')
 
     # # fig 1 - sep v thr
@@ -386,13 +391,13 @@ for p_idx, participant_name in enumerate(participant_list):
     plt.show()
 
     # # fig 5 - log(area), log(thr)
-    wide_df = fig_df.pivot(index=['area_deg', 'separation'], columns='cond', values='ISI_0')
+    wide_df = fig_df.pivot(index=['n_pixels', 'separation'], columns='cond', values='ISI_0')
     print(f'wide_df:\n{wide_df}')
 
-    wide_err_df = error_df.pivot(index=['area', 'separation'], columns='cond', values='ISI_0')
+    wide_err_df = error_df.pivot(index=['n_pixels', 'separation'], columns='cond', values='ISI_0')
     print(f'wide_err_df:\n{wide_err_df}')
 
-    area_values = wide_df.index.get_level_values('area_deg').to_list()
+    area_values = wide_df.index.get_level_values('n_pixels').to_list()
     print(f'area_values: {area_values}')
 
     fig_title = 'Participant average log(I) thresholds - Ricco_v4'
@@ -404,7 +409,7 @@ for p_idx, participant_name in enumerate(participant_list):
                            fixed_y_range=False,
                            x_tick_vals=area_values,
                            x_tick_labels=None,
-                           x_axis_label='log(area degrees$^2$) - circles condition',
+                           x_axis_label='log(n_pixels)',
                            y_axis_label='log(I)',
                            log_log_axes=True,
                            neg1_slope=True,
@@ -415,10 +420,10 @@ for p_idx, participant_name in enumerate(participant_list):
     plt.show()
 
     # # fig 6 - log(area), log(weber)
-    wide_df = fig_df.pivot(index=['area_deg', 'separation'], columns='cond', values='weber_thr')
+    wide_df = fig_df.pivot(index=['n_pixels', 'separation'], columns='cond', values='weber_thr')
     print(f'wide_df:\n{wide_df}')
 
-    wide_err_df = error_df.pivot(index=['area', 'separation'], columns='cond', values='weber_thr')
+    wide_err_df = error_df.pivot(index=['n_pixels', 'separation'], columns='cond', values='weber_thr')
     print(f'wide_err_df:\n{wide_err_df}')
     fig_title = 'Participant average log(∆I/I) thresholds - Ricco_v4'
     save_name = 'ricco_v4_log_area_log_weber.png'
@@ -429,7 +434,7 @@ for p_idx, participant_name in enumerate(participant_list):
                            fixed_y_range=False,
                            x_tick_vals=area_values,
                            x_tick_labels=None,
-                           x_axis_label='log(area degrees$^2$) - circles condition',
+                           x_axis_label='log(n_pixels)',
                            y_axis_label='log(∆I/I)',
                            log_log_axes=True,
                            neg1_slope=True,
@@ -574,13 +579,13 @@ plot_runs_ave_w_errors(fig_df=log_len_log_weber_df, error_df=err_log_len_log_web
 plt.show()
 
 # # fig 5: log area, log thr
-log_area_log_thr_df = fig_df[['area_deg', 'probeLum']]
-log_area_log_thr_df.set_index('area_deg', inplace=True)
-err_log_area_log_thr_df = error_df[['area_deg', 'probeLum']]
-err_log_area_log_thr_df.set_index('area_deg', inplace=True)
+log_area_log_thr_df = fig_df[['n_pixels', 'probeLum']]
+log_area_log_thr_df.set_index('n_pixels', inplace=True)
+err_log_area_log_thr_df = error_df[['n_pixels', 'probeLum']]
+err_log_area_log_thr_df.set_index('n_pixels', inplace=True)
 print(f'log_area_log_weber_df:\n{log_area_log_thr_df}')
 print(f"check col names: {log_area_log_thr_df.columns.to_list()}")
-area_values = fig_df['area_deg'].to_list()
+area_values = fig_df['n_pixels'].to_list()
 print(f'area_values: {area_values}')
 fig_title = 'Participant average log(area), log(I) thresholds - Ricco_v4'
 save_name = 'ricco_v4_log_area_log_thr.png'
@@ -591,7 +596,7 @@ plot_runs_ave_w_errors(fig_df=log_area_log_thr_df, error_df=err_log_area_log_thr
                        fixed_y_range=False,
                        x_tick_vals=area_values,
                        x_tick_labels=None,
-                       x_axis_label='log(area degrees$^2$) - circles condition',
+                       x_axis_label='log(n_pixels)',
                        y_axis_label='log(I)',
                        log_log_axes=True,
                        neg1_slope=True,
@@ -602,13 +607,13 @@ plot_runs_ave_w_errors(fig_df=log_area_log_thr_df, error_df=err_log_area_log_thr
 plt.show()
 
 # # fig 6: log area, log weber
-log_area_log_weber_df = fig_df[['area_deg', 'weber_thr']]
-log_area_log_weber_df.set_index('area_deg', inplace=True)
-err_log_area_log_weber_df = error_df[['area_deg', 'weber_thr']]
-err_log_area_log_weber_df.set_index('area_deg', inplace=True)
+log_area_log_weber_df = fig_df[['n_pixels', 'weber_thr']]
+log_area_log_weber_df.set_index('n_pixels', inplace=True)
+err_log_area_log_weber_df = error_df[['n_pixels', 'weber_thr']]
+err_log_area_log_weber_df.set_index('n_pixels', inplace=True)
 print(f'log_area_log_weber_df:\n{log_area_log_weber_df}')
 print(f"check col names: {log_area_log_weber_df.columns.to_list()}")
-area_values = fig_df['area_deg'].to_list()
+area_values = fig_df['n_pixels'].to_list()
 print(f'area_values: {area_values}')
 fig_title = 'Participant average log(area), log(∆I/I) thresholds - Ricco_v4'
 save_name = 'ricco_v4_log_area_log_weber.png'
@@ -619,7 +624,7 @@ plot_runs_ave_w_errors(fig_df=log_area_log_weber_df, error_df=err_log_area_log_w
                        fixed_y_range=False,
                        x_tick_vals=area_values,
                        x_tick_labels=None,
-                       x_axis_label='log(area degrees$^2$) - circles condition',
+                       x_axis_label='log(n_pixels)',
                        y_axis_label='log(∆I/I)',
                        log_log_axes=True,
                        neg1_slope=True,
