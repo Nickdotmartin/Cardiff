@@ -2291,7 +2291,9 @@ def d_average_participant(root_path, run_dir_names_list,
             ave_psignifit_thr_df.insert(0, 'stair_names', stair_names)
             cond_values = ave_psignifit_thr_df.index.get_level_values('cond').to_list()
             sep_values = ave_psignifit_thr_df.index.get_level_values('separation').to_list()
-            area_values = ave_psignifit_thr_df['area_deg'].to_list()
+            area_deg_values = ave_psignifit_thr_df['area_deg'].to_list()
+            area_pix_vals = ave_psignifit_thr_df['n_pixels'].to_list()
+            len_values = ave_psignifit_thr_df['length'].to_list()
 
             print(f'\ncond_values:\n{cond_values}')
             print(f'sep_values:\n{sep_values}')
@@ -2338,9 +2340,14 @@ def d_average_participant(root_path, run_dir_names_list,
             # for ricco_v2 exp - change order to match ave_psignifit_thr_df
             error_bars_df.insert(0, 'cond', cond_vals)
             error_bars_df['separation'] = sep_vals
-            error_bars_df['area'] = area_values
+            error_bars_df['area_deg'] = area_deg_values
+            error_bars_df['n_pixels'] = area_pix_vals
+            error_bars_df['length'] = len_values
             error_bars_df.reset_index()
-            col_order = ['cond', 'separation', 'stair_names', 'area', 'weber_thr', 'ISI_0']
+            print(f'check columns: {error_bars_df.columns.to_list()}')
+            # col_order = ['cond', 'separation', 'stair_names', 'area', 'weber_thr', 'ISI_0']
+            col_order = ['cond', 'separation', 'area_deg', 'n_pixels', 'length', 'delta_I', 'weber_thr', 'thr']
+
             error_bars_df.reset_index(inplace=True)
             error_bars_df = error_bars_df[col_order]
             error_bars_df.set_index(['cond', 'separation'], inplace=True)
