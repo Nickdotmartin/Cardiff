@@ -151,300 +151,300 @@ for p_idx, participant_name in enumerate(participant_list):
     #     # b3_plot_staircase(run_data_path, show_plots=True)
     #     # # c_plots(save_path=save_path, isi_name_list=isi_name_list, show_plots=True)
 
-        thr_df_path = f'{save_path}{os.sep}psignifit_thresholds.csv'
-        # thr_df_path = f'{save_path}{os.sep}{thr_save_name}.csv'
-        thr_df = pd.read_csv(thr_df_path)
-
-        if 'delta_thr' in list(thr_df.columns):
-            thr_df.drop('delta_thr', axis=1, inplace=True)
-
-        print(f'thr_df:\n{thr_df}\n')
-
-        sep_list = thr_df['separation'].unique()
-        sep_vals_list = [i for i in sep_list]
-        sep_name_list = ['1pr' if i == -1 else f'sep{i}' for i in sep_list]
-        print(f'sep_vals_list: {sep_vals_list}')
-        print(f'sep_name_list: {sep_name_list}\n')
-
-        # basic plot with exp1 axes
-        run_thr_plot(thr_df, x_col='separation', y_col='ISI_0', hue_col='cond',
-                     x_ticks_vals=sep_vals_list, x_tick_names=sep_name_list,
-                     x_axis_label='Probe cond (separation)',
-                     y_axis_label='Probe Luminance',
-                     fig_title='Ricco_v4: probe cond vs thr',
-                     save_as=f'{save_path}{os.sep}ricco_v4_cond_v_thr.png')
-        plt.show()
-
-
-        # # probe length details
-        sep_to_pix_len_dict = {-1: 1.5, 0: 2.5, 1: 3.5, 2: 4.5, 3: 5.5, 6: 8.9, 18: 20.5}
-        pix_len_list = [area_dict[i]['pixels']['length'] for i in sep_vals_list]
-        pix_len_name_list = [str(i) for i in pix_len_list]
-        print(f'pix_len_list: {pix_len_list}')
-
-        # basic plot with exp1 axes
-        run_thr_plot(thr_df, x_col='separation', y_col='ISI_0', hue_col='cond',
-                     x_ticks_vals=sep_vals_list, x_tick_names=pix_len_list,
-                     x_axis_label='Probe length (diagonal pixels, width = 3)',
-                     y_axis_label='Probe Luminance',
-                     fig_title='Ricco_v4: probe len vs thr',
-                     save_as=f'{save_path}{os.sep}ricco_v4_len_v_thr.png')
-        plt.show()
-
-        print(f'thr_df:\n{thr_df}')
-
-
-
-        # check for 'area' and 'weber_thr' col
-        sep_list = thr_df['separation'].to_list()
-
-        # old area was given in pixels
-        col_names = thr_df.columns.to_list()
-        if 'n_pixels' not in col_names:
-            # area_col = [area_dict[i]['degrees']['area'] for i in sep_list]
-            area_col = [area_dict[i]['pixels']['n_pixels'] for i in sep_list]
-            thr_df.insert(3, 'n_pixels', area_col)
-
-        if 'length' not in col_names:
-            pix_len_list = [area_dict[i]['pixels']['length'] for i in sep_list]
-            thr_df.insert(4, 'length', pix_len_list)
-
-        if 'weber_thr' not in col_names:
-            thr_col = thr_df['ISI_0'].to_list()
-            bgLum = 21.2
-            # delta_thr_col = [(i-bgLum)/bgLum for i in thr_col]
-            weber_thr_col = [(i-bgLum)/i for i in thr_col]
-            thr_df.insert(5, 'weber_thr', weber_thr_col)
-
-        if 'stair_name' in col_names:
-            thr_df.drop('stair_name', axis=1, inplace=True)
-
-        print(f'thr_df:\n{thr_df}')
-        thr_df.to_csv(thr_df_path, index=False)
-
-
-        # plot with log-log axes - length
-        simple_log_log_plot(thr_df, x_col='length', y_col='weber_thr', hue_col='cond',
-                         x_ticks_vals=None, x_tick_names=None,
-                         x_axis_label='log(diag pixel length)',
-                         y_axis_label='log(∆I/I)',
-                         fig_title='Ricco_v4: log(length) v log(∆I/I)',
-                         save_as=f'{save_path}{os.sep}ricco_v4_log_length_log_weber.png')
-        plt.show()
-
-        # plot with log-log axes - area
-        simple_log_log_plot(thr_df, x_col='n_pixels', y_col='weber_thr', hue_col='cond',
-                         x_ticks_vals=None, x_tick_names=None,
-                         x_axis_label='log(n_pixels)',
-                         y_axis_label='log(∆I/I)',
-                         fig_title='Ricco_v4: log(area) v log(∆I/I)',
-                         save_as=f'{save_path}{os.sep}ricco_v4_log_area_log_weber.png')
-        plt.show()
-
-        # plot with log-log axes - log(i) NOT log(weber)
-        simple_log_log_plot(thr_df, x_col='n_pixels', y_col='ISI_0', hue_col='cond',
-                         x_ticks_vals=None, x_tick_names=None,
-                         x_axis_label='log(n_pixels)',
-                         y_axis_label='log(I)',
-                         fig_title='Ricco_v4: log(area) v log(I)',
-                         save_as=f'{save_path}{os.sep}ricco_v4_log_area_log_thr.png')
-        plt.show()
+        # thr_df_path = f'{save_path}{os.sep}psignifit_thresholds.csv'
+        # # thr_df_path = f'{save_path}{os.sep}{thr_save_name}.csv'
+        # thr_df = pd.read_csv(thr_df_path)
+        #
+        # if 'delta_thr' in list(thr_df.columns):
+        #     thr_df.drop('delta_thr', axis=1, inplace=True)
+        #
+        # print(f'thr_df:\n{thr_df}\n')
+        #
+        # sep_list = thr_df['separation'].unique()
+        # sep_vals_list = [i for i in sep_list]
+        # sep_name_list = ['1pr' if i == -1 else f'sep{i}' for i in sep_list]
+        # print(f'sep_vals_list: {sep_vals_list}')
+        # print(f'sep_name_list: {sep_name_list}\n')
+        #
+        # # basic plot with exp1 axes
+        # run_thr_plot(thr_df, x_col='separation', y_col='ISI_0', hue_col='cond',
+        #              x_ticks_vals=sep_vals_list, x_tick_names=sep_name_list,
+        #              x_axis_label='Probe cond (separation)',
+        #              y_axis_label='Probe Luminance',
+        #              fig_title='Ricco_v4: probe cond vs thr',
+        #              save_as=f'{save_path}{os.sep}ricco_v4_cond_v_thr.png')
+        # plt.show()
+        #
+        #
+        # # # probe length details
+        # sep_to_pix_len_dict = {-1: 1.5, 0: 2.5, 1: 3.5, 2: 4.5, 3: 5.5, 6: 8.9, 18: 20.5}
+        # pix_len_list = [area_dict[i]['pixels']['length'] for i in sep_vals_list]
+        # pix_len_name_list = [str(i) for i in pix_len_list]
+        # print(f'pix_len_list: {pix_len_list}')
+        #
+        # # basic plot with exp1 axes
+        # run_thr_plot(thr_df, x_col='separation', y_col='ISI_0', hue_col='cond',
+        #              x_ticks_vals=sep_vals_list, x_tick_names=pix_len_list,
+        #              x_axis_label='Probe length (diagonal pixels, width = 3)',
+        #              y_axis_label='Probe Luminance',
+        #              fig_title='Ricco_v4: probe len vs thr',
+        #              save_as=f'{save_path}{os.sep}ricco_v4_len_v_thr.png')
+        # plt.show()
+        #
+        # print(f'thr_df:\n{thr_df}')
+        #
+        #
+        #
+        # # check for 'area' and 'weber_thr' col
+        # sep_list = thr_df['separation'].to_list()
+        #
+        # # old area was given in pixels
+        # col_names = thr_df.columns.to_list()
+        # if 'n_pixels' not in col_names:
+        #     # area_col = [area_dict[i]['degrees']['area'] for i in sep_list]
+        #     area_col = [area_dict[i]['pixels']['n_pixels'] for i in sep_list]
+        #     thr_df.insert(3, 'n_pixels', area_col)
+        #
+        # if 'length' not in col_names:
+        #     pix_len_list = [area_dict[i]['pixels']['length'] for i in sep_list]
+        #     thr_df.insert(4, 'length', pix_len_list)
+        #
+        # if 'weber_thr' not in col_names:
+        #     thr_col = thr_df['ISI_0'].to_list()
+        #     bgLum = 21.2
+        #     # delta_thr_col = [(i-bgLum)/bgLum for i in thr_col]
+        #     weber_thr_col = [(i-bgLum)/i for i in thr_col]
+        #     thr_df.insert(5, 'weber_thr', weber_thr_col)
+        #
+        # if 'stair_name' in col_names:
+        #     thr_df.drop('stair_name', axis=1, inplace=True)
+        #
+        # print(f'thr_df:\n{thr_df}')
+        # thr_df.to_csv(thr_df_path, index=False)
+        #
+        #
+        # # plot with log-log axes - length
+        # simple_log_log_plot(thr_df, x_col='length', y_col='weber_thr', hue_col='cond',
+        #                  x_ticks_vals=None, x_tick_names=None,
+        #                  x_axis_label='log(diag pixel length)',
+        #                  y_axis_label='log(∆I/I)',
+        #                  fig_title='Ricco_v4: log(length) v log(∆I/I)',
+        #                  save_as=f'{save_path}{os.sep}ricco_v4_log_length_log_weber.png')
+        # plt.show()
+        #
+        # # plot with log-log axes - area
+        # simple_log_log_plot(thr_df, x_col='n_pixels', y_col='weber_thr', hue_col='cond',
+        #                  x_ticks_vals=None, x_tick_names=None,
+        #                  x_axis_label='log(n_pixels)',
+        #                  y_axis_label='log(∆I/I)',
+        #                  fig_title='Ricco_v4: log(area) v log(∆I/I)',
+        #                  save_as=f'{save_path}{os.sep}ricco_v4_log_area_log_weber.png')
+        # plt.show()
+        #
+        # # plot with log-log axes - log(i) NOT log(weber)
+        # simple_log_log_plot(thr_df, x_col='n_pixels', y_col='ISI_0', hue_col='cond',
+        #                  x_ticks_vals=None, x_tick_names=None,
+        #                  x_axis_label='log(n_pixels)',
+        #                  y_axis_label='log(I)',
+        #                  fig_title='Ricco_v4: log(area) v log(I)',
+        #                  save_as=f'{save_path}{os.sep}ricco_v4_log_area_log_thr.png')
+        # plt.show()
     #
     #
     # '''d'''
-    trim_n = None
-    if len(run_folder_names) == 12:
-        trim_n = 1
-
-    # # run_folder_names = ['Nick_1', 'Nick_2', 'Nick_3']
-    d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-                          trim_n=trim_n, error_type='SE')
-
-    # making average plot
-    all_df_path = os.path.join(root_path, 'MASTER_TM1_thresholds.csv')
-    p_ave_path = os.path.join(root_path, 'MASTER_ave_TM_thresh.csv')
-    err_path = os.path.join(root_path, 'MASTER_ave_TM_thr_error_SE.csv')
-    n_trimmed = trim_n
-    if n_trimmed is None:
-        all_df_path = os.path.join(root_path, 'MASTER_psignifit_thresholds.csv')
-        p_ave_path = os.path.join(root_path, 'MASTER_ave_thresh.csv')
-        err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
-
-    exp_ave = False
-
-    # todo: wrap these plot functions for participant and experiment averages into a function
-    # load data and change order to put 1pr last
-    print('*** making average plot ***')
-    print(f'root_path: {root_path}')
-    # reshape dfs so that the different conds are in separate columns.
-    fig_df = pd.read_csv(p_ave_path)
-    print(f'fig_df:\n{fig_df}')
-
-    error_df = pd.read_csv(err_path)
-    # replace NaN with zero
-    error_df['weber_thr'] = error_df['weber_thr'].fillna(0)
-    if 'length' not in error_df.columns:
-        len_values = fig_df['length'].to_list()
-        print(f'len_values: {len_values}')
-        error_df.insert(4, 'length', len_values)
-    if 'n_pixels' not in error_df.columns:
-        area_values = fig_df['n_pixels'].to_list()
-        print(f'area_values: {area_values}')
-        error_df.insert(4, 'n_pixels', area_values)
-    print(f'error_df:\n{error_df}')
-
-    # # fig 1 - sep v thr
-    wide_df = fig_df.pivot(index=['separation'], columns='cond', values='ISI_0')
-    print(f'wide_df:\n{wide_df}')
-    wide_err_df = error_df.pivot(index=['separation'], columns='cond', values='ISI_0')
-
-    sep_cond_values = wide_df.index.get_level_values('separation').to_list()
-    sep_cond_labels = ['1pr' if i == -1 else i for i in sep_cond_values]
-    print(f'sep_cond_values: {sep_cond_values}')
-
-    fig_title = 'Participant average thresholds - Ricco_v4'
-    save_name = 'ricco_v4_sep_v_thr.png'
-    plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
-                           jitter=False, error_caps=True, alt_colours=False,
-                           legend_names=None,
-                           even_spaced_x=True,
-                           fixed_y_range=False,
-                           x_tick_vals=sep_cond_values,
-                           x_tick_labels=sep_cond_labels,
-                           x_axis_label='Separation (2probe cond)',
-                           y_axis_label='Threshold',
-                           log_log_axes=False,
-                           neg1_slope=False,
-                           fig_title=fig_title, save_name=save_name,
-                           save_path=root_path, verbose=True)
-    plt.show()
-
-    # # fig 2 - len v thr
-    pix_len_list = [area_dict[i]['pixels']['length'] for i in sep_cond_values]
-    fig_title = 'Participant average thresholds - Ricco_v4'
-    save_name = 'ricco_v4_len_v_thr.png'
-    plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
-                           jitter=False, error_caps=True, alt_colours=False,
-                           legend_names=None,
-                           even_spaced_x=True,
-                           fixed_y_range=False,
-                           x_tick_vals=pix_len_list,
-                           x_tick_labels=pix_len_list,
-                           x_axis_label='length (diagonal pixels)',
-                           y_axis_label='Threshold',
-                           log_log_axes=False,
-                           neg1_slope=False,
-                           fig_title=fig_title, save_name=save_name,
-                           save_path=root_path, verbose=True)
-    plt.show()
-
-    # fig 3 - log(len), log(thr)
-    wide_df = fig_df.pivot(index=['length', 'separation'], columns='cond', values='ISI_0')
-    print(f'wide_df:\n{wide_df}')
-
-    wide_err_df = error_df.pivot(index=['length', 'separation'], columns='cond', values='ISI_0')
-    print(f'wide_err_df:\n{wide_err_df}')
-
-    fig_title = 'Participant average log(len), log(I) thresholds - Ricco_v4'
-    save_name = 'ricco_v4_log_len_log_thr.png'
-    plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
-                           jitter=False, error_caps=True, alt_colours=False,
-                           legend_names=None,
-                           even_spaced_x=False,
-                           fixed_y_range=False,
-                           x_tick_vals=len_values,
-                           x_tick_labels=None,
-                           x_axis_label='log(length, pixels)',
-                           y_axis_label='log(I)',
-                           log_log_axes=True,
-                           neg1_slope=True,
-                           slope_ycol_name='lines',
-                           slope_xcol_idx_depth=2,
-                           fig_title=fig_title, save_name=save_name,
-                           save_path=root_path, verbose=True)
-    plt.show()
-
-    # # fig 4 - log(len), log(weber)
-    wide_df = fig_df.pivot(index=['length', 'separation'], columns='cond', values='weber_thr')
-    print(f'wide_df:\n{wide_df}')
-
-    wide_err_df = error_df.pivot(index=['length', 'separation'], columns='cond', values='weber_thr')
-    print(f'wide_err_df:\n{wide_err_df}')
-
-    fig_title = 'Participant average log(len), log(∆I/I) thresholds - Ricco_v4'
-    save_name = 'ricco_v4_log_len_log_weber.png'
-    plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
-                           jitter=False, error_caps=True, alt_colours=False,
-                           legend_names=None,
-                           even_spaced_x=False,
-                           fixed_y_range=False,
-                           x_tick_vals=len_values,
-                           x_tick_labels=None,
-                           x_axis_label='log(length, pixels)',
-                           y_axis_label='log(∆I/I)',
-                           log_log_axes=True,
-                           neg1_slope=True,
-                           slope_ycol_name='lines',
-                           slope_xcol_idx_depth=2,
-                           fig_title=fig_title, save_name=save_name,
-                           save_path=root_path, verbose=True)
-    plt.show()
-
-    # # fig 5 - log(area), log(thr)
-    wide_df = fig_df.pivot(index=['n_pixels', 'separation'], columns='cond', values='ISI_0')
-    print(f'wide_df:\n{wide_df}')
-
-    wide_err_df = error_df.pivot(index=['n_pixels', 'separation'], columns='cond', values='ISI_0')
-    print(f'wide_err_df:\n{wide_err_df}')
-
-    area_values = wide_df.index.get_level_values('n_pixels').to_list()
-    print(f'area_values: {area_values}')
-
-    fig_title = 'Participant average log(I) thresholds - Ricco_v4'
-    save_name = 'ricco_v4_log_area_log_thr.png'
-    plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
-                           jitter=False, error_caps=True, alt_colours=False,
-                           legend_names=None,
-                           even_spaced_x=False,
-                           fixed_y_range=False,
-                           x_tick_vals=area_values,
-                           x_tick_labels=None,
-                           x_axis_label='log(n_pixels)',
-                           y_axis_label='log(I)',
-                           log_log_axes=True,
-                           neg1_slope=True,
-                           slope_ycol_name='lines',
-                           slope_xcol_idx_depth=2,
-                           fig_title=fig_title, save_name=save_name,
-                           save_path=root_path, verbose=True)
-    plt.show()
-
-    # # fig 6 - log(area), log(weber)
-    wide_df = fig_df.pivot(index=['n_pixels', 'separation'], columns='cond', values='weber_thr')
-    print(f'wide_df:\n{wide_df}')
-
-    wide_err_df = error_df.pivot(index=['n_pixels', 'separation'], columns='cond', values='weber_thr')
-    print(f'wide_err_df:\n{wide_err_df}')
-    fig_title = 'Participant average log(∆I/I) thresholds - Ricco_v4'
-    save_name = 'ricco_v4_log_area_log_weber.png'
-    plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
-                           jitter=False, error_caps=True, alt_colours=False,
-                           legend_names=None,
-                           even_spaced_x=False,
-                           fixed_y_range=False,
-                           x_tick_vals=area_values,
-                           x_tick_labels=None,
-                           x_axis_label='log(n_pixels)',
-                           y_axis_label='log(∆I/I)',
-                           log_log_axes=True,
-                           neg1_slope=True,
-                           slope_ycol_name='lines',
-                           slope_xcol_idx_depth=2,
-                           fig_title=fig_title, save_name=save_name,
-                           save_path=root_path, verbose=True)
-    plt.show()
-
-    print('*** finished participant average plots ***')
+    # trim_n = None
+    # if len(run_folder_names) == 12:
+    #     trim_n = 1
+    #
+    # # # run_folder_names = ['Nick_1', 'Nick_2', 'Nick_3']
+    # d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
+    #                       trim_n=trim_n, error_type='SE')
+    #
+    # # making average plot
+    # all_df_path = os.path.join(root_path, 'MASTER_TM1_thresholds.csv')
+    # p_ave_path = os.path.join(root_path, 'MASTER_ave_TM_thresh.csv')
+    # err_path = os.path.join(root_path, 'MASTER_ave_TM_thr_error_SE.csv')
+    # n_trimmed = trim_n
+    # if n_trimmed is None:
+    #     all_df_path = os.path.join(root_path, 'MASTER_psignifit_thresholds.csv')
+    #     p_ave_path = os.path.join(root_path, 'MASTER_ave_thresh.csv')
+    #     err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
+    #
+    # exp_ave = False
+    #
+    # # todo: wrap these plot functions for participant and experiment averages into a function
+    # # load data and change order to put 1pr last
+    # print('*** making average plot ***')
+    # print(f'root_path: {root_path}')
+    # # reshape dfs so that the different conds are in separate columns.
+    # fig_df = pd.read_csv(p_ave_path)
+    # print(f'fig_df:\n{fig_df}')
+    #
+    # error_df = pd.read_csv(err_path)
+    # # replace NaN with zero
+    # error_df['weber_thr'] = error_df['weber_thr'].fillna(0)
+    # if 'length' not in error_df.columns:
+    #     len_values = fig_df['length'].to_list()
+    #     print(f'len_values: {len_values}')
+    #     error_df.insert(4, 'length', len_values)
+    # if 'n_pixels' not in error_df.columns:
+    #     area_values = fig_df['n_pixels'].to_list()
+    #     print(f'area_values: {area_values}')
+    #     error_df.insert(4, 'n_pixels', area_values)
+    # print(f'error_df:\n{error_df}')
+    #
+    # # # fig 1 - sep v thr
+    # wide_df = fig_df.pivot(index=['separation'], columns='cond', values='ISI_0')
+    # print(f'wide_df:\n{wide_df}')
+    # wide_err_df = error_df.pivot(index=['separation'], columns='cond', values='ISI_0')
+    #
+    # sep_cond_values = wide_df.index.get_level_values('separation').to_list()
+    # sep_cond_labels = ['1pr' if i == -1 else i for i in sep_cond_values]
+    # print(f'sep_cond_values: {sep_cond_values}')
+    #
+    # fig_title = 'Participant average thresholds - Ricco_v4'
+    # save_name = 'ricco_v4_sep_v_thr.png'
+    # plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
+    #                        jitter=False, error_caps=True, alt_colours=False,
+    #                        legend_names=None,
+    #                        even_spaced_x=True,
+    #                        fixed_y_range=False,
+    #                        x_tick_vals=sep_cond_values,
+    #                        x_tick_labels=sep_cond_labels,
+    #                        x_axis_label='Separation (2probe cond)',
+    #                        y_axis_label='Threshold',
+    #                        log_log_axes=False,
+    #                        neg1_slope=False,
+    #                        fig_title=fig_title, save_name=save_name,
+    #                        save_path=root_path, verbose=True)
+    # plt.show()
+    #
+    # # # fig 2 - len v thr
+    # pix_len_list = [area_dict[i]['pixels']['length'] for i in sep_cond_values]
+    # fig_title = 'Participant average thresholds - Ricco_v4'
+    # save_name = 'ricco_v4_len_v_thr.png'
+    # plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
+    #                        jitter=False, error_caps=True, alt_colours=False,
+    #                        legend_names=None,
+    #                        even_spaced_x=True,
+    #                        fixed_y_range=False,
+    #                        x_tick_vals=pix_len_list,
+    #                        x_tick_labels=pix_len_list,
+    #                        x_axis_label='length (diagonal pixels)',
+    #                        y_axis_label='Threshold',
+    #                        log_log_axes=False,
+    #                        neg1_slope=False,
+    #                        fig_title=fig_title, save_name=save_name,
+    #                        save_path=root_path, verbose=True)
+    # plt.show()
+    #
+    # # fig 3 - log(len), log(thr)
+    # wide_df = fig_df.pivot(index=['length', 'separation'], columns='cond', values='ISI_0')
+    # print(f'wide_df:\n{wide_df}')
+    #
+    # wide_err_df = error_df.pivot(index=['length', 'separation'], columns='cond', values='ISI_0')
+    # print(f'wide_err_df:\n{wide_err_df}')
+    #
+    # fig_title = 'Participant average log(len), log(I) thresholds - Ricco_v4'
+    # save_name = 'ricco_v4_log_len_log_thr.png'
+    # plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
+    #                        jitter=False, error_caps=True, alt_colours=False,
+    #                        legend_names=None,
+    #                        even_spaced_x=False,
+    #                        fixed_y_range=False,
+    #                        x_tick_vals=len_values,
+    #                        x_tick_labels=None,
+    #                        x_axis_label='log(length, pixels)',
+    #                        y_axis_label='log(I)',
+    #                        log_log_axes=True,
+    #                        neg1_slope=True,
+    #                        slope_ycol_name='lines',
+    #                        slope_xcol_idx_depth=2,
+    #                        fig_title=fig_title, save_name=save_name,
+    #                        save_path=root_path, verbose=True)
+    # plt.show()
+    #
+    # # # fig 4 - log(len), log(weber)
+    # wide_df = fig_df.pivot(index=['length', 'separation'], columns='cond', values='weber_thr')
+    # print(f'wide_df:\n{wide_df}')
+    #
+    # wide_err_df = error_df.pivot(index=['length', 'separation'], columns='cond', values='weber_thr')
+    # print(f'wide_err_df:\n{wide_err_df}')
+    #
+    # fig_title = 'Participant average log(len), log(∆I/I) thresholds - Ricco_v4'
+    # save_name = 'ricco_v4_log_len_log_weber.png'
+    # plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
+    #                        jitter=False, error_caps=True, alt_colours=False,
+    #                        legend_names=None,
+    #                        even_spaced_x=False,
+    #                        fixed_y_range=False,
+    #                        x_tick_vals=len_values,
+    #                        x_tick_labels=None,
+    #                        x_axis_label='log(length, pixels)',
+    #                        y_axis_label='log(∆I/I)',
+    #                        log_log_axes=True,
+    #                        neg1_slope=True,
+    #                        slope_ycol_name='lines',
+    #                        slope_xcol_idx_depth=2,
+    #                        fig_title=fig_title, save_name=save_name,
+    #                        save_path=root_path, verbose=True)
+    # plt.show()
+    #
+    # # # fig 5 - log(area), log(thr)
+    # wide_df = fig_df.pivot(index=['n_pixels', 'separation'], columns='cond', values='ISI_0')
+    # print(f'wide_df:\n{wide_df}')
+    #
+    # wide_err_df = error_df.pivot(index=['n_pixels', 'separation'], columns='cond', values='ISI_0')
+    # print(f'wide_err_df:\n{wide_err_df}')
+    #
+    # area_values = wide_df.index.get_level_values('n_pixels').to_list()
+    # print(f'area_values: {area_values}')
+    #
+    # fig_title = 'Participant average log(I) thresholds - Ricco_v4'
+    # save_name = 'ricco_v4_log_area_log_thr.png'
+    # plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
+    #                        jitter=False, error_caps=True, alt_colours=False,
+    #                        legend_names=None,
+    #                        even_spaced_x=False,
+    #                        fixed_y_range=False,
+    #                        x_tick_vals=area_values,
+    #                        x_tick_labels=None,
+    #                        x_axis_label='log(n_pixels)',
+    #                        y_axis_label='log(I)',
+    #                        log_log_axes=True,
+    #                        neg1_slope=True,
+    #                        slope_ycol_name='lines',
+    #                        slope_xcol_idx_depth=2,
+    #                        fig_title=fig_title, save_name=save_name,
+    #                        save_path=root_path, verbose=True)
+    # plt.show()
+    #
+    # # # fig 6 - log(area), log(weber)
+    # wide_df = fig_df.pivot(index=['n_pixels', 'separation'], columns='cond', values='weber_thr')
+    # print(f'wide_df:\n{wide_df}')
+    #
+    # wide_err_df = error_df.pivot(index=['n_pixels', 'separation'], columns='cond', values='weber_thr')
+    # print(f'wide_err_df:\n{wide_err_df}')
+    # fig_title = 'Participant average log(∆I/I) thresholds - Ricco_v4'
+    # save_name = 'ricco_v4_log_area_log_weber.png'
+    # plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
+    #                        jitter=False, error_caps=True, alt_colours=False,
+    #                        legend_names=None,
+    #                        even_spaced_x=False,
+    #                        fixed_y_range=False,
+    #                        x_tick_vals=area_values,
+    #                        x_tick_labels=None,
+    #                        x_axis_label='log(n_pixels)',
+    #                        y_axis_label='log(∆I/I)',
+    #                        log_log_axes=True,
+    #                        neg1_slope=True,
+    #                        slope_ycol_name='lines',
+    #                        slope_xcol_idx_depth=2,
+    #                        fig_title=fig_title, save_name=save_name,
+    #                        save_path=root_path, verbose=True)
+    # plt.show()
+    #
+    # print('*** finished participant average plots ***')
 
 
 # participant_list = ['Nick', 'Kim', 'Simon']
@@ -505,7 +505,7 @@ err_thr_by_len_df.set_index('length', inplace=True)
 print(f'ave_thr_by_len_df:\n{ave_thr_by_len_df}')
 length_values = fig_df['length'].to_list()
 print(f'length_values: {length_values}')
-fig_title = 'Participant average thresholds - Ricco_v4'
+fig_title = 'Experiment average thresholds - Ricco_v4'
 save_name = 'ricco_v4_len_v_thr.png'
 plot_runs_ave_w_errors(fig_df=ave_thr_by_len_df, error_df=err_thr_by_len_df,
                        jitter=False, error_caps=True, alt_colours=False,
@@ -531,7 +531,7 @@ print(f'log_len_log_weber_df:\n{log_len_log_thr_df}')
 print(f"check col names: {log_len_log_thr_df.columns.to_list()}")
 len_values = fig_df['length'].to_list()
 print(f'len_values: {len_values}')
-fig_title = 'Participant average log(len), log(I) thresholds - Ricco_v4'
+fig_title = 'Experiment average log(len), log(I) thresholds - Ricco_v4'
 save_name = 'ricco_v4_log_len_log_thr.png'
 plot_runs_ave_w_errors(fig_df=log_len_log_thr_df, error_df=err_log_len_log_thr_df,
                        jitter=False, error_caps=True, alt_colours=False,
@@ -559,7 +559,7 @@ print(f'log_len_log_weber_df:\n{log_len_log_weber_df}')
 print(f"check col names: {log_len_log_weber_df.columns.to_list()}")
 len_values = fig_df['length'].to_list()
 print(f'len_values: {len_values}')
-fig_title = 'Participant average log(len), log(∆I/I) thresholds - Ricco_v4'
+fig_title = 'Experiment average log(len), log(∆I/I) thresholds - Ricco_v4'
 save_name = 'ricco_v4_log_len_log_weber.png'
 plot_runs_ave_w_errors(fig_df=log_len_log_weber_df, error_df=err_log_len_log_weber_df,
                        jitter=False, error_caps=True, alt_colours=False,
@@ -587,7 +587,7 @@ print(f'log_area_log_weber_df:\n{log_area_log_thr_df}')
 print(f"check col names: {log_area_log_thr_df.columns.to_list()}")
 area_values = fig_df['n_pixels'].to_list()
 print(f'area_values: {area_values}')
-fig_title = 'Participant average log(area), log(I) thresholds - Ricco_v4'
+fig_title = 'Experiment average log(area), log(I) thresholds - Ricco_v4'
 save_name = 'ricco_v4_log_area_log_thr.png'
 plot_runs_ave_w_errors(fig_df=log_area_log_thr_df, error_df=err_log_area_log_thr_df,
                        jitter=False, error_caps=True, alt_colours=False,
@@ -615,7 +615,7 @@ print(f'log_area_log_weber_df:\n{log_area_log_weber_df}')
 print(f"check col names: {log_area_log_weber_df.columns.to_list()}")
 area_values = fig_df['n_pixels'].to_list()
 print(f'area_values: {area_values}')
-fig_title = 'Participant average log(area), log(∆I/I) thresholds - Ricco_v4'
+fig_title = 'Experiment average log(area), log(∆I/I) thresholds - Ricco_v4'
 save_name = 'ricco_v4_log_area_log_weber.png'
 plot_runs_ave_w_errors(fig_df=log_area_log_weber_df, error_df=err_log_area_log_weber_df,
                        jitter=False, error_caps=True, alt_colours=False,
