@@ -59,8 +59,8 @@ for p_idx, participant_name in enumerate(participant_list):
     # search to automatically get run_folder_names
     dir_list = os.listdir(root_path)
     run_folder_names = []
-    for i in range(13):
-        check_dir = f'{participant_name}_{i}'
+    for i in range(12):  # numbers 0 to 11
+        check_dir = f'{participant_name}_{i+p_idx_plus}'   # numbers 1 to 12
         if check_dir in dir_list:
             run_folder_names.append(check_dir)
 
