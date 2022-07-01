@@ -479,7 +479,7 @@ def plot_pos_sep_and_1probe(pos_sep_and_1probe_df,
         
     if save_path is not None:
         if save_name is not None:
-            plt.savefig(f'{save_path}{os.sep}{save_name}')
+            plt.savefig(os.path.join(save_path, save_name))
 
     return fig
 
@@ -609,7 +609,7 @@ def plot_1probe_w_errors(fig_df, error_df, split_1probe=True,
 
     if save_path is not None:
         if save_name is not None:
-            plt.savefig(f'{save_path}{os.sep}{save_name}')
+            plt.savefig(os.path.join(save_path, save_name))
 
     return fig
 
@@ -715,7 +715,7 @@ def plot_w_errors_no_1probe(wide_df, x_var, y_var, lines_var,
 
     if save_path is not None:
         if fig1b_savename is not None:
-            plt.savefig(f'{save_path}{os.sep}{fig1b_savename}')
+            plt.savefig(os.path.join(save_path, fig1b_savename))
 
     return fig
 
@@ -775,7 +775,7 @@ def plot_thr_heatmap(heatmap_df,
 
     if save_path is not None:
         if save_name is not None:
-            plt.savefig(f'{save_path}{os.sep}{save_name}')
+            plt.savefig(os.path.join(save_path, save_name))
 
     return heatmap
 
@@ -1145,7 +1145,7 @@ def eight_batman_plots(mean_df, thr1_df, thr2_df,
     
     if save_path is not None:
         if save_name is not None:
-            plt.savefig(f'{save_path}{os.sep}{save_name}')
+            plt.savefig(os.path.join(save_path, save_name))
 
     return fig
 
@@ -1955,7 +1955,7 @@ def d_average_participant(root_path, run_dir_names_list,
     all_psignifit_list = []
     for run_idx, run_name in enumerate(run_dir_names_list):
 
-        this_psignifit_df = pd.read_csv(f'{root_path}{os.sep}{run_name}{os.sep}psignifit_thresholds.csv')
+        this_psignifit_df = pd.read_csv(os.path.join(root_path, run_name, 'psignifit_thresholds.csv'))
 
         if verbose:
             print(f'{run_idx}. {run_name} - this_psignifit_df:\n{this_psignifit_df}')
@@ -2083,7 +2083,7 @@ def e_average_exp_data(exp_path, p_names_list,
         if use_trimmed:
             ave_df_name = 'MASTER_ave_TM_thresh'
 
-        this_p_ave_df = pd.read_csv(f'{exp_path}{os.sep}{p_name}{os.sep}{ave_df_name}.csv')
+        this_p_ave_df = pd.read_csv(os.path.join(exp_path, p_name, f'{ave_df_name}.csv'))
 
         if verbose:
             print(f'{p_idx}. {p_name} - this_p_ave_df:\n{this_p_ave_df}')

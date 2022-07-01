@@ -374,6 +374,8 @@ print('\nexpInfo (dict)')
 for k, v in expInfo.items():
     print(f"{k}: {v}")
 
+# todo: If colours are RGB255, change staircase to use int(RGB255 values),
+#  then later convert to float(probeLum).  Since montior can only use int(rgb255)
 
 stairs = []
 for stair_idx in expInfo['stair_list']:

@@ -253,6 +253,9 @@ stairStart = maxLum
 miniVal = bgLum
 maxiVal = maxLum
 
+# todo: If colours are RGB255, change staircase to use int(RGB255 values),
+#  then later convert to float(probeLum).  Since montior can only use int(rgb255)
+
 stairs = []
 for thisStart in expInfo['startPoints']:
 

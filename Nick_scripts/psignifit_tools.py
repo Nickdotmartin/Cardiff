@@ -207,7 +207,7 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
     adaptive proccedure is used.
     https://github.com/wichmann-lab/psignifit/wiki/Priors
     '''
-    # options['stimulusRange'] = [21.2, 106]
+    # options['stimulusRange'] = [21.2, 106]  # gives everything massive CIs
 
 
     if conf_int:
@@ -254,15 +254,15 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
           f'')
 
     if conf_int:
-        [threshold, CI] = ps.getThreshold(res, target_threshold)
+        [threshold, CI_limits] = ps.getThreshold(res, target_threshold)
         if options['estimateType'] == 'mean':
             threshold = round(threshold[0], 2)
         else:
             threshold = round(threshold, 2)
 
-        CI = list(CI[0])
+        CI_limits = list(CI_limits[0])
 
-        print(f'\nCI:\n{CI}\nfor options.confP: {options["confP"]}')
+        print(f'\nCI_limits:\n{CI_limits}\nfor options.confP: {options["confP"]}')
     else:
         threshold = ps.getThreshold(res, target_threshold)
         if options['estimateType'] == 'mean':
@@ -315,8 +315,9 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
                       'sig_name': sig_name, 'est_type': est_type,
                       'exp_type': options['expType'], 'expN': options['expN'],
                       'target_threshold': target_threshold,
+                      'stimulus_range': list(res['options']['stimulusRange']),
                       'Threshold': threshold, 'slope_at_target': slope_at_target,
-                      'CI': CI, 'width': width, 'eta': eta}
+                      'CI_limits': CI_limits, 'width': width, 'eta': eta}
 
     print('\n*** finished run_psignifit() ***\n')
 
@@ -419,7 +420,8 @@ def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
 
 
 def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bins=True,
-                               sep_col='separation', isi_list=None, sep_list=None, 
+                               sep_col='separation', thr_col='probeLum',
+                               isi_list=None, sep_list=None,
                                group=None,
                                conf_int=True,
                                cols_to_add_dict=None, save_name=None,
@@ -434,7 +436,8 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
     :param n_bins: Default=10. Number of bins to use.
     :param q_bins: Default=True. If True, uses quartile bins, if false will use equally space bins.
     :param sep_col: name of column containing separations: use 'stair' if there
-        is no separation column.    
+        is no separation column.
+    :param thr_col: name of column containing DV: e.g., 'probeLum' or 'NEW_probeLum'.
     :param isi_list: Default=None. list of ISI values.  If None passed will use default values.
     :param sep_list: Default=None.  List of separation values.  If None passed will use defualts.
     :param group: Default=None.  Pass a group id for exp1a to differentiate between
@@ -458,7 +461,8 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
         # sep_list = [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]
 
     thr_array = np.zeros(shape=[len(sep_list), len(isi_list)])
-    CI_array = np.zeros(shape=[len(sep_list), len(isi_list)*2])
+    CI_limits_array = np.zeros(shape=[len(sep_list), len(isi_list)*2])
+    CI_width_array = np.zeros(shape=[len(sep_list), len(isi_list)])
     eta_array = np.zeros(shape=[len(sep_list), len(isi_list)])
 
     # identify whether csv_name is actaully a csv_name or infact a dataframe ready to use.
@@ -542,10 +546,33 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
             thr_array[sep_idx, isi_idx] = threshold
 
             if conf_int:
-                CI = psignifit_dict['CI']
-                CI = [round(i, 2) for i in CI]
-                CI_array[sep_idx, isi_idx*2] = CI[0]
-                CI_array[sep_idx, (isi_idx*2)+1] = CI[1]
+                CI_limits = psignifit_dict['CI_limits']
+                CI_limits_array[sep_idx, isi_idx*2] = round(CI_limits[0], 2)
+                CI_limits_array[sep_idx, (isi_idx*2)+1] = round(CI_limits[1], 2)
+
+                # # CI_width = max limint minus min limit
+                # print(f'type(CI_limits): {type(CI_limits)}')
+                # print(f'CI_limits[0]: {CI_limits[0]}')
+                # print(f'CI_limits[1]: {CI_limits[1]}')
+                # print(f'type(CI_limits[0]): {type(CI_limits[0])}')
+                # print(f'type(CI_limits[1]): {type(CI_limits[1])}')
+                # print(f'psignifit_dict:')
+                # for k, v in psignifit_dict.items():
+                #     print(f"{k}: {v}")
+
+                if not np.isnan(CI_limits).any():
+                    CI_width_array[sep_idx, isi_idx] = CI_limits[1] - CI_limits[0]
+                else:
+                    print(f'found a NAN in CI_limits: {CI_limits}')
+                    print(f"using psignifit_dict['stimulus_range']: {psignifit_dict['stimulus_range']}")
+                    if CI_limits[0] != np.nan:
+                        CI_width = psignifit_dict['stimulus_range'][1] - CI_limits[0]
+                    elif CI_limits[1] != np.nan:
+                        CI_width = CI_limits[1] - psignifit_dict['stimulus_range'][0]
+                    else:
+                        CI_width = psignifit_dict['stimulus_range'][1] - psignifit_dict['stimulus_range'][0]
+                    print(f'CI_width: {CI_width}')
+                    CI_width_array[sep_idx, isi_idx] = CI_width
 
                 # scaling the extra variance introduced
                 # (a value near zero indicates your data to be basically binomially distributed,
@@ -556,19 +583,22 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
     # save zeros df - run and q_bin in name.
     print(f'thr_array:\n{thr_array}')
     if conf_int:
-        print(f'CI_array:\n{CI_array}')
-        print(f'eta_array:\n{eta_array}')
+        print(f'CI_limits_array:\n{CI_limits_array}')
+        print(f'CI_width_array:\n{CI_width_array}')
 
     # make dataframe from array
     thr_df = pd.DataFrame(thr_array, columns=isi_name_list)
     thr_df.insert(0, sep_col, sep_list)
 
     if conf_int:
-        CI_headers = [[f'{i}_lo@95', f'{i}_hi@95'] for i in isi_name_list]
-        CI_headers = [j for sub in CI_headers for j in sub]
-        print(CI_headers)
-        CI_df = pd.DataFrame(CI_array, columns=CI_headers)
-        CI_df.insert(0, sep_col, sep_list)
+        CI_limits_headers = [[f'{i}_lo@95', f'{i}_hi@95'] for i in isi_name_list]
+        CI_limits_headers = [j for sub in CI_limits_headers for j in sub]
+        print(CI_limits_headers)
+        CI_limits_df = pd.DataFrame(CI_limits_array, columns=CI_limits_headers)
+        CI_limits_df.insert(0, sep_col, sep_list)
+
+        CI_width_df = pd.DataFrame(CI_width_array, columns=isi_name_list)
+        CI_width_df.insert(0, sep_col, sep_list)
 
         eta_df = pd.DataFrame(eta_array, columns=isi_name_list)
         eta_df.insert(0, sep_col, sep_list)
@@ -577,13 +607,15 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
         for idx, (header, col_vals) in enumerate(cols_to_add_dict.items()):
             thr_df.insert(idx+1, header, col_vals)
             if conf_int:
-                CI_df.insert(idx+1, header, col_vals)
+                CI_limits_df.insert(idx+1, header, col_vals)
+                CI_width_df.insert(idx+1, header, col_vals)
+                eta_df.insert(idx+1, header, col_vals)
 
     if verbose:
         print(f"thr_df:\n{thr_df}")
         if conf_int:
-            print(f"CI_df:\n{CI_df}")
-            print(f"eta_df:\n{eta_df}")
+            print(f"CI_limits_df:\n{CI_limits_df}")
+            print(f"CI_width_df:\n{CI_width_df}")
 
     # save threshold array
     if save_name is None:
@@ -600,10 +632,15 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
     thr_df.to_csv(thr_filepath, index=False)
 
     if conf_int:
-        CI_filename = f'psignifit_CI.csv'
-        CI_filepath = os.path.join(root_path, p_run_name, CI_filename)
-        print(f'saving psignifit_CI.csv to {CI_filepath}')
-        CI_df.to_csv(CI_filepath, index=False)
+        CI_limits_filename = f'psignifit_CI_limits.csv'
+        CI_limits_filepath = os.path.join(root_path, p_run_name, CI_limits_filename)
+        print(f'saving psignifit_CI.csv to {CI_limits_filepath}')
+        CI_limits_df.to_csv(CI_limits_filepath, index=False)
+
+        CI_width_filename = f'psignifit_CI_width.csv'
+        CI_width_filepath = os.path.join(root_path, p_run_name, CI_width_filename)
+        print(f'saving psignifit_CI_width.csv to {CI_width_filepath}')
+        CI_width_df.to_csv(CI_width_filepath, index=False)
 
         eta_filename = f'psignifit_eta.csv'
         eta_filepath = os.path.join(root_path, p_run_name, eta_filename)
