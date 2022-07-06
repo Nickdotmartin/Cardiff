@@ -7,12 +7,12 @@ from check_home_dir import switch_path
 
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
-# old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data'
-old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim_split_runs_weighted_mean'
+old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data'
+# old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim_split_runs_weighted_mean'
 exp_path = switch_path(old_exp_path, 'wind_oneDrive')
 print(f"exp_path: {exp_path}")
-# participant_list = ['aa', 'bb', 'cc', 'dd', 'ee']
-participant_list = ['Kim']
+participant_list = ['aa', 'bb', 'cc', 'dd', 'ee']
+# participant_list = ['Kim']
 
 n_runs = 6
 
@@ -97,9 +97,6 @@ for p_idx, participant_name in enumerate(participant_list):
         print(f"run_data_df:\n{run_data_df}")
 
 
-
-
-
         stair_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
         cols_to_add_dict = {'group': [1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2],
                             'separation': [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0, 20, 20]}
@@ -120,62 +117,71 @@ for p_idx, participant_name in enumerate(participant_list):
         print(f'thr_df:\n{thr_df}')
 
         # todo: run b3 and c_plots with newLum
-#         '''b3'''
-#         # run_data_path = f'{save_path}{os.sep}RUNDATA-sorted.xlsx'
-#         run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
-#         thr_path = os.path.join(save_path, 'psignifit_thresholds.csv')
-#
-#         b3_plot_staircase(run_data_path, show_plots=False)
-#
-#         '''c'''
-#         c_plots(save_path=save_path, show_plots=True)
-#
-#     '''d'''
-#     d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-#                           trim_n=1, error_type='SE')
-#
-# #     all_df_path = f'{root_path}/MASTER_TM1_thresholds.csv'
-# #     p_ave_path = f'{root_path}/MASTER_ave_TM_thresh.csv'
-# #     err_path = f'{root_path}/MASTER_ave_TM_thr_error_SE.csv'
-#     all_df_path = os.path.join(root_path, 'MASTER_TM1_thresholds.csv')
-#     p_ave_path = os.path.join(root_path, 'MASTER_ave_TM_thresh.csv')
-#     err_path = os.path.join(root_path, 'MASTER_ave_TM_thr_error_SE.csv')
-#
-#     n_trimmed = 1
-#     exp_ave = False
-#
-#     make_average_plots(all_df_path=all_df_path,
-#                        ave_df_path=p_ave_path,
-#                        error_bars_path=err_path,
-#                        error_type='SE',
-#                        n_trimmed=n_trimmed,
-#                        exp_ave=False,
-#                        show_plots=True, verbose=True)
-#
-#
-# print(f'exp_path: {exp_path}')
-# print('\nget exp_average_data')
-#
-# e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
-#                    error_type='SE', use_trimmed=True, verbose=True)
-#
-#
-# # all_df_path = f'{exp_path}/MASTER_exp_thr.csv'
-# # exp_ave_path = f'{exp_path}/MASTER_exp_ave_thr.csv'
-# # err_path = f'{exp_path}/MASTER_ave_thr_error_SE.csv'
-# all_df_path = os.path.join(exp_path, 'MASTER_exp_thr.csv')
-# exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
-# err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
-#
-# n_trimmed = None
-# exp_ave = True
-#
-# make_average_plots(all_df_path=all_df_path,
-#                    ave_df_path=exp_ave_path,
-#                    error_bars_path=err_path,
-#                    error_type='SE',
-#                    n_trimmed=n_trimmed,
-#                    exp_ave=exp_ave,
-#                    show_plots=True, verbose=True)
-#
+        '''b3'''
+        # run_data_path = f'{save_path}{os.sep}RUNDATA-sorted.xlsx'
+        run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
+        thr_path = os.path.join(save_path, 'psignifit_thresholds.csv')
+
+        b3_plot_staircase(run_data_path, show_plots=False)
+
+        '''c'''
+        c_plots(save_path=save_path, show_plots=True)
+
+    # trim_n = None
+    # if len(run_folder_names) == 12:
+    #     trim_n = 1
+    trim_n = False  # 1
+    n_trimmed = trim_n
+    use_trimmed = False
+    if trim_n == 1:
+        use_trimmed = True
+
+
+    '''d'''
+    d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
+                          trim_n=n_trimmed, error_type='SE')
+
+    all_df_path = os.path.join(root_path, 'MASTER_TM1_thresholds.csv')
+    p_ave_path = os.path.join(root_path, 'MASTER_ave_TM_thresh.csv')
+    err_path = os.path.join(root_path, 'MASTER_ave_TM_thr_error_SE.csv')
+    n_trimmed = trim_n
+    if n_trimmed is None:
+        all_df_path = os.path.join(root_path, 'MASTER_TM1_thresholds.csv')
+        p_ave_path = os.path.join(root_path, 'MASTER_ave_TM_thresh.csv')
+        err_path = os.path.join(root_path, 'MASTER_ave_TM_thr_error_SE.csv')
+
+    exp_ave = False
+
+    make_average_plots(all_df_path=all_df_path,
+                       ave_df_path=p_ave_path,
+                       error_bars_path=err_path,
+                       error_type='SE',
+                       n_trimmed=n_trimmed,
+                       exp_ave=False,
+                       show_plots=True, verbose=True)
+
+
+print(f'exp_path: {exp_path}')
+print('\nget exp_average_data')
+
+e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
+                   error_type='SE', use_trimmed=use_trimmed, verbose=True)
+
+
+
+all_df_path = os.path.join(exp_path, 'MASTER_exp_thr.csv')
+exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
+err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
+
+n_trimmed = None
+exp_ave = True
+
+make_average_plots(all_df_path=all_df_path,
+                   ave_df_path=exp_ave_path,
+                   error_bars_path=err_path,
+                   error_type='SE',
+                   n_trimmed=n_trimmed,
+                   exp_ave=exp_ave,
+                   show_plots=True, verbose=True)
+
 print('\nexp1a_analysis_pipe finished\n')
