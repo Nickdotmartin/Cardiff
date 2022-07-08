@@ -2,6 +2,8 @@ import os
 import pickle
 
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
 import numpy as np
 import pandas as pd
 import psignifit as ps
@@ -126,12 +128,15 @@ def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='sta
             correct_per_bin = this_bin_df['trial_response'].sum()
             # print(f'\tcorrect_per_bin: {correct_per_bin}/{this_bin_df.shape[0]}\n')
             data_arr.append([bin_interval.left, this_bin_vals, correct_per_bin, bin_count[bin_interval]])
-            found_bins_left.append(round(bin_interval.left, 3))
+            # found_bins_left.append(round(bin_interval.left, 3))
+            found_bins_left.append(bin_interval.left)
 
 
     data_df = pd.DataFrame(data_arr, columns=['bin_left', 'stim_level', 'n_correct', 'n_total'])
     data_df = data_df.sort_values(by='bin_left', ignore_index=True)
-    data_df['prop_corr'] = round(np.divide(data_df['n_correct'], data_df['n_total']).fillna(0), 2)
+    # data_df['prop_corr'] = round(np.divide(data_df['n_correct'], data_df['n_total']).fillna(0), 2)
+    data_df['prop_corr'] = np.divide(data_df['n_correct'], data_df['n_total']).fillna(0)
+
     if verbose:
         print(f"\ndata_df (with extra cols):\n{data_df}")
     data_df = data_df.drop(columns=['stim_level', 'prop_corr'])
@@ -227,7 +232,6 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
             print(f"{k}: {v}")
 
     # get threshold
-    # todo: get confidence intervals and save them in a csv.  also add conf interval to the plot.
     '''
     https://github.com/wichmann-lab/python-psignifit/wiki/How-to-Get-Thresholds-and-Slopes
     The only change you may observe is that the getThreshold function always returns a tuple 
@@ -245,7 +249,7 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
     '''
 
     res_thresh, width, res_lambda, res_gamma, eta = res['Fit']
-    print(f'all_results:\n'
+    print(f'\nall_results:\n'
           f'res_thresh: {res_thresh}\n'  # 
           f'width: {width}\n'  # (difference between the 95 and the 5 percent point of the unscaled sigmoid)
           f'res_lambda: {res_lambda}\n'  # upper asymptote/lapse rate
@@ -255,10 +259,14 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
 
     if conf_int:
         [threshold, CI_limits] = ps.getThreshold(res, target_threshold)
+        print(f'ps.getThreshold(res, target_threshold): {ps.getThreshold(res, target_threshold)}')
         if options['estimateType'] == 'mean':
-            threshold = round(threshold[0], 2)
+            # threshold = round(threshold[0], 2)
+            threshold = threshold[0]
         else:
-            threshold = round(threshold, 2)
+            # threshold = round(threshold, 2)
+            threshold = threshold
+
 
         CI_limits = list(CI_limits[0])
 
@@ -266,14 +274,24 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
     else:
         threshold = ps.getThreshold(res, target_threshold)
         if options['estimateType'] == 'mean':
-            threshold = round(threshold[0][0], 2)
+            # threshold = round(threshold[0][0], 2)
+            threshold = threshold[0][0]
         else:
-            threshold = round(threshold[0], 2)
+            # threshold = round(threshold[0], 2)
+            threshold = threshold[0]
+
     if verbose:
         print(f'\nthreshold: {threshold}')
 
+    print(f'\n\nidiot check:\n'
+          # f'all results; ps.psignifit(data_np, options)\n'
+          # f'{ps.psignifit(data_np, options)}\n\n'
+          f'res["Fit"]:\n{res["Fit"]}\n'
+          f'res["conf_Intervals"]\n{res["conf_Intervals"]}\n')
 
-    slope_at_target = round(ps.getSlopePC(res, target_threshold), 2)
+    # slope_at_target = round(ps.getSlopePC(res, target_threshold), 2)
+    slope_at_target = ps.getSlopePC(res, target_threshold)
+
     if verbose:
         print(f'slope_at_target: {slope_at_target}')
 
@@ -287,11 +305,31 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
         print(f'making plots (save_plots: {save_plots})')
         plt.figure()
         plt.title(f"{dset_name}: sig: {sig_name}, est: {est_type}\n"
-                  f"threshPC: {target_threshold}, threshold: {threshold}, slope: {slope_at_target}")
+                  f"threshPC: {target_threshold}, threshold: {round(threshold, 2)}, slope: {round(slope_at_target, 2)}")
         if conf_int:
             plotOptions = dict()
-            plotOptions['CIthresh'] = True
-            fit_curve_plot = ps.psigniplot.plotPsych(res, CIthresh=True, showImediate=False)
+            # plotOptions['CIthresh'] = True
+            # plotOptions['axisHandle'] = 'Fit'
+
+            fit_curve_plot = ps.psigniplot.plotPsych(res, lineColor=[1, 0, 0], plotAsymptote=False,
+                                                     CIthresh=True, showImediate=False)
+
+
+            fit_patch = mpatches.Patch(color=[1, 0, 0], label='Bayesian Fit')
+            CI_patch = mpatches.Patch(color='black', label='CI=95% Fit')
+            fit_curve_plot.legend(handles=[fit_patch, CI_patch], loc='lower right')
+
+            plotOptions = dict()
+            CI_res = res.copy()
+            CI_res['Fit'][0] = threshold
+            CI_res['conf_Intervals'][0][0] = CI_limits[0]
+            CI_res['conf_Intervals'][0][1] = CI_limits[1]
+
+            print(f'plotOptions:\n{plotOptions}')
+
+            fit_curve_plot2 = ps.psigniplot.plotPsych(CI_res, plotData=False, CIthresh=True,
+                                                      showImediate=False)
+
         else:
             fit_curve_plot = ps.psigniplot.plotPsych(res, showImediate=False)
 
@@ -532,7 +570,7 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
                                                                   save_path=save_path,
                                                                   isi=isi, sep=sep, p_run_name=p_run_name,
                                                                   sep_col=sep_col, stair_levels=[sep],
-                                                                  thr_col='probeLum', resp_col='trial_response',
+                                                                  thr_col=thr_col, resp_col='trial_response',
                                                                   quartile_bins=q_bins, n_bins=n_bins,
                                                                   save_np=False, target_threshold=.75,
                                                                   sig_name='norm', est_type='MAP',
@@ -547,8 +585,11 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
 
             if conf_int:
                 CI_limits = psignifit_dict['CI_limits']
-                CI_limits_array[sep_idx, isi_idx*2] = round(CI_limits[0], 2)
-                CI_limits_array[sep_idx, (isi_idx*2)+1] = round(CI_limits[1], 2)
+                # CI_limits_array[sep_idx, isi_idx*2] = round(CI_limits[0], 2)
+                # CI_limits_array[sep_idx, (isi_idx*2)+1] = round(CI_limits[1], 2)
+                CI_limits_array[sep_idx, isi_idx*2] = CI_limits[0]
+                CI_limits_array[sep_idx, (isi_idx*2)+1] = CI_limits[1]
+
 
                 # # CI_width = max limint minus min limit
                 # print(f'type(CI_limits): {type(CI_limits)}')

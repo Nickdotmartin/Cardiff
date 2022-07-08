@@ -7,8 +7,9 @@ from check_home_dir import switch_path
 
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
-old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data'
-# old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim_split_runs_weighted_mean'
+# old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data'
+old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim_split_runs_weighted_mean'
+old_exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\exp1a_1probe_test\CI95"
 exp_path = switch_path(old_exp_path, 'wind_oneDrive')
 print(f"exp_path: {exp_path}")
 participant_list = ['aa', 'bb', 'cc', 'dd', 'ee']
@@ -54,7 +55,7 @@ for p_idx, participant_name in enumerate(participant_list):
         # # '''a'''
         # # p_name = f'{participant_name}_{run_idx+1}_output'  # use this one
         # p_name = f'{participant_name}{run_idx+1}'  # todo: comment out
-        # isi_list = [-1, 0, 2, 4, 6, 9, 12, 24]
+        isi_list = [-1, 0, 2, 4, 6, 9, 12, 24]
         #
         # # # # for first run, some files are saved just as name not name1
         # # # check_file = os.path.join(save_path, 'ISI_-1_probeDur2', f'{participant_name}_output.csv')
@@ -62,7 +63,7 @@ for p_idx, participant_name in enumerate(participant_list):
         # # # if not os.path.isfile(check_file):
         # # #     raise FileNotFoundError(check_file)
         #
-        # run_data_df = a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=isi_list, verbose=True)
+        run_data_df = a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=isi_list, verbose=True)
 
         # todo: can get rid of this once all RUN-data has newLum column
         run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
@@ -98,9 +99,12 @@ for p_idx, participant_name in enumerate(participant_list):
         print(f"run_data_df:\n{run_data_df}")
 
 
-        stair_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
-        cols_to_add_dict = {'group': [1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2],
-                            'separation': [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0, 20, 20]}
+        # stair_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+        # cols_to_add_dict = {'group': [1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2],
+        #                     'separation': [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0, 20, 20]}
+        stair_list = [13, 14]
+        cols_to_add_dict = {'group': [1, 2],
+                            'separation': [20, 20]}
 
         '''get psignifit thresholds df - use stairs as sep levels rather than using groups'''
         thr_df = get_psignifit_threshold_df(root_path=root_path,
@@ -129,19 +133,19 @@ for p_idx, participant_name in enumerate(participant_list):
         # c_plots(save_path=save_path, show_plots=True)
 
 
-    # trim_n = None  # 1
-    # use_trimmed = False
-    # # if len(run_folder_names) == 6:
-    # #     trim_n = 1
-    # #     use_trimmed = True
-    # n_trimmed = trim_n
-    #
-    # print(f"\n\ntrim_n: {trim_n}, use_trimmed: {use_trimmed}\n\n")
-    #
-    # '''d'''
-    # d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-    #                       trim_n=n_trimmed, error_type='SE')
-    #
+    trim_n = None  # 1
+    use_trimmed = False
+    # if len(run_folder_names) == 6:
+    #     trim_n = 1
+    #     use_trimmed = True
+    n_trimmed = trim_n
+
+    print(f"\n\ntrim_n: {trim_n}, use_trimmed: {use_trimmed}\n\n")
+
+    '''d'''
+    d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
+                          trim_n=n_trimmed, error_type='SE')
+
     # all_df_path = os.path.join(root_path, 'MASTER_TM1_thresholds.csv')
     # p_ave_path = os.path.join(root_path, 'MASTER_ave_TM_thresh.csv')
     # err_path = os.path.join(root_path, 'MASTER_ave_TM_thr_error_SE.csv')
