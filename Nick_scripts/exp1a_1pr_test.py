@@ -8,8 +8,8 @@ from check_home_dir import switch_path
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
 # old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data'
-old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim_split_runs_weighted_mean'
-old_exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\exp1a_1probe_test\CI95"
+# old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim_split_runs_weighted_mean'
+old_exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\exp1a_1probe_test\Bayesian"
 exp_path = switch_path(old_exp_path, 'wind_oneDrive')
 print(f"exp_path: {exp_path}")
 participant_list = ['aa', 'bb', 'cc', 'dd', 'ee']
@@ -52,74 +52,78 @@ for p_idx, participant_name in enumerate(participant_list):
         # needed to ensure names go name1, name2, name3 not name1, name12, name123
         p_name = participant_name
 
-        # # '''a'''
-        # # p_name = f'{participant_name}_{run_idx+1}_output'  # use this one
-        # p_name = f'{participant_name}{run_idx+1}'  # todo: comment out
-        isi_list = [-1, 0, 2, 4, 6, 9, 12, 24]
+        # # # '''a'''
+        # # # p_name = f'{participant_name}_{run_idx+1}_output'  # use this one
+        # p_name = f'{participant_name}_output'  # use this one
+        # # p_name = f'{participant_name}{run_idx+1}'  # todo: comment out
+        # isi_list = [-1, 0, 2, 4, 6, 9, 12, 24]
+        # #
+        # # # # # for first run, some files are saved just as name not name1
+        # # # # check_file = os.path.join(save_path, 'ISI_-1_probeDur2', f'{participant_name}_output.csv')
+        # # # #
+        # # # # if not os.path.isfile(check_file):
+        # # # #     raise FileNotFoundError(check_file)
+        # #
+        # run_data_df = a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=isi_list, verbose=True)
         #
-        # # # # for first run, some files are saved just as name not name1
-        # # # check_file = os.path.join(save_path, 'ISI_-1_probeDur2', f'{participant_name}_output.csv')
-        # # #
-        # # # if not os.path.isfile(check_file):
-        # # #     raise FileNotFoundError(check_file)
+        # # todo: can get rid of this once all RUN-data has newLum column
+        # run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
+        # run_data_df = pd.read_excel(run_data_path, engine='openpyxl')
         #
-        run_data_df = a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=isi_list, verbose=True)
+        # '''add newLum column
+        # in old version, the experiment script varies probeLum and converts to float(RGB255) values for screen.
+        # However, monitor can only use int(RGB255).
+        # This function will will round RGB255 values to int(RGB255), then convert to NEW_probeLum
+        # LumColor255Factor = 2.395387069
+        # 1. get probeColor255 column.
+        # 2. convert to int(RGB255) and convert to new_Lum with int(RGB255)/LumColor255Factor
+        # 3. add to run_data_df'''
+        # if 'newLum' not in run_data_df.columns.to_list():
+        #     LumColor255Factor = 2.395387069
+        #     rgb255_col = run_data_df['probeColor255'].to_list()
+        #     newLum = [int(i) / LumColor255Factor for i in rgb255_col]
+        #     run_data_df.insert(9, 'newLum', newLum)
+        #     run_data_df.to_excel(os.path.join(save_path, 'RUNDATA-sorted.xlsx'), index=False)
+        #     print(f"added newLum column\n"
+        #           f"run_data_df: {run_data_df.columns.to_list()}")
+        #
+        #
+        # # run_data_path = f'{save_path}{os.sep}RUNDATA-sorted.xlsx'
+        # run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
+        #
+        # run_data_df = pd.read_excel(run_data_path, engine='openpyxl',
+        #                             usecols=['ISI',
+        #                                      'stair',
+        #                                      'separation', 'group',
+        #                                      # 'probeLum',
+        #                                      'newLum', 'trial_response'])
+        # print(f"run_data_df:\n{run_data_df}")
+        #
+        #
+        # # stair_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+        # # cols_to_add_dict = {'group': [1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2],
+        # #                     'separation': [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0, 20, 20]}
+        # stair_list = [13, 14]
+        # cols_to_add_dict = {'group': [1, 2],
+        #                     'separation': [20, 20]}
+        #
+        # '''get psignifit thresholds df - use stairs as sep levels rather than using groups'''
+        # thr_df = get_psignifit_threshold_df(root_path=root_path,
+        #                                     p_run_name=run_dir,
+        #                                     csv_name=run_data_df,
+        #                                     n_bins=9, q_bins=True,
+        #                                     sep_col='stair',
+        #                                     thr_col='newLum',
+        #                                     isi_list=isi_list,
+        #                                     sep_list=stair_list,
+        #                                     conf_int=True,
+        #                                     save_plots=True,
+        #                                     cols_to_add_dict=cols_to_add_dict,
+        #                                     verbose=True)
+        # print(f'thr_df:\n{thr_df}')
 
-        # todo: can get rid of this once all RUN-data has newLum column
-        run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
-        run_data_df = pd.read_excel(run_data_path, engine='openpyxl')
-
-        '''add newLum column
-        in old version, the experiment script varies probeLum and converts to float(RGB255) values for screen.
-        However, monitor can only use int(RGB255).
-        This function will will round RGB255 values to int(RGB255), then convert to NEW_probeLum
-        LumColor255Factor = 2.395387069
-        1. get probeColor255 column.
-        2. convert to int(RGB255) and convert to new_Lum with int(RGB255)/LumColor255Factor
-        3. add to run_data_df'''
-        if 'newLum' not in run_data_df.columns.to_list():
-            LumColor255Factor = 2.395387069
-            rgb255_col = run_data_df['probeColor255'].to_list()
-            newLum = [int(i) / LumColor255Factor for i in rgb255_col]
-            run_data_df.insert(9, 'newLum', newLum)
-            run_data_df.to_excel(os.path.join(save_path, 'RUNDATA-sorted.xlsx'), index=False)
-            print(f"added newLum column\n"
-                  f"run_data_df: {run_data_df.columns.to_list()}")
 
 
-        # run_data_path = f'{save_path}{os.sep}RUNDATA-sorted.xlsx'
-        run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
-
-        run_data_df = pd.read_excel(run_data_path, engine='openpyxl',
-                                    usecols=['ISI',
-                                             'stair',
-                                             'separation', 'group',
-                                             # 'probeLum',
-                                             'newLum', 'trial_response'])
-        print(f"run_data_df:\n{run_data_df}")
-
-
-        # stair_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
-        # cols_to_add_dict = {'group': [1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2],
-        #                     'separation': [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0, 20, 20]}
-        stair_list = [13, 14]
-        cols_to_add_dict = {'group': [1, 2],
-                            'separation': [20, 20]}
-
-        '''get psignifit thresholds df - use stairs as sep levels rather than using groups'''
-        thr_df = get_psignifit_threshold_df(root_path=root_path,
-                                            p_run_name=run_dir,
-                                            csv_name=run_data_df,
-                                            n_bins=9, q_bins=True,
-                                            sep_col='stair',
-                                            thr_col='newLum',
-                                            isi_list=isi_list,
-                                            sep_list=stair_list,
-                                            conf_int=True,
-                                            save_plots=True,
-                                            cols_to_add_dict=cols_to_add_dict,
-                                            verbose=True)
-        print(f'thr_df:\n{thr_df}')
         #
         # # todo: run b3 and c_plots with newLum
         # '''b3'''
@@ -133,11 +137,11 @@ for p_idx, participant_name in enumerate(participant_list):
         # c_plots(save_path=save_path, show_plots=True)
 
 
-    trim_n = None  # 1
-    use_trimmed = False
-    # if len(run_folder_names) == 6:
-    #     trim_n = 1
-    #     use_trimmed = True
+    # trim_n = None  # 1
+    # use_trimmed = False
+    if len(run_folder_names) == 6:
+        trim_n = 1
+        use_trimmed = True
     n_trimmed = trim_n
 
     print(f"\n\ntrim_n: {trim_n}, use_trimmed: {use_trimmed}\n\n")

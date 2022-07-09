@@ -42,7 +42,9 @@ yes - as long as arrays are in same format
 
 verbose = True
 # old_exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Kim_split_runs_weighted_mean'
-old_exp_path = r'/Users\sapnm4\OneDrive - Cardiff University\PycharmProjects/Cardiff/exp1a_data'
+# old_exp_path = r'/Users\sapnm4\OneDrive - Cardiff University\PycharmProjects/Cardiff/exp1a_data'
+old_exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\exp1a_1probe_test\Bayesian"
+
 exp_path = os.path.normpath(old_exp_path)
 
 conf_type_list = ['CI_width', 'eta']
@@ -59,6 +61,8 @@ isi_name_list = ['Concurrent', 'ISI0', 'ISI2', 'ISI4',
 isi_vals_list = [-1, 0, 2, 4, 6, 9, 12, 24]
 
 sep_list = [0, 1, 2, 3, 6, 18, 20]
+# sep_list = [20]
+
 p_idx_plus = 1
 
 for participant_name in participant_list:

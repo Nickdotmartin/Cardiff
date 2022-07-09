@@ -258,6 +258,7 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
           f'')
 
     if conf_int:
+        # todo: comment this back in once I have bayesian estimates
         [threshold, CI_limits] = ps.getThreshold(res, target_threshold)
         print(f'ps.getThreshold(res, target_threshold): {ps.getThreshold(res, target_threshold)}')
         if options['estimateType'] == 'mean':
@@ -271,6 +272,13 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
         CI_limits = list(CI_limits[0])
 
         print(f'\nCI_limits:\n{CI_limits}\nfor options.confP: {options["confP"]}')
+
+        # # # todo: get rid of this once I have bayesian estimates
+        # threshold = res['Fit'][0]
+        # CI_limits = list(res['conf_Intervals'][0])
+
+
+
     else:
         threshold = ps.getThreshold(res, target_threshold)
         if options['estimateType'] == 'mean':
