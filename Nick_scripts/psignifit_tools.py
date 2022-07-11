@@ -19,6 +19,7 @@ This script contains the analysis pipeline for individual participants.
 4. Plot psychometric function
 """
 
+
 def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='stair',
                                     stair_levels=None, 
                                     thr_col='probeLum', resp_col='trial_response',
@@ -75,7 +76,6 @@ def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='sta
     if verbose:
         print(f"raw_data, stair_levels:{stair_levels}:\n{raw_data_df}")
 
-    # dataset_name = f'{p_run_name}_ISI{isi}_sep{sep}_stair{stair_levels[0]}'
     dataset_name = f'{p_run_name}_ISI{isi}_{sep_col}{stair_levels[0]}'
 
     # get useful info
@@ -131,12 +131,10 @@ def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='sta
             # found_bins_left.append(round(bin_interval.left, 3))
             found_bins_left.append(bin_interval.left)
 
-
+    # make data df
     data_df = pd.DataFrame(data_arr, columns=['bin_left', 'stim_level', 'n_correct', 'n_total'])
     data_df = data_df.sort_values(by='bin_left', ignore_index=True)
-    # data_df['prop_corr'] = round(np.divide(data_df['n_correct'], data_df['n_total']).fillna(0), 2)
     data_df['prop_corr'] = np.divide(data_df['n_correct'], data_df['n_total']).fillna(0)
-
     if verbose:
         print(f"\ndata_df (with extra cols):\n{data_df}")
     data_df = data_df.drop(columns=['stim_level', 'prop_corr'])
@@ -162,10 +160,11 @@ def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='sta
 
 # # # # # # # #
 
+
 def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
                   sig_name='norm', est_type='MAP', n_blocks=None,
                   conf_int=True,
-                  thr_type='Bayes',  # 'CI95'
+                  thr_type='Bayes',
                   plot_both_curves=False,
                   save_plots=True, show_plots=False, verbose=True):
 
@@ -182,10 +181,16 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
     :param n_blocks: default: None. Pass a value to set the number of unique
         probeLum values in the array or number of bins if greater than 25.
         e.g., if you want to have 30 bins enter 30.
-    :param save_plots: default: True.
+    :param conf_int: default: True.  Save and plot confidence/credible intervals
+    :param thr_type: default: 'Bayes'.  This gets threshold estimate from 'Fit' in results dict.
+            Can also pass 'CI95' to get threshold estimate from getThreshold.
+            Analysis of 1probe results suggests 'Bayes' is most reliable (lowest SD).
+    :param plot_both_curves: default: False.  If true will plot both 'Bayes' and 'CI95' on plots,
+            but currently needs thr_type set to CI95.
     :param show_plots: default: False.  Display plot on sceen. Useful if doing a
         single pot or not saving, but don't use for multiple plots as it slows
         things down and eats memory.
+    :param save_plots:  default=True.  Will save plots.
     :param verbose:
 
     :return: figure of fitted curve and dict of details
@@ -211,11 +216,10 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
     options['threshPC'] = target_threshold
 
     '''psignifit recommend adjusting to a realistic (generous) range if an 
-    adaptive proccedure is used.
+    adaptive procedure is used.
     https://github.com/wichmann-lab/psignifit/wiki/Priors
     '''
     # options['stimulusRange'] = [21.2, 106]  # gives everything massive CIs
-
 
     if conf_int:
         options['confP'] = [.95]
@@ -233,84 +237,68 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
             # if k in ['nblocks', 'stimulusRange']:
             print(f"{k}: {v}")
 
-    # get threshold
     '''
+    get thresholds
+    
+    I have two methods for getting the thresholds.  
+    1. The first (I've called 'Bayes' is described in the basic usage wiki 
+    https://github.com/wichmann-lab/python-psignifit/wiki/Basic-Usage
+    This calls the 'Fit' parameter of the results dictionary and associated CIs.
+    
+    2. The second (I've called 'CI95') is described in the get Thresholds Wiki 
     https://github.com/wichmann-lab/python-psignifit/wiki/How-to-Get-Thresholds-and-Slopes
-    The only change you may observe is that the getThreshold function always returns a tuple 
-    with the point estimate and confidence intervals. This could not be avoided as python functions 
-    are not told which of their outputs are used by the calling program. 
-    The warnings about these confidence intervals being a rough worst case approximation still 
-    applies as spelled out in detail for the MATLAB version.
-
-    To get only the threshold call:
-    ps.getThreshold(res,percentCorrect)[0]
+    This calls the getThreshold function which takes the results dict and percentCorrect as variables.  
     
-    so I probably can add conf_int = threshold[1]
-    
-    READ THEIR psignifit 4 PAPER FIRST
+    I can do either, although, as it stands the Bayes method with trimmed means performs the best, 
+    that is, smallest SD across 8 sets of 1probe estimates per participant.
     '''
 
-    res_thresh, width, res_lambda, res_gamma, eta = res['Fit']
+    # # 1. Bayes threshold and CI (from results dict 'Fit')
+
+    Bayes_thr, width, res_lambda, res_gamma, eta = res['Fit']
+
+    Bayes_CI_limits = list(res['conf_Intervals'][0])
+
     print(f'\nall_results:\n'
-          f'res_thresh: {res_thresh}\n'  # 
+          f'Bayes_thr: {Bayes_thr}\n'  # 
           f'width: {width}\n'  # (difference between the 95 and the 5 percent point of the unscaled sigmoid)
           f'res_lambda: {res_lambda}\n'  # upper asymptote/lapse rate
           f'res_gamma: {res_gamma}\n'  # lower asymptote/guess rate
-          f'eta: {eta}\n'  # scaling the extra variance introduced (a value near zero indicates your data to be basically binomially distributed, whereas values near one indicate severely overdispersed data)
-          f'')
+          f'eta: {eta}\n'  # scaling the extra variance introduced (a value near zero indicates your data to be 
+          # basically binomially distributed, whereas values near one indicate severely overdispersed data)
+          f'Bayes_CI_limits: {Bayes_CI_limits}')
 
-    if conf_int:
-
-        if thr_type == 'CI95':
-
-            [threshold, CI_limits] = ps.getThreshold(res, target_threshold)
-            print(f'ps.getThreshold(res, target_threshold): {ps.getThreshold(res, target_threshold)}')
-            if options['estimateType'] == 'mean':
-                # threshold = round(threshold[0], 2)
-                threshold = threshold[0]
-            else:
-                # threshold = round(threshold, 2)
-                threshold = threshold
-
-
-            CI_limits = list(CI_limits[0])
-
-
-        elif thr_type == 'Bayes':
-
-            threshold = res['Fit'][0]
-            CI_limits = list(res['conf_Intervals'][0])
-
-        print(f'\nCI_limits:\n{CI_limits}\nfor options.confP: {options["confP"]}')
-
+    # # 2. CI95 threshold from getThreshold function
+    [CI95_thr, CI95_limits] = ps.getThreshold(res, target_threshold)
+    print(f'ps.getThreshold(res, target_threshold): {ps.getThreshold(res, target_threshold)}')
+    if options['estimateType'] == 'mean':
+        CI95_thr = CI95_thr[0]
     else:
-        if thr_type == 'CI95':
+        CI95_thr = CI95_thr
+    CI95_limits = list(CI95_limits[0])
+    print(f'\nCI95_limits:\n{CI95_limits}\nfor options.confP: {options["confP"]}')
 
-            threshold = ps.getThreshold(res, target_threshold)
-            if options['estimateType'] == 'mean':
-                # threshold = round(threshold[0][0], 2)
-                threshold = threshold[0][0]
-            else:
-                # threshold = round(threshold[0], 2)
-                threshold = threshold[0]
-
-        elif thr_type == 'Bayes':
-            threshold = res['Fit'][0]
-
-
+    # select thr_type
+    if thr_type == 'Bayes':
+        threshold = Bayes_thr
+        CI_limits = Bayes_CI_limits
+    elif thr_type == 'CI95':
+        threshold = CI95_thr
+        CI_limits = CI95_limits
+    else:
+        raise ValueError("thr_type must be in ['Bayes', 'CI95']")
 
     if verbose:
-        print(f'\nthreshold: {threshold}')
+        print(f'\nthreshold: {threshold}\n'
+              f'CI_limits: {CI_limits}')
 
     print(f'\n\nidiot check:\n'
-          # f'all results; ps.psignifit(data_np, options)\n'
-          # f'{ps.psignifit(data_np, options)}\n\n'
           f'res["Fit"]:\n{res["Fit"]}\n'
           f'res["conf_Intervals"]\n{res["conf_Intervals"]}\n')
 
+    '''I'm not sure whether the slope relates to Bayes or CI95 slope???'''
     # slope_at_target = round(ps.getSlopePC(res, target_threshold), 2)
     slope_at_target = ps.getSlopePC(res, target_threshold)
-
     if verbose:
         print(f'slope_at_target: {slope_at_target}')
 
@@ -328,7 +316,7 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
 
             if not plot_both_curves:
 
-                print(f'ploting {thr_type}')
+                print(f'plotting {thr_type}')
 
                 plt.title(f"{dset_name}: sig: {sig_name}, est: {est_type}\n"
                           f"threshPC: {target_threshold}, {thr_type} thr: {round(threshold, 2)}, "
@@ -336,51 +324,39 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
 
                 if thr_type == 'CI95':
 
-
-                    plotOptions = dict()
                     CI_res = res.copy()
                     CI_res['Fit'][0] = threshold
                     CI_res['conf_Intervals'][0][0] = CI_limits[0]
                     CI_res['conf_Intervals'][0][1] = CI_limits[1]
 
-                    print(f'plotOptions:\n{plotOptions}')
-
                     fit_curve_plot = ps.psigniplot.plotPsych(CI_res, plotData=False, CIthresh=True,
-                                                              showImediate=False)
+                                                             showImediate=False)
 
                 elif thr_type == 'Bayes':
-
-                    plotOptions = dict()
 
                     fit_curve_plot = ps.psigniplot.plotPsych(res, plotAsymptote=True,
                                                              CIthresh=True, showImediate=False)
 
-
             else:
 
-                print(f'ploting both threshold types')
+                if thr_type == 'Bayes':
+                    raise ValueError('plot_both_curves currently only set up to run with CI95 as thr type.')
 
-
+                print(f'plotting both threshold types')
                 plt.title(f"{dset_name}: sig: {sig_name}, est: {est_type}\n"
                           f"threshPC: {target_threshold}, Bayes thr: {round(res['Fit'][0], 2)}, "
                           f"CI95 thr: {round(threshold, 2)}")
-                plotOptions = dict()
-
                 fit_curve_plot = ps.psigniplot.plotPsych(res, lineColor=[1, 0, 0], plotAsymptote=False,
                                                          CIthresh=True, showImediate=False)
-
 
                 fit_patch = mpatches.Patch(color=[1, 0, 0], label='Bayesian Fit')
                 CI_patch = mpatches.Patch(color='black', label='CI=95% Fit')
                 fit_curve_plot.legend(handles=[fit_patch, CI_patch], loc='lower right')
 
-                plotOptions = dict()
                 CI_res = res.copy()
                 CI_res['Fit'][0] = threshold
                 CI_res['conf_Intervals'][0][0] = CI_limits[0]
                 CI_res['conf_Intervals'][0][1] = CI_limits[1]
-
-                print(f'plotOptions:\n{plotOptions}')
 
                 fit_curve_plot2 = ps.psigniplot.plotPsych(CI_res, plotData=False, CIthresh=True,
                                                           showImediate=False)
@@ -457,8 +433,14 @@ def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
     :param target_threshold: threshold if this percentage correct
     :param sig_name: default: 'norm', can also choose 'logistic'.
     :param est_type: default: 'MAP' (maximum a postieriori), can also choose 'mean' (posterior mean).
+    :param conf_int: default: True.  Save and plot confidence/credible intervals
+    :param thr_type: default: 'Bayes'.  This gets threshold estimate from 'Fit' in results dict.
+            Can also pass 'CI95' to get threshold estimate from getThreshold.
+            Analysis of 1probe results suggests 'Bayes' is most reliable (lowest SD).
+    :param plot_both_curves: default: False.  If true will plot both 'Bayes' and 'CI95' on plots,
+            but currently needs thr_type set to CI95.
     :param save_plots: default: True.
-    :param show_plots: default: False.  Display plot on sceen. Useful if doing a
+    :param show_plots: default: False.  Display plot on screen. Useful if doing a
         single pot or not saving, but don't use for multiple plots as it slows
         things down and eats memory.
     :param verbose: if True will print progress to screen
@@ -542,8 +524,15 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
     :param sep_list: Default=None.  List of separation values.  If None passed will use defualts.
     :param group: Default=None.  Pass a group id for exp1a to differentiate between
                     identical stairs  (e.g., 1&2, 3&4 etc).
+    :param conf_int: default: True.  Save and plot confidence/credible intervals
+    :param thr_type: default: 'Bayes'.  This gets threshold estimate from 'Fit' in results dict.
+            Can also pass 'CI95' to get threshold estimate from getThreshold.
+            Analysis of 1probe results suggests 'Bayes' is most reliable (lowest SD).
+    :param plot_both_curves: default: False.  If true will plot both 'Bayes' and 'CI95' on plots,
+            but currently needs thr_type set to CI95.
     :param cols_to_add_dict: add dictionary of columns to insert to finished df (header=key, column=value)
     :param save_name: Pass a name to save output or if None will save as 'psignifit_thresholds'.
+    :param show_plots: If True, will show plots immediately.
     :param save_plots: If True, will save plots.
     :param verbose: Print progress to screen
 
@@ -568,7 +557,7 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
     CI_width_array = np.zeros(shape=[len(sep_list), len(isi_list)])
     eta_array = np.zeros(shape=[len(sep_list), len(isi_list)])
 
-    # identify whether csv_name is actaully a csv_name or infact a dataframe ready to use.
+    # identify whether csv_name is actaully a csv_name or in fact a dataframe ready to use.
     load_csv = True
     if type(csv_name) is str:
         if csv_name[-4:] == '.csv':
@@ -614,8 +603,6 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
 
                 print(f'n correct = {sep_df["trial_response"].sum()}')
 
-
-
             # # # test with csv to numpy
             # yes script now works directly with df, don't need to load csv.
             # now move on to doing full thing
@@ -652,21 +639,8 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
 
             if conf_int:
                 CI_limits = psignifit_dict['CI_limits']
-                # CI_limits_array[sep_idx, isi_idx*2] = round(CI_limits[0], 2)
-                # CI_limits_array[sep_idx, (isi_idx*2)+1] = round(CI_limits[1], 2)
                 CI_limits_array[sep_idx, isi_idx*2] = CI_limits[0]
                 CI_limits_array[sep_idx, (isi_idx*2)+1] = CI_limits[1]
-
-
-                # # CI_width = max limint minus min limit
-                # print(f'type(CI_limits): {type(CI_limits)}')
-                # print(f'CI_limits[0]: {CI_limits[0]}')
-                # print(f'CI_limits[1]: {CI_limits[1]}')
-                # print(f'type(CI_limits[0]): {type(CI_limits[0])}')
-                # print(f'type(CI_limits[1]): {type(CI_limits[1])}')
-                # print(f'psignifit_dict:')
-                # for k, v in psignifit_dict.items():
-                #     print(f"{k}: {v}")
 
                 if not np.isnan(CI_limits).any():
                     CI_width_array[sep_idx, isi_idx] = CI_limits[1] - CI_limits[0]
@@ -733,7 +707,6 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
     if group is not None:
         thr_filename = f'g{group}_{thr_filename}'
     thr_filename = f'{thr_filename}.csv'
-
 
     thr_filepath = os.path.join(root_path, p_run_name, thr_filename)
     print(f'saving psignifit_thresholds.csv to {thr_filepath}')
