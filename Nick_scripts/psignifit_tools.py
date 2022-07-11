@@ -165,6 +165,8 @@ def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='sta
 def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
                   sig_name='norm', est_type='MAP', n_blocks=None,
                   conf_int=True,
+                  thr_type='Bayes',  # 'CI95'
+                  plot_both_curves=False,
                   save_plots=True, show_plots=False, verbose=True):
 
     """
@@ -258,35 +260,44 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
           f'')
 
     if conf_int:
-        # todo: comment this back in once I have bayesian estimates
-        [threshold, CI_limits] = ps.getThreshold(res, target_threshold)
-        print(f'ps.getThreshold(res, target_threshold): {ps.getThreshold(res, target_threshold)}')
-        if options['estimateType'] == 'mean':
-            # threshold = round(threshold[0], 2)
-            threshold = threshold[0]
-        else:
-            # threshold = round(threshold, 2)
-            threshold = threshold
+
+        if thr_type == 'CI95':
+
+            [threshold, CI_limits] = ps.getThreshold(res, target_threshold)
+            print(f'ps.getThreshold(res, target_threshold): {ps.getThreshold(res, target_threshold)}')
+            if options['estimateType'] == 'mean':
+                # threshold = round(threshold[0], 2)
+                threshold = threshold[0]
+            else:
+                # threshold = round(threshold, 2)
+                threshold = threshold
 
 
-        CI_limits = list(CI_limits[0])
+            CI_limits = list(CI_limits[0])
+
+
+        elif thr_type == 'Bayes':
+
+            threshold = res['Fit'][0]
+            CI_limits = list(res['conf_Intervals'][0])
 
         print(f'\nCI_limits:\n{CI_limits}\nfor options.confP: {options["confP"]}')
 
-        # # # todo: get rid of this once I have bayesian estimates
-        # threshold = res['Fit'][0]
-        # CI_limits = list(res['conf_Intervals'][0])
-
-
-
     else:
-        threshold = ps.getThreshold(res, target_threshold)
-        if options['estimateType'] == 'mean':
-            # threshold = round(threshold[0][0], 2)
-            threshold = threshold[0][0]
-        else:
-            # threshold = round(threshold[0], 2)
-            threshold = threshold[0]
+        if thr_type == 'CI95':
+
+            threshold = ps.getThreshold(res, target_threshold)
+            if options['estimateType'] == 'mean':
+                # threshold = round(threshold[0][0], 2)
+                threshold = threshold[0][0]
+            else:
+                # threshold = round(threshold[0], 2)
+                threshold = threshold[0]
+
+        elif thr_type == 'Bayes':
+            threshold = res['Fit'][0]
+
+
 
     if verbose:
         print(f'\nthreshold: {threshold}')
@@ -312,31 +323,67 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
     else:
         print(f'making plots (save_plots: {save_plots})')
         plt.figure()
-        plt.title(f"{dset_name}: sig: {sig_name}, est: {est_type}\n"
-                  f"threshPC: {target_threshold}, threshold: {round(threshold, 2)}, slope: {round(slope_at_target, 2)}")
+
         if conf_int:
-            plotOptions = dict()
-            # plotOptions['CIthresh'] = True
-            # plotOptions['axisHandle'] = 'Fit'
 
-            fit_curve_plot = ps.psigniplot.plotPsych(res, lineColor=[1, 0, 0], plotAsymptote=False,
-                                                     CIthresh=True, showImediate=False)
+            if not plot_both_curves:
+
+                print(f'ploting {thr_type}')
+
+                plt.title(f"{dset_name}: sig: {sig_name}, est: {est_type}\n"
+                          f"threshPC: {target_threshold}, {thr_type} thr: {round(threshold, 2)}, "
+                          f"slope: {round(slope_at_target, 2)}")
+
+                if thr_type == 'CI95':
 
 
-            fit_patch = mpatches.Patch(color=[1, 0, 0], label='Bayesian Fit')
-            CI_patch = mpatches.Patch(color='black', label='CI=95% Fit')
-            fit_curve_plot.legend(handles=[fit_patch, CI_patch], loc='lower right')
+                    plotOptions = dict()
+                    CI_res = res.copy()
+                    CI_res['Fit'][0] = threshold
+                    CI_res['conf_Intervals'][0][0] = CI_limits[0]
+                    CI_res['conf_Intervals'][0][1] = CI_limits[1]
 
-            plotOptions = dict()
-            CI_res = res.copy()
-            CI_res['Fit'][0] = threshold
-            CI_res['conf_Intervals'][0][0] = CI_limits[0]
-            CI_res['conf_Intervals'][0][1] = CI_limits[1]
+                    print(f'plotOptions:\n{plotOptions}')
 
-            print(f'plotOptions:\n{plotOptions}')
+                    fit_curve_plot = ps.psigniplot.plotPsych(CI_res, plotData=False, CIthresh=True,
+                                                              showImediate=False)
 
-            fit_curve_plot2 = ps.psigniplot.plotPsych(CI_res, plotData=False, CIthresh=True,
-                                                      showImediate=False)
+                elif thr_type == 'Bayes':
+
+                    plotOptions = dict()
+
+                    fit_curve_plot = ps.psigniplot.plotPsych(res, plotAsymptote=True,
+                                                             CIthresh=True, showImediate=False)
+
+
+            else:
+
+                print(f'ploting both threshold types')
+
+
+                plt.title(f"{dset_name}: sig: {sig_name}, est: {est_type}\n"
+                          f"threshPC: {target_threshold}, Bayes thr: {round(res['Fit'][0], 2)}, "
+                          f"CI95 thr: {round(threshold, 2)}")
+                plotOptions = dict()
+
+                fit_curve_plot = ps.psigniplot.plotPsych(res, lineColor=[1, 0, 0], plotAsymptote=False,
+                                                         CIthresh=True, showImediate=False)
+
+
+                fit_patch = mpatches.Patch(color=[1, 0, 0], label='Bayesian Fit')
+                CI_patch = mpatches.Patch(color='black', label='CI=95% Fit')
+                fit_curve_plot.legend(handles=[fit_patch, CI_patch], loc='lower right')
+
+                plotOptions = dict()
+                CI_res = res.copy()
+                CI_res['Fit'][0] = threshold
+                CI_res['conf_Intervals'][0][0] = CI_limits[0]
+                CI_res['conf_Intervals'][0][1] = CI_limits[1]
+
+                print(f'plotOptions:\n{plotOptions}')
+
+                fit_curve_plot2 = ps.psigniplot.plotPsych(CI_res, plotData=False, CIthresh=True,
+                                                          showImediate=False)
 
         else:
             fit_curve_plot = ps.psigniplot.plotPsych(res, showImediate=False)
@@ -360,6 +407,7 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
                       'save_path': save_path, 'save_plots': save_plots,
                       'sig_name': sig_name, 'est_type': est_type,
                       'exp_type': options['expType'], 'expN': options['expN'],
+                      'thr_type': thr_type,
                       'target_threshold': target_threshold,
                       'stimulus_range': list(res['options']['stimulusRange']),
                       'Threshold': threshold, 'slope_at_target': slope_at_target,
@@ -380,6 +428,8 @@ def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
                          target_threshold=.75,
                          sig_name='norm', est_type='MAP',
                          conf_int=True,
+                         thr_type='Bayes',  # 'CI95'
+                         plot_both_curves=False,
                          save_plots=True, show_plots=False,
                          verbose=True):
     """
@@ -453,6 +503,8 @@ def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
                                                    sig_name=sig_name,
                                                    est_type=est_type,
                                                    conf_int=conf_int,
+                                                   thr_type=thr_type,
+                                                   plot_both_curves=plot_both_curves,
                                                    save_plots=save_plots,
                                                    show_plots=show_plots,
                                                    verbose=True)
@@ -470,6 +522,8 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
                                isi_list=None, sep_list=None,
                                group=None,
                                conf_int=True,
+                               thr_type='Bayes',  # 'CI95'
+                               plot_both_curves=False,
                                cols_to_add_dict=None, save_name=None,
                                show_plots=False, save_plots=True,
                                verbose=True):
@@ -497,6 +551,9 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
     """
 
     print('\n*** running get_psignifit_threshold_df() ***')
+
+    if thr_type not in ['Bayes', 'CI95']:
+        raise ValueError
 
     if isi_list is None:
         isi_list = [0, 1, 4, 6, 12, 24]
@@ -583,6 +640,8 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
                                                                   save_np=False, target_threshold=.75,
                                                                   sig_name='norm', est_type='MAP',
                                                                   conf_int=conf_int,
+                                                                  thr_type=thr_type,
+                                                                  plot_both_curves=plot_both_curves,
                                                                   save_plots=save_plots, show_plots=show_plots,
                                                                   verbose=verbose
                                                                   )
