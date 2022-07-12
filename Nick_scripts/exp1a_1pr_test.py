@@ -147,7 +147,7 @@ for p_idx, participant_name in enumerate(participant_list):
     # print(f"\n\ntrim_n: {trim_n}, "
     #       f"use_trimmed: {use_trimmed}\n\n")
 
-    for n_trimmed in [1, 2, 3, 4, 5]:
+    for n_trimmed in [None, 1, 2, 3, 4, 5]:
 
         '''d'''
         d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
