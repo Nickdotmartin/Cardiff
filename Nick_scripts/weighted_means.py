@@ -172,7 +172,7 @@ for participant_name in participant_list:
                 # weighted_mean = np.average(thr_array, weights=conf_array)
                 # weighted_mean_array[sep_idx, isi_idx] = weighted_mean
                 #
-                # weighted_std = np.sqrt(np.cov(thr_array, aweights=conf_array))
+                # weighted_std = np.sqrt(np.cov(thr_array, weights=conf_array))
                 # weighted_std_array[sep_idx, isi_idx] = weighted_std
                 #
                 # weighted_se = weighted_std / np.sqrt(sum(conf_array) - 1)

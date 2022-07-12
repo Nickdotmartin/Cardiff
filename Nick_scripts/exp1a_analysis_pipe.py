@@ -8,11 +8,12 @@ from check_home_dir import switch_path
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
 old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data'
-# old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim_split_runs_weighted_mean'
 exp_path = switch_path(old_exp_path, 'wind_oneDrive')
 print(f"exp_path: {exp_path}")
 participant_list = ['aa', 'bb', 'cc', 'dd', 'ee']
-# participant_list = ['Kim']
+# participant_list = ['bb', 'cc', 'dd', 'ee']
+# participant_list = ['aa']
+
 isi_list = [-1, 0, 2, 4, 6, 9, 12, 24]
 
 n_runs = 6
@@ -27,22 +28,7 @@ for p_idx, participant_name in enumerate(participant_list):
 
     group_list = [1, 2]
 
-    # check whether scrips a, b3 and c have been completed for the last run (e.g., all runs) for this participant
-    check_last_c_plots_fig = os.path.join(root_path, run_folder_names[-1], 'g2_dataDivOneProbe.png')
-
-    # # todo: comment this out again?
-    # if not os.path.isfile(check_last_c_plots_fig):
-    #     print(f'\nNOT completed analysis yet: {check_last_c_plots_fig}')
-
     for run_idx, run_dir in enumerate(run_folder_names):
-
-        # check whether scripts a, b3 and c have been done for this run for this participant
-        # check_last_c_plots_fig = f'{root_path}/{run_dir}/g2_dataDivOneProbe.png'
-        check_last_c_plots_fig = os.path.join(root_path, run_dir, 'g2_dataDivOneProbe.png')
-
-        # if os.path.isfile(check_last_c_plots_fig):
-        #     print(f'\nalready completed: {check_last_c_plots_fig}')
-        #     continue
 
         print(f'\nrunning analysis for {participant_name}, {run_dir}, {participant_name}{run_idx+1}\n')
         save_path = f'{root_path}{os.sep}{run_dir}'
@@ -52,21 +38,9 @@ for p_idx, participant_name in enumerate(participant_list):
         p_name = participant_name
 
         # # '''a'''
-        # # p_name = f'{participant_name}_{run_idx+1}_output'  # use this one
-        # p_name = f'{participant_name}{run_idx+1}'  # todo: comment out
-        # isi_list = [-1, 0, 2, 4, 6, 9, 12, 24]
-        #
-        # # # # for first run, some files are saved just as name not name1
-        # # # check_file = os.path.join(save_path, 'ISI_-1_probeDur2', f'{participant_name}_output.csv')
-        # # #
-        # # # if not os.path.isfile(check_file):
-        # # #     raise FileNotFoundError(check_file)
-        #
-        # run_data_df = a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=isi_list, verbose=True)
+        p_name = f'{participant_name}_output'  # use this one
 
-        # todo: can get rid of this once all RUN-data has newLum column
-        run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
-        run_data_df = pd.read_excel(run_data_path, engine='openpyxl')
+        run_data_df = a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=isi_list, verbose=True)
 
         '''add newLum column
         in old version, the experiment script varies probeLum and converts to float(RGB255) values for screen.
@@ -86,7 +60,6 @@ for p_idx, participant_name in enumerate(participant_list):
                   f"run_data_df: {run_data_df.columns.to_list()}")
 
 
-        # run_data_path = f'{save_path}{os.sep}RUNDATA-sorted.xlsx'
         run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
 
         run_data_df = pd.read_excel(run_data_path, engine='openpyxl',
@@ -112,80 +85,79 @@ for p_idx, participant_name in enumerate(participant_list):
                                             isi_list=isi_list,
                                             sep_list=stair_list,
                                             conf_int=True,
+                                            thr_type='Bayes',
+                                            plot_both_curves=False,
                                             save_plots=True,
                                             cols_to_add_dict=cols_to_add_dict,
                                             verbose=True)
         print(f'thr_df:\n{thr_df}')
-        #
-        # # todo: run b3 and c_plots with newLum
-        # '''b3'''
-        # # run_data_path = f'{save_path}{os.sep}RUNDATA-sorted.xlsx'
-        # run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
-        # thr_path = os.path.join(save_path, 'psignifit_thresholds.csv')
-        #
-        # b3_plot_staircase(run_data_path, show_plots=False)
-        #
-        # '''c'''
-        # c_plots(save_path=save_path, show_plots=True)
+
+        '''b3'''
+        run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
+        thr_path = os.path.join(save_path, 'psignifit_thresholds.csv')
+
+        b3_plot_staircase(run_data_path, thr_col='newLum', show_plots=False)
+
+        '''c'''
+        c_plots(save_path=save_path, thr_col='newLum', show_plots=True)
 
 
-    # trim_n = None  # 1
-    # use_trimmed = False
-    # # if len(run_folder_names) == 6:
-    # #     trim_n = 1
-    # #     use_trimmed = True
-    # n_trimmed = trim_n
-    #
-    # print(f"\n\ntrim_n: {trim_n}, use_trimmed: {use_trimmed}\n\n")
-    #
-    # '''d'''
-    # d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-    #                       trim_n=n_trimmed, error_type='SE')
-    #
-    # all_df_path = os.path.join(root_path, 'MASTER_TM1_thresholds.csv')
-    # p_ave_path = os.path.join(root_path, 'MASTER_ave_TM_thresh.csv')
-    # err_path = os.path.join(root_path, 'MASTER_ave_TM_thr_error_SE.csv')
-    # n_trimmed = trim_n
-    # if n_trimmed is None:
-    #     all_df_path = os.path.join(root_path, 'MASTER_psignifit_thresholds.csv')
-    #     p_ave_path = os.path.join(root_path, 'MASTER_ave_thresh.csv')
-    #     err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
-    #
-    # exp_ave = False
-    #
-    # # todo: make_average_plots with newLum - currently uses probeLum
+    trim_n = None
+    use_trimmed = False
+    if len(run_folder_names) == 6:
+        trim_n = 1
+        use_trimmed = True
+    n_trimmed = trim_n
 
-    # make_average_plots(all_df_path=all_df_path,
-    #                    ave_df_path=p_ave_path,
-    #                    error_bars_path=err_path,
-    #                    error_type='SE',
-    #                    n_trimmed=n_trimmed,
-    #                    exp_ave=False,
-    #                    show_plots=True, verbose=True)
+    print(f"\n\ntrim_n: {trim_n}, use_trimmed: {use_trimmed}\n\n")
+
+    '''d'''
+    d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
+                          trim_n=n_trimmed, error_type='SE')
+
+    all_df_path = os.path.join(root_path, 'MASTER_TM1_thresholds.csv')
+    p_ave_path = os.path.join(root_path, 'MASTER_ave_TM_thresh.csv')
+    err_path = os.path.join(root_path, 'MASTER_ave_TM_thr_error_SE.csv')
+    n_trimmed = trim_n
+    if n_trimmed is None:
+        all_df_path = os.path.join(root_path, 'MASTER_psignifit_thresholds.csv')
+        p_ave_path = os.path.join(root_path, 'MASTER_ave_thresh.csv')
+        err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
+
+    exp_ave = False
+
+    make_average_plots(all_df_path=all_df_path,
+                       ave_df_path=p_ave_path,
+                       error_bars_path=err_path,
+                       thr_col='newLum',
+                       error_type='SE',
+                       n_trimmed=n_trimmed,
+                       exp_ave=False,
+                       show_plots=True, verbose=True)
 
 
-# print(f'exp_path: {exp_path}')
-# print('\nget exp_average_data')
-#
-# e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
-#                    error_type='SE', use_trimmed=use_trimmed, verbose=True)
-#
-#
-#
-# all_df_path = os.path.join(exp_path, 'MASTER_exp_thr.csv')
-# exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
-# err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
-#
-# n_trimmed = None
-# exp_ave = True
-#
-# # todo: make_average_plots with newLum - currently uses probeLum
-# make_average_plots(all_df_path=all_df_path,
-#                    ave_df_path=exp_ave_path,
-#                    error_bars_path=err_path,
-#                    error_type='SE',
-#                    n_trimmed=n_trimmed,
-#                    exp_ave=exp_ave,
-#                    show_plots=True, verbose=True)
+print(f'exp_path: {exp_path}')
+print('\nget exp_average_data')
+participant_list = ['aa', 'bb', 'cc', 'dd', 'ee']
+
+e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
+                   error_type='SE', use_trimmed=use_trimmed, verbose=True)
+
+
+all_df_path = os.path.join(exp_path, 'MASTER_exp_thr.csv')
+exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
+err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
+
+n_trimmed = None
+exp_ave = True
+
+make_average_plots(all_df_path=all_df_path,
+                   ave_df_path=exp_ave_path,
+                   error_bars_path=err_path,
+                   thr_col='newLum',
+                   error_type='SE',
+                   n_trimmed=n_trimmed,
+                   exp_ave=exp_ave,
+                   show_plots=True, verbose=True)
 
 print('\nexp1a_analysis_pipe finished\n')

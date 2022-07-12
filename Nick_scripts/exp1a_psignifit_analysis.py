@@ -105,6 +105,7 @@ def merge_pos_and_neg_sep_dfs(pos_sep_df, neg_sep_df):
 
 
 def split_df_into_pos_sep_df_and_1probe_df(pos_sep_and_1probe_df,
+                                           thr_col='newLum',
                                            isi_name_list=None,
                                            one_probe_pos=None,
                                            verbose=True):
@@ -158,7 +159,7 @@ def split_df_into_pos_sep_df_and_1probe_df(pos_sep_and_1probe_df,
 
     one_probe_lum_list = one_probe_df.values.tolist()[0]
     one_probe_dict = {'ISIs': isi_name_list,
-                      'probeLum': one_probe_lum_list,
+                      f'{thr_col}': one_probe_lum_list,
                       'x_vals': [one_probe_pos for _ in isi_name_list]}
     one_probe_df = pd.DataFrame.from_dict(one_probe_dict)
     if verbose:
@@ -326,7 +327,7 @@ def trim_n_high_n_low(all_data_df, trim_from_ends=None, reference_col='separatio
 
 ##################
 
-def make_long_df(wide_df, wide_stubnames='ISI',
+def make_long_df(wide_df, wide_stubnames='ISI', thr_col='newLum',
                  col_to_keep='separation', idx_col='Run', verbose=True):
 
     """
@@ -360,7 +361,7 @@ def make_long_df(wide_df, wide_stubnames='ISI',
         print(f'long_df:\n{long_df}')
 
     # # replace column values and labels
-    long_df = long_df.rename({wide_stubnames: 'probeLum'}, axis='columns')
+    long_df = long_df.rename({wide_stubnames: f'{thr_col}'}, axis='columns')
     # change concurrent ISI column from 999 to -1
     long_df.index = pd.MultiIndex.from_tuples([(x[0], x[1], 'ISI -1') if x[2] == 999 else
                                                (x[0], x[1], f'ISI {x[2]}') for x in long_df.index])
@@ -381,11 +382,11 @@ def make_long_df(wide_df, wide_stubnames='ISI',
 
 
 # # # all ISIs on one axis - pos sep only, plus single probe
-# FIGURE 1 - shows one axis (x=separation (0-18), y=probeLum) with all ISIs added.
+# FIGURE 1 - shows one axis (x=separation (0-18), y=newLum) with all ISIs added.
 # it also seems that for isi=99 there are simple dots added at -1 on the x-axis.
 
 def plot_pos_sep_and_1probe(pos_sep_and_1probe_df,
-                            thr_col='probeLum',
+                            thr_col='newLum',
                             fig_title=None,
                             one_probe=True,
                             save_path=None,
@@ -485,7 +486,8 @@ def plot_pos_sep_and_1probe(pos_sep_and_1probe_df,
 
 ####################
 
-def plot_1probe_w_errors(fig_df, error_df, split_1probe=True,
+def plot_1probe_w_errors(fig_df, error_df,
+                         thr_col='newLum', split_1probe=True,
                          jitter=True, error_caps=False, alt_colours=False,
                          legend_names=None,
                          x_tick_vals=None,
@@ -573,8 +575,8 @@ def plot_1probe_w_errors(fig_df, error_df, split_1probe=True,
 
         if split_1probe:
             ax.errorbar(x=one_probe_df['x_vals'][idx] + np.random.uniform(low=-jit_max, high=jit_max),
-                        y=one_probe_df['probeLum'][idx],
-                        yerr=one_probe_er_df['probeLum'][idx],
+                        y=one_probe_df[thr_col][idx],
+                        yerr=one_probe_er_df[thr_col][idx],
                         marker='.', lw=2, elinewidth=.7,
                         capsize=cap_size,
                         color=my_colours[idx])
@@ -700,7 +702,7 @@ def plot_w_errors_no_1probe(wide_df, x_var, y_var, lines_var,
         ax.set_xticklabels(x_tick_labels)
     ax.set_xlabel(x_var)
 
-    if y_var == 'probeLum':
+    if y_var == 'newLum':
         ax.set_ylabel('Probe Luminance')
     else:
         ax.set_ylabel(y_var)
@@ -832,7 +834,7 @@ def plot_diff_from_concurrent(thr_df_path, div_by_1probe=False,
 
     sns.lineplot(data=diff_from_conc_df.T, linewidth=3)
     plt.axhline(y=0, color='lightgrey', linestyle='dashed')
-    plt.ylabel('ProbeLum difference from concurrent')
+    plt.ylabel('Luminance difference from concurrent')
     plt.xlabel('ISI')
     plt.title(fig_title)
     plt.savefig(f'{save_path}/{save_name}.png')
@@ -1150,7 +1152,7 @@ def eight_batman_plots(mean_df, thr1_df, thr2_df,
     return fig
 
 
-def plot_8_sep_thr(all_thr_df, exp_ave=False, fig_title=None, save_name=None, save_path=None, verbose=True):
+def plot_8_sep_thr(all_thr_df, thr_col='newLum', exp_ave=False, fig_title=None, save_name=None, save_path=None, verbose=True):
     """
     Function to make a page with seven axes showing the threshold for each separation,
     and an eighth plot showing all separations.
@@ -1213,8 +1215,10 @@ def plot_8_sep_thr(all_thr_df, exp_ave=False, fig_title=None, save_name=None, sa
                 this_sep = sep_list[ax_counter]
                 sep_df = long_fig_df[long_fig_df['separation'] == this_sep]
 
+                print(f"sep_df:\n{sep_df}")
+
                 sns.pointplot(ax=axes[row_idx, col_idx],
-                              data=sep_df, x='ISI', y='probeLum',
+                              data=sep_df, x='ISI', y=thr_col,
                               estimator=np.mean, ci=68,
                               markers='.',
                               errwidth=1,
@@ -1229,7 +1233,7 @@ def plot_8_sep_thr(all_thr_df, exp_ave=False, fig_title=None, save_name=None, sa
                 ax.set_ylim([min_thr, max_thr])
             else:
                 sns.pointplot(ax=axes[row_idx, col_idx],
-                              data=long_fig_df, x='ISI', y='probeLum',
+                              data=long_fig_df, x='ISI', y=thr_col,
                               hue='separation',
                               estimator=np.mean, ci=68,
                               markers='.',
@@ -1381,7 +1385,9 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
     conditions) showing the Luminance value of two staircases as function of 
     trial number. 
 """
-def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_response',
+
+
+def b3_plot_staircase(all_data_path, thr_col='newLum', resp_col='trial_response',
                       show_plots=True, save_plots=True, verbose=True):
     # todo: add variable to load thresholds csv and mark psignifit threshold on staircase plot.
 
@@ -1392,8 +1398,8 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
     trial number. Eighth panel shows psignifit thr per sep condition.
 
     :param all_data_path: path to the all_data xlsx file.
-    :param thr_col: (default probeLum) name of the column showing the threshold
-        (e.g., varied by the staircase).
+    :param thr_col: (default newLum) name of the column showing the threshold
+        (e.g., varied by the staircase).  Original was probeLum.
     :param resp_col: (default: 'trial_response') name of the column showing
         (accuracy per trial).
     :param show_plots: whether to display plots on-screen.
@@ -1416,7 +1422,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
     else:
         all_data_df = pd.read_excel(all_data_path, engine='openpyxl',
                                     usecols=['ISI', 'separation', 'stair', 'total_nTrials',
-                                             'probeLum', 'trial_response', 'resp.rt'])
+                                             f'{thr_col}', 'trial_response', 'resp.rt'])
 
     # get list of isi and stair values to loop through
     stair_list = all_data_df['stair'].unique()
@@ -1535,13 +1541,13 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
                     stair_odd = (ax_counter * 2) + 1  # 1, 3, 5, 7, 9, 11, 13
                     stair_odd_df = isi_df[isi_df['stair'] == stair_odd]
                     stair_odd_df.insert(0, 'step', list(range(trials_per_stair)))
-                    final_lum_odd = stair_odd_df.loc[stair_odd_df['step'] == trials_per_stair - 1, 'probeLum'].item()
+                    final_lum_odd = stair_odd_df.loc[stair_odd_df['step'] == trials_per_stair - 1, thr_col].item()
                     n_reversals_odd = trials_per_stair - stair_odd_df[resp_col].sum()
 
                     stair_even = (ax_counter + 1) * 2  # 2, 4, 6, 8, 10, 12, 14
                     stair_even_df = isi_df[isi_df['stair'] == stair_even]
                     stair_even_df.insert(0, 'step', list(range(trials_per_stair)))
-                    final_lum_even = stair_even_df.loc[stair_even_df['step'] == trials_per_stair - 1, 'probeLum'].item()
+                    final_lum_even = stair_even_df.loc[stair_even_df['step'] == trials_per_stair - 1, thr_col].item()
                     n_reversals_even = trials_per_stair - stair_even_df[resp_col].sum()
 
                     # append n_reversals to n_reversals_np to save later.
@@ -1577,7 +1583,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
                                  x='step', y=thr_col,
                                  color='tab:red',
                                  marker="v", markersize=5)
-                    # line for final probeLum
+                    # line for final Luminance
                     ax.axhline(y=final_lum_odd, linestyle="dotted", color='tab:red')
                     ax.axhline(y=psig_odd_thr, linestyle="dashed", color='tab:brown')
                     # text for n_reversals
@@ -1732,10 +1738,10 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
 
 ####################
 # all_data_path = ''
-# b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_response',
+# b3_plot_staircase(all_data_path, thr_col='newLum', resp_col='trial_response',
 #                   show_plots=True, save_plots=True, verbose=True)
 
-def c_plots(save_path, thr_col='probeLum', show_plots=True, verbose=True):
+def c_plots(save_path, thr_col='newLum', show_plots=True, verbose=True):
 
     """
     5. c_plots.m: uses psignifit_thresholds.csv and outputs plots.
@@ -1756,7 +1762,7 @@ def c_plots(save_path, thr_col='probeLum', show_plots=True, verbose=True):
                       use eight_batman_plots()
                       
     :param save_path: path to run dir containing psignifit_thresholds.csv, where plots will be save.
-    :param thr_col: column for threshold (e.g., probeLum)
+    :param thr_col: column for threshold (e.g., 'newLum', 'probeLum')
     :param show_plots: Default True
     :param verbose: Default True.
     """
@@ -1768,7 +1774,7 @@ def c_plots(save_path, thr_col='probeLum', show_plots=True, verbose=True):
     sym_sep_tick_labels = [-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18, '1\nprobe']
     pos_sep_list = [0, 1, 2, 3, 6, 18, 20]
 
-    # load df mean of last n probeLum values (14 stairs x 8 isi).
+    # load df mean of last n luminance values (14 stairs x 8 isi).
     thr_csv_name = f'{save_path}{os.sep}psignifit_thresholds.csv'
     psig_thr_df = pd.read_csv(thr_csv_name)
     if verbose:
@@ -1889,7 +1895,7 @@ def c_plots(save_path, thr_col='probeLum', show_plots=True, verbose=True):
 
         pos_sep_df, one_probe_df = split_df_into_pos_sep_df_and_1probe_df(group_plot_df)
         pos_sep_arr = pos_sep_df.to_numpy()
-        one_probe_arr = one_probe_df['probeLum'].to_numpy()
+        one_probe_arr = one_probe_df[thr_col].to_numpy()
         div_by_1probe_arr = (pos_sep_arr.T / one_probe_arr[:, None]).T
         div_by_1probe_df = pd.DataFrame(div_by_1probe_arr, columns=isi_name_list)
         div_by_1probe_df.insert(0, 'separation', pos_sep_list[:-1])
@@ -1897,7 +1903,7 @@ def c_plots(save_path, thr_col='probeLum', show_plots=True, verbose=True):
         print(f'div_by_1probe_df:\n{div_by_1probe_df}')
 
         plot_pos_sep_and_1probe(div_by_1probe_df,
-                                thr_col='probeLum',
+                                thr_col=thr_col,
                                 fig_title=fig4_title,
                                 one_probe=False,
                                 save_path=save_path,
@@ -1913,7 +1919,7 @@ def c_plots(save_path, thr_col='probeLum', show_plots=True, verbose=True):
 
 # #########
 # c_plots(save_path='',
-#         thr_col='probeLum', last_vals_list=[1, 4, 7],
+#         thr_col='newLum', last_vals_list=[1, 4, 7],
 #         show_plots=True, verbose=True)
 
 
@@ -2027,8 +2033,11 @@ def d_average_participant(root_path, run_dir_names_list,
 
     # save csv with average values
     if trim_n is not None:
-        ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM_thresh.csv')
-        error_bars_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM_thr_error_{error_type}.csv')
+        # ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM_thresh.csv')
+        # error_bars_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM_thr_error_{error_type}.csv')
+        # todo: decide whether to state number trimmed in filename
+        ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM{trim_n}_thresh.csv')
+        error_bars_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM{trim_n}_thr_error_{error_type}.csv')
     else:
         ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_thresh.csv')
         error_bars_df.to_csv(f'{root_path}{os.sep}MASTER_ave_thr_error_{error_type}.csv')
@@ -2133,6 +2142,7 @@ def e_average_exp_data(exp_path, p_names_list,
 
 
 def make_average_plots(all_df_path, ave_df_path, error_bars_path,
+                       thr_col='newLum',
                        n_trimmed=False,
                        error_type='SE',
                        exp_ave=False,
@@ -2243,7 +2253,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         fig1b_title = f'{ave_over} probe luminance at each ISI value per separation'
         fig1b_savename = f'ave_thr_all_runs_transpose.png'
 
-    plot_w_errors_no_1probe(wide_df=all_df, x_var='ISI', y_var='probeLum',
+    plot_w_errors_no_1probe(wide_df=all_df, x_var='ISI', y_var=thr_col,
                             lines_var='separation', long_df_idx_col=idx_col,
                             legend_names=['0', '1', '2', '3', '6', '18', '1probe'],
                             x_tick_labels=['conc', 0, 2, 4, 6, 9, 12, 24],
@@ -2303,7 +2313,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
         # divide pos_sep by one_probe and append to list
         pos_sep_arr = pos_sep_df.to_numpy()
-        one_probe_arr = one_probe_df['probeLum'].to_numpy()
+        one_probe_arr = one_probe_df[thr_col].to_numpy()
         div_by_1probe_arr = (pos_sep_arr.T / one_probe_arr[:, None]).T
         div_by_1probe_df = pd.DataFrame(div_by_1probe_arr, columns=isi_name_list)
         div_by_1probe_df.insert(0, idx_col, [data_set] * len(div_by_1probe_df))
@@ -2361,7 +2371,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         fig2b_save_name = 'ave_thr_div_1probe_transpose.png'
         fig2b_title = f'{ave_over} average thresholds divided by single probe at each ISI'
 
-    plot_w_errors_no_1probe(wide_df=divided_df, x_var='ISI', y_var='probeLum',
+    plot_w_errors_no_1probe(wide_df=divided_df, x_var='ISI', y_var=thr_col,
                             lines_var='separation', long_df_idx_col=idx_col,
                             legend_names=['0', '1', '2', '3', '6', '18'],
                             x_tick_labels=['conc', 0, 2, 4, 6, 9, 12, 24],

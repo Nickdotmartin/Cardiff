@@ -163,9 +163,7 @@ def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='sta
 
 def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
                   sig_name='norm', est_type='MAP', n_blocks=None,
-                  conf_int=True,
-                  thr_type='Bayes',
-                  plot_both_curves=False,
+                  conf_int=True,  thr_type='Bayes', plot_both_curves=False,
                   save_plots=True, show_plots=False, verbose=True):
 
     """
@@ -403,8 +401,7 @@ def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
                          quartile_bins=False, n_bins=10, save_np=False,
                          target_threshold=.75,
                          sig_name='norm', est_type='MAP',
-                         conf_int=True,
-                         thr_type='Bayes',  # 'CI95'
+                         conf_int=True, thr_type='Bayes',
                          plot_both_curves=False,
                          save_plots=True, show_plots=False,
                          verbose=True):
@@ -501,10 +498,8 @@ def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
 
 def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bins=True,
                                sep_col='separation', thr_col='probeLum',
-                               isi_list=None, sep_list=None,
-                               group=None,
-                               conf_int=True,
-                               thr_type='Bayes',  # 'CI95'
+                               isi_list=None, sep_list=None, group=None,
+                               conf_int=True, thr_type='Bayes',
                                plot_both_curves=False,
                                cols_to_add_dict=None, save_name=None,
                                show_plots=False, save_plots=True,
