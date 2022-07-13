@@ -53,46 +53,70 @@ for p_idx, participant_name in enumerate(participant_list):
         # '''a'''
         p_name = f'{participant_name}_{run_idx+p_idx_plus}'
 
-        # # for first run, some files are saved just as name not name1
-        # run_data_path = f'{save_path}{os.sep}{p_name}_output.csv'
-        # if not os.path.isfile(run_data_path):
-        #     raise FileNotFoundError(run_data_path)
-        # print(f'run_data_path: {run_data_path}')
-        #
-        # run_data_df = pd.read_csv(run_data_path)
-        # # remove any Unnamed columns
-        # if any("Unnamed" in i for i in list(run_data_df.columns)):
-        #     unnamed_col = [i for i in list(run_data_df.columns) if "Unnamed" in i][0]
-        #     run_data_df.drop(unnamed_col, axis=1, inplace=True)
-        # run_data_df.sort_values(by=['stair', 'step'], inplace=True, ignore_index=True)
-        #
-        # # save sorted csv
-        # run_data_df.to_csv(run_data_path, index=False)
-        # print(f"run_data_df: {run_data_df.columns}\n{run_data_df}")
-        #
-        # # extract values from dataframe
-        # isi_list = run_data_df['ISI'].unique()
-        # print(f'isi_list: {isi_list}')
-        # cond_types = run_data_df['cond_type'].unique()
-        # print(f'cond_types: {cond_types}')
-        #
-        #
-        # '''get psignifit thresholds df - use stairs as sep levels rather than using groups'''
-        # thr_df = get_psignifit_threshold_df(root_path=root_path,
-        #                                     p_run_name=run_dir,
-        #                                     csv_name=run_data_df,
-        #                                     n_bins=9, q_bins=True,
-        #                                     isi_list=isi_list,
-        #                                     sep_col='cond_type',
-        #                                     sep_list=cond_types,
-        #                                     cols_to_add_dict=None,
-        #                                     verbose=True)
-        # print(f'thr_df: {type(thr_df)}\n{thr_df}')
+        # for first run, some files are saved just as name not name1
+        run_data_path = f'{save_path}{os.sep}{p_name}_output.csv'
+        if not os.path.isfile(run_data_path):
+            raise FileNotFoundError(run_data_path)
+        print(f'run_data_path: {run_data_path}')
+
+        run_data_df = pd.read_csv(run_data_path)
+        # remove any Unnamed columns
+        if any("Unnamed" in i for i in list(run_data_df.columns)):
+            unnamed_col = [i for i in list(run_data_df.columns) if "Unnamed" in i][0]
+            run_data_df.drop(unnamed_col, axis=1, inplace=True)
+        run_data_df.sort_values(by=['stair', 'step'], inplace=True, ignore_index=True)
+
+        '''add newLum column
+                in old version, the experiment script varies probeLum and converts to float(RGB255) values for screen.
+                However, monitor can only use int(RGB255).
+                This function will will round RGB255 values to int(RGB255), then convert to NEW_probeLum
+                LumColor255Factor = 2.395387069
+                1. get probeColor255 column.
+                2. convert to int(RGB255) and convert to new_Lum with int(RGB255)/LumColor255Factor
+                3. add to run_data_df'''
+        if 'newLum' not in run_data_df.columns.to_list():
+            LumColor255Factor = 2.395387069
+            rgb255_col = run_data_df['probeColor255'].to_list()
+            newLum = [int(i) / LumColor255Factor for i in rgb255_col]
+            run_data_df.insert(9, 'newLum', newLum)
+            # run_data_df.to_excel(os.path.join(save_path, 'RUNDATA-sorted.xlsx'), index=False)
+            print(f"added newLum column\n"
+                  f"run_data_df: {run_data_df.columns.to_list()}")
+
+        # run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
+
+        # save sorted csv
+        run_data_df.to_csv(run_data_path, index=False)
+        print(f"run_data_df: {run_data_df.columns}\n{run_data_df}")
+
+        # extract values from dataframe
+        isi_list = run_data_df['ISI'].unique()
+        print(f'isi_list: {isi_list}')
+        cond_types = run_data_df['cond_type'].unique()
+        print(f'cond_types: {cond_types}')
+
+
+        '''get psignifit thresholds df - use stairs as sep levels rather than using groups'''
+        thr_df = get_psignifit_threshold_df(root_path=root_path,
+                                            p_run_name=run_dir,
+                                            csv_name=run_data_df,
+                                            n_bins=9, q_bins=True,
+                                            isi_list=isi_list,
+                                            sep_col='cond_type',
+                                            thr_col='newLum',
+                                            sep_list=cond_types,
+                                            conf_int=True,
+                                            thr_type='Bayes',
+                                            plot_both_curves=False,
+                                            cols_to_add_dict=None,
+                                            verbose=True)
+        print(f'thr_df: {type(thr_df)}\n{thr_df}')
         #
         # '''# Bloch doesn't currently work with b3_plot_staircase or c_plots
         # b3_plot_staircase(run_data_path, show_plots=True)
         # c_plots(save_path=save_path, isi_name_list=isi_name_list, show_plots=True)'''
         #
+
         run_data_path = f'{save_path}{os.sep}{p_name}_output.csv'
         run_data_df = pd.read_csv(run_data_path)
         print(f'run_data_df:\n{run_data_df}')
@@ -111,7 +135,7 @@ for p_idx, participant_name in enumerate(participant_list):
         long_thr_df = make_long_df(wide_df=thr_df,
                                    cols_to_keep=['cond_type'],
                                    cols_to_change=isi_name_list,
-                                   cols_to_change_show='probeLum',
+                                   cols_to_change_show='newLum',
                                    new_col_name='ISI', strip_from_cols='ISI_', verbose=True)
         print(f'long_thr_df:\n{long_thr_df}')
         long_thr_df_path = f'{save_path}{os.sep}long_thr_df.csv'
@@ -129,7 +153,7 @@ for p_idx, participant_name in enumerate(participant_list):
         print(f'isi_labels_list: {isi_labels_list}')
 
         # basic plot with regular axes
-        run_thr_plot(long_thr_df, x_col='ISI', y_col='probeLum', hue_col='cond_type',
+        run_thr_plot(long_thr_df, x_col='ISI', y_col='newLum', hue_col='cond_type',
                      x_ticks_vals=isi_list,
                      x_tick_names=None,
                      x_axis_label='ISI (as if two-probes from exp1)',
@@ -161,7 +185,7 @@ for p_idx, participant_name in enumerate(participant_list):
             long_thr_df.insert(1, 'dur_ms', dur_col)
 
             # # make extra columns for -1 slope=complete plots - delta_I and weber_frac
-            thr_col = long_thr_df['probeLum'].to_list()
+            thr_col = long_thr_df['newLum'].to_list()
             bgLum = 21.2
             delta_I_col = [i-bgLum for i in thr_col]
             weber_thr_col = [(i-bgLum)/i for i in thr_col]
@@ -203,14 +227,14 @@ for p_idx, participant_name in enumerate(participant_list):
                             y_axis_label='log(∆I)',
                             fig_title='Bloch_v5: log(duration) v log(∆I)',
                             show_neg1slope=True,
-                            save_as=f'{save_path}{os.sep}bloch_v5_log_dur_log_delta_I.png')
+                            save_as=f'{save_path}{os.sep}bloch_v5_log_dur_log_contrast.png')
         plt.show()
 
 
     '''d'''
     trim_n = None
     if len(run_folder_names) == 12:
-        trim_n = 1
+        trim_n = 2
     thr_df_name = 'long_thr_df'
 
     d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
@@ -218,16 +242,13 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
     # making average plot
-    all_df_path = os.path.join(root_path, 'MASTER_TM1_thresholds.csv')
-    p_ave_path = os.path.join(root_path, 'MASTER_ave_TM_thresh.csv')
-    err_path = os.path.join(root_path, 'MASTER_ave_TM_thr_error_SE.csv')
-
-    n_trimmed = trim_n
-    if n_trimmed is None:
+    all_df_path = os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv')
+    p_ave_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv')
+    err_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thr_error_SE.csv')
+    if trim_n is None:
         all_df_path = os.path.join(root_path, f'MASTER_{thr_df_name}.csv')
         p_ave_path = os.path.join(root_path, 'MASTER_ave_thresh.csv')
         err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
-    exp_ave = False
 
     # load data and change order to put 1pr last
     print('*** making average plot ***')
@@ -238,11 +259,14 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
     # # fig 1, standard axes (not log)
-    wide_df = ave_df.pivot(index=['dur_ms'], columns='cond_type', values='probeLum')
+    wide_df = ave_df.pivot(index=['dur_ms'], columns='cond_type', values='newLum')
     print(f'wide_df:\n{wide_df}')
 
+    dur_list = ave_df['dur_ms'].to_list()
+    print(f'dur_list: {dur_list}')
+
     error_df = pd.read_csv(err_path)
-    wide_err_df = error_df.pivot(index=['dur_ms'], columns='cond_type', values='probeLum')
+    wide_err_df = error_df.pivot(index=['dur_ms'], columns='cond_type', values='newLum')
     print(f'wide_err_df:\n{wide_err_df}')
     fig_title = 'Participant average thresholds - Bloch_v5'
     save_name = 'bloch_v5_dur_v_thr.png'
@@ -251,8 +275,8 @@ for p_idx, participant_name in enumerate(participant_list):
                            legend_names=None,
                            even_spaced_x=True,
                            fixed_y_range=False,
-                           x_tick_vals=None,
-                           x_tick_labels=None,
+                           x_tick_vals=dur_list,
+                           x_tick_labels=dur_list,
                            x_axis_label='Duration (ms)',
                            y_axis_label='Threshold',
                            log_log_axes=False,
@@ -270,7 +294,7 @@ for p_idx, participant_name in enumerate(participant_list):
     print(f'wide_err_df:\n{wide_err_df}')
 
     fig_title = 'Participant average log(∆I) thresholds - Bloch_v5'
-    save_name = 'bloch_v5_log_dur_log_delta_I.png'
+    save_name = 'bloch_v5_log_dur_log_contrast.png'
     plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
                            jitter=False, error_caps=True, alt_colours=False,
                            legend_names=None,
@@ -321,17 +345,15 @@ for p_idx, participant_name in enumerate(participant_list):
 print(f'exp_path: {exp_path}')
 print('\nget exp_average_data')
 
-participant_list = ['Nick', 'Tony']
+# participant_list = ['Nick', 'Tony']
 
 e_average_exp_data(exp_path=exp_path, p_names_list=participant_list, exp_type='Bloch',
-                   error_type='SE', use_trimmed=True, verbose=True)
+                   error_type='SE', n_trimmed=trim_n, verbose=True)
 
 
 all_df_path = os.path.join(exp_path, 'MASTER_exp_thr.csv')
 exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
 err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
-n_trimmed = None
-exp_ave = True
 
 # print('*** making average plot ***')
 print('*** making average plot ***')
@@ -351,9 +373,9 @@ print(f'error_df:\n{error_df}')
 
 
 # fig 1 - ave thr by sep
-ave_thr_by_dur_df = fig_df[['dur_ms', 'probeLum']]
+ave_thr_by_dur_df = fig_df[['dur_ms', 'thr']]
 ave_thr_by_dur_df.set_index('dur_ms', inplace=True)
-err_thr_by_dur_df = error_df[['dur_ms', 'probeLum']]
+err_thr_by_dur_df = error_df[['dur_ms', 'thr']]
 err_thr_by_dur_df.set_index('dur_ms', inplace=True)
 print(f'ave_thr_by_dur_df:\n{ave_thr_by_dur_df}')
 
@@ -381,7 +403,7 @@ err_log_dur_log_delta_I_df = error_df[['dur_ms', 'delta_I']]
 err_log_dur_log_delta_I_df.set_index('dur_ms', inplace=True)
 print(f'log_dur_log_delta_I_df:\n{log_dur_log_delta_I_df}')
 fig_title = 'Experiment average log(∆I) thresholds - Bloch_v5'
-save_name = 'bloch_v5_log_dur_log_delta_I.png'
+save_name = 'bloch_v5_log_dur_log_contrast.png'
 plot_runs_ave_w_errors(fig_df=log_dur_log_delta_I_df, error_df=err_log_dur_log_delta_I_df,
                        jitter=False, error_caps=True, alt_colours=False,
                        legend_names=None,

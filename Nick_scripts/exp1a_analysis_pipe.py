@@ -103,36 +103,30 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
     trim_n = None
-    use_trimmed = False
     if len(run_folder_names) == 6:
-        trim_n = 1
-        use_trimmed = True
-    n_trimmed = trim_n
+        trim_n = 2
 
-    print(f"\n\ntrim_n: {trim_n}, use_trimmed: {use_trimmed}\n\n")
+    print(f"\n\ntrim_n: {trim_n}, \n\n")
 
     '''d'''
     d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-                          trim_n=n_trimmed, error_type='SE')
+                          trim_n=trim_n, error_type='SE')
 
-    all_df_path = os.path.join(root_path, 'MASTER_TM1_thresholds.csv')
-    p_ave_path = os.path.join(root_path, 'MASTER_ave_TM_thresh.csv')
-    err_path = os.path.join(root_path, 'MASTER_ave_TM_thr_error_SE.csv')
-    n_trimmed = trim_n
-    if n_trimmed is None:
+    all_df_path = os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv')
+    p_ave_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv')
+    err_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thr_error_SE.csv')
+    if trim_n is None:
         all_df_path = os.path.join(root_path, 'MASTER_psignifit_thresholds.csv')
         p_ave_path = os.path.join(root_path, 'MASTER_ave_thresh.csv')
         err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
-
-    exp_ave = False
 
     make_average_plots(all_df_path=all_df_path,
                        ave_df_path=p_ave_path,
                        error_bars_path=err_path,
                        thr_col='newLum',
                        error_type='SE',
-                       n_trimmed=n_trimmed,
-                       exp_ave=False,
+                       n_trimmed=trim_n,
+                       exp_ave=False,  # participant ave, not exp ave
                        show_plots=True, verbose=True)
 
 
@@ -141,23 +135,20 @@ print('\nget exp_average_data')
 participant_list = ['aa', 'bb', 'cc', 'dd', 'ee']
 
 e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
-                   error_type='SE', use_trimmed=use_trimmed, verbose=True)
+                   error_type='SE', n_trimmed=trim_n, verbose=True)
 
 
 all_df_path = os.path.join(exp_path, 'MASTER_exp_thr.csv')
 exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
 err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
 
-n_trimmed = None
-exp_ave = True
-
+# make experiment average plots -
 make_average_plots(all_df_path=all_df_path,
                    ave_df_path=exp_ave_path,
                    error_bars_path=err_path,
                    thr_col='newLum',
                    error_type='SE',
-                   n_trimmed=n_trimmed,
-                   exp_ave=exp_ave,
+                   exp_ave=True,
                    show_plots=True, verbose=True)
 
 print('\nexp1a_analysis_pipe finished\n')

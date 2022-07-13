@@ -197,7 +197,7 @@ def trim_n_high_n_low(all_data_df, trim_from_ends=None, reference_col='separatio
 def make_long_df(wide_df,
                  cols_to_keep=['congruent', 'separation'],
                  cols_to_change=['ISI_1', 'ISI_4', 'ISI_6'],
-                 cols_to_change_show='probeLum',
+                 cols_to_change_show='newLum',
                  new_col_name='ISI', strip_from_cols='ISI_', verbose=True):
     """
     Function to convert wide-form_df to long-form_df.  e.g., if there are several
@@ -206,7 +206,7 @@ def make_long_df(wide_df,
     :param wide_df: dataframe to be changed.
     :param cols_to_keep: Columns to use for indexing (e.g., ['congruent', 'separation'...etc]).
     :param cols_to_change: List of columns showing data at different levels e.g., [ISI_1, ISI_4, ISI_6...etc].
-    :param cols_to_change_show: What is being measured in repeated cols, e.g., probeLum.
+    :param cols_to_change_show: What is being measured in repeated cols, e.g., newLum, probeLum.
     :param new_col_name: name for new col describing levels e.g. isi
     :param strip_from_cols: string to strip from col names when for new cols.
         e.g., if strip_from_cols='ISI_', then [ISI_1, ISI_4, ISI_6] becomes [1, 4, 6].
@@ -739,9 +739,9 @@ def plot_runs_ave_w_errors(fig_df, error_df,
 
 def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'],
                                 cols_to_change=['ISI_1', 'ISI_4', 'ISI_6'],
-                                cols_to_change_show='probeLum', new_col_name='ISI',
+                                cols_to_change_show='newLum', new_col_name='ISI',
                                 strip_from_cols='ISI_',
-                                x_axis='separation', y_axis='probeLum',
+                                x_axis='separation', y_axis='newLum',
                                 hue_var='ISI', style_var='congruent', style_order=[1, -1],
                                 error_bars=False,
                                 jitter=False,
@@ -764,12 +764,12 @@ def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'
     :param cols_to_change: Columns containing different measurements of some
         variable (e.g., ISI_1, ISI_4, ISI_6...etc) that will be converted into
         longform (e.g., ISI: [1, 4, 6]).
-    :param cols_to_change_show: What is being measured in cols to change (e.g., probeLum; dependent variable).
+    :param cols_to_change_show: What is being measured in cols to change (e.g., newLum; dependent variable).
     :param new_col_name: What the cols to change describe (e.g., isi; independent variable).
     :param strip_from_cols: string to remove if independent variables are to be
         turned into numeric values (e.g., for ISI_1, ISI_4, ISI_6, strip 'ISI_' to get 1, 4,6).
     :param x_axis: Variable to be shown along x-axis (e.g., separation or isi).
-    :param y_axis: Variable to be shown along y-axis (e.g., probeLum).
+    :param y_axis: Variable to be shown along y-axis (e.g., newLum).
     :param hue_var: Variable to be shown with different lines (e.g., isi or separation).
     :param style_var: Addition variable to show with solid or dashed lines (e.g., congruent or incongruent).
     :param style_order: Order of style var as displayed in df (e.g., [1, -1]).
@@ -959,7 +959,7 @@ def plot_diff(ave_thr_df, stair_names_col='stair_names', fig_title=None, save_pa
     ax.set_xticks(list(range(len(x_tick_labels))))
     ax.set_xticklabels(x_tick_labels)
     plt.xlabel(x_axis_label)
-    plt.ylabel("Difference in probeLum (cong-incong)")
+    plt.ylabel("Difference in luminance (cong-incong)")
     ax.legend(title=legend_title)
 
     if save_name:
@@ -1506,7 +1506,7 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
                   "'bgcolor_to_rgb1', 'bgLumP', 'bgLum', 'bgColor255')")
             cols_to_use = ['ISI', 'srtd_trial_idx', 'trial_number', 'stair',
                            'stair_name', 'step', 'separation', 'congruent',
-                           'flow_dir', 'probe_jump', 'corner', 'probeLum',
+                           'flow_dir', 'probe_jump', 'corner', 'newLum',
                            'trial_response', 'resp.rt', 'probeColor1', 'probeColor255',
                            'probe_ecc', 'BGspeed', 'orientation', 'ISI_actual_ms',
                            '1_Participant', '2_Probe_dur_in_frames_at_240hz',
@@ -1545,7 +1545,7 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
     return all_data_df
 
 
-def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_response',
+def b3_plot_staircase(all_data_path, thr_col='newLum', resp_col='trial_response',
                       show_plots=True, save_plots=True, verbose=True):
     """
     b3_plot_staircase: staircases-ISIxxx.png: xxx corresponds to isi conditions.
@@ -1554,7 +1554,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
     trial number. Last panel shows last thr per sep condition.
 
     :param all_data_path: path to the all_data xlsx file.
-    :param thr_col: (default probeLum) name of the column showing the threshold
+    :param thr_col: (default newLum) name of the column showing the threshold
         (e.g., varied by the staircase).
     :param resp_col: (default: 'trial_response') name of the column showing
         (accuracy per trial).
@@ -1578,7 +1578,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
         all_data_df = pd.read_excel(all_data_path, engine='openpyxl',
                                     usecols=["ISI", "stair", "step", "separation",
                                              "flow_dir", "probe_jump", "corner",
-                                             "probeLum", "trial_response"])
+                                             "newLum", "trial_response"])
 
     # get list of isi and stair values to loop through
     stair_list = all_data_df['stair'].unique()
@@ -1672,13 +1672,13 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
                     stair_even_cong = ax_counter * 2  # 0, 2, 4, 6, 8, 10
                     stair_even_cong_df = isi_df[isi_df['stair'] == stair_even_cong]
                     final_lum_even_cong = \
-                        stair_even_cong_df.loc[stair_even_cong_df['step'] == trials_per_stair - 1, 'probeLum'].item()
+                        stair_even_cong_df.loc[stair_even_cong_df['step'] == trials_per_stair - 1, thr_col].item()
                     n_reversals_even_cong = trials_per_stair - stair_even_cong_df[resp_col].sum()
 
                     stair_odd_incong = (ax_counter * 2) + 1  # 1, 3, 5, 7, 9, 11
                     stair_odd_incong_df = isi_df[isi_df['stair'] == stair_odd_incong]
                     final_lum_odd_incong = \
-                        stair_odd_incong_df.loc[stair_odd_incong_df['step'] == trials_per_stair - 1, 'probeLum'].item()
+                        stair_odd_incong_df.loc[stair_odd_incong_df['step'] == trials_per_stair - 1, thr_col].item()
                     n_reversals_odd_incong = trials_per_stair - stair_odd_incong_df[resp_col].sum()
 
                     # append n_reversals to n_reversals_np to save later.
@@ -1701,7 +1701,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
                     sns.lineplot(ax=axes[row_idx, col_idx], data=stair_even_cong_df,
                                  x='step', y=thr_col, color='tab:blue',
                                  marker="o", markersize=4)
-                    # line for final probeLum
+                    # line for final newLum
                     ax.axhline(y=final_lum_even_cong, linestyle="-.", color='tab:blue')
                     # text for n_reversals
                     ax.text(x=0.25, y=0.8, s=f'{n_reversals_even_cong} reversals',
@@ -1810,7 +1810,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeLum', resp_col='trial_respons
     print("\n***finished b3_plot_staircases()***\n")
 
 
-def b3_plot_stair_sep0(all_data_path, thr_col='probeLum', resp_col='trial_response',
+def b3_plot_stair_sep0(all_data_path, thr_col='newLum', resp_col='trial_response',
                        show_plots=True, save_plots=True, verbose=True):
     """
     b3_plot_staircase: staircases-ISIxxx.png: xxx corresponds to isi conditions.
@@ -1819,7 +1819,7 @@ def b3_plot_stair_sep0(all_data_path, thr_col='probeLum', resp_col='trial_respon
     trial number. Last panel shows last thr per sep condition.
 
     :param all_data_path: path to the all_data xlsx file.
-    :param thr_col: (default probeLum) name of the column showing the threshold
+    :param thr_col: (default newLum) name of the column showing the threshold
         (e.g., varied by the staircase).
     :param resp_col: (default: 'trial_response') name of the column showing
         (accuracy per trial).
@@ -1843,7 +1843,7 @@ def b3_plot_stair_sep0(all_data_path, thr_col='probeLum', resp_col='trial_respon
         all_data_df = pd.read_excel(all_data_path, engine='openpyxl',
                                     usecols=["ISI", "stair", "step", "separation",
                                              "flow_dir", "probe_jump", "corner",
-                                             "probeLum", "trial_response"])
+                                             "newLum", "trial_response"])
 
     # get list of isi and stair values to loop through
     stair_list = all_data_df['stair'].unique()
@@ -1920,7 +1920,7 @@ def b3_plot_stair_sep0(all_data_path, thr_col='probeLum', resp_col='trial_respon
                 print(f"this_stair_df:\n{this_stair_df}")
 
                 final_lum_val = \
-                    this_stair_df.loc[this_stair_df['step'] == trials_per_stair - 1, 'probeLum'].item()
+                    this_stair_df.loc[this_stair_df['step'] == trials_per_stair - 1, thr_col].item()
                 n_reversals = trials_per_stair - this_stair_df[resp_col].sum()
 
                 # append n_reversals to n_reversals_np to save later.
@@ -1938,7 +1938,7 @@ def b3_plot_stair_sep0(all_data_path, thr_col='probeLum', resp_col='trial_respon
                 sns.lineplot(ax=axes[row_idx, col_idx], data=this_stair_df,
                              x='step', y=thr_col, color='tab:blue',
                              marker="o", markersize=4)
-                # line for final probeLum
+                # line for final newLum
                 ax.axhline(y=final_lum_val, linestyle="-.", color='tab:blue')
                 # text for n_reversals
                 ax.text(x=0.25, y=0.8, s=f'{n_reversals} reversals',
@@ -1995,7 +1995,7 @@ def b3_plot_stair_sep0(all_data_path, thr_col='probeLum', resp_col='trial_respon
     print("\n***finished b3_plot_stair_sep0()***\n")
 
 
-def c_plots(save_path, isi_name_list=None, show_plots=True, verbose=True):
+def c_plots(save_path, thr_col='newLum', isi_name_list=None, show_plots=True, verbose=True):
     """
     5. c_plots.m: uses psignifit_thresholds.csv and outputs plots.
 
@@ -2024,7 +2024,7 @@ def c_plots(save_path, isi_name_list=None, show_plots=True, verbose=True):
     """
     print("\n*** running c_plots() ***\n")
 
-    # load df mean of last n probeLum values (14 stairs x 8 isi).
+    # load df mean of last n newLum values (14 stairs x 8 isi).
     thr_csv_name = os.path.join(save_path, 'psignifit_thresholds.csv')
 
     # this psig_thr_df is in stair order (e.g., stairs 0, 1, 2, 3 == sep: 18, -18, 6, -6 etc)
@@ -2165,9 +2165,9 @@ def c_plots(save_path, isi_name_list=None, show_plots=True, verbose=True):
 
     plot_w_errors_either_x_axis(wide_df=psig_thr_df, cols_to_keep=['congruent', 'separation'],
                                 cols_to_change=isi_name_list,
-                                cols_to_change_show='probeLum', new_col_name='ISI',
+                                cols_to_change_show=thr_col, new_col_name='ISI',
                                 strip_from_cols='ISI_',
-                                x_axis='separation', y_axis='probeLum', x_tick_vals=[0, 1, 2, 3, 6, 18],
+                                x_axis='separation', y_axis=thr_col, x_tick_vals=[0, 1, 2, 3, 6, 18],
                                 hue_var='ISI', style_var='congruent', style_order=[1, -1],
                                 error_bars=True, even_spaced_x=True, jitter=False,
                                 fig_title=fig4_title, fig_savename=fig4_savename,
@@ -2186,9 +2186,9 @@ def c_plots(save_path, isi_name_list=None, show_plots=True, verbose=True):
 
     plot_w_errors_either_x_axis(wide_df=psig_thr_df, cols_to_keep=['congruent', 'separation'],
                                 cols_to_change=isi_name_list,
-                                cols_to_change_show='probeLum', new_col_name='ISI',
+                                cols_to_change_show=thr_col, new_col_name='ISI',
                                 strip_from_cols='ISI_',
-                                x_axis='ISI', y_axis='probeLum',
+                                x_axis='ISI', y_axis=thr_col,
                                 hue_var='separation', style_var='congruent', style_order=[1, -1],
                                 error_bars=True, even_spaced_x=True, jitter=False,
                                 fig_title=fig5_title, fig_savename=fig5_savename,
@@ -2381,8 +2381,8 @@ def d_average_participant(root_path, run_dir_names_list,
     # todo: since I added extra ISI conditions, ISI conds are not in ascending order.
     #  Perhaps re-order columns before saving?
     if trim_n is not None:
-        ave_psignifit_thr_df.to_csv(os.path.join(root_path, 'MASTER_ave_TM_thresh.csv'))
-        error_bars_df.to_csv(os.path.join(root_path, f'MASTER_ave_TM_thr_error_{error_type}.csv'))
+        ave_psignifit_thr_df.to_csv(os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv'))
+        error_bars_df.to_csv(os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thr_error_{error_type}.csv'))
     else:
         ave_psignifit_thr_df.to_csv(os.path.join(root_path, 'MASTER_ave_thresh.csv'))
         error_bars_df.to_csv(os.path.join(root_path, f'MASTER_ave_thr_error_{error_type}.csv'))
@@ -2394,7 +2394,7 @@ def d_average_participant(root_path, run_dir_names_list,
 def e_average_exp_data(exp_path, p_names_list,
                        exp_type='rad_flow',
                        error_type='SE',
-                       use_trimmed=True,
+                       n_trimmed=None,
                        verbose=True):
     """
     e_average_over_participants: take MASTER_ave_TM_thresh.csv (or MASTER_ave_thresh.csv)
@@ -2419,8 +2419,9 @@ def e_average_exp_data(exp_path, p_names_list,
     :param exp_type: type of experiment.  This is because different columns etc
         are required for radial_flow or Ricco etc.
     :param error_type: Default: None. Can pass sd or se for standard deviation or error.
-    :param use_trimmed: default True.  If True, use trimmed_mean ave (MASTER_ave_TM_thresh),
-         if False, use MASTER_ave_thresh.
+    :param n_trimmed: default None.  If None, use MASTER_ave_thresh.
+            Else use: trimmed_mean ave (MASTER_ave_TM{n_trimmed}_thresh),
+
     :param verbose: Default True, print progress to screen
 
     :returns: exp_ave_thr_df: experiment mean threshold for each separation and ISI.
@@ -2435,8 +2436,8 @@ def e_average_exp_data(exp_path, p_names_list,
     for p_idx, p_name in enumerate(p_names_list):
 
         ave_df_name = 'MASTER_ave_thresh'
-        if use_trimmed:
-            ave_df_name = 'MASTER_ave_TM_thresh'
+        if n_trimmed is not None:
+            ave_df_name = f'MASTER_ave_TM{n_trimmed}_thresh'
 
         this_ave_df_path = os.path.join(exp_path, p_name, f'{ave_df_name}.csv')
         # # if trimmed mean doesn't exists (e.g., because participant hasn't done 12 runs)
@@ -2458,7 +2459,7 @@ def e_average_exp_data(exp_path, p_names_list,
 
 
         if exp_type in ['Ricco', 'Bloch']:
-            this_p_ave_df.rename(columns={'ISI_0': 'probeLum'}, inplace=True)
+            this_p_ave_df.rename(columns={'ISI_0': 'thr'}, inplace=True)
         else:
             stair_names_list = this_p_ave_df['stair_names'].tolist()
             if verbose:
@@ -2530,6 +2531,7 @@ def e_average_exp_data(exp_path, p_names_list,
 
 
 def make_average_plots(all_df_path, ave_df_path, error_bars_path,
+                       thr_col='newLum',
                        n_trimmed=False,
                        exp_ave=False,
                        show_plots=True, verbose=True):
@@ -2609,7 +2611,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     if n_trimmed is not None:
         fig_1a_title = f'{ave_over} average thresholds per ISI across all runs (trim={n_trimmed}).\n' \
                        f'positive=congruent probe/flow motion, negative=incongruent. Bars=SE.'
-        fig_1a_savename = f'ave_TM_thr_pos_and_neg.png'
+        fig_1a_savename = f'ave_TM{n_trimmed}_thr_pos_and_neg.png'
     else:
         fig_1a_title = f'{ave_over} average threshold per ISI across all runs.\n' \
                        f'positive=congruent probe/flow motion, negative=incongruent. Bars=SE.'
@@ -2638,7 +2640,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     if n_trimmed is not None:
         fig_1b_title = f'{ave_over} average thresholds per separation across all runs (trim={n_trimmed}).\n' \
                        f'Bars=.68 CI'
-        fig_1b_savename = f'ave_TM_thr_all_runs_sep.png'
+        fig_1b_savename = f'ave_TM{n_trimmed}_thr_all_runs_sep.png'
     else:
         fig_1b_title = f'{ave_over} average threshold per separation across all runs\n' \
                        f'Bars=.68 CI'
@@ -2648,8 +2650,8 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     plot_w_errors_either_x_axis(wide_df=all_df, cols_to_keep=['congruent', 'separation'],
                                 cols_to_change=isi_name_list,
-                                cols_to_change_show='probeLum', new_col_name='ISI',
-                                strip_from_cols='ISI_', x_axis='ISI', y_axis='probeLum',
+                                cols_to_change_show=thr_col, new_col_name='ISI',
+                                strip_from_cols='ISI_', x_axis='ISI', y_axis=thr_col,
                                 hue_var='separation', style_var='congruent', style_order=[1, -1],
                                 error_bars=True, even_spaced_x=True, jitter=.01,
                                 fig_title=fig_1b_title, fig_savename=fig_1b_savename,
@@ -2662,7 +2664,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     if n_trimmed is not None:
         fig_1c_title = f'{ave_over} average thresholds per ISI across all runs (trim={n_trimmed}).\n' \
                        f'Bars=.68 CI'
-        fig_1c_savename = f'ave_TM_thr_all_runs_isi.png'
+        fig_1c_savename = f'ave_TM{n_trimmed}_thr_all_runs_isi.png'
     else:
         fig_1c_title = f'{ave_over} average threshold per ISI across all runs\n' \
                        f'Bars=.68 CI'
@@ -2670,9 +2672,9 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     plot_w_errors_either_x_axis(wide_df=all_df, cols_to_keep=['congruent', 'separation'],
                                 cols_to_change=isi_name_list,
-                                cols_to_change_show='probeLum', new_col_name='ISI',
+                                cols_to_change_show=thr_col, new_col_name='ISI',
                                 strip_from_cols='ISI_',
-                                x_axis='separation', y_axis='probeLum',
+                                x_axis='separation', y_axis=thr_col,
                                 hue_var='ISI', style_var='congruent', style_order=[1, -1],
                                 error_bars=True,
                                 log_scale=False,
@@ -2689,7 +2691,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     if n_trimmed is not None:
         fig_1d_title = f'{ave_over} Congruent and Incongruent thresholds for each ISI (trim={n_trimmed}).\n' \
                        f'Bars=SE'
-        fig_1d_savename = f'ave_TM_pos_sep_per_isi.png'
+        fig_1d_savename = f'ave_TM{n_trimmed}_pos_sep_per_isi.png'
     else:
         fig_1d_title = f'{ave_over} Congruent and Incongruent thresholds for each ISI\n' \
                        f'Bars=SE'
@@ -2709,7 +2711,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     if n_trimmed is not None:
         fig_2a_title = f'{ave_over} Mean Difference (Congruent - Incongruent Conditions).\n' \
                        f'(x-axis=Sep)  trim={n_trimmed}.'
-        fig_2a_savename = f'ave_TM_diff_x_sep.png'
+        fig_2a_savename = f'ave_TM{n_trimmed}_diff_x_sep.png'
     else:
         fig_2a_title = f'{ave_over} Mean Difference (Congruent - Incongruent Conditions).\n(x-axis=Sep)'
         fig_2a_savename = f'ave_diff_x_sep.png'
@@ -2726,7 +2728,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     if n_trimmed is not None:
         fig_2b_title = f'{ave_over} Mean Difference Between Congruent and Incongruent Conditions (x-axis=ISI).\n' \
                        f'(Positive=congruent has higher threshold). (trim={n_trimmed}).'
-        fig_2b_savename = f'ave_TM_diff_x_isi.png'
+        fig_2b_savename = f'ave_TM{n_trimmed}_diff_x_isi.png'
     else:
         fig_2b_title = f'{ave_over} Mean Difference Between Congruent and Incongruent Conditions (x-axis=ISI).\n' \
                        '(Positive=congruent has higher threshold).'
@@ -2742,7 +2744,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     print(f"\nHeatmap")
     if n_trimmed is not None:
         heatmap_title = f'{ave_over} mean Threshold for each ISI and separation (trim={n_trimmed}).'
-        heatmap_savename = 'mean_TM_thr_heatmap'
+        heatmap_savename = f'mean_TM{n_trimmed}_thr_heatmap'
     else:
         heatmap_title = f'{ave_over} mean Threshold for each ISI and separation'
         heatmap_savename = 'mean_thr_heatmap'
