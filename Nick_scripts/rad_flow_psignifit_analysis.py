@@ -1461,7 +1461,7 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
     else:
         print(f'isi_list: {isi_list}')
 
-    all_data = []
+    all_data_list = []
 
     # loop through ISIs in each run.
     for isi in isi_list:
@@ -1506,7 +1506,7 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
                   "'bgcolor_to_rgb1', 'bgLumP', 'bgLum', 'bgColor255')")
             cols_to_use = ['ISI', 'srtd_trial_idx', 'trial_number', 'stair',
                            'stair_name', 'step', 'separation', 'congruent',
-                           'flow_dir', 'probe_jump', 'corner', 'newLum',
+                           'flow_dir', 'probe_jump', 'corner', 'probeLum',
                            'trial_response', 'resp.rt', 'probeColor1', 'probeColor255',
                            'probe_ecc', 'BGspeed', 'orientation', 'ISI_actual_ms',
                            '1_Participant', '2_Probe_dur_in_frames_at_240hz',
@@ -1516,10 +1516,17 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
             this_isi_df = this_isi_df[cols_to_use]
             column_names = cols_to_use
 
-        # add to all_data
-        all_data.append(this_isi_df)
+        # add to all_data_list
+        all_data_list.append(this_isi_df)
 
     # create all_data_df - reshape to 2d
+    # all_data = np.ndarray(all_data_list, dtype=object)
+    # all_data_df = pd.concat(all_data_list)
+    # print(f'all_data_df: {type(all_data_df)}, {all_data_df.shape}\n{all_data_df}')
+
+    # all_data = np.ndarray(all_data_df, dtype=object)
+
+    all_data = all_data_list
     if verbose:
         print(f'all_data: {type(all_data)}\n{all_data}')
     all_data_shape = np.shape(all_data)
