@@ -20,7 +20,7 @@ print(f"convert_path1: {convert_path1}")
 exp_path = convert_path1
 participant_list = ['Simon', 'Nick', 'Kim']  # , 'bb', 'cc', 'dd', 'ee']
 
-n_runs = 7
+n_runs = 12
 p_idx_plus = 1
 
 # # convert separation into area (units are pixels, mm and degrees are diagonal pixels)
@@ -92,33 +92,29 @@ for p_idx, participant_name in enumerate(participant_list):
         run_data_df.sort_values(by=['stair', 'step'], inplace=True, ignore_index=True)
 
         '''add newLum column
-                        in old version, the experiment script varies probeLum and converts to float(RGB255) values for screen.
-                        However, monitor can only use int(RGB255).
-                        This function will will round RGB255 values to int(RGB255), then convert to NEW_probeLum
-                        LumColor255Factor = 2.395387069
-                        1. get probeColor255 column.
-                        2. convert to int(RGB255) and convert to new_Lum with int(RGB255)/LumColor255Factor
-                        3. add to run_data_df'''
+        in old version, the experiment script varies probeLum and converts to float(RGB255) values for screen.
+        However, monitor can only use int(RGB255).
+        This function will will round RGB255 values to int(RGB255), then convert to NEW_probeLum
+        LumColor255Factor = 2.395387069
+        1. get probeColor255 column.
+        2. convert to int(RGB255) and convert to new_Lum with int(RGB255)/LumColor255Factor
+        3. add to run_data_df'''
         if 'newLum' not in run_data_df.columns.to_list():
             LumColor255Factor = 2.395387069
             rgb255_col = run_data_df['probeColor255'].to_list()
             newLum = [int(i) / LumColor255Factor for i in rgb255_col]
             run_data_df.insert(9, 'newLum', newLum)
-            run_data_df.to_excel(os.path.join(save_path, 'RUNDATA-sorted.xlsx'), index=False)
             print(f"added newLum column\n"
                   f"run_data_df: {run_data_df.columns.to_list()}")
-
-        # run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
 
         # # save sorted csv
         run_data_df.to_csv(run_data_path, index=False)
 
-        run_data_df = pd.read_csv(run_data_path, usecols=
-                                  ['trial_number', 'stair', 'stair_name', 'step',
-                                   'separation', 'cond_type', 'ISI', 'corner',
-                                   'newLum',
-                                   # 'weber_lum',
-                                   'trial_response', '3_fps'])
+        run_data_df = pd.read_csv(run_data_path,
+                                  usecols=['trial_number', 'stair', 'stair_name',
+                                           'step', 'separation', 'cond_type',
+                                           'ISI', 'corner', 'newLum',
+                                           'trial_response', '3_fps'])
         print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}\n")
 
         # extract values from dataframe
@@ -159,22 +155,14 @@ for p_idx, participant_name in enumerate(participant_list):
                                             verbose=True)
         print(f'thr_df: {type(thr_df)}\n{thr_df}')
 
-
         '''b3'''
         run_data_path = f'{save_path}{os.sep}{p_name}_output.csv'
-        run_data_df = pd.read_csv(run_data_path,
-                                  # usecols=
-                                  # ['trial_number', 'stair', 'stair_name', 'step',
-                                  #  'separation', 'cond_type', 'ISI', 'corner',
-                                  #  'newLum', 'weber_lum', 'trial_response', '3_fps']
-                                  )
+        run_data_df = pd.read_csv(run_data_path)
         print(f'run_data_df:\n{run_data_df}')
 
         # Ricco doesn't currently work with b3_plot_staircase or c_plots
         # b3_plot_staircase(run_data_path, show_plots=True)
         # # c_plots(save_path=save_path, isi_name_list=isi_name_list, show_plots=True)
-
-
 
         '''Run figs from here'''
         thr_df_path = f'{save_path}{os.sep}psignifit_thresholds.csv'
@@ -195,7 +183,6 @@ for p_idx, participant_name in enumerate(participant_list):
         col_names = thr_df.columns.to_list()
         print(f'col_names:\n{col_names}\n')
 
-
         if 'ISI_0' in col_names:
             thr_df.rename(columns={'ISI_0': 'thr'}, inplace=True)
 
@@ -207,15 +194,15 @@ for p_idx, participant_name in enumerate(participant_list):
         if 'length' not in col_names:
             len_degrees_list = [area_dict[i]['degrees']['length'] for i in sep_list]
             thr_df.insert(4, 'length', len_degrees_list)
-            len_degrees_names_list = [round(i, 3) for i in len_degrees_list]
-            print(f'len_degrees_list: {len_degrees_list}')
-            print(f'len_degrees_names_list: {len_degrees_names_list}\n')
+
         else:
             len_degrees_list = [area_dict[i]['degrees']['length'] for i in sep_list]
             thr_df['length'] = len_degrees_list
-            len_degrees_names_list = [round(i, 3) for i in len_degrees_list]
-            print(f'len_degrees_list: {len_degrees_list}')
-            print(f'len_degrees_names_list: {len_degrees_names_list}\n')
+        print(f'len_degrees_list: {len_degrees_list}')
+        len_degrees_names_list = [format(i, '.3g') for i in len_degrees_list]
+        print(f'len_degrees_names_list: {len_degrees_names_list}\n')
+        len_degrees_names_list2 = [str(i)[1:] for i in len_degrees_names_list]
+        print(f'len_degrees_names_list2: {len_degrees_names_list2}\n')
 
         if 'delta_I' not in col_names:
             thr_col = thr_df['thr'].to_list()
@@ -234,14 +221,12 @@ for p_idx, participant_name in enumerate(participant_list):
         if 'stair_name' in col_names:
             thr_df.drop('stair_name', axis=1, inplace=True)
 
-
         print(f'thr_df:\n{thr_df}')
         thr_df.to_csv(thr_df_path, index=False)
 
-
         # basic plot with exp1 axes
         run_thr_plot(thr_df, x_col='length', y_col='thr', hue_col='cond',
-                     x_ticks_vals=len_degrees_list, x_tick_names=len_degrees_names_list,
+                     x_ticks_vals=len_degrees_list, x_tick_names=len_degrees_names_list2,
                      x_axis_label='length - degrees',
                      y_axis_label='Probe Luminance',
                      fig_title='Ricco_v4: length vs thresholds',
@@ -250,41 +235,39 @@ for p_idx, participant_name in enumerate(participant_list):
 
         # plot with log-log axes - length
         simple_log_log_plot(thr_df, x_col='length', y_col='weber_thr', hue_col='cond',
-                         x_ticks_vals=None, x_tick_names=None,
-                         x_axis_label='log(diag pixel length)',
-                         y_axis_label='log(∆I/I)',
-                         fig_title='Ricco_v4: log(length) v log(∆I/I)',
-                         save_as=f'{save_path}{os.sep}ricco_v4_log_length_log_weber.png')
+                            x_ticks_vals=None, x_tick_names=None,
+                            x_axis_label='log(diag pixel length)',
+                            y_axis_label='log(∆I/I)',
+                            fig_title='Ricco_v4: log(length) v log(∆I/I)',
+                            save_as=f'{save_path}{os.sep}ricco_v4_log_length_log_weber.png')
         plt.show()
 
         # plot with log-log axes - area
         simple_log_log_plot(thr_df, x_col='n_pixels', y_col='weber_thr', hue_col='cond',
-                         x_ticks_vals=None, x_tick_names=None,
-                         x_axis_label='log(n_pixels)',
-                         y_axis_label='log(∆I/I)',
-                         fig_title='Ricco_v4: log(area) v log(∆I/I)',
-                         save_as=f'{save_path}{os.sep}ricco_v4_log_area_log_weber.png')
+                            x_ticks_vals=None, x_tick_names=None,
+                            x_axis_label='log(n_pixels)',
+                            y_axis_label='log(∆I/I)',
+                            fig_title='Ricco_v4: log(area) v log(∆I/I)',
+                            save_as=f'{save_path}{os.sep}ricco_v4_log_area_log_weber.png')
         plt.show()
-
 
         # plot with log-log axes - length v delta_I
         simple_log_log_plot(thr_df, x_col='length', y_col='delta_I', hue_col='cond',
-                         x_ticks_vals=None, x_tick_names=None,
-                         x_axis_label='log(length, degrees)',
-                         y_axis_label='Contrast: log(∆I)',
-                         fig_title='Ricco_v4: log(length) v log(∆I)',
-                         save_as=f'{save_path}{os.sep}ricco_v4_log_length_log_contrast.png')
+                            x_ticks_vals=None, x_tick_names=None,
+                            x_axis_label='log(length, degrees)',
+                            y_axis_label='Contrast: log(∆I)',
+                            fig_title='Ricco_v4: log(length) v log(∆I)',
+                            save_as=f'{save_path}{os.sep}ricco_v4_log_length_log_contrast.png')
         plt.show()
 
         # plot with log-log axes - area v delta_I
         simple_log_log_plot(thr_df, x_col='n_pixels', y_col='delta_I', hue_col='cond',
-                         x_ticks_vals=None, x_tick_names=None,
-                         x_axis_label='Area: log(n_pixels)',
-                         y_axis_label='Contrast: log(I)',
-                         fig_title='Ricco_v4: log(area) v log(contrast)',
-                         save_as=f'{save_path}{os.sep}ricco_v4_log_area_log_contrast.png')
+                            x_ticks_vals=None, x_tick_names=None,
+                            x_axis_label='Area: log(n_pixels)',
+                            y_axis_label='Contrast: log(I)',
+                            fig_title='Ricco_v4: log(area) v log(contrast)',
+                            save_as=f'{save_path}{os.sep}ricco_v4_log_area_log_contrast.png')
         plt.show()
-
 
     '''d'''
     trim_n = None
@@ -299,7 +282,7 @@ for p_idx, participant_name in enumerate(participant_list):
     all_df_path = os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv')
     p_ave_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv')
     err_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thr_error_SE.csv')
-    if n_trimmed is None:
+    if trim_n is None:
         all_df_path = os.path.join(root_path, 'MASTER_psignifit_thresholds.csv')
         p_ave_path = os.path.join(root_path, 'MASTER_ave_thresh.csv')
         err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
@@ -317,15 +300,28 @@ for p_idx, participant_name in enumerate(participant_list):
     error_df = pd.read_csv(err_path)
     # replace NaN with zero
     error_df['weber_thr'] = error_df['weber_thr'].fillna(0)
+
+    len_values = fig_df['length'].to_list()
+    print(f'len_values: {len_values}')
     if 'length' not in error_df.columns:
-        len_values = fig_df['length'].to_list()
-        print(f'len_values: {len_values}')
         error_df.insert(4, 'length', len_values)
+    else:
+        error_df['length'] = len_values
+
+    area_values = fig_df['n_pixels'].to_list()
+    print(f'area_values: {area_values}')
     if 'n_pixels' not in error_df.columns:
-        area_values = fig_df['n_pixels'].to_list()
-        print(f'area_values: {area_values}')
         error_df.insert(4, 'n_pixels', area_values)
+    else:
+        error_df['n_pixels'] = area_values
+
+    if 'cond' not in error_df.columns:
+        cond_list = ['lines', 'lines', 'lines', 'lines', 'lines', 'lines', 'lines']
+        error_df.insert(1, 'cond', cond_list)
+        fig_df.insert(1, 'cond', cond_list)
     print(f'error_df:\n{error_df}')
+
+    print(f'fig_df:\n{fig_df}')
 
     # # fig 1 - len v thr
     wide_df = fig_df.pivot(index=['length'], columns='cond', values='thr')
@@ -333,7 +329,9 @@ for p_idx, participant_name in enumerate(participant_list):
     wide_err_df = error_df.pivot(index=['length'], columns='cond', values='thr')
 
     len_degrees_list = fig_df['length'].to_list()
-    len_degrees_names_list = [round(i, 3) for i in len_degrees_list]
+    # len_degrees_names_list = [round(i, 3) for i in len_degrees_list]
+    len_degrees_names_list = [format(i, '.3g') for i in len_degrees_list]
+    len_degrees_names_list = [str(i)[1:] for i in len_degrees_names_list]
     print(f'len_degrees_names_list: {len_degrees_names_list}')
 
     fig_title = 'Participant average thresholds - Ricco_v4'
@@ -341,7 +339,7 @@ for p_idx, participant_name in enumerate(participant_list):
     plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
                            jitter=False, error_caps=True, alt_colours=False,
                            legend_names=None,
-                           even_spaced_x=True,
+                           even_spaced_x=False,
                            fixed_y_range=False,
                            x_tick_vals=len_degrees_list,
                            x_tick_labels=len_degrees_names_list,
@@ -354,21 +352,22 @@ for p_idx, participant_name in enumerate(participant_list):
     plt.show()
 
     # # fig 2 - area v thr
-    wide_df = fig_df.pivot(index=['area_deg'], columns='cond', values='thr')
+    wide_df = fig_df.pivot(index=['n_pixels'], columns='cond', values='thr')
     print(f'wide_df:\n{wide_df}')
-    wide_err_df = error_df.pivot(index=['area_deg'], columns='cond', values='thr')
+    wide_err_df = error_df.pivot(index=['n_pixels'], columns='cond', values='thr')
 
+    area_list = fig_df['n_pixels'].to_list()
+    area_labels = [int(i) for i in area_list]
 
-    area_list = fig_df['area_deg'].to_list()
     fig_title = 'Participant average thresholds - Ricco_v4'
     save_name = 'ricco_v4_area_v_thr.png'
     plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
                            jitter=False, error_caps=True, alt_colours=False,
                            legend_names=None,
-                           even_spaced_x=True,
+                           even_spaced_x=False,
                            fixed_y_range=False,
                            x_tick_vals=area_list,
-                           x_tick_labels=area_list,
+                           x_tick_labels=area_labels,
                            x_axis_label='Area: n_pixels',
                            y_axis_label='Threshold',
                            log_log_axes=False,
@@ -458,10 +457,10 @@ for p_idx, participant_name in enumerate(participant_list):
     plt.show()
 
     # # fig 6 - log(area), log(weber)
-    wide_df = fig_df.pivot(index=['n_pixels', 'separation'], columns='cond', values='weber_thr')
+    wide_df = fig_df.pivot(index=['n_pixels'], columns='cond', values='weber_thr')
     print(f'wide_df:\n{wide_df}')
 
-    wide_err_df = error_df.pivot(index=['n_pixels', 'separation'], columns='cond', values='weber_thr')
+    wide_err_df = error_df.pivot(index=['n_pixels'], columns='cond', values='weber_thr')
     print(f'wide_err_df:\n{wide_err_df}')
     fig_title = 'Participant average log(∆I/I) thresholds - Ricco_v4'
     save_name = 'ricco_v4_log_area_log_weber.png'
@@ -477,7 +476,7 @@ for p_idx, participant_name in enumerate(participant_list):
                            log_log_axes=True,
                            neg1_slope=True,
                            slope_ycol_name='lines',
-                           slope_xcol_idx_depth=2,
+                           slope_xcol_idx_depth=1,
                            fig_title=fig_title, save_name=save_name,
                            save_path=root_path, verbose=True)
     plt.show()
@@ -489,7 +488,7 @@ for p_idx, participant_name in enumerate(participant_list):
 print(f'exp_path: {exp_path}')
 print('\nget exp_average_data')
 e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
-                   exp_type='Ricco',  # todo: add exp_type to Bloch _analysis_pipe
+                   exp_type='Ricco',
                    error_type='SE', n_trimmed=trim_n, verbose=True)
 
 
@@ -522,7 +521,7 @@ save_name = 'ricco_v4_sep_v_thr.png'
 plot_runs_ave_w_errors(fig_df=ave_thr_by_len_df, error_df=err_thr_by_len_df,
                        jitter=False, error_caps=True, alt_colours=False,
                        legend_names=None,
-                       even_spaced_x=True,
+                       even_spaced_x=False,
                        fixed_y_range=False,
                        x_tick_vals=len_degrees_list,
                        x_tick_labels=len_degrees_names_list,
@@ -549,7 +548,7 @@ save_name = 'ricco_v4_area_v_thr.png'
 plot_runs_ave_w_errors(fig_df=ave_thr_by_area_df, error_df=err_thr_by_area_df,
                        jitter=False, error_caps=True, alt_colours=False,
                        legend_names=None,
-                       even_spaced_x=True,
+                       even_spaced_x=False,
                        fixed_y_range=False,
                        x_tick_vals=area_values,
                        x_tick_labels=area_values,

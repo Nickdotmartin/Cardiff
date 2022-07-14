@@ -301,7 +301,7 @@ def multi_plot_shape(n_figs, min_rows=1):
     mod = n_figs % n_rows
     n_cols = td + mod
 
-    # there are some weird results, this helps catch 11, 14, 15 etc from going mad.
+    # there are some weird results, this helps catch 11, 14, 15 etc. from going mad.
     if n_rows * (n_cols - 1) > n_figs:
         n_cols = n_cols - 1
         if n_rows * (n_cols - 1) > n_figs:
@@ -592,7 +592,7 @@ def plot_runs_ave_w_errors(fig_df, error_df,
     :param x_axis_label: Label for x-axis.  If None passed, will use 'Probe separation in diagonal pixels'.
     :param y_axis_label: Label for y-axis.  If None passed, will use 'Probe Luminance'.
     :param log_log_axes: If True, both axes are in log scale, else in normal scale.
-    :param neg_1_slope: If True, adds a reference line with slope=-1.
+    :param neg1_slope: If True, adds a reference line with slope=-1.
     :param slope_ycol_name: Name of column to take the start of slope from
     :param slope_xcol_idx_depth: Some dfs have 2 index cols, so input 2.
     :param fig_title: Title for figure.
@@ -2017,6 +2017,7 @@ def c_plots(save_path, thr_col='newLum', isi_name_list=None, show_plots=True, ve
 
 
     :param save_path: path to run dir containing psignifit_thresholds.csv, where plots will be save.
+    :param thr_col: Name of column containing threshold values.
     :param isi_name_list: Default None: can input a list of names of ISIs,
             useful if I only have data for a few ISI values.
     :param show_plots: Default True
@@ -2283,7 +2284,7 @@ def d_average_participant(root_path, run_dir_names_list,
 
         if 'area_deg' in groupby_sep_df.columns:
             # for ricco_v2 experiment
-            # print(f"\nwhatabouthtis:\n{groupby_sep_df.groupby(['cond', 'separation'], sort=True).sem()}")
+            # print(f"\nwhatabouthis:\n{groupby_sep_df.groupby(['cond', 'separation'], sort=True).sem()}")
 
             ave_psignifit_thr_df = groupby_sep_df.groupby(['cond', 'separation'], sort=False).mean()
             # print(f'\njust made ave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
@@ -2452,11 +2453,8 @@ def e_average_exp_data(exp_path, p_names_list,
         if 'Unnamed: 0' in list(this_p_ave_df):
             this_p_ave_df.drop('Unnamed: 0', axis=1, inplace=True)
 
-
-
         rows, cols = this_p_ave_df.shape
         this_p_ave_df.insert(0, 'participant', [p_name] * rows)
-
 
         if exp_type in ['Ricco', 'Bloch']:
             this_p_ave_df.rename(columns={'ISI_0': 'thr'}, inplace=True)
@@ -2486,9 +2484,8 @@ def e_average_exp_data(exp_path, p_names_list,
     # # get means and errors
     groupby_sep_df = all_exp_thr_df.drop('participant', axis=1)
     if exp_type == 'Ricco':
-        groupby_sep_df = groupby_sep_df.drop('stair_names', axis=1)
-        groupby_col = 'separation'
-        sort_rows = True
+        groupby_col = 'stair_names'
+        sort_rows = False
     elif exp_type == 'Bloch':
         groupby_sep_df['stair_names'] = groupby_sep_df['cond_type'] + "_" + groupby_sep_df["ISI"].map(str)
         groupby_sep_df = groupby_sep_df.drop('cond_type', axis=1)
@@ -2502,7 +2499,6 @@ def e_average_exp_data(exp_path, p_names_list,
         #  condition so error was NaN and somehow order changed.
         groupby_col = 'stair_names'
         sort_rows = True
-
 
     exp_ave_thr_df = groupby_sep_df.groupby(groupby_col, sort=sort_rows).mean()
     if verbose:
@@ -2546,6 +2542,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     :param all_df_path: Path to df with all participant/stack data.
     :param ave_df_path: Path to df with average across all stacks/participants
     :param error_bars_path: Path to df for errors bars with SE/SD associated with averages.
+    :param thr_col: Name of column containing threshold values.
     :param n_trimmed: Whether averages data has been trimmed.
     :param exp_ave: If False, this script is for participant averages over runs.
                     If True, the script if for experiment averages over participants.
@@ -2598,7 +2595,6 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     if verbose:
         print(f"\nstair_names_list: {stair_names_list}")
         print(f"stair_names_labels: {stair_names_labels}")
-
 
     """part 3. main Figures (these are the ones saved in the matlab script)
     Fig1: plot average threshold for each ISI and sep.
