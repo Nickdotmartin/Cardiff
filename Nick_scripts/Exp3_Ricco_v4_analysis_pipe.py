@@ -18,7 +18,7 @@ exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardi
 convert_path1 = os.path.normpath(exp_path)
 print(f"convert_path1: {convert_path1}")
 exp_path = convert_path1
-participant_list = ['Simon', 'Nick', 'Kim']  # , 'bb', 'cc', 'dd', 'ee']
+participant_list = ['Nick', 'Kim']  # , 'bb', 'cc', 'dd', 'ee']
 
 n_runs = 12
 p_idx_plus = 1
@@ -484,7 +484,7 @@ for p_idx, participant_name in enumerate(participant_list):
     print('*** finished participant average plots ***')
 
 
-# participant_list = ['Nick', 'Kim', 'Simon']
+participant_list = ['Nick', 'Kim', 'Simon']
 print(f'exp_path: {exp_path}')
 print('\nget exp_average_data')
 e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,

@@ -14,13 +14,12 @@ from psignifit_tools import get_psignifit_threshold_df
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
 exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp2_Bloch_NM_v5"
-# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp2_Bloch_NM_v3"
 
 convert_path1 = os.path.normpath(exp_path)
 print(f"convert_path1: {convert_path1}")
 exp_path = convert_path1
 
-participant_list = ['Nick', 'Tony']  # 'Nick', 'bb', 'cc', 'dd', 'ee']
+participant_list = ['Kim', 'Nick']  # 'Nick', 'bb', 'cc', 'dd', 'ee']
 n_runs = 12
 
 p_idx_plus = 1
@@ -334,7 +333,7 @@ for p_idx, participant_name in enumerate(participant_list):
 print(f'exp_path: {exp_path}')
 print('\nget exp_average_data')
 
-# participant_list = ['Nick', 'Tony']
+participant_list = ['Kim', 'Nick', 'Tony']
 
 e_average_exp_data(exp_path=exp_path, p_names_list=participant_list, exp_type='Bloch',
                    error_type='SE', n_trimmed=trim_n, verbose=True)

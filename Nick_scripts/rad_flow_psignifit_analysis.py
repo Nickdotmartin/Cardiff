@@ -1202,17 +1202,67 @@ def multi_pos_sep_per_isi(ave_thr_df, error_df,
               f'error_df:\n{error_df}')
         print(f'max_thr: {max_thr}\nmin_thr: {min_thr}')
 
-    cong_rows = sorted(ave_thr_df.index[ave_thr_df[stair_names_col] >= 0].tolist(), reverse=True)
-    incong_rows = sorted(ave_thr_df.index[ave_thr_df[stair_names_col] < 0].tolist(), reverse=True)
+    print(f'idiot check: indices\n'
+          f'ave_thr_df.index.tolist(): {ave_thr_df.index.tolist()}\n'
+          f'type: {type(ave_thr_df.index.tolist()[0])}\n'
+          f'ave_thr_df[stair_names_col].tolist(): {ave_thr_df[stair_names_col].tolist()}\n'
+          f'type: {type(ave_thr_df[stair_names_col].tolist()[0])}\n'          
+          f''
+          f'')
+
+
+
+    stair_names_list = ave_thr_df[stair_names_col].to_list()
+
+
+    # if abs(stair_names_list[0]) == abs(stair_names_list[1]):
+    #     print('these are alternating pairs of cong incong')
+    # elif abs(stair_names_list[0]) == abs(stair_names_list[-1]):
+    #     print('these are mirror image of all cong then all incong in rev order\n'
+    #           'I will need to resort these')
+
+    # cong_stairs = sorted([i for i in stair_names_list if i >= 0])
+    # incong_stairs = sorted([i for i in stair_names_list if i < 0])
+    #
+    # if ((incong_stairs[0] == -18) and (cong_stairs[0] == 0)):
+    #     print('mismatch')
+    #     cong_stairs = sorted(cong_stairs, reverse=True)
+    # elif ((incong_stairs[0] == -0.10) and (cong_stairs[0] == 18)):
+    #     print('mismatch2')
+    #     cong_stairs = sorted(cong_stairs, reverse=True)
+    #
+    # print(f"stair_names_list: {stair_names_list}\n"
+    #       f"cong_stairs: {cong_stairs}\n"
+    #       f"incong_stairs: {incong_stairs}")
+
+    # cong_df = ave_thr_df.loc[ave_thr_df[stair_names_col].isin(cong_stairs)]
+    # incong_df = ave_thr_df.loc[ave_thr_df[stair_names_col].isin(incong_stairs)]
+    #
+    # cong_err_df = error_df.loc[error_df[stair_names_col].isin(cong_stairs)]
+    # incong_err_df = error_df.loc[error_df[stair_names_col].isin(incong_stairs)]
+
+
+    if abs(stair_names_list[0]) == abs(stair_names_list[1]):
+        print('these are alternating pairs of cong incong')
+        cong_rows = sorted(ave_thr_df.index[ave_thr_df[stair_names_col] >= 0].tolist(), reverse=True)
+        incong_rows = sorted(ave_thr_df.index[ave_thr_df[stair_names_col] < 0].tolist(), reverse=True)
+    elif abs(stair_names_list[0]) == abs(stair_names_list[-1]):
+        print('these are mirror image of all cong then all incong in rev order\n'
+              "don't reverse cong rows")
+        cong_rows = sorted(ave_thr_df.index[ave_thr_df[stair_names_col] >= 0].tolist(), reverse=False)
+        incong_rows = sorted(ave_thr_df.index[ave_thr_df[stair_names_col] < 0].tolist(), reverse=True)
+
+
     if verbose:
         print(f'\ncong_rows: {cong_rows}')
         print(f'incong_rows: {incong_rows}')
 
-    # slice rows for cong and incong df
+    # # slice rows for cong and incong df
     cong_df = ave_thr_df.iloc[cong_rows, :]
     cong_err_df = error_df.iloc[cong_rows, :]
     incong_df = ave_thr_df.iloc[incong_rows, :]
     incong_err_df = error_df.iloc[incong_rows, :]
+
 
     pos_sep_list = [int(i) for i in list(sorted(cong_df[stair_names_col].tolist()))]
     isi_names_list = list(cong_df.columns)[1:]
@@ -2283,6 +2333,9 @@ def d_average_participant(root_path, run_dir_names_list,
     else:
         get_means_df = all_data_psignifit_df
 
+    print(f'get_means_df: {get_means_df.columns.to_list()}\n'
+          f'{get_means_df.head()}')
+
     # # get means and errors
     if 'stair_names' in get_means_df.columns:
         groupby_sep_df = get_means_df.drop('stack', axis=1)
@@ -2308,6 +2361,8 @@ def d_average_participant(root_path, run_dir_names_list,
             # print('just made ave_psignifit_thr_df')
         else:
             groupby_sep_df = groupby_sep_df.drop('separation', axis=1)
+            if 'cond' in groupby_sep_df.columns:
+                groupby_sep_df = groupby_sep_df.drop('cond', axis=1)
             ave_psignifit_thr_df = groupby_sep_df.groupby('stair_names', sort=False).mean()
 
         if verbose:
@@ -2331,6 +2386,7 @@ def d_average_participant(root_path, run_dir_names_list,
         # print('just made error_bars_df')
 
         if 'area_deg' in error_bars_df.columns.to_list():
+            # todo:do I still need this - area_deg not in ricco df
             print(f'\nerror_bars_df:\n{error_bars_df}')
 
             # getting sep and col vals from here, not above, as order changes if conds have NaNs due to only 1 run.
@@ -2364,7 +2420,7 @@ def d_average_participant(root_path, run_dir_names_list,
         print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
 
     else:
-
+        # todo: do I still need this?
         # for Exp2_Bloch_NM_v2
         if thr_df_name == 'long_thr_df':
             groupby_sep_df = get_means_df.drop('stack', axis=1)
