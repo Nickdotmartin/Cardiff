@@ -42,7 +42,7 @@ expInfo = {'1_Participant_name': 'Nicktest',
            '3_fps': [60, 240, 144, 60],
            # to compare with exp 1 ISIs use [1, 4, 6, 9]
            # to compare with probes + ISIs use [5, 8, 10, 13],
-           '4_Probe duration in frames': [4, 6, 9, 1, 18],  # ['12', '3', '6', '12', '18', '24', '30', '36', '120'],
+           '4_Probe duration in frames': [1, 4, 6, 9, 5, 8, 10, 13, 24],  # ['12', '3', '6', '12', '18', '24', '30', '36', '120'],
            '5_prelim_bg_flow_ms': [0, 70],
            '7_Trials_counter': [True, False],
            '8_Background': ['flow_rad', 'None'],
@@ -83,18 +83,21 @@ prelim_bg_flow_fr = int(prelim_bg_flow_ms * fps / 1000)
 
 n_stairs = 2
 flow_directions = [1, -1]
-probe_directions = [-1, 1]
+flow_dir_name = ['out' if i == -1 else 'in' for i in flow_directions]
+probe_directions = [-1, 1]  # -1=outward, 1=inwards
+probe_dir_name = ['out' if i == -1 else 'in' for i in probe_directions]
+
+print(f"\nflow_directions: {flow_directions}\n"
+      f"flow_dir_name: {flow_dir_name}\n"
+      f"probe_directions: {probe_directions}\n"
+      f"probe_dir_name: {probe_dir_name}\n")
 
 participant_run = f'{participant_name}_{run_number}'
 
+
 # FILENAME
-# filename = f'{_thisDir}{os.sep}' \
-#            f'{expName}{os.sep}' \
-#            f'{participant_name}{os.sep}' \
-#            f'{participant_run}{os.sep}' \
-#            f'probeDur{probe_duration}{os.sep}' \
-#            f'{participant_run}_output'
-filename = os.path.join(_thisDir, expName, participant_name, participant_run, f'probeDur{probe_duration}', f'{participant_run}_output.csv')
+filename = os.path.join(_thisDir, expName, participant_name, participant_run,
+                        f'probeDur{probe_duration}', f'{participant_run}_output.csv')
 print(f'saving output to: {filename}')
 # Experiment Handler
 thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
@@ -318,7 +321,7 @@ for stair_idx in expInfo['stair_list']:
     thisInfo = copy.copy(expInfo)
     thisInfo['stair_idx'] = stair_idx
 
-    stair_name = f'{stair_idx}_fl{flow_directions[stair_idx]}_pr{probe_directions[stair_idx]}'
+    stair_name = f'{stair_idx}_fl_{flow_dir_name[stair_idx]}_pr_{probe_dir_name[stair_idx]}'
     thisStair = Staircase(name=f'{stair_name}', type='simple', value=stairStart,
                           C=stairStart * 0.6,  # step_size, typically 60% of reference stimulus
                           minRevs=3, minTrials=n_trials_per_stair, minVal=miniVal,
