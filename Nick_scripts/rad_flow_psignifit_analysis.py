@@ -1635,7 +1635,7 @@ def b3_plot_staircase(all_data_path, thr_col='newLum', resp_col='trial_response'
         all_data_df = pd.read_excel(all_data_path, engine='openpyxl',
                                     usecols=["ISI", "stair", "step", "separation",
                                              "flow_dir", "probe_jump", "corner",
-                                             "newLum", "trial_response"])
+                                             "newLum", "probeLum", "trial_response"])
 
     # get list of isi and stair values to loop through
     stair_list = all_data_df['stair'].unique()
@@ -1712,6 +1712,7 @@ def b3_plot_staircase(all_data_path, thr_col='newLum', resp_col='trial_response'
         # get df for this isi only
         isi_df = all_data_df[all_data_df['ISI'] == isi]
         isi_name = isi_name_list[isi_idx]
+        print(f"\n{isi_idx}. staircase for ISI: {isi}, {isi_name}")
 
         # initialise 8 plot figure - last plot will be blank
         # # this is a figure showing n_reversals per staircase condition.
@@ -1900,7 +1901,7 @@ def b3_plot_stair_sep0(all_data_path, thr_col='newLum', resp_col='trial_response
         all_data_df = pd.read_excel(all_data_path, engine='openpyxl',
                                     usecols=["ISI", "stair", "step", "separation",
                                              "flow_dir", "probe_jump", "corner",
-                                             "newLum", "trial_response"])
+                                             "newLum", "probeLum", "trial_response"])
 
     # get list of isi and stair values to loop through
     stair_list = all_data_df['stair'].unique()

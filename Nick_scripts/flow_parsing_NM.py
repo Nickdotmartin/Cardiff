@@ -30,7 +30,7 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'Asus_VG24'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz'
+monitor_name = 'HP_24uh'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz'
 display_number = 1  # 0 indexed, 1 for external display
 
 # Store info about the experiment session
@@ -88,14 +88,14 @@ probe_directions = [-1, 1]
 participant_run = f'{participant_name}_{run_number}'
 
 # FILENAME
-filename = f'{_thisDir}{os.sep}' \
-           f'{expName}{os.sep}' \
-           f'{participant_name}{os.sep}' \
-           f'{participant_run}{os.sep}' \
-           f'probeDur{probe_duration}{os.sep}' \
-           f'{participant_run}_output'
-
-
+# filename = f'{_thisDir}{os.sep}' \
+#            f'{expName}{os.sep}' \
+#            f'{participant_name}{os.sep}' \
+#            f'{participant_run}{os.sep}' \
+#            f'probeDur{probe_duration}{os.sep}' \
+#            f'{participant_run}_output'
+filename = os.path.join(_thisDir, expName, participant_name, participant_run, f'probeDur{probe_duration}', f'{participant_run}_output.csv')
+print(f'saving output to: {filename}')
 # Experiment Handler
 thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
                                  extraInfo=expInfo, runtimeInfo=None,
@@ -335,7 +335,7 @@ for step in range(n_trials_per_stair):
     np.random.shuffle(stairs)
     for thisStair in stairs:
 
-        print(f"thisStair: {thisStair}, step: {step}")
+        print(f"step: {step}, thisStair: {thisStair}")
 
         trial_number = trial_number + 1
         trialClock.reset()
