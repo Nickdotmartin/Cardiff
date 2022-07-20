@@ -6,8 +6,9 @@ from rad_flow_psignifit_analysis import c_plots, d_average_participant, make_ave
 
 # # loop through run folders with first 5 scripts (a, b1, b2, b3, c)
 # # then run script d to get master lists and averages
-# exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\radial_flow_exp'
+exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\radial_flow_exp'
 # participant_list = ['Kim', 'Nick', 'Simon']  # , 'Nick_half_speed']
+participant_list = ['Nick']
 
 # exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_half'
 # participant_list = ['Simon_half']  # , 'Nick_half_speed']
@@ -167,6 +168,7 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
 print(f'exp_path: {exp_path}')
+participant_list = ['Kim', 'Nick', 'Simon']
 print('\nget exp_average_data')
 e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
                    error_type='SE', n_trimmed=trim_n, verbose=True)
