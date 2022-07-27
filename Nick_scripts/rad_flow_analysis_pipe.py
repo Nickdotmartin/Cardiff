@@ -81,7 +81,7 @@ for p_idx, participant_name in enumerate(participant_list):
         '''a'''
         p_name = f'{participant_name}_{r_idx_plus}'
 
-        # a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=run_isi_list, verbose=verbose)
+        a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=run_isi_list, verbose=verbose)
 
         run_data_path = f'{save_path}{os.sep}ALL_ISIs_sorted.xlsx'
         run_data_df = pd.read_excel(run_data_path, engine='openpyxl',

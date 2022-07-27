@@ -1633,9 +1633,11 @@ def b3_plot_staircase(all_data_path, thr_col='newLum', resp_col='trial_response'
         all_data_df = pd.read_csv(all_data_path)
     else:
         all_data_df = pd.read_excel(all_data_path, engine='openpyxl',
-                                    usecols=["ISI", "stair", "step", "separation",
-                                             "flow_dir", "probe_jump", "corner",
-                                             "newLum", "probeLum", "trial_response"])
+                                    # usecols=["ISI", "stair", "step", "separation",
+                                    #          "flow_dir", "probe_jump", "corner",
+                                    #          "newLum", "probeLum", "trial_response"]
+                                    # note: don't use usecols as some exps have 'NewLum' but radflow doesn't
+                                    )
 
     # get list of isi and stair values to loop through
     stair_list = all_data_df['stair'].unique()
