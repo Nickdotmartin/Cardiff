@@ -29,11 +29,10 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'HP_24uh'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18'
+monitor_name = 'Nick_work_laptop'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 # gamma set at 2.1  [####### this comment is incorrect, its set above i think ############]
 
-# todo: check dsplay number
-display_number = 0  # 0 indexed, 1 for external display
+display_number = 1  # 0 indexed, 1 for external display
 
 
 
@@ -141,7 +140,7 @@ print(f"mon_dict: {mon_dict}")
 
 # double check using full screen in lab
 display_number = 1  # 0 indexed, 1 for external display
-if monitor_name in ['ASUS_2_13_240Hz', 'asus_cal']:
+if monitor_name in ['ASUS_2_13_240Hz', 'asus_cal', 'Nick_work_laptop']:
     display_number = 0
 use_full_screen = True
 if display_number > 0:
@@ -164,7 +163,7 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     units='pix',
                     screen=display_number,
                     # allowGUI=True,
-                    # fullscr=True,
+                    fullscr=use_full_screen,
                     )
 
 print(f"check win.size: {win.size}")
