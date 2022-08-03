@@ -31,7 +31,9 @@ os.chdir(_thisDir)
 # Monitor config from monitor centre
 monitor_name = 'HP_24uh'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18'
 # gamma set at 2.1  [####### this comment is incorrect, its set above i think ############]
-display_number = 1  # 0 indexed, 1 for external display
+
+# todo: check dsplay number
+display_number = 0  # 0 indexed, 1 for external display
 
 
 
@@ -39,7 +41,7 @@ display_number = 1  # 0 indexed, 1 for external display
 expName = 'EXP1_DEMO'  # from the Builder filename that created this script
 
 # todo: change dict keys (ISI str to int?) once I've looked at analysis
-expInfo = {'1. Participant': 'Exp1_test',
+expInfo = {'1. Participant': 'p1',
            'run_number': '1',
            '2. Probe duration in frames at 240hz': [2, 50, 100],
            '3. fps': [60, 144, 240],

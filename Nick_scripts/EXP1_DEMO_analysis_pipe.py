@@ -14,7 +14,7 @@ convert_path1 = os.path.normpath(exp_path)
 exp_path = convert_path1
 
 print(f"exp_path: {exp_path}")
-participant_list = ['Nick2_test']
+participant_list = ['p1', 'p2']
 
 # isi_list = [-1, 0, 2, 4, 6, 9, 12, 24]
 isi_list = [-1, 6]
