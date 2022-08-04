@@ -902,31 +902,61 @@ def plot_diff(ave_thr_df, stair_names_col='stair_names', fig_title=None, save_pa
     # if stair_names_col is set as index, move it to regular column and add standard index
     if ave_thr_df.index.name == stair_names_col:
         ave_thr_df.reset_index(drop=False, inplace=True)
-    if verbose:
-        print(f'ave_thr_df:\n{ave_thr_df}')
 
-    # get rows to slice for each df to be in ascending order
-    # if stair_names_col in list(ave_thr_df.columns):
-    cong_rows = sorted(ave_thr_df.index[ave_thr_df['stair_names'] >= 0].tolist(), reverse=True)
-    incong_rows = sorted(ave_thr_df.index[ave_thr_df['stair_names'] < 0].tolist(), reverse=True)
-    # else:
-    #     cong_rows = sorted(ave_thr_df.index[ave_thr_df.index >= 0].tolist())
-    #     incong_rows = sorted(ave_thr_df.index[ave_thr_df.index < 0].tolist(), reverse=True)
+    # sort df so it is in ascending order - participant and exp dfs are in diff order to begin so this avoids that complication.
+    srtd_ave_thr_df = ave_thr_df.sort_values(by='stair_names', ascending=True)
+    srtd_ave_thr_df.reset_index(drop=True, inplace=True)
+
+    if verbose:
+        print(f'srtd_ave_thr_df:\n{srtd_ave_thr_df}')
+
+    # get rows to slice for each df
+    # the should be in opposite order; e.g., cong desc 18, 6, 3...; incong asc -18, -6, -3...
+    cong_rows = sorted(srtd_ave_thr_df.index[srtd_ave_thr_df['stair_names'] >= 0].tolist(), reverse=False)
+    incong_rows = sorted(srtd_ave_thr_df.index[srtd_ave_thr_df['stair_names'] < 0].tolist(), reverse=True)
     if verbose:
         print(f'\ncong_rows: {cong_rows}')
         print(f'incong_rows: {incong_rows}')
 
     # slice rows for cong and incong df
-    cong_df = ave_thr_df.iloc[cong_rows, :]
-    incong_df = ave_thr_df.iloc[incong_rows, :]
+    cong_df = srtd_ave_thr_df.iloc[cong_rows, :]
+    incong_df = srtd_ave_thr_df.iloc[incong_rows, :]
 
-    pos_sep_list = [int(i) for i in list(sorted(cong_df['stair_names'].tolist()))]
+    pos_sep_list = [int(i) for i in list(cong_df['stair_names'].tolist())]
     cong_df.reset_index(drop=True, inplace=True)
     incong_df.reset_index(drop=True, inplace=True)
     if verbose:
         print(f'\ncong_df: {cong_df.shape}\n{cong_df}')
         print(f'\nincong_df: {incong_df.shape}\n{incong_df}')
         print(f'\npos_sep_list: {pos_sep_list}')
+
+
+    # check to make sure incong_df is in correct order - e.g., if cong is asc, incong should descend.
+    # if last cong is 18, last incong should be -18
+    # if last cong is 0, last incong should be -.1
+    check_incong_list = [int(i) for i in list(incong_df['stair_names'].tolist())]
+    print(f'\ncheck_incong_list: {check_incong_list}')
+    swap_order = False
+    use_ascending = False
+    if pos_sep_list[0] == -check_incong_list[0]:
+        print('yeah, correct order (1)')
+    elif pos_sep_list[-1] == -check_incong_list[-1]:
+        print('yeah, correct order (2)')
+    elif pos_sep_list[-1] == -check_incong_list[0]:  # -18 is first for incong, use ascenind=False
+        print('wrong, swap order (1)')
+        swap_order = True
+        use_ascending = True
+    elif pos_sep_list[0] == -check_incong_list[-1]:  # -18 is last for incong, use ascenind=True
+        print('wrong, swap order (2)')
+        swap_order = True
+    else:
+        print("I dunno what's doing on!?")
+        raise ValueError("cant get correct order for diff df")
+    if swap_order:
+        incong_df = incong_df.sort_values(by='stair_names', ascending=use_ascending)
+        incong_df.reset_index(drop=True, inplace=True)
+        print(f'\nincong_df: {incong_df.shape}\n{incong_df}')
+
 
     # subtract one from the other
     diff_df = cong_df - incong_df
@@ -1328,7 +1358,9 @@ def multi_pos_sep_per_isi(ave_thr_df, error_df,
                     else:
                         ax.set_xticks(pos_sep_list)
                     ax.set_xticklabels(pos_sep_list)
-                    ax.set_ylim([min_thr, max_thr])
+
+                    # todo: tidy this function - get rid of min and max calls and commented out stuff.
+                    # ax.set_ylim([min_thr, max_thr])
 
                     if row_idx == 1:
                         ax.set_xlabel('Probe separation (pixels)')
@@ -1380,7 +1412,8 @@ def multi_pos_sep_per_isi(ave_thr_df, error_df,
             else:
                 ax.set_xticks(pos_sep_list)
             ax.set_xticklabels(pos_sep_list)
-            ax.set_ylim([min_thr, max_thr])
+
+            # ax.set_ylim([min_thr, max_thr])
 
             # if row_idx == 1:
             ax.set_xlabel('Probe separation (pixels)')
@@ -2652,14 +2685,14 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         print(f'\nall_df:\n{all_df}')
         print(f'\nave_df:\n{ave_df}')
         print(f'\nerror_bars_df:\n{error_bars_df}')
-        print(f'\nisi_name_list; {isi_name_list}')
         print(f'\nisi_values_list; {isi_values_list}')
+        print(f'isi_name_list; {isi_name_list}')
 
     stair_names_list = sorted(list(all_df['stair_names'].unique()))
     stair_names_list = [-.1 if i == -.10 else int(i) for i in stair_names_list]
     stair_names_labels = ['-0' if i == -.10 else int(i) for i in stair_names_list]
     if verbose:
-        print(f"\nstair_names_list: {stair_names_list}")
+        print(f"stair_names_list: {stair_names_list}")
         print(f"stair_names_labels: {stair_names_labels}")
 
     """part 3. main Figures (these are the ones saved in the matlab script)

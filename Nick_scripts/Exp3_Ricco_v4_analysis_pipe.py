@@ -14,16 +14,15 @@ from psignifit_tools import get_psignifit_threshold_df
 
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
-# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp3_Ricco_NM_v4"
-exp_path = r"C:\Users\sapnm4\PycharmProjects\Cardiff\Nick_scripts\Exp3_Ricco_NM_DEMO"
-
+exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp3_Ricco_NM_v4"
+# exp_path = r"C:\Users\sapnm4\PycharmProjects\Cardiff\Nick_scripts\Exp3_Ricco_NM_DEMO"
 convert_path1 = os.path.normpath(exp_path)
 print(f"convert_path1: {convert_path1}")
 exp_path = convert_path1
+
 # participant_list = ['Kim']  # , 'bb', 'cc', 'dd', 'ee']
 # participant_list = ['Kim', 'Nick', 'Simon']  # , 'bb', 'cc', 'dd', 'ee']
-participant_list = ['Ricco_test']
-
+participant_list = ['Kris']
 
 
 n_runs = 12
@@ -330,7 +329,7 @@ for p_idx, participant_name in enumerate(participant_list):
     print('*** finished participant average plots ***')
 
 
-participant_list = ['Nick', 'Kim', 'Simon']
+participant_list = ['Nick', 'Kim', 'Kris', 'Simon']
 trim_n = 2
 print(f'exp_path: {exp_path}')
 print('\nget exp_average_data')

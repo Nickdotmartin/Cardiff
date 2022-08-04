@@ -558,6 +558,7 @@ for step in range(n_trials_per_stair):
                         #         resp.corr = 1
 
                         # # use this if there are 1 and -1 probeDir
+                        # todo: explain what answer and rel answer are/do
                         if probeDir == 1:
                             if (resp.keys == str('i')) or (resp.keys == 'i'):
                                 # resp.corr = 1
