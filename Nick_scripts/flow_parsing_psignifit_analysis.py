@@ -2358,9 +2358,11 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                                 cols_to_change_show='probeSpeed', new_col_name='probe_dur',
                                 strip_from_cols=None, x_axis='probe_dur', y_axis='probeSpeed',
                                 hue_var='stair_names', style_var=None, style_order=None,
-                                error_bars=True, even_spaced_x=True, jitter=False,   # .01,
+                                error_bars=True, even_spaced_x=True,
+                                x_tick_vals=dur_values_list,
+                                jitter=False,   # .01,
                                 fig_title=fig_1b_title, fig_savename=fig_1b_savename,
-                                save_path=save_path, x_tick_vals=dur_name_list, verbose=verbose)
+                                save_path=save_path, verbose=verbose)
     if show_plots:
         plt.show()
     plt.close()
@@ -2399,8 +2401,6 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         heatmap_savename = 'mean_thr_heatmap'
 
     plot_thr_heatmap(heatmap_df=ave_w_stairname_idx_df.T,
-                     x_tick_labels=stair_names_list,
-                     y_tick_labels=dur_values_list,
                      heatmap_midpoint=0.0,
                      fig_title=heatmap_title,
                      save_name=heatmap_savename,

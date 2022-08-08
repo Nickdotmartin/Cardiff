@@ -13,16 +13,17 @@ from psignifit_tools import get_psignifit_threshold_df
 
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
-# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp2_Bloch_NM_v5"
-exp_path = r"C:\Users\sapnm4\PycharmProjects\Cardiff\Nick_scripts\Exp2_Bloch_NM_DEMO"
+exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp2_Bloch_NM_v5"
+# exp_path = r"C:\Users\sapnm4\PycharmProjects\Cardiff\Nick_scripts\Exp2_Bloch_NM_DEMO"
 
 
 convert_path1 = os.path.normpath(exp_path)
 print(f"convert_path1: {convert_path1}")
 exp_path = convert_path1
 
-# participant_list = ['Kim']  # 'Nick', 'bb', 'cc', 'dd', 'ee']
-participant_list = ['Bloch_test']  # 'Nick', 'bb', 'cc', 'dd', 'ee']
+# participant_list = ['Kim', 'Nick', 'Tony', 'Simon', 'Kris']  # 'Nick', 'bb', 'cc', 'dd', 'ee']
+participant_list = ['Simon']  # 'Nick', 'bb', 'cc', 'dd', 'ee']
+
 n_runs = 12
 
 p_idx_plus = 1
@@ -205,15 +206,15 @@ for p_idx, participant_name in enumerate(participant_list):
             long_thr_df.to_csv(long_thr_df_path, index=False)
             print(f'long_thr_df:\n{long_thr_df}')
 
-        # plot with log-log axes - Weber
-        simple_log_log_plot(long_thr_df, x_col='dur_ms', y_col='weber_thr', hue_col='cond_type',
-                            x_ticks_vals=None, x_tick_names=None,
-                            x_axis_label='log(duration ms) - 1probe condition',
-                            y_axis_label='log(∆I/I)',
-                            fig_title='Bloch_v5: log(duration) v log(∆I/I)',
-                            show_neg1slope=True,
-                            save_as=f'{save_path}{os.sep}bloch_v5_log_dur_log_weber.png')
-        plt.show()
+        # # plot with log-log axes - Weber
+        # simple_log_log_plot(long_thr_df, x_col='dur_ms', y_col='weber_thr', hue_col='cond_type',
+        #                     x_ticks_vals=None, x_tick_names=None,
+        #                     x_axis_label='log(duration ms) - 1probe condition',
+        #                     y_axis_label='log(∆I/I)',
+        #                     fig_title='Bloch_v5: log(duration) v log(∆I/I)',
+        #                     show_neg1slope=True,
+        #                     save_as=f'{save_path}{os.sep}bloch_v5_log_dur_log_weber.png')
+        # plt.show()
 
         # plot with log-log axes - log(∆i)
         simple_log_log_plot(long_thr_df, x_col='dur_ms', y_col='delta_I', hue_col='cond_type',
@@ -305,115 +306,115 @@ for p_idx, participant_name in enumerate(participant_list):
                            save_path=root_path, verbose=True)
     plt.show()
 
-    # # fig 3 - log dur, log(weber_thr)
-    wide_df = ave_df.pivot(index=['dur_ms'], columns='cond_type', values='weber_thr')
-    print(f'wide_df:\n{wide_df}')
-
-    error_df = pd.read_csv(err_path)
-    wide_err_df = error_df.pivot(index=['dur_ms'], columns='cond_type', values='weber_thr')
-    print(f'wide_err_df:\n{wide_err_df}')
-
-    fig_title = 'Participant average log(∆I/I) thresholds - Bloch_v5'
-    save_name = 'bloch_v5_log_dur_log_weber.png'
-    plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
-                           jitter=False, error_caps=True, alt_colours=False,
-                           legend_names=None,
-                           even_spaced_x=False,
-                           fixed_y_range=False,
-                           x_tick_vals=None,
-                           x_tick_labels=None,
-                           x_axis_label='log(duration ms) - 1probe condition',
-                           y_axis_label='Weber threshold: log(∆I/I)',
-                           log_log_axes=True,
-                           neg1_slope=True,
-                           slope_ycol_name='1probe',
-                           slope_xcol_idx_depth=1,
-                           fig_title=fig_title, save_name=save_name,
-                           save_path=root_path, verbose=True)
-    plt.show()
+    # # # fig 3 - log dur, log(weber_thr)
+    # wide_df = ave_df.pivot(index=['dur_ms'], columns='cond_type', values='weber_thr')
+    # print(f'wide_df:\n{wide_df}')
+    #
+    # error_df = pd.read_csv(err_path)
+    # wide_err_df = error_df.pivot(index=['dur_ms'], columns='cond_type', values='weber_thr')
+    # print(f'wide_err_df:\n{wide_err_df}')
+    #
+    # fig_title = 'Participant average log(∆I/I) thresholds - Bloch_v5'
+    # save_name = 'bloch_v5_log_dur_log_weber.png'
+    # plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
+    #                        jitter=False, error_caps=True, alt_colours=False,
+    #                        legend_names=None,
+    #                        even_spaced_x=False,
+    #                        fixed_y_range=False,
+    #                        x_tick_vals=None,
+    #                        x_tick_labels=None,
+    #                        x_axis_label='log(duration ms) - 1probe condition',
+    #                        y_axis_label='Weber threshold: log(∆I/I)',
+    #                        log_log_axes=True,
+    #                        neg1_slope=True,
+    #                        slope_ycol_name='1probe',
+    #                        slope_xcol_idx_depth=1,
+    #                        fig_title=fig_title, save_name=save_name,
+    #                        save_path=root_path, verbose=True)
+    # plt.show()
     print('*** finished participant average plot ***')
 
 print(f'exp_path: {exp_path}')
 print('\nget exp_average_data')
+trim_n = 2
+participant_list = ['Kim', 'Nick', 'Tony', 'Simon']
 
-# participant_list = ['Kim', 'Nick', 'Tony']
-#
-# e_average_exp_data(exp_path=exp_path, p_names_list=participant_list, exp_type='Bloch',
-#                    error_type='SE', n_trimmed=trim_n, verbose=True)
-#
-#
-# all_df_path = os.path.join(exp_path, 'MASTER_exp_thr.csv')
-# exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
-# err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
-#
-# # print('*** making average plot ***')
+e_average_exp_data(exp_path=exp_path, p_names_list=participant_list, exp_type='Bloch',
+                   error_type='SE', n_trimmed=trim_n, verbose=True)
+
+
+all_df_path = os.path.join(exp_path, 'MASTER_exp_thr.csv')
+exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
+err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
+
 # print('*** making average plot ***')
-# fig_df = pd.read_csv(exp_ave_path)
-# print(f'fig_df: {fig_df.columns.to_list()}\n{fig_df}')
-#
-# isi_vals_list = fig_df['ISI'].to_list()
-# isi_names_list = ['1pr' if i == -2 else int(i) for i in isi_vals_list]
-# print(f'isi_names_list: {isi_names_list}')
-#
-# dur_list = fig_df['dur_ms'].to_list()
-# print(f'dur_list: {dur_list}')
-# dur_labels = [format(i, '.3g') for i in dur_list]
-# print(f'dur_labels: {dur_labels}')
-#
-#
-# error_df = pd.read_csv(err_path)
-# print(f'error_df:\n{error_df}')
-#
-#
-# # fig 1 - ave thr by sep
-# ave_thr_by_dur_df = fig_df[['dur_ms', 'newLum']]
-# ave_thr_by_dur_df.set_index('dur_ms', inplace=True)
-# err_thr_by_dur_df = error_df[['dur_ms', 'newLum']]
-# err_thr_by_dur_df.set_index('dur_ms', inplace=True)
-# print(f'ave_thr_by_dur_df:\n{ave_thr_by_dur_df}')
-#
-# fig_title = 'Experiment average thresholds - Bloch_v5'
-# save_name = 'bloch_v5_dur_v_thr.png'
-# plot_runs_ave_w_errors(fig_df=ave_thr_by_dur_df, error_df=err_thr_by_dur_df,
-#                        jitter=False, error_caps=True, alt_colours=False,
-#                        legend_names=None,
-#                        even_spaced_x=False,
-#                        fixed_y_range=False,
-#                        x_tick_vals=dur_list,
-#                        x_tick_labels=dur_labels,
-#                        x_axis_label='duration (ms)',
-#                        y_axis_label='Luminance threshold',
-#                        log_log_axes=False,
-#                        neg1_slope=False,
-#                        fig_title=fig_title, save_name=save_name,
-#                        save_path=exp_path, verbose=True)
-# plt.show()
-#
-# # # plot 2: log-log axes - log(∆i)
-# log_dur_log_delta_I_df = fig_df[['dur_ms', 'delta_I']]
-# log_dur_log_delta_I_df.set_index('dur_ms', inplace=True)
-# err_log_dur_log_delta_I_df = error_df[['dur_ms', 'delta_I']]
-# err_log_dur_log_delta_I_df.set_index('dur_ms', inplace=True)
-# print(f'log_dur_log_delta_I_df:\n{log_dur_log_delta_I_df}')
-# fig_title = 'Experiment average log(∆I) thresholds - Bloch_v5'
-# save_name = 'bloch_v5_log_dur_log_contrast.png'
-# plot_runs_ave_w_errors(fig_df=log_dur_log_delta_I_df, error_df=err_log_dur_log_delta_I_df,
-#                        jitter=False, error_caps=True, alt_colours=False,
-#                        legend_names=None,
-#                        even_spaced_x=False,
-#                        fixed_y_range=False,
-#                        x_tick_vals=None,
-#                        x_tick_labels=None,
-#                        x_axis_label='log(duration ms)',
-#                        y_axis_label='Contrast: log(∆I)',
-#                        log_log_axes=True,
-#                        neg1_slope=True,
-#                        slope_ycol_name='delta_I',
-#                        slope_xcol_idx_depth=1,
-#                        fig_title=fig_title, save_name=save_name,
-#                        save_path=exp_path, verbose=True)
-# plt.show()
-#
+print('*** making average plot ***')
+fig_df = pd.read_csv(exp_ave_path)
+print(f'fig_df: {fig_df.columns.to_list()}\n{fig_df}')
+
+isi_vals_list = fig_df['ISI'].to_list()
+isi_names_list = ['1pr' if i == -2 else int(i) for i in isi_vals_list]
+print(f'isi_names_list: {isi_names_list}')
+
+dur_list = fig_df['dur_ms'].to_list()
+print(f'dur_list: {dur_list}')
+dur_labels = [format(i, '.3g') for i in dur_list]
+print(f'dur_labels: {dur_labels}')
+
+
+error_df = pd.read_csv(err_path)
+print(f'error_df:\n{error_df}')
+
+
+# fig 1 - ave thr by sep
+ave_thr_by_dur_df = fig_df[['dur_ms', 'newLum']]
+ave_thr_by_dur_df.set_index('dur_ms', inplace=True)
+err_thr_by_dur_df = error_df[['dur_ms', 'newLum']]
+err_thr_by_dur_df.set_index('dur_ms', inplace=True)
+print(f'ave_thr_by_dur_df:\n{ave_thr_by_dur_df}')
+
+fig_title = 'Experiment average thresholds - Bloch_v5'
+save_name = 'bloch_v5_dur_v_thr.png'
+plot_runs_ave_w_errors(fig_df=ave_thr_by_dur_df, error_df=err_thr_by_dur_df,
+                       jitter=False, error_caps=True, alt_colours=False,
+                       legend_names=None,
+                       even_spaced_x=False,
+                       fixed_y_range=False,
+                       x_tick_vals=dur_list,
+                       x_tick_labels=dur_labels,
+                       x_axis_label='duration (ms)',
+                       y_axis_label='Luminance threshold',
+                       log_log_axes=False,
+                       neg1_slope=False,
+                       fig_title=fig_title, save_name=save_name,
+                       save_path=exp_path, verbose=True)
+plt.show()
+
+# # plot 2: log-log axes - log(∆i)
+log_dur_log_delta_I_df = fig_df[['dur_ms', 'delta_I']]
+log_dur_log_delta_I_df.set_index('dur_ms', inplace=True)
+err_log_dur_log_delta_I_df = error_df[['dur_ms', 'delta_I']]
+err_log_dur_log_delta_I_df.set_index('dur_ms', inplace=True)
+print(f'log_dur_log_delta_I_df:\n{log_dur_log_delta_I_df}')
+fig_title = 'Experiment average log(∆I) thresholds - Bloch_v5'
+save_name = 'bloch_v5_log_dur_log_contrast.png'
+plot_runs_ave_w_errors(fig_df=log_dur_log_delta_I_df, error_df=err_log_dur_log_delta_I_df,
+                       jitter=False, error_caps=True, alt_colours=False,
+                       legend_names=None,
+                       even_spaced_x=False,
+                       fixed_y_range=False,
+                       x_tick_vals=None,
+                       x_tick_labels=None,
+                       x_axis_label='log(duration ms)',
+                       y_axis_label='Contrast: log(∆I)',
+                       log_log_axes=True,
+                       neg1_slope=True,
+                       slope_ycol_name='delta_I',
+                       slope_xcol_idx_depth=1,
+                       fig_title=fig_title, save_name=save_name,
+                       save_path=exp_path, verbose=True)
+plt.show()
+
 # # # plot 3: log-log axes - log(∆I/I)
 #
 # log_dur_log_weber_df = fig_df[['dur_ms', 'weber_thr']]
@@ -440,10 +441,10 @@ print('\nget exp_average_data')
 #                        fig_title=fig_title, save_name=save_name,
 #                        save_path=exp_path, verbose=True)
 # plt.show()
-#
-#
-# print('*** finished exp average plot ***')
-#
+
+
+print('*** finished exp average plot ***')
+
 # # todo: wrap these plot functions for participant and experiment averages into a function
 
 

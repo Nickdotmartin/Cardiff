@@ -1499,7 +1499,7 @@ def plot_thr_heatmap(heatmap_df,
         heatmap_midpoint = mean_thr
         colourmap = sns.color_palette("Spectral", as_cmap=True)
     else:
-        colourmap = sns.color_palette("seismic", as_cmap=True)
+        colourmap = sns.color_palette("bwr", as_cmap=True)
     print(f"heatmap_midpoint: {heatmap_midpoint}")
 
     heatmap = sns.heatmap(data=heatmap_df,
