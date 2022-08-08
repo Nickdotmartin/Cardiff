@@ -13,34 +13,36 @@ convert_path1 = os.path.normpath(exp_path)
 print(f"convert_path1: {convert_path1}")
 exp_path = convert_path1
 stair_list = [0, 1]
-participant_list = ['Nick']  # , 'Simon']
+stair_names_list = ['0_fl_in_pr_out', '1_fl_out_pr_in']
+participant_list = ['Simon', 'Nick']
 # probe_dur_list = [4, 6, 9]
 all_probe_dur_list = [1, 4, 6, 9, 18]
 
-# probe_dur_list = [9]
 
 verbose = True
 show_plots = True
 
-n_runs = 3
-# if the first folder to analyse is 1, p_idx_plus = 1.  If the forst folder is 5, use 5 etc.
-p_idx_plus = 4
+# n_runs = 3
+n_runs = 12
+# if the first folder to analyse is 1, p_idx_plus = 1.  If the first folder is 5, use 5 etc.
+# p_idx_plus = 4
+p_idx_plus = 1
 
 
 for p_idx, participant_name in enumerate(participant_list):
 
     root_path = os.path.join(exp_path, participant_name)
 
-    run_folder_names = [f'{participant_name}_{i+p_idx_plus}' for i in list(range(n_runs))]
-    print(f'run_folder_names: {run_folder_names}')
+    # run_folder_names = [f'{participant_name}_{i+p_idx_plus}' for i in list(range(n_runs))]
+    # print(f'run_folder_names: {run_folder_names}')
 
-    # # # search to automatically get run_folder_names
-    # dir_list = os.listdir(root_path)
-    # run_folder_names = []
-    # for i in range(12):  # numbers 0 to 11
-    #     check_dir = f'{participant_name}_{i+p_idx_plus}'   # numbers 1 to 12
-    #     if check_dir in dir_list:
-    #         run_folder_names.append(check_dir)
+    # # search to automatically get run_folder_names
+    dir_list = os.listdir(root_path)
+    run_folder_names = []
+    for i in range(12):  # numbers 0 to 11
+        check_dir = f'{participant_name}_{i+p_idx_plus}'   # numbers 1 to 12
+        if check_dir in dir_list:
+            run_folder_names.append(check_dir)
 
     print(f'run_folder_names: {run_folder_names}')
 
@@ -80,11 +82,10 @@ for p_idx, participant_name in enumerate(participant_list):
         run_data_df = pd.read_csv(run_data_path)
         print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}\n")
 
-        #
-        #     '''get psignifit thresholds df'''
-        #     cols_to_add_dict = {'stair_names': [18, -18, 6, -6, 3, -3, 2, -2, 1, -1, 0, -0.1],
-        #                         'congruent':  [1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1],
-        #                         'separation': [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]}
+
+        '''get psignifit thresholds df'''
+        cols_to_add_dict = {'stair_names': stair_names_list}
+        # todo: check target threshold should be .5, but it doesn't work, so using .50001?
         thr_df = get_psignifit_threshold_df(root_path=root_path,
                                             p_run_name=run_dir,
                                             csv_name=run_data_df,
@@ -92,17 +93,15 @@ for p_idx, participant_name in enumerate(participant_list):
                                             stair_col='stair',
                                             dur_list=probe_dur_list,
                                             stair_list=stair_list,
-                                            target_threshold=.75,
-                                            # cols_to_add_dict=cols_to_add_dict,
+                                            target_threshold=.5000001,
+                                            cols_to_add_dict=cols_to_add_dict,
                                             verbose=verbose)
         print(f'thr_df:\n{thr_df}')
 
         '''b3'''
-        b3_plot_staircase(run_data_path, thr_col='probeSpeed', resp_col='rel_answer',  # 'rel_answer'
+        run_data_path = os.path.join(save_path, 'ALL_durations_sorted.csv')
+        b3_plot_staircase(run_data_path, thr_col='probeSpeed', resp_col='rel_answer',  # 'answer'
                           show_plots=show_plots, verbose=verbose)
-
-        #     '''c I don't actually need any of these, instead sort get psignifit thr ands make plots from those.'''
-        #     c_plots(save_path=save_path, isi_name_list=isi_names_list, show_plots=show_plots, verbose=verbose)
 
     '''d participant averages'''
     trim_n = None
@@ -130,7 +129,7 @@ for p_idx, participant_name in enumerate(participant_list):
 
 print(f'exp_path: {exp_path}')
 print('\nget exp_average_data')
-participant_list = ['Simon', 'Nick_half_speed']
+participant_list = ['Simon', 'Nick']
 n_trimmed = None
 use_trimmed = False
 e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
@@ -141,12 +140,11 @@ all_df_path = f'{exp_path}/MASTER_exp_thr.csv'
 exp_ave_path = f'{exp_path}/MASTER_exp_ave_thr.csv'
 err_path = f'{exp_path}/MASTER_ave_thr_error_SE.csv'
 n_trimmed = None
-exp_ave=True
+exp_ave = True
 
 make_average_plots(all_df_path=all_df_path,
                    ave_df_path=exp_ave_path,
                    error_bars_path=err_path,
-                   # error_type='SE',
                    n_trimmed=n_trimmed,
                    exp_ave=exp_ave,
                    show_plots=True, verbose=True)

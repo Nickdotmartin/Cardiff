@@ -338,7 +338,7 @@ for step in range(n_trials_per_stair):
     np.random.shuffle(stairs)
     for thisStair in stairs:
 
-        print(f"step: {step}, thisStair: {thisStair}")
+        print(f"\nstep: {step}, thisStair: {thisStair}")
 
         trial_number = trial_number + 1
         trialClock.reset()

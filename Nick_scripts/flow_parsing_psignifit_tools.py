@@ -193,7 +193,7 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.5,
     options = dict()  # initialize as an empty dict
 
     options['sigmoidName'] = sig_name  # 'norm'  # 'logistic'
-    options['expType'] = 'nAFC'
+    options['expType'] = '2AFC'
     options['expN'] = 2
     options['estimateType'] = est_type  # 'mean'  # 'MAP'  'mean'
 
@@ -206,7 +206,7 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.5,
     options['threshPC'] = target_threshold
 
     if verbose:
-        print(f'data_np:\n{data_np}')
+        print(f'data_np ([stimulus level | nCorrect | ntotal]):\n{data_np}')
         print(f'options (dict): {options}')
 
     # results
@@ -219,7 +219,21 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.5,
                 print(f"{k}: {v}")
 
     # get threshold
-    threshold = ps.getThreshold(res, target_threshold)
+    # if threshold percent correct not reached, try different sigmoid
+    # threshold = ps.getThreshold(res, target_threshold)
+    try:
+        threshold = ps.getThreshold(res, target_threshold)
+    except AssertionError:  # 'The threshold percent correct is not reached by the sigmoid!'
+        print('\nChanging sigmoid to overcome assertion error')
+        if sig_name == 'norm':
+            sig_name = 'neg_gauss'
+        else:
+            sig_name = 'norm'
+        options['sigmoidName'] = sig_name
+        print(f'options (dict): {options}')
+        res = ps.psignifit(data_np, options)
+        threshold = ps.getThreshold(res, target_threshold)
+
     if options['estimateType'] == 'mean':
         threshold = round(threshold[0][0], 2)
     else:
@@ -238,26 +252,30 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.5,
         print('not making plots')
         fit_curve_plot = None
     else:
+        stair_level = bin_data_dict['stair_levels'][0]
+        if stair_level == 0:
+            stair_name = '0_fl_in_pr_out'
+        elif stair_level == 1:
+            stair_name = '1_fl_out_pr_in'
+        else:
+            raise ValueError(f'stair_level expected to be 0 or 1, not {stair_level}')
+        print(f"stair_level: {stair_level}; stair_name: {stair_name}")
+
+
         plt.figure()
-        plt.title(f"{dset_name}: stair: {bin_data_dict['stair_levels']}\n"
+        plt.title(f"{dset_name}: stair: ({stair_level}) {stair_name}\n"
                   f"threshPC: {target_threshold}, threshold: {threshold}, "
                   f"sig: {sig_name}, "
                   f"est: {est_type}")
         fit_curve_plot = ps.psigniplot.plotPsych(res, showImediate=False)
 
         if save_plot:
-            # plot_path = os.path.join(root_path, p_run_name, thr_filename)
-
             print(f'saving plot to: {save_path}{os.sep}{dset_name}_psig.png')
             plt.savefig(f'{save_path}{os.sep}{dset_name}_psig.png')
 
         if show_plot:
             plt.show()
         plt.close()
-
-    # ps.psigniplot.plotMarginal(res)
-    # ps.psigniplot.plot2D(res, 0,1)
-    # ps.psigniplot.plotPrior(res)
 
     psignifit_dict = {'data': data_np, 'csv_path': bin_data_dict['csv_path'],
                       'dset_name': dset_name,
@@ -387,7 +405,7 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
     :param stair_col: name of column containing separations: use 'stair' if there
         is no separation column.    
     :param dur_list: Default=None. list of duration values.  If None passed will use default values.
-    :param stair_list: Default=None.  List of stair values.  If None passed will use defualts.
+    :param stair_list: Default=None.  List of stair values.  If None passed will use defaults.
     :param target_threshold: Accuracy to get threshold for.
     :param cols_to_add_dict: add dictionary of columns to insert to finished df (header=key, column=value)
     :param save_name: Pass a name to save output or if None will save as 'psignifit_thresholds'.
@@ -485,7 +503,7 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
                                                                   quartile_bins=q_bins, n_bins=n_bins,
                                                                   save_np=False, target_threshold=target_threshold,
                                                                   sig_name=sig_name, est_type='MAP',
-                                                                  save_plot=False, show_plot=True,
+                                                                  save_plot=True, show_plot=True,
                                                                   verbose=verbose
                                                                   )
 

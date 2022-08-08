@@ -625,15 +625,16 @@ def plot_runs_ave_w_errors(fig_df, error_df,
     if even_spaced_x:
         x_tick_vals = list(range(len(x_tick_vals)))
 
-    # adding jitter works well if df.index are all int
-    # need to set it up to use x_tick_vals if df.index is not all int or float
-    check_idx_num = all(isinstance(x, (int, float)) for x in fig_df.index)
-    print(f'check_idx_num: {check_idx_num}')
-
-    check_x_val_num = all(isinstance(x, (int, float)) for x in x_tick_vals)
-    print(f'check_x_val_num: {check_x_val_num}')
 
     if jitter:
+        # adding jitter works well if df.index are all int
+        # need to set it up to use x_tick_vals if df.index is not all int or float
+        check_idx_num = all(isinstance(x, (int, float)) for x in fig_df.index)
+        print(f'check_idx_num: {check_idx_num}')
+
+        check_x_val_num = all(isinstance(x, (int, float)) for x in x_tick_vals)
+        print(f'check_x_val_num: {check_x_val_num}')
+
         if not all(isinstance(x, (int, float)) for x in x_tick_vals):
             x_tick_vals = list(range(len(x_tick_vals)))
 
@@ -872,8 +873,9 @@ def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'
     plt.title(fig_title)
 
     # Change legend labels for congruent and incongruent data
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles=handles, labels=labels[:-2] + ['True', 'False'])
+    if hue_var != 'stair_names':
+        handles, labels = ax.get_legend_handles_labels()
+        ax.legend(handles=handles, labels=labels[:-2] + ['True', 'False'])
 
     print(f'test save path:\n{save_path}\n{fig_savename}')
     plt.savefig(os.path.join(save_path, fig_savename))
@@ -883,7 +885,8 @@ def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'
     return fig
 
 
-def plot_diff(ave_thr_df, stair_names_col='stair_names', fig_title=None, save_path=None, save_name=None,
+def plot_diff(ave_thr_df, stair_names_col='stair_names', fig_title=None,
+              save_path=None, save_name=None,
               x_axis_isi=False, verbose=True):
     """
     Function to plot the difference between congruent and incongruent conditions.
@@ -904,7 +907,7 @@ def plot_diff(ave_thr_df, stair_names_col='stair_names', fig_title=None, save_pa
         ave_thr_df.reset_index(drop=False, inplace=True)
 
     # sort df so it is in ascending order - participant and exp dfs are in diff order to begin so this avoids that complication.
-    srtd_ave_thr_df = ave_thr_df.sort_values(by='stair_names', ascending=True)
+    srtd_ave_thr_df = ave_thr_df.sort_values(by=stair_names_col, ascending=True)
     srtd_ave_thr_df.reset_index(drop=True, inplace=True)
 
     if verbose:
@@ -912,8 +915,8 @@ def plot_diff(ave_thr_df, stair_names_col='stair_names', fig_title=None, save_pa
 
     # get rows to slice for each df
     # the should be in opposite order; e.g., cong desc 18, 6, 3...; incong asc -18, -6, -3...
-    cong_rows = sorted(srtd_ave_thr_df.index[srtd_ave_thr_df['stair_names'] >= 0].tolist(), reverse=False)
-    incong_rows = sorted(srtd_ave_thr_df.index[srtd_ave_thr_df['stair_names'] < 0].tolist(), reverse=True)
+    cong_rows = sorted(srtd_ave_thr_df.index[srtd_ave_thr_df[stair_names_col] >= 0].tolist(), reverse=False)
+    incong_rows = sorted(srtd_ave_thr_df.index[srtd_ave_thr_df[stair_names_col] < 0].tolist(), reverse=True)
     if verbose:
         print(f'\ncong_rows: {cong_rows}')
         print(f'incong_rows: {incong_rows}')
@@ -922,7 +925,7 @@ def plot_diff(ave_thr_df, stair_names_col='stair_names', fig_title=None, save_pa
     cong_df = srtd_ave_thr_df.iloc[cong_rows, :]
     incong_df = srtd_ave_thr_df.iloc[incong_rows, :]
 
-    pos_sep_list = [int(i) for i in list(cong_df['stair_names'].tolist())]
+    pos_sep_list = [int(i) for i in list(cong_df[stair_names_col].tolist())]
     cong_df.reset_index(drop=True, inplace=True)
     incong_df.reset_index(drop=True, inplace=True)
     if verbose:
@@ -934,7 +937,7 @@ def plot_diff(ave_thr_df, stair_names_col='stair_names', fig_title=None, save_pa
     # check to make sure incong_df is in correct order - e.g., if cong is asc, incong should descend.
     # if last cong is 18, last incong should be -18
     # if last cong is 0, last incong should be -.1
-    check_incong_list = [int(i) for i in list(incong_df['stair_names'].tolist())]
+    check_incong_list = [int(i) for i in list(incong_df[stair_names_col].tolist())]
     print(f'\ncheck_incong_list: {check_incong_list}')
     swap_order = False
     use_ascending = False
@@ -953,14 +956,14 @@ def plot_diff(ave_thr_df, stair_names_col='stair_names', fig_title=None, save_pa
         print("I dunno what's doing on!?")
         raise ValueError("cant get correct order for diff df")
     if swap_order:
-        incong_df = incong_df.sort_values(by='stair_names', ascending=use_ascending)
+        incong_df = incong_df.sort_values(by=stair_names_col, ascending=use_ascending)
         incong_df.reset_index(drop=True, inplace=True)
         print(f'\nincong_df: {incong_df.shape}\n{incong_df}')
 
 
     # subtract one from the other
     diff_df = cong_df - incong_df
-    diff_df.drop('stair_names', inplace=True, axis=1)
+    diff_df.drop(stair_names_col, inplace=True, axis=1)
 
     if x_axis_isi:
         diff_df = diff_df.T
@@ -977,6 +980,7 @@ def plot_diff(ave_thr_df, stair_names_col='stair_names', fig_title=None, save_pa
     if verbose:
         print(f'\ndiff_df:\n{diff_df}')
         print(f'\nx_axis_label: {x_axis_label}')
+        print(f'\nlegend_title: {legend_title}')
 
     # make plot
     fig, ax = plt.subplots(figsize=(10, 6))
@@ -1455,7 +1459,10 @@ def multi_pos_sep_per_isi(ave_thr_df, error_df,
 
 def plot_thr_heatmap(heatmap_df,
                      x_tick_labels=None,
+                     x_axis_label=None,
                      y_tick_labels=None,
+                     y_axis_label=None,
+                     heatmap_midpoint=None,
                      fig_title=None,
                      save_name=None,
                      save_path=None,
@@ -1487,9 +1494,17 @@ def plot_thr_heatmap(heatmap_df,
     if verbose:
         print(f'mean_val: {round(mean_thr, 2)}')
 
+
+    if heatmap_midpoint is None:
+        heatmap_midpoint = mean_thr
+        colourmap = sns.color_palette("Spectral", as_cmap=True)
+    else:
+        colourmap = sns.color_palette("seismic", as_cmap=True)
+    print(f"heatmap_midpoint: {heatmap_midpoint}")
+
     heatmap = sns.heatmap(data=heatmap_df,
-                          annot=True, center=mean_thr,
-                          cmap=sns.color_palette("Spectral", as_cmap=True),
+                          annot=True, center=heatmap_midpoint,
+                          cmap=colourmap,
                           xticklabels=x_tick_labels, yticklabels=y_tick_labels)
 
     # keep y ticks upright rather than rotates (90)
@@ -1498,12 +1513,16 @@ def plot_thr_heatmap(heatmap_df,
     # add central mirror symmetry line
     plt.axvline(x=6, color='grey', linestyle='dashed')
 
-    if 'ISI' in str(x_tick_labels[0]).upper():
-        heatmap.set_xlabel('ISI')
-        heatmap.set_ylabel('Separation')
+    if x_axis_label is None:
+        if 'ISI' in str(x_tick_labels[0]).upper():
+            heatmap.set_xlabel('ISI')
+            heatmap.set_ylabel('Separation')
+        else:
+            heatmap.set_xlabel('Separation')
+            heatmap.set_ylabel('ISI')
     else:
-        heatmap.set_xlabel('Separation')
-        heatmap.set_ylabel('ISI')
+        heatmap.set_xlabel(x_axis_label)
+        heatmap.set_ylabel(y_axis_label)
 
     if fig_title is not None:
         plt.title(fig_title)
