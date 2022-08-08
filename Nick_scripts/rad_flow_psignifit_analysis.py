@@ -2515,6 +2515,8 @@ def e_average_exp_data(exp_path, p_names_list,
                        error_type='SE',
                        n_trimmed=None,
                        verbose=True):
+
+    # todo: if necessary, have a separate function to transform data before feeding it into here.
     """
     e_average_over_participants: take MASTER_ave_TM_thresh.csv (or MASTER_ave_thresh.csv)
     in each participant folder and make master list
@@ -2551,6 +2553,8 @@ def e_average_exp_data(exp_path, p_names_list,
      - loop through participants and get each MASTER_ave_TM_thresh.csv
     Make master sheets: MASTER_exp_thr and MASTER_exp_ave_thr."""
 
+    print(f"p_names_list: {p_names_list}")
+
     all_p_ave_list = []
     for p_idx, p_name in enumerate(p_names_list):
 
@@ -2561,12 +2565,13 @@ def e_average_exp_data(exp_path, p_names_list,
         this_ave_df_path = os.path.join(exp_path, p_name, f'{ave_df_name}.csv')
         # # if trimmed mean doesn't exists (e.g., because participant hasn't done 12 runs)
         if not os.path.isfile(this_ave_df_path):
+            print(f"Couldn't find trimmed mean data for {p_name}\nUsing untrimmed instead.")
             this_ave_df_path = os.path.join(exp_path, p_name, 'MASTER_ave_thresh.csv')
 
         this_p_ave_df = pd.read_csv(this_ave_df_path)
 
         if verbose:
-            print(f'{p_idx}. {p_name} - this_p_ave_df:\n{this_p_ave_df}')
+            print(f'\n{p_idx}. {p_name} - this_p_ave_df:\n{this_p_ave_df}')
 
         if 'Unnamed: 0' in list(this_p_ave_df):
             this_p_ave_df.drop('Unnamed: 0', axis=1, inplace=True)
@@ -2739,7 +2744,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     # if I delete this messy plot, I can also delete the function that made it.
     plot_runs_ave_w_errors(fig_df=ave_w_sep_idx_df, error_df=error_bars_df,
-                           jitter=True, error_caps=True, alt_colours=False,
+                           jitter=.1, error_caps=True, alt_colours=False,
                            legend_names=isi_name_list,
                            x_tick_vals=stair_names_list,
                            x_tick_labels=stair_names_labels,
@@ -2760,14 +2765,14 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                        f'Bars=.68 CI'
         fig_1b_savename = f'ave_thr_all_runs_sep.png'
 
-        # tod: It also seems that using evenly_spaced_x is fuckng it up.  Not sure why.
+        # tod: It also seems that using evenly_spaced_x is messing it up.  Not sure why.
 
     plot_w_errors_either_x_axis(wide_df=all_df, cols_to_keep=['congruent', 'separation'],
                                 cols_to_change=isi_name_list,
                                 cols_to_change_show=thr_col, new_col_name='ISI',
                                 strip_from_cols='ISI_', x_axis='ISI', y_axis=thr_col,
                                 hue_var='separation', style_var='congruent', style_order=[1, -1],
-                                error_bars=True, even_spaced_x=True, jitter=.01,
+                                error_bars=True, even_spaced_x=True, jitter=.05,
                                 fig_title=fig_1b_title, fig_savename=fig_1b_savename,
                                 save_path=save_path, x_tick_vals=isi_name_list, verbose=verbose)
     if show_plots:
@@ -2792,7 +2797,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                                 hue_var='ISI', style_var='congruent', style_order=[1, -1],
                                 error_bars=True,
                                 log_scale=False,
-                                even_spaced_x=True, jitter=.1,
+                                even_spaced_x=True, jitter=.05,
                                 fig_title=fig_1c_title, fig_savename=fig_1c_savename,
                                 x_tick_vals=[0, 1, 2, 3, 6, 18], save_path=save_path, verbose=verbose)
     if show_plots:
@@ -2801,7 +2806,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     #################
     # figure 1d multiple plots with single line.
-    print("\n\nfig_1d 1d: one ax per ISI, pos_sep, compare congruent and incongruent.")
+    print("\n\nfig_1d: one ax per ISI, pos_sep, compare congruent and incongruent.")
     if n_trimmed is not None:
         fig_1d_title = f'{ave_over} Congruent and Incongruent thresholds for each ISI (trim={n_trimmed}).\n' \
                        f'Bars=SE'

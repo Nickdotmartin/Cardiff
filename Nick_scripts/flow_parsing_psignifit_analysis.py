@@ -2241,6 +2241,9 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                        n_trimmed=False,
                        exp_ave=False,
                        show_plots=True, verbose=True):
+
+    # todo: if necessary, have a separate function to transform data before feeding it into here.
+
     """Plots:
     MASTER_ave_thresh saved as ave_thr_all_runs.png
     MASTER_ave_thresh two-probe/one-probe saved as ave_thr_div_1probe.png

@@ -3,6 +3,9 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+import matplotlib.lines as mlines
+
+from rad_flow_psignifit_analysis import split_df_alternate_rows
 
 
 '''
@@ -396,7 +399,7 @@ for p_idx, participant_name in enumerate(participant_list):
     print(f'df_headers: {df_headers}')
 
     # get list of isi and stair values to loop through
-    stair_list = all_data_df['stair'].unique()
+    stair_list = all_data_df['stair_names'].unique()
     isi_list = all_data_df['ISI'].unique()
     # get isi string for column names
     isi_name_list = [f'ISI_{i}' for i in isi_list]
