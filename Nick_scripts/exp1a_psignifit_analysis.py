@@ -1969,7 +1969,8 @@ def d_average_participant(root_path, run_dir_names_list,
         if 'Unnamed: 0' in list(this_psignifit_df):
             this_psignifit_df.drop('Unnamed: 0', axis=1, inplace=True)
 
-        this_psignifit_df.drop(columns='stair', inplace=True)
+        if 'stair' in list(this_psignifit_df):
+            this_psignifit_df.drop(columns='stair', inplace=True)
 
         # split df into group1 and group2
         psig_g1_df = this_psignifit_df[this_psignifit_df['group'] == 1]

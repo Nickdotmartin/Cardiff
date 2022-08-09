@@ -33,7 +33,8 @@ expInfo = {'1_Participant': 'Nick_test',
            # 12 frames is 66ms, 29 frames is 120ms,
            '2_Probe_dur_in_frames_at_240hz': [2, 50, 100],
            '3_fps': [240, 144, 60],
-           '4_Trials_counter': [True, False]}
+           '4_Trials_counter': [True, False]
+           }
 
 # GUI
 dlg = gui.DlgFromDict(dictionary=expInfo, title=expName)

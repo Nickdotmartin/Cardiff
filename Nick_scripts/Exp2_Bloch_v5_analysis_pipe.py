@@ -22,7 +22,7 @@ print(f"convert_path1: {convert_path1}")
 exp_path = convert_path1
 
 # participant_list = ['Kim', 'Nick', 'Tony', 'Simon', 'Kris']  # 'Nick', 'bb', 'cc', 'dd', 'ee']
-participant_list = ['Simon']  # 'Nick', 'bb', 'cc', 'dd', 'ee']
+participant_list = ['Kris']  # 'Nick', 'bb', 'cc', 'dd', 'ee']
 
 n_runs = 12
 
@@ -337,7 +337,7 @@ for p_idx, participant_name in enumerate(participant_list):
 print(f'exp_path: {exp_path}')
 print('\nget exp_average_data')
 trim_n = 2
-participant_list = ['Kim', 'Nick', 'Tony', 'Simon']
+participant_list = ['Kim', 'Nick', 'Tony', 'Simon', 'Kris']
 
 e_average_exp_data(exp_path=exp_path, p_names_list=participant_list, exp_type='Bloch',
                    error_type='SE', n_trimmed=trim_n, verbose=True)

@@ -16,34 +16,44 @@ That is, do participants show adaptation to repeated radial flow motion.
 This method was suggest by Simon (From Teams > Simon, 24/03/2022).
 
 For each ISI, sep=2, plot all the congruent and incongruent staircases onto one plot,
-including a mean staircase.
+including a ave staircase.
 If there is an order effect then the staircases will diverge over time.
 
 1. loop through all conditions.
 2. load data for staircases.
-3. add data to master list for calculating mean
+3. add data to master list for calculating ave
 
 4. # two options here
 a) add data to plot in loop, one line at a time.
 b) create plot from master list with multiple lines simultaneously
 
-5. add mean lines
+5. add ave lines
 
 
 I could base process on b3_plot_staircase.  But I need to adapt it.
 Don't show final thr hline
 Don't have multiple panels
-(although I could do all stairs and mean on different plots if its too busy)
+(although I could do all stairs and ave on different plots if its too busy)
 '''
 
 
-exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2"
+# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2"
+exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\exp1a_data"
 exp_path = os.path.normpath(exp_path)
-participant_list = ['Simon']  # , 'Nick', 'Simon']
+# participant_list = ['Nick', 'Simon']
+participant_list = ['aa']
 
-stair_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-all_isi_list = [1, 4, 6, 9]
+# stair_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+stair_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+
+# all_isi_list = [1, 4, 6, 9]
+all_isi_list = [-1, 0, 1, 2, 4, 6, 9, 12, 24]
 all_isi_names_list = [f'ISI_{i}' for i in all_isi_list]
+
+get_median = True
+ave_type = 'mean'
+if get_median:
+    ave_type = 'median'
 
 verbose = True
 show_plots = False
@@ -97,7 +107,9 @@ for p_idx, participant_name in enumerate(participant_list):
         p_name = participant_name
         p_name = f'{participant_name}_{r_idx_plus}'
 
-        run_data_path = os.path.join(save_path, 'ALL_ISIs_sorted.xlsx')
+        # run_data_path = os.path.join(save_path, 'ALL_ISIs_sorted.xlsx')
+        run_data_path = os.path.join(save_path, 'RUNDATA-SORTED.xlsx')
+
         run_data_df = pd.read_excel(run_data_path, engine='openpyxl',
                                     usecols=["stair", "step",
                                              "ISI", "separation",
@@ -119,10 +131,10 @@ for p_idx, participant_name in enumerate(participant_list):
 
     '''
     Part 2 - 
-    1. Calculate mean thr for each step for congruent and incongruent data.
+    1. Calculate ave thr for each step for congruent and incongruent data.
     2. loop through MASTER_p_trial_data_df for each ISI/sep combination.
     3. make plot showing all 12 congruent and incongruent staircases on the same plot (different colours)
-    and mean cong and incong ontop.
+    and ave cong and incong ontop.
     '''
 
     MASTER_p_trial_data_df = pd.read_csv(os.path.join(root_path, f'MASTER_p_trial_data_df.csv'))
@@ -154,17 +166,20 @@ for p_idx, participant_name in enumerate(participant_list):
             # initialise plot
             fig, ax = plt.subplots()
 
-            # # get mean values for each step
+            # # get ave values for each step
             this_sep_df = sep_df[['stack', 'step', 'congruent', 'probeLum']]
             print(f"this_sep_df ({this_sep_df.shape}):\n{this_sep_df}")
-            mean_step_thr_df = this_sep_df.groupby(['congruent', 'step'], sort=False).mean()
-            mean_step_thr_df.reset_index(drop=False, inplace=True)
-            mean_step_thr_df.drop('stack', axis=1, inplace=True)
-            print(f"mean_step_thr_df ({mean_step_thr_df.shape}):\n{mean_step_thr_df}")
-            wide_mean_step_thr_df = mean_step_thr_df.pivot(index='step', columns='congruent', values='probeLum')
+            if get_median:
+                ave_step_thr_df = this_sep_df.groupby(['congruent', 'step'], sort=False).median()
+            else:
+                ave_step_thr_df = this_sep_df.groupby(['congruent', 'step'], sort=False).mean()
+            ave_step_thr_df.reset_index(drop=False, inplace=True)
+            ave_step_thr_df.drop('stack', axis=1, inplace=True)
+            print(f"ave_step_thr_df ({ave_step_thr_df.shape}):\n{ave_step_thr_df}")
+            wide_ave_step_thr_df = ave_step_thr_df.pivot(index='step', columns='congruent', values='probeLum')
             column_names = ['Incongruent', 'Congruent']
-            wide_mean_step_thr_df.columns = column_names
-            print(f"wide_mean_step_thr_df ({wide_mean_step_thr_df.shape}):\n{wide_mean_step_thr_df}")
+            wide_ave_step_thr_df.columns = column_names
+            print(f"wide_ave_step_thr_df ({wide_ave_step_thr_df.shape}):\n{wide_ave_step_thr_df}")
 
 
             stack_list = sep_df['stack'].unique()
@@ -192,10 +207,10 @@ for p_idx, participant_name in enumerate(participant_list):
                 for idx, name in enumerate(column_names):
 
                     my_colour = 'pink'
-                    mean_colour = 'red'
+                    ave_colour = 'red'
                     if name == 'Congruent':
                         my_colour = 'lightblue'
-                        mean_colour = 'blue'
+                        ave_colour = 'blue'
 
                     # # make plot
                     ax.errorbar(x=list(range(25)), y=wide_df[name],
@@ -203,7 +218,7 @@ for p_idx, participant_name in enumerate(participant_list):
                                 # capsize=cap_size,
                                 color=my_colour
                                 )
-                    fig.suptitle(f"All run stairs\n{participant_name}: ISI{isi}, sep{sep}")
+                    fig.suptitle(f"All run stairs\n{participant_name} with {ave_type}: ISI{isi}, sep{sep}")
 
                     ax.set_xlabel('step (25 per condition, per run)')
                     ax.set_ylabel('ProbeLum')
@@ -211,16 +226,16 @@ for p_idx, participant_name in enumerate(participant_list):
             for idx, name in enumerate(column_names):
 
                 my_colour = 'pink'
-                mean_colour = 'red'
+                ave_colour = 'red'
                 if name == 'Congruent':
                     my_colour = 'lightblue'
-                    mean_colour = 'blue'
+                    ave_colour = 'blue'
 
                 # # make plot
-                ax.errorbar(x=list(range(25)), y=wide_mean_step_thr_df[name],
+                ax.errorbar(x=list(range(25)), y=wide_ave_step_thr_df[name],
                             # marker='.', lw=2, elinewidth=.7,
                             # capsize=cap_size,
-                            color=mean_colour
+                            color=ave_colour
                             )
 
 
@@ -233,72 +248,26 @@ for p_idx, participant_name in enumerate(participant_list):
                                     # marker='o',
                                     # linestyle="dotted",
                                     markersize=4, label='Incongruent')
-                mean_cong_line = mlines.Line2D([], [], color='red',
-                                          marker=None,
-                                          linewidth=.5,
-                                          label='Congruent (mean)')
-                mean_incong_line = mlines.Line2D([], [], color='blue',
-                                          marker=None,
-                                          linewidth=.5,
-                                          label='Incongruent (mean)')
-                ax.legend(handles=[st1, mean_cong_line, st2, mean_incong_line], fontsize=6)
+                ave_cong_line = mlines.Line2D([], [], color='red',
+                                              marker=None,
+                                              linewidth=.5,
+                                              label=f'Congruent ({ave_type})')
+                ave_incong_line = mlines.Line2D([], [], color='blue',
+                                                marker=None,
+                                                linewidth=.5,
+                                                label=f'Incongruent ({ave_type})')
+                ax.legend(handles=[st1, ave_cong_line, st2, ave_incong_line], fontsize=6)
 
-            save_name = f"all_run_stairs_{participant_name}_isi{isi}_sep{sep}.png"
+            if get_median:
+                save_name = f"all_run_stairs_{participant_name}_isi{isi}_sep{sep}_median.png"
+            else:
+                save_name = f"all_run_stairs_{participant_name}_isi{isi}_sep{sep}_mean.png"
+
             print(save_name)
             plt.savefig(os.path.join(root_path, save_name))
 
             plt.show()
 
-
-
-
-
-        # plot_order_effects(run_data_path, thr_col='probeLum', show_plots=show_plots, verbose=verbose)
-
-    # # not sure I actually want to use trimmed means?
-    # trim_n = None
-    # if len(run_folder_names) == 12:
-    #     trim_n = 2
-    # print(f'\ntrim_n: {trim_n}')
-    #
-    # all_df_path = os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv')
-    # p_ave_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv')
-    # err_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thr_error_SE.csv')
-    # if trim_n is None:
-    #     all_df_path = os.path.join(root_path, f'MASTER_psignifit_thresholds.csv')
-    #     p_ave_path = os.path.join(root_path, 'MASTER_ave_thresh.csv')
-    #     err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
-    #
-    # all_df = pd.read_csv(all_df_path)
-    # print(f'all_df: {all_df}')
-    #
-    # '''
-    # I guess this is the stuff that I can actually wrap into a function.
-    # goes after d_average_participants.
-    # But it needs to use all of the data that goes into getting psignifit threshold,
-    # not the thresholds themselves'''
-    #
-    # all_data_df = all_df
-    #
-    # df_headers = list(all_data_df)
-    # print(f'df_headers: {df_headers}')
-    #
-    # # get list of isi and stair values to loop through
-    # stair_list = all_data_df['stair_names'].unique()
-    # isi_list = all_data_df['ISI'].unique()
-    # # get isi string for column names
-    # isi_name_list = [f'ISI_{i}' for i in isi_list]
-    #
-    # trials, columns = np.shape(all_data_df)
-    # trials_per_stair = int(trials / len(isi_list) / len(stair_list))
-    #
-    # if verbose:
-    #     print(f"all_data_df:\n{all_data_df}")
-    #     print(f"{len(isi_list)} isi values and {len(stair_list)} stair values")
-    #     print(f"isi_list: {isi_list}")
-    #     print(f"isi_name_list: {isi_name_list}")
-    #     print(f"stair_list: {stair_list}")
-    #     print(f"trials_per_stair: {trials_per_stair}")
 
 
 
