@@ -32,7 +32,7 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'Asus_VG24'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
+monitor_name = 'asus_cal'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 # gamma set at 2.1  [####### this comment is incorrect, its set above i think ############]
 
 display_number = 1  # 0 indexed, 1 for external display
@@ -42,10 +42,10 @@ display_number = 1  # 0 indexed, 1 for external display
 # Store info about the experiment session
 expName = 'EXP1_direction_detection_2AFC'  # from the Builder filename that created this script
 
-expInfo = {'1. Participant': 'Nick_test',
-           '1. run_number': '1',
+expInfo = {'1. Participant': 'Nick',
+           '1. run_number': '2',
            '2. Probe duration in frames at 240hz': [2, 50, 100],
-           '3. fps': [60, 144, 240],
+           '3. fps': [240, 60, 144],
            '4_Trials_counter': [True, False]
            # '4. ISI duration in frame': [0, 2, 4, 6, 9, 12, 24, -1],
            # '5. Probe orientation': ['tangent'],
@@ -79,11 +79,13 @@ trials_counter = expInfo['4_Trials_counter']
 # VARIABLES
 # Distances between probes (spatioally and temporally)
 '''Sort separation and ISI types'''
-separations = [0, 1, 2, 3, 6, 18]
+# separations = [0, 1, 2, 3, 6, 18]
+separations = [0, 2, 4, 6]
 # separations = [0, 6]
 print(f'separations: {separations}')
 # # I also have two ISI types
-ISI_values = [-1, 0, 2, 4, 6, 9, 12, 24]
+# ISI_values = [-1, 0, 2, 4, 6, 9, 12, 24]
+ISI_values = [0, 2, 4, 6]
 # ISI_values = [6]
 print(f'ISI_values: {ISI_values}')
 # repeat separation values for each ISI e.g., [0, 0, 6, 6]
@@ -289,13 +291,13 @@ if trials_counter:
     trials_counter.color = 'white'
 
 # BREAKS
-take_break = 76
+take_break = 81
 total_n_trials = int(n_trials_per_stair * n_stairs)
 # take_break = int(total_n_trials/2)+1
 print(f"take_break every {take_break} trials.")
 breaks = visual.TextStim(win=win, name='breaks',
                          # text="turn on the light and take at least 30-seconds break.",
-                         text="Break\n"
+                         text="Break\nTurn on the light and take at least 30-seconds break.\n"
                               "Remember, if you are not sure, just guess!\n"
                               "Keep focussed on the circle in the middle of the screen.",
                          font='Arial', pos=[0, 0], height=20, ori=0, color=[255, 255, 255],
@@ -311,6 +313,8 @@ while not event.getKeys():
     fixation.setRadius(3)
     fixation.draw()
     instructions.draw()
+    trials_counter.text = f"0/{total_n_trials}"
+    trials_counter.draw()
     win.flip()
 
 # STAIRCASE
@@ -555,10 +559,10 @@ for step in range(n_trials_per_stair):
 
                         # direction in which the probe jumps : 1=Anti-clockwise, -1=Clockwise
                         # target_jump = random.choice([1, -1])
-                        if target_jump == -1:
+                        if actual_motion == -1:
                             if resp.keys == 'a':
                                 resp.corr = 1
-                        elif target_jump == 1:
+                        elif actual_motion == 1:
                             if resp.keys == 'c':
                                 resp.corr = 1
 

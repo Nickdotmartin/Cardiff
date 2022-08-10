@@ -29,7 +29,7 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'HP_24uh'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
+monitor_name = 'asus_cal'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 # gamma set at 2.1  [####### this comment is incorrect, it's set above i think ############]
 
 display_number = 1  # 0 indexed, 1 for external display
@@ -39,9 +39,9 @@ expName = 'EXP1_sep4_5'  # from the Builder filename that created this script
 
 # todo: change dict keys (ISI str to int?) once I've looked at analysis
 expInfo = {'1. Participant': 'Nick_test',
-           'run_number': '1',
+           'run_number': '2',
            '2. Probe duration in frames at 240hz': [2, 50, 100],
-           '3. fps': [60, 144, 240],
+           '3. fps': [240, 60, 144],
            # '4. ISI duration in frame': [0, 2, 4, 6, 9, 12, 24, -1],
            # '5. Probe orientation': ['tangent'],
            # '6. Probe size': ['5pixels', '6pixels', '3pixels'],
@@ -269,12 +269,23 @@ instructions = visual.TextStim(win=win, name='instructions',
                                font='Arial', height=20,
                                color='white')
 
+# Trial counter
+trials_counter = visual.TextStim(win=win, name='trials_counter', text="???",
+                                 font='Arial', height=20,
+                                 # default set to black (e.g., invisible)
+                                 color='black',
+                                 pos=[-widthPix*.45, -heightPix*.45])
+if trials_counter:
+    # if trials counter yes, change colour to white.
+    trials_counter.color = 'white'
+
 # BREAKS
-take_break = 76
+take_break = 100
+total_n_trials = int(n_trials_per_stair * n_stairs)
 print(f"take_break every {take_break} trials.")
 breaks = visual.TextStim(win=win, name='breaks',
                          # text="turn on the light and take at least 30-seconds break.",
-                         text="Break\n"
+                         text="Break\nTurn on the light and take at least 30-seconds break.\n"
                               "Remember, if you don't see the flash, just guess!\n"
                               "Keep focussed on the circle in the middle of the screen.",
                          font='Arial', pos=[0, 0], height=20, ori=0, color=[255, 255, 255],
@@ -290,6 +301,8 @@ while not event.getKeys():
     fixation.setRadius(3)
     fixation.draw()
     instructions.draw()
+    trials_counter.text = f"0/{total_n_trials}"
+    trials_counter.draw()
     win.flip()
 
 # STAIRCASE
@@ -484,6 +497,8 @@ for step in range(n_trials_per_stair):
                 if t_fixation >= frameN > 0:
                     fixation.setRadius(3)
                     fixation.draw()
+                    trials_counter.text = f"{trial_number}/{total_n_trials}"
+                    trials_counter.draw()
 
                 # PROBE 1
                 if t_interval_1 >= frameN > t_fixation:
@@ -494,11 +509,13 @@ for step in range(n_trials_per_stair):
                             probe2.draw()
                     fixation.setRadius(3)
                     fixation.draw()
+                    trials_counter.draw()
 
                 # ISI
                 if t_ISI >= frameN > t_interval_1:
                     fixation.setRadius(3)
                     fixation.draw()
+                    trials_counter.draw()
 
                 # PROBE 2
                 if t_interval_2 >= frameN > t_ISI:
@@ -507,11 +524,13 @@ for step in range(n_trials_per_stair):
                             probe2.draw()
                     fixation.setRadius(3)
                     fixation.draw()
+                    trials_counter.draw()
 
                 # ANSWER
                 if frameN > t_interval_2:
                     fixation.setRadius(2)
                     fixation.draw()
+                    trials_counter.draw()
 
                     # ANSWER
                     resp = event.BuilderKeyResponse()

@@ -27,19 +27,19 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'HP_24uh'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz'
+monitor_name = 'asus_cal'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz'
 display_number = 1  # 0 indexed, 1 for external display
 
 # Store info about the experiment session
 expName = 'Exp1_speed_detection'  # from the Builder filename that created this script
 
 
-expInfo = {'1_Participant_name': 'Nicktest',
-           '2_run_number': 1,
-           '3_fps': [60, 240, 144, 60],
+expInfo = {'1_Participant_name': 'Nick',
+           '2_run_number': 2,
+           '3_fps': [240, 60, 144],
            # to compare with exp 1 ISIs use [1, 4, 6, 9]
            # to compare with probes + ISIs use [5, 8, 10, 13],
-           '4_Probe duration in frames': [4, 1, 4, 6, 9, 5, 8, 10, 13, 24],  # ['12', '3', '6', '12', '18', '24', '30', '36', '120'],
+           '4_Probe duration in frames': [4, 5, 8, 10, 13, 1, 4, 6, 9, 24],  # ['12', '3', '6', '12', '18', '24', '30', '36', '120'],
            # '5_prelim_bg_flow_ms': [0, 70],
            '7_Trials_counter': [True, False],
            # '8_Background': ['None', 'flow_rad', ],
@@ -301,6 +301,13 @@ end_of_exp = visual.TextStim(win=win, name='end_of_exp',
                                   "Press any key to return to the desktop.",
                              font='Arial', height=20)
 
+while not event.getKeys():
+    fixation.setRadius(3)
+    fixation.draw()
+    instructions.draw()
+    trials_counter.text = f"0/{total_n_trials}"
+    trials_counter.draw()
+    win.flip()
 
 # STAIRCASE
 expInfo['stair_list'] = list(range(n_stairs))
