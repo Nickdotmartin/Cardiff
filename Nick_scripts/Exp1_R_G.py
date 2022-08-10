@@ -43,7 +43,6 @@ expInfo = {'1. Participant': 'Nick_test',
            '2. Probe duration in frames at 240hz': [2, 50, 100],
            '3. fps': [60, 144, 240],
            '4_Trials_counter': [True, False]
-
            # '4. ISI duration in frame': [0, 2, 4, 6, 9, 12, 24, -1],
            # '5. Probe orientation': ['tangent'],
            # '6. Probe size': ['5pixels', '6pixels', '3pixels'],
@@ -69,7 +68,6 @@ probe_ecc = 4
 fps = int(expInfo['3. fps'])
 orientation = 'tangent'  # expInfo['5. Probe orientation']
 trials_counter = expInfo['4_Trials_counter']
-
 # ISI durations, -1 correspond to simultaneous probes
 # ISI = int(expInfo['4. ISI duration in frame'])
 
@@ -256,9 +254,9 @@ probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
              (1, -2), (-1, -2), (-1, -1), (0, -1)]
 
 probe1R = visual.ShapeStim(win, vertices=probeVert, fillColor=[255, 0, 0],
-                          lineWidth=0, opacity=1, size=1, interpolate=False)
+                           lineWidth=0, opacity=1, size=1, interpolate=False)
 probe2G = visual.ShapeStim(win, vertices=probeVert, fillColor=[0, 255, 0],
-                          lineWidth=0, opacity=1, size=1, interpolate=False)
+                           lineWidth=0, opacity=1, size=1, interpolate=False)
 
 # MOUSE - hide cursor
 myMouse = event.Mouse(visible=False)
@@ -620,7 +618,7 @@ for step in range(n_trials_per_stair):
         thisStair.newValue(resp.corr)   # so that the staircase adjusts itself
 
 
-print("end of exp loop, saving data")
+print("end of experiment loop, saving data")
 thisExp.close()
 
 while not event.getKeys():

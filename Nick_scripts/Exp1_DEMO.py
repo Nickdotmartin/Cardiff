@@ -44,6 +44,7 @@ expInfo = {'1. Participant': 'p1',
            'run_number': '1',
            '2. Probe duration in frames at 240hz': [2, 50, 100],
            '3. fps': [60, 144, 240],
+           '4_Trials_counter': [True, False]
            # '4. ISI duration in frame': [0, 2, 4, 6, 9, 12, 24, -1],
            # '5. Probe orientation': ['tangent'],
            # '6. Probe size': ['5pixels', '6pixels', '3pixels'],
@@ -63,11 +64,12 @@ expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
 # GUI SETTINGS
 participant_name = expInfo['1. Participant']
 run_number = int(expInfo['run_number'])
-trial_number = 25
+n_trials_per_stair = 25
 probe_duration = int(expInfo['2. Probe duration in frames at 240hz'])
 probe_ecc = 4
 fps = int(expInfo['3. fps'])
 orientation = 'tangent'  # expInfo['5. Probe orientation']
+trials_counter = expInfo['4_Trials_counter']
 # ISI durations, -1 correspond to simultaneous probes
 # ISI = int(expInfo['4. ISI duration in frame'])
 
@@ -125,6 +127,7 @@ minColor1 = -1
 bgLumP = 20  # int(expInfo['7. Background lum in percent of maxLum'])  # 20
 bgLum = maxLum * bgLumP / 100
 bgColor255 = bgLum * LumColor255Factor
+bgColor1 = (bgColor255 * Color255Color1Factor) - 1
 
 
 # MONITOR SPEC
@@ -271,7 +274,21 @@ instructions = visual.TextStim(win=win, name='instructions',
                                font='Arial', height=20,
                                color='white')
 
+# Trial counter
+trials_counter = visual.TextStim(win=win, name='trials_counter', text="???",
+                                 font='Arial', height=20,
+                                 # default set to black (e.g., invisible)
+                                 color='black',
+                                 pos=[-widthPix*.45, -heightPix*.45])
+if trials_counter:
+    # if trials counter yes, change colour to white.
+    trials_counter.color = 'white'
+
 # BREAKS
+take_break = 76
+total_n_trials = int(n_trials_per_stair * n_stairs)
+# take_break = int(total_n_trials/2)+1
+print(f"take_break every {take_break} trials.")
 breaks = visual.TextStim(win=win, name='breaks',
                          # text="turn on the light and take at least 30-seconds break.",
                          text="Break\n"
@@ -280,6 +297,12 @@ breaks = visual.TextStim(win=win, name='breaks',
                          font='Arial', pos=[0, 0], height=20, ori=0, color=[255, 255, 255],
                          colorSpace='rgb255', opacity=1, languageStyle='LTR', depth=0.0)
 
+end_of_exp = visual.TextStim(win=win, name='end_of_exp',
+                             text="You have completed this experiment.\n"
+                                  "Thank you for your time.\n\n"
+                                  "Press any key to return to the desktop.",
+                             font='Arial', height=20)
+
 while not event.getKeys():
     fixation.setRadius(3)
     fixation.draw()
@@ -287,12 +310,11 @@ while not event.getKeys():
     win.flip()
 
 # STAIRCASE
-total_nTrials = 0
 # todo: change from list(range(1, 15)) to list(range(1, len(separations)))
-# expInfo['startPoints'] = list(range(1, 15))  # 14 staircases (14 conditions)
-expInfo['startPoints'] = list(range(n_stairs))
+# expInfo['stair_list'] = list(range(1, 15))  # 14 staircases (14 conditions)
+expInfo['stair_list'] = list(range(n_stairs))
 
-expInfo['nTrials'] = trial_number
+expInfo['n_trials_per_stair'] = n_trials_per_stair
 
 stairStart = maxLum
 miniVal = bgLum
@@ -302,12 +324,12 @@ maxiVal = maxLum
 #  then later convert to float(probeLum).  Since montior can only use int(rgb255)
 
 stairs = []
-for thisStart in expInfo['startPoints']:
+for stair_idx in expInfo['stair_list']:
 
     thisInfo = copy.copy(expInfo)
-    thisInfo['thisStart'] = thisStart
+    thisInfo['stair_idx'] = stair_idx
 
-    stair_name = stair_names_list[thisStart]
+    stair_name = stair_names_list[stair_idx]
 
 
     thisStair = Staircase(name=stair_name,
@@ -316,40 +338,36 @@ for thisStart in expInfo['startPoints']:
                           value=stairStart,
                           C=stairStart*0.6,  # typically 60% of reference stimulus
                           minRevs=3,
-                          minTrials=trial_number,
+                          minTrials=n_trials_per_stair,
                           minVal=miniVal,
                           maxVal=maxiVal,
                           targetThresh=0.75,  # changed this from prev versions
                           extraInfo=thisInfo)
     stairs.append(thisStair)
 
+trial_number = 0
 
 # EXPERIMENT
-for trialN in range(expInfo['nTrials']):
+for step in range(n_trials_per_stair):
     shuffle(stairs)
     for thisStair in stairs:
 
         # conditions
         # separation experiment #################################################
 
-        stairNum = thisStair.extraInfo['thisStart']
+        stair_idx = thisStair.extraInfo['stair_idx']
 
-        print(f"\n{trialN}. stairNum: {stairNum}, thisStair: {thisStair},  trialN: {trialN}")
+        print(f"\ntrial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
 
-        # sep = separations[thisStair.extraInfo['thisStart']-1]
-        sep = sep_vals_list[stairNum]
+        # sep = separations[thisStair.extraInfo['stair_idx']-1]
+        sep = sep_vals_list[stair_idx]
 
-        ISI = ISI_vals_list[stairNum]
+        ISI = ISI_vals_list[stair_idx]
 
         print(f"ISI: {ISI}, sep: {sep}")
 
 
         # direction in which the probe jumps : CW or CCW
-        # todo: should I remove code for if target_jump == 9?
-        '''original script for reset probe orientation has 3 possible values: 1, -1 or 9. 
-        I guess this is useless as there are only two choices here.
-                        elif target_jump == 9:
-                    probe1.ori = random.choice([0, 180])'''
 
         target_jump = random.choice([1, -1])
         # staircase varied probeLum
@@ -359,7 +377,7 @@ for trialN in range(expInfo['nTrials']):
 
         print(f"probeLum: {probeLum}")
 
-        total_nTrials = total_nTrials + 1
+        trial_number = trial_number + 1
 
         # Black or White
         probe1.color = [probeColor1, probeColor1*redfilter, probeColor1*redfilter]
@@ -389,8 +407,6 @@ for trialN in range(expInfo['nTrials']):
                     probe1.ori = 180
                     probe2.ori = 0
                     probe2.pos = [p1_x + sep-1, p1_y - sep]
-                elif target_jump == 9:
-                    probe1.ori = random.choice([0, 180])
         elif corner == 135:
             p1_x = x_prob * -1
             p1_y = y_prob * 1
@@ -403,8 +419,6 @@ for trialN in range(expInfo['nTrials']):
                     probe1.ori = 270
                     probe2.ori = 90
                     probe2.pos = [p1_x - sep+1, p1_y - sep]
-                elif target_jump == 9:
-                    probe1.ori = random.choice([90, 270])
         elif corner == 225:
             p1_x = x_prob * -1
             p1_y = y_prob * -1
@@ -417,8 +431,6 @@ for trialN in range(expInfo['nTrials']):
                     probe1.ori = 0
                     probe2.ori = 180
                     probe2.pos = [p1_x - sep+1, p1_y + sep]
-                elif target_jump == 9:
-                    probe1.ori = random.choice([0, 180])
         else:
             corner = 315
             p1_x = x_prob * 1
@@ -432,8 +444,6 @@ for trialN in range(expInfo['nTrials']):
                     probe1.ori = 90
                     probe2.ori = 270
                     probe2.pos = [p1_x + sep-1, p1_y + sep]
-                elif target_jump == 9:
-                    probe1.ori = random.choice([90, 270])
 
         probe1.pos = [p1_x, p1_y]
 
@@ -460,9 +470,9 @@ for trialN in range(expInfo['nTrials']):
             frameN = -1
             #
             # # display Break before trials 120 and 240
-            # if total_nTrials == 120+1 or total_nTrials == 240+1:
+            # if trial_number == 120+1 or trial_number == 240+1:
             # display Break before trial 51
-            if total_nTrials == 50 + 1:
+            if (trial_number % take_break == 1) & (trial_number > 1):
                 continueRoutine = False
                 breaks.draw()
                 win.flip()
@@ -478,6 +488,9 @@ for trialN in range(expInfo['nTrials']):
                 if t_fixation >= frameN > 0:
                     fixation.setRadius(3)
                     fixation.draw()
+                    trials_counter.text = f"{trial_number}/{total_n_trials}"
+                    trials_counter.draw()
+
 
                 # PROBE 1
                 if t_interval_1 >= frameN > t_fixation:
@@ -488,11 +501,13 @@ for trialN in range(expInfo['nTrials']):
                             probe2.draw()
                     fixation.setRadius(3)
                     fixation.draw()
+                    trials_counter.draw()
 
                 # ISI
                 if t_ISI >= frameN > t_interval_1:
                     fixation.setRadius(3)
                     fixation.draw()
+                    trials_counter.draw()
 
                 # PROBE 2
                 if t_interval_2 >= frameN > t_ISI:
@@ -501,11 +516,13 @@ for trialN in range(expInfo['nTrials']):
                             probe2.draw()
                     fixation.setRadius(3)
                     fixation.draw()
+                    trials_counter.draw()
 
                 # ANSWER
                 if frameN > t_interval_2:
                     fixation.setRadius(2)
                     fixation.draw()
+                    trials_counter.draw()
 
                     # ANSWER
                     resp = event.BuilderKeyResponse()
@@ -539,7 +556,7 @@ for trialN in range(expInfo['nTrials']):
                 if event.getKeys(keyList=["escape"]):
                     core.quit()
 
-                # redo the trial if i think i made a mistake
+                # redo the trial if I think I made a mistake
                 if event.getKeys(keyList=["r"]) or event.getKeys(keyList=['num_9']):
                     repeat = True
                     continueRoutine = False
@@ -549,9 +566,10 @@ for trialN in range(expInfo['nTrials']):
                 if continueRoutine:
                     win.flip()
 
-
-        thisExp.addData('stair', stairNum)
+        thisExp.addData('trial_number', trial_number)
+        thisExp.addData('stair', stair_idx)
         thisExp.addData('stair_name', stair_name)
+        thisExp.addData('step', step)
         thisExp.addData('separation', sep)
         thisExp.addData('ISI', ISI)
         thisExp.addData('probe_jump', target_jump)
@@ -562,8 +580,24 @@ for trialN in range(expInfo['nTrials']):
         thisExp.addData('corner', corner)
         thisExp.addData('probe_ecc', probe_ecc)
         thisExp.addData('resp.rt', resp.rt)
-        thisExp.addData('total_nTrials', total_nTrials)
+        thisExp.addData('trial_number', trial_number)
         thisExp.addData('orientation', orientation)
+        thisExp.addData('expName', expName)
+        thisExp.addData('monitor_name', monitor_name)
+        thisExp.addData('selected_fps', fps)
         thisExp.nextEntry()
 
         thisStair.newValue(resp.corr)   # so that the staircase adjusts itself
+
+
+print("end of experiment loop, saving data")
+thisExp.close()
+
+while not event.getKeys():
+    # display end of experiment screen
+    end_of_exp.draw()
+    win.flip()
+else:
+    # close and quit once a key is pressed
+    win.close()
+    core.quit()
