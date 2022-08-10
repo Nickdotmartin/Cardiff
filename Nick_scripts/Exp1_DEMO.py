@@ -41,7 +41,7 @@ expName = 'EXP1_DEMO'  # from the Builder filename that created this script
 
 # todo: change dict keys (ISI str to int?) once I've looked at analysis
 expInfo = {'1. Participant': 'p1',
-           'run_number': '1',
+           '1. run_number': '1',
            '2. Probe duration in frames at 240hz': [2, 50, 100],
            '3. fps': [60, 144, 240],
            '4_Trials_counter': [True, False]
@@ -63,7 +63,7 @@ expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
 
 # GUI SETTINGS
 participant_name = expInfo['1. Participant']
-run_number = int(expInfo['run_number'])
+run_number = int(expInfo['1. run_number'])
 n_trials_per_stair = 25
 probe_duration = int(expInfo['2. Probe duration in frames at 240hz'])
 probe_ecc = 4
@@ -77,9 +77,11 @@ trials_counter = expInfo['4_Trials_counter']
 # VARIABLES
 # Distances between probes (spatioally and temporally)
 '''Sort separation and ISI types'''
+# separations = [0, 1, 2, 3, 6, 18]
 separations = [0, 6]
 print(f'separations: {separations}')
 # # I also have two ISI types
+# ISI_values = [-1, 0, 2, 4, 6, 9, 12, 24]
 ISI_values = [-1, 6]
 print(f'ISI_values: {ISI_values}')
 # repeat separation values for each ISI e.g., [0, 0, 6, 6]
@@ -372,7 +374,7 @@ for step in range(n_trials_per_stair):
         target_jump = random.choice([1, -1])
         # staircase varied probeLum
         probeLum = thisStair.next()
-        probeColor255 = probeLum * LumColor255Factor
+        probeColor255 = int(probeLum * LumColor255Factor)
         probeColor1 = (probeColor255 * Color255Color1Factor) - 1
 
         print(f"probeLum: {probeLum}")
@@ -399,14 +401,14 @@ for step in range(n_trials_per_stair):
             p1_x = x_prob * 1
             p1_y = y_prob * 1
             if orientation == 'tangent':
-                if target_jump == 1:  # CCW
-                    probe1.ori = 0
-                    probe2.ori = 180
-                    probe2.pos = [p1_x - sep+1, p1_y + sep]
-                elif target_jump == -1:  # CW
+                if target_jump == 1:  # CW
                     probe1.ori = 180
                     probe2.ori = 0
                     probe2.pos = [p1_x + sep-1, p1_y - sep]
+                elif target_jump == -1:  # ACW
+                    probe1.ori = 0
+                    probe2.ori = 180
+                    probe2.pos = [p1_x - sep+1, p1_y + sep]
         elif corner == 135:
             p1_x = x_prob * -1
             p1_y = y_prob * 1
@@ -423,14 +425,14 @@ for step in range(n_trials_per_stair):
             p1_x = x_prob * -1
             p1_y = y_prob * -1
             if orientation == 'tangent':
-                if target_jump == 1:  # CCW
-                    probe1.ori = 180
-                    probe2.ori = 0
-                    probe2.pos = [p1_x + sep-1, p1_y - sep]
-                elif target_jump == -1:  # CW
+                if target_jump == 1:  # CW
                     probe1.ori = 0
                     probe2.ori = 180
                     probe2.pos = [p1_x - sep+1, p1_y + sep]
+                elif target_jump == -1:  # ACW
+                    probe1.ori = 180
+                    probe2.ori = 0
+                    probe2.pos = [p1_x + sep-1, p1_y - sep]
         else:
             corner = 315
             p1_x = x_prob * 1
@@ -449,18 +451,17 @@ for step in range(n_trials_per_stair):
 
         # timing in frames
         # if ISI >= 0:
-        # todo: change t_interval_1 and 2 to t_probe_1 and 2?
         t_fixation = 1 * fps
-        t_interval_1 = t_fixation + probe_duration
-        t_ISI = t_interval_1 + ISI
-        t_interval_2 = t_ISI + probe_duration
+        t_probe_1 = t_fixation + probe_duration
+        t_ISI = t_probe_1 + ISI
+        t_probe_2 = t_ISI + probe_duration
         # I presume this means almost unlimited time to respond?
-        t_response = t_interval_2 + 10000*fps
+        t_response = t_probe_2 + 10000*fps
 
         # print(f't_fixation: {t_fixation}')
-        # print(f't_interval_1: {t_interval_1}')
+        # print(f't_probe_1: {t_probe_1}')
         # print(f't_ISI: {t_ISI}')
-        # print(f't_interval_2: {t_interval_2}')
+        # print(f't_probe_2: {t_probe_2}')
         # print(f't_response: {t_response}')
         #
 
@@ -493,7 +494,7 @@ for step in range(n_trials_per_stair):
 
 
                 # PROBE 1
-                if t_interval_1 >= frameN > t_fixation:
+                if t_probe_1 >= frameN > t_fixation:
                     probe1.draw()
                     # SIMULTANEOUS CONDITION
                     if ISI == -1:
@@ -504,13 +505,13 @@ for step in range(n_trials_per_stair):
                     trials_counter.draw()
 
                 # ISI
-                if t_ISI >= frameN > t_interval_1:
+                if t_ISI >= frameN > t_probe_1:
                     fixation.setRadius(3)
                     fixation.draw()
                     trials_counter.draw()
 
                 # PROBE 2
-                if t_interval_2 >= frameN > t_ISI:
+                if t_probe_2 >= frameN > t_ISI:
                     if ISI >= 0:
                         if sep <= 18:
                             probe2.draw()
@@ -519,7 +520,7 @@ for step in range(n_trials_per_stair):
                     trials_counter.draw()
 
                 # ANSWER
-                if frameN > t_interval_2:
+                if frameN > t_probe_2:
                     fixation.setRadius(2)
                     fixation.draw()
                     trials_counter.draw()

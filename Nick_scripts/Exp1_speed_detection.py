@@ -357,7 +357,7 @@ for step in range(n_trials_per_stair):
 
         contrastprobe = 0.5
         probeLum = thisStair.next()
-        probeColor255 = probeLum * LumColor255Factor
+        probeColor255 = int(probeLum * LumColor255Factor)
         probeColor1 = (probeColor255 * Color255Color1Factor) - 1
         print(f"probeLum: {probeLum}")
 
