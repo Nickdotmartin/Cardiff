@@ -2481,20 +2481,40 @@ def d_average_participant(root_path, run_dir_names_list,
             groupby_sep_df = get_means_df.drop('stack', axis=1)
             ave_psignifit_thr_df = groupby_sep_df.groupby(['cond_type', 'dur_ms', 'ISI'], sort=False).mean()
 
-        if verbose:
-            print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
-        if error_type in [False, None]:
-            error_bars_df = None
-        elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
-            error_bars_df = groupby_sep_df.groupby(['cond_type', 'dur_ms', 'ISI'], sort=False).sem()
-        elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
-            error_bars_df = groupby_sep_df.groupby(['cond_type', 'dur_ms', 'ISI'], sort=False).std()
-        else:
-            raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
-                             f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standard_error']\n"
-                             f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
-                             f"'deviation', 'standard_deviation']")
-        print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
+            if verbose:
+                print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
+            if error_type in [False, None]:
+                error_bars_df = None
+            elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
+                error_bars_df = groupby_sep_df.groupby(['cond_type', 'dur_ms', 'ISI'], sort=False).sem()
+            elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
+                error_bars_df = groupby_sep_df.groupby(['cond_type', 'dur_ms', 'ISI'], sort=False).std()
+            else:
+                raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
+                                 f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standard_error']\n"
+                                 f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
+                                 f"'deviation', 'standard_deviation']")
+            print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
+
+        elif get_means_df.columns.to_list() == ['stack', 'probeSpeed', 'ISI_0']:
+            groupby_sep_df = get_means_df.drop('stack', axis=1)
+            ave_psignifit_thr_df = groupby_sep_df.groupby(['probeSpeed'], sort=True).mean()
+
+
+            if verbose:
+                print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
+            if error_type in [False, None]:
+                error_bars_df = None
+            elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
+                error_bars_df = groupby_sep_df.groupby(['probeSpeed'], sort=True).sem()
+            elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
+                error_bars_df = groupby_sep_df.groupby(['probeSpeed'], sort=True).std()
+            else:
+                raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
+                                 f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standard_error']\n"
+                                 f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
+                                 f"'deviation', 'standard_deviation']")
+            print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
 
     # save csv with average values
     # todo: since I added extra ISI conditions, ISI conds are not in ascending order.
