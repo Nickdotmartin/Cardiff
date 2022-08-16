@@ -2102,6 +2102,16 @@ def e_average_exp_data(exp_path, p_names_list,
 
         this_p_ave_df = pd.read_csv(f'{exp_path}{os.sep}{p_name}{os.sep}{ave_df_name}.csv')
 
+        ave_df_name = 'MASTER_ave_thresh'
+        if n_trimmed is not None:
+            ave_df_name = f'MASTER_ave_TM{n_trimmed}_thresh'
+
+        this_ave_df_path = os.path.join(exp_path, p_name, f'{ave_df_name}.csv')
+        # # if trimmed mean doesn't exists (e.g., because participant hasn't done 12 runs)
+        if not os.path.isfile(this_ave_df_path):
+            print(f"Couldn't find trimmed mean data for {p_name}\nUsing untrimmed instead.")
+            this_ave_df_path = os.path.join(exp_path, p_name, 'MASTER_ave_thresh.csv')
+
         if verbose:
             print(f'{p_idx}. {p_name} - this_p_ave_df:\n{this_p_ave_df}')
 
@@ -2240,6 +2250,7 @@ def plot_diff(ave_thr_df, stair_names_col='stair', fig_title=None,
 def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                        n_trimmed=False,
                        exp_ave=False,
+                       dur_values_list=None,
                        show_plots=True, verbose=True):
 
     # todo: if necessary, have a separate function to transform data before feeding it into here.
@@ -2291,7 +2302,8 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     else:
         error_bars_df = pd.read_csv(error_bars_path)
 
-    dur_values_list = list(all_df.columns[3:])
+    if dur_values_list is None:
+        dur_values_list = list(all_df.columns[3:])
     dur_name_list = [f'dur_{i}' for i in dur_values_list]
 
     if verbose:

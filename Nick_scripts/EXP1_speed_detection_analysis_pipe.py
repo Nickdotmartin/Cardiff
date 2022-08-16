@@ -1,8 +1,12 @@
 import os
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+
 from rad_flow_psignifit_analysis import a_data_extraction, b3_plot_staircase, c_plots, \
-    d_average_participant, e_average_exp_data, make_average_plots
+    d_average_participant, e_average_exp_data, make_average_plots, plot_w_errors_either_x_axis
+# from flow_parsing_psignifit_analysis import make_average_plots, e_average_exp_data
+
 from psignifit_tools import get_psignifit_threshold_df
 from check_home_dir import switch_path
 
@@ -17,8 +21,6 @@ exp_path = convert_path1
 print(f"exp_path: {exp_path}")
 participant_list = ['Nick']
 
-# isi_list = [-1, 0, 2, 4, 6, 9, 12, 24]
-# sep_list = [4, 5]
 probe_speed_list = [0, .25, .5, .75, 1.0, 1.5, 2.0]
 
 # make data_extraction for joining different probe durs together
@@ -66,93 +68,67 @@ for p_idx, participant_name in enumerate(participant_list):
             # # '''a'''
             p_name = f'{participant_name}_{run_idx+1}_output'  # use this one
 
+            # todo: make data extraxction script to join diffewrent probe duratons together.
             # run_data_df = a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=isi_list, verbose=True)
 
-        #     dur_data_df = pd.read_csv(os.path.join(save_path, probeDur, f'{p_name}.csv'))
-        #     column_names = list(dur_data_df)
-        #     print(f"dur_data_df:\n{dur_data_df}")
-        #
-        #     run_data.append(dur_data_df)
-        #
-        # run_data_shape = np.shape(run_data)
-        # sheets, rows, columns = np.shape(run_data)
-        # run_data = np.reshape(run_data, newshape=(sheets * rows, columns))
-        # print(f'run_data reshaped from {run_data_shape} to {np.shape(run_data)}')
-        # run_data_df = pd.DataFrame(run_data, columns=column_names)
-        # if 'Unnamed: 0' in list(run_data_df):
-        #     run_data_df.drop('Unnamed: 0', axis=1, inplace=True)
-        # print(f"run_data_df:\n{run_data_df}")
-        # save_name = 'RUNDATA-sorted.xlsx'
-        # save_excel_path = os.path.join(save_path, save_name)
-        # print(f"\nsaving run_data_df to save_excel_path:\n{save_excel_path}")
-        # run_data_df.to_excel(save_excel_path, index=False)
-        #
-        # run_data_df = pd.read_excel(save_excel_path, engine='openpyxl')
-        #
-        # run_data_df = run_data_df.sort_values(by=['stair', 'trial_number'])
-        #
-        # # todo: change psignifit top NewLum once I have new data
-        #
-        # # '''add newLum column
-        # # in old version, the experiment script varies probeLum and converts to float(RGB255) values for screen.
-        # # However, monitor can only use int(RGB255).
-        # # This function will will round RGB255 values to int(RGB255), then convert to NEW_probeLum
-        # # LumColor255Factor = 2.395387069
-        # # 1. get probeColor255 column.
-        # # 2. convert to int(RGB255) and convert to new_Lum with int(RGB255)/LumColor255Factor
-        # # 3. add to run_data_df'''
-        # # if 'newLum' not in run_data_df.columns.to_list():
-        # #     LumColor255Factor = 2.395387069
-        # #     rgb255_col = run_data_df['probeColor255'].to_list()
-        # #     newLum = [int(i) / LumColor255Factor for i in rgb255_col]
-        # #     run_data_df.insert(9, 'newLum', newLum)
-        # #     run_data_df.to_excel(os.path.join(save_path, 'RUNDATA-sorted.xlsx'), index=False)
-        # #     print(f"added newLum column\n"
-        # #           f"run_data_df: {run_data_df.columns.to_list()}")
-        #
-        #
-        # run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
-        #
-        # run_data_df = pd.read_excel(run_data_path, engine='openpyxl',
-        #                             # usecols=[
-        #                             #          'stair', 'stair_name', 'step',
-        #                             #          'probeSpeed', 'probeDur',
-        #                             #          # 'group',
-        #                             #          # 'probeLum',
-        #                             #          'newLum', 'trial_response']
-        #                             )
-        # print(f"run_data_df:\n{run_data_df}")
-        #
-        #
-        # probe_speed_list = list(run_data_df['probeSpeed'].unique())
-        # sep_list = list(run_data_df['separation'].unique())
-        # isi_list = list(run_data_df['ISI'].unique())
-        # stair_list = list(run_data_df['stair'].unique())
-        # stair_names_list = list(run_data_df['stair_name'].unique())
-        # cols_to_add_dict = {'stair': stair_list, 'stair_name': stair_names_list,
-        #                     'probeSpeed': probe_speed_list,
-        #                     'separation': sep_list, 'ISI': isi_list}
-        #
-        # '''get psignifit thresholds df - use stairs as sep levels rather than using groups'''
-        # thr_df = get_psignifit_threshold_df(root_path=root_path,
-        #                                     p_run_name=run_dir,
-        #                                     # p_run_name=p_name,
-        #                                     csv_name=run_data_df,
-        #                                     n_bins=9, q_bins=True,
-        #                                     # sep_col='stair',
-        #                                     sep_col='probeSpeed',
-        #                                     sep_list=probe_speed_list,
-        #                                     # sep_list=stair_list,
-        #                                     thr_col='probeLum',
-        #                                     isi_list=isi_list,
-        #                                     conf_int=True,
-        #                                     thr_type='Bayes',
-        #                                     plot_both_curves=False,
-        #                                     save_plots=True,
-        #                                     # cols_to_add_dict=cols_to_add_dict,
-        #                                     cols_to_add_dict=None,
-        #                                     verbose=True)
-        # print(f'thr_df:\n{thr_df}')
+            dur_data_df = pd.read_csv(os.path.join(save_path, probeDur, f'{p_name}.csv'))
+            column_names = list(dur_data_df)
+            print(f"dur_data_df:\n{dur_data_df}")
+
+            run_data.append(dur_data_df)
+
+        run_data_shape = np.shape(run_data)
+        sheets, rows, columns = np.shape(run_data)
+        run_data = np.reshape(run_data, newshape=(sheets * rows, columns))
+        print(f'run_data reshaped from {run_data_shape} to {np.shape(run_data)}')
+        run_data_df = pd.DataFrame(run_data, columns=column_names)
+        if 'Unnamed: 0' in list(run_data_df):
+            run_data_df.drop('Unnamed: 0', axis=1, inplace=True)
+        print(f"run_data_df:\n{run_data_df}")
+        save_name = 'RUNDATA-sorted.xlsx'
+        save_excel_path = os.path.join(save_path, save_name)
+        print(f"\nsaving run_data_df to save_excel_path:\n{save_excel_path}")
+        run_data_df.to_excel(save_excel_path, index=False)
+
+        run_data_df = pd.read_excel(save_excel_path, engine='openpyxl')
+
+        run_data_df = run_data_df.sort_values(by=['stair', 'trial_number'])
+
+        # todo: change psignifit top NewLum once I have new data
+
+
+
+        run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
+
+        run_data_df = pd.read_excel(run_data_path, engine='openpyxl')
+        print(f"run_data_df:\n{run_data_df}")
+
+
+        probe_speed_list = list(run_data_df['probeSpeed'].unique())
+        sep_list = list(run_data_df['separation'].unique())
+        isi_list = list(run_data_df['ISI'].unique())
+        stair_list = list(run_data_df['stair'].unique())
+        stair_names_list = list(run_data_df['stair_name'].unique())
+        cols_to_add_dict = {'stair': stair_list, 'stair_name': stair_names_list,
+                            'probeSpeed': probe_speed_list,
+                            'separation': sep_list, 'ISI': isi_list}
+
+        '''get psignifit thresholds df - use stairs as sep levels rather than using groups'''
+        thr_df = get_psignifit_threshold_df(root_path=root_path,
+                                            p_run_name=run_dir,
+                                            csv_name=run_data_df,
+                                            n_bins=9, q_bins=True,
+                                            sep_col='probeSpeed',
+                                            sep_list=probe_speed_list,
+                                            thr_col='probeLum',
+                                            isi_list=isi_list,
+                                            conf_int=True,
+                                            thr_type='Bayes',
+                                            plot_both_curves=False,
+                                            save_plots=True,
+                                            cols_to_add_dict=None,
+                                            verbose=True)
+        print(f'thr_df:\n{thr_df}')
         #
         # '''b3'''
         # run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
@@ -166,7 +142,7 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
     trim_n = None
-    if len(run_folder_names) == 6:
+    if len(run_folder_names) == 12:
         trim_n = 2
 
     print(f"\n\ntrim_n: {trim_n}, \n\n")
@@ -183,34 +159,93 @@ for p_idx, participant_name in enumerate(participant_list):
         p_ave_path = os.path.join(root_path, 'MASTER_ave_thresh.csv')
         err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
 
+    p_all_df = pd.read_csv(all_df_path)
+    print(f'p_all_df\n{p_all_df}')
+    p_ave_df = pd.read_csv(p_ave_path)
+    probe_speed_list = list(p_ave_df['probeSpeed'].unique())
+    print(f'p_ave_df\n{p_ave_df}')
+    print(f'probe_speed_list\n{probe_speed_list}')
+
     make_average_plots(all_df_path=all_df_path,
                        ave_df_path=p_ave_path,
                        error_bars_path=err_path,
-                       thr_col='newLum',
+                       # thr_col='newLum',
                        n_trimmed=trim_n,
                        exp_ave=False,  # participant ave, not exp ave
+                       dur_values_list=probe_speed_list,
                        show_plots=True, verbose=True)
 
+    save_path, df_name = os.path.split(p_ave_path)
 
-print(f'exp_path: {exp_path}')
-print('\nget exp_average_data')
-# participant_list = ['aa', 'bb', 'cc', 'dd', 'ee']
+    if trim_n is not None:
+        fig_1b_title = f'P average thresholds per stair across all runs (trim={trim_n}).\n' \
+                       f'Bars=.68 CI'
+        fig_1b_savename = f'ave_TM_thr_all_runs.png'
+    else:
+        fig_1b_title = f'P average threshold per stair across all runs\n' \
+                       f'Bars=.68 CI'
+        fig_1b_savename = f'ave_thr_all_runs.png'
+    plot_w_errors_either_x_axis(wide_df=p_all_df, cols_to_keep=['probeSpeed'],
+                                cols_to_change=['ISI_0'],
+                                cols_to_change_show='probeLum', new_col_name='ISI',
+                                strip_from_cols=None, x_axis='probeSpeed', y_axis='probeLum',
+                                hue_var=None, style_var=None, style_order=None,
+                                error_bars=True, even_spaced_x=True,
+                                x_tick_vals=probe_speed_list,
+                                jitter=False,  # .01,
+                                fig_title=fig_1b_title, fig_savename=fig_1b_savename,
+                                save_path=save_path, verbose=True)
+    plt.show()
+    plt.close()
 
-e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
-                   error_type='SE', n_trimmed=trim_n, verbose=True)
 
 
-all_df_path = os.path.join(exp_path, 'MASTER_exp_thr.csv')
-exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
-err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
+# print(f'exp_path: {exp_path}')
+# print('\nget exp_average_data')
+# # participant_list = ['aa', 'bb', 'cc', 'dd', 'ee']
+#
+# e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
+#                    error_type='SE',
+#                    n_trimmed=trim_n,
+#                    exp_type='speed_detection',
+#                    verbose=True)
+#
+#
+# all_df_path = os.path.join(exp_path, 'MASTER_exp_thr.csv')
+# exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
+# err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
+#
+# save_path, df_name = os.path.split(p_ave_path)
+#
+# if trim_n is not None:
+#     fig_1b_title = f'P average thresholds per stair across all runs (trim={trim_n}).\n' \
+#                    f'Bars=.68 CI'
+#     fig_1b_savename = f'ave_TM_thr_all_runs.png'
+# else:
+#     fig_1b_title = f'P average threshold per stair across all runs\n' \
+#                    f'Bars=.68 CI'
+#     fig_1b_savename = f'ave_thr_all_runs.png'
+# plot_w_errors_either_x_axis(wide_df=p_all_df, cols_to_keep=['probeSpeed'],
+#                             cols_to_change=['ISI_0'],
+#                             cols_to_change_show='probeLum', new_col_name='ISI',
+#                             strip_from_cols=None, x_axis='probeSpeed', y_axis='probeLum',
+#                             hue_var=None, style_var=None, style_order=None,
+#                             error_bars=True, even_spaced_x=True,
+#                             x_tick_vals=probe_speed_list,
+#                             jitter=False,  # .01,
+#                             fig_title=fig_1b_title, fig_savename=fig_1b_savename,
+#                             save_path=save_path, verbose=True)
+# plt.show()
+# plt.close()
 
-# make experiment average plots -
-make_average_plots(all_df_path=all_df_path,
-                   ave_df_path=exp_ave_path,
-                   error_bars_path=err_path,
-                   thr_col='newLum',
-                   error_type='SE',
-                   exp_ave=True,
-                   show_plots=True, verbose=True)
+#
+# # make experiment average plots -
+# make_average_plots(all_df_path=all_df_path,
+#                    ave_df_path=exp_ave_path,
+#                    error_bars_path=err_path,
+#                    thr_col='newLum',
+#                    error_type='SE',
+#                    exp_ave=True,
+#                    show_plots=True, verbose=True)
 
 print('\nexp1a_analysis_pipe finished\n')

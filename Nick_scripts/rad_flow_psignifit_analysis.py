@@ -850,7 +850,11 @@ def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'
         print(f'x_tick_vals: {x_tick_vals}')
 
     # initialize plot
-    my_colours = fig_colours(n_conditions=len(set(list(long_df[hue_var]))))
+    if hue_var is None:
+        my_colours = fig_colours(n_conditions=5)
+    else:
+        my_colours = fig_colours(n_conditions=len(set(list(long_df[hue_var]))))
+
     fig, ax = plt.subplots(figsize=(10, 6))
 
     # with error bards for d_averages example
@@ -2499,10 +2503,9 @@ def d_average_participant(root_path, run_dir_names_list,
         elif get_means_df.columns.to_list() == ['stack', 'probeSpeed', 'ISI_0']:
             groupby_sep_df = get_means_df.drop('stack', axis=1)
             ave_psignifit_thr_df = groupby_sep_df.groupby(['probeSpeed'], sort=True).mean()
-
-
             if verbose:
                 print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
+
             if error_type in [False, None]:
                 error_bars_df = None
             elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
@@ -2599,7 +2602,7 @@ def e_average_exp_data(exp_path, p_names_list,
         rows, cols = this_p_ave_df.shape
         this_p_ave_df.insert(0, 'participant', [p_name] * rows)
 
-        if exp_type in ['Ricco', 'Bloch']:
+        if exp_type in ['Ricco', 'Bloch', 'speed_detection']:
             this_p_ave_df.rename(columns={'ISI_0': 'thr'}, inplace=True)
         else:
             stair_names_list = this_p_ave_df['stair_names'].tolist()
@@ -2625,6 +2628,7 @@ def e_average_exp_data(exp_path, p_names_list,
     all_exp_thr_df.to_csv(os.path.join(exp_path, 'MASTER_exp_thr.csv'), index=False)
 
     # # get means and errors
+    print(f"exp_type: {exp_type}")
     groupby_sep_df = all_exp_thr_df.drop('participant', axis=1)
     if exp_type == 'Ricco':
         groupby_col = 'stair_names'
@@ -2633,6 +2637,9 @@ def e_average_exp_data(exp_path, p_names_list,
         groupby_sep_df['stair_names'] = groupby_sep_df['cond_type'] + "_" + groupby_sep_df["ISI"].map(str)
         groupby_sep_df = groupby_sep_df.drop('cond_type', axis=1)
         groupby_col = 'stair_names'
+        sort_rows = False
+    elif exp_type == 'speed_detection':
+        groupby_col = 'participant'
         sort_rows = False
     else:
         groupby_sep_df = groupby_sep_df.drop('separation', axis=1)
@@ -2673,6 +2680,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                        thr_col='newLum',
                        n_trimmed=False,
                        exp_ave=False,
+                       isi_name_list=None,
                        show_plots=True, verbose=True):
     """Plots:
     MASTER_ave_thresh saved as ave_thr_all_runs.png
@@ -2722,15 +2730,14 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     else:
         error_bars_df = pd.read_csv(error_bars_path)
 
-    isi_name_list = list(all_df.columns[4:])
-    isi_values_list = [i[4:] for i in isi_name_list]
+    if isi_name_list is None:
+        isi_name_list = list(all_df.columns[4:])
 
     if verbose:
         print(f'\nall_df:\n{all_df}')
         print(f'\nave_df:\n{ave_df}')
         print(f'\nerror_bars_df:\n{error_bars_df}')
-        print(f'\nisi_values_list; {isi_values_list}')
-        print(f'isi_name_list; {isi_name_list}')
+        print(f'isi_name_list: {isi_name_list}')
 
     stair_names_list = sorted(list(all_df['stair_names'].unique()))
     stair_names_list = [-.1 if i == -.10 else int(i) for i in stair_names_list]
@@ -2890,7 +2897,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     plot_thr_heatmap(heatmap_df=ave_w_sep_idx_df.T,
                      x_tick_labels=stair_names_labels,
-                     y_tick_labels=isi_values_list,
+                     y_tick_labels=isi_name_list,
                      fig_title=heatmap_title,
                      save_name=heatmap_savename,
                      save_path=save_path,

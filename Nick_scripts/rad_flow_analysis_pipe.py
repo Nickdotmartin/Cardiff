@@ -32,7 +32,7 @@ all_isi_names_list = [f'ISI_{i}' for i in all_isi_list]
 
 
 verbose = True
-show_plots = False
+show_plots = True
 
 n_runs = 12
 # if the first folder to analyse is 1, p_idx_plus = 1.  If the forst folder is 5, use 5 etc.
@@ -94,24 +94,6 @@ for p_idx, participant_name in enumerate(participant_list):
                                     #          "newLum", "trial_response"]
                                     )
         print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
-
-        # todo: I don't need newLum column!  This was to turn float(RGB255) back into int(rgb255), but these exps use float(rgb).
-        # '''add newLum column
-        #         in old version, the experiment script varies probeLum and converts to float(RGB255) values for screen.
-        #         However, monitor can only use int(RGB255).
-        #         This function will will round RGB255 values to int(RGB255), then convert to NEW_probeLum
-        #         LumColor255Factor = 2.395387069
-        #         1. get probeColor255 column.
-        #         2. convert to int(RGB255) and convert to new_Lum with int(RGB255)/LumColor255Factor
-        #         3. add to run_data_df'''
-        # if 'newLum' not in run_data_df.columns.to_list():
-        #     LumColor255Factor = 2.395387069
-        #     rgb255_col = run_data_df['probeColor255'].to_list()
-        #     newLum = [int(i) / LumColor255Factor for i in rgb255_col]
-        #     run_data_df.insert(12, 'newLum', newLum)
-        #     run_data_df.to_excel(os.path.join(save_path, 'ALL_ISIs_sorted.xlsx'), index=False)
-        #     print(f"added newLum column\n"
-        #           f"run_data_df: {run_data_df.columns.to_list()}")
 
 
         '''get psignifit thresholds df'''
@@ -192,7 +174,5 @@ make_average_plots(all_df_path=all_df_path,
                    n_trimmed=trim_n,
                    exp_ave=True,
                    show_plots=True, verbose=True)
-
-
 
 print('\nrad_flow_analysis_pipe finished')

@@ -1210,7 +1210,8 @@ def plot_8_sep_thr(all_thr_df, thr_col='newLum', exp_ave=False, fig_title=None, 
     # just_thr_df = all_thr_df.loc[:, 'ISI 999':]
     if 'Concurrent' in list(all_thr_df.columns):
         just_thr_df = all_thr_df.loc[:, 'Concurrent':]
-    elif 'ISI_-1' in list(all_thr_df.columns):
+    # elif 'ISI_-1' in list(all_thr_df.columns):
+    else:
         just_thr_df = all_thr_df.iloc[:, 2:]
 
     min_thr = just_thr_df.min().min()
@@ -2183,7 +2184,6 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                        error_type='SE',
                        exp_ave=False,
                        split_1probe=True,
-                       isi_vals_list=[-1, 0, 2, 4, 6, 9, 12, 24],
                        isi_name_list=['Concurrent', 'ISI 0', 'ISI 2', 'ISI 4',
                                        'ISI 6', 'ISI 9', 'ISI 12', 'ISI 24'],
                        sep_vals_list=[0, 1, 2, 3, 6, 18, 20],
@@ -2313,9 +2313,9 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     print(f"\nfig_1c\n")
     # check because columns names get changed somewhere.
-    if 'ISI 999' in list(all_df.columns):
-        print('Columns headers changed when making plot 1b, changing back to originals')
-        all_df.columns = all_df_headers
+    # if 'ISI 999' in list(all_df.columns):
+    #     print('Columns headers changed when making plot 1b, changing back to originals')
+    all_df.columns = all_df_headers
 
     # fig 1c, eight plots - seven showing a particular sepration, eighth showing all separations.
     if n_trimmed is not None:
@@ -2432,20 +2432,29 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
             print('finished fig2b')
 
     print(f"\nfig_3a - difference from concurrent\n")
-    if n_trimmed is not None:
-        fig3a_save_name = f'diff_from_conc_TM{n_trimmed}.png'
-        fig3a_title = f'{ave_over} ISI different in threshold from concurrent (trim={n_trimmed}).'
-    else:
-        fig3a_save_name = 'diff_from_conc.png'
-        fig3a_title = f'{ave_over} ISI different in threshold from concurrent'
-    plot_diff_from_concurrent(ave_df, div_by_1probe=False,
-                              fig_title=fig3a_title, save_name=fig3a_save_name, save_path=save_path)
-    if show_plots:
-        plt.show()
-    plt.close()
+    run_this_plot= False
+    if 'Concurrent' in list(ave_df.columns):
+        run_this_plot = True
+    elif 'ISI_-1' in list(ave_df.columns):
+        run_this_plot = True
 
-    if verbose:
-        print('finished fig3a')
+    if run_this_plot:
+
+        if n_trimmed is not None:
+            fig3a_save_name = f'diff_from_conc_TM{n_trimmed}.png'
+            fig3a_title = f'{ave_over} ISI different in threshold from concurrent (trim={n_trimmed}).'
+        else:
+            fig3a_save_name = 'diff_from_conc.png'
+            fig3a_title = f'{ave_over} ISI different in threshold from concurrent'
+        plot_diff_from_concurrent(ave_df, div_by_1probe=False,
+                                  fig_title=fig3a_title, save_name=fig3a_save_name,
+                                  save_path=save_path)
+        if show_plots:
+            plt.show()
+        plt.close()
+
+        if verbose:
+            print('finished fig3a')
 
     if split_1probe:
         print(f"\nfig_3b - difference from concurrent div1probe\n")

@@ -298,6 +298,7 @@ dotsMask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
 # function for wrapping flow_dots back into volume
 # its is used as WrapPoints(z, minDist, maxDist)
 # Any dots with a z (depth) value out of bounds are transformed to be in bounds
+# todo: Note - this function (wrapPoints) doesn't return anything so is functionally useless :(
 def WrapPoints(ii, imin, imax):
     lessthanmin = (ii < imin)
     ii[lessthanmin] = ii[lessthanmin] + (imax-imin)
