@@ -21,9 +21,6 @@ from rad_flow_psignifit_analysis import c_plots, d_average_participant, make_ave
 # exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2_half'
 # participant_list = ['Nick_half_speed', 'Simon_half']  # , 'Nick_half_speed']
 
-exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\jitter2_2'
-participant_list = ['Simon']  # , 'Nick_half_speed']
-
 exp_path = os.path.normpath(exp_path)
 
 stair_list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]

@@ -1340,7 +1340,7 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
         # load data
         this_isi_df = pd.read_csv(filepath)
         if verbose:
-            print(f"loaded csv:\n{this_isi_df.head()}")
+            print(f"loaded csv ({list(this_isi_df.columns)}):\n{this_isi_df.head()}")
 
         # remove any Unnamed columns
         if any("Unnamed" in i for i in list(this_isi_df.columns)):
@@ -1359,11 +1359,15 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
 
         # add in separation column mapped from stair_sep_dict
         sep_list = this_isi_df['stair'].map(stair_sep_dict)
-        this_isi_df.insert(2, 'separation', sep_list)
+        if 'separation' not in list(this_isi_df.columns):
+            this_isi_df.insert(2, 'separation', sep_list)
 
         # sort by group, stair, original trial number
-        trial_numbers = list(this_isi_df['total_nTrials'])
-        this_isi_df = this_isi_df.sort_values(by=['group', 'stair', 'total_nTrials'])
+        trial_num_header = 'total_nTrials'
+        if 'trial_number' in list(this_isi_df.columns):
+            trial_num_header = 'trial_number'
+        trial_numbers = list(this_isi_df[trial_num_header])
+        this_isi_df = this_isi_df.sort_values(by=['group', 'stair', trial_num_header])
         this_isi_df.insert(0, 'srtd_trial_idx', trial_numbers)
 
         if verbose:
@@ -1452,8 +1456,9 @@ def b3_plot_staircase(all_data_path, thr_col='newLum', resp_col='trial_response'
         all_data_df = pd.read_csv(all_data_path)
     else:
         all_data_df = pd.read_excel(all_data_path, engine='openpyxl',
-                                    usecols=['ISI', 'separation', 'stair', 'total_nTrials',
-                                             f'{thr_col}', 'trial_response', 'resp.rt'])
+                                    # usecols=['ISI', 'separation', 'stair', 'total_nTrials',
+                                    #          f'{thr_col}', 'trial_response', 'resp.rt']
+                                    )
 
     # get list of isi and stair values to loop through
     stair_list = all_data_df['stair'].unique()
@@ -1957,6 +1962,7 @@ def c_plots(save_path, thr_col='newLum', show_plots=True, verbose=True):
 def d_average_participant(root_path, run_dir_names_list,
                           error_type=None,
                           trim_n=None,
+                          isi_names_list=None,
                           verbose=True):
     """
     d_average_participant: take psignifit_thresholds.csv
@@ -1986,8 +1992,9 @@ def d_average_participant(root_path, run_dir_names_list,
     Incidentally the MATLAB script didn't specify which reversals data to use,
     although the figures imply Martin used last3 reversals."""
 
-    isi_name_list = ['Concurrent', 'ISI0', 'ISI2', 'ISI4',
-                     'ISI6', 'ISI9', 'ISI12', 'ISI24']
+    if isi_names_list is None:
+        isi_names_list = ['Concurrent', 'ISI0', 'ISI2', 'ISI4',
+                         'ISI6', 'ISI9', 'ISI12', 'ISI24']
 
     all_psignifit_list = []
     for run_idx, run_name in enumerate(run_dir_names_list):
@@ -2014,7 +2021,7 @@ def d_average_participant(root_path, run_dir_names_list,
             psig_g2_df.drop(columns='group', inplace=True)
             psig_g2_df.insert(0, 'stack', [run_idx*2+1] * rows)
 
-            columns_list = ['stack', 'separation'] + isi_name_list
+            columns_list = ['stack', 'separation'] + isi_names_list
             psig_g1_df.columns = columns_list
             psig_g2_df.columns = columns_list
 
