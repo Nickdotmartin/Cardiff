@@ -262,7 +262,7 @@ for p_idx, participant_name in enumerate(participant_list):
     error_df = pd.read_csv(err_path)
     wide_err_df = error_df.pivot(index=['dur_ms'], columns='cond_type', values='newLum')
     print(f'wide_err_df:\n{wide_err_df}')
-    fig_title = 'Participant average thresholds - Bloch_v5'
+    fig_title = f'Participant average thresholds - Bloch_v5 (n={len(run_folder_names)})'
     save_name = 'bloch_v5_dur_v_thr.png'
     plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
                            jitter=False, error_caps=True, alt_colours=False,
@@ -287,7 +287,7 @@ for p_idx, participant_name in enumerate(participant_list):
     wide_err_df = error_df.pivot(index=['dur_ms'], columns='cond_type', values='delta_I')
     print(f'wide_err_df:\n{wide_err_df}')
 
-    fig_title = 'Participant average log(∆I) thresholds - Bloch_v5'
+    fig_title = f'Participant average log(∆I) thresholds - Bloch_v5 (n={len(run_folder_names)})'
     save_name = 'bloch_v5_log_dur_log_contrast.png'
     plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
                            jitter=False, error_caps=True, alt_colours=False,
@@ -373,7 +373,7 @@ err_thr_by_dur_df = error_df[['dur_ms', 'newLum']]
 err_thr_by_dur_df.set_index('dur_ms', inplace=True)
 print(f'ave_thr_by_dur_df:\n{ave_thr_by_dur_df}')
 
-fig_title = 'Experiment average thresholds - Bloch_v5'
+fig_title = f'Experiment average thresholds - Bloch_v5  (n={len(participant_list)})'
 save_name = 'bloch_v5_dur_v_thr.png'
 plot_runs_ave_w_errors(fig_df=ave_thr_by_dur_df, error_df=err_thr_by_dur_df,
                        jitter=False, error_caps=True, alt_colours=False,
@@ -396,7 +396,7 @@ log_dur_log_delta_I_df.set_index('dur_ms', inplace=True)
 err_log_dur_log_delta_I_df = error_df[['dur_ms', 'delta_I']]
 err_log_dur_log_delta_I_df.set_index('dur_ms', inplace=True)
 print(f'log_dur_log_delta_I_df:\n{log_dur_log_delta_I_df}')
-fig_title = 'Experiment average log(∆I) thresholds - Bloch_v5'
+fig_title = f'Experiment average log(∆I) thresholds - Bloch_v5 (n={len(participant_list)})'
 save_name = 'bloch_v5_log_dur_log_contrast.png'
 plot_runs_ave_w_errors(fig_df=log_dur_log_delta_I_df, error_df=err_log_dur_log_delta_I_df,
                        jitter=False, error_caps=True, alt_colours=False,

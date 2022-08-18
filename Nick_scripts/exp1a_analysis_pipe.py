@@ -126,6 +126,7 @@ for p_idx, participant_name in enumerate(participant_list):
                        error_bars_path=err_path,
                        thr_col='newLum',
                        error_type='SE',
+                       ave_over_n=len(run_folder_names),
                        n_trimmed=trim_n,
                        exp_ave=False,  # participant ave, not exp ave
                        show_plots=True, verbose=True)
@@ -149,6 +150,7 @@ make_average_plots(all_df_path=all_df_path,
                    error_bars_path=err_path,
                    thr_col='newLum',
                    error_type='SE',
+                   ave_over_n=len(participant_list),
                    exp_ave=True,
                    show_plots=True, verbose=True)
 

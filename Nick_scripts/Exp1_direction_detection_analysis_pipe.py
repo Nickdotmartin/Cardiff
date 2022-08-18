@@ -1,6 +1,7 @@
 import os
 import pandas as pd
-from exp1a_psignifit_analysis import a_data_extraction, b3_plot_staircase, c_plots, \
+from exp1a_psignifit_analysis import plot_thr_heatmap, \
+    a_data_extraction, b3_plot_staircase, c_plots, \
     d_average_participant, e_average_exp_data, make_average_plots
 from psignifit_tools import get_psignifit_threshold_df
 from check_home_dir import switch_path
@@ -34,6 +35,8 @@ for p_idx, participant_name in enumerate(participant_list):
         if check_dir in dir_list:
             run_folder_names.append(check_dir)
 
+    master_acc_list = []
+
     for run_idx, run_dir in enumerate(run_folder_names):
 
         print(f'\nrunning analysis for {participant_name}, {run_dir}, {participant_name}{run_idx+1}\n')
@@ -51,124 +54,44 @@ for p_idx, participant_name in enumerate(participant_list):
 
         # # I don't need data extraction as all ISIs are in same df.
         run_data_df = pd.read_csv(os.path.join(save_path, f'{p_name}.csv'))
+        print(f"run_data_df ({list(run_data_df.columns)}):\n{run_data_df}")
 
-        try:
-            run_data_df = run_data_df.sort_values(by=['stair', 'total_nTrials'])
-        except KeyError:
-            run_data_df = run_data_df.sort_values(by=['stair', 'trial_number'])
+        simple_df = run_data_df[['stair', 'separation', 'ISI', 'trial_response']]
+        print(f"simple_df ({list(simple_df.columns)}):\n{simple_df}")
 
+        mean_df = simple_df.groupby(['separation', 'ISI'], sort=True).mean()
+        # print(f"mean_df ({list(mean_df.columns)}):\n{mean_df}")
+        mean_df = mean_df.rename(columns={'trial_response': 'accuracy'})
 
-        '''add newLum column
-        in old version, the experiment script varies probeLum and converts to float(RGB255) values for screen.
-        However, monitor can only use int(RGB255).
-        This function will will round RGB255 values to int(RGB255), then convert to NEW_probeLum
-        LumColor255Factor = 2.395387069
-        1. get probeColor255 column.
-        2. convert to int(RGB255) and convert to new_Lum with int(RGB255)/LumColor255Factor
-        3. add to run_data_df'''
-        if 'newLum' not in run_data_df.columns.to_list():
-            LumColor255Factor = 2.395387069
-            rgb255_col = run_data_df['probeColor255'].to_list()
-            newLum = [int(i) / LumColor255Factor for i in rgb255_col]
-            run_data_df.insert(9, 'newLum', newLum)
-            run_data_df.to_excel(os.path.join(save_path, 'RUNDATA-sorted.xlsx'), index=False)
-            print(f"added newLum column\n"
-                  f"run_data_df: {run_data_df.columns.to_list()}")
+        mean_df.reset_index(drop=False, inplace=True)
+        rows, cols = mean_df.shape
+        mean_df.insert(0, 'run', [run_idx+1] * rows)
+        print(f"mean_df ({list(mean_df.columns)}):\n{mean_df}")
 
+        master_acc_list.append(mean_df)
 
-        run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
+    all_data_df = pd.concat(master_acc_list, ignore_index=True)
+    print(f"all_data_df ({list(all_data_df.columns)}):\n{all_data_df}")
 
-        run_data_df = pd.read_excel(run_data_path, engine='openpyxl')
-        print(f"run_data_df:\n{run_data_df}")
+    all_mean_df = all_data_df.groupby(['separation', 'ISI'], sort=True).mean()
+    all_mean_df.reset_index(drop=False, inplace=True)
+    all_mean_df.drop(['run', 'stair'], axis=1, inplace=True)
+    print(f"all_mean_df ({list(all_mean_df.columns)}):\n{all_mean_df}")
 
-        sep_list = list(run_data_df['separation'].unique())
-        isi_list = list(run_data_df['ISI'].unique())
-        stair_list = list(run_data_df['stair'].unique())
-        stair_names_list = list(run_data_df['stair_name'].unique())
-        cols_to_add_dict = {'stair': stair_list, 'stair_name': stair_names_list}
+    save_name = 'master_detection_accuracy.csv'
+    all_mean_df.to_csv(os.path.join(root_path, save_name))
 
-        '''get psignifit thresholds df - use stairs as sep levels rather than using groups'''
-        thr_df = get_psignifit_threshold_df(root_path=root_path,
-                                            p_run_name=run_dir,
-                                            csv_name=run_data_df,
-                                            n_bins=9, q_bins=True,
-                                            sep_col='separation',
-                                            sep_list=sep_list,
-                                            thr_col='newLum',
-                                            isi_list=isi_list,
-                                            conf_int=True,
-                                            thr_type='Bayes',
-                                            plot_both_curves=False,
-                                            save_plots=False,
-                                            cols_to_add_dict=None,
-                                            verbose=True)
-        print(f'thr_df:\n{thr_df}')
+    heat_df = all_mean_df.pivot(index='separation', columns='ISI', values='accuracy')
+    print(f"heat_df ({list(heat_df.columns)}):\n{heat_df}")
+
+    plot_thr_heatmap(heatmap_df=heat_df,
+                         x_tick_labels=['ISI 0', 'ISI 2', 'ISI 4', 'ISI 6'],
+                         y_tick_labels=[0, 2, 4, 6],
+                         fig_title=f'Direction detection Accuracy\n(chance=50%, n={len(run_folder_names)})',
+                         save_name='Accuracy_heatmap.png',
+                         save_path=root_path,
+                         verbose=True)
 
 
-    trim_n = None
-    if len(run_folder_names) == 6:
-        trim_n = 2
-
-    print(f"\n\ntrim_n: {trim_n}, \n\n")
-
-    '''d'''
-    d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-                          trim_n=trim_n, error_type='SE')
-
-    all_df_path = os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv')
-    p_ave_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv')
-    err_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thr_error_SE.csv')
-    if trim_n is None:
-        all_df_path = os.path.join(root_path, 'MASTER_psignifit_thresholds.csv')
-        p_ave_path = os.path.join(root_path, 'MASTER_ave_thresh.csv')
-        err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
-
-    p_ave_df = pd.read_csv(p_ave_path)
-    isi_name_list = list(p_ave_df.columns)[1:]
-    sep_list = list(p_ave_df['separation'].unique())
-
-    print(f'p_ave_df\n{p_ave_df}')
-    print(f'isi_name_list\n{isi_name_list}')
-
-    make_average_plots(all_df_path=all_df_path,
-                       ave_df_path=p_ave_path,
-                       error_bars_path=err_path,
-                       thr_col='newLum',
-                       error_type='SE',
-                       n_trimmed=trim_n,
-                       exp_ave=False,  # participant ave, not exp ave
-                       split_1probe=False,
-                       isi_name_list=isi_name_list,
-                       sep_vals_list=sep_list,
-                       sep_name_list=sep_list,
-                       show_plots=True, verbose=True)
-
-
-print(f'exp_path: {exp_path}')
-print('\nget exp_average_data')
-e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
-                   error_type='SE', n_trimmed=trim_n, verbose=True)
-
-
-all_df_path = os.path.join(exp_path, 'MASTER_exp_thr.csv')
-exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
-err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
-
-exp_ave_df = pd.read_csv(exp_ave_path)
-isi_name_list = list(exp_ave_df.columns)[1:]
-sep_list = list(exp_ave_df['separation'].unique())
-
-# make experiment average plots -
-make_average_plots(all_df_path=all_df_path,
-                   ave_df_path=exp_ave_path,
-                   error_bars_path=err_path,
-                   thr_col='newLum',
-                   error_type='SE',
-                   exp_ave=True,
-                   split_1probe=False,
-                   isi_name_list=isi_name_list,
-                   sep_vals_list=sep_list,
-                   sep_name_list=sep_list,
-                   show_plots=True, verbose=True)
 
 print('\nexp1a_analysis_pipe finished\n')

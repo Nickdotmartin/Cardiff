@@ -2679,6 +2679,7 @@ def e_average_exp_data(exp_path, p_names_list,
 def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                        thr_col='newLum',
                        n_trimmed=False,
+                       ave_over_n=None,
                        exp_ave=False,
                        isi_name_list=None,
                        show_plots=True, verbose=True):
@@ -2755,11 +2756,11 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     print(f"\nfig_1a")
     if n_trimmed is not None:
-        fig_1a_title = f'{ave_over} average thresholds per ISI across all runs (trim={n_trimmed}).\n' \
+        fig_1a_title = f'{ave_over} average thresholds per ISI across all runs (n={ave_over_n}, trim={n_trimmed}).\n' \
                        f'positive=congruent probe/flow motion, negative=incongruent. Bars=SE.'
         fig_1a_savename = f'ave_TM{n_trimmed}_thr_pos_and_neg.png'
     else:
-        fig_1a_title = f'{ave_over} average threshold per ISI across all runs.\n' \
+        fig_1a_title = f'{ave_over} average threshold per ISI across all runs. (n={ave_over_n})\n' \
                        f'positive=congruent probe/flow motion, negative=incongruent. Bars=SE.'
         fig_1a_savename = f'ave_thr_pos_and_neg.png'
 
@@ -2784,12 +2785,12 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     print(f"\nfig_1b")
     if n_trimmed is not None:
-        fig_1b_title = f'{ave_over} average thresholds per separation across all runs (trim={n_trimmed}).\n' \
+        fig_1b_title = f'{ave_over} average thresholds per separation across all runs (n={ave_over_n}, trim={n_trimmed}).\n' \
                        f'Bars=.68 CI'
         fig_1b_savename = f'ave_TM{n_trimmed}_thr_all_runs_sep.png'
     else:
         fig_1b_title = f'{ave_over} average threshold per separation across all runs\n' \
-                       f'Bars=.68 CI'
+                       f'Bars=.68 CI, n={ave_over_n}'
         fig_1b_savename = f'ave_thr_all_runs_sep.png'
 
         # tod: It also seems that using evenly_spaced_x is messing it up.  Not sure why.
@@ -2809,11 +2810,11 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     print(f"\nfig_1c")
     if n_trimmed is not None:
         fig_1c_title = f'{ave_over} average thresholds per ISI across all runs (trim={n_trimmed}).\n' \
-                       f'Bars=.68 CI'
+                       f'Bars=.68 CI, n={ave_over_n}'
         fig_1c_savename = f'ave_TM{n_trimmed}_thr_all_runs_isi.png'
     else:
         fig_1c_title = f'{ave_over} average threshold per ISI across all runs\n' \
-                       f'Bars=.68 CI'
+                       f'Bars=.68 CI, n={ave_over_n}'
         fig_1c_savename = f'ave_thr_all_runs_isi.png'
 
     plot_w_errors_either_x_axis(wide_df=all_df, cols_to_keep=['congruent', 'separation'],
@@ -2836,11 +2837,11 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     print("\n\nfig_1d: one ax per ISI, pos_sep, compare congruent and incongruent.")
     if n_trimmed is not None:
         fig_1d_title = f'{ave_over} Congruent and Incongruent thresholds for each ISI (trim={n_trimmed}).\n' \
-                       f'Bars=SE'
+                       f'Bars=SE, n={ave_over_n}'
         fig_1d_savename = f'ave_TM{n_trimmed}_pos_sep_per_isi.png'
     else:
         fig_1d_title = f'{ave_over} Congruent and Incongruent thresholds for each ISI\n' \
-                       f'Bars=SE'
+                       f'Bars=SE, n={ave_over_n}'
         fig_1d_savename = f'ave_thr_pos_sep_per_isi.png'
 
     multi_pos_sep_per_isi(ave_thr_df=ave_df, error_df=error_bars_df,
@@ -2856,10 +2857,11 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     print('\nfig2a: Mean participant difference between congruent and incongruent conditions (x-axis=Sep)')
     if n_trimmed is not None:
         fig_2a_title = f'{ave_over} Mean Difference (Congruent - Incongruent Conditions).\n' \
-                       f'(x-axis=Sep)  trim={n_trimmed}.'
+                       f'(x-axis=Sep)  trim={n_trimmed}, n={ave_over_n}.'
         fig_2a_savename = f'ave_TM{n_trimmed}_diff_x_sep.png'
     else:
-        fig_2a_title = f'{ave_over} Mean Difference (Congruent - Incongruent Conditions).\n(x-axis=Sep)'
+        fig_2a_title = f'{ave_over} Mean Difference (Congruent - Incongruent Conditions).\n' \
+                       f'(x-axis=Sep), n={ave_over_n}'
         fig_2a_savename = f'ave_diff_x_sep.png'
 
     plot_diff(ave_df, stair_names_col='stair_names',
@@ -2873,11 +2875,11 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     if n_trimmed is not None:
         fig_2b_title = f'{ave_over} Mean Difference Between Congruent and Incongruent Conditions (x-axis=ISI).\n' \
-                       f'(Positive=congruent has higher threshold). (trim={n_trimmed}).'
+                       f'(Positive=congruent has higher threshold, n={ave_over_n}, trim={n_trimmed}).'
         fig_2b_savename = f'ave_TM{n_trimmed}_diff_x_isi.png'
     else:
         fig_2b_title = f'{ave_over} Mean Difference Between Congruent and Incongruent Conditions (x-axis=ISI).\n' \
-                       '(Positive=congruent has higher threshold).'
+                       f'(Positive=congruent has higher threshold, n={ave_over_n}).'
         fig_2b_savename = f'ave_diff_x_isi.png'
 
     plot_diff(ave_df, stair_names_col='stair_names',
@@ -2889,10 +2891,10 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     print(f"\nHeatmap")
     if n_trimmed is not None:
-        heatmap_title = f'{ave_over} mean Threshold for each ISI and separation (trim={n_trimmed}).'
+        heatmap_title = f'{ave_over} mean Threshold for each ISI and separation (n={ave_over_n}, trim={n_trimmed}).'
         heatmap_savename = f'mean_TM{n_trimmed}_thr_heatmap'
     else:
-        heatmap_title = f'{ave_over} mean Threshold for each ISI and separation'
+        heatmap_title = f'{ave_over} mean Threshold for each ISI and separation (n={ave_over_n})'
         heatmap_savename = 'mean_thr_heatmap'
 
     plot_thr_heatmap(heatmap_df=ave_w_sep_idx_df.T,

@@ -2187,6 +2187,7 @@ def e_average_exp_data(exp_path, p_names_list,
 
 def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                        thr_col='newLum',
+                       ave_over_n=None,
                        n_trimmed=None,
                        error_type='SE',
                        exp_ave=False,
@@ -2272,10 +2273,10 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     print(f"\nfig_1a\n")
     if n_trimmed is not None:
-        fig1_title = f'{ave_over} average thresholds across all runs (trim={n_trimmed}).'
+        fig1_title = f'{ave_over} average thresholds across all runs (n={ave_over_n}, trim={n_trimmed}).'
         fig1_savename = f'ave_TM{n_trimmed}_thr_all_runs.png'
     else:
-        fig1_title = f'{ave_over} average threshold across all runs'
+        fig1_title = f'{ave_over} average threshold across all runs (n={ave_over_n})'
         fig1_savename = f'ave_thr_all_runs.png'
 
     plot_1probe_w_errors(fig_df=ave_df, error_df=error_bars_df,
@@ -2297,10 +2298,10 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     print(f"\n\nfig_1b")
     # fig 1b, ISI on x-axis, different line for each sep
     if n_trimmed is not None:
-        fig1b_title = f'{ave_over} probe luminance at each ISI value per separation (trim={n_trimmed}).'
+        fig1b_title = f'{ave_over} probe luminance at each ISI value per separation (n={ave_over_n}, trim={n_trimmed}).'
         fig1b_savename = f'ave_TM{n_trimmed}_thr_all_runs_transpose.png'
     else:
-        fig1b_title = f'{ave_over} probe luminance at each ISI value per separation'
+        fig1b_title = f'{ave_over} probe luminance at each ISI value per separation (n={ave_over_n})'
         fig1b_savename = f'ave_thr_all_runs_transpose.png'
 
     plot_w_errors_no_1probe(wide_df=all_df, x_var='ISI', y_var=thr_col,
@@ -2327,10 +2328,10 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     # fig 1c, eight plots - seven showing a particular sepration, eighth showing all separations.
     if n_trimmed is not None:
         f'{ave_over} average thresholds per separation'
-        fig1c_title = f'{ave_over} average thresholds per separation (trim={n_trimmed}).'
+        fig1c_title = f'{ave_over} average thresholds per separation (n={ave_over_n}, trim={n_trimmed}).'
         fig1c_savename = f'ave_TM{n_trimmed}_thr_per_sep.png'
     else:
-        fig1c_title = f'{ave_over} average thresholds per separation'
+        fig1c_title = f'{ave_over} average thresholds per separation (n={ave_over_n})'
         fig1c_savename = f'ave_thr_per_sep.png'
 
     plot_8_sep_thr(all_thr_df=all_df, exp_ave=exp_ave, fig_title=fig1c_title,
@@ -2391,10 +2392,10 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
         if n_trimmed is not None:
             fig2a_save_name = f'ave_TM{n_trimmed}_thr_div_1probe.png'
-            fig2a_title = f'{ave_over} average thresholds divided by single probe (trim={n_trimmed}).'
+            fig2a_title = f'{ave_over} average thresholds divided by single probe (n={ave_over_n}, trim={n_trimmed}).'
         else:
             fig2a_save_name = 'ave_thr_div_1probe.png'
-            fig2a_title = f'{ave_over} average threshold divided by single probe'
+            fig2a_title = f'{ave_over} average threshold divided by single probe (n={ave_over_n})'
 
         plot_1probe_w_errors(fig_df=div_ave_psignifit_thr_df, error_df=div_error_bars_df,
                              split_1probe=False, jitter=True,
@@ -2418,10 +2419,10 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         # fig 2b, ISI on x-axis, different line for each sep
         if n_trimmed is not None:
             fig2b_save_name = f'ave_TM{n_trimmed}_thr_div_1probe_transpose.png'
-            fig2b_title = f'{ave_over} average thresholds divided by single probe at each ISI (trim={n_trimmed}).'
+            fig2b_title = f'{ave_over} average thresholds divided by single probe at each ISI (n={ave_over_n}, trim={n_trimmed}).'
         else:
             fig2b_save_name = 'ave_thr_div_1probe_transpose.png'
-            fig2b_title = f'{ave_over} average thresholds divided by single probe at each ISI'
+            fig2b_title = f'{ave_over} average thresholds divided by single probe at each ISI (n={ave_over_n})'
 
         plot_w_errors_no_1probe(wide_df=divided_df, x_var='ISI', y_var=thr_col,
                                 lines_var='separation', long_df_idx_col=idx_col,
@@ -2449,10 +2450,10 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
         if n_trimmed is not None:
             fig3a_save_name = f'diff_from_conc_TM{n_trimmed}.png'
-            fig3a_title = f'{ave_over} ISI different in threshold from concurrent (trim={n_trimmed}).'
+            fig3a_title = f'{ave_over} ISI different in threshold from concurrent (n={ave_over_n}, trim={n_trimmed}).'
         else:
             fig3a_save_name = 'diff_from_conc.png'
-            fig3a_title = f'{ave_over} ISI different in threshold from concurrent'
+            fig3a_title = f'{ave_over} ISI different in threshold from concurrent (n={ave_over_n})'
         plot_diff_from_concurrent(ave_df, div_by_1probe=False,
                                   fig_title=fig3a_title, save_name=fig3a_save_name,
                                   save_path=save_path)
@@ -2467,10 +2468,10 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         print(f"\nfig_3b - difference from concurrent div1probe\n")
         if n_trimmed is not None:
             fig3b_save_name = f'diff_from_conc_TM{n_trimmed}_div1probe.png'
-            fig3b_title = f'{ave_over} ISI different in threshold from concurrent (div1probe, trim={n_trimmed}).'
+            fig3b_title = f'{ave_over} ISI different in threshold from concurrent\n(div1probe, n={ave_over_n}, trim={n_trimmed}).'
         else:
             fig3b_save_name = 'diff_from_conc_div1probe.png'
-            fig3b_title = f'{ave_over} ISI different in threshold from concurrent (div1probe)'
+            fig3b_title = f'{ave_over} ISI different in threshold from concurrent (div1probe, n={ave_over_n})'
         plot_diff_from_concurrent(ave_df, div_by_1probe=True,
                                   fig_title=fig3b_title, save_name=fig3b_save_name, save_path=save_path)
         if show_plots:
@@ -2488,10 +2489,10 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     # sep_labels = [0, 1, 2, 3, 6, 18, '1probe']
     # isi_labels = ['conc', 'isi 0', 'isi 2', 'isi 4', 'isi 6', 'isi 9', 'isi12', 'isi 24']
     if n_trimmed is not None:
-        heatmap_title = f'{ave_over} mean Threshold for each ISI and separation (trim={n_trimmed}).'
+        heatmap_title = f'{ave_over} mean Threshold for each ISI and separation (n={ave_over_n}, trim={n_trimmed}).'
         heatmap_savename = f'mean_TM{n_trimmed}_thr_heatmap'
     else:
-        heatmap_title = f'{ave_over} mean Threshold for each ISI and separation'
+        heatmap_title = f'{ave_over} mean Threshold for each ISI and separation (n={ave_over_n})'
         heatmap_savename = 'mean_thr_heatmap'
 
     plot_thr_heatmap(heatmap_df=ave_df.T, x_tick_labels=sep_name_list,
@@ -2511,10 +2512,10 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         sep_labels = [0, 1, 2, 3, 6, 18]
         isi_labels = ['conc', 'isi 0', 'isi 2', 'isi 4', 'isi 6', 'isi 9', 'isi12', 'isi 24']
         if n_trimmed is not None:
-            heatmap_title = f'{ave_over} mean Threshold/1probe for each ISI and separation (trim={n_trimmed}).'
+            heatmap_title = f'{ave_over} mean Threshold/1probe for each ISI and separation (n={ave_over_n}, trim={n_trimmed}).'
             heatmap_savename = f'mean_TM{n_trimmed}_thr_div_1probe_heatmap'
         else:
-            heatmap_title = f'{ave_over} mean Threshold/1probe for each ISI and separation'
+            heatmap_title = f'{ave_over} mean Threshold/1probe for each ISI and separation (n={ave_over_n})'
             heatmap_savename = 'mean_thr_div_1probe_heatmap'
 
         plot_thr_heatmap(heatmap_df=div_ave_psignifit_thr_df.T,
@@ -2531,11 +2532,11 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     if n_trimmed is not None:
         surface_title = f'{ave_over} mean threshold for each ISI and separation condition.\n' \
-                        f'Markers show min thr per ISI (trim={n_trimmed}).'
+                        f'Markers show min thr per ISI (n={ave_over_n}, trim={n_trimmed}).'
         surface_savename = f'mean_TM{n_trimmed}_thr_surface'
     else:
         surface_title = f'{ave_over} mean threshold for each ISI and separation condition.\n' \
-                        f'Markers show min thr per ISI'
+                        f'Markers show min thr per ISI (n={ave_over_n})'
         surface_savename = 'mean_thr_surface'
 
     plot_thr_3dsurface(plot_df=ave_df, my_rotation=True, even_spaced=False,

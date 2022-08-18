@@ -7,12 +7,10 @@ from check_home_dir import switch_path
 
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
-# old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data'
-# exp_path = switch_path(old_exp_path, 'wind_oneDrive')
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\EXP1_R_G"
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\EXP1_sep4_5"
 exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\EXP1_split_probes"
-# # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp1_speed_detection"
+
 convert_path1 = os.path.normpath(exp_path)
 exp_path = convert_path1
 
@@ -60,64 +58,64 @@ for p_idx, participant_name in enumerate(participant_list):
         # # '''a'''
         p_name = f'{participant_name}_output'  # use this one
 
-        # # I don't need data extraction as all ISIs are in same df.
-        run_data_df = pd.read_csv(os.path.join(save_path, f'{p_name}.csv'))
-
-        try:
-            run_data_df = run_data_df.sort_values(by=['stair', 'total_nTrials'])
-        except KeyError:
-            run_data_df = run_data_df.sort_values(by=['stair', 'trial_number'])
-
-
-        '''add newLum column
-        in old version, the experiment script varies probeLum and converts to float(RGB255) values for screen.
-        However, monitor can only use int(RGB255).
-        This function will will round RGB255 values to int(RGB255), then convert to NEW_probeLum
-        LumColor255Factor = 2.395387069
-        1. get probeColor255 column.
-        2. convert to int(RGB255) and convert to new_Lum with int(RGB255)/LumColor255Factor
-        3. add to run_data_df'''
-        if 'newLum' not in run_data_df.columns.to_list():
-            LumColor255Factor = 2.395387069
-            rgb255_col = run_data_df['probeColor255'].to_list()
-            newLum = [int(i) / LumColor255Factor for i in rgb255_col]
-            run_data_df.insert(9, 'newLum', newLum)
-            run_data_df.to_excel(os.path.join(save_path, 'RUNDATA-sorted.xlsx'), index=False)
-            print(f"added newLum column\n"
-                  f"run_data_df: {run_data_df.columns.to_list()}")
-
-
-        run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
-
-        run_data_df = pd.read_excel(run_data_path, engine='openpyxl')
-        print(f"run_data_df:\n{run_data_df}")
-
-        sep_list = list(run_data_df['separation'].unique())
-        isi_list = list(run_data_df['ISI'].unique())
-        stair_list = list(run_data_df['stair'].unique())
-        stair_names_list = list(run_data_df['stair_name'].unique())
-        cols_to_add_dict = {'stair': stair_list, 'stair_name': stair_names_list}
-
-        '''get psignifit thresholds df - use stairs as sep levels rather than using groups'''
-        thr_df = get_psignifit_threshold_df(root_path=root_path,
-                                            p_run_name=run_dir,
-                                            csv_name=run_data_df,
-                                            n_bins=9, q_bins=True,
-                                            sep_col='separation',
-                                            sep_list=sep_list,
-                                            thr_col='newLum',
-                                            isi_list=isi_list,
-                                            conf_int=True,
-                                            thr_type='Bayes',
-                                            plot_both_curves=False,
-                                            save_plots=False,
-                                            cols_to_add_dict=None,
-                                            verbose=True)
-        print(f'thr_df:\n{thr_df}')
-
-        '''b3'''
-        run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
-        thr_path = os.path.join(save_path, 'psignifit_thresholds.csv')
+        # # # I don't need data extraction as all ISIs are in same df.
+        # run_data_df = pd.read_csv(os.path.join(save_path, f'{p_name}.csv'))
+        #
+        # try:
+        #     run_data_df = run_data_df.sort_values(by=['stair', 'total_nTrials'])
+        # except KeyError:
+        #     run_data_df = run_data_df.sort_values(by=['stair', 'trial_number'])
+        #
+        #
+        # '''add newLum column
+        # in old version, the experiment script varies probeLum and converts to float(RGB255) values for screen.
+        # However, monitor can only use int(RGB255).
+        # This function will will round RGB255 values to int(RGB255), then convert to NEW_probeLum
+        # LumColor255Factor = 2.395387069
+        # 1. get probeColor255 column.
+        # 2. convert to int(RGB255) and convert to new_Lum with int(RGB255)/LumColor255Factor
+        # 3. add to run_data_df'''
+        # if 'newLum' not in run_data_df.columns.to_list():
+        #     LumColor255Factor = 2.395387069
+        #     rgb255_col = run_data_df['probeColor255'].to_list()
+        #     newLum = [int(i) / LumColor255Factor for i in rgb255_col]
+        #     run_data_df.insert(9, 'newLum', newLum)
+        #     run_data_df.to_excel(os.path.join(save_path, 'RUNDATA-sorted.xlsx'), index=False)
+        #     print(f"added newLum column\n"
+        #           f"run_data_df: {run_data_df.columns.to_list()}")
+        #
+        #
+        # run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
+        #
+        # run_data_df = pd.read_excel(run_data_path, engine='openpyxl')
+        # print(f"run_data_df:\n{run_data_df}")
+        #
+        # sep_list = list(run_data_df['separation'].unique())
+        # isi_list = list(run_data_df['ISI'].unique())
+        # stair_list = list(run_data_df['stair'].unique())
+        # stair_names_list = list(run_data_df['stair_name'].unique())
+        # cols_to_add_dict = {'stair': stair_list, 'stair_name': stair_names_list}
+        #
+        # '''get psignifit thresholds df - use stairs as sep levels rather than using groups'''
+        # thr_df = get_psignifit_threshold_df(root_path=root_path,
+        #                                     p_run_name=run_dir,
+        #                                     csv_name=run_data_df,
+        #                                     n_bins=9, q_bins=True,
+        #                                     sep_col='separation',
+        #                                     sep_list=sep_list,
+        #                                     thr_col='newLum',
+        #                                     isi_list=isi_list,
+        #                                     conf_int=True,
+        #                                     thr_type='Bayes',
+        #                                     plot_both_curves=False,
+        #                                     save_plots=False,
+        #                                     cols_to_add_dict=None,
+        #                                     verbose=True)
+        # print(f'thr_df:\n{thr_df}')
+        #
+        # '''b3'''
+        # run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
+        # thr_path = os.path.join(save_path, 'psignifit_thresholds.csv')
 
 
     trim_n = None
@@ -127,8 +125,8 @@ for p_idx, participant_name in enumerate(participant_list):
     print(f"\n\ntrim_n: {trim_n}, \n\n")
 
     '''d'''
-    d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-                          trim_n=trim_n, error_type='SE')
+    # d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
+    #                       trim_n=trim_n, error_type='SE')
 
     all_df_path = os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv')
     p_ave_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv')
@@ -155,8 +153,8 @@ for p_idx, participant_name in enumerate(participant_list):
                        thr_col='newLum',
                        error_type='SE',
                        n_trimmed=trim_n,
+                       ave_ver_n=len(run_folder_names),
                        split_1probe=False,
-                       isi_vals_list=isi_vals_list,
                        isi_name_list=isi_name_list,
                        sep_vals_list=sep_vals_list,
                        sep_name_list=sep_name_list,
@@ -164,29 +162,30 @@ for p_idx, participant_name in enumerate(participant_list):
                        show_plots=True, verbose=True)
 
 
-print(f'exp_path: {exp_path}')
-print('\nget exp_average_data')
-
-e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
-                   error_type='SE', n_trimmed=trim_n, verbose=True)
-
-
-all_df_path = os.path.join(exp_path, 'MASTER_exp_thr.csv')
-exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
-err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
-
-
-make_average_plots(all_df_path=all_df_path,
-                   ave_df_path=exp_ave_path,
-                   error_bars_path=err_path,
-                   thr_col='newLum',
-                   error_type='SE',
-                   split_1probe=False,
-                   isi_vals_list=isi_vals_list,
-                   isi_name_list=isi_name_list,
-                   sep_vals_list=sep_vals_list,
-                   sep_name_list=sep_name_list,
-                   exp_ave=True,  # participant ave, not exp ave
-                   show_plots=True, verbose=True)
+# print(f'exp_path: {exp_path}')
+# print('\nget exp_average_data')
+#
+# e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
+#                    error_type='SE', n_trimmed=trim_n, verbose=True)
+#
+#
+# all_df_path = os.path.join(exp_path, 'MASTER_exp_thr.csv')
+# exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
+# err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
+#
+#
+# make_average_plots(all_df_path=all_df_path,
+#                    ave_df_path=exp_ave_path,
+#                    error_bars_path=err_path,
+#                    thr_col='newLum',
+#                    error_type='SE',
+#                    ave_ver_n = len(participant_list),
+#                    split_1probe=False,
+#                    isi_vals_list=isi_vals_list,
+#                    isi_name_list=isi_name_list,
+#                    sep_vals_list=sep_vals_list,
+#                    sep_name_list=sep_name_list,
+#                    exp_ave=True,  # participant ave, not exp ave
+#                    show_plots=True, verbose=True)
 
 print('\nexp1a_analysis_pipe finished\n')

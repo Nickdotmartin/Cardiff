@@ -282,7 +282,7 @@ for p_idx, participant_name in enumerate(participant_list):
     len_pixles_list = fig_df['len_pix'].to_list()
     print(f'len_pixles_list: {len_pixles_list}')
 
-    fig_title = 'Participant average thresholds - Ricco_v4'
+    fig_title = f'Participant average thresholds - Ricco_v4 (n={len(run_folder_names)})'
     save_name = 'ricco_v4_len_v_thr.png'
     plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
                            jitter=False, error_caps=True, alt_colours=False,
@@ -307,7 +307,7 @@ for p_idx, participant_name in enumerate(participant_list):
     wide_err_df = error_df.pivot(index=['len_pix'], columns='cond', values='delta_I')
     print(f'wide_err_df:\n{wide_err_df}')
 
-    fig_title = 'Participant average log(len), log(∆I) thresholds - Ricco_v4'
+    fig_title = f'Participant average log(len), log(∆I) thresholds - Ricco_v4 (n={len(run_folder_names)})'
     save_name = 'ricco_v4_log_len_log_contrast.png'
     plot_runs_ave_w_errors(fig_df=wide_df, error_df=wide_err_df,
                            jitter=False, error_caps=True, alt_colours=False,
@@ -362,7 +362,7 @@ err_thr_by_len_df = error_df[['len_pix', 'thr']]
 err_thr_by_len_df.set_index('len_pix', inplace=True)
 print(f'ave_thr_by_len_df:\n{ave_thr_by_len_df}')
 
-fig_title = 'Experiment average thresholds - Ricco_v4'
+fig_title = f'Experiment average thresholds - Ricco_v4 (n={len(participant_list)})'
 save_name = 'ricco_v4_len_v_thr.png'
 plot_runs_ave_w_errors(fig_df=ave_thr_by_len_df, error_df=err_thr_by_len_df,
                        jitter=False, error_caps=True, alt_colours=False,
@@ -385,7 +385,7 @@ log_len_log_contrast_df = fig_df[['len_pix', 'delta_I']]
 log_len_log_contrast_df.set_index('len_pix', inplace=True)
 err_log_len_log_contrast_df = error_df[['len_pix', 'delta_I']]
 err_log_len_log_contrast_df.set_index('len_pix', inplace=True)
-fig_title = 'Experiment average log(len), log(∆I) thresholds - Ricco_v4'
+fig_title = f'Experiment average log(len), log(∆I) thresholds - Ricco_v4 (n={len(participant_list)})'
 save_name = 'ricco_v4_log_len_log_contrast.png'
 plot_runs_ave_w_errors(fig_df=log_len_log_contrast_df, error_df=err_log_len_log_contrast_df,
                        jitter=False, error_caps=True, alt_colours=False,
