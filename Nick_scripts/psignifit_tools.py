@@ -497,8 +497,9 @@ def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
 
 
 def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bins=True,
-                               sep_col='separation', thr_col='probeLum',
-                               isi_list=None, sep_list=None, group=None,
+                               thr_col='probeLum',
+                               sep_col='separation', sep_list=None,
+                               isi_col=None, isi_list=None, group=None,
                                conf_int=True, thr_type='Bayes',
                                plot_both_curves=False,
                                cols_to_add_dict=None, save_name=None,
@@ -539,9 +540,12 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
     if thr_type not in ['Bayes', 'CI95']:
         raise ValueError
 
+    if isi_col is None:
+        isi_col = 'ISI'
+
     if isi_list is None:
         isi_list = [0, 1, 4, 6, 12, 24]
-    isi_name_list = [f'ISI_{i}' for i in isi_list]
+    isi_name_list = [f'{isi_col}_{i}' for i in isi_list]
 
     if sep_list is None:
         sep_list = [18, 6, 3, 2, 1, 0]
@@ -574,7 +578,7 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
             if 'Unnamed: 0' in list(isi_df):
                 isi_df.drop('Unnamed: 0', axis=1, inplace=True)
         else:
-            isi_df = csv_name[csv_name['ISI'] == isi]
+            isi_df = csv_name[csv_name[isi_col] == isi]
 
         if verbose:
             print(f'\nrunning analysis for {p_run_name}\n')

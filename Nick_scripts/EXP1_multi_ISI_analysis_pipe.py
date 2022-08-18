@@ -112,10 +112,7 @@ for p_idx, participant_name in enumerate(participant_list):
         #                                     cols_to_add_dict=None,
         #                                     verbose=True)
         # print(f'thr_df:\n{thr_df}')
-        #
-        # '''b3'''
-        # run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
-        # thr_path = os.path.join(save_path, 'psignifit_thresholds.csv')
+
 
 
     trim_n = None
@@ -153,7 +150,7 @@ for p_idx, participant_name in enumerate(participant_list):
                        thr_col='newLum',
                        error_type='SE',
                        n_trimmed=trim_n,
-                       ave_ver_n=len(run_folder_names),
+                       ave_over_n=len(run_folder_names),
                        split_1probe=False,
                        isi_name_list=isi_name_list,
                        sep_vals_list=sep_vals_list,

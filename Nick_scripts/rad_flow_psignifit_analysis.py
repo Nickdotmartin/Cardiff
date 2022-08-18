@@ -2500,7 +2500,7 @@ def d_average_participant(root_path, run_dir_names_list,
                                  f"'deviation', 'standard_deviation']")
             print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
 
-        elif get_means_df.columns.to_list() == ['stack', 'probeSpeed', 'ISI_0']:
+        elif 'probeSpeed' in get_means_df.columns.to_list():
             groupby_sep_df = get_means_df.drop('stack', axis=1)
             ave_psignifit_thr_df = groupby_sep_df.groupby(['probeSpeed'], sort=True).mean()
             if verbose:

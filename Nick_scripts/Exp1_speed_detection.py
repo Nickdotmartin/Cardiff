@@ -39,7 +39,7 @@ expInfo = {'1_Participant_name': 'Nick',
            '3_fps': [240, 60, 144],
            # to compare with exp 1 ISIs use [1, 4, 6, 9]
            # to compare with probes + ISIs use [5, 8, 10, 13],
-           '4_Probe duration in frames': [4, 5, 8, 10, 13, 1, 4, 6, 9, 24],  # ['12', '3', '6', '12', '18', '24', '30', '36', '120'],
+           '4_Probe duration in frames': [4, 6, 8, 10, 13, 1, 4, 6, 9, 24],  # ['12', '3', '6', '12', '18', '24', '30', '36', '120'],
            # '5_prelim_bg_flow_ms': [0, 70],
            '7_Trials_counter': [True, False],
            # '8_Background': ['None', 'flow_rad', ],
