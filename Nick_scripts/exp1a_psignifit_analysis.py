@@ -1322,7 +1322,7 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
     stair_sep_dict = {1: 18, 2: 18, 3: 6, 4: 6, 5: 3, 6: 3, 7: 2,
                       8: 2, 9: 1, 10: 1, 11: 0, 12: 0, 13: 99, 14: 99}
     stair_group_dict = {1: 1, 2: 2, 3: 1, 4: 2, 5: 1, 6: 2, 7: 1,
-                        8: 2, 9: 1, 10: 2, 11: 1, 12: 2, 13: 1, 14: 2}
+                        8: 2, 9: 1, 10: 2, 11: 1, 12: 2, 13: 1, 14: 2, 0: 2}
 
     # raw results csv doesn't have separation or group columns, so assume I'll add them and re-save raw data.
     # resave_results = True
@@ -1473,7 +1473,7 @@ def b3_plot_staircase(all_data_path, thr_col='newLum', resp_col='trial_response'
     trials_per_stair = int(trials / len(isi_list) / len(stair_list))
 
     if verbose:
-        print(f"all_data_df:\n{all_data_df.head()}")
+        print(f"all_data_df ({list(all_data_df.columns)}):\n{all_data_df.head()}")
         print(f"{len(isi_list)} isi values and {len(stair_list)} stair values")
         print(f"isi_list: {isi_list}")
         print(f"isi_name_list: {isi_name_list}")
@@ -1552,6 +1552,8 @@ def b3_plot_staircase(all_data_path, thr_col='newLum', resp_col='trial_response'
 
         # get df for this isi only
         isi_df = all_data_df[all_data_df['ISI'] == isi]
+        print(f"isi_df:\n{isi_df}")
+
         isi_name = isi_name_list[isi_idx]
 
         # psignifit series for this isi only
