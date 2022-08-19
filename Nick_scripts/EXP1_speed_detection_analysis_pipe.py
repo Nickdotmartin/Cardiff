@@ -49,98 +49,98 @@ for p_idx, participant_name in enumerate(participant_list):
         print(f'\nrunning analysis for {participant_name}, {run_dir}, {participant_name}_{run_idx+1}\n')
         # print(f'\nrunning analysis for {participant_name}\n')
 
-        # save_path = os.path.join(root_path, run_dir)
-        # dir_list = os.listdir(save_path)
-        # probeDur_list = []
-        # for i in range(25):  # numbers 0 to 11
-        #     check_dir = f'probeDur{i}'  # numbers 1 to 12
-        #     if check_dir in dir_list:
-        #         probeDur_list.append(check_dir)
-        # print(f"probeDur_list: {probeDur_list}")
+        save_path = os.path.join(root_path, run_dir)
+        dir_list = os.listdir(save_path)
+        probeDur_list = []
+        for i in range(25):  # numbers 0 to 11
+            check_dir = f'probeDur{i}'  # numbers 1 to 12
+            if check_dir in dir_list:
+                probeDur_list.append(check_dir)
+        print(f"probeDur_list: {probeDur_list}")
+
+        run_data = []
+
+        for probeDur in probeDur_list:
+            # don't delete this (participant_name = participant_name),
+            # needed to ensure names go name1, name2, name3 not name1, name12, name123
+            p_name = participant_name
+
+            # # '''a'''
+            p_name = f'{participant_name}_{run_idx+1}_output'  # use this one
+
+            # todo: make data extraxction script to join diffewrent probe duratons together.
+            # run_data_df = a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=isi_list, verbose=True)
+
+            dur_data_df = pd.read_csv(os.path.join(save_path, probeDur, f'{p_name}.csv'))
+            column_names = list(dur_data_df)
+            print(f"dur_data_df:\n{dur_data_df}")
+
+            run_data.append(dur_data_df)
+
+        run_data_shape = np.shape(run_data)
+        sheets, rows, columns = np.shape(run_data)
+        run_data = np.reshape(run_data, newshape=(sheets * rows, columns))
+        print(f'run_data reshaped from {run_data_shape} to {np.shape(run_data)}')
+        run_data_df = pd.DataFrame(run_data, columns=column_names)
+        if 'Unnamed: 0' in list(run_data_df):
+            run_data_df.drop('Unnamed: 0', axis=1, inplace=True)
+        print(f"run_data_df:\n{run_data_df}")
+        save_name = 'RUNDATA-sorted.xlsx'
+        save_excel_path = os.path.join(save_path, save_name)
+        print(f"\nsaving run_data_df to save_excel_path:\n{save_excel_path}")
+        run_data_df.to_excel(save_excel_path, index=False)
+
+        run_data_df = pd.read_excel(save_excel_path, engine='openpyxl')
+
+        run_data_df = run_data_df.sort_values(by=['stair', 'trial_number'])
+
+        # todo: change psignifit top NewLum once I have new data
+
+
+
+        run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
+
+        run_data_df = pd.read_excel(run_data_path, engine='openpyxl')
+        print(f"run_data_df:\n{run_data_df}")
+
+
+        probe_speed_list = list(run_data_df['probeSpeed'].unique())
+        sep_list = list(run_data_df['separation'].unique())
+        isi_list = list(run_data_df['ISI'].unique())
+        dur_list = list(run_data_df['probe_dur'].unique())
+        stair_list = list(run_data_df['stair'].unique())
+        stair_names_list = list(run_data_df['stair_name'].unique())
+        cols_to_add_dict = {'stair': stair_list, 'stair_name': stair_names_list,
+                            # 'probeSpeed': probe_speed_list,
+                            'separation': sep_list, 'isi': isi_list, 'dur': dur_list}
+
+        '''get psignifit thresholds df - use stairs as sep levels rather than using groups'''
+        thr_df = get_psignifit_threshold_df(root_path=root_path,
+                                            p_run_name=run_dir,
+                                            csv_name=run_data_df,
+                                            n_bins=9, q_bins=True,
+                                            sep_col='probeSpeed',
+                                            sep_list=probe_speed_list,
+                                            thr_col='probeLum',
+                                            isi_col='probe_dur',
+                                            isi_list=dur_list,
+                                            conf_int=True,
+                                            thr_type='Bayes',
+                                            plot_both_curves=False,
+                                            save_plots=True,
+                                            cols_to_add_dict=None,
+                                            verbose=True)
+        print(f'thr_df:\n{thr_df}')
         #
-        # run_data = []
-        #
-        # for probeDur in probeDur_list:
-        #     # don't delete this (participant_name = participant_name),
-        #     # needed to ensure names go name1, name2, name3 not name1, name12, name123
-        #     p_name = participant_name
-        #
-        #     # # '''a'''
-        #     p_name = f'{participant_name}_{run_idx+1}_output'  # use this one
-        #
-        #     # todo: make data extraxction script to join diffewrent probe duratons together.
-        #     # run_data_df = a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=isi_list, verbose=True)
-        #
-        #     dur_data_df = pd.read_csv(os.path.join(save_path, probeDur, f'{p_name}.csv'))
-        #     column_names = list(dur_data_df)
-        #     print(f"dur_data_df:\n{dur_data_df}")
-        #
-        #     run_data.append(dur_data_df)
-        #
-        # run_data_shape = np.shape(run_data)
-        # sheets, rows, columns = np.shape(run_data)
-        # run_data = np.reshape(run_data, newshape=(sheets * rows, columns))
-        # print(f'run_data reshaped from {run_data_shape} to {np.shape(run_data)}')
-        # run_data_df = pd.DataFrame(run_data, columns=column_names)
-        # if 'Unnamed: 0' in list(run_data_df):
-        #     run_data_df.drop('Unnamed: 0', axis=1, inplace=True)
-        # print(f"run_data_df:\n{run_data_df}")
-        # save_name = 'RUNDATA-sorted.xlsx'
-        # save_excel_path = os.path.join(save_path, save_name)
-        # print(f"\nsaving run_data_df to save_excel_path:\n{save_excel_path}")
-        # run_data_df.to_excel(save_excel_path, index=False)
-        #
-        # run_data_df = pd.read_excel(save_excel_path, engine='openpyxl')
-        #
-        # run_data_df = run_data_df.sort_values(by=['stair', 'trial_number'])
-        #
-        # # todo: change psignifit top NewLum once I have new data
-        #
-        #
-        #
+        # '''b3'''
         # run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
+        # thr_path = os.path.join(save_path, 'psignifit_thresholds.csv')
         #
-        # run_data_df = pd.read_excel(run_data_path, engine='openpyxl')
-        # print(f"run_data_df:\n{run_data_df}")
+        # # b3 needs 'total_Ntrials' as column header, which I have changed to trial_number.
+        # # b3_plot_staircase(run_data_path, thr_col='newLum', show_plots=False)
         #
-        #
-        # probe_speed_list = list(run_data_df['probeSpeed'].unique())
-        # sep_list = list(run_data_df['separation'].unique())
-        # isi_list = list(run_data_df['ISI'].unique())
-        # dur_list = list(run_data_df['probe_dur'].unique())
-        # stair_list = list(run_data_df['stair'].unique())
-        # stair_names_list = list(run_data_df['stair_name'].unique())
-        # cols_to_add_dict = {'stair': stair_list, 'stair_name': stair_names_list,
-        #                     # 'probeSpeed': probe_speed_list,
-        #                     'separation': sep_list, 'isi': isi_list, 'dur': dur_list}
-        #
-        # '''get psignifit thresholds df - use stairs as sep levels rather than using groups'''
-        # thr_df = get_psignifit_threshold_df(root_path=root_path,
-        #                                     p_run_name=run_dir,
-        #                                     csv_name=run_data_df,
-        #                                     n_bins=9, q_bins=True,
-        #                                     sep_col='probeSpeed',
-        #                                     sep_list=probe_speed_list,
-        #                                     thr_col='probeLum',
-        #                                     isi_col='probe_dur',
-        #                                     isi_list=dur_list,
-        #                                     conf_int=True,
-        #                                     thr_type='Bayes',
-        #                                     plot_both_curves=False,
-        #                                     save_plots=True,
-        #                                     cols_to_add_dict=None,
-        #                                     verbose=True)
-        # print(f'thr_df:\n{thr_df}')
-        # #
-        # # '''b3'''
-        # # run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
-        # # thr_path = os.path.join(save_path, 'psignifit_thresholds.csv')
-        # #
-        # # # b3 needs 'total_Ntrials' as column header, which I have changed to trial_number.
-        # # # b3_plot_staircase(run_data_path, thr_col='newLum', show_plots=False)
-        # #
-        # # '''c'''
-        # # # c_plots(save_path=save_path, thr_col='newLum', show_plots=True)
+        # '''c'''
+        # # c_plots(save_path=save_path, thr_col='newLum', show_plots=True)
 
 
     trim_n = None
@@ -150,8 +150,8 @@ for p_idx, participant_name in enumerate(participant_list):
     print(f"\n\ntrim_n: {trim_n}, \n\n")
 
     '''d'''
-    # d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-    #                       trim_n=trim_n, error_type='SE')
+    d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
+                          trim_n=trim_n, error_type='SE')
 
     all_df_path = os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv')
     p_ave_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv')
