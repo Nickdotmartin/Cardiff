@@ -49,8 +49,8 @@ for p_idx, participant_name in enumerate(participant_list):
         # run_data_df = a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=isi_list, verbose=True)
 
         run_data_df = pd.read_csv(os.path.join(save_path, f'{p_name}.csv'))
-
-        run_data_df = run_data_df.sort_values(by=['stair', 'total_nTrials'])
+        print(f"run_data_df: {list(run_data_df.columns)}\n{run_data_df}")
+        run_data_df = run_data_df.sort_values(by=['stair', 'trial_number'])
 
         '''add newLum column
         in old version, the experiment script varies probeLum and converts to float(RGB255) values for screen.
