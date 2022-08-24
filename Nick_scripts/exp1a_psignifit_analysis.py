@@ -548,10 +548,12 @@ def plot_1probe_w_errors(fig_df, error_df,
     else:
         two_probe_df = fig_df
         # two_probe_df.drop('separation', axis=1, inplace=True)
-        two_probe_df.set_index('separation', drop=True, inplace=True)
+        if 'separation' in list(two_probe_df.columns):
+            two_probe_df.set_index('separation', drop=True, inplace=True)
         two_probe_er_df = error_df
         # two_probe_er_df.drop('separation', axis=1, inplace=True)
-        two_probe_er_df.set_index('separation', drop=True, inplace=True)
+        if 'separation' in list(two_probe_er_df.columns):
+            two_probe_er_df.set_index('separation', drop=True, inplace=True)
 
     if verbose:
         print(f'two_probe_df:\n{two_probe_df}')
@@ -779,7 +781,8 @@ def plot_thr_heatmap(heatmap_df,
 
     heatmap = sns.heatmap(data=heatmap_df,
                           annot=True, center=mean_thr,
-                          cmap=sns.color_palette("Spectral", as_cmap=True),
+                          # cmap=sns.color_palette("Spectral", as_cmap=True),
+                          cmap='RdYlGn_r',
                           xticklabels=x_tick_labels, yticklabels=y_tick_labels,
                           square=False)
 
@@ -802,7 +805,9 @@ def plot_thr_heatmap(heatmap_df,
 ##########################
 
 
-def plt_heatmap_per_row(heatmap_df,
+def plt_heatmap_row_col(heatmap_df,
+                        colour_by='row',
+                        x_tick_labels=None,
                         x_axis_label=None,
                         y_tick_labels=None,
                         y_axis_label=None,
@@ -814,6 +819,7 @@ def plt_heatmap_per_row(heatmap_df,
     """
     Function for making a heatmap
     :param heatmap_df: Expects dataframe with separation as index and ISIs as columns.
+    :param colour_by: colour plots by 'rows' or 'cols.  That is, each row or column is coloured individually.
     :param y_tick_labels: Labels for rows
     :param fig_title:
     :param save_name:
@@ -822,19 +828,32 @@ def plt_heatmap_per_row(heatmap_df,
     :return: Heatmap
     """
 
-    print('\n*** running plt_heatmap_per_row() ***\n')
+    print(f'\n*** running plt_heatmap_row_col(colour_by={colour_by}) ***\n')
 
     if verbose:
         print(f'heatmap_df:\n{heatmap_df}')
 
+    if x_tick_labels is None:
+        x_tick_labels = list(heatmap_df.columns)
     if y_tick_labels is None:
         y_tick_labels = list(heatmap_df.index)
 
-    # todo: make equivallent fig coloured by column/vertically.
-    fig, axs = plt.subplots(nrows=4, sharex=True)
+    if str.lower(colour_by) in ['col', 'columns', 'horizontal']:
+        fig, axs = plt.subplots(ncols=len(x_tick_labels), sharey=True)
+        loop_over = x_tick_labels
+    else:
+        fig, axs = plt.subplots(nrows=len(y_tick_labels), sharex=True)
+        loop_over = y_tick_labels
 
-    for ax, y_tick_label in zip(axs, y_tick_labels):
-        sns.heatmap(data=heatmap_df.loc[[y_tick_label]],
+    print(f"loop over ({colour_by}): {loop_over}")
+
+    for ax, tick_label in zip(axs, loop_over):
+        if str.lower(colour_by) in ['col', 'columns', 'horizontal']:
+            use_this_data = heatmap_df[[tick_label]]
+        else:
+            use_this_data = heatmap_df.loc[[tick_label]]
+
+        sns.heatmap(data=use_this_data,
                     ax=ax,
                     linewidths=.05,
                     cmap='RdYlGn_r',
@@ -844,12 +863,25 @@ def plt_heatmap_per_row(heatmap_df,
                     cbar=False,
                     square=True)
 
-        # arrange labels and ticks per ax
-        ax.set_ylabel(None)
-        if ax == axs[-1]:
-            ax.set_xlabel(x_axis_label, fontsize=fontsize)
+        # # arrange labels and ticks per ax
+        if str.lower(colour_by) in ['col', 'columns', 'horizontal']:
+            ax.set_xlabel(None)
+            if ax == axs[0]:
+                ax.set_ylabel(y_axis_label, fontsize=fontsize)
+            else:
+                ax.tick_params(left=False)
+                ax.set_ylabel(None)
+            fig.supxlabel(x_axis_label, fontsize=fontsize+2)
+            plt.subplots_adjust(wspace=-0.5, hspace=-.5)
+
         else:
-            ax.tick_params(bottom=False)
+            ax.set_ylabel(None)
+            if ax == axs[-1]:
+                ax.set_xlabel(x_axis_label, fontsize=fontsize)
+            else:
+                ax.tick_params(bottom=False)
+            fig.supylabel(y_axis_label, fontsize=fontsize+2, x=.1)
+            plt.subplots_adjust(hspace=0.1)
 
     # # make colourbar: numbers are (1) the horizontal and (2) vertical position
     # # of the bottom left corner, then (3) width and (4) height of colourbar.
@@ -857,11 +889,8 @@ def plt_heatmap_per_row(heatmap_df,
     cbar = plt.colorbar(cm.ScalarMappable(cmap='RdYlGn_r'), cax=cb_ax)
     # set the colorbar ticks and tick labels
     cbar.set_ticks(np.arange(0, 1.1, 0.5))
-    cbar.set_ticklabels(['Low', 'Med', 'High'])
-    cbar.set_label('Luminance threshold')
-
-    fig.supylabel(y_axis_label, fontsize=fontsize+2, x=.1)
-    plt.subplots_adjust(hspace=0.1)
+    cbar.set_ticklabels(['Lowest', 'Med', 'Highest'])
+    cbar.set_label(f'Luminance threshold per {colour_by}')
 
     if fig_title is not None:
         plt.suptitle(fig_title, fontsize=fontsize+4)
@@ -2488,30 +2517,30 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         if verbose:
             print('finished fig2a')
 
-    if split_1probe:
-        print(f"\nfig_2b\n")
-        # fig 2b, ISI on x-axis, different line for each sep
-        if n_trimmed is not None:
-            fig2b_save_name = f'ave_TM{n_trimmed}_thr_div_1probe_transpose.png'
-            fig2b_title = f'{ave_over} average thresholds divided by single probe at each ISI (n={ave_over_n}, trim={n_trimmed}).'
-        else:
-            fig2b_save_name = 'ave_thr_div_1probe_transpose.png'
-            fig2b_title = f'{ave_over} average thresholds divided by single probe at each ISI (n={ave_over_n})'
-
-        plot_w_errors_no_1probe(wide_df=divided_df, x_var='ISI', y_var=thr_col,
-                                lines_var='separation', long_df_idx_col=idx_col,
-                                legend_names=['0', '1', '2', '3', '6', '18'],
-                                x_tick_labels=['conc', 0, 2, 4, 6, 9, 12, 24],
-                                alt_colours=True, fixed_y_range=False, jitter=True,
-                                error_caps=True, fig1b_title=fig2b_title,
-                                fig1b_savename=fig2b_save_name, save_path=save_path,
-                                verbose=True)
-        if show_plots:
-            plt.show()
-        plt.close()
-
-        if verbose:
-            print('finished fig2b')
+    # if split_1probe:
+        # print(f"\nfig_2b\n")
+        # # fig 2b, ISI on x-axis, different line for each sep
+        # if n_trimmed is not None:
+        #     fig2b_save_name = f'ave_TM{n_trimmed}_thr_div_1probe_transpose.png'
+        #     fig2b_title = f'{ave_over} average thresholds divided by single probe at each ISI (n={ave_over_n}, trim={n_trimmed}).'
+        # else:
+        #     fig2b_save_name = 'ave_thr_div_1probe_transpose.png'
+        #     fig2b_title = f'{ave_over} average thresholds divided by single probe at each ISI (n={ave_over_n})'
+        #
+        # plot_w_errors_no_1probe(wide_df=divided_df, x_var='ISI', y_var=thr_col,
+        #                         lines_var='separation', long_df_idx_col=idx_col,
+        #                         legend_names=['0', '1', '2', '3', '6', '18'],
+        #                         x_tick_labels=['conc', 0, 2, 4, 6, 9, 12, 24],
+        #                         alt_colours=True, fixed_y_range=False, jitter=True,
+        #                         error_caps=True, fig1b_title=fig2b_title,
+        #                         fig1b_savename=fig2b_save_name, save_path=save_path,
+        #                         verbose=True)
+        # if show_plots:
+        #     plt.show()
+        # plt.close()
+        #
+        # if verbose:
+        #     print('finished fig2b')
 
     print(f"\nfig_3a - difference from concurrent\n")
     run_this_plot= False
@@ -2619,17 +2648,42 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         heatmap_pr_title = f'{ave_over} Heatmap per row (n={ave_over_n})'
         heatmap_pr_savename = 'mean_heatmap_per_row'
 
-
-    # regular (not transpose)
-    plt_heatmap_per_row(heatmap_df=ave_df,
+    plt_heatmap_row_col(heatmap_df=ave_df,
+                        colour_by='row',
+                        x_tick_labels=None,
                         x_axis_label='ISI',
-                        y_tick_labels=sep_vals_list,
+                        y_tick_labels=None,
                         y_axis_label='Separation',
                         fig_title=heatmap_pr_title,
                         save_name=heatmap_pr_savename,
                         save_path=save_path,
                         verbose=True)
+    if show_plots:
+        plt.show()
+    plt.close()
 
+    print(f"\nHeatmap per col\n")
+    if 'separation' in list(ave_df.columns):
+        ave_df.set_index('separation', drop=True, inplace=True)
+
+    # get mean of each col, then mean of that
+    if n_trimmed is not None:
+        heatmap_pr_title = f'{ave_over} Heatmap per col (n={ave_over_n}, trim={n_trimmed}).'
+        heatmap_pr_savename = f'mean_TM{n_trimmed}_heatmap_per_col'
+    else:
+        heatmap_pr_title = f'{ave_over} Heatmap per col (n={ave_over_n})'
+        heatmap_pr_savename = 'mean_heatmap_per_col'
+
+    plt_heatmap_row_col(heatmap_df=ave_df,
+                        colour_by='col',
+                        x_tick_labels=None,
+                        x_axis_label='ISI',
+                        y_tick_labels=None,
+                        y_axis_label='Separation',
+                        fig_title=heatmap_pr_title,
+                        save_name=heatmap_pr_savename,
+                        save_path=save_path,
+                        verbose=True)
     if show_plots:
         plt.show()
     plt.close()
