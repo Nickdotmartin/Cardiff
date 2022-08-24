@@ -802,6 +802,78 @@ def plot_thr_heatmap(heatmap_df,
 ##########################
 
 
+def plt_heatmap_per_row(heatmap_df,
+                        x_axis_label=None,
+                        y_tick_labels=None,
+                        y_axis_label=None,
+                        fig_title=None,
+                        fontsize=16,
+                        save_name=None,
+                        save_path=None,
+                        verbose=True):
+    """
+    Function for making a heatmap
+    :param heatmap_df: Expects dataframe with separation as index and ISIs as columns.
+    :param y_tick_labels: Labels for rows
+    :param fig_title:
+    :param save_name:
+    :param save_path:
+    :param verbose:
+    :return: Heatmap
+    """
+
+    print('\n*** running plt_heatmap_per_row() ***\n')
+
+    if verbose:
+        print(f'heatmap_df:\n{heatmap_df}')
+
+    if y_tick_labels is None:
+        y_tick_labels = list(heatmap_df.index)
+
+    # todo: make equivallent fig coloured by column/vertically.
+    fig, axs = plt.subplots(nrows=4, sharex=True)
+
+    for ax, y_tick_label in zip(axs, y_tick_labels):
+        sns.heatmap(data=heatmap_df.loc[[y_tick_label]],
+                    ax=ax,
+                    linewidths=.05,
+                    cmap='RdYlGn_r',
+                    annot=True,
+                    annot_kws={'fontsize': fontsize},
+                    # fmt='{:.2f}',
+                    cbar=False,
+                    square=True)
+
+        # arrange labels and ticks per ax
+        ax.set_ylabel(None)
+        if ax == axs[-1]:
+            ax.set_xlabel(x_axis_label, fontsize=fontsize)
+        else:
+            ax.tick_params(bottom=False)
+
+    # # make colourbar: numbers are (1) the horizontal and (2) vertical position
+    # # of the bottom left corner, then (3) width and (4) height of colourbar.
+    cb_ax = fig.add_axes([0.85, 0.11, 0.02, 0.77])
+    cbar = plt.colorbar(cm.ScalarMappable(cmap='RdYlGn_r'), cax=cb_ax)
+    # set the colorbar ticks and tick labels
+    cbar.set_ticks(np.arange(0, 1.1, 0.5))
+    cbar.set_ticklabels(['Low', 'Med', 'High'])
+    cbar.set_label('Luminance threshold')
+
+    fig.supylabel(y_axis_label, fontsize=fontsize+2, x=.1)
+    plt.subplots_adjust(hspace=0.1)
+
+    if fig_title is not None:
+        plt.suptitle(fig_title, fontsize=fontsize+4)
+
+    if save_path is not None:
+        if save_name is not None:
+            plt.savefig(os.path.join(save_path, save_name))
+
+    return fig
+
+
+
 def plot_diff_from_concurrent(thr_df_path, div_by_1probe=False,
                               fig_title=None, save_name=None, save_path=None):
     """
@@ -2497,9 +2569,16 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         heatmap_title = f'{ave_over} mean Threshold for each ISI and separation (n={ave_over_n})'
         heatmap_savename = 'mean_thr_heatmap'
 
-    plot_thr_heatmap(heatmap_df=ave_df.T, x_tick_labels=sep_name_list,
-                     y_tick_labels=isi_name_list, fig_title=heatmap_title,
+    # transpose
+    # plot_thr_heatmap(heatmap_df=ave_df.T, x_tick_labels=sep_name_list,
+    #                  y_tick_labels=isi_name_list, fig_title=heatmap_title,
+    #                  save_name=heatmap_savename, save_path=save_path, verbose=True)
+
+    # regular (not transpose)
+    plot_thr_heatmap(heatmap_df=ave_df, x_tick_labels=isi_name_list,
+                     y_tick_labels=sep_name_list, fig_title=heatmap_title,
                      save_name=heatmap_savename, save_path=save_path, verbose=True)
+
     if show_plots:
         plt.show()
     plt.close()
@@ -2528,31 +2607,58 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
             plt.show()
         plt.close()
 
-    print(f"\n3d surface plot\n")
+    print(f"\nHeatmap per row\n")
     if 'separation' in list(ave_df.columns):
         ave_df.set_index('separation', drop=True, inplace=True)
 
+    # get mean of each col, then mean of that
     if n_trimmed is not None:
-        surface_title = f'{ave_over} mean threshold for each ISI and separation condition.\n' \
-                        f'Markers show min thr per ISI (n={ave_over_n}, trim={n_trimmed}).'
-        surface_savename = f'mean_TM{n_trimmed}_thr_surface'
+        heatmap_pr_title = f'{ave_over} Heatmap per row (n={ave_over_n}, trim={n_trimmed}).'
+        heatmap_pr_savename = f'mean_TM{n_trimmed}_heatmap_per_row'
     else:
-        surface_title = f'{ave_over} mean threshold for each ISI and separation condition.\n' \
-                        f'Markers show min thr per ISI (n={ave_over_n})'
-        surface_savename = 'mean_thr_surface'
+        heatmap_pr_title = f'{ave_over} Heatmap per row (n={ave_over_n})'
+        heatmap_pr_savename = 'mean_heatmap_per_row'
 
-    plot_thr_3dsurface(plot_df=ave_df, my_rotation=True, even_spaced=False,
-                       transpose_df=False, rev_rows=False, rev_cols=False,
-                       show_min_per_sep=True, min_per_df_row=True,
-                       my_elev=15, my_azim=300,
-                       fig_title=surface_title,
-                       save_path=save_path,
-                       save_name=surface_savename,
-                       verbose=True)
+
+    # regular (not transpose)
+    plt_heatmap_per_row(heatmap_df=ave_df,
+                        x_axis_label='ISI',
+                        y_tick_labels=sep_vals_list,
+                        y_axis_label='Separation',
+                        fig_title=heatmap_pr_title,
+                        save_name=heatmap_pr_savename,
+                        save_path=save_path,
+                        verbose=True)
 
     if show_plots:
         plt.show()
     plt.close()
+
+    # print(f"\n3d surface plot\n")
+    # if 'separation' in list(ave_df.columns):
+    #     ave_df.set_index('separation', drop=True, inplace=True)
+    #
+    # if n_trimmed is not None:
+    #     surface_title = f'{ave_over} mean threshold for each ISI and separation condition.\n' \
+    #                     f'Markers show min thr per ISI (n={ave_over_n}, trim={n_trimmed}).'
+    #     surface_savename = f'mean_TM{n_trimmed}_thr_surface'
+    # else:
+    #     surface_title = f'{ave_over} mean threshold for each ISI and separation condition.\n' \
+    #                     f'Markers show min thr per ISI (n={ave_over_n})'
+    #     surface_savename = 'mean_thr_surface'
+    #
+    # plot_thr_3dsurface(plot_df=ave_df, my_rotation=True, even_spaced=False,
+    #                    transpose_df=False, rev_rows=False, rev_cols=False,
+    #                    show_min_per_sep=True, min_per_df_row=True,
+    #                    my_elev=15, my_azim=300,
+    #                    fig_title=surface_title,
+    #                    save_path=save_path,
+    #                    save_name=surface_savename,
+    #                    verbose=True)
+    #
+    # if show_plots:
+    #     plt.show()
+    # plt.close()
 
 
     print("\n*** finished make_average_plots()***\n")
