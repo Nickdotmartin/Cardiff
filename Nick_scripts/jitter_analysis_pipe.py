@@ -137,9 +137,9 @@ for p_idx, participant_name in enumerate(participant_list):
     #     # c_plots(save_path=save_path, thr_col='newLum', show_plots=True)
     #
     #
-    # trim_n = None
-    # if len(run_folder_names) == 12:
-    #     trim_n = 2
+    trim_n = None
+    if len(run_folder_names) == 12:
+        trim_n = 2
     #
     # print(f"\n\ntrim_n: {trim_n}, \n\n")
     #
@@ -148,27 +148,27 @@ for p_idx, participant_name in enumerate(participant_list):
     #                       isi_names_list=run_isi_names_list,
     #                       trim_n=trim_n, error_type='SE')
     #
-    # all_df_path = os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv')
-    # p_ave_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv')
-    # err_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thr_error_SE.csv')
-    # if trim_n is None:
-    #     all_df_path = os.path.join(root_path, 'MASTER_psignifit_thresholds.csv')
-    #     p_ave_path = os.path.join(root_path, 'MASTER_ave_thresh.csv')
-    #     err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
+    all_df_path = os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv')
+    p_ave_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv')
+    err_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thr_error_SE.csv')
+    if trim_n is None:
+        all_df_path = os.path.join(root_path, 'MASTER_psignifit_thresholds.csv')
+        p_ave_path = os.path.join(root_path, 'MASTER_ave_thresh.csv')
+        err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
     #
-    # make_average_plots(all_df_path=all_df_path,
-    #                    ave_df_path=p_ave_path,
-    #                    error_bars_path=err_path,
-    #                    thr_col='newLum',
-    #                    error_type='SE',
-    #                    n_trimmed=trim_n,
-    #                    exp_ave=False,  # participant ave, not exp ave
-    #                    ave_over_n=len(run_folder_names),
-    #                    split_1probe=False,
-    #                    isi_name_list=run_isi_names_list,
-    #                    sep_vals_list=[0, 1, 2, 3, 6, 18],
-    #                    sep_name_list=[0, 1, 2, 3, 6, 18],
-    #                    show_plots=True, verbose=True)
+    make_average_plots(all_df_path=all_df_path,
+                       ave_df_path=p_ave_path,
+                       error_bars_path=err_path,
+                       thr_col='newLum',
+                       error_type='SE',
+                       n_trimmed=trim_n,
+                       exp_ave=False,  # participant ave, not exp ave
+                       ave_over_n=len(run_folder_names),
+                       split_1probe=False,
+                       isi_name_list=run_isi_names_list,
+                       sep_vals_list=[0, 1, 2, 3, 6, 18],
+                       sep_name_list=[0, 1, 2, 3, 6, 18],
+                       show_plots=True, verbose=True)
 
 
 print(f'exp_path: {exp_path}')
@@ -178,8 +178,8 @@ trim_n = None
 if len(run_folder_names) == 12:
     trim_n = 2
 
-e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
-                   error_type='SE', n_trimmed=trim_n, verbose=True)
+# e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
+#                    error_type='SE', n_trimmed=trim_n, verbose=True)
 
 
 all_df_path = os.path.join(exp_path, 'MASTER_exp_thr.csv')

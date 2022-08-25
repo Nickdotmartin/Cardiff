@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 
 from rad_flow_psignifit_analysis import a_data_extraction, b3_plot_staircase, c_plots, \
     d_average_participant, e_average_exp_data, make_average_plots, plot_w_errors_either_x_axis
+
+from exp1a_psignifit_analysis import plot_thr_heatmap, plt_heatmap_row_col
 # from flow_parsing_psignifit_analysis import make_average_plots, e_average_exp_data
 
 from psignifit_tools import get_psignifit_threshold_df
@@ -65,82 +67,82 @@ for p_idx, participant_name in enumerate(participant_list):
             # needed to ensure names go name1, name2, name3 not name1, name12, name123
             p_name = participant_name
 
-            # # '''a'''
-            p_name = f'{participant_name}_{run_idx+1}_output'  # use this one
-
-            # todo: make data extraxction script to join diffewrent probe duratons together.
-            # run_data_df = a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=isi_list, verbose=True)
-
-            dur_data_df = pd.read_csv(os.path.join(save_path, probeDur, f'{p_name}.csv'))
-            column_names = list(dur_data_df)
-            print(f"dur_data_df:\n{dur_data_df}")
-
-            run_data.append(dur_data_df)
-
-        run_data_shape = np.shape(run_data)
-        sheets, rows, columns = np.shape(run_data)
-        run_data = np.reshape(run_data, newshape=(sheets * rows, columns))
-        print(f'run_data reshaped from {run_data_shape} to {np.shape(run_data)}')
-        run_data_df = pd.DataFrame(run_data, columns=column_names)
-        if 'Unnamed: 0' in list(run_data_df):
-            run_data_df.drop('Unnamed: 0', axis=1, inplace=True)
-        print(f"run_data_df:\n{run_data_df}")
-        save_name = 'RUNDATA-sorted.xlsx'
-        save_excel_path = os.path.join(save_path, save_name)
-        print(f"\nsaving run_data_df to save_excel_path:\n{save_excel_path}")
-        run_data_df.to_excel(save_excel_path, index=False)
-
-        run_data_df = pd.read_excel(save_excel_path, engine='openpyxl')
-
-        run_data_df = run_data_df.sort_values(by=['stair', 'trial_number'])
-
-        # todo: change psignifit top NewLum once I have new data
-
-
-
-        run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
-
-        run_data_df = pd.read_excel(run_data_path, engine='openpyxl')
-        print(f"run_data_df:\n{run_data_df}")
-
-
-        probe_speed_list = list(run_data_df['probeSpeed'].unique())
-        sep_list = list(run_data_df['separation'].unique())
-        isi_list = list(run_data_df['ISI'].unique())
-        dur_list = list(run_data_df['probe_dur'].unique())
-        stair_list = list(run_data_df['stair'].unique())
-        stair_names_list = list(run_data_df['stair_name'].unique())
-        cols_to_add_dict = {'stair': stair_list, 'stair_name': stair_names_list,
-                            # 'probeSpeed': probe_speed_list,
-                            'separation': sep_list, 'isi': isi_list, 'dur': dur_list}
-
-        '''get psignifit thresholds df - use stairs as sep levels rather than using groups'''
-        thr_df = get_psignifit_threshold_df(root_path=root_path,
-                                            p_run_name=run_dir,
-                                            csv_name=run_data_df,
-                                            n_bins=9, q_bins=True,
-                                            sep_col='probeSpeed',
-                                            sep_list=probe_speed_list,
-                                            thr_col='probeLum',
-                                            isi_col='probe_dur',
-                                            isi_list=dur_list,
-                                            conf_int=True,
-                                            thr_type='Bayes',
-                                            plot_both_curves=False,
-                                            save_plots=True,
-                                            cols_to_add_dict=None,
-                                            verbose=True)
-        print(f'thr_df:\n{thr_df}')
+        #     # # '''a'''
+        #     p_name = f'{participant_name}_{run_idx+1}_output'  # use this one
         #
-        # '''b3'''
+        #     # todo: make data extraxction script to join diffewrent probe duratons together.
+        #     # run_data_df = a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=isi_list, verbose=True)
+        #
+        #     dur_data_df = pd.read_csv(os.path.join(save_path, probeDur, f'{p_name}.csv'))
+        #     column_names = list(dur_data_df)
+        #     print(f"dur_data_df:\n{dur_data_df}")
+        #
+        #     run_data.append(dur_data_df)
+        #
+        # run_data_shape = np.shape(run_data)
+        # sheets, rows, columns = np.shape(run_data)
+        # run_data = np.reshape(run_data, newshape=(sheets * rows, columns))
+        # print(f'run_data reshaped from {run_data_shape} to {np.shape(run_data)}')
+        # run_data_df = pd.DataFrame(run_data, columns=column_names)
+        # if 'Unnamed: 0' in list(run_data_df):
+        #     run_data_df.drop('Unnamed: 0', axis=1, inplace=True)
+        # print(f"run_data_df:\n{run_data_df}")
+        # save_name = 'RUNDATA-sorted.xlsx'
+        # save_excel_path = os.path.join(save_path, save_name)
+        # print(f"\nsaving run_data_df to save_excel_path:\n{save_excel_path}")
+        # run_data_df.to_excel(save_excel_path, index=False)
+        #
+        # run_data_df = pd.read_excel(save_excel_path, engine='openpyxl')
+        #
+        # run_data_df = run_data_df.sort_values(by=['stair', 'trial_number'])
+        #
+        # # todo: change psignifit top NewLum once I have new data
+        #
+        #
+        #
         # run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
-        # thr_path = os.path.join(save_path, 'psignifit_thresholds.csv')
         #
-        # # b3 needs 'total_Ntrials' as column header, which I have changed to trial_number.
-        # # b3_plot_staircase(run_data_path, thr_col='newLum', show_plots=False)
+        # run_data_df = pd.read_excel(run_data_path, engine='openpyxl')
+        # print(f"run_data_df:\n{run_data_df}")
         #
-        # '''c'''
-        # # c_plots(save_path=save_path, thr_col='newLum', show_plots=True)
+        #
+        # probe_speed_list = list(run_data_df['probeSpeed'].unique())
+        # sep_list = list(run_data_df['separation'].unique())
+        # isi_list = list(run_data_df['ISI'].unique())
+        # dur_list = list(run_data_df['probe_dur'].unique())
+        # stair_list = list(run_data_df['stair'].unique())
+        # stair_names_list = list(run_data_df['stair_name'].unique())
+        # cols_to_add_dict = {'stair': stair_list, 'stair_name': stair_names_list,
+        #                     # 'probeSpeed': probe_speed_list,
+        #                     'separation': sep_list, 'isi': isi_list, 'dur': dur_list}
+        #
+        # '''get psignifit thresholds df - use stairs as sep levels rather than using groups'''
+        # thr_df = get_psignifit_threshold_df(root_path=root_path,
+        #                                     p_run_name=run_dir,
+        #                                     csv_name=run_data_df,
+        #                                     n_bins=9, q_bins=True,
+        #                                     sep_col='probeSpeed',
+        #                                     sep_list=probe_speed_list,
+        #                                     thr_col='probeLum',
+        #                                     isi_col='probe_dur',
+        #                                     isi_list=dur_list,
+        #                                     conf_int=True,
+        #                                     thr_type='Bayes',
+        #                                     plot_both_curves=False,
+        #                                     save_plots=True,
+        #                                     cols_to_add_dict=None,
+        #                                     verbose=True)
+        # print(f'thr_df:\n{thr_df}')
+        # #
+        # # '''b3'''
+        # # run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
+        # # thr_path = os.path.join(save_path, 'psignifit_thresholds.csv')
+        # #
+        # # # b3 needs 'total_Ntrials' as column header, which I have changed to trial_number.
+        # # # b3_plot_staircase(run_data_path, thr_col='newLum', show_plots=False)
+        # #
+        # # '''c'''
+        # # # c_plots(save_path=save_path, thr_col='newLum', show_plots=True)
 
 
     trim_n = None
@@ -150,8 +152,8 @@ for p_idx, participant_name in enumerate(participant_list):
     print(f"\n\ntrim_n: {trim_n}, \n\n")
 
     '''d'''
-    d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-                          trim_n=trim_n, error_type='SE')
+    # d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
+    #                       trim_n=trim_n, error_type='SE')
 
     all_df_path = os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv')
     p_ave_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv')
@@ -179,34 +181,80 @@ for p_idx, participant_name in enumerate(participant_list):
 
     save_path, df_name = os.path.split(p_ave_path)
 
-    if trim_n is not None:
-        fig_1b_title = f'P average thresholds per stair across all runs (trim={trim_n}).\n' \
-                       f'Bars=.68 CI'
-        fig_1b_savename = f'ave_TM_thr_all_runs.png'
-    else:
-        fig_1b_title = f'P average threshold per stair across all runs\n' \
-                       f'Bars=.68 CI'
-        fig_1b_savename = f'ave_thr_all_runs.png'
+    # if trim_n is not None:
+    #     fig_1b_title = f'P average thresholds per stair across all runs (trim={trim_n}).\n' \
+    #                    f'Bars=.68 CI'
+    #     fig_1b_savename = f'ave_TM_thr_all_runs.png'
+    # else:
+    #     fig_1b_title = f'P average threshold per stair across all runs\n' \
+    #                    f'Bars=.68 CI'
+    #     fig_1b_savename = f'ave_thr_all_runs.png'
+    #
+    # headers = list(p_all_df.columns)
+    #
+    # substring = 'probe_dur_'
+    #
+    # # ✅ find all strings in list that contain substring
+    # probe_dur_cols = [item for item in headers if substring in item]
+    # # print(all_matches)
+    # plot_w_errors_either_x_axis(wide_df=p_all_df, cols_to_keep=['probeSpeed'],
+    #                             cols_to_change=probe_dur_cols,
+    #                             cols_to_change_show='probeLum', new_col_name='probe_dur',
+    #                             strip_from_cols=substring, x_axis='probeSpeed', y_axis='probeLum',
+    #                             hue_var='probe_dur', style_var=None, style_order=None,
+    #                             error_bars=True, even_spaced_x=True,
+    #                             x_tick_vals=probe_speed_list,
+    #                             jitter=False,  # .01,
+    #                             fig_title=fig_1b_title, fig_savename=fig_1b_savename,
+    #                             save_path=save_path, verbose=True)
+    # plt.show()
+    # plt.close()
 
-    headers = list(p_all_df.columns)
+    ave_over_n = len(run_folder_names)
 
-    substring = 'probe_dur_'
+    # heat_df = all_mean_df.pivot(index='separation', columns='ISI', values='accuracy')
+    # print(f"heat_df ({list(heat_df.columns)}):\n{heat_df}")
 
-    # ✅ find all strings in list that contain substring
-    probe_dur_cols = [item for item in headers if substring in item]
-    # print(all_matches)
-    plot_w_errors_either_x_axis(wide_df=p_all_df, cols_to_keep=['probeSpeed'],
-                                cols_to_change=probe_dur_cols,
-                                cols_to_change_show='probeLum', new_col_name='probe_dur',
-                                strip_from_cols=substring, x_axis='probeSpeed', y_axis='probeLum',
-                                hue_var='probe_dur', style_var=None, style_order=None,
-                                error_bars=True, even_spaced_x=True,
-                                x_tick_vals=probe_speed_list,
-                                jitter=False,  # .01,
-                                fig_title=fig_1b_title, fig_savename=fig_1b_savename,
-                                save_path=save_path, verbose=True)
-    plt.show()
-    plt.close()
+    heat_df = p_ave_df.set_index('probeSpeed', drop=True)
+    print(f'heat_df\n{heat_df}')
+
+    probe_dur_list = list(heat_df.columns)
+    probe_speed_list = list(heat_df.index)
+
+    plot_thr_heatmap(heatmap_df=heat_df,
+                     x_tick_labels=probe_dur_list,
+                     y_tick_labels=probe_speed_list,
+                     fig_title=f'Direction detection Accuracy\n(chance=50%, n={ave_over_n})',
+                     save_name='Accuracy_heatmap.png',
+                     save_path=save_path,
+                     verbose=True)
+
+    heatmap_pr_title = f'P Heatmap per row (n={ave_over_n})'
+    heatmap_pr_savename = 'mean_heatmap_per_row'
+
+    plt_heatmap_row_col(heatmap_df=heat_df,
+                        colour_by='row',
+                        x_tick_labels=None,
+                        x_axis_label='probe_dur',
+                        y_tick_labels=None,
+                        y_axis_label='Probe_speed',
+                        fig_title=heatmap_pr_title,
+                        save_name=heatmap_pr_savename,
+                        save_path=save_path,
+                        verbose=True)
+
+    heatmap_pc_title = f'P Heatmap per col (n={ave_over_n})'
+    heatmap_pc_savename = 'mean_heatmap_per_col'
+    plt_heatmap_row_col(heatmap_df=heat_df,
+                        colour_by='col',
+                        x_tick_labels=None,
+                        x_axis_label='Probe Dur',
+                        y_tick_labels=None,
+                        y_axis_label='Probe_speed',
+                        fig_title=heatmap_pc_title,
+                        save_name=heatmap_pc_savename,
+                        save_path=save_path,
+                        verbose=True)
 
 
 

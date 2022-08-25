@@ -751,6 +751,7 @@ def plot_thr_heatmap(heatmap_df,
                      fig_title=None,
                      save_name=None,
                      save_path=None,
+                     my_colourmap='RdYlGn_r',
                      verbose=True):
     """
     Function for making a heatmap
@@ -782,7 +783,7 @@ def plot_thr_heatmap(heatmap_df,
     heatmap = sns.heatmap(data=heatmap_df,
                           annot=True, center=mean_thr,
                           # cmap=sns.color_palette("Spectral", as_cmap=True),
-                          cmap='RdYlGn_r',
+                          cmap=my_colourmap,
                           xticklabels=x_tick_labels, yticklabels=y_tick_labels,
                           square=False)
 
@@ -815,6 +816,7 @@ def plt_heatmap_row_col(heatmap_df,
                         fontsize=16,
                         save_name=None,
                         save_path=None,
+                        my_colourmap='RdYlGn_r',
                         verbose=True):
     """
     Function for making a heatmap
@@ -856,7 +858,7 @@ def plt_heatmap_row_col(heatmap_df,
         sns.heatmap(data=use_this_data,
                     ax=ax,
                     linewidths=.05,
-                    cmap='RdYlGn_r',
+                    cmap=my_colourmap,
                     annot=True,
                     annot_kws={'fontsize': fontsize},
                     # fmt='{:.2f}',
@@ -886,7 +888,7 @@ def plt_heatmap_row_col(heatmap_df,
     # # make colourbar: numbers are (1) the horizontal and (2) vertical position
     # # of the bottom left corner, then (3) width and (4) height of colourbar.
     cb_ax = fig.add_axes([0.85, 0.11, 0.02, 0.77])
-    cbar = plt.colorbar(cm.ScalarMappable(cmap='RdYlGn_r'), cax=cb_ax)
+    cbar = plt.colorbar(cm.ScalarMappable(cmap=my_colourmap), cax=cb_ax)
     # set the colorbar ticks and tick labels
     cbar.set_ticks(np.arange(0, 1.1, 0.5))
     cbar.set_ticklabels(['Lowest', 'Med', 'Highest'])
