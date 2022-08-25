@@ -6,6 +6,8 @@ import pandas as pd
 import seaborn as sns
 import math
 
+from exp1a_psignifit_analysis import plt_heatmap_row_col
+
 """
 This page contains python functions to analyse the radial_flow.py experiment.
 The workflow is based on Martin's MATLAB scripts used in OLD_MATLAB_analysis.py.
@@ -2897,13 +2899,70 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         heatmap_title = f'{ave_over} mean Threshold for each ISI and separation (n={ave_over_n})'
         heatmap_savename = 'mean_thr_heatmap'
 
-    plot_thr_heatmap(heatmap_df=ave_w_sep_idx_df.T,
-                     x_tick_labels=stair_names_labels,
-                     y_tick_labels=isi_name_list,
-                     fig_title=heatmap_title,
+    # todo: I used to use ave_w_sep_idx_df.T, but I will try without the transpose to compare with other heatmaps.
+    plot_thr_heatmap(
+        # heatmap_df=ave_w_sep_idx_df.T,
+        #              x_tick_labels=stair_names_labels,
+        #              y_tick_labels=isi_name_list,
+        heatmap_df=ave_w_sep_idx_df,
+        x_tick_labels=isi_name_list,
+        y_tick_labels=stair_names_labels,
+        fig_title=heatmap_title,
                      save_name=heatmap_savename,
                      save_path=save_path,
                      verbose=verbose)
+    if show_plots:
+        plt.show()
+    plt.close()
+
+    print(f"\nHeatmap per row\n")
+    if 'separation' in list(ave_df.columns):
+        ave_df.set_index('separation', drop=True, inplace=True)
+
+    # get mean of each col, then mean of that
+    if n_trimmed is not None:
+        heatmap_pr_title = f'{ave_over} Heatmap per row (n={ave_over_n}, trim={n_trimmed}).'
+        heatmap_pr_savename = f'mean_TM{n_trimmed}_heatmap_per_row'
+    else:
+        heatmap_pr_title = f'{ave_over} Heatmap per row (n={ave_over_n})'
+        heatmap_pr_savename = 'mean_heatmap_per_row'
+
+    plt_heatmap_row_col(heatmap_df=ave_w_sep_idx_df,
+                        colour_by='row',
+                        x_tick_labels=None,
+                        x_axis_label='ISI',
+                        y_tick_labels=None,
+                        y_axis_label='Separation',
+                        fig_title=heatmap_pr_title,
+                        save_name=heatmap_pr_savename,
+                        save_path=save_path,
+                        verbose=True)
+    if show_plots:
+        plt.show()
+    plt.close()
+
+    print(f"\nHeatmap per col\n")
+    if 'separation' in list(ave_df.columns):
+        ave_df.set_index('separation', drop=True, inplace=True)
+
+    # get mean of each col, then mean of that
+    if n_trimmed is not None:
+        heatmap_pr_title = f'{ave_over} Heatmap per col (n={ave_over_n}, trim={n_trimmed}).'
+        heatmap_pr_savename = f'mean_TM{n_trimmed}_heatmap_per_col'
+    else:
+        heatmap_pr_title = f'{ave_over} Heatmap per col (n={ave_over_n})'
+        heatmap_pr_savename = 'mean_heatmap_per_col'
+
+    plt_heatmap_row_col(heatmap_df=ave_w_sep_idx_df,
+                        colour_by='col',
+                        x_tick_labels=None,
+                        x_axis_label='ISI',
+                        y_tick_labels=None,
+                        y_axis_label='Separation',
+                        fig_title=heatmap_pr_title,
+                        save_name=heatmap_pr_savename,
+                        save_path=save_path,
+                        verbose=True)
     if show_plots:
         plt.show()
     plt.close()

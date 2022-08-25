@@ -3,6 +3,7 @@ import pandas as pd
 from psignifit_tools import get_psignifit_threshold_df
 from rad_flow_psignifit_analysis import a_data_extraction, b3_plot_staircase
 from rad_flow_psignifit_analysis import c_plots, d_average_participant, make_average_plots, e_average_exp_data
+from exp1a_psignifit_analysis import plt_heatmap_row_col
 
 # # loop through run folders with first 5 scripts (a, b1, b2, b3, c)
 # # then run script d to get master lists and averages
@@ -16,7 +17,6 @@ from rad_flow_psignifit_analysis import c_plots, d_average_participant, make_ave
 # todo: why does a_extract data work for my data but not Simon's???
 # exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2'
 # participant_list = ['Simon', 'Nick']  # , 'Nick_half_speed']
-
 
 # exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2_half'
 # participant_list = ['Nick_half_speed', 'Simon_half']  # , 'Nick_half_speed']
@@ -81,46 +81,45 @@ for p_idx, participant_name in enumerate(participant_list):
         '''a'''
         p_name = f'{participant_name}_{r_idx_plus}'
 
-        a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=run_isi_list, verbose=verbose)
-
-        run_data_path = f'{save_path}{os.sep}ALL_ISIs_sorted.xlsx'
-        run_data_df = pd.read_excel(run_data_path, engine='openpyxl',
-                                    # usecols=["ISI", "stair", "stair_name",
-                                    #          "step", "separation", "congruent",
-                                    #          "flow_dir", "probe_jump", "corner",
-                                    #          "newLum", "trial_response"]
-                                    )
-        print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
-
-
-        '''get psignifit thresholds df'''
-        cols_to_add_dict = {'stair_names': [18, -18, 6, -6, 3, -3, 2, -2, 1, -1, 0, -0.1],
-                            'congruent':  [1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1],
-                            'separation': [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]}
-        thr_df = get_psignifit_threshold_df(root_path=root_path,
-                                            p_run_name=run_dir,
-                                            csv_name=run_data_df,
-                                            n_bins=9, q_bins=True,
-                                            sep_col='stair',
-                                            thr_col='probeLum',
-                                            isi_list=run_isi_list,
-                                            sep_list=stair_list,
-                                            conf_int=True,
-                                            thr_type='Bayes',
-                                            plot_both_curves=False,
-                                            cols_to_add_dict=cols_to_add_dict,
-                                            show_plots=False,
-                                            verbose=verbose)
-        print(f'thr_df:\n{thr_df}')
-
-
-        '''b3'''
-        b3_plot_staircase(run_data_path, thr_col='probeLum', show_plots=show_plots, verbose=verbose)
-
-        '''c I don't actually need any of these, instead sort get psignifit thr ands make plots from those.'''
-        c_plots(save_path=save_path, thr_col='probeLum', isi_name_list=run_isi_names_list, show_plots=show_plots, verbose=verbose)
-
-
+        # a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=run_isi_list, verbose=verbose)
+        #
+        # run_data_path = f'{save_path}{os.sep}ALL_ISIs_sorted.xlsx'
+        # run_data_df = pd.read_excel(run_data_path, engine='openpyxl',
+        #                             # usecols=["ISI", "stair", "stair_name",
+        #                             #          "step", "separation", "congruent",
+        #                             #          "flow_dir", "probe_jump", "corner",
+        #                             #          "newLum", "trial_response"]
+        #                             )
+        # print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
+        #
+        #
+        # '''get psignifit thresholds df'''
+        # cols_to_add_dict = {'stair_names': [18, -18, 6, -6, 3, -3, 2, -2, 1, -1, 0, -0.1],
+        #                     'congruent':  [1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1],
+        #                     'separation': [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]}
+        # thr_df = get_psignifit_threshold_df(root_path=root_path,
+        #                                     p_run_name=run_dir,
+        #                                     csv_name=run_data_df,
+        #                                     n_bins=9, q_bins=True,
+        #                                     sep_col='stair',
+        #                                     thr_col='probeLum',
+        #                                     isi_list=run_isi_list,
+        #                                     sep_list=stair_list,
+        #                                     conf_int=True,
+        #                                     thr_type='Bayes',
+        #                                     plot_both_curves=False,
+        #                                     cols_to_add_dict=cols_to_add_dict,
+        #                                     show_plots=False,
+        #                                     verbose=verbose)
+        # print(f'thr_df:\n{thr_df}')
+        #
+        #
+        # '''b3'''
+        # b3_plot_staircase(run_data_path, thr_col='probeLum', show_plots=show_plots, verbose=verbose)
+        #
+        # '''c I don't actually need any of these, instead sort get psignifit thr ands make plots from those.'''
+        # c_plots(save_path=save_path, thr_col='probeLum', isi_name_list=run_isi_names_list, show_plots=show_plots, verbose=verbose)
+        #
 
     '''d participant averages'''
     trim_n = None
@@ -128,8 +127,8 @@ for p_idx, participant_name in enumerate(participant_list):
         trim_n = 2
     print(f'\ntrim_n: {trim_n}')
 
-    d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-                          trim_n=trim_n, error_type='SE', verbose=verbose)
+    # d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
+    #                       trim_n=trim_n, error_type='SE', verbose=verbose)
 
 
     # making average plot
@@ -152,13 +151,14 @@ for p_idx, participant_name in enumerate(participant_list):
                        show_plots=True, verbose=True)
 
 
+
 print(f'exp_path: {exp_path}')
 # participant_list = ['Nick_half', 'Simon_half']
 print('\nget exp_average_data')
 trim_n = 2
 # todo: sort script to automatically use trim=2 if its there, and not just use untrimmed
-e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
-                   error_type='SE', n_trimmed=trim_n, verbose=True)
+# e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
+#                    error_type='SE', n_trimmed=trim_n, verbose=True)
 
 
 all_df_path = os.path.join(exp_path, "MASTER_exp_thr.csv")
