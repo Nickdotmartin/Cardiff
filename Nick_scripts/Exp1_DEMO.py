@@ -34,8 +34,6 @@ monitor_name = 'Nick_work_laptop'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 
 
 display_number = 1  # 0 indexed, 1 for external display
 
-
-
 # Store info about the experiment session
 expName = 'EXP1_DEMO'  # from the Builder filename that created this script
 
