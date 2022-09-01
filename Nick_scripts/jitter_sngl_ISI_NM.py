@@ -15,26 +15,25 @@ from kestenSTmaxVal import Staircase
 """
 This script takes: 
 the probes from EXPERIMENT3_background_motion_SKR, and adds jitter.  
-Each separation appears ONCE per run, rather than twice as in Exp1."""
-
-# todo: SORT OUT COLORS TO MATCH EXP1:This script uses colorspace=rgb, but it should be rgb255.
-#  I'll keep it as is for now, but I need to use these vals below for bglum and deltaLum.
-#  flow_bgcolor = [-0.1, -0.1, -0.1]  # dark grey converts to:
-#  rgb: -0.1 = rgb1: .45 = rgb255: 114.75 = lum: 47.8.
-#  for future ref, to match exp1 it should be flow_bgcolor = [-0.6, -0.6, -0.6]  # dark grey
+Each separation appears ONCE per run, rather than twice as in Exp1.
+Jitter pattern now uses WrapPoints to put points beyond +/-500 back into range.
+Jitter points randomly change position every 2 frames
+ - should this be set to move in random positions but not et random new position?
+Jitter colours are same as rad_flow (rbg255[76.5, 114.75, 76.5]), but could be higher contrast?
+"""
 
 # Ensure that relative paths start from the same directory as this script
 _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 
-# todo: change to asus_cal
+# todo: change to asus_cal for testing
 # Monitor config from monitor centre
-monitor_name = 'Nick_work_laptop'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
+monitor_name = 'Asus_VG24'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 display_number = 1  # 0 indexed, 1 for external display
 
 # Store info about the experiment session
-expName = 'jitter_NM'  # from the Builder filename that created this script
+expName = 'jitter_sngl_ISI_NM'  # from the Builder filename that created this script
 
 expInfo = {'1_Participant': 'Nick_test',
            '1. run_number': '1',
@@ -42,11 +41,9 @@ expInfo = {'1_Participant': 'Nick_test',
            '3_fps': [240, 144, 60],
            '4_ISI_dur_in_ms': [100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0],
            '5_Probe_orientation': ['tangent', 'radial'],
-           # '6_Probe_size': ['5pixels', '6pixels', '3pixels'],
            '7_Trials_counter': [True, False],
            '8_Background': ['jitter', 'flow_rad', 'None'],
-           '9_bg_speed_cond': ['Normal', 'Half-speed']
-           }
+           '9_bg_speed_cond': ['Normal', 'Half-speed']}
 
 # GUI
 dlg = gui.DlgFromDict(dictionary=expInfo, title=expName)
@@ -105,9 +102,6 @@ if background == 'flow_rad':
 separations = list(np.repeat(separation_values, sep_per_run))
 n_stairs = len(separations)
 
-# # main contrast is whether the background and target motion is in same or opposite direction.
-# congruence_list: 1=congruent/same, -1=incongruent/different
-# congruence_list = [1, -1]*len(separation_values)
 
 # FILENAME
 filename = f'{_thisDir}{os.sep}' \
@@ -132,27 +126,9 @@ Color1LumFactor = 2.39538706913372
 
 maxLum = 106  # 255 RGB
 minLum = 0.12  # 0 RGB
-maxColor255 = 255
-minColor255 = 0
-maxColor1 = 1
-minColor1 = -1
-bgLumP = 20
-bgLum = maxLum * bgLumP / 100
-bgColor255 = bgLum * LumColor255Factor  # I could switch to using this.
-print(f'bgColor255: {bgColor255}')
 
-# #  rgb: -0.1 = rgb1: .45 = rgb255: 114.75 = lum: 47.8
 flow_bgcolor = [-0.1, -0.1, -0.1]  # dark grey
-# # flow_bgcolor = [-0.6, -0.6, -0.6]  # these values would be equivalent to exp1a
-#
-# if background == 'flow_rad':
-#     # background colour: use darker grey.  set once here and use elsewhere
-#     bgcolor = flow_bgcolor
-# else:
-#     # bgcolor = bgColor255
-#     bgcolor = flow_bgcolor
 bgcolor = flow_bgcolor
-
 
 # get ACTUAL bgcolor details
 actual_bg_color = bgcolor[0]
@@ -180,11 +156,9 @@ mon_dict = {'mon_name': monitor_name,
             'width': thisMon.getWidth(),
             'size': thisMon.getSizePix(),
             'dist': thisMon.getDistance(),
-            'notes': thisMon.getNotes()
-            }
+            'notes': thisMon.getNotes()}
 print(f"mon_dict: {mon_dict}")
 
-# todo: do I still need these monitor checks?
 # double check using full screen in lab
 if monitor_name in ['ASUS_2_13_240Hz', 'asus_cal', 'Nick_work_laptop']:
     display_number = 0
@@ -200,8 +174,7 @@ mon = monitors.Monitor(monitor_name, width=monitorwidth, distance=viewdist)
 mon.setSizePix((widthPix, heightPix))
 mon.save()
 
-# todo: exp1 uses rgb255, so do ricco & Bloch but rad_flow uses rgb.
-#  Best to move to rgb255, right?
+
 # WINDOW SPEC
 win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     colorSpace='rgb255',
@@ -211,8 +184,7 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     units='pix',
                     screen=display_number,
                     allowGUI=False,
-                    fullscr=use_full_screen,
-                    )
+                    fullscr=use_full_screen)
 
 
 # # check correct monitor details (fps, size) have been accessed.
@@ -244,16 +216,6 @@ else:
 
 
 # PROBEs
-# todo: I don't need all these probe sizes - just use 5.
-# probe sizes choice
-# if expInfo['6_Probe_size'] == '6pixels':  # 6 pixels
-#     probeVert = [(0, 0), (1, 0), (1, 1), (2, 1),
-#                  (2, -2), (-1, -2), (-1, -1), (0, -1)]
-# elif expInfo['6_Probe_size'] == '3pixels':  # 3 pixels
-#     probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, 0), (1, 0), (1, -1),
-#                  (0, -1), (0, -2), (-1, -2), (-1, -2), (-1, -1), (0, -1)]
-# else:  # 5 pixels
-#     # default setting is expInfo['6_Probe_size'] == '5pixels':
 expInfo['6_Probe_size'] = '5pixels'
 probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
              (1, -2), (-1, -2), (-1, -1), (0, -1)]
@@ -268,16 +230,19 @@ probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor=[-1.0, 1.0, -1.0],
 raisedCosTexture1 = visual.filters.makeMask(256, shape='raisedCosine',
                                             fringeWidth=0.3, radius=[1.0, 1.0])
 mask_size = 150
-# todo: sort probe masks to match background - currently white!
+print(f"bgColor255: {bgColor255}")
 probeMask1 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
-                                size=(mask_size, mask_size), units='pix', color=bgColor255)
+                                size=(mask_size, mask_size), units='pix',
+                                colorSpace='rgb255', color=bgColor255)
 probeMask2 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
-                                size=(mask_size, mask_size), units='pix', color=bgColor255)
+                                size=(mask_size, mask_size), units='pix',
+                                colorSpace='rgb255', color=bgColor255)
 probeMask3 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
-                                size=(mask_size, mask_size), units='pix', color=bgColor255)
+                                size=(mask_size, mask_size), units='pix',
+                                colorSpace='rgb255', color=bgColor255)
 probeMask4 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
-                                size=(mask_size, mask_size), units='pix', color=bgColor255)
-
+                                size=(mask_size, mask_size), units='pix',
+                                colorSpace='rgb255', color=bgColor255)
 
 # BACKGROUND
 # flow_dots
@@ -288,11 +253,14 @@ elif bg_speed_cond == 'Half-speed':
 else:
     raise ValueError(f'background speed should be selected from drop down menu: Normal or Half-speed')
 nDots = 10000
+flow_dots_col = [76.5, 114.75, 76.5]
 flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
                                     units='pix', nElements=nDots, sizes=30,
-                                    colors=[bgColor255-0.3,
-                                            bgColor255,
-                                            bgColor255-0.3])
+                                    colorSpace='rgb255',
+                                    # colors=[bgColor255-0.3,
+                                    #         bgColor255,
+                                    #         bgColor255-0.3],
+                                    colors=flow_dots_col)
 
 # full screen mask to blend off edges and fade to black
 # Create a raisedCosine mask array and assign it to a Grating stimulus (grey outside, transparent inside)
@@ -311,7 +279,9 @@ dotsMask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
 # function for wrapping flow_dots back into volume
 # its is used as WrapPoints(z, minDist, maxDist)
 # Any dots with a z (depth) value out of bounds are transformed to be in bounds
-
+# todo: does not necessarily appear at edge of screen.  If min = -500, max = 500; then difference is 1000.
+# any dot with value of -700 will appear at 300 (-700 + 100).
+# any dot with value of 1111 will appear at 111 (1111 - 1000).
 
 def WrapPoints(ii, imin, imax):
     lessthanmin = (ii < imin)
@@ -320,8 +290,25 @@ def WrapPoints(ii, imin, imax):
     ii[morethanmax] = ii[morethanmax] - (imax-imin)
     return ii
 
+'''
+https://stackoverflow.com/questions/34082748/how-to-create-a-continuous-visual-window-background-wrapping-of-background/34122312#34122312
 
-taille = 5000  # french for 'size', 'cut', 'trim', 'clip' etc
+BORDER_RIGHT = 1  # for 'norm' units, this is the coordinate of the right border
+
+# Animation
+for frame in range(360):
+    # Determine location of elements on next frame
+    stim.xys += (0.01, 0)  # move all to the right
+    exceeded = stim.xys[:,0] > BORDER_RIGHT  # index of elements whose x-value exceeds the border
+    stim.xys[exceeded] *= (-1, 1)  # for these indicies, mirror the x-coordinate but keep the y-coordinate
+
+    # Show it 
+    stim.draw()
+    win.flip()'''
+
+
+
+taille = 5000  # french for 'size', 'cut', 'trim', 'clip' etc - what does it actually do here?
 minDist = 0.5
 maxDist = 5
 
@@ -343,8 +330,7 @@ instructions = visual.TextStim(win=win, name='instructions',
                                     "press [r] or [9] to redo the previous trial.\n\n"
                                     "Press any key to start.",
                                font='Arial', height=20,
-                               colorSpace='rgb255', color='white',
-                               )
+                               colorSpace='rgb255', color='white')
 while not event.getKeys():
     fixation.setRadius(3)
     fixation.draw()
@@ -356,8 +342,7 @@ trials_counter = visual.TextStim(win=win, name='trials_counter', text="???",
                                  font='Arial', height=20,
                                  # default set to black (e.g., invisible)
                                  color='black',
-                                 pos=[-widthPix*.45, -heightPix*.45]
-                                 )
+                                 pos=[-widthPix*.45, -heightPix*.45])
 if trials_counter:
     # if trials counter yes, change colour to white.
     trials_counter.color = 'white'
@@ -397,14 +382,8 @@ for stair_idx in expInfo['stair_list']:
     thisInfo['stair_idx'] = stair_idx
 
     stair_name = f'sep{separations[stair_idx]}_isi{ISI}'
-    # stair_name will be pos or neg sep value for congruence (e.g., 18, -18, 6, -6 etc)
-    # however, change -0 to -.1 to avoid confusion with 0.
-    # todo: tidy this up, get rid of congruence
-    # stair_name = separations[stair_idx] * congruence_list[stair_idx]
-    # if separations[stair_idx] + congruence_list[stair_idx] == -1:
-    #     stair_name = -.1
 
-    thisStair = Staircase(name=f'{stair_name}',
+    thisStair = Staircase(name=stair_name,
                           type='simple',
                           value=stairStart,
                           C=stairStart * 0.6,  # step_size, typically 60% of reference stimulus
@@ -413,36 +392,27 @@ for stair_idx in expInfo['stair_list']:
                           minVal=miniVal,
                           maxVal=maxiVal,
                           targetThresh=0.75,
-                          extraInfo=thisInfo
-                          )
+                          extraInfo=thisInfo)
     stairs.append(thisStair)
 
 
 # EXPERIMENT
 trial_number = 0
 print('\n*** exp loop*** \n\n')
-
 for step in range(n_trials_per_stair):
     np.random.shuffle(stairs)
     for thisStair in stairs:
 
-        print(f"thisStair: {thisStair}, step: {step}")
-
         trial_number = trial_number + 1
         trialClock.reset()
-
         stair_idx = thisStair.extraInfo['stair_idx']
-        sep = separations[stair_idx]
 
-        # todo: remove congruence and flow_dir
-        # congruence is balanced with separation values
-        # congruent = congruence_list[stair_idx]
-        # flow_dir = flow_directions[stair_idx]
-        # flow_dir = np.random.choice([1, -1])
+        print(f"trial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
+
+        sep = separations[stair_idx]
 
         # PROBE
         target_jump = np.random.choice([1, -1])  # direction in which the probe jumps : CW or CCW
-        # target_jump = congruent * flow_dir
 
         # flow_dots
         x = np.random.rand(nDots) * taille - taille / 2
@@ -453,9 +423,6 @@ for step in range(n_trials_per_stair):
         x_flow = x / z
         y_flow = y / z
 
-        # Make variable for whether target_jump and flow dir are the same
-        # (e.g., both inward or both outward = 1, else -1)
-        # trgt_flow_same = flow_dir*target_jump
 
         # staircase varies probeLum
         probeLum = thisStair.next()
@@ -467,8 +434,8 @@ for step in range(n_trials_per_stair):
         # PROBE LOCATIONS
         # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
         corner = np.random.choice([45, 135, 225, 315])
+        print(f'sep: {sep}, corner: {corner}')
 
-        print(f'\tcorner: {corner}')
         # dist_from_fix is a constant giving distance form fixation,
         # dist_from_fix was previously 2 identical variables x_prob & y_prob.
         dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
@@ -593,13 +560,14 @@ for step in range(n_trials_per_stair):
 
         # timing in frames
         # fixation time is now 70ms shorted than previously.
-        t_fixation = 0.2 * (fps - prelim_bg_flow_fr)
+        # todo: add in random when setting fixation time so it varies slightly each trial.
+        #  This might remove or reduce saccade anticipation effects.
+        t_fixation = 1 * (fps - prelim_bg_flow_fr)
         t_bg_motion = t_fixation + prelim_bg_flow_fr
-        t_interval_1 = t_bg_motion + probe_duration
-        t_ISI = t_interval_1 + ISI
-        t_interval_2 = t_ISI + probe_duration
-        # essentially unlimited time to respond
-        t_response = t_interval_2 + 10000 * fps
+        t_probe_1 = t_bg_motion + probe_duration
+        t_ISI = t_probe_1 + ISI
+        t_probe_2 = t_ISI + probe_duration
+        t_response = t_probe_2 + 10000 * fps  # essentially unlimited time to respond
 
         # repeat the trial if [r] has been pressed
         repeat = True
@@ -627,12 +595,14 @@ for step in range(n_trials_per_stair):
                     if background == 'jitter':
                         # draw flow_dots but with no motion
                         # todo: change motion to update every frame or ? frames
-                        if frameN % 8 == 0:
-                            x = x+np.random.rand(1) * flow_speed- flow_speed / 2
-                            # todo: should the below be z = WrapPoints?
-                            WrapPoints(x, taille/2, taille/2)
+                        if frameN % 2 == 0:
+                            x = x+np.random.rand(1) * flow_speed - flow_speed / 2
+                            x = WrapPoints(x, taille/2, taille/2)
+                            # x = WrapPoints(x, -500, 500)
                             y = y+np.random.rand(1) * flow_speed - flow_speed / 2
-                            WrapPoints(y, taille/2, taille/2)
+                            y = WrapPoints(y, taille/2, taille/2)
+                            # y = WrapPoints(y, -500, 500)
+
                         x_flow = x / z
                         y_flow = y / z
                         flow_dots.xys = np.array([x_flow, y_flow]).transpose()
@@ -653,15 +623,20 @@ for step in range(n_trials_per_stair):
                     if background == 'jitter':
                         # todo: add these two lines back in?
                         # radial flow_dots motion
-#                       z = z + flow_speed * flow_dir
-#                        WrapPoints(z, minDist, maxDist)
-                        if frameN % 8 == 0:
+                        # z = z + flow_speed * flow_dir
+                        # WrapPoints(z, minDist, maxDist)
+                        if frameN % 2 == 0:
                             # todo: change motion to update every frame or ? frames
-                            x=x+np.random.rand(1) * flow_speed- flow_speed / 2
-                            WrapPoints(x, taille/2, taille/2)
-                            y=y+np.random.rand(1) * flow_speed - flow_speed / 2
-                            WrapPoints(y, taille/2, taille/2)
- 
+                            x = x + np.random.rand(1) * flow_speed - flow_speed / 2
+                            print(f"x: {x}")
+                            x = WrapPoints(x, taille/2, taille/2)
+                            # x = WrapPoints(x, -500, 500)
+                            print(f"x2: {x}")
+
+                            y = y + np.random.rand(1) * flow_speed - flow_speed / 2
+                            y = WrapPoints(y, taille/2, taille/2)
+                            # y = WrapPoints(y, -500, 500)
+
                         x_flow = x / z
                         y_flow = y / z
 
@@ -676,24 +651,26 @@ for step in range(n_trials_per_stair):
 
                     fixation.setRadius(3)
                     fixation.draw()
-                    # probe1.draw()
                     trials_counter.draw()
 
 
                 # PROBE 1
-                if t_interval_1 >= frameN > t_bg_motion:
+                if t_probe_1 >= frameN > t_bg_motion:
                     # after background motion, before end of probe1 interval
                     if background == 'jitter':
                         # radial flow_dots motion
                         # todo: add these two lines back in?
-#                       z = z + flow_speed * flow_dir
-#                        WrapPoints(z, minDist, maxDist)
-                        if frameN % 8 == 0:
+                        # z = z + flow_speed * flow_dir
+                        # WrapPoints(z, minDist, maxDist)
+                        if frameN % 2 == 0:
                             # todo: change motion to update every frame or ? frames
-                            x=x+np.random.rand(1) * flow_speed- flow_speed / 2
-                            WrapPoints(x, taille/2, taille/2)
-                            y=y+np.random.rand(1) * flow_speed - flow_speed / 2
-                            WrapPoints(y, taille/2, taille/2)
+                            x = x + np.random.rand(1) * flow_speed - flow_speed / 2
+                            x = WrapPoints(x, taille/2, taille/2)
+                            # x = WrapPoints(x, -500, 500)
+                            y = y + np.random.rand(1) * flow_speed - flow_speed / 2
+                            y = WrapPoints(y, taille/2, taille/2)
+                            # y = WrapPoints(y, -500, 500)
+
                         x_flow = x / z
                         y_flow = y / z
 
@@ -706,25 +683,31 @@ for step in range(n_trials_per_stair):
                         probeMask4.draw()
                         dotsMask.draw()
 
+                    probe1.draw()
+                    if ISI == -1:  # SIMULTANEOUS CONDITION (concurrent)
+                        if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
+                            probe2.draw()
                     fixation.setRadius(3)
                     fixation.draw()
-                    probe1.draw()
                     trials_counter.draw()
 
 
                 # ISI
-                if t_ISI >= frameN > t_interval_1:
+                if t_ISI >= frameN > t_probe_1:
                     if background == 'jitter':
                         # radial flow_dots motion
                         # todo: add these two lines back in?
-#                       z = z + flow_speed * flow_dir
-#                        WrapPoints(z, minDist, maxDist)
-                        if frameN % 8 == 0:
+                        # z = z + flow_speed * flow_dir
+                        # WrapPoints(z, minDist, maxDist)
+                        if frameN % 2 == 0:
                             # todo: change motion to update every frame or ? frames
-                            x=x+np.random.rand(1) * flow_speed- flow_speed / 2
-                            WrapPoints(x, taille/2, taille/2)
-                            y=y+np.random.rand(1) * flow_speed - flow_speed / 2
-                            WrapPoints(y, taille/2, taille/2)
+                            x = x + np.random.rand(1) * flow_speed - flow_speed / 2
+                            x = WrapPoints(x, taille/2, taille/2)
+                            # x = WrapPoints(x, -500, 500)
+                            y = y + np.random.rand(1) * flow_speed - flow_speed / 2
+                            y = WrapPoints(y, taille/2, taille/2)
+                            # y = WrapPoints(y, -500, 500)
+
                         x_flow = x / z
                         y_flow = y / z
 
@@ -742,19 +725,22 @@ for step in range(n_trials_per_stair):
                     trials_counter.draw()
 
                 # PROBE 2
-                if t_interval_2 >= frameN > t_ISI:
+                if t_probe_2 >= frameN > t_ISI:
                     # after ISI but before end of probe2 interval
                     if background == 'jitter':
                         # radial flow_dots motion
                         # todo: add these two lines back in?
-#                       z = z + flow_speed * flow_dir
-#                        WrapPoints(z, minDist, maxDist)
-                        if frameN % 8 == 0:
+                        # z = z + flow_speed * flow_dir
+                        # WrapPoints(z, minDist, maxDist)
+                        if frameN % 2 == 0:
                             # todo: change motion to update every frame or ? frames
-                            x=x+np.random.rand(1) * flow_speed- flow_speed / 2
-                            WrapPoints(x, taille/2, taille/2)
-                            y=y+np.random.rand(1) * flow_speed - flow_speed / 2
-                            WrapPoints(y, taille/2, taille/2)
+                            x = x + np.random.rand(1) * flow_speed - flow_speed / 2
+                            x = WrapPoints(x, taille/2, taille/2)
+                            # x = WrapPoints(x, -500, 500)
+                            y = y + np.random.rand(1) * flow_speed - flow_speed / 2
+                            y = WrapPoints(y, taille/2, taille/2)
+                            # y = WrapPoints(y, -500, 500)
+
                         x_flow = x / z
                         y_flow = y / z
 
@@ -767,22 +753,27 @@ for step in range(n_trials_per_stair):
                         probeMask4.draw()
                         dotsMask.draw()
 
+                    if ISI >= 0:
+                        if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
+                            probe2.draw()
                     fixation.setRadius(3)
                     fixation.draw()
-                    probe2.draw()
                     trials_counter.draw()
 
                 # ANSWER
-                if frameN > t_interval_2:
+                if frameN > t_probe_2:
                     # after probe 2 interval
                     if background == 'jitter':
                         # draw flow_dots but with no motion
-                        if frameN % 8 == 0:
+                        if frameN % 2 == 0:
                             # todo: change motion to update every frame or ? frames
-                            x=x+np.random.rand(1) * flow_speed- flow_speed / 2
-                            WrapPoints(x, taille/2, taille/2)
-                            y=y+np.random.rand(1) * flow_speed - flow_speed / 2
-                            WrapPoints(y, taille/2, taille/2)
+                            x = x + np.random.rand(1) * flow_speed - flow_speed / 2
+                            x = WrapPoints(x, taille/2, taille/2)
+                            # x = WrapPoints(x, -500, 500)
+                            y = y + np.random.rand(1) * flow_speed - flow_speed / 2
+                            y = WrapPoints(y, taille/2, taille/2)
+                            # y = WrapPoints(y, -500, 500)
+
                         x_flow = x / z
                         y_flow = y / z
 
@@ -849,8 +840,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('stair_name', thisStair)
         thisExp.addData('step', step)
         thisExp.addData('separation', sep)
-        # thisExp.addData('congruent', congruent)
-        # thisExp.addData('flow_dir', flow_dir)
+        thisExp.addData('ISI', ISI)
         thisExp.addData('probe_jump', target_jump)
         thisExp.addData('corner', corner)
         thisExp.addData('probeLum', probeLum)
@@ -862,14 +852,13 @@ for step in range(n_trials_per_stair):
         thisExp.addData('BGspeed', flow_speed)
         thisExp.addData('orientation', orientation)
         thisExp.addData('ISI_actual_ms', ISI_actual_ms)
-        thisExp.addData('ISI_frames', ISI_frames)
-        # thisExp.addData('actual_bg_color', actual_bg_color)
-        # thisExp.addData('bgcolor_to_rgb1', bgcolor_to_rgb1)
         thisExp.addData('bgLumP', bgLumP)
         thisExp.addData('bgLum', bgLum)
         thisExp.addData('bgColor255', bgColor255)
         thisExp.addData('weber_thr', (probeLum-bgLum)/probeLum)
         thisExp.addData('expName', expName)
+        thisExp.addData('monitor_name', monitor_name)
+        thisExp.addData('selected_fps', fps)
 
         thisExp.nextEntry()
 

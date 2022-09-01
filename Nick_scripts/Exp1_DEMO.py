@@ -1,7 +1,6 @@
 from __future__ import division
-from psychopy import gui, visual, core, data, event, logging, monitors
+from psychopy import gui, visual, core, data, event, monitors
 from psychopy import __version__ as psychopy_version
-# import psychopy
 import os
 import numpy as np
 from numpy import deg2rad
@@ -10,8 +9,6 @@ import random
 import copy
 from datetime import datetime
 from math import *
-
-from PsychoPy_tools import check_correct_monitor
 from kestenSTmaxVal import Staircase
 
 
@@ -32,7 +29,6 @@ os.chdir(_thisDir)
 monitor_name = 'Nick_work_laptop'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 # gamma set at 2.1  [####### this comment is incorrect, its set above i think ############]
 
-display_number = 1  # 0 indexed, 1 for external display
 
 # Store info about the experiment session
 expName = 'EXP1_DEMO'  # from the Builder filename that created this script
@@ -43,13 +39,7 @@ expInfo = {'1. Participant': 'p1',
            '2. Probe duration in frames at 240hz': [2, 50, 100],
            '3. fps': [60, 144, 240],
            '4_Trials_counter': [True, False]
-           # '4. ISI duration in frame': [0, 2, 4, 6, 9, 12, 24, -1],
-           # '5. Probe orientation': ['tangent'],
-           # '6. Probe size': ['5pixels', '6pixels', '3pixels'],
-           # '7. Background lum in percent of maxLum': 20,
-           # '8. Red filter': ['no', 'yes']
            }
-
 
 # GUI
 dlg = gui.DlgFromDict(dictionary=expInfo, title=expName)
@@ -68,13 +58,13 @@ probe_ecc = 4
 fps = int(expInfo['3. fps'])
 orientation = 'tangent'  # expInfo['5. Probe orientation']
 trials_counter = expInfo['4_Trials_counter']
-# ISI durations, -1 correspond to simultaneous probes
-# ISI = int(expInfo['4. ISI duration in frame'])
 
 
 # VARIABLES
-# Distances between probes (spatioally and temporally)
-'''Sort separation and ISI types'''
+'''Distances between probes (spatially and temporally)
+For 1probe condition, use separation==99.
+For concurrent probes, use ISI==-1.
+'''
 # separations = [0, 1, 2, 3, 6, 18]
 separations = [0, 6]
 print(f'separations: {separations}')
@@ -94,8 +84,6 @@ print(f'ISI_vals_list: {ISI_vals_list}')
 # e.g., ['sep0_ISI-1', 'sep0_ISI6', 'sep6_ISI-1', 'sep6_ISI6']
 stair_names_list = [f'sep{s}_ISI{c}' for s, c in zip(sep_vals_list, ISI_vals_list)]
 print(f'stair_names_list: {stair_names_list}')
-
-
 
 # FILENAME
 filename = f'{_thisDir}{os.sep}' \
@@ -142,7 +130,7 @@ mon_dict = {'mon_name': monitor_name,
 print(f"mon_dict: {mon_dict}")
 
 # double check using full screen in lab
-display_number = 1  # 0 indexed, 1 for external display
+display_number = 1  # 0 indexed, 1 for external display, 0 for internal
 if monitor_name in ['ASUS_2_13_240Hz', 'asus_cal', 'Nick_work_laptop']:
     display_number = 0
 use_full_screen = True
@@ -176,78 +164,14 @@ print(f"widthPix: {widthPix}, hight: {heightPix}")
 widthPix, heightPix = win.size
 print(f"check win.size: {win.size}")
 
-
-print(f"type(win.getActualFrameRate()): {type(win.getActualFrameRate())} {win.getActualFrameRate()}")
-print(f"check win.size: {win.size}")
-check_correct_monitor(monitor_name=monitor_name,
-                      actual_size=win.size,
-                      actual_fps=win.getActualFrameRate(),
-                      verbose=True)
-
-# check correct monitor details (fps, size) have been accessed.
-print(win.monitor.name, win.monitor.getSizePix())
-actualFrameRate = int(win.getActualFrameRate())
-
-print(f"actual_size: {type(win.monitor.getSizePix())} {win.monitor.getSizePix()}")
-print(f"actual fps: {type(win.getActualFrameRate())} {win.getActualFrameRate()}")
-
-if fps in list(range(actualFrameRate-2, actualFrameRate+2)):
-    print("fps matches actual frame rate")
-else:
-    # if values don't match, quit experiment
-    print(f"fps ({fps}) does not match actual frame rate ({actualFrameRate})")
-    core.quit()
-
-
-# actual_size = win.size
-actual_size = win.monitor.getSizePix()
-print(f"idiot check. I think I should use win.monitor.getSizePix() {win.monitor.getSizePix()}.\n"
-      f"currently using win.size {win.size}")
-
-
-if list(mon_dict['size']) == list(actual_size):
-    print(f"monitor is expected size")
-elif list(mon_dict['size']) == list(actual_size/2):
-    print(f"actual size is double expected size - Its ok, just a mac retina display bug.")
-else:
-    print(f"Display size does not match expected size from montior centre")
-    # check sizes seems unreliable,
-    # it returns different values for same screen if different mon_names are used!
-    check_sizes = win._checkMatchingSizes(mon_dict['size'], actual_size)
-    print(check_sizes)
-    core.quit()
-
-# check sizes seems unreliable,
-print(f"double checking win._checkMatchingSizes({mon_dict['size']}, {actual_size})")
-# it returns different values for same screen if different mon_names are used!
-check_sizes = win._checkMatchingSizes(mon_dict['size'], actual_size)
-print(f'check_sizes: {check_sizes}\n')
-
-
 # ELEMENTS
 # fixation bull eye
 fixation = visual.Circle(win, radius=2, units='pix',
                          lineColor='white', fillColor='black')
 
 # PROBEs
-# probe color
-# if expInfo['8. Red filter'] == 'yes':
-#     redfilter = -1
-# else:
-redfilter = 1
-
-# probe sizes choice
-# if expInfo['6. Probe size'] == '6pixels':  # 6 pixels
-#     probeVert = [(0, 0), (1, 0), (1, 1), (2, 1),
-#                  (2, -2), (-1, -2), (-1, -1), (0, -1)]
-#
-# elif expInfo['6. Probe size'] == '3pixels':  # 3 pixels
-#     probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, 0), (1, 0), (1, -1),
-#                  (0, -1), (0, -2), (-1, -2), (-1, -2), (-1, -1), (0, -1)]
-#
-# else:  # 5 pixels
-# default setting is expInfo['6. Probe size'] == '5pixels':
-expInfo['6. Probe size'] = '5pixels'
+redfilter = 1  # to use red filter set to -1.
+expInfo['6. Probe size'] = '5pixels'  # ignore this, all experiments use 5pixel probes now.
 probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
              (1, -2), (-1, -2), (-1, -1), (0, -1)]
 
@@ -310,30 +234,21 @@ while not event.getKeys():
     win.flip()
 
 # STAIRCASE
-# todo: change from list(range(1, 15)) to list(range(1, len(separations)))
-# expInfo['stair_list'] = list(range(1, 15))  # 14 staircases (14 conditions)
 expInfo['stair_list'] = list(range(n_stairs))
-
 expInfo['n_trials_per_stair'] = n_trials_per_stair
 
 stairStart = maxLum
 miniVal = bgLum
 maxiVal = maxLum
 
-# todo: If colours are RGB255, change staircase to use int(RGB255 values),
-#  then later convert to float(probeLum).  Since montior can only use int(rgb255)
-
 stairs = []
 for stair_idx in expInfo['stair_list']:
 
     thisInfo = copy.copy(expInfo)
     thisInfo['stair_idx'] = stair_idx
-
     stair_name = stair_names_list[stair_idx]
 
-
     thisStair = Staircase(name=stair_name,
-                            # name='trials',
                           type='simple',
                           value=stairStart,
                           C=stairStart*0.6,  # typically 60% of reference stimulus
@@ -352,39 +267,27 @@ for step in range(n_trials_per_stair):
     shuffle(stairs)
     for thisStair in stairs:
 
-        # conditions
-        # separation experiment #################################################
-
         stair_idx = thisStair.extraInfo['stair_idx']
-
         print(f"\ntrial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
 
-        # sep = separations[thisStair.extraInfo['stair_idx']-1]
         sep = sep_vals_list[stair_idx]
-
         ISI = ISI_vals_list[stair_idx]
-
         print(f"ISI: {ISI}, sep: {sep}")
 
-
         # direction in which the probe jumps : CW or CCW
-
         target_jump = random.choice([1, -1])
-        # staircase varied probeLum
-        probeLum = thisStair.next()
-        probeColor255 = int(probeLum * LumColor255Factor)
-        probeColor1 = (probeColor255 * Color255Color1Factor) - 1
 
-        print(f"probeLum: {probeLum}")
+        # staircase varies probeLum
+        probeLum = thisStair.next()
+        probeColor255 = int(probeLum * LumColor255Factor)  # rgb255 are ints.
+        probeColor1 = (probeColor255 * Color255Color1Factor) - 1
+        print(f"probeLum: {probeLum}, probeColor255: {probeColor255}, probeColor1: {probeColor1}")
 
         trial_number = trial_number + 1
 
         # Black or White
         probe1.color = [probeColor1, probeColor1*redfilter, probeColor1*redfilter]
         probe2.color = [probeColor1, probeColor1*redfilter, probeColor1*redfilter]
-
-        # print(f"\nbgLum: {bgLum} bgColor255: {bgColor255} win.colorSpace: {win.colorSpace}")
-
 
         # PROBE LOCATION
         # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
@@ -448,29 +351,19 @@ for step in range(n_trials_per_stair):
         probe1.pos = [p1_x, p1_y]
 
         # timing in frames
-        # if ISI >= 0:
+        # todo: add random variance to t_fixation to reduce anticipatory effects?
         t_fixation = 1 * fps
         t_probe_1 = t_fixation + probe_duration
         t_ISI = t_probe_1 + ISI
         t_probe_2 = t_ISI + probe_duration
-        # I presume this means almost unlimited time to respond?
         t_response = t_probe_2 + 10000*fps
-
-        # print(f't_fixation: {t_fixation}')
-        # print(f't_probe_1: {t_probe_1}')
-        # print(f't_ISI: {t_ISI}')
-        # print(f't_probe_2: {t_probe_2}')
-        # print(f't_response: {t_response}')
-        #
 
         # repeat the trial if [r] has been pressed
         repeat = True
         while repeat:
             frameN = -1
-            #
-            # # display Break before trials 120 and 240
-            # if trial_number == 120+1 or trial_number == 240+1:
-            # display Break before trial 51
+
+            # take a break every ? trials
             if (trial_number % take_break == 1) & (trial_number > 1):
                 continueRoutine = False
                 breaks.draw()
@@ -494,9 +387,9 @@ for step in range(n_trials_per_stair):
                 # PROBE 1
                 if t_probe_1 >= frameN > t_fixation:
                     probe1.draw()
-                    # SIMULTANEOUS CONDITION
-                    if ISI == -1:
-                        if sep <= 18:
+
+                    if ISI == -1:  # SIMULTANEOUS CONDITION (concurrent)
+                        if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
                             probe2.draw()
                     fixation.setRadius(3)
                     fixation.draw()
@@ -511,7 +404,7 @@ for step in range(n_trials_per_stair):
                 # PROBE 2
                 if t_probe_2 >= frameN > t_ISI:
                     if ISI >= 0:
-                        if sep <= 18:
+                        if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
                             probe2.draw()
                     fixation.setRadius(3)
                     fixation.draw()
@@ -579,7 +472,6 @@ for step in range(n_trials_per_stair):
         thisExp.addData('corner', corner)
         thisExp.addData('probe_ecc', probe_ecc)
         thisExp.addData('resp.rt', resp.rt)
-        thisExp.addData('trial_number', trial_number)
         thisExp.addData('orientation', orientation)
         thisExp.addData('expName', expName)
         thisExp.addData('monitor_name', monitor_name)
