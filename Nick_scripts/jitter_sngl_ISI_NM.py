@@ -3,7 +3,7 @@ from __future__ import division
 import copy
 import os
 from datetime import datetime
-from math import *
+from math import tan, sqrt
 
 import numpy as np
 from psychopy import __version__ as psychopy_version
@@ -16,16 +16,15 @@ from kestenSTmaxVal import Staircase
 This script takes: 
 the probes from EXPERIMENT3_background_motion_SKR, and adds jitter.  
 Each separation appears ONCE per run, rather than twice as in Exp1.
-Jitter pattern now uses WrapPoints to put points beyond +/-500 back into range.
-Jitter points randomly change position every 2 frames
- - should this be set to move in random positions but not et random new position?
+Jitter points randomly change position every 30ms
 Jitter colours are same as rad_flow (rbg255[76.5, 114.75, 76.5]), but could be higher contrast?
+Jitter can be random or radial (radial includes both inward and outward motion).
+A random interval can be added to fixation time to reduce anticipatory saccades, maybe?
 """
 
 # Ensure that relative paths start from the same directory as this script
 _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
-
 
 # todo: change to asus_cal for testing
 # Monitor config from monitor centre
@@ -39,15 +38,16 @@ expInfo = {'1_Participant': 'Nick_test',
            '2_Probe_dur_in_frames_at_240hz': [2, 50],
            '3_fps': [240, 144, 60],
            '4_ISI_dur_in_ms': [100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0],
-           '5_Probe_orientation': ['tangent', 'radial'],
-           '7_Trials_counter': [True, False],
-           '8_Background': ['jitter', 'flow_rad', 'None'],
-           '9_bg_speed_cond': ['Normal', 'Half-speed']}
+           '5_Trials_counter': [True, False],
+           '6_Probe_orientation': ['tangent', 'radial'],
+           '7_Background': ['jitter_rand', 'jitter_rad', 'None'],
+           '8_bg_speed_cond': ['Normal', 'Half-speed'],
+           '9_vary_fixation': [False, True]}
 
 # GUI
 dlg = gui.DlgFromDict(dictionary=expInfo, title=expName)
 if not dlg.OK:
-    core.quit()  # user pressed cancel
+    core.quit()  # user pressed escape
 
 expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
 expInfo['time'] = datetime.now().strftime("%H:%M:%S")
@@ -57,11 +57,13 @@ participant_name = expInfo['1_Participant']
 run_number = int(expInfo['1. run_number'])
 probe_duration = int(expInfo['2_Probe_dur_in_frames_at_240hz'])
 fps = int(expInfo['3_fps'])
-orientation = expInfo['5_Probe_orientation']
+orientation = expInfo['6_Probe_orientation']
 # Probe_size = expInfo['6_Probe_size']
-trials_counter = expInfo['7_Trials_counter']
-background = expInfo['8_Background']
-bg_speed_cond = expInfo['9_bg_speed_cond']
+trials_counter = expInfo['5_Trials_counter']
+background = expInfo['7_Background']
+bg_speed_cond = expInfo['8_bg_speed_cond']
+vary_fixation = expInfo['9_vary_fixation']
+
 
 # ISI timing in ms and frames
 '''ISI can be given (roughly) in ms, for any monitor it will try to match that value in frames.
@@ -86,8 +88,8 @@ probe_ecc = 4
 prelim_bg_flow_ms = 500
 prelim_bg_flow_fr = int(prelim_bg_flow_ms * fps / 1000)
 
-# Distances between probes & flow direction
-separation_values = [18, 6, 3, 2, 1, 0]
+# Distances between probes in pixels
+separation_values = [18, 6, 3, 2, 1, 0, 99]
 '''
 In rad_flow,  each separation value appears in 2 stairs, e.g.,
 stair1 will be sep=18, flow_dir=inwards; stair2 will be sep=18, flow_dir=outwards etc.
@@ -108,12 +110,14 @@ filename = f'{_thisDir}{os.sep}' \
            f'{participant_name}{os.sep}' \
            f'{participant_name}_{run_number}{os.sep}' \
            f'{participant_name}_output'
+# files are labelled as '_incomplete' unless entire script runs.
+save_output_name = filename + '_incomplete'
 
 # Experiment Handler
 thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
                                  extraInfo=expInfo, runtimeInfo=None,
                                  savePickle=None, saveWideText=True,
-                                 dataFileName=filename)
+                                 dataFileName=save_output_name)
 
 # COLORS AND LUMINANCE
 # Lum to Color255
@@ -126,26 +130,38 @@ Color1LumFactor = 2.39538706913372
 maxLum = 106  # 255 RGB
 minLum = 0.12  # 0 RGB
 
-flow_bgcolor = [-0.1, -0.1, -0.1]  # dark grey
-bgcolor = flow_bgcolor
+# flow_bgcolor = [-0.1, -0.1, -0.1]  # dark grey
+# bgcolor = flow_bgcolor
+#
+# # get ACTUAL bgcolor details
+# actual_bg_color = bgcolor[0]
+# print(f'actual_bg_color: {actual_bg_color}')
+# bgcolor_to_rgb255 = (actual_bg_color + 1) * 127.5
+# # print(f'bgcolor_to_rgb255: {bgcolor_to_rgb255}')
+# bgcolor_to_rgb1 = (actual_bg_color+1)/2
+# print(f'bgcolor_to_rgb1: {bgcolor_to_rgb1}')
+# bgcolor_to_lum = bgcolor_to_rgb1*maxLum
+# # print(f'bgcolor_to_lum: {bgcolor_to_lum}')
+# bglum_as_prop_maxLum = bgcolor_to_lum/maxLum
+# # print(f'bglum_as_prop_maxLum: {bglum_as_prop_maxLum}')
+# bgLumP = bglum_as_prop_maxLum
+# print(f'bgLumP: {bgLumP}')
+# bgLum = bgcolor_to_lum
+# print(f'bgLum: {bgLum}')
+# bgColor255 = bgcolor_to_rgb255
+# print(f'bgColor255: {bgColor255}')
 
 # get ACTUAL bgcolor details
-actual_bg_color = bgcolor[0]
-print(f'actual_bg_color: {actual_bg_color}')
-bgcolor_to_rgb255 = (actual_bg_color + 1) * 127.5
-# print(f'bgcolor_to_rgb255: {bgcolor_to_rgb255}')
-bgcolor_to_rgb1 = (actual_bg_color+1)/2
-print(f'bgcolor_to_rgb1: {bgcolor_to_rgb1}')
-bgcolor_to_lum = bgcolor_to_rgb1*maxLum
-# print(f'bgcolor_to_lum: {bgcolor_to_lum}')
-bglum_as_prop_maxLum = bgcolor_to_lum/maxLum
-# print(f'bglum_as_prop_maxLum: {bglum_as_prop_maxLum}')
-bgLumP = bglum_as_prop_maxLum
-print(f'bgLumP: {bgLumP}')
-bgLum = bgcolor_to_lum
-print(f'bgLum: {bgLum}')
-bgColor255 = bgcolor_to_rgb255
+rgb_bg_color = -0.1
+print(f'rgb_bg_color: {rgb_bg_color}')
+bgColor255 = (rgb_bg_color + 1) * 127.5
 print(f'bgColor255: {bgColor255}')
+bgcolor_to_rgb1 = (rgb_bg_color+1)/2
+print(f'bgcolor_to_rgb1: {bgcolor_to_rgb1}')
+bgLum = bgcolor_to_rgb1*maxLum
+print(f'bgLum: {bgLum}')
+bgLumP = bgLum/maxLum
+print(f'bgLumP: {bgLumP}')
 
 
 # MONITOR SPEC
@@ -165,11 +181,11 @@ if monitor_name in ['ASUS_2_13_240Hz', 'asus_cal', 'Nick_work_laptop']:
 use_full_screen = True
 if display_number > 0:
     use_full_screen = False
-widthPix = mon_dict['size'][0]
-heightPix = mon_dict['size'][1]
-monitorwidth = mon_dict['width']  # monitor width in cm
-viewdist = mon_dict['dist']  # viewing distance in cm
-viewdistPix = widthPix/monitorwidth*viewdist
+widthPix = int(mon_dict['size'][0])
+heightPix = int(mon_dict['size'][1])
+monitorwidth = float(mon_dict['width'])  # monitor width in cm
+viewdist = float(mon_dict['dist'])  # viewing distance in cm
+viewdistPix = widthPix / monitorwidth * viewdist
 mon = monitors.Monitor(monitor_name, width=monitorwidth, distance=viewdist)
 mon.setSizePix((widthPix, heightPix))
 mon.save()
@@ -201,18 +217,10 @@ except ValueError:
     # don't save csv, no trials have happened yet
     thisExp.abort()
 
-# CLOCK
-trialClock = core.Clock()
-
 # ELEMENTS
 # fixation bull eye
-if background in ['jitter', 'flow_rad']:
-    fixation = visual.Circle(win, radius=2, units='pix', lineColor='black',
-                             fillColor='black')
-else:
-    fixation = visual.Circle(win, radius=2, units='pix', lineColor='white',
-                             fillColor='black')
-
+fixation = visual.Circle(win, radius=2, units='pix', lineColor='white',
+                         fillColor='black')
 
 # PROBEs
 expInfo['6_Probe_size'] = '5pixels'
@@ -242,37 +250,53 @@ probeMask4 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
                                 size=(mask_size, mask_size), units='pix',
                                 colorSpace='rgb255', color=bgColor255)
 
-# BACKGROUND
-# flow_dots
+# dist_from_fix is a constant giving distance form fixation,
+dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
+
+# probe mask locations
+probeMask1.setPos([dist_from_fix + 1, dist_from_fix + 1])
+probeMask2.setPos([-dist_from_fix - 1, dist_from_fix + 1])
+probeMask3.setPos([-dist_from_fix - 1, -dist_from_fix - 1])
+probeMask4.setPos([dist_from_fix + 1, -dist_from_fix - 1])
+
+# BACKGROUND flow_dots
 if bg_speed_cond == 'Normal':
-    flow_speed = 500
+    # flow_speed = 500
+    flow_speed = .01
 elif bg_speed_cond == 'Half-speed':
-    flow_speed = 10
+    # flow_speed = 10
+    flow_speed = .005
 else:
     raise ValueError(f'background speed should be selected from drop down menu: Normal or Half-speed')
-nDots = 1500
-flow_dots_col = [76.5, 114.75, 76.5]
+nDots = 1500  # 10000 - I've reduced the number since the dot_field_size is now much smaller
+flow_dots_col = [76.5, 114.75, 76.5]  # greeney-grey in rgb255
 flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
                                     units='pix', nElements=nDots, sizes=30,
                                     colorSpace='rgb255', colors=flow_dots_col)
-lives = np.random.random(nDots) * 10  # this will be the current life of each element
-max_life = 8
+dot_lives = np.random.random(nDots) * 10  # this will be the current life of each element in frames
+max_lives = 8  # maximum number of frames before dots are redrawn.
 
-# # original Simon version - harsh radial flow
+# dot_field_size = 5000  # taille is french for 'size', 'cut', 'trim', 'clip' etc - what does it actually do here?
+dot_field_size = int(mon_dict['size'][1])  # used to set max pixels from centre that dots appear
+print(f"\ndot_field_size: {dot_field_size}")
+
+# x and y locations - remember its equivalent to (rand * dot_field_size) - (dot_field_size / 2)
+x = np.random.rand(nDots) * dot_field_size - dot_field_size / 2
+y = np.random.rand(nDots) * dot_field_size - dot_field_size / 2
+
+# # Dots move randomly in smooth directions, then get new direction when reborn.
+# # separate x and y motion is non-radial; same values for both gives radial motion.
+# # random.normal, centered at 1 (no motion), with a sd given by flow_speed.
+x_motion = np.random.normal(1, flow_speed, nDots)
+y_motion = np.random.normal(1, flow_speed, nDots)
+if background == 'jitter_radial':
+    y_motion = x_motion
+# # original Simon version (z, rather than x_motion/y_motion), harsh radial flow
 # z = np.random.rand(nDots) * (maxDist + minDist) / 2
 # # more subtle mix of in and out flow
 # z = np.random.normal(1, .01, nDots)
 # # no flow at all  (values > 1 flow out and < 1 flow in)
-z = np.ones(nDots)
-
-# taille = 1000  # french for 'size', 'cut', 'trim', 'clip' etc - what does it actually do here?
-# taille = 50  # french for 'size', 'cut', 'trim', 'clip' etc - what does it actually do here?
-taille = mon_dict['size'][1]  # used to set max pixels from centre that dots appear
-minDist = 0.5
-maxDist = 5
-# flow_dots - remember its equivalent to (rand * taille) - (taille / 2)
-x = np.random.rand(nDots) * taille - taille / 2
-y = np.random.rand(nDots) * taille - taille / 2
+# z = np.ones(nDots)
 
 
 # full screen mask to blend off edges and fade to black
@@ -288,14 +312,14 @@ dotsMask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
 # changed dotsmask color from grey
 # above fades to black round edges which makes screen edges less visible
 
-# todo: add comment to this function.  Move function to the top?
+# WRAP FUNCTION: no longer needed
+# add comment to this function.  Move function to the top?
 # function for wrapping flow_dots back into volume
 # its is used as WrapPoints(z, minDist, maxDist)
 # Any dots with a z (depth) value out of bounds are transformed to be in bounds
-# todo: does not necessarily appear at edge of screen.  If min = -500, max = 500; then difference is 1000.
+# note: does not necessarily appear at edge of screen.  If min = -500, max = 500; then difference is 1000.
 # any dot with value of -700 will appear at 300 (-700 + 100).
 # any dot with value of 1111 will appear at 111 (1111 - 1000).
-#
 # def WrapPoints(ii, imin, imax):
 #     lessthanmin = (ii < imin)
 #     ii[lessthanmin] = ii[lessthanmin] + (imax-imin)
@@ -321,6 +345,9 @@ dotsMask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
 
 # MOUSE - Hide cursor
 myMouse = event.Mouse(visible=False)
+
+# # KEYBOARD
+resp = event.BuilderKeyResponse()
 
 # INSTRUCTION
 instructions = visual.TextStim(win=win, name='instructions',
@@ -348,7 +375,7 @@ trials_counter = visual.TextStim(win=win, name='trials_counter', text="???",
                                  font='Arial', height=20,
                                  # default set to black (e.g., invisible)
                                  color='black',
-                                 pos=[-widthPix*.45, -heightPix*.45])
+                                 pos=[-widthPix * .45, -heightPix * .45])
 if trials_counter:
     # if trials counter yes, change colour to white.
     trials_counter.color = 'white'
@@ -372,21 +399,18 @@ end_of_exp = visual.TextStim(win=win, name='end_of_exp',
 # STAIRCASE
 expInfo['stair_list'] = list(range(n_stairs))
 expInfo['n_trials_per_stair'] = n_trials_per_stair
+print('\nexpInfo (dict)')
+for k, v in expInfo.items():
+    print(f"{k}: {v}")
 
 stairStart = maxLum
 miniVal = bgLum
 maxiVal = maxLum
 
-print('\nexpInfo (dict)')
-for k, v in expInfo.items():
-    print(f"{k}: {v}")
-
-
 stairs = []
 for stair_idx in expInfo['stair_list']:
     thisInfo = copy.copy(expInfo)
     thisInfo['stair_idx'] = stair_idx
-
     stair_name = f'sep{separations[stair_idx]}_isi{ISI}'
 
     thisStair = Staircase(name=stair_name,
@@ -411,47 +435,21 @@ for step in range(n_trials_per_stair):
 
         trial_number = trial_number + 1
         stair_idx = thisStair.extraInfo['stair_idx']
-        print(f"trial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
+        print(f"\ntrial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
 
         sep = separations[stair_idx]
 
-        # PROBE
-        target_jump = np.random.choice([1, -1])  # direction in which the probe jumps : CW or CCW
+        # direction in which the probe jumps : CW or CCW
+        target_jump = np.random.choice([1, -1])
 
         # staircase varies probeLum
         probeLum = thisStair.next()
-        probeColor255 = probeLum * LumColor255Factor
+        probeColor255 = int(probeLum * LumColor255Factor)
         probeColor1 = (probeColor255 * Color255Color1Factor) - 1
         probe1.color = [probeColor1, probeColor1, probeColor1]
         probe2.color = [probeColor1, probeColor1, probeColor1]
-
-        # dist_from_fix is a constant giving distance form fixation,
-        dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
-
         print(f'probeLum: {probeLum}, probeColor255: {probeColor255}, probeColor1: {probeColor1}')
-        print(f'\tbgLum: {bgLum}, bgColor255: {bgColor255}')
-        print(f'\t\twin.colorSpace: {win.colorSpace}\n')
 
-        # probe mask locations
-        probeMask1.setPos([dist_from_fix+1, dist_from_fix+1])
-        probeMask2.setPos([-dist_from_fix-1, dist_from_fix+1])
-        probeMask3.setPos([-dist_from_fix-1, -dist_from_fix-1])
-        probeMask4.setPos([dist_from_fix+1, -dist_from_fix-1])
-
-        # flow_dots - remember its equivalent to (rand * taille) - (taille / 2)
-        x = np.random.rand(nDots) * taille - taille / 2
-        y = np.random.rand(nDots) * taille - taille / 2
-
-        # # original Simon version - harsh radial flow
-        # z = np.random.rand(nDots) * (maxDist + minDist) / 2
-        # # more subtle mix of in and out flow
-        # z = np.random.normal(1, .01, nDots)
-        # # no flow at all  (values > 1 flow out and < 1 flow in)
-        # z = np.ones(nDots)
-
-        # z was called z_flow but is actually z position like x and y
-        x_flow = x / z
-        y_flow = y / z
 
         # PROBE LOCATIONS
         # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
@@ -565,18 +563,21 @@ for step in range(n_trials_per_stair):
 
         probe1.pos = [p1_x, p1_y]
 
+        # to avoid fixation times always being the same which might increase anticipatory effects,
+        # add in a random number of frames (up to 1 second) to fixation time
+        vary_fix = 0
+        if vary_fixation:
+            vary_fix = np.random.randint(0, fps)
+
         # timing in frames
-        # fixation time is now 70ms shorted than previously.
-        # todo: add in random when setting fixation time so it varies slightly each trial.
-        #  This might remove or reduce saccade anticipation effects.
-        t_fixation = 1 * (fps - prelim_bg_flow_fr)
+        # fixation time is now 70ms shorter than previously.
+        t_fixation = (fps / 2) - prelim_bg_flow_fr + vary_fix
         t_bg_motion = t_fixation + prelim_bg_flow_fr
         t_probe_1 = t_bg_motion + probe_duration
         t_ISI = t_probe_1 + ISI
         t_probe_2 = t_ISI + probe_duration
         t_response = t_probe_2 + 10000 * fps  # essentially unlimited time to respond
 
-        trialClock.reset()
 
         # repeat the trial if [r] has been pressed
         repeat = True
@@ -596,187 +597,67 @@ for step in range(n_trials_per_stair):
             while continueRoutine:
                 frameN = frameN + 1
 
+                # # update background dot motion
+                # update dot's life each frame
+                dot_lives = dot_lives + 1
+
+                # get array of x and y pos by calling .xys
+                flow_dot_xs = flow_dots.xys[:, 0]
+                flow_dot_ys = flow_dots.xys[:, 1]
+
+                # find the dead elements and reset their life
+                deadElements = (dot_lives > max_lives)  # numpy vector, not standard python
+                dot_lives[deadElements] = 0
+
+                # New x, y locations for dots that are re-born (random array, same shape as dead elements)
+                flow_dot_xs[deadElements] = np.random.random(
+                    flow_dot_xs[deadElements].shape) * dot_field_size - dot_field_size / 2.0
+                flow_dot_ys[deadElements] = np.random.random(
+                    flow_dot_ys[deadElements].shape) * dot_field_size - dot_field_size / 2.0
+
+                # each frame, update dot positions by dividing x_location by x_motion
+                x_flow = flow_dot_xs / x_motion
+                y_flow = flow_dot_ys / y_motion
+                xy_pos = np.array([x_flow, y_flow]).transpose()
+                flow_dots.xys = xy_pos
+
                 # FIXATION
                 if t_fixation >= frameN > 0:
                     # before fixation has finished
                     trials_counter.text = f"{trial_number}/{total_n_trials}"
-
-                    if background == 'jitter':
-                        # draw flow_dots but with no motion
-                        # # todo: change motion to update every frame or ? frames
-                        # if frameN % 2 == 0:
-                        #     x = x+np.random.rand(1) * flow_speed - flow_speed / 2
-                        #     x = WrapPoints(x, taille/2, taille/2)
-                        #     # x = WrapPoints(x, -500, 500)
-                        #     y = y+np.random.rand(1) * flow_speed - flow_speed / 2
-                        #     y = WrapPoints(y, taille/2, taille/2)
-                        #     # y = WrapPoints(y, -500, 500)
-                        #
-                        # x_flow = x / z
-                        # y_flow = y / z
-                        # flow_dots.xys = np.array([x_flow, y_flow]).transpose()
-                        # flow_dots.draw()
-
-                        # newXYs = flow_dots.xys
-                        flow_dot_xs = flow_dots.xys[:, 0]
-                        flow_dot_ys = flow_dots.xys[:, 1]
-
-                        # find the dead elemnts and reset their life
-                        deadElements = (lives > max_life)  # numpy vector, not standard python
-                        lives[deadElements] = 0
-
-                        # for the dead elements update the xy and ori
-                        # random array same shape as dead elements
-                        # newXYs[deadElements, :] = np.random.random(newXYs[deadElements, :].shape) * taille - taille/2.0
-                        flow_dot_xs[deadElements] = np.random.random(
-                            flow_dot_xs[deadElements].shape) * taille - taille / 2.0
-                        flow_dot_ys[deadElements] = np.random.random(
-                            flow_dot_ys[deadElements].shape) * taille - taille / 2.0
-
-                        # # If I'm not using z, I can just access or create xys like this.
-                        # xys = random([nDots, 2]) * taille - taille / 2.0  # numpy vector
-                        # flow_dots.xys = np.array([x_flow, y_flow]).transpose()
-                        # # If I am using z, I create the xys like this
-                        x_flow = flow_dot_xs / z
-                        y_flow = flow_dot_ys / z
-                        xy_pos = np.array([x_flow, y_flow]).transpose()
-                        flow_dots.xys = xy_pos
-                        flow_dots.draw()
-
-                        lives = lives + 1
-
-                        probeMask1.draw()
-                        probeMask2.draw()
-                        probeMask3.draw()
-                        probeMask4.draw()
-                        dotsMask.draw()
-
+                    flow_dots.draw()
+                    probeMask1.draw()
+                    probeMask2.draw()
+                    probeMask3.draw()
+                    probeMask4.draw()
+                    dotsMask.draw()
                     fixation.setRadius(3)
                     fixation.draw()
                     trials_counter.draw()
 
                 # Background motion prior to probe1
                 if t_bg_motion >= frameN > t_fixation:
-                    # after fixation, before end of background motion
-                    if background == 'jitter':
-                        # todo: add these two lines back in?
-                        # radial flow_dots motion
-                        # z = z + flow_speed * flow_dir
-                        # WrapPoints(z, minDist, maxDist)
-                        # if frameN % 2 == 0:
-                        #     # todo: change motion to update every frame or ? frames
-                        #     x = x + np.random.rand(1) * flow_speed - flow_speed / 2
-                        #     print(f"x: {x}")
-                        #     x = WrapPoints(x, taille/2, taille/2)
-                        #     # x = WrapPoints(x, -500, 500)
-                        #     print(f"x2: {x}")
-                        #
-                        #     y = y + np.random.rand(1) * flow_speed - flow_speed / 2
-                        #     y = WrapPoints(y, taille/2, taille/2)
-                        #     # y = WrapPoints(y, -500, 500)
-                        #
-                        # x_flow = x / z
-                        # y_flow = y / z
-                        #
-                        # flow_dots.xys = np.array([x_flow, y_flow]).transpose()
-                        # flow_dots.draw()
-
-                        # newXYs = flow_dots.xys
-                        flow_dot_xs = flow_dots.xys[:, 0]
-                        flow_dot_ys = flow_dots.xys[:, 1]
-
-                        # find the dead elemnts and reset their life
-                        deadElements = (lives > max_life)  # numpy vector, not standard python
-                        lives[deadElements] = 0
-
-                        # for the dead elements update the xy and ori
-                        # random array same shape as dead elements
-                        # newXYs[deadElements, :] = np.random.random(newXYs[deadElements, :].shape) * taille - taille/2.0
-                        flow_dot_xs[deadElements] = np.random.random(
-                            flow_dot_xs[deadElements].shape) * taille - taille / 2.0
-                        flow_dot_ys[deadElements] = np.random.random(
-                            flow_dot_ys[deadElements].shape) * taille - taille / 2.0
-
-                        # # If I'm not using z, I can just access or create xys like this.
-                        # xys = random([nDots, 2]) * taille - taille / 2.0  # numpy vector
-                        # flow_dots.xys = np.array([x_flow, y_flow]).transpose()
-                        # # If I am using z, I create the xys like this
-                        x_flow = flow_dot_xs / z
-                        y_flow = flow_dot_ys / z
-                        xy_pos = np.array([x_flow, y_flow]).transpose()
-                        flow_dots.xys = xy_pos
-                        flow_dots.draw()
-
-                        lives = lives + 1
-
-                        probeMask1.draw()
-                        probeMask2.draw()
-                        probeMask3.draw()
-                        probeMask4.draw()
-                        dotsMask.draw()
-
+                    flow_dots.draw()
+                    probeMask1.draw()
+                    probeMask2.draw()
+                    probeMask3.draw()
+                    probeMask4.draw()
+                    dotsMask.draw()
                     fixation.setRadius(3)
                     fixation.draw()
                     trials_counter.draw()
 
+                    # reset timer to start with probe1 presentation.
+                    resp.clock.reset()
 
-                # PROBE 1
+                # PROBE 1: after background motion, before end of probe1 interval
                 if t_probe_1 >= frameN > t_bg_motion:
-                    # after background motion, before end of probe1 interval
-                    if background == 'jitter':
-                        # radial flow_dots motion
-                        # todo: add these two lines back in?
-                        # z = z + flow_speed * flow_dir
-                        # WrapPoints(z, minDist, maxDist)
-                        # if frameN % 2 == 0:
-                        #     # todo: change motion to update every frame or ? frames
-                        #     x = x + np.random.rand(1) * flow_speed - flow_speed / 2
-                        #     x = WrapPoints(x, taille/2, taille/2)
-                        #     # x = WrapPoints(x, -500, 500)
-                        #     y = y + np.random.rand(1) * flow_speed - flow_speed / 2
-                        #     y = WrapPoints(y, taille/2, taille/2)
-                        #     # y = WrapPoints(y, -500, 500)
-                        #
-                        # x_flow = x / z
-                        # y_flow = y / z
-                        #
-                        # flow_dots.xys = np.array([x_flow, y_flow]).transpose()
-                        # flow_dots.draw()
-
-                        # newXYs = flow_dots.xys
-                        flow_dot_xs = flow_dots.xys[:, 0]
-                        flow_dot_ys = flow_dots.xys[:, 1]
-
-                        # find the dead elemnts and reset their life
-                        deadElements = (lives > max_life)  # numpy vector, not standard python
-                        lives[deadElements] = 0
-
-                        # for the dead elements update the xy and ori
-                        # random array same shape as dead elements
-                        # newXYs[deadElements, :] = np.random.random(newXYs[deadElements, :].shape) * taille - taille/2.0
-                        flow_dot_xs[deadElements] = np.random.random(
-                            flow_dot_xs[deadElements].shape) * taille - taille / 2.0
-                        flow_dot_ys[deadElements] = np.random.random(
-                            flow_dot_ys[deadElements].shape) * taille - taille / 2.0
-
-                        # # If I'm not using z, I can just access or create xys like this.
-                        # xys = random([nDots, 2]) * taille - taille / 2.0  # numpy vector
-                        # flow_dots.xys = np.array([x_flow, y_flow]).transpose()
-                        # # If I am using z, I create the xys like this
-                        x_flow = flow_dot_xs / z
-                        y_flow = flow_dot_ys / z
-                        xy_pos = np.array([x_flow, y_flow]).transpose()
-                        flow_dots.xys = xy_pos
-                        flow_dots.draw()
-
-                        lives = lives + 1
-
-                        probeMask1.draw()
-                        probeMask2.draw()
-                        probeMask3.draw()
-                        probeMask4.draw()
-                        dotsMask.draw()
-
+                    flow_dots.draw()
+                    probeMask1.draw()
+                    probeMask2.draw()
+                    probeMask3.draw()
+                    probeMask4.draw()
+                    dotsMask.draw()
                     probe1.draw()
                     if ISI == -1:  # SIMULTANEOUS CONDITION (concurrent)
                         if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
@@ -785,124 +666,26 @@ for step in range(n_trials_per_stair):
                     fixation.draw()
                     trials_counter.draw()
 
-
                 # ISI
                 if t_ISI >= frameN > t_probe_1:
-                    if background == 'jitter':
-                        # radial flow_dots motion
-                        # todo: add these two lines back in?
-                        # z = z + flow_speed * flow_dir
-                        # WrapPoints(z, minDist, maxDist)
-                        # if frameN % 2 == 0:
-                        #     # todo: change motion to update every frame or ? frames
-                        #     x = x + np.random.rand(1) * flow_speed - flow_speed / 2
-                        #     x = WrapPoints(x, taille/2, taille/2)
-                        #     # x = WrapPoints(x, -500, 500)
-                        #     y = y + np.random.rand(1) * flow_speed - flow_speed / 2
-                        #     y = WrapPoints(y, taille/2, taille/2)
-                        #     # y = WrapPoints(y, -500, 500)
-                        #
-                        # x_flow = x / z
-                        # y_flow = y / z
-                        #
-                        # flow_dots.xys = np.array([x_flow, y_flow]).transpose()
-                        # flow_dots.draw()
-
-                        # newXYs = flow_dots.xys
-                        flow_dot_xs = flow_dots.xys[:, 0]
-                        flow_dot_ys = flow_dots.xys[:, 1]
-
-                        # find the dead elemnts and reset their life
-                        deadElements = (lives > max_life)  # numpy vector, not standard python
-                        lives[deadElements] = 0
-
-                        # for the dead elements update the xy and ori
-                        # random array same shape as dead elements
-                        # newXYs[deadElements, :] = np.random.random(newXYs[deadElements, :].shape) * taille - taille/2.0
-                        flow_dot_xs[deadElements] = np.random.random(
-                            flow_dot_xs[deadElements].shape) * taille - taille / 2.0
-                        flow_dot_ys[deadElements] = np.random.random(
-                            flow_dot_ys[deadElements].shape) * taille - taille / 2.0
-
-                        # # If I'm not using z, I can just access or create xys like this.
-                        # xys = random([nDots, 2]) * taille - taille / 2.0  # numpy vector
-                        # flow_dots.xys = np.array([x_flow, y_flow]).transpose()
-                        # # If I am using z, I create the xys like this
-                        x_flow = flow_dot_xs / z
-                        y_flow = flow_dot_ys / z
-                        xy_pos = np.array([x_flow, y_flow]).transpose()
-                        flow_dots.xys = xy_pos
-                        flow_dots.draw()
-
-                        lives = lives + 1
-
-                        probeMask1.draw()
-                        probeMask2.draw()
-                        probeMask3.draw()
-                        probeMask4.draw()
-                        dotsMask.draw()
-
+                    flow_dots.draw()
+                    probeMask1.draw()
+                    probeMask2.draw()
+                    probeMask3.draw()
+                    probeMask4.draw()
+                    dotsMask.draw()
                     fixation.setRadius(3)
                     fixation.draw()
                     trials_counter.draw()
 
-                # PROBE 2
+                # PROBE 2: after ISI but before end of probe2 interval
                 if t_probe_2 >= frameN > t_ISI:
-                    # after ISI but before end of probe2 interval
-                    if background == 'jitter':
-                        # radial flow_dots motion
-                        # todo: add these two lines back in?
-                        # z = z + flow_speed * flow_dir
-                        # WrapPoints(z, minDist, maxDist)
-                        # if frameN % 2 == 0:
-                        #     # todo: change motion to update every frame or ? frames
-                        #     x = x + np.random.rand(1) * flow_speed - flow_speed / 2
-                        #     x = WrapPoints(x, taille/2, taille/2)
-                        #     # x = WrapPoints(x, -500, 500)
-                        #     y = y + np.random.rand(1) * flow_speed - flow_speed / 2
-                        #     y = WrapPoints(y, taille/2, taille/2)
-                        #     # y = WrapPoints(y, -500, 500)
-                        #
-                        # x_flow = x / z
-                        # y_flow = y / z
-                        #
-                        # flow_dots.xys = np.array([x_flow, y_flow]).transpose()
-                        # flow_dots.draw()
-
-                        # newXYs = flow_dots.xys
-                        flow_dot_xs = flow_dots.xys[:, 0]
-                        flow_dot_ys = flow_dots.xys[:, 1]
-
-                        # find the dead elemnts and reset their life
-                        deadElements = (lives > max_life)  # numpy vector, not standard python
-                        lives[deadElements] = 0
-
-                        # for the dead elements update the xy and ori
-                        # random array same shape as dead elements
-                        # newXYs[deadElements, :] = np.random.random(newXYs[deadElements, :].shape) * taille - taille/2.0
-                        flow_dot_xs[deadElements] = np.random.random(
-                            flow_dot_xs[deadElements].shape) * taille - taille / 2.0
-                        flow_dot_ys[deadElements] = np.random.random(
-                            flow_dot_ys[deadElements].shape) * taille - taille / 2.0
-
-                        # # If I'm not using z, I can just access or create xys like this.
-                        # xys = random([nDots, 2]) * taille - taille / 2.0  # numpy vector
-                        # flow_dots.xys = np.array([x_flow, y_flow]).transpose()
-                        # # If I am using z, I create the xys like this
-                        x_flow = flow_dot_xs / z
-                        y_flow = flow_dot_ys / z
-                        xy_pos = np.array([x_flow, y_flow]).transpose()
-                        flow_dots.xys = xy_pos
-                        flow_dots.draw()
-
-                        lives = lives + 1
-
-                        probeMask1.draw()
-                        probeMask2.draw()
-                        probeMask3.draw()
-                        probeMask4.draw()
-                        dotsMask.draw()
-
+                    flow_dots.draw()
+                    probeMask1.draw()
+                    probeMask2.draw()
+                    probeMask3.draw()
+                    probeMask4.draw()
+                    dotsMask.draw()
                     if ISI >= 0:
                         if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
                             probe2.draw()
@@ -910,68 +693,19 @@ for step in range(n_trials_per_stair):
                     fixation.draw()
                     trials_counter.draw()
 
-                # ANSWER
+                # ANSWER: after probe 2 interval until response
                 if frameN > t_probe_2:
-                    # after probe 2 interval
-                    if background == 'jitter':
-                        # draw flow_dots but with no motion
-                        # if frameN % 2 == 0:
-                        #     # todo: change motion to update every frame or ? frames
-                        #     x = x + np.random.rand(1) * flow_speed - flow_speed / 2
-                        #     x = WrapPoints(x, taille/2, taille/2)
-                        #     # x = WrapPoints(x, -500, 500)
-                        #     y = y + np.random.rand(1) * flow_speed - flow_speed / 2
-                        #     y = WrapPoints(y, taille/2, taille/2)
-                        #     # y = WrapPoints(y, -500, 500)
-                        #
-                        # x_flow = x / z
-                        # y_flow = y / z
-                        #
-                        # flow_dots.xys = np.array([x_flow, y_flow]).transpose()
-                        # flow_dots.draw()
-
-                        # newXYs = flow_dots.xys
-                        flow_dot_xs = flow_dots.xys[:, 0]
-                        flow_dot_ys = flow_dots.xys[:, 1]
-
-                        # find the dead elemnts and reset their life
-                        deadElements = (lives > max_life)  # numpy vector, not standard python
-                        lives[deadElements] = 0
-
-                        # for the dead elements update the xy and ori
-                        # random array same shape as dead elements
-                        # newXYs[deadElements, :] = np.random.random(newXYs[deadElements, :].shape) * taille - taille/2.0
-                        flow_dot_xs[deadElements] = np.random.random(
-                            flow_dot_xs[deadElements].shape) * taille - taille / 2.0
-                        flow_dot_ys[deadElements] = np.random.random(
-                            flow_dot_ys[deadElements].shape) * taille - taille / 2.0
-
-                        # # If I'm not using z, I can just access or create xys like this.
-                        # xys = random([nDots, 2]) * taille - taille / 2.0  # numpy vector
-                        # flow_dots.xys = np.array([x_flow, y_flow]).transpose()
-                        # # If I am using z, I create the xys like this
-                        x_flow = flow_dot_xs / z
-                        y_flow = flow_dot_ys / z
-                        xy_pos = np.array([x_flow, y_flow]).transpose()
-                        flow_dots.xys = xy_pos
-                        flow_dots.draw()
-
-                        lives = lives + 1
-
-                        probeMask1.draw()
-                        probeMask2.draw()
-                        probeMask3.draw()
-                        probeMask4.draw()
-                        dotsMask.draw()
-
+                    flow_dots.draw()
+                    probeMask1.draw()
+                    probeMask2.draw()
+                    probeMask3.draw()
+                    probeMask4.draw()
+                    dotsMask.draw()
                     fixation.setRadius(2)
                     fixation.draw()
                     trials_counter.draw()
 
-
-                    # ANSWER
-                    # todo: check if there is a better way to get key responses and RTs
-                    resp = event.BuilderKeyResponse()
+                    # Response
                     theseKeys = event.getKeys(keyList=['num_5', 'num_4', 'num_1',
                                                        'num_2', 'w', 'q', 'a', 's'])
                     if len(theseKeys) > 0:  # at least one key was pressed
@@ -997,8 +731,7 @@ for step in range(n_trials_per_stair):
                         repeat = False
                         continueRoutine = False
 
-                # regardless of frameN
-                # check for quit
+                # regardless of frameN, check for quit
                 if event.getKeys(keyList=["escape"]):
                     thisExp.close()
                     core.quit()
@@ -1028,6 +761,8 @@ for step in range(n_trials_per_stair):
         thisExp.addData('probeColor1', probeColor1)
         thisExp.addData('probeColor255', probeColor255)
         thisExp.addData('probe_ecc', probe_ecc)
+        thisExp.addData('background', background)
+        thisExp.addData('bg_speed_cond', bg_speed_cond)
         thisExp.addData('BGspeed', flow_speed)
         thisExp.addData('orientation', orientation)
         thisExp.addData('ISI_actual_ms', ISI_actual_ms)
@@ -1035,6 +770,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('bgLum', bgLum)
         thisExp.addData('bgColor255', bgColor255)
         thisExp.addData('weber_thr', (probeLum-bgLum)/probeLum)
+        thisExp.addData('vary_fixation', vary_fixation)
         thisExp.addData('expName', expName)
         thisExp.addData('monitor_name', monitor_name)
         thisExp.addData('selected_fps', fps)
@@ -1044,6 +780,7 @@ for step in range(n_trials_per_stair):
         thisStair.newValue(resp.corr)  # so that the staircase adjusts itself
 
 print("end of exp loop, saving data")
+thisExp.dataFileName = filename
 thisExp.close()
 
 while not event.getKeys():
