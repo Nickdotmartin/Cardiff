@@ -17,9 +17,9 @@ background = 'jitter_random'  # 'jitter_random', 'jitter_radial'
 flow_dots_col = [76.5, 114.75, 76.5]
 
 # # dot parameters
-nDots = 100
+nDots = 250
 dot_field_size = 800  # previously called taille: french for 'size'
-flow_speed = .01
+flow_speed = .01  # actually gives the variance in speeds
 
 # # set number of frames that dots persist for
 dot_lives = np.random.random(nDots) * 10  # this will be the current life of each element
