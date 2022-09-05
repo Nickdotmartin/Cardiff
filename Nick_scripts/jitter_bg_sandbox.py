@@ -7,14 +7,14 @@ from psychopy import visual, core, event
 # # make window to display stim
 win = visual.Window(fullscr=True, units='pix', monitor='testMonitor')
 
+# # set same colours as radial flow exp
+flow_dots_col = [76.5, 114.75, 76.5]
+
 # # set hypothetical frame rate to test max_lives variable
 fps = 240
 
 # # choose between random motion and radial motion (both in and outward)
 background = 'jitter_random'  # 'jitter_random', 'jitter_radial'
-
-# # set same colours as radial flow exp
-flow_dots_col = [76.5, 114.75, 76.5]
 
 # # dot parameters
 nDots = 250
@@ -70,7 +70,7 @@ while not event.getKeys():
     flow_dots.xys = xy_pos
 
     # # the above is called just once in the experiment loop.
-    # flow_dots.draw() is all that needs to be called for each part of exp (fixation, probe1, isi etc)
+    # flow_dots.draw() is repeatedly called for each part of exp (fixation, probe1, isi etc)
     flow_dots.draw()
 
     win.flip()
