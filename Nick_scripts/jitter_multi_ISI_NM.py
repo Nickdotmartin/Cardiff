@@ -274,9 +274,9 @@ invRaisedCosTexture = -raisedCosTexture2  # inverts mask to blur edges instead o
 blankslab = np.ones((1080, 420))  # create blank slabs to put to left and right of image
 mmask = np.append(blankslab, invRaisedCosTexture, axis=1)  # append blank slab to left
 mmask = np.append(mmask, blankslab, axis=1)  # and right
-dotsMask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
+peripheral_mask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
                               size=(widthPix, heightPix), units='pix', color='black')
-# changed dotsmask color from grey
+# changed peripheral_mask color from grey
 # above fades to black round edges which makes screen edges less visible
 
 # WRAP FUNCTION: no longer needed
@@ -601,7 +601,7 @@ for step in range(n_trials_per_stair):
                     probeMask2.draw()
                     probeMask3.draw()
                     probeMask4.draw()
-                    dotsMask.draw()
+                    peripheral_mask.draw()
                     fixation.setRadius(3)
                     fixation.draw()
                     trials_counter.draw()
@@ -613,7 +613,7 @@ for step in range(n_trials_per_stair):
                     probeMask2.draw()
                     probeMask3.draw()
                     probeMask4.draw()
-                    dotsMask.draw()
+                    peripheral_mask.draw()
                     fixation.setRadius(3)
                     fixation.draw()
                     trials_counter.draw()
@@ -628,7 +628,7 @@ for step in range(n_trials_per_stair):
                     probeMask2.draw()
                     probeMask3.draw()
                     probeMask4.draw()
-                    dotsMask.draw()
+                    peripheral_mask.draw()
                     probe1.draw()
                     if ISI == -1:  # SIMULTANEOUS CONDITION (concurrent)
                         if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
@@ -644,7 +644,7 @@ for step in range(n_trials_per_stair):
                     probeMask2.draw()
                     probeMask3.draw()
                     probeMask4.draw()
-                    dotsMask.draw()
+                    peripheral_mask.draw()
                     fixation.setRadius(3)
                     fixation.draw()
                     trials_counter.draw()
@@ -656,7 +656,7 @@ for step in range(n_trials_per_stair):
                     probeMask2.draw()
                     probeMask3.draw()
                     probeMask4.draw()
-                    dotsMask.draw()
+                    peripheral_mask.draw()
                     if ISI >= 0:
                         if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
                             probe2.draw()
@@ -671,7 +671,7 @@ for step in range(n_trials_per_stair):
                     probeMask2.draw()
                     probeMask3.draw()
                     probeMask4.draw()
-                    dotsMask.draw()
+                    peripheral_mask.draw()
                     fixation.setRadius(2)
                     fixation.draw()
                     trials_counter.draw()
