@@ -268,35 +268,38 @@ elif bg_speed_cond == 'Half-speed':
     flow_speed = .005
 else:
     raise ValueError(f'background speed should be selected from drop down menu: Normal or Half-speed')
-nDots = 1500  # 10000 - I've reduced the number since the dot_field_size is now much smaller
+n_moving_dots = 1000  # 10000 - I've reduced the number since the dot_field_size is now much smaller
 flow_dots_col = [76.5, 114.75, 76.5]  # greeney-grey in rgb255
 flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
-                                    units='pix', nElements=nDots, sizes=30,
+                                    units='pix', nElements=n_moving_dots, sizes=30,
                                     colorSpace='rgb255', colors=flow_dots_col)
-dot_lives = np.random.random(nDots) * 10  # this will be the current life of each element in frames
-max_lives = 8  # maximum number of frames before dots are redrawn.
+dot_lives = np.random.random(n_moving_dots) * 10  # this will be the current life of each element in frames
+dot_life_ms = 13.333333
+# maximum number of frames before dots are redrawn.
+dot_life_fr = int(round(dot_life_ms / (1000 / fps), 0))
+print(f"dot_life_fr: {dot_life_fr}, {dot_life_ms}ms at {fps} fps.")
 
 # dot_field_size = 5000  # taille is french for 'size', 'cut', 'trim', 'clip' etc - what does it actually do here?
 dot_field_size = int(mon_dict['size'][1])  # used to set max pixels from centre that dots appear
 print(f"\ndot_field_size: {dot_field_size}")
 
 # x and y locations - remember its equivalent to (rand * dot_field_size) - (dot_field_size / 2)
-x = np.random.rand(nDots) * dot_field_size - dot_field_size / 2
-y = np.random.rand(nDots) * dot_field_size - dot_field_size / 2
+x = np.random.rand(n_moving_dots) * dot_field_size - dot_field_size / 2
+y = np.random.rand(n_moving_dots) * dot_field_size - dot_field_size / 2
 
 # # Dots move randomly in smooth directions, then get new direction when reborn.
 # # separate x and y motion is non-radial; same values for both gives radial motion.
 # # random.normal, centered at 1 (no motion), with a sd given by flow_speed.
-x_motion = np.random.normal(1, flow_speed, nDots)
-y_motion = np.random.normal(1, flow_speed, nDots)
+x_motion = np.random.normal(1, flow_speed, n_moving_dots)
+y_motion = np.random.normal(1, flow_speed, n_moving_dots)
 if background == 'jitter_radial':
     y_motion = x_motion
 # # original Simon version (z, rather than x_motion/y_motion), harsh radial flow
-# z = np.random.rand(nDots) * (maxDist + minDist) / 2
+# z = np.random.rand(n_moving_dots) * (maxDist + minDist) / 2
 # # more subtle mix of in and out flow
-# z = np.random.normal(1, .01, nDots)
+# z = np.random.normal(1, .01, n_moving_dots)
 # # no flow at all  (values > 1 flow out and < 1 flow in)
-# z = np.ones(nDots)
+# z = np.ones(n_moving_dots)
 
 
 # full screen mask to blend off edges and fade to black
@@ -307,9 +310,9 @@ invRaisedCosTexture = -raisedCosTexture2  # inverts mask to blur edges instead o
 blankslab = np.ones((1080, 420))  # create blank slabs to put to left and right of image
 mmask = np.append(blankslab, invRaisedCosTexture, axis=1)  # append blank slab to left
 mmask = np.append(mmask, blankslab, axis=1)  # and right
-dotsMask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
-                              size=(widthPix, heightPix), units='pix', color='black')
-# changed dotsmask color from grey
+peripheral_mask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
+                                     size=(widthPix, heightPix), units='pix', color='black')
+# changed peripheral_mask color from grey
 # above fades to black round edges which makes screen edges less visible
 
 # WRAP FUNCTION: no longer needed
@@ -606,7 +609,7 @@ for step in range(n_trials_per_stair):
                 flow_dot_ys = flow_dots.xys[:, 1]
 
                 # find the dead elements and reset their life
-                deadElements = (dot_lives > max_lives)  # numpy vector, not standard python
+                deadElements = (dot_lives > dot_life_fr)  # numpy vector, not standard python
                 dot_lives[deadElements] = 0
 
                 # New x, y locations for dots that are re-born (random array, same shape as dead elements)
@@ -630,7 +633,7 @@ for step in range(n_trials_per_stair):
                     probeMask2.draw()
                     probeMask3.draw()
                     probeMask4.draw()
-                    dotsMask.draw()
+                    peripheral_mask.draw()
                     fixation.setRadius(3)
                     fixation.draw()
                     trials_counter.draw()
@@ -642,7 +645,7 @@ for step in range(n_trials_per_stair):
                     probeMask2.draw()
                     probeMask3.draw()
                     probeMask4.draw()
-                    dotsMask.draw()
+                    peripheral_mask.draw()
                     fixation.setRadius(3)
                     fixation.draw()
                     trials_counter.draw()
@@ -657,7 +660,7 @@ for step in range(n_trials_per_stair):
                     probeMask2.draw()
                     probeMask3.draw()
                     probeMask4.draw()
-                    dotsMask.draw()
+                    peripheral_mask.draw()
                     probe1.draw()
                     if ISI == -1:  # SIMULTANEOUS CONDITION (concurrent)
                         if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
@@ -673,7 +676,7 @@ for step in range(n_trials_per_stair):
                     probeMask2.draw()
                     probeMask3.draw()
                     probeMask4.draw()
-                    dotsMask.draw()
+                    peripheral_mask.draw()
                     fixation.setRadius(3)
                     fixation.draw()
                     trials_counter.draw()
@@ -685,7 +688,7 @@ for step in range(n_trials_per_stair):
                     probeMask2.draw()
                     probeMask3.draw()
                     probeMask4.draw()
-                    dotsMask.draw()
+                    peripheral_mask.draw()
                     if ISI >= 0:
                         if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
                             probe2.draw()
@@ -700,7 +703,7 @@ for step in range(n_trials_per_stair):
                     probeMask2.draw()
                     probeMask3.draw()
                     probeMask4.draw()
-                    dotsMask.draw()
+                    peripheral_mask.draw()
                     fixation.setRadius(2)
                     fixation.draw()
                     trials_counter.draw()

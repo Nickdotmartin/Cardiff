@@ -14,7 +14,7 @@ Then, then the jitter stops, the central circle should appear to move or jitter 
 
 """parameters"""
 # if True, uses B&W, else uses colours from radial flow experiment.
-use_high_contrast = True
+use_high_contrast = False
 
 # How many frames dots are active for, original jitter example has pixels flip every 13.3ms
 # dot_life_fr = 4
@@ -28,7 +28,7 @@ background = 'jitter_random'  # 'jitter_random', 'jitter_radial'
 
 # # dot parameters
 n_moving_dots = 1000  # 350
-flow_speed = .03  # actually gives the variance in speeds
+flow_speed = .01  # actually gives the variance in speeds
 
 # adaptation time in seconds
 adaptation_time = 30
