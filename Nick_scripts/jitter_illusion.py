@@ -16,8 +16,12 @@ Then, then the jitter stops, the central circle should appear to move or jitter 
 # if True, uses B&W, else uses colours from radial flow experiment.
 use_high_contrast = True
 
-# How many frames dots are active for, original jitter example has pixels flip every 2 frames.
-max_lives = 4  
+# How many frames dots are active for, original jitter example has pixels flip every 13.3ms
+# dot_life_fr = 4
+fps = 60
+dot_life_ms = 13.333333
+dot_life_fr = int(round(dot_life_ms/(1000/fps), 0))
+print(f"dot_life_fr: {dot_life_fr}, {dot_life_ms}ms at {fps} fps.")
 
 # # choose between random motion and radial motion (both in and outward)
 background = 'jitter_random'  # 'jitter_random', 'jitter_radial'
@@ -26,10 +30,13 @@ background = 'jitter_random'  # 'jitter_random', 'jitter_radial'
 n_moving_dots = 1000  # 350
 flow_speed = .03  # actually gives the variance in speeds
 
+# adaptation time in seconds
+adaptation_time = 30
+
 
 """back end"""
 # get dimensions of monitor to fit mask to
-monitor_name = 'NickMac'
+monitor_name = 'Asus_VG24'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 thisMon = monitors.Monitor(monitor_name)
 this_width = thisMon.getWidth()
 mon_dict = {'mon_name': monitor_name,
@@ -86,7 +93,7 @@ peripheral_mask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
                                      size=(widthPix, heightPix), units='pix', color='black')
 
 # outer dot parameters
-dot_field_size = 800  # previously called taille: french for 'size'
+dot_field_size = heightPix  # previously called taille: french for 'size'
 
 # # set number of frames that dots persist for
 dot_lives = np.random.random(n_moving_dots) * 10  # this will be the current life of each element
@@ -138,9 +145,9 @@ static_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle'
 fixation = visual.Circle(win, radius=3, units='pix', lineColor='white',
                          fillColor='black')
 
-# set a countdown timer for 15 seconds
+# set a countdown timer for 30 seconds
 countDown = core.CountdownTimer()
-countDown.add(15)
+countDown.add(adaptation_time)
 
 # # display runs for 15 seconds
 while countDown.getTime() > 0:
@@ -153,7 +160,7 @@ while countDown.getTime() > 0:
     flow_dot_ys = flow_dots.xys[:, 1]
 
     # find the dead elements and reset their life
-    deadElements = (dot_lives > max_lives)  # np vector, not standard python
+    deadElements = (dot_lives > dot_life_fr)  # np vector, not standard python
     dot_lives[deadElements] = 0
 
     # New x, y locations for dots that are re-born (random array same shape as dead elements)
