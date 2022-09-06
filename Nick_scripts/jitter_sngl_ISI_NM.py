@@ -42,7 +42,8 @@ expInfo = {'1_Participant': 'Nick_test',
            '6_Probe_orientation': ['tangent', 'radial'],
            '7_Background': ['jitter_rand', 'jitter_rad', 'None'],
            '8_bg_speed_cond': ['Normal', 'Half-speed'],
-           '9_vary_fixation': [False, True]}
+           '9_vary_fixation': [False, True],
+           '10_high_contrast': [False, True]}
 
 # GUI
 dlg = gui.DlgFromDict(dictionary=expInfo, title=expName)
@@ -63,7 +64,8 @@ trials_counter = expInfo['5_Trials_counter']
 background = expInfo['7_Background']
 bg_speed_cond = expInfo['8_bg_speed_cond']
 vary_fixation = expInfo['9_vary_fixation']
-
+high_contrast = expInfo['10_high_contrast']
+print(f'high_contrast: {high_contrast }')
 
 # ISI timing in ms and frames
 '''ISI can be given (roughly) in ms, for any monitor it will try to match that value in frames.
@@ -153,6 +155,8 @@ minLum = 0.12  # 0 RGB
 
 # get ACTUAL bgcolor details
 rgb_bg_color = -0.1
+if high_contrast is True:
+    rgb_bg_color = 1
 print(f'rgb_bg_color: {rgb_bg_color}')
 bgColor255 = (rgb_bg_color + 1) * 127.5
 print(f'bgColor255: {bgColor255}')
@@ -270,11 +274,13 @@ else:
     raise ValueError(f'background speed should be selected from drop down menu: Normal or Half-speed')
 n_moving_dots = 1000  # 10000 - I've reduced the number since the dot_field_size is now much smaller
 flow_dots_col = [76.5, 114.75, 76.5]  # greeney-grey in rgb255
+if high_contrast is True:
+    flow_dots_col = [0, 0, 0]
 flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
                                     units='pix', nElements=n_moving_dots, sizes=30,
                                     colorSpace='rgb255', colors=flow_dots_col)
 dot_lives = np.random.random(n_moving_dots) * 10  # this will be the current life of each element in frames
-dot_life_ms = 13.333333
+dot_life_ms = 30  # 13.333333
 # maximum number of frames before dots are redrawn.
 dot_life_fr = int(round(dot_life_ms / (1000 / fps), 0))
 print(f"dot_life_fr: {dot_life_fr}, {dot_life_ms}ms at {fps} fps.")
