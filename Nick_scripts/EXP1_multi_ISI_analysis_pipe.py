@@ -8,7 +8,7 @@ from check_home_dir import switch_path
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\EXP1_R_G"
-exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\EXP1_sep4_5"
+# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\EXP1_sep4_5"
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\EXP1_split_probes"
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\jitter_multi_ISI_NM"
 
@@ -162,7 +162,7 @@ for p_idx, participant_name in enumerate(participant_list):
 
 print(f'exp_path: {exp_path}')
 print('\nget exp_average_data')
-
+# participant_list = ['Kim', 'Nick']
 e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
                    error_type='SE', n_trimmed=trim_n, verbose=True)
 
