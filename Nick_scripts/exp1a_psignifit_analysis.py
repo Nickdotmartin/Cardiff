@@ -751,6 +751,7 @@ def plot_thr_heatmap(heatmap_df,
                      fig_title=None,
                      save_name=None,
                      save_path=None,
+                     annot_fmt='.0f',
                      my_colourmap='RdYlGn_r',
                      verbose=True):
     """
@@ -781,7 +782,7 @@ def plot_thr_heatmap(heatmap_df,
         print(f'mean_val: {round(mean_thr, 2)}')
 
     heatmap = sns.heatmap(data=heatmap_df,
-                          annot=True, center=mean_thr,
+                          annot=True, fmt=annot_fmt, center=mean_thr,
                           # cmap=sns.color_palette("Spectral", as_cmap=True),
                           cmap=my_colourmap,
                           xticklabels=x_tick_labels, yticklabels=y_tick_labels,
@@ -814,6 +815,7 @@ def plt_heatmap_row_col(heatmap_df,
                         y_axis_label=None,
                         fig_title=None,
                         fontsize=16,
+                        annot_fmt='.0f',
                         save_name=None,
                         save_path=None,
                         my_colourmap='RdYlGn_r',
@@ -861,7 +863,7 @@ def plt_heatmap_row_col(heatmap_df,
                     cmap=my_colourmap,
                     annot=True,
                     annot_kws={'fontsize': fontsize},
-                    # fmt='{:.2f}',
+                    fmt=annot_fmt,
                     cbar=False,
                     square=True)
 
@@ -2301,6 +2303,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                                        'ISI 6', 'ISI 9', 'ISI 12', 'ISI 24'],
                        sep_vals_list=[0, 1, 2, 3, 6, 18, 20],
                        sep_name_list=[0, 1, 2, 3, 6, 18, '1probe'],
+                       heatmap_annot_fmt='{:.2f}',
                        show_plots=True, verbose=True):
     """
     Plots:
@@ -2608,7 +2611,9 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     # regular (not transpose)
     plot_thr_heatmap(heatmap_df=ave_df, x_tick_labels=isi_name_list,
                      y_tick_labels=sep_name_list, fig_title=heatmap_title,
-                     save_name=heatmap_savename, save_path=save_path, verbose=True)
+                     save_name=heatmap_savename, save_path=save_path,
+                     annot_fmt=heatmap_annot_fmt,
+                     verbose=True)
 
     if show_plots:
         plt.show()
@@ -2632,6 +2637,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
         plot_thr_heatmap(heatmap_df=div_ave_psignifit_thr_df.T,
                          x_tick_labels=sep_labels, y_tick_labels=isi_labels,
+                         annot_fmt=heatmap_annot_fmt,
                          fig_title=heatmap_title, save_name=heatmap_savename,
                          save_path=save_path, verbose=True)
         if show_plots:
@@ -2657,6 +2663,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                         y_tick_labels=None,
                         y_axis_label='Separation',
                         fig_title=heatmap_pr_title,
+                        annot_fmt=heatmap_annot_fmt,
                         save_name=heatmap_pr_savename,
                         save_path=save_path,
                         verbose=True)
@@ -2682,6 +2689,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                         x_axis_label='ISI',
                         y_tick_labels=None,
                         y_axis_label='Separation',
+                        annot_fmt=heatmap_annot_fmt,
                         fig_title=heatmap_pr_title,
                         save_name=heatmap_pr_savename,
                         save_path=save_path,

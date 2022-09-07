@@ -11,12 +11,13 @@ from check_home_dir import switch_path
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\EXP1_sep4_5"
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\EXP1_split_probes"
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\jitter_multi_ISI_NM"
+exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\jitter_midmask_multi_ISI_NM"
 
 convert_path1 = os.path.normpath(exp_path)
 exp_path = convert_path1
 
 print(f"exp_path: {exp_path}")
-participant_list = ['Kim']
+participant_list = ['Nick']
 
 n_runs = 12
 
@@ -157,6 +158,7 @@ for p_idx, participant_name in enumerate(participant_list):
                        sep_vals_list=sep_vals_list,
                        sep_name_list=sep_name_list,
                        exp_ave=False,  # participant ave, not exp ave
+                       heatmap_annot_fmt='.0f',  # use '.3g' for 3 significant figures, '.2f' for 2dp, '.0f' for int.
                        show_plots=True, verbose=True)
 
 
@@ -183,6 +185,7 @@ make_average_plots(all_df_path=all_df_path,
                    sep_vals_list=sep_vals_list,
                    sep_name_list=sep_name_list,
                    exp_ave=True,  # participant ave, not exp ave
+                   heatmap_annot_fmt='.0f',  # use '.3g' for 3 significant figures, '.2f' for 2dp, '.0f' for int.
                    show_plots=True, verbose=True)
 
 print('\nexp1a_analysis_pipe finished\n')
