@@ -117,10 +117,7 @@ flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
                                     colors=flow_dots_col)
 
 
-# central mask with static dots
-# MASK BEHIND PROBES
-# raisedCosTexture1 = visual.filters.makeMask(256, shape='raisedCosine',
-#                                             fringeWidth=0.3, radius=[1.0, 1.0])
+# central mask behind probemasks
 raisedCosTexture1 = visual.filters.makeMask(256, shape='raisedCosine',
                                             fringeWidth=0.01, radius=[1.0, 1.0])
 static_mask_size = 400

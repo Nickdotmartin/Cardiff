@@ -7,12 +7,14 @@ from check_home_dir import switch_path
 
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
-exp_path = r"C:\Users\sapnm4\PycharmProjects\Cardiff\Nick_scripts\EXP1_sep4_5"
+# exp_path = r"C:\Users\sapnm4\PycharmProjects\Cardiff\Nick_scripts\EXP1_sep4_5"
+exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\EXP1_sep4_5"
+
 convert_path1 = os.path.normpath(exp_path)
 exp_path = convert_path1
 
 print(f"exp_path: {exp_path}")
-participant_list = ['Nick_test']
+participant_list = ['Kim']
 
 isi_list = [-1, 0, 2, 4, 6, 9, 12, 24]
 sep_list = [4, 5]
@@ -132,13 +134,14 @@ for p_idx, participant_name in enumerate(participant_list):
                        thr_col='newLum',
                        error_type='SE',
                        n_trimmed=trim_n,
+                       split_1probe=False,
                        exp_ave=False,  # participant ave, not exp ave
                        show_plots=True, verbose=True)
 
 
 print(f'exp_path: {exp_path}')
 print('\nget exp_average_data')
-
+participant_list = ['Kim', 'Nick']
 e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
                    error_type='SE', n_trimmed=trim_n, verbose=True)
 
@@ -154,6 +157,7 @@ make_average_plots(all_df_path=all_df_path,
                    thr_col='newLum',
                    error_type='SE',
                    exp_ave=True,
+                   split_1probe=False,
                    show_plots=True, verbose=True)
 
 print('\nexp1a_analysis_pipe finished\n')
