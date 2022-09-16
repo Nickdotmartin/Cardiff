@@ -515,8 +515,8 @@ first script just does means across all conds (e.g., no ISI or sep)
 # code for exp1 data
 exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\exp1a_data"
 exp_path = os.path.normpath(exp_path)
-participant_list = ['aa']
-# participant_list = ['aa', 'bb', 'cc', 'dd', 'ee']
+# participant_list = ['aa']
+participant_list = ['aa', 'bb', 'cc', 'dd', 'ee']
 all_isi_list = [-1, 0, 1, 2, 4, 6, 9, 12, 24]
 p_idx_plus = 1
 
@@ -524,39 +524,61 @@ for p_idx, participant_name in enumerate(participant_list):
 
     root_path = os.path.join(exp_path, participant_name)
 
-    acc_thr_per_stack_list = []
-
     # # df for accuracy
     MASTER_p_trial_data_df = pd.read_csv(os.path.join(root_path, f'MASTER_p_trial_data_df.csv'))
     print(f'\nMASTER_p_trial_data_df ({MASTER_p_trial_data_df.shape}):\n{MASTER_p_trial_data_df.head()}')
-    isi_list = MASTER_p_trial_data_df['ISI'].unique().tolist()
 
     # # df for thresholds
     MASTER_psignifit_thr_df = pd.read_csv(os.path.join(root_path, f'MASTER_psignifit_thresholds.csv'))
     print(f'\nMASTER_psignifit_thr_df ({MASTER_psignifit_thr_df.shape}):\n{MASTER_psignifit_thr_df.head()}')
-    isi_name_list = MASTER_psignifit_thr_df.columns.to_list()[2:]
-    # print(isi_name_list)
 
-    # # # get mean accuracy and threshold per experimental session
-    # for this_stack in list(MASTER_p_trial_data_df['stack'].unique()):
-    #
-    #     # # get mean acc per stack/run
-    #     this_stack_acc_df = MASTER_p_trial_data_df[MASTER_p_trial_data_df['stack'] == this_stack]
-    #     rows, cols = this_stack_acc_df.shape
-    #     n_correct = sum(list(this_stack_acc_df['trial_response']))
-    #     mean_accuracy = n_correct/rows
-    #
-    #     # # get mean threshold per stack/run
-    #     this_stack_thr_df = MASTER_psignifit_thr_df[MASTER_psignifit_thr_df['stack'] == this_stack]
-    #     just_thr = this_stack_thr_df.drop(['stack', 'separation'], axis=1)
-    #     mean_thr = just_thr.mean().mean()
-    #
-    #     print(f"p_name: {participant_name}; stack {this_stack}; "
-    #           f"mean_acc: {round(mean_accuracy, 2)}%; mean_thr: {round(mean_thr, 2)}")
-    #
-    #     acc_thr_per_stack_list.append([this_stack, mean_accuracy, mean_thr])
-    #
-    #
+    acc_thr_per_stack_list = []
+    thr_per_stack_list = []
+
+    # # get mean accuracy and threshold per experimental session
+    # # acc stacks are 1-6
+    acc_stack_list = list(MASTER_p_trial_data_df['stack'].unique())
+    for this_stack in acc_stack_list:
+
+        # # get mean acc per stack/run
+        this_stack_acc_df = MASTER_p_trial_data_df[MASTER_p_trial_data_df['stack'] == this_stack]
+        rows, cols = this_stack_acc_df.shape
+        n_correct = sum(list(this_stack_acc_df['trial_response']))
+        mean_accuracy = n_correct/rows
+        prop_errors = 1-mean_accuracy
+
+        acc_thr_per_stack_list.append([this_stack, prop_errors])
+
+    # # thr stacks are 0-11
+    thr_stack_list = list(MASTER_psignifit_thr_df['stack'].unique())
+    for this_stack in thr_stack_list:
+
+        # # get mean threshold per stack/run
+        this_stack_thr_df = MASTER_psignifit_thr_df[MASTER_psignifit_thr_df['stack'] == this_stack]
+        just_thr = this_stack_thr_df.drop(['stack', 'separation'], axis=1)
+        mean_thr = just_thr.mean().mean()
+
+        thr_per_stack_list.append(mean_thr)
+
+
+    print(f"acc_thr_per_stack_list: {acc_thr_per_stack_list}")
+    print(f"thr_per_stack_list: {thr_per_stack_list}")
+
+    # # convert thr stacks to 1-6 and get mean of pairs of thr
+    for stack in acc_stack_list:
+
+        thr_group_a = thr_per_stack_list[stack * 2 - 2]
+        thr_group_b = thr_per_stack_list[stack * 2 - 1]
+        this_mean_thr = np.array([thr_group_a, thr_group_b]).mean()
+
+        print(f"{stack}: {thr_group_a}, {thr_group_b}, {this_mean_thr}")
+
+        acc_thr_per_stack_list[stack-1].append(this_mean_thr)
+
+    print(f"acc_thr_per_stack_list: {acc_thr_per_stack_list}")
+
+
+
     # # # plot mean accuracy and threshold per experimental session
     # acc_thr_per_stack_array = np.array(acc_thr_per_stack_list)
     # x = acc_thr_per_stack_array[:, 0]
@@ -567,47 +589,150 @@ for p_idx, participant_name in enumerate(participant_list):
     # ax2 = ax1.twinx()  # applies twinx to ax2, which is the second y axis.
     #
     # ax1.bar(x, y1, color='royalblue')
+    # # ax1.plot(x, y1, 'o-', color='royalblue')
     # ax2.plot(x, y2, 'o-', color="red")
     #
+    # ax1.set_ylim(bottom=.20)
     # ax1.set_xlabel('Experiment session')
-    # ax1.set_ylabel('Mean Accuracy (%)', color='royalblue')
+    # # ax1.set_ylabel('Mean Accuracy', color='royalblue')
+    # ax1.set_ylabel('Errors (proportion)', color='royalblue')
     # ax2.set_ylabel('Mean Luminance Threshold', color='red')
-    # plt.title(f"{participant_name} mean accuracy and thresholds per session")
+    # plt.title(f"{participant_name} mean errors and thresholds per session")
     #
     # plt.savefig(os.path.join(root_path, 'mean_acc_thr.png'))
     # plt.show()  # shows the plot.
 
-    # # # get accuracy and thr for each condition in each session
-    # MASTER_acc_pivot = MASTER_p_trial_data_df.pivot_table(index=["stack", 'separation'], columns="ISI", values="trial_response", aggfunc='sum')
-    # MASTER_acc_pivot.reset_index(inplace=True)
-    # print(MASTER_acc_pivot)
-    #
-    # MASTER_acc_long_df = pd.melt(frame=MASTER_acc_pivot,
-    #                              id_vars=["stack", 'separation'],
-    #                              value_vars=isi_list,
-    #                              var_name=None,
-    #                              value_name='n_correct',
-    #                              col_level=None,
-    #                              ignore_index=True)
-    # print(MASTER_acc_long_df)
-    #
-    # MASTER_acc_long_df['cond'] = [f"sep{sep}_ISI{isi}" for sep, isi in
-    #                               zip(MASTER_acc_long_df['separation'].tolist(),
-    #                                   MASTER_acc_long_df['ISI'].tolist())]
-    #
-    # print(MASTER_acc_long_df)
-    #
-    # sns.relplot(
-    #     data=MASTER_acc_long_df,
-    #     x="stack", y="n_correct", hue="cond",
-    #     kind="line", legend=False)
-    # plt.show()
 
     # # get accuracy and thr for each condition in each session
 
+    isi_name_list = MASTER_psignifit_thr_df.columns.to_list()[2:]
+    isi_list = MASTER_p_trial_data_df['ISI'].unique().tolist()
+    MASTER_acc_pivot = MASTER_p_trial_data_df.pivot_table(index=["stack", 'separation'],
+                                                          columns="ISI",
+                                                          values="trial_response", aggfunc='sum')
+    print(f"MASTER_acc_pivot:\n{MASTER_acc_pivot}")
+    MASTER_acc_pivot = MASTER_acc_pivot.reset_index()
+    MASTER_acc_pivot.index.rename('idx', inplace=True)
+    print(f"MASTER_acc_pivot:\n{MASTER_acc_pivot}")
+
+    acc_stack_list = list(MASTER_acc_pivot['stack'].unique())
+
+
+    # # get change in errors per stack
+    first_stack_errors = MASTER_acc_pivot[MASTER_acc_pivot['stack'] == 1]
+    print(f"first_stack_errors:\n{first_stack_errors}")
+
+    error_diff_list = []
+
+    for this_stack in acc_stack_list:
+
+        this_stack_df = MASTER_acc_pivot[MASTER_acc_pivot['stack'] == this_stack]
+        this_stack_df.reset_index(inplace=True, drop=True)
+        print(f"\n{this_stack}: this_stack_df:\n{this_stack_df}\nfirst_stack_errors:\n{first_stack_errors}")
+
+        error_diff_df = this_stack_df.subtract(first_stack_errors, fill_value=0)
+        print(f"error_diff_df:\n{error_diff_df}")
+
+        error_diff_list.append(error_diff_df)
+
+    MASTER_error_diff_df = pd.concat(error_diff_list, ignore_index=True)
+    MASTER_error_diff_df['separation'] = MASTER_acc_pivot['separation']
+    print(f"MASTER_error_diff_df:\n{MASTER_error_diff_df}")
+
+    # # convert to long form
+    MASTER_err_long_df = pd.melt(frame=MASTER_error_diff_df,
+                                 id_vars=["stack", 'separation'],
+                                 value_vars=isi_list,
+                                 var_name=None,
+                                 value_name='error_diff',
+                                 col_level=None,
+                                 ignore_index=True)
+    print(f"MASTER_err_long_df:\n{MASTER_err_long_df}")
+
+    MASTER_err_long_df['cond'] = [f"sep{sep}_ISI{isi}" for sep, isi in
+                                  zip(MASTER_err_long_df['separation'].tolist(),
+                                      MASTER_err_long_df['ISI'].tolist())]
+
+    print(f"MASTER_err_long_df:\n{MASTER_err_long_df}")
+
+
+    # # plot difference in mean errors per session
+    sns.relplot(data=MASTER_err_long_df,
+                x="stack", y="error_diff", hue="cond",
+                kind="line", legend=False)
+    plt.title(f"{participant_name} Mean difference in Errors per Session")
+    plt.savefig(os.path.join(root_path, 'mean_error_diff.png'))
+    plt.show()
+
+
+
+    # # actual number of errors per session
+    MASTER_acc_long_df = pd.melt(frame=MASTER_acc_pivot,
+                                 id_vars=["stack", 'separation'],
+                                 value_vars=isi_list,
+                                 var_name=None,
+                                 value_name='n_correct',
+                                 col_level=None,
+                                 ignore_index=True)
+    print(MASTER_acc_long_df)
+
+    MASTER_acc_long_df['cond'] = [f"sep{sep}_ISI{isi}" for sep, isi in
+                                  zip(MASTER_acc_long_df['separation'].tolist(),
+                                      MASTER_acc_long_df['ISI'].tolist())]
+
+    print(MASTER_acc_long_df)
+
+    sns.relplot(data=MASTER_acc_long_df, x="stack", y="n_correct", hue="cond",
+                kind="line", legend=False)
+    plt.title(f"{participant_name} Mean number of Errors per Session")
+    plt.savefig(os.path.join(root_path, 'mean_errors.png'))
+    plt.show()
+
+
+
+    # # # get accuracy and thr for each condition in each session
+    isi_list = MASTER_p_trial_data_df['ISI'].unique().tolist()
     MASTER_psignifit_thr_df.columns = ['stack', 'separation'] + isi_list
     print(MASTER_psignifit_thr_df)
-    MASTER_thr_long_df = pd.melt(frame=MASTER_psignifit_thr_df,
+
+    '''change this so there are just 6 sessions by getting mean thr'''
+    six_sesh_list = []
+
+    # # original thr stacks are 0-11
+    thr_stack_list = list(MASTER_psignifit_thr_df['stack'].unique())
+    sep_col = list(MASTER_psignifit_thr_df['separation'].unique())
+
+    # for this_stack in thr_stack_list:
+    for idx in list(range(1, 7)):
+
+        first_stack = idx*2-2
+        second_stack = idx*2-1
+
+        # # get mean threshold per stack/run
+        first_stack_thr_df = MASTER_psignifit_thr_df[MASTER_psignifit_thr_df['stack'] == first_stack]
+        first_stack_thr_df = first_stack_thr_df.drop(['stack', 'separation'], axis=1)
+        first_stack_thr_df.reset_index(inplace=True, drop=True)
+        print(f"\n\n{first_stack}\n{first_stack_thr_df}")
+
+        second_stack_thr_df = MASTER_psignifit_thr_df[MASTER_psignifit_thr_df['stack'] == second_stack]
+        second_stack_thr_df = second_stack_thr_df.drop(['stack', 'separation'], axis=1)
+        second_stack_thr_df.reset_index(inplace=True, drop=True)
+        print(f"{second_stack}\n{second_stack_thr_df}")
+
+        # # get mean of both dfs
+        mean_of_both_dfs = pd.concat([first_stack_thr_df, second_stack_thr_df]).groupby(level=0).mean()
+        mean_of_both_dfs.insert(0, 'separation', sep_col)
+        mean_of_both_dfs.insert(0, 'stack', idx)
+        print(f"mean:\n{mean_of_both_dfs}")
+
+        six_sesh_list.append(mean_of_both_dfs)
+
+    six_sesh_df = pd.concat(six_sesh_list, ignore_index=True)
+    print(f"six_sesh_df:\n{six_sesh_df}")
+
+
+    # # get thresholds per session per cond
+    MASTER_thr_long_df = pd.melt(frame=six_sesh_df,
                                  id_vars=["stack", 'separation'],
                                  value_vars=isi_list,
                                  var_name='ISI',
@@ -623,22 +748,64 @@ for p_idx, participant_name in enumerate(participant_list):
     print(MASTER_thr_long_df)
 
     # # all values on same plot
-    sns.relplot(
-        data=MASTER_thr_long_df,
-        x="stack", y="threshold", hue="cond",
-        kind="line", legend=False)
-
-    # # different plot for each cond
-    # sns.relplot(data=MASTER_thr_long_df, x="stack", y="threshold",
-    #             # hue="day",
-    #             kind='line',
-    #             col="separation", row="ISI")
-
-
-
+    sns.relplot(data=MASTER_thr_long_df, x="stack", y="threshold", hue="cond",
+                kind="line", legend=False)
+    plt.title(f"{participant_name} Mean Thresholds per Session")
+    plt.savefig(os.path.join(root_path, 'mean_thr.png'))
     plt.show()
 
 
+    # different plot for each cond
+    sns.relplot(data=MASTER_thr_long_df, x="stack", y="threshold",
+                kind='line', col="separation", row="ISI")
+    plt.title(f"{participant_name} Mean Thresholds per cond per Session")
+    plt.savefig(os.path.join(root_path, 'mean_thr_per_cond.png'))
+    plt.show()
+
+
+    # # or get difference in threshold per session
+    '''loop through and subtract each stack from the first stack as I did with errors.'''
+    first_stack_thr = six_sesh_df[six_sesh_df['stack'] == 1]
+    print(f"first_stack_thr:\n{first_stack_thr}")
+
+    thr_diff_list = []
+
+    for this_stack in list(range(1, 7)):
+
+        this_stack_df = six_sesh_df[six_sesh_df['stack'] == this_stack]
+        this_stack_df.reset_index(inplace=True, drop=True)
+        print(f"\n{this_stack}: this_stack_df:\n{this_stack_df}\nfirst_stack_thr:\n{first_stack_thr}")
+
+        thr_diff_df = this_stack_df.subtract(first_stack_thr, fill_value=0)
+        print(f"thr_diff_df:\n{thr_diff_df}")
+
+        thr_diff_list.append(thr_diff_df)
+
+    MASTER_thr_diff_df = pd.concat(thr_diff_list, ignore_index=True)
+    MASTER_thr_diff_df['separation'] = six_sesh_df['separation']
+    print(f"MASTER_thr_diff_df:\n{MASTER_thr_diff_df}")
+
+    MASTER_thr_diff_long_df = pd.melt(frame=MASTER_thr_diff_df,
+                                      id_vars=["stack", 'separation'],
+                                      value_vars=isi_list,
+                                      var_name='ISI',
+                                      value_name='threshold',
+                                      col_level=None,
+                                      ignore_index=True)
+    print(MASTER_thr_diff_long_df)
+
+    MASTER_thr_diff_long_df['cond'] = [f"sep{sep}_ISI{isi}" for sep, isi in
+                                       zip(MASTER_thr_diff_long_df['separation'].tolist(),
+                                           MASTER_thr_diff_long_df['ISI'].tolist())]
+
+    print(MASTER_thr_diff_long_df)
+
+    # # all values on same plot
+    sns.relplot(data=MASTER_thr_diff_long_df, x="stack", y="threshold", hue="cond",
+                kind="line", legend=False)
+    plt.title(f"{participant_name} Mean Difference in Thresholds per Session")
+    plt.savefig(os.path.join(root_path, 'mean_thr_diff.png'))
+    plt.show()
 
 
 
