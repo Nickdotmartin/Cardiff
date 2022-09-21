@@ -67,9 +67,11 @@ vary_fixation = expInfo['5_vary_fixation']
 For 1probe condition, use separation==99.
 For concurrent probes, use ISI==-1.
 '''
-separations = [0, 2, 4, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
+# separations = [0, 2, 4, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
+separations = [0, 4]  # select from [0, 1, 2, 3, 6, 18, 99]
 print(f'separations: {separations}')
-ISI_values = [0, 2, 4, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+# ISI_values = [0, 2, 4, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+ISI_values = [0, 4]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 print(f'ISI_values: {ISI_values}')
 # repeat separation values for each ISI e.g., [0, 0, 6, 6]
 sep_vals_list = list(np.repeat(separations, len(ISI_values)))
@@ -195,8 +197,8 @@ instructions = visual.TextStim(win=win, name='instructions',
                                text="\n\n\n\n\n\nFocus on the small circle at the centre of the screen.\n\n"
                                     "A small white probe will briefly flash on screen,\n"
                                     "press the key related to the location of the probe:\n\n"
-                                    "[4] top-left\t\t\t[5] top-right\n\n\n\n"
-                                    "[1] bottom-left\t\t\t[2] bottom-right.\n\n\n"
+                                    "[4]/[Q] top-left\t\t\t[5]/[W] top-right\n\n\n\n"
+                                    "[1]/[A] bottom-left\t\t\t[2]/[S] bottom-right.\n\n\n"
                                     "Some flashes will seem bright and easy to see\n"
                                     "Some will be dim and harder to spot\n"
                                     "Some will be so dim that you won't see them, so just guess!\n\n"
