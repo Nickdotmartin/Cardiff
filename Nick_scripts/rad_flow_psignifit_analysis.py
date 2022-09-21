@@ -881,7 +881,9 @@ def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'
     # Change legend labels for congruent and incongruent data
     if hue_var != 'stair_names':
         handles, labels = ax.get_legend_handles_labels()
-        ax.legend(handles=handles, labels=labels[:-2] + ['True', 'False'])
+        # ax.legend(handles=handles, labels=labels[:-2] + ['True', 'False'])
+        ax.legend(handles=handles, labels=labels)
+
 
     print(f'test save path:\n{save_path}\n{fig_savename}')
     plt.savefig(os.path.join(save_path, fig_savename))

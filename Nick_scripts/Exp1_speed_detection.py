@@ -27,14 +27,14 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'asus_cal'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz'
+monitor_name = 'Asus_VG24'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz'
 display_number = 1  # 0 indexed, 1 for external display
 
 # Store info about the experiment session
 expName = 'Exp1_speed_detection'  # from the Builder filename that created this script
 
 
-expInfo = {'1_Participant_name': 'Nick',
+expInfo = {'1_Participant_name': 'Nicktest',
            '2_run_number': 2,
            '3_fps': [240, 60, 144],
            # to compare with exp 1 ISIs use [1, 4, 6, 9]

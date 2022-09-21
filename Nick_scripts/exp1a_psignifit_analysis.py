@@ -1378,7 +1378,8 @@ def plot_8_sep_thr(all_thr_df, thr_col='newLum', exp_ave=False, fig_title=None, 
                               palette=my_colours)
                 ax.set_ylim([min_thr - 2, max_thr + 2])
                 ax.set_xticklabels(isi_labels)
-                plt.legend([], [], frameon=False)
+                plt.legend([], [], frameon=False, loc='right')
+                # plt.legend([], [], frameon=False, loc='right', bbox_to_anchor=(1.05, 1))
                 ax.set_title(f'All Separation conditions')
 
             ax_counter += 1

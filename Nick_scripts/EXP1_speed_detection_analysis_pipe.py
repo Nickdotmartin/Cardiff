@@ -26,7 +26,7 @@ participant_list = ['Nick']
 probe_speed_list = [0, .25, .5, .75, 1.0, 1.5, 2.0]
 
 # make data_extraction for joining different probe durs together
-probeDur = 4
+# probeDur = 4
 
 n_runs = 12
 
@@ -181,80 +181,85 @@ for p_idx, participant_name in enumerate(participant_list):
 
     save_path, df_name = os.path.split(p_ave_path)
 
-    # if trim_n is not None:
-    #     fig_1b_title = f'P average thresholds per stair across all runs (trim={trim_n}).\n' \
-    #                    f'Bars=.68 CI'
-    #     fig_1b_savename = f'ave_TM_thr_all_runs.png'
-    # else:
-    #     fig_1b_title = f'P average threshold per stair across all runs\n' \
-    #                    f'Bars=.68 CI'
-    #     fig_1b_savename = f'ave_thr_all_runs.png'
-    #
-    # headers = list(p_all_df.columns)
-    #
-    # substring = 'probe_dur_'
-    #
-    # # ✅ find all strings in list that contain substring
-    # probe_dur_cols = [item for item in headers if substring in item]
-    # # print(all_matches)
-    # plot_w_errors_either_x_axis(wide_df=p_all_df, cols_to_keep=['probeSpeed'],
-    #                             cols_to_change=probe_dur_cols,
-    #                             cols_to_change_show='probeLum', new_col_name='probe_dur',
-    #                             strip_from_cols=substring, x_axis='probeSpeed', y_axis='probeLum',
-    #                             hue_var='probe_dur', style_var=None, style_order=None,
-    #                             error_bars=True, even_spaced_x=True,
-    #                             x_tick_vals=probe_speed_list,
-    #                             jitter=False,  # .01,
-    #                             fig_title=fig_1b_title, fig_savename=fig_1b_savename,
-    #                             save_path=save_path, verbose=True)
-    # plt.show()
-    # plt.close()
+    ave_over_n = len(run_folder_names)
+
+
+    if trim_n is not None:
+        fig_1b_title = f'P average thresholds per stair across {ave_over_n} runs (trim={trim_n}).\n' \
+                       f'Bars=.68 CI'
+        fig_1b_savename = f'ave_TM_thr_all_runs.png'
+    else:
+        fig_1b_title = f'P average threshold per stair across {ave_over_n} runs\n' \
+                       f'Bars=.68 CI'
+        fig_1b_savename = f'ave_thr_all_runs.png'
+
+    headers = list(p_all_df.columns)
+
+    substring = 'probe_dur_'
+
+    # ✅ find all strings in list that contain substring
+    probe_dur_cols = [item for item in headers if substring in item]
+    print(f"probe_dur_cols: {probe_dur_cols}")
+    # print(all_matches)
+    plot_w_errors_either_x_axis(wide_df=p_all_df, cols_to_keep=['probeSpeed'],
+                                cols_to_change=probe_dur_cols,
+                                cols_to_change_show='probeLum', new_col_name='probe_dur',
+                                strip_from_cols=substring, x_axis='probeSpeed', y_axis='probeLum',
+                                hue_var='probe_dur',
+                                style_var=None, style_order=None,
+                                error_bars=True, even_spaced_x=True,
+                                x_tick_vals=probe_speed_list,
+                                jitter=False,  # .01,
+                                fig_title=fig_1b_title, fig_savename=fig_1b_savename,
+                                save_path=save_path, verbose=True)
+    plt.show()
+    plt.close()
 
     ave_over_n = len(run_folder_names)
 
     # heat_df = all_mean_df.pivot(index='separation', columns='ISI', values='accuracy')
     # print(f"heat_df ({list(heat_df.columns)}):\n{heat_df}")
 
-    heat_df = p_ave_df.set_index('probeSpeed', drop=True)
-    print(f'heat_df\n{heat_df}')
+    # heat_df = p_ave_df.set_index('probeSpeed', drop=True)
+    # print(f'heat_df\n{heat_df}')
+    #
+    # probe_dur_list = list(heat_df.columns)
+    # probe_speed_list = list(heat_df.index)
 
-    probe_dur_list = list(heat_df.columns)
-    probe_speed_list = list(heat_df.index)
-
-    plot_thr_heatmap(heatmap_df=heat_df,
-                     x_tick_labels=probe_dur_list,
-                     y_tick_labels=probe_speed_list,
-                     fig_title=f'Direction detection Accuracy\n(chance=50%, n={ave_over_n})',
-                     save_name='Accuracy_heatmap.png',
-                     save_path=save_path,
-                     verbose=True)
-
-    heatmap_pr_title = f'P Heatmap per row (n={ave_over_n})'
-    heatmap_pr_savename = 'mean_heatmap_per_row'
-
-    plt_heatmap_row_col(heatmap_df=heat_df,
-                        colour_by='row',
-                        x_tick_labels=None,
-                        x_axis_label='probe_dur',
-                        y_tick_labels=None,
-                        y_axis_label='Probe_speed',
-                        fig_title=heatmap_pr_title,
-                        save_name=heatmap_pr_savename,
-                        save_path=save_path,
-                        verbose=True)
-
-    heatmap_pc_title = f'P Heatmap per col (n={ave_over_n})'
-    heatmap_pc_savename = 'mean_heatmap_per_col'
-    plt_heatmap_row_col(heatmap_df=heat_df,
-                        colour_by='col',
-                        x_tick_labels=None,
-                        x_axis_label='Probe Dur',
-                        y_tick_labels=None,
-                        y_axis_label='Probe_speed',
-                        fig_title=heatmap_pc_title,
-                        save_name=heatmap_pc_savename,
-                        save_path=save_path,
-                        verbose=True)
+    # plot_thr_heatmap(heatmap_df=heat_df,
+    #                  x_tick_labels=probe_dur_list,
+    #                  y_tick_labels=probe_speed_list,
+    #                  fig_title=f'Direction detection Accuracy\n(chance=50%, n={ave_over_n})',
+    #                  save_name='Accuracy_heatmap.png',
+    #                  save_path=save_path,
+    #                  verbose=True)
+    #
+    # heatmap_pr_title = f'P Heatmap per row (n={ave_over_n})'
+    # heatmap_pr_savename = 'mean_heatmap_per_row'
+    #
+    # plt_heatmap_row_col(heatmap_df=heat_df,
+    #                     colour_by='row',
+    #                     x_tick_labels=None,
+    #                     x_axis_label='probe_dur',
+    #                     y_tick_labels=None,
+    #                     y_axis_label='Probe_speed',
+    #                     fig_title=heatmap_pr_title,
+    #                     save_name=heatmap_pr_savename,
+    #                     save_path=save_path,
+    #                     verbose=True)
+    #
+    # heatmap_pc_title = f'P Heatmap per col (n={ave_over_n})'
+    # heatmap_pc_savename = 'mean_heatmap_per_col'
+    # plt_heatmap_row_col(heatmap_df=heat_df,
+    #                     colour_by='col',
+    #                     x_tick_labels=None,
+    #                     x_axis_label='Probe Dur',
+    #                     y_tick_labels=None,
+    #                     y_axis_label='Probe_speed',
+    #                     fig_title=heatmap_pc_title,
+    #                     save_name=heatmap_pc_savename,
+    #                     save_path=save_path,
+    #                     verbose=True)
 
 
 
