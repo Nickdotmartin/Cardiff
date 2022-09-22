@@ -29,7 +29,7 @@ os.chdir(_thisDir)
 
 # todo: change to asus_cal for testing
 # Monitor config from monitor centre
-monitor_name = 'Iiyama_2_18'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
+monitor_name = 'HP_24uh'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 
 # Store info about the experiment session
 expName = 'jitter_multi_ISI_NM'  # from the Builder filename that created this script

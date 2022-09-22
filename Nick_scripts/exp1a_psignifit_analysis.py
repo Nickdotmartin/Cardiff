@@ -782,7 +782,9 @@ def plot_thr_heatmap(heatmap_df,
         print(f'mean_val: {round(mean_thr, 2)}')
 
     heatmap = sns.heatmap(data=heatmap_df,
-                          annot=True, fmt=annot_fmt, center=mean_thr,
+                          annot=True,
+                          # fmt=annot_fmt,
+                          center=mean_thr,
                           # cmap=sns.color_palette("Spectral", as_cmap=True),
                           cmap=my_colourmap,
                           xticklabels=x_tick_labels, yticklabels=y_tick_labels,
@@ -863,7 +865,7 @@ def plt_heatmap_row_col(heatmap_df,
                     cmap=my_colourmap,
                     annot=True,
                     annot_kws={'fontsize': fontsize},
-                    fmt=annot_fmt,
+                    # fmt=annot_fmt,
                     cbar=False,
                     square=True)
 
@@ -1331,10 +1333,16 @@ def plot_8_sep_thr(all_thr_df, thr_col='newLum', exp_ave=False, fig_title=None, 
         print(f'long_fig_df:\n{long_fig_df}')
 
     sep_list = sorted(list(long_fig_df['separation'].unique()))
-    # isi_labels = ['conc', 0, 2, 4, 6, 9, 12, 24]
-    isi_labels = sorted(list(long_fig_df['ISI'].unique()))
-    # isi_labels = ['conc' if i == 999 else i for i in isi_labels]
-    print(f'isi_labels:\n{isi_labels}')
+    isi_names_list = sorted(list(long_fig_df['ISI'].unique()))
+    print(f'isi_labels:\n{isi_names_list}')
+    if type(isi_names_list[0]) == str:
+        if 'ISI ' in isi_names_list[0]:
+            isi_vals_list = [int(i.strip('ISI ')) for i in isi_names_list]
+        elif 'ISI_' in isi_names_list[0]:
+            isi_vals_list = [int(i.strip('ISI_')) for i in isi_names_list]
+    isi_vals_list = sorted(isi_vals_list)
+    isi_vals_list = ['conc' if i == -1 else i for i in isi_vals_list]
+
 
     my_colours = fig_colours(len(sep_list))
 
@@ -1365,7 +1373,7 @@ def plot_8_sep_thr(all_thr_df, thr_col='newLum', exp_ave=False, fig_title=None, 
                     this_sep = '1probe'
 
                 ax.set_title(f'Separation = {this_sep}')
-                ax.set_xticklabels(isi_labels)
+                ax.set_xticklabels(isi_vals_list)
                 ax.set_ylim([min_thr - 2, max_thr + 2])
             elif ax_counter == len(sep_list):
                 sns.pointplot(ax=axes[row_idx, col_idx],
@@ -1377,7 +1385,7 @@ def plot_8_sep_thr(all_thr_df, thr_col='newLum', exp_ave=False, fig_title=None, 
                               capsize=.1,
                               palette=my_colours)
                 ax.set_ylim([min_thr - 2, max_thr + 2])
-                ax.set_xticklabels(isi_labels)
+                ax.set_xticklabels(isi_vals_list)
                 plt.legend([], [], frameon=False, loc='right')
                 # plt.legend([], [], frameon=False, loc='right', bbox_to_anchor=(1.05, 1))
                 ax.set_title(f'All Separation conditions')

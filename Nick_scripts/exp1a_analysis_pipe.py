@@ -7,8 +7,10 @@ from check_home_dir import switch_path
 
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
-old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data'
+# old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data'
 # old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim_split_runs'
+# old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data_first_three_sessions'
+old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data_second_three_sessions'
 exp_path = switch_path(old_exp_path, 'wind_oneDrive')
 print(f"exp_path: {exp_path}")
 participant_list = ['aa', 'bb', 'cc', 'dd', 'ee']
@@ -104,14 +106,22 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
     trim_n = None
-    if len(run_folder_names) == 6:
-        trim_n = 2
+    # if len(run_folder_names) == 6:
+    #     trim_n = 2
 
     print(f"\n\ntrim_n: {trim_n}, \n\n")
 
-    # '''d'''
-    # d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-    #                       trim_n=trim_n, error_type='SE')
+    if 'first_three_sessions' in old_exp_path:
+        run_folder_names = run_folder_names[:3]
+    elif 'second_three_sessions' in old_exp_path:
+        run_folder_names = run_folder_names[3:]
+    else:
+        raise ValueError('what experiment am I analysing?')
+
+
+    '''d'''
+    d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
+                          trim_n=trim_n, error_type='SE')
 
     all_df_path = os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv')
     p_ave_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv')
@@ -136,8 +146,8 @@ print(f'exp_path: {exp_path}')
 print('\nget exp_average_data')
 participant_list = ['aa', 'bb', 'cc', 'dd', 'ee']
 
-# e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
-#                    error_type='SE', n_trimmed=trim_n, verbose=True)
+e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
+                   error_type='SE', n_trimmed=trim_n, verbose=True)
 
 
 all_df_path = os.path.join(exp_path, 'MASTER_exp_thr.csv')
