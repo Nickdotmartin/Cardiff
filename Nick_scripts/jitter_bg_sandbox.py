@@ -11,20 +11,24 @@ win = visual.Window(fullscr=True, units='pix', monitor='testMonitor')
 flow_dots_col = [76.5, 114.75, 76.5]
 
 # # set hypothetical frame rate to test max_lives variable
-fps = 240
+fps = 60  # 240
 
 # # choose between random motion and radial motion (both in and outward)
 background = 'jitter_random'  # 'jitter_random', 'jitter_radial'
 
 # # dot parameters
-nDots = 250
+nDots = 1000  # 250
 dot_field_size = 800  # previously called taille: french for 'size'
-flow_speed = .01  # actually gives the variance in speeds
+flow_speed = 0  # .01  # actually gives the variance in speeds
 
 # # set number of frames that dots persist for
-dot_lives = np.random.random(nDots) * 10  # this will be the current life of each element
-max_lives = int(fps/30)  # original jitter example has pixels flipping at ~30fps
+'''original study changed dots every 13.33ms/75Hz.
+life_dinominator of 10 = 100ms, 20 = 50ms, 30 = 33ms, 60 = 16.67ms, (80 = 12.5ms but only for 240Hz)
+'''
+life_dinominator = 60
+max_lives = int(fps/life_dinominator)  # original jitter example has pixels flipping at ~30fps
 print(f"max_lives: {max_lives}")
+dot_lives = np.random.random(nDots) * 10  # this initializes them with lives up to 10.
 
 # # get start locations for dots
 # flow_dots - remember its equivalent to (rand * dot_field_size) - (dot_field_size / 2)
@@ -39,7 +43,9 @@ y_motion = np.random.normal(1, flow_speed, nDots)
 if background == 'jitter_radial':
     y_motion = x_motion
 
-flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
+# could use psychopy.visual.DotStim for square dots.  this method also has dotlife param.
+flow_dots = visual.ElementArrayStim(win, elementTex=None,
+                                    elementMask='circle',
                                     units='pix', nElements=nDots, sizes=30,
                                     colorSpace='rgb255',
                                     colors=flow_dots_col)
