@@ -73,8 +73,7 @@ prelim_bg_flow_fr = int(prelim_bg_flow_ms * fps / 1000)
 # VARIABLES
 '''Distances between probes (spatially and temporally)
 For 1probe condition, use separation==99.
-For concurrent probes, use ISI==-1.
-'''
+For concurrent probes, use ISI==-1.'''
 separations = [0, 3, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
 print(f'\nseparations: {separations}')
 ISI_values = [-1, 3, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
@@ -200,7 +199,7 @@ probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor=[-1.0, 1.0, -1.0],
                           lineWidth=0, opacity=1, size=1, interpolate=False)
 
 
-# MASK BEHIND PROBES
+# MASKs BEHIND PROBES
 raisedCosTexture1 = visual.filters.makeMask(256, shape='raisedCosine',
                                             fringeWidth=0.3, radius=[1.0, 1.0])
 mask_size = 150
@@ -237,7 +236,7 @@ elif bg_speed_cond == 'Half-speed':
     flow_speed = .005
 else:
     raise ValueError(f'background speed should be selected from drop down menu: Normal or Half-speed')
-n_moving_dots = 1500 
+n_moving_dots = 1500
 flow_dots_col = [76.5, 114.75, 76.5]  # greeney-grey in rgb255
 flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
                                     units='pix', nElements=n_moving_dots, sizes=30,
@@ -349,7 +348,7 @@ if trials_counter:
 
 # BREAKS
 total_n_trials = int(n_trials_per_stair * n_stairs)
-take_break = int(total_n_trials/4)
+take_break = 75  # int(total_n_trials/4)
 print(f"\ntake_break every {take_break} trials.")
 breaks = visual.TextStim(win=win, name='breaks',
                          text="turn on the light and take at least 30-seconds break.\n\n"
@@ -419,7 +418,6 @@ for step in range(n_trials_per_stair):
         probe1.color = [probeColor1, probeColor1, probeColor1]
         probe2.color = [probeColor1, probeColor1, probeColor1]
         print(f'probeLum: {probeLum}, probeColor255: {probeColor255}, probeColor1: {probeColor1}')
-
 
         # PROBE LOCATIONS
         # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
@@ -753,7 +751,7 @@ for step in range(n_trials_per_stair):
 
         thisStair.newValue(resp.corr)  # so that the staircase adjusts itself
 
-print("end of exp loop, saving data")
+print("end of experiment loop, saving data")
 thisExp.dataFileName = filename
 thisExp.close()
 

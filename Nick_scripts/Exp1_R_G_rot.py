@@ -219,7 +219,7 @@ if trials_counter:
 
 # BREAKS
 total_n_trials = int(n_trials_per_stair * n_stairs)    
-take_break = 100
+take_break = 75
 # take_break = int(total_n_trials/2)+1
 print(f"take_break every {take_break} trials.")
 breaks = visual.TextStim(win=win, name='breaks',
