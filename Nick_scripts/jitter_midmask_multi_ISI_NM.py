@@ -76,8 +76,7 @@ prelim_bg_flow_fr = int(prelim_bg_flow_ms * fps / 1000)
 # VARIABLES
 '''Distances between probes (spatially and temporally)
 For 1probe condition, use separation==99.
-For concurrent probes, use ISI==-1.
-'''
+For concurrent probes, use ISI==-1.'''
 separations = [0, 2, 4, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
 print(f'\nseparations: {separations}')
 ISI_values = [0, 2, 4, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
@@ -809,7 +808,7 @@ for step in range(n_trials_per_stair):
 
         thisStair.newValue(resp.corr)  # so that the staircase adjusts itself
 
-print("end of exp loop, saving data")
+print("end of experiment loop, saving data")
 thisExp.dataFileName = filename
 thisExp.close()
 

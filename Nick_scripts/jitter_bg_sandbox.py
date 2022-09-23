@@ -5,7 +5,7 @@ from psychopy import visual, core, event
 
 
 # # make window to display stim
-win = visual.Window(fullscr=True, units='pix', monitor='testMonitor')
+win = visual.Window(fullscr=True, units='pix', monitor='Nick_work_laptop')  # asus_cal,
 
 # # set same colours as radial flow exp
 flow_dots_col = [76.5, 114.75, 76.5]
@@ -25,7 +25,7 @@ flow_speed = 0  # .01  # actually gives the variance in speeds
 '''original study changed dots every 13.33ms/75Hz.
 life_dinominator of 10 = 100ms, 20 = 50ms, 30 = 33ms, 60 = 16.67ms, (80 = 12.5ms but only for 240Hz)
 '''
-life_dinominator = 60
+life_dinominator = 30
 max_lives = int(fps/life_dinominator)  # original jitter example has pixels flipping at ~30fps
 print(f"max_lives: {max_lives}")
 dot_lives = np.random.random(nDots) * 10  # this initializes them with lives up to 10.

@@ -41,7 +41,7 @@ expInfo = {'1_Participant': 'Nick_test',
            '5_Trials_counter': [True, False],
            '6_Probe_orientation': ['tangent', 'radial'],
            '7_Background': ['jitter_random', 'jitter_radial', 'None'],
-           '8_bg_speed_cond': ['Normal', 'Half-speed'],
+           '8_bg_speed_cond': ['static', 'Normal', 'Half-speed'],
            '9_vary_fixation': [False, True],
            '10_high_contrast': [False, True]}
 
@@ -63,6 +63,7 @@ orientation = expInfo['6_Probe_orientation']  # 'tangent'
 background = expInfo['7_Background']  # 'jitter'
 bg_speed_cond = expInfo['8_bg_speed_cond']  # 'Normal'
 vary_fixation = expInfo['9_vary_fixation']
+# todo: get rid of high contrast stuff
 high_contrast = expInfo['10_high_contrast']
 print(f'high_contrast: {high_contrast }')
 
@@ -78,9 +79,9 @@ prelim_bg_flow_fr = int(prelim_bg_flow_ms * fps / 1000)
 For 1probe condition, use separation==99.
 For concurrent probes, use ISI==-1.
 '''
-separations = [0, 2, 4, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
+separations = [0, 3, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
 print(f'\nseparations: {separations}')
-ISI_values = [0, 2, 4, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+ISI_values = [-1, 3, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 print(f'ISI_values: {ISI_values}')
 # repeat separation values for each ISI e.g., [0, 0, 6, 6]
 sep_vals_list = list(np.repeat(separations, len(ISI_values)))
@@ -232,7 +233,9 @@ probeMask3.setPos([-dist_from_fix - 1, -dist_from_fix - 1])
 probeMask4.setPos([dist_from_fix + 1, -dist_from_fix - 1])
 
 # BACKGROUND flow_dots
-if bg_speed_cond == 'Normal':
+if bg_speed_cond == 'static':
+    flow_speed = 0
+elif bg_speed_cond == 'Normal':
     # flow_speed = 500
     flow_speed = .01
 elif bg_speed_cond == 'Half-speed':
@@ -243,12 +246,12 @@ else:
 n_moving_dots = 1000  # 10000 - I've reduced the number since the dot_field_size is now much smaller
 flow_dots_col = [76.5, 114.75, 76.5]  # greeney-grey in rgb255
 if high_contrast is True:
-    flow_dots_col = [0, 0, 0]
+    flow_dots_col = [0, 0, 0]  # dots are black on a white background
 flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
                                     units='pix', nElements=n_moving_dots, sizes=30,
                                     colorSpace='rgb255', colors=flow_dots_col)
 dot_lives = np.random.random(n_moving_dots) * 10  # this will be the current life of each element in frames
-dot_life_ms = 30  # 13.333333
+dot_life_ms = 33  # 13.333333
 # maximum number of frames before dots are redrawn.
 dot_life_fr = int(round(dot_life_ms / (1000 / fps), 0))
 print(f"dot_life_fr: {dot_life_fr}, {dot_life_ms}ms at {fps} fps.")
@@ -341,11 +344,6 @@ instructions = visual.TextStim(win=win, name='instructions',
                                     "Press any key to start.",
                                font='Arial', height=20,
                                colorSpace='rgb255', color='white')
-while not event.getKeys():
-    fixation.setRadius(3)
-    fixation.draw()
-    instructions.draw()
-    win.flip()
 
 # Trial counter
 trials_counter = visual.TextStim(win=win, name='trials_counter', text="???",
@@ -372,6 +370,11 @@ end_of_exp = visual.TextStim(win=win, name='end_of_exp',
                                   "Press any key to return to the desktop.",
                              font='Arial', height=20)
 
+while not event.getKeys():
+    fixation.setRadius(3)
+    fixation.draw()
+    instructions.draw()
+    win.flip()
 
 # STAIRCASE
 expInfo['stair_list'] = list(range(n_stairs))
@@ -417,9 +420,6 @@ for step in range(n_trials_per_stair):
         ISI = ISI_vals_list[stair_idx]
         print(f"ISI: {ISI}, sep: {sep}")
 
-        # direction in which the probe jumps : CW or CCW
-        target_jump = np.random.choice([1, -1])
-
         # staircase varies probeLum
         probeLum = thisStair.next()
         probeColor255 = int(probeLum * LumColor255Factor)  # rgb255 are ints.
@@ -433,6 +433,8 @@ for step in range(n_trials_per_stair):
         # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
         corner = np.random.choice([45, 135, 225, 315])
         print(f'\tcorner: {corner}')
+        # direction in which the probe jumps : CW or CCW
+        target_jump = np.random.choice([1, -1])
 
         # set probe ori
         if corner == 45:
@@ -443,15 +445,15 @@ for step in range(n_trials_per_stair):
             #  whereas probe1.ori refers to rotational angle of probe stimulus
             if orientation == 'tangent':
                 if target_jump == 1:  # CCW
-                    probe1.ori = 0
-                    probe2.ori = 180
-                    # probe2 is left and up from probe1
-                    probe2.pos = [p1_x - sep + 1, p1_y + sep]
-                elif target_jump == -1:  # CW
                     probe1.ori = 180
                     probe2.ori = 0
-                    # probe2 is right and down from probe1
+                    # probe2 is left and up from probe1
                     probe2.pos = [p1_x + sep - 1, p1_y - sep]
+                elif target_jump == -1:  # CW
+                    probe1.ori = 0
+                    probe2.ori = 180
+                    # probe2 is right and down from probe1
+                    probe2.pos = [p1_x - sep + 1, p1_y + sep]
             elif orientation == 'radial':
                 if target_jump == 1:  # inward
                     probe1.ori = 270
@@ -495,13 +497,13 @@ for step in range(n_trials_per_stair):
             p1_y = dist_from_fix * -1
             if orientation == 'tangent':
                 if target_jump == 1:  # CCW
-                    probe1.ori = 180
-                    probe2.ori = 0
-                    probe2.pos = [p1_x + sep - 1, p1_y - sep]
-                elif target_jump == -1:  # CW
                     probe1.ori = 0
                     probe2.ori = 180
                     probe2.pos = [p1_x - sep + 1, p1_y + sep]
+                elif target_jump == -1:  # CW
+                    probe1.ori = 180
+                    probe2.ori = 0
+                    probe2.pos = [p1_x + sep - 1, p1_y - sep]
             elif orientation == 'radial':
                 if target_jump == 1:  # inward
                     probe1.ori = 90
@@ -730,7 +732,7 @@ for step in range(n_trials_per_stair):
         # add to exp dict
         thisExp.addData('trial_number', trial_number)
         thisExp.addData('stair', stair_idx)
-        thisExp.addData('stair_name', thisStair)
+        thisExp.addData('stair_name', stair_name)
         thisExp.addData('step', step)
         thisExp.addData('separation', sep)
         thisExp.addData('ISI', ISI)

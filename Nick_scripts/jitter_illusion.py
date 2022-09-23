@@ -31,12 +31,13 @@ n_moving_dots = 1000  # 350
 flow_speed = .01  # actually gives the variance in speeds
 
 # adaptation time in seconds
-adaptation_time = 30
+adaptation_time = 5
+illusion_time = 5
 
 
 """back end"""
 # get dimensions of monitor to fit mask to
-monitor_name = 'Asus_VG24'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
+monitor_name = 'Nick_work_laptop'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 thisMon = monitors.Monitor(monitor_name)
 this_width = thisMon.getWidth()
 mon_dict = {'mon_name': monitor_name,
@@ -146,6 +147,12 @@ fixation = visual.Circle(win, radius=3, units='pix', lineColor='white',
 countDown = core.CountdownTimer()
 countDown.add(adaptation_time)
 
+# Keyboard
+resp = event.BuilderKeyResponse()
+# theseKeys = event.getKeys(keyList=['space'])
+myMouse = event.Mouse(visible=False)  # MOUSE - hide cursor
+
+
 # # display runs for 15 seconds
 while countDown.getTime() > 0:
 
@@ -185,9 +192,13 @@ while countDown.getTime() > 0:
     if event.getKeys(['escape']):
         core.quit()
 
-# present static display for 10 seconds
-countDown.add(10)
+# reset response clock
+resp.clock.reset()
+
+# present static display for illusion_time seconds
+countDown.add(illusion_time)
 while countDown.getTime() > 0:
+    resp.clock.reset()
 
     flow_dots.draw()
 
@@ -198,8 +209,32 @@ while countDown.getTime() > 0:
 
     win.flip()
 
+    theseKeys = event.getKeys(keyList=['space'])
+    if len(theseKeys) > 0:  # at least one key was pressed
+        resp.keys = theseKeys[-1]  # just the last key pressed
+        resp.rt = resp.clock.getTime()
+
     if event.getKeys(['escape']):
         core.quit()
 
-win.close()
-core.quit()
+# # end message
+end_of_exp = visual.TextStim(win=win, name='end_of_exp',
+                             text="You have completed this experiment.\n"
+                                  f"The illusion persisted for {resp.rt}."
+                                  "Thank you for your time.\n\n"
+                                  "Press any key to return to the desktop.",
+                             font='Arial', height=20)
+
+print(f"response time: {resp.rt}")
+
+while not event.getKeys():
+    # display end of experiment screen
+    end_of_exp.draw()
+    win.flip()
+else:
+    # close and quit once a key is pressed
+    win.close()
+    core.quit()
+
+# win.close()
+# core.quit()
