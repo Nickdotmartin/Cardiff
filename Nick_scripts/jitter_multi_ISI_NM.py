@@ -29,7 +29,7 @@ os.chdir(_thisDir)
 
 # todo: change to asus_cal for testing
 # Monitor config from monitor centre
-monitor_name = 'HP_24uh'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
+monitor_name = 'Asus_VG24'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 
 # Store info about the experiment session
 expName = 'jitter_multi_ISI_NM'  # from the Builder filename that created this script
@@ -42,8 +42,7 @@ expInfo = {'1_Participant': 'Nick_test',
            '6_Probe_orientation': ['tangent', 'radial'],
            '7_Background': ['jitter_random', 'jitter_radial', 'None'],
            '8_bg_speed_cond': ['static', 'Normal', 'Half-speed'],
-           '9_vary_fixation': [False, True],
-           '10_high_contrast': [False, True]}
+           '9_vary_fixation': [False, True]}
 
 # GUI
 dlg = gui.DlgFromDict(dictionary=expInfo, title=expName)
@@ -63,9 +62,6 @@ orientation = expInfo['6_Probe_orientation']  # 'tangent'
 background = expInfo['7_Background']  # 'jitter'
 bg_speed_cond = expInfo['8_bg_speed_cond']  # 'Normal'
 vary_fixation = expInfo['9_vary_fixation']
-# todo: get rid of high contrast stuff
-high_contrast = expInfo['10_high_contrast']
-print(f'high_contrast: {high_contrast }')
 
 n_trials_per_stair = 25
 probe_ecc = 4
@@ -124,8 +120,6 @@ minLum = 0.12  # 0 RGB
 
 # get ACTUAL bgcolor details
 rgb_bg_color = -0.1
-if high_contrast is True:
-    rgb_bg_color = 1
 print(f'\nrgb_bg_color: {rgb_bg_color}')
 bgColor255 = (rgb_bg_color + 1) * 127.5
 print(f'bgColor255: {bgColor255}')
@@ -243,10 +237,8 @@ elif bg_speed_cond == 'Half-speed':
     flow_speed = .005
 else:
     raise ValueError(f'background speed should be selected from drop down menu: Normal or Half-speed')
-n_moving_dots = 1000  # 10000 - I've reduced the number since the dot_field_size is now much smaller
+n_moving_dots = 1500 
 flow_dots_col = [76.5, 114.75, 76.5]  # greeney-grey in rgb255
-if high_contrast is True:
-    flow_dots_col = [0, 0, 0]  # dots are black on a white background
 flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
                                     units='pix', nElements=n_moving_dots, sizes=30,
                                     colorSpace='rgb255', colors=flow_dots_col)
