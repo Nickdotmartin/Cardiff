@@ -332,8 +332,8 @@ resp = event.BuilderKeyResponse()
 # INSTRUCTION
 instructions = visual.TextStim(win=win, name='instructions',
                                text="\n\n\n\n\n\nFocus on the small circle at the centre of the screen.\n\n"
-                                    "A small white probe will briefly flash on screen,\n"
-                                    "press the key related to the location of the probe:\n\n"
+                                    "Small white probes will briefly flash in three corners,\n"
+                                    "press the key related to the direction which did NOT contain a probe:\n\n"
                                     "[4]/[Q] top-left\t\t\t[5]/[W] top-right\n\n\n\n"
                                     "[1]/[A] bottom-left\t\t\t[2]/[S] bottom-right.\n\n\n"
                                     "Some flashes will seem bright and easy to see\n"
