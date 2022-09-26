@@ -16,26 +16,25 @@ from kestenSTmaxVal import Staircase
 Missing probe study.
 Probes will appear in three corners, participants identify corner without probe.
 
-I think I will design it so that all 4 corners have probe motion planned, 
-then just don't draw the corner that is selected
+The script is designed it so that all 4 corners have probe motion planned, 
+then just don't draw the missing_corner that is selected
 
 We want to manipulate the coherence of the movement of the three probes.
 Motion is coherent if
 1. all tangental: (2) clockwise or anti-clockwise.  [rotation]
 2. all radial: (2) inward/outward       [radial]
-3. mixed: same quadrant (4) top-right; top-left; bottom-left; bottom-right  [shift]
+3. mixed: same quadrant (4) top-right; top-left; bottom-left; bottom-right  [translation]
 This gives 8 possibilities for clear coherent motion
 
 Non-coherent if
 Mixed - two radial (one in, one out), two tangent (one CW one CCW).
 Only with this pattern can you be sure that when you delete one the other three aren't good.  
-I think there are 4x3x2=24 possible combinations of this pattern.
+However, with the pattern, there will always be two probes with same absolute (tr, tl, bl, br), 
+or relational (in, out, cw, ccw) motion, so I have made it so that the 
+incohenrent probes include all 4 absolute directions, but with two matching for cw/ccw.
  
-
-AVOID less coherent - but still a pattern
-4. same general direction: all contain upward motion, but relies on symmetry
-    - e.g., two move up and left, two move up and right
-  
+There are no mirror symmetrical patterns (less coherent - but still a pattern)
+    - e.g., two move up and left, two move up and right  
 '''
 
 # sets psychoPy to only log critical messages
@@ -84,11 +83,9 @@ probe_coherence = expInfo['6_probe_coherence']
 For 1probe condition, use separation==99.
 For concurrent probes, use ISI==-1.
 '''
-# separations = [0, 2, 4, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
-separations = [18]  # select from [0, 1, 2, 3, 6, 18, 99]
+separations = [0, 3, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
 print(f'separations: {separations}')
-# ISI_values = [0, 2, 4, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
-ISI_values = [0]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+ISI_values = [-1, 3, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 print(f'ISI_values: {ISI_values}')
 # repeat separation values for each ISI e.g., [0, 0, 6, 6]
 sep_vals_list = list(np.repeat(separations, len(ISI_values))) + list(np.repeat(separations, len(ISI_values)))
@@ -101,7 +98,6 @@ print(f'coherence_list: {coherence_list}')
 
 # stair_names_list joins sep_vals_list and ISI_vals_list
 # e.g., ['sep0_ISI-1', 'sep0_ISI6', 'sep6_ISI-1', 'sep6_ISI6']
-# stair_names_list = [f'sep{s}_ISI{c}' for s, c in zip(sep_vals_list, ISI_vals_list)]
 stair_names_list = [f'{c}_sep{s}_ISI{i}' for c, s, i in zip(coherence_list, sep_vals_list, ISI_vals_list)]
 print(f'stair_names_list: {stair_names_list}')
 n_stairs = len(sep_vals_list)
@@ -191,15 +187,14 @@ widthPix, heightPix = win.size
 print(f"check win.size: {win.size}")
 
 '''
-DIctionary of co-ordinated probe motion.  There are 3 coherent types:
+Dictionary of co-ordinated probe motion.  There are 3 coherent types:
 rotational, radial and translational.
-There are two roational (CW and CCW), two rdial (in/out) and four translational (4 corners).
+There are two rotational (CW and CCW), two radial (in/out) and four translational (4 corners).
 An experiment can select one of these types of coherent motion.
 There are eight types of incoherent motion.
-An experiment will use one type of coherent, selecting the version randomly, along with random selection of incoherent motion.
+An experiment will use one type of coherent motion, selecting the example randomly, 
+interleaved with random selections of incoherent motion.
 '''
-
-probe_types = ['rotation', 'radial', 'translation', 'incoherent']
 
 probes_dict = {'type': {'rotation': {'n_examples': 2, 'names': ['CW', 'CCW'],
                                      'examples':
@@ -295,9 +290,7 @@ probes_dict = {'type': {'rotation': {'n_examples': 2, 'names': ['CW', 'CCW'],
 
 
 # ELEMENTS
-# fixation bull eye
-fixation = visual.Circle(win, radius=2, units='pix',
-                         lineColor='white', fillColor='black')
+
 
 # PROBEs
 expInfo['6. Probe size'] = '5pixels'  # ignore this, all experiments use 5pixel probes now.
@@ -322,6 +315,10 @@ probe1_br = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, -1.0, 1.0)
 probe2_br = visual.ShapeStim(win, vertices=probeVert, fillColor=[-1.0, 1.0, -1.0],
                           lineWidth=0, opacity=1, size=1, interpolate=False)
 
+
+# fixation bull eye
+fixation = visual.Circle(win, radius=2, units='pix',
+                         lineColor='white', fillColor='black')
 
 # dist_from_fix is a constant to get 4dva distance from fixation,
 dist_from_fix = round((tan(deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
@@ -429,8 +426,6 @@ for step in range(n_trials_per_stair):
         probeLum = thisStair.next()
         probeColor255 = int(probeLum * LumColor255Factor)  # rgb255 are ints.
         probeColor1 = (probeColor255 * Color255Color1Factor) - 1
-        # probe1.color = [probeColor1, probeColor1, probeColor1]
-        # probe2.color = [probeColor1, probeColor1, probeColor1]
         probe1_tr.color = [probeColor1, probeColor1, probeColor1]
         probe2_tr.color = [probeColor1, probeColor1, probeColor1]
         probe1_tl.color = [probeColor1, probeColor1, probeColor1]
@@ -443,11 +438,7 @@ for step in range(n_trials_per_stair):
         print(f"probeLum: {probeLum}, probeColor255: {probeColor255}, probeColor1: {probeColor1}")
 
         # PROBE LOCATION
-        # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
         missing_corner = random.choice(['tr', 'tl', 'bl', 'br'])
-
-        # direction in which the probe jumps : -1 == CCW/outward; 1 == CW/inward
-        # target_jump = random.choice([1, -1])
 
         if coherence == 'rot':
             probes_type = 'rotation'
@@ -491,13 +482,12 @@ for step in range(n_trials_per_stair):
 
 
         # set probe ori
-        # if corner == 45:
         # in top-right corner, both x and y increase (right and up)
         tr_p1_x = dist_from_fix * 1
         tr_p1_y = dist_from_fix * 1
         probe1_tr.pos = [tr_p1_x, tr_p1_y]
         #  'orientation' (e.g., tr_ori) here refers to the relationship between probes,
-        #  whereas probe1.ori refers to rotational angle of probe stimulus
+        #  whereas probe1_tr.ori refers to rotational angle of probe stimulus
         if tr_ori == 'tangent':
             if tr_jump == 1:  # CCW
                 probe1_tr.ori = 180
@@ -520,7 +510,7 @@ for step in range(n_trials_per_stair):
                 probe2_tr.ori = 270
                 # probe2 is right and up from probe1
                 probe2_tr.pos = [tr_p1_x + sep - 1, tr_p1_y + sep]
-        # elif corner == 135:
+
         # in top-left corner, x decreases (left) and y increases (up)
         tl_p1_x = dist_from_fix * -1
         tl_p1_y = dist_from_fix * 1
@@ -547,7 +537,7 @@ for step in range(n_trials_per_stair):
                 probe2_tl.ori = 180
                 # probe2 is left and up from probe1
                 probe2_tl.pos = [tl_p1_x - sep + 1, tl_p1_y + sep]
-        # elif corner == 225:
+
         # in bottom left corner, both x and y decrease (left and down)
         bl_p1_x = dist_from_fix * -1
         bl_p1_y = dist_from_fix * -1
@@ -572,7 +562,7 @@ for step in range(n_trials_per_stair):
                 probe2_bl.ori = 90
                 # probe2 is left and down from probe1
                 probe2_bl.pos = [bl_p1_x - sep + 1, bl_p1_y - sep]
-        # else: corner = 315
+
         # in bottom-right corner, x increases (right) and y decreases (down)
         br_p1_x = dist_from_fix * 1
         br_p1_y = dist_from_fix * -1
@@ -644,7 +634,7 @@ for step in range(n_trials_per_stair):
                     resp.clock.reset()
 
 
-                # PROBE 1
+                # PROBE 1: draw three probes, not one in 'missing_corner'
                 if t_probe_1 >= frameN > t_fixation:
                     if missing_corner != 'tr':
                         probe1_tr.draw()
@@ -656,7 +646,7 @@ for step in range(n_trials_per_stair):
                         probe1_br.draw()
 
                     if ISI == -1:  # SIMULTANEOUS CONDITION (concurrent)
-                        if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
+                        if sep <= 18:  # don't draw 2nd probes in 1probe cond (sep==99)
                             if missing_corner != 'tr':
                                 probe2_tr.draw()
                             if missing_corner != 'tl':
@@ -678,7 +668,7 @@ for step in range(n_trials_per_stair):
                 # PROBE 2
                 if t_probe_2 >= frameN > t_ISI:
                     if ISI >= 0:
-                        if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
+                        if sep <= 18:  # don't draw 2nd probes in 1probe cond (sep==99)
                             if missing_corner != 'tr':
                                 probe2_tr.draw()
                             if missing_corner != 'tl':
@@ -745,7 +735,6 @@ for step in range(n_trials_per_stair):
         thisExp.addData('step', step)
         thisExp.addData('separation', sep)
         thisExp.addData('ISI', ISI)
-        # thisExp.addData('probe_jump', target_jump)
         thisExp.addData('probes_type', probes_type)
         thisExp.addData('example_name ', example_name)
         thisExp.addData('probeColor1', probeColor1)
