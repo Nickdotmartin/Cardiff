@@ -31,13 +31,13 @@ n_moving_dots = 1000  # 350
 flow_speed = .01  # actually gives the variance in speeds
 
 # adaptation time in seconds
-adaptation_time = 5
+adaptation_time = 15
 illusion_time = 5
 
 
 """back end"""
 # get dimensions of monitor to fit mask to
-monitor_name = 'Nick_work_laptop'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
+monitor_name = 'HP_24uh'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 thisMon = monitors.Monitor(monitor_name)
 this_width = thisMon.getWidth()
 mon_dict = {'mon_name': monitor_name,
@@ -69,6 +69,7 @@ if use_high_contrast:
 else:
     # # set same colours as radial flow exp
     flow_dots_col = [76.5, 114.75, 76.5]
+    # flow_dots_col = [90, 114.75, 90]
     bgColor255 = 114.75
 
 
@@ -198,7 +199,6 @@ resp.clock.reset()
 # present static display for illusion_time seconds
 countDown.add(illusion_time)
 while countDown.getTime() > 0:
-    resp.clock.reset()
 
     flow_dots.draw()
 
@@ -218,14 +218,17 @@ while countDown.getTime() > 0:
         core.quit()
 
 # # end message
+font_colour = 'white'
+if use_high_contrast:
+    font_colour = 'black'
 end_of_exp = visual.TextStim(win=win, name='end_of_exp',
                              text="You have completed this experiment.\n"
-                                  f"The illusion persisted for {resp.rt}."
+                                  f"The illusion persisted for {round(resp.rt, 2)}."
                                   "Thank you for your time.\n\n"
                                   "Press any key to return to the desktop.",
-                             font='Arial', height=20)
+                             font='Arial', height=20, color=font_colour)
 
-print(f"response time: {resp.rt}")
+print(f"response time: {round(resp.rt, 2)} seconds")
 
 while not event.getKeys():
     # display end of experiment screen

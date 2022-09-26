@@ -328,13 +328,21 @@ for step in range(n_trials_per_stair):
         corner = random.choice([45, 135, 225, 315])
 
         # todo: add separate target jump variables for each corner.
-        # direction in which the probe jumps : CW or CCW
-        target_jump = random.choice([1, -1])
+        # direction in which the probe jumps : -1 == CCW/outward; 1 == CW/inward
+        # target_jump = random.choice([1, -1])
+        top_right_jump = 1
+        top_left_jump = 1
+        bottom_left_jump = 1
+        bottom_right_jump = 1
 
         ori_45tr = 'tangent'
         ori_135tl = 'tangent'
         ori_225bl = 'tangent'
         ori_312br = 'tangent'
+
+        probes_dict = {
+            'rotational': {1: {'orientation': 'tangent', 'jump': 1}
+        }
 
         # set probe ori
         # if corner == 45:
