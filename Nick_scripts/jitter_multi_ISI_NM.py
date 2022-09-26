@@ -29,7 +29,7 @@ os.chdir(_thisDir)
 
 # todo: change to asus_cal for testing
 # Monitor config from monitor centre
-monitor_name = 'Asus_VG24'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
+monitor_name = 'HP_24uh'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 
 # Store info about the experiment session
 expName = 'jitter_multi_ISI_NM'  # from the Builder filename that created this script
@@ -237,15 +237,18 @@ elif bg_speed_cond == 'Half-speed':
 else:
     raise ValueError(f'background speed should be selected from drop down menu: Normal or Half-speed')
 n_moving_dots = 1500
-flow_dots_col = [76.5, 114.75, 76.5]  # greeney-grey in rgb255
+# flow_dots_col = [76.5, 114.75, 76.5]  # greeney-grey in rgb255
+flow_dots_col = [100, 114.75, 100]  # light greeney-grey in rgb255; easier on the eyes
 flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
                                     units='pix', nElements=n_moving_dots, sizes=30,
                                     colorSpace='rgb255', colors=flow_dots_col)
-dot_lives = np.random.random(n_moving_dots) * 10  # this will be the current life of each element in frames
+# dot_lives = np.random.random(n_moving_dots) * 10  # this will be the current life of each element in frames
 dot_life_ms = 33  # 13.333333
 # maximum number of frames before dots are redrawn.
 dot_life_fr = int(round(dot_life_ms / (1000 / fps), 0))
 print(f"dot_life_fr: {dot_life_fr}, {dot_life_ms}ms at {fps} fps.")
+dot_lives = np.random.randint(dot_life_fr, size=n_moving_dots) # this will be the current life of each element in frames
+
 
 # dot_field_size = 5000  # taille is french for 'size', 'cut', 'trim', 'clip' etc - what does it actually do here?
 dot_field_size = int(mon_dict['size'][1])  # used to set max pixels from centre that dots appear

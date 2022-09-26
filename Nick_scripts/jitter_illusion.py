@@ -31,8 +31,8 @@ n_moving_dots = 1000  # 350
 flow_speed = .01  # actually gives the variance in speeds
 
 # adaptation time in seconds
-adaptation_time = 15
-illusion_time = 5
+adaptation_time = 30
+illusion_time = 10
 
 
 """back end"""
@@ -68,8 +68,8 @@ if use_high_contrast:
     bgColor255 = 255
 else:
     # # set same colours as radial flow exp
-    flow_dots_col = [76.5, 114.75, 76.5]
-    # flow_dots_col = [90, 114.75, 90]
+    # flow_dots_col = [76.5, 114.75, 76.5]
+    flow_dots_col = [90, 114.75, 90]
     bgColor255 = 114.75
 
 
@@ -98,7 +98,8 @@ peripheral_mask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
 dot_field_size = heightPix  # previously called taille: french for 'size'
 
 # # set number of frames that dots persist for
-dot_lives = np.random.random(n_moving_dots) * 10  # this will be the current life of each element
+# dot_lives = np.random.random(n_moving_dots) * 10  # this will be the current life of each element
+dot_lives = np.random.randint(dot_life_fr, size=n_moving_dots) # this will be the current life of each element in frames
 
 # # get start locations for dots
 # flow_dots - remember its equivalent to (rand * dot_field_size) - (dot_field_size / 2)
@@ -213,9 +214,12 @@ while countDown.getTime() > 0:
     if len(theseKeys) > 0:  # at least one key was pressed
         resp.keys = theseKeys[-1]  # just the last key pressed
         resp.rt = resp.clock.getTime()
+        break
 
     if event.getKeys(['escape']):
         core.quit()
+
+
 
 # # end message
 font_colour = 'white'
