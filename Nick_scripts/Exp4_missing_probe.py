@@ -74,7 +74,6 @@ n_trials_per_stair = 25
 probe_duration = int(expInfo['2. Probe duration in frames at 240hz'])
 probe_ecc = 4
 fps = int(expInfo['3. fps'])
-orientation = 'tangent'  # expInfo['5. Probe orientation']
 trials_counter = expInfo['4_Trials_counter']
 vary_fixation = expInfo['5_vary_fixation']
 probe_coherence = expInfo['6_probe_coherence']
@@ -293,34 +292,6 @@ probes_dict = {'type': {'rotation': {'n_examples': 2, 'names': ['CW', 'CCW'],
                         }
                }
 
-# for probes_type in probe_types:
-#     print(probes_type)
-#     # print(probes_dict['type'].keys())
-#     n_examples = int(probes_dict['type'][probes_type]['n_examples'])
-#     for ex in range(n_examples):
-#         example_name = probes_dict['type'][probes_type]['names'][ex]
-#         tr_ori = probes_dict['type'][probes_type]['examples'][example_name]['tr']['orientation']
-#         tr_jump = probes_dict['type'][probes_type]['examples'][example_name]['tr']['jump']
-#         tr_dir = probes_dict['type'][probes_type]['examples'][example_name]['tr']['direction']
-#
-#         tl_ori = probes_dict['type'][probes_type]['examples'][example_name]['tl']['orientation']
-#         tl_jump = probes_dict['type'][probes_type]['examples'][example_name]['tl']['jump']
-#         tl_dir = probes_dict['type'][probes_type]['examples'][example_name]['tl']['direction']
-#
-#         bl_ori = probes_dict['type'][probes_type]['examples'][example_name]['bl']['orientation']
-#         bl_jump = probes_dict['type'][probes_type]['examples'][example_name]['bl']['jump']
-#         bl_dir = probes_dict['type'][probes_type]['examples'][example_name]['bl']['direction']
-#
-#         br_ori = probes_dict['type'][probes_type]['examples'][example_name]['br']['orientation']
-#         br_jump = probes_dict['type'][probes_type]['examples'][example_name]['br']['jump']
-#         br_dir = probes_dict['type'][probes_type]['examples'][example_name]['br']['direction']
-#
-#         print(f"\n{probes_type}, {example_name}\n"
-#               f"tr: {tr_dir}, {tr_ori}, {tr_jump}\n"
-#               f"tl: {tl_dir}, {tl_ori}, {tl_jump}\n"
-#               f"bl: {bl_dir}, {bl_ori}, {bl_jump}\n"
-#               f"br: {br_dir}, {br_ori}, {br_jump}\n"
-#               )
 
 
 # ELEMENTS
@@ -525,7 +496,7 @@ for step in range(n_trials_per_stair):
         tr_p1_x = dist_from_fix * 1
         tr_p1_y = dist_from_fix * 1
         probe1_tr.pos = [tr_p1_x, tr_p1_y]
-        #  'orientation' here refers to the relationship between probes,
+        #  'orientation' (e.g., tr_ori) here refers to the relationship between probes,
         #  whereas probe1.ori refers to rotational angle of probe stimulus
         if tr_ori == 'tangent':
             if tr_jump == 1:  # CCW
@@ -784,7 +755,6 @@ for step in range(n_trials_per_stair):
         thisExp.addData('missing_corner', missing_corner)
         thisExp.addData('probe_ecc', probe_ecc)
         thisExp.addData('resp.rt', resp.rt)
-        thisExp.addData('orientation', orientation)
         thisExp.addData('vary_fixation', vary_fixation)
         thisExp.addData('expName', expName)
         thisExp.addData('monitor_name', monitor_name)
