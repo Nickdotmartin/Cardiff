@@ -109,6 +109,7 @@ print(f'total_n_trials: {total_n_trials}')
 # FILENAME
 filename = f'{_thisDir}{os.sep}' \
            f'{expName}{os.sep}' \
+           f'{probe_coherence}{os.sep}' \
            f'{participant_name}{os.sep}' \
            f'{participant_name}_{run_number}{os.sep}' \
            f'{participant_name}_output'
