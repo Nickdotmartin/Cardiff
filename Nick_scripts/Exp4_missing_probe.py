@@ -361,7 +361,7 @@ take_break = 76
 print(f"take_break every {take_break} trials.")
 breaks = visual.TextStim(win=win, name='breaks',
                          # text="turn on the light and take at least 30-seconds break.",
-                         text="Break\n"
+                         text="Break\nTurn on the light and take at least 30-seconds break.\n"
                               "Remember, if you don't see the flash, just guess!\n"
                               "Keep focussed on the circle in the middle of the screen.",
                          font='Arial', pos=[0, 0], height=20, ori=0, color=[255, 255, 255],
