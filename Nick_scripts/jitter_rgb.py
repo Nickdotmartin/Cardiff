@@ -18,8 +18,8 @@ the probes from EXPERIMENT3_background_motion_SKR, and adds jitter.
 Each separation appears ONCE per run, rather than twice as in Exp1.
 This script can include multiple ISIs.
 Jitter points randomly change position every 30ms
-Jitter colours are same as rad_flow (rbg255[76.5, 114.75, 76.5]), but could be higher contrast?.
-Jitter can be random or radial (radial includes both inward and outward motion).
+Colours are rgb, like Simon's Jitter2_2 script, which makes probes esier to detect.
+A central, transparent mask can be added to reduce visual discomfort.
 A random interval can be added to fixation time to reduce anticipatory saccades, maybe?
 """
 
@@ -27,7 +27,7 @@ A random interval can be added to fixation time to reduce anticipatory saccades,
 _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
-# todo: change to asus_cal for testing
+# todo: Use to ASUS_2_13_240Hz for testing
 # Monitor config from monitor centre
 monitor_name = 'Nick_work_laptop'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 
@@ -117,17 +117,19 @@ Color1LumFactor = 2.39538706913372
 maxLum = 106  # 255 RGB
 minLum = 0.12  # 0 RGB
 
-# get ACTUAL bgcolor details
+# get ACTUAL bg_colour details
 rgb_bg_color = -0.1
 print(f'\nrgb_bg_color: {rgb_bg_color}')
 bgColor255 = (rgb_bg_color + 1) * 127.5
 print(f'bgColor255: {bgColor255}')
-bgcolor_to_rgb1 = (rgb_bg_color+1)/2
+bgcolor_to_rgb1 = (rgb_bg_color+1)/2  # in range 0 to 1
 print(f'bgcolor_to_rgb1: {bgcolor_to_rgb1}')
 bgLum = bgcolor_to_rgb1*maxLum
 print(f'bgLum: {bgLum}')
 bgLumP = bgLum/maxLum
 print(f'bgLumP: {bgLumP}')
+
+bg_colour = [rgb_bg_color, rgb_bg_color, rgb_bg_color]
 
 
 # MONITOR SPEC
@@ -159,8 +161,8 @@ mon.save()
 
 # WINDOW SPEC
 win = visual.Window(monitor=mon, size=(widthPix, heightPix),
-                    colorSpace='rgb255',
-                    color=bgColor255,  # bgcolor from Martin's flow script, not bgColor255
+                    colorSpace='rgb',
+                    color=bg_colour,
                     winType='pyglet',  # I've added pyglet to make it work on pycharm/mac
                     pos=[1, -1],  # pos gives position of top-left of screen
                     units='pix',
@@ -204,16 +206,16 @@ raisedCosTexture1 = visual.filters.makeMask(256, shape='raisedCosine',
 mask_size = 150
 probeMask1 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
                                 size=(mask_size, mask_size), units='pix',
-                                colorSpace='rgb255', color=bgColor255)
+                                colorSpace='rgb', color=bg_colour)
 probeMask2 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
                                 size=(mask_size, mask_size), units='pix',
-                                colorSpace='rgb255', color=bgColor255)
+                                colorSpace='rgb', color=bg_colour)
 probeMask3 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
                                 size=(mask_size, mask_size), units='pix',
-                                colorSpace='rgb255', color=bgColor255)
+                                colorSpace='rgb', color=bg_colour)
 probeMask4 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
                                 size=(mask_size, mask_size), units='pix',
-                                colorSpace='rgb255', color=bgColor255)
+                                colorSpace='rgb', color=bg_colour)
 
 # dist_from_fix is a constant to get 4dva distance from fixation,
 dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
@@ -224,7 +226,7 @@ probeMask2.setPos([-dist_from_fix - 1, dist_from_fix + 1])
 probeMask3.setPos([-dist_from_fix - 1, -dist_from_fix - 1])
 probeMask4.setPos([dist_from_fix + 1, -dist_from_fix - 1])
 
-# # BACKGROUND ficker_dots - dots do not move, just appear and disappear from same location.
+# # BACKGROUND flicker_dots - dots do not move, just appear and disappear from same location.
 dot_field_size = int(mon_dict['size'][1])  # used to set max pixels from centre that dots appear
 print(f"\ndot_field_size: {dot_field_size}")
 n_moving_dots = 1500
@@ -238,11 +240,10 @@ dot_life_fr = int(round(dot_life_ms / (1000 / fps), 0))
 print(f"dot_life_fr: {dot_life_fr}, {dot_life_ms}ms at {fps} fps.")
 dot_lives = np.random.randint(dot_life_fr, size=n_moving_dots) # this will be the current life of each element in frames
 
-# todo: update these colours to be rgb, check simon script
-ficker_dots_col = [76.5, 114.75, 76.5]  # greeney-grey in rgb255
-ficker_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
+flicker_dots_col = [bg_colour[0]-0.3, bg_colour[1], bg_colour[2]-0.3]
+flicker_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
                                     units='pix', nElements=n_moving_dots, sizes=30,
-                                    colorSpace='rgb255', colors=ficker_dots_col)
+                                    colorSpace='rgb', colors=flicker_dots_col)
 
 
 # full screen mask to blend off edges and fade to black
@@ -255,7 +256,8 @@ mmask = np.append(blankslab, invRaisedCosTexture, axis=1)  # append blank slab t
 mmask = np.append(mmask, blankslab, axis=1)  # and right
 # peripheral_mask fades to black round edges which makes screen edges less visible
 peripheral_mask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
-                              size=(widthPix, heightPix), units='pix', color='black')
+                                     size=(widthPix, heightPix), units='pix', 
+                                     color='black')
 
 
 # central mask behind probemasks - reduces visual discomfort
@@ -269,10 +271,10 @@ print(f"use_mid_mask: {use_mid_mask}; mid_mask_opacity: {mid_mask_opacity}")
 static_mask_size = 4*dist_from_fix  #  roughly aligned with edge of probeMasks
 
 static_mask = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
-                                 size=(static_mask_size, static_mask_size), units='pix',
-                                 colorSpace='rgb255', color=bgColor255,
-                                 opacity=mid_mask_opacity
-                                 )
+                                 size=(static_mask_size, static_mask_size), 
+                                 units='pix',
+                                 colorSpace='rgb', color=bg_colour,
+                                 opacity=mid_mask_opacity)
 
 
 # MOUSE - Hide cursor
@@ -295,7 +297,7 @@ instructions = visual.TextStim(win=win, name='instructions',
                                     "press [r] or [9] to redo the previous trial.\n\n"
                                     "Press any key to start.",
                                font='Arial', height=20,
-                               colorSpace='rgb255', color='white')
+                               colorSpace='rgb', color='white')
 
 # Trial counter
 trials_counter = visual.TextStim(win=win, name='trials_counter', text="???",
@@ -314,7 +316,7 @@ print(f"\ntake_break every {take_break} trials.")
 breaks = visual.TextStim(win=win, name='breaks',
                          text="Turn on the light and take at least 30-seconds break.\n\n"
                               "When you are ready to continue, press any key.",
-                         font='Arial', height=20, colorSpace='rgb255', color=[1, 1, 1])
+                         font='Arial', height=20, colorSpace='rgb', color=[1, 1, 1])
 
 end_of_exp = visual.TextStim(win=win, name='end_of_exp',
                              text="You have completed this experiment.\n"
@@ -535,29 +537,29 @@ for step in range(n_trials_per_stair):
                 dot_lives = dot_lives + 1
 
                 # get array of x and y pos by calling .xys
-                ficker_dot_xs = ficker_dots.xys[:, 0]
-                ficker_dot_ys = ficker_dots.xys[:, 1]
+                flicker_dot_xs = flicker_dots.xys[:, 0]
+                flicker_dot_ys = flicker_dots.xys[:, 1]
 
                 # find the dead elements and reset their life
                 deadElements = (dot_lives > dot_life_fr)  # numpy vector, not standard python
                 dot_lives[deadElements] = 0
 
                 # New x, y locations for dots that are re-born (random array, same shape as dead elements)
-                ficker_dot_xs[deadElements] = np.random.random(
-                    ficker_dot_xs[deadElements].shape) * dot_field_size - dot_field_size / 2.0
-                ficker_dot_ys[deadElements] = np.random.random(
-                    ficker_dot_ys[deadElements].shape) * dot_field_size - dot_field_size / 2.0
+                flicker_dot_xs[deadElements] = np.random.random(
+                    flicker_dot_xs[deadElements].shape) * dot_field_size - dot_field_size / 2.0
+                flicker_dot_ys[deadElements] = np.random.random(
+                    flicker_dot_ys[deadElements].shape) * dot_field_size - dot_field_size / 2.0
 
                 # each frame, update dot positions by dividing x_location by x_motion
-                xy_pos = np.array([ficker_dot_xs, ficker_dot_ys]).transpose()
-                ficker_dots.xys = xy_pos
+                xy_pos = np.array([flicker_dot_xs, flicker_dot_ys]).transpose()
+                flicker_dots.xys = xy_pos
 
 
                 # FIXATION
                 if t_fixation >= frameN > 0:
                     # before fixation has finished
                     trials_counter.text = f"{trial_number}/{total_n_trials}"
-                    ficker_dots.draw()
+                    flicker_dots.draw()
                     static_mask.draw()
                     probeMask1.draw()
                     probeMask2.draw()
@@ -570,7 +572,7 @@ for step in range(n_trials_per_stair):
 
                 # Background motion prior to probe1
                 if t_bg_motion >= frameN > t_fixation:
-                    ficker_dots.draw()
+                    flicker_dots.draw()
                     static_mask.draw()
                     probeMask1.draw()
                     probeMask2.draw()
@@ -586,7 +588,7 @@ for step in range(n_trials_per_stair):
 
                 # PROBE 1: after background motion, before end of probe1 interval
                 if t_probe_1 >= frameN > t_bg_motion:
-                    ficker_dots.draw()
+                    flicker_dots.draw()
                     static_mask.draw()
                     probeMask1.draw()
                     probeMask2.draw()
@@ -603,7 +605,7 @@ for step in range(n_trials_per_stair):
 
                 # ISI
                 if t_ISI >= frameN > t_probe_1:
-                    ficker_dots.draw()
+                    flicker_dots.draw()
                     static_mask.draw()
                     probeMask1.draw()
                     probeMask2.draw()
@@ -616,7 +618,7 @@ for step in range(n_trials_per_stair):
 
                 # PROBE 2: after ISI but before end of probe2 interval
                 if t_probe_2 >= frameN > t_ISI:
-                    ficker_dots.draw()
+                    flicker_dots.draw()
                     static_mask.draw()
                     probeMask1.draw()
                     probeMask2.draw()
@@ -632,7 +634,7 @@ for step in range(n_trials_per_stair):
 
                 # ANSWER: after probe 2 interval until response
                 if frameN > t_probe_2:
-                    ficker_dots.draw()
+                    flicker_dots.draw()
                     static_mask.draw()
                     probeMask1.draw()
                     probeMask2.draw()
@@ -702,7 +704,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('orientation', orientation)
         thisExp.addData('bgLumP', bgLumP)
         thisExp.addData('bgLum', bgLum)
-        thisExp.addData('bgColor255', bgColor255)
+        thisExp.addData('rgb_bg_color', rgb_bg_color)
         thisExp.addData('weber_thr', (probeLum-bgLum)/probeLum)
         thisExp.addData('vary_fixation', vary_fixation)
         thisExp.addData('expName', expName)
