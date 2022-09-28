@@ -71,7 +71,7 @@ probe_duration = int(expInfo['2. Probe duration in frames at 240hz'])
 probe_ecc = 4
 fps = int(expInfo['3. fps'])
 orientation = 'tangent'  # expInfo['5. Probe orientation']
-trials_counter = expInfo['4_Trials_counter']
+trials_counter = eval(expInfo['4_Trials_counter'])
 # ISI durations, -1 correspond to simultaneous probes
 # ISI = int(expInfo['4. ISI duration in frame'])
 

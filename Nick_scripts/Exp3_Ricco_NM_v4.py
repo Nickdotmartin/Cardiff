@@ -49,7 +49,7 @@ participant_name = expInfo['1_Participant']
 probe_duration = int(expInfo['2_Probe_dur_in_frames_at_240hz'])
 fps = int(expInfo['3_fps'])
 orientation = 'tangent'
-trials_counter = expInfo['4_Trials_counter']
+trials_counter = eval(expInfo['4_Trials_counter'])
 background = None
 
 # VARIABLES

@@ -51,7 +51,7 @@ probe_duration = int(expInfo['2_Probe_dur_in_frames_at_240hz'])
 fps = int(expInfo['3_fps'])
 orientation = 'tangent'  # expInfo['5_Probe_orientation']
 probe_size = '5pixels'  # expInfo['6_probe_size']
-trials_counter = expInfo['4_Trials_counter']
+trials_counter = eval(expInfo['4_Trials_counter'])
 background = None  # expInfo['8_Background']
 
 # ISI timing in ms and frames

@@ -18,7 +18,8 @@ the probes from EXPERIMENT3_background_motion_SKR, and adds jitter.
 Each separation appears ONCE per run, rather than twice as in Exp1.
 This script can include multiple ISIs.
 Jitter points randomly change position every 30ms
-Colours are rgb, like Simon's Jitter2_2 script, which makes probes esier to detect.
+Colours are rgb, like Simon's Jitter2_2 script, which makes probes easier to detect.
+Using the lab monitor (NOT asus_cal) also makes probes easier to see.
 A central, transparent mask can be added to reduce visual discomfort.
 A random interval can be added to fixation time to reduce anticipatory saccades, maybe?
 """
@@ -27,8 +28,8 @@ A random interval can be added to fixation time to reduce anticipatory saccades,
 _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
-# todo: Use to ASUS_2_13_240Hz for testing
 # Monitor config from monitor centre
+# todo: Use to ASUS_2_13_240Hz for testing: do NOT use asus_cal
 monitor_name = 'Nick_work_laptop'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 
 # Store info about the experiment session
