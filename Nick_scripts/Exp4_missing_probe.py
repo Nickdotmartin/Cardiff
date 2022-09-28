@@ -73,8 +73,8 @@ n_trials_per_stair = 25
 probe_duration = int(expInfo['2. Probe duration in frames at 240hz'])
 probe_ecc = 4
 fps = int(expInfo['3. fps'])
-trials_counter = expInfo['4_Trials_counter']
-vary_fixation = expInfo['5_vary_fixation']
+trials_counter = eval(expInfo['4_Trials_counter'])
+vary_fixation = eval(expInfo['5_vary_fixation'])
 probe_coherence = expInfo['6_probe_coherence']
 
 

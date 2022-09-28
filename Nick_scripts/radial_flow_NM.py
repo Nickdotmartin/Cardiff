@@ -61,7 +61,7 @@ probe_duration = int(expInfo['2_Probe_dur_in_frames_at_240hz'])
 fps = int(expInfo['3_fps'])
 orientation = expInfo['5_Probe_orientation']
 Probe_size = expInfo['6_Probe_size']
-trials_counter = expInfo['7_Trials_counter']
+trials_counter = eval(expInfo['7_Trials_counter'])
 background = expInfo['8_Background']
 bg_speed_cond = expInfo['9_bg_speed_cond']
 

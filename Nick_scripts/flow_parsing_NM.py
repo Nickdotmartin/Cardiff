@@ -61,7 +61,7 @@ expInfo['time'] = datetime.now().strftime("%H:%M:%S")
 participant_name = expInfo['1_Participant_name']
 run_number = expInfo['2_run_number']
 fps = int(expInfo['3_fps'])
-trials_counter = expInfo['7_Trials_counter']
+trials_counter = eval(expInfo['7_Trials_counter'])
 background = expInfo['8_Background']
 bg_speed_cond = expInfo['9_bg_speed_cond']
 

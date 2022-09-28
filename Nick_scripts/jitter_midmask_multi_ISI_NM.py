@@ -57,11 +57,11 @@ participant_name = expInfo['1_Participant']
 run_number = int(expInfo['2_Run_number'])
 probe_duration = int(expInfo['3_Probe_dur_in_frames_at_240hz'])
 fps = int(expInfo['4_fps'])
-trials_counter = expInfo['5_Trials_counter']
+trials_counter = eval(expInfo['5_Trials_counter'])
 orientation = expInfo['6_Probe_orientation']  # 'tangent'
 background = expInfo['7_Background']  # 'jitter'
 bg_speed_cond = expInfo['8_bg_speed_cond']  # 'Normal'
-vary_fixation = expInfo['9_vary_fixation']
+vary_fixation = eval(expInfo['9_vary_fixation'])
 
 n_trials_per_stair = 25
 probe_ecc = 4
