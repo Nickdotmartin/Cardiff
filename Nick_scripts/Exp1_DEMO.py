@@ -89,7 +89,7 @@ filename = f'{_thisDir}{os.sep}' \
            f'{expName}{os.sep}' \
            f'{participant_name}{os.sep}' \
            f'{participant_name}_{run_number}{os.sep}' \
-           f'{participant_name}_output'
+           f'{participant_name}_{run_number}_output'
 # files are labelled as '_incomplete' unless entire script runs.
 save_output_name = filename + '_incomplete'
 
@@ -144,7 +144,6 @@ viewdistPix = widthPix/monitorwidth*viewdist
 mon = monitors.Monitor(monitor_name, width=monitorwidth, distance=viewdist)
 mon.setSizePix((widthPix, heightPix))
 mon.save()
-
 
 # WINDOW SPEC
 win = visual.Window(monitor=mon, size=(widthPix, heightPix),
@@ -215,7 +214,6 @@ if trials_counter:
 # BREAKS
 take_break = 76
 total_n_trials = int(n_trials_per_stair * n_stairs)
-# take_break = int(total_n_trials/2)+1
 print(f"take_break every {take_break} trials.")
 breaks = visual.TextStim(win=win, name='breaks',
                          # text="turn on the light and take at least 30-seconds break.",
@@ -235,6 +233,8 @@ while not event.getKeys():
     fixation.setRadius(3)
     fixation.draw()
     instructions.draw()
+    trials_counter.text = f"0/{total_n_trials}"
+    trials_counter.draw()
     win.flip()
 
 # STAIRCASE
@@ -250,9 +250,8 @@ for stair_idx in expInfo['stair_list']:
 
     thisInfo = copy.copy(expInfo)
     thisInfo['stair_idx'] = stair_idx
-    stair_name = stair_names_list[stair_idx]
 
-    thisStair = Staircase(name=stair_name,
+    thisStair = Staircase(name=stair_names_list[stair_idx],
                           type='simple',
                           value=stairStart,
                           C=stairStart*0.6,  # typically, 60% of reference stimulus
@@ -487,7 +486,7 @@ for step in range(n_trials_per_stair):
 
         thisExp.addData('trial_number', trial_number)
         thisExp.addData('stair', stair_idx)
-        thisExp.addData('stair_name', stair_name)
+        thisExp.addData('stair_name', thisStair)
         thisExp.addData('step', step)
         thisExp.addData('separation', sep)
         thisExp.addData('ISI', ISI)

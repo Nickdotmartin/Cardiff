@@ -45,7 +45,7 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'Asus_VG24'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
+monitor_name = 'Nick_work_laptop'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 
 # Store info about the experiment session
 expName = 'EXP4_missing_probe'  # from the Builder filename that created this script
@@ -112,7 +112,7 @@ filename = f'{_thisDir}{os.sep}' \
            f'{probe_coherence}{os.sep}' \
            f'{participant_name}{os.sep}' \
            f'{participant_name}_{run_number}{os.sep}' \
-           f'{participant_name}_output'
+           f'{participant_name}_{run_number}_output'
 # files are labelled as '_incomplete' unless entire script runs.
 save_output_name = filename + '_incomplete'
 
@@ -193,7 +193,7 @@ rotational, radial and translational.
 There are two rotational (CW and CCW), two radial (in/out) and four translational (4 corners).
 An experiment can select one of these types of coherent motion.
 There are eight types of incoherent motion.
-An experiment will use one type of coherent motion, selecting the example randomly, 
+An experiment will use one type of coherent motion, selecting the example randomly,
 interleaved with random selections of incoherent motion.
 '''
 
@@ -392,9 +392,8 @@ for stair_idx in expInfo['stair_list']:
 
     thisInfo = copy.copy(expInfo)
     thisInfo['stair_idx'] = stair_idx
-    stair_name = stair_names_list[stair_idx]
 
-    thisStair = Staircase(name=stair_name,
+    thisStair = Staircase(name=stair_names_list[stair_idx],
                           type='simple',
                           value=stairStart,
                           C=stairStart*0.6,  # typically, 60% of reference stimulus
@@ -732,7 +731,7 @@ for step in range(n_trials_per_stair):
 
         thisExp.addData('trial_number', trial_number)
         thisExp.addData('stair', stair_idx)
-        thisExp.addData('stair_name', stair_name)
+        thisExp.addData('stair_name', thisStair)
         thisExp.addData('step', step)
         thisExp.addData('separation', sep)
         thisExp.addData('ISI', ISI)

@@ -97,7 +97,7 @@ filename = f'{_thisDir}{os.sep}' \
            f'{expName}{os.sep}' \
            f'{participant_name}{os.sep}' \
            f'{participant_name}_{run_number}{os.sep}' \
-           f'{participant_name}_output'
+           f'{participant_name}_{run_number}_output'
 # files are labelled as '_incomplete' unless entire script runs.
 save_output_name = filename + '_incomplete'
 
@@ -346,9 +346,8 @@ stairs = []
 for stair_idx in expInfo['stair_list']:
     thisInfo = copy.copy(expInfo)
     thisInfo['stair_idx'] = stair_idx
-    stair_name = stair_names_list[stair_idx]
 
-    thisStair = Staircase(name=stair_name,
+    thisStair = Staircase(name=stair_names_list[stair_idx],
                           type='simple',
                           value=stairStart,
                           C=stairStart * 0.6,  # step_size, typically 60% of reference stimulus
@@ -690,7 +689,7 @@ for step in range(n_trials_per_stair):
         # add to exp dict
         thisExp.addData('trial_number', trial_number)
         thisExp.addData('stair', stair_idx)
-        thisExp.addData('stair_name', stair_name)
+        thisExp.addData('stair_name', thisStair)
         thisExp.addData('step', step)
         thisExp.addData('separation', sep)
         thisExp.addData('ISI', ISI)

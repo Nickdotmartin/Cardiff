@@ -33,8 +33,7 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'asus_cal'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
-# gamma set at 2.1  [####### this comment is incorrect, its set above i think ############]
+monitor_name = 'Nick_work_laptop'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 
 display_number = 1  # 0 indexed, 1 for external display
 
@@ -42,15 +41,10 @@ display_number = 1  # 0 indexed, 1 for external display
 expName = 'EXP1_split_probes'  # from the Builder filename that created this script
 
 # todo: change dict keys (ISI str to int?) once I've looked at analysis
-expInfo = {'1. Participant': 'Nick',
+expInfo = {'1. Participant': 'Nick_test',
            'run_number': '3',
            '2. Probe duration in frames at 240hz': [2, 50, 100],
            '3. fps': [240, 60, 144],
-           # '4. ISI duration in frame': [0, 2, 4, 6, 9, 12, 24, -1],
-           # '5. Probe orientation': ['tangent'],
-           # '6. Probe size': ['5pixels', '6pixels', '3pixels'],
-           # '7. Background lum in percent of maxLum': 20,
-           # '8. Red filter': ['no', 'yes']
            }
 
 # GUI
@@ -69,8 +63,6 @@ probe_duration = int(expInfo['2. Probe duration in frames at 240hz'])
 probe_ecc = 4
 fps = int(expInfo['3. fps'])
 orientation = 'tangent'  # expInfo['5. Probe orientation']
-# ISI durations, -1 correspond to simultaneous probes
-# ISI = int(expInfo['4. ISI duration in frame'])
 
 
 # VARIABLES
@@ -89,8 +81,7 @@ print(f'ISI_values: {ISI_values}')
 # repeat separation values for each ISI e.g., [0, 0, 6, 6]
 sep_vals_list = list(np.repeat(separations, len(ISI_values)))
 print(f'sep_vals_list: {sep_vals_list}')
-n_stairs = len(sep_vals_list)
-print(f'n_stairs: {n_stairs}')
+
 # ISI_vals_list cycles through ISIs e.g., [-1, 6, -1, 6]
 ISI_vals_list = list(np.tile(ISI_values, len(separations)))
 print(f'ISI_vals_list: {ISI_vals_list}')
@@ -98,19 +89,23 @@ print(f'ISI_vals_list: {ISI_vals_list}')
 # e.g., ['sep0_ISI-1', 'sep0_ISI6', 'sep6_ISI-1', 'sep6_ISI6']
 stair_names_list = [f'sep{s}_ISI{c}' for s, c in zip(sep_vals_list, ISI_vals_list)]
 print(f'stair_names_list: {stair_names_list}')
+n_stairs = len(sep_vals_list)
+print(f'n_stairs: {n_stairs}')
 
 # FILENAME
 filename = f'{_thisDir}{os.sep}' \
            f'{expName}{os.sep}' \
            f'{participant_name}{os.sep}' \
            f'{participant_name}_{run_number}{os.sep}' \
-           f'{participant_name}_output'
+           f'{participant_name}_{run_number}_output'
+# files are labelled as '_incomplete' unless entire script runs.
+save_output_name = filename + '_incomplete'
 
 # Experiment Handler
 thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
                                  extraInfo=expInfo, runtimeInfo=None,
                                  savePickle=None, saveWideText=True,
-                                 dataFileName=filename)
+                                 dataFileName=save_output_name)
 
 # COLORS AND LUMINANCE
 # Lum to Color255
@@ -129,6 +124,7 @@ minColor1 = -1
 bgLumP = 20  # int(expInfo['7. Background lum in percent of maxLum'])  # 20
 bgLum = maxLum * bgLumP / 100
 bgColor255 = bgLum * LumColor255Factor
+bgColor1 = (bgColor255 * Color255Color1Factor) - 1
 
 # MONITOR SPEC
 thisMon = monitors.Monitor(monitor_name)
@@ -137,8 +133,7 @@ mon_dict = {'mon_name': monitor_name,
             'width': thisMon.getWidth(),
             'size': thisMon.getSizePix(),
             'dist': thisMon.getDistance(),
-            'notes': thisMon.getNotes()
-            }
+            'notes': thisMon.getNotes()}
 print(f"\nmon_dict: {mon_dict}")
 
 # double check using full screen in lab
@@ -225,16 +220,6 @@ fixation = visual.Circle(win, radius=2, units='pix',
                          lineColor='white', fillColor='black')
 
 # PROBEs
-redfilter = 1
-# 5 pixels
-# default setting is expInfo['6. Probe size'] == '5pixels':
-# expInfo['6. Probe size'] = '5pixels'
-# probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
-#              (1, -2), (-1, -2), (-1, -1), (0, -1)]
-# probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, -1.0, 1.0),
-#                           lineWidth=0, opacity=1, size=1, interpolate=False)
-# probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor=[-1.0, 1.0, -1.0],
-#                           lineWidth=0, opacity=1, size=1, interpolate=False)
 probe_size = 1
 probe_L_vert = [(0, 0), (2, 0), (2, 1), (1, 1), (1, -2), (0, -2)]
 
@@ -250,8 +235,14 @@ probe_2b_L = visual.ShapeStim(win, vertices=probe_L_vert, fillColor='green',
 probe_1b_dots = visual.ShapeStim(win, vertices=probe_dots_vert, fillColor='red',
                                  lineWidth=0, opacity=1, size=probe_size, interpolate=False)
 
+# dist_from_fix is a constant to get 4dva distance from fixation,
+dist_from_fix = round((tan(deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
+
 # MOUSE - hide cursor
 myMouse = event.Mouse(visible=False)
+
+# # KEYBOARD
+resp = event.BuilderKeyResponse()
 
 # INSTRUCTION
 instructions = visual.TextStim(win=win, name='instructions',
@@ -279,7 +270,7 @@ if trials_counter:
     trials_counter.color = 'white'
 
 # BREAKS
-take_break = 100
+take_break = 76
 total_n_trials = int(n_trials_per_stair * n_stairs)
 print(f"take_break every {take_break} trials.")
 breaks = visual.TextStim(win=win, name='breaks',
@@ -305,10 +296,7 @@ while not event.getKeys():
     win.flip()
 
 # STAIRCASE
-trial_number = 0
-# expInfo['stair_list'] = list(range(1, 15))  # 14 staircases (14 conditions)
 expInfo['stair_list'] = list(range(n_stairs))
-
 expInfo['n_trials_per_stair'] = n_trials_per_stair
 
 stairStart = maxLum
@@ -316,13 +304,11 @@ miniVal = bgLum
 maxiVal = maxLum
 
 stairs = []
-for thisStart in expInfo['stair_list']:
+for stair_idx in expInfo['stair_list']:
     thisInfo = copy.copy(expInfo)
-    thisInfo['thisStart'] = thisStart
+    thisInfo['stair_idx'] = stair_idx
 
-    stair_name = stair_names_list[thisStart]
-
-    thisStair = Staircase(name=stair_name,
+    thisStair = Staircase(name=stair_names_list[stair_idx],
                           type='simple',
                           value=stairStart,
                           C=stairStart * 0.6,  # typically 60% of reference stimulus
@@ -330,47 +316,38 @@ for thisStart in expInfo['stair_list']:
                           minTrials=n_trials_per_stair,
                           minVal=miniVal,
                           maxVal=maxiVal,
-                          targetThresh=0.75,  # changed this from prev versions
+                          targetThresh=0.75,
                           extraInfo=thisInfo)
     stairs.append(thisStair)
+
+trial_number = 0
 
 # EXPERIMENT
 for step in range(n_trials_per_stair):
     shuffle(stairs)
     for thisStair in stairs:
 
-        stairNum = thisStair.extraInfo['thisStart']
-
-        print(f"\n{step}. stairNum: {stairNum}, thisStair: {thisStair},  step: {step}")
-
-        # sep = separations[thisStair.extraInfo['thisStart']-1]
-        sep = sep_vals_list[stairNum]
-
-        ISI = ISI_vals_list[stairNum]
-
-        print(f"ISI: {ISI}, sep: {sep}")
-
-        # direction in which the probe jumps : CW or CCW
-
-        target_jump = random.choice([1, -1])
-        # staircase varied probeLum
-        probeLum = thisStair.next()
-        probeColor255 = int(probeLum * LumColor255Factor)
-        probeColor1 = (probeColor255 * Color255Color1Factor) - 1
-
-        print(f"probeLum: {probeLum}")
-
         trial_number = trial_number + 1
 
+        stair_idx = thisStair.extraInfo['stair_idx']
+        print(f"\ntrial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
+
+        sep = sep_vals_list[stair_idx]
+        ISI = ISI_vals_list[stair_idx]
+        print(f"ISI: {ISI}, sep: {sep}")
+
+        # staircase varies probeLum
+        probeLum = thisStair.next()
+        probeColor255 = int(probeLum * LumColor255Factor)  # rgb255 are ints.
+        probeColor1 = (probeColor255 * Color255Color1Factor) - 1
+        print(f"probeLum: {probeLum}")
+
         # Black or White
-        # probe1.color = [probeColor1, probeColor1*redfilter, probeColor1*redfilter]
-        # probe2.color = [probeColor1, probeColor1*redfilter, probeColor1*redfilter]
         probe_1a_L.color = [probeColor1, probeColor1, probeColor1]
         probe_2a_dots.color = [probeColor1, probeColor1, probeColor1]
         probe_2b_L.color = [probeColor1, probeColor1, probeColor1]
         probe_1b_dots.color = [probeColor1, probeColor1, probeColor1]
-
-        # print(f"\nbgLum: {bgLum} bgColor255: {bgColor255} win.colorSpace: {win.colorSpace}")
+        print(f"\nbgLum: {bgLum} bgColor255: {bgColor255} win.colorSpace: {win.colorSpace}")
 
         """
         My new probes are called: probe_1a_L, probe_2a_dots, probe_2b_L, probe_1b_dots.
@@ -382,122 +359,94 @@ for step in range(n_trials_per_stair):
 
         """
 
+
         # PROBE LOCATION
         # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
         corner = random.choice([45, 135, 225, 315])
-        x_prob = round((tan(deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
-        y_prob = round((tan(deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
+        # direction in which the probe jumps : CW or CCW
+        target_jump = random.choice([1, -1])
+
+        # corner_name = 'top-right'
+        # if corner == 135:
+        #     corner_name = 'top-left'
+        # elif corner == 225:
+        #     corner_name = 'bottom_left'
+        # elif corner == 315:
+        #     corner_name = 'bottom_right'
+        # 
+        # jump_dir = 'clockwise'
+        # if target_jump == -1:
+        #     jump_dir = 'anticlockwise'
+        # 
+        # print(f"corner: {corner} {corner_name}; jump dir: {target_jump} {jump_dir}")
 
         # reset probe ori
-        # probe1.ori = 0
-        # probe2.ori = 0
         probe_1a_L.ori = 0
         probe_2a_dots.ori = 0
         probe_2b_L.ori = 0
         probe_1b_dots.ori = 0
         if corner == 45:
-            p1_x = x_prob * 1
-            p1_y = y_prob * 1
+            p1_x = dist_from_fix * 1
+            p1_y = dist_from_fix * 1
             if orientation == 'tangent':
                 if target_jump == 1:  # CCW
-                    # probe1.ori = 0
-                    # probe2.ori = 180
-                    # probe2.pos = [p1_x - sep+1, p1_y + sep]
                     probe_2b_L.ori = probe_1b_dots.ori = 180
                     probe_2b_L.pos = probe_1b_dots.pos = [p1_x - sep + 1, p1_y + sep]
                 elif target_jump == -1:  # CW
-                    # probe1.ori = 180
-                    # probe2.ori = 0
-                    # probe2.pos = [p1_x + sep-1, p1_y - sep]
                     probe_1a_L.ori = probe_2a_dots.ori = 180
                     probe_2b_L.pos = probe_1b_dots.pos = [p1_x + sep - 1, p1_y - sep]
-
         elif corner == 135:
-            p1_x = x_prob * -1
-            p1_y = y_prob * 1
+            p1_x = dist_from_fix * -1
+            p1_y = dist_from_fix * 1
             if orientation == 'tangent':
                 if target_jump == 1:  # CCW
-                    # probe1.ori = 90
-                    # probe2.ori = 270
-                    # probe2.pos = [p1_x + sep-1, p1_y + sep]
                     probe_1a_L.ori = probe_2a_dots.ori = 90
                     probe_2b_L.ori = probe_1b_dots.ori = 270
                     probe_2b_L.pos = probe_1b_dots.pos = [p1_x + sep - 1, p1_y + sep]
-
                 elif target_jump == -1:  # CW
-                    # probe1.ori = 270
-                    # probe2.ori = 90
-                    # probe2.pos = [p1_x - sep+1, p1_y - sep]
                     probe_1a_L.ori = probe_2a_dots.ori = 270
                     probe_2b_L.ori = probe_1b_dots.ori = 90
                     probe_2b_L.pos = probe_1b_dots.pos = [p1_x - sep + 1, p1_y - sep]
-
         elif corner == 225:
-            p1_x = x_prob * -1
-            p1_y = y_prob * -1
+            p1_x = dist_from_fix * -1
+            p1_y = dist_from_fix * -1
             if orientation == 'tangent':
                 if target_jump == 1:  # CCW
-                    # probe1.ori = 180
-                    # probe2.ori = 0
-                    # probe2.pos = [p1_x + sep-1, p1_y - sep]
                     probe_1a_L.ori = probe_2a_dots.ori = 180
                     probe_2b_L.pos = probe_1b_dots.pos = [p1_x + sep - 1, p1_y - sep]
-
                 elif target_jump == -1:  # CW
-                    # probe1.ori = 0
-                    # probe2.ori = 180
-                    # probe2.pos = [p1_x - sep+1, p1_y + sep]
                     probe_2b_L.ori = probe_1b_dots.ori = 180
                     probe_2b_L.pos = probe_1b_dots.pos = [p1_x - sep + 1, p1_y + sep]
         else:
             corner = 315
-            p1_x = x_prob * 1
-            p1_y = y_prob * -1
+            p1_x = dist_from_fix * 1
+            p1_y = dist_from_fix * -1
             if orientation == 'tangent':
                 if target_jump == 1:  # CCW
-                    # probe1.ori = 270
-                    # probe2.ori = 90
-                    # probe2.pos = [p1_x - sep+1, p1_y - sep]
                     probe_1a_L.ori = probe_2a_dots.ori = 270
                     probe_2b_L.ori = probe_1b_dots.ori = 90
                     probe_2b_L.pos = probe_1b_dots.pos = [p1_x - sep + 1, p1_y - sep]
-
                 elif target_jump == -1:  # CW
-                    # probe1.ori = 90
-                    # probe2.ori = 270
-                    # probe2.pos = [p1_x + sep-1, p1_y + sep]
                     probe_1a_L.ori = probe_2a_dots.ori = 90
                     probe_2b_L.ori = probe_1b_dots.ori = 270
                     probe_2b_L.pos = probe_1b_dots.pos = [p1_x + sep - 1, p1_y + sep]
 
-        # probe1.pos = [p1_x, p1_y]
         probe_1a_L.pos = probe_2a_dots.pos = [p1_x, p1_y]
 
         # timing in frames
         # if ISI >= 0:
-        # todo: change t_interval_1 and 2 to t_probe_1 and 2?
         t_fixation = 1 * fps
-        t_interval_1 = t_fixation + probe_duration
-        t_ISI = t_interval_1 + ISI
-        t_interval_2 = t_ISI + probe_duration
-        # I presume this means almost unlimited time to respond?
-        t_response = t_interval_2 + 10000 * fps
-
-        # print(f't_fixation: {t_fixation}')
-        # print(f't_interval_1: {t_interval_1}')
-        # print(f't_ISI: {t_ISI}')
-        # print(f't_interval_2: {t_interval_2}')
-        # print(f't_response: {t_response}')
-        #
+        t_probe_1 = t_fixation + probe_duration
+        t_ISI = t_probe_1 + ISI
+        t_probe_2 = t_ISI + probe_duration
+        t_response = t_probe_2 + 10000 * fps  # essentially unlimited time to respond
 
         # repeat the trial if [r] has been pressed
         repeat = True
         while repeat:
             frameN = -1
-            #
-            # # display Break before trials 120 and 240
-            # if trial_number == 120+1 or trial_number == 240+1:
-            # display Break before trial 51
+
+            # take a break every ? trials
             if (trial_number % take_break == 1) & (trial_number > 1):
                 continueRoutine = False
                 breaks.draw()
@@ -516,35 +465,34 @@ for step in range(n_trials_per_stair):
                     fixation.draw()
                     trials_counter.text = f"{trial_number}/{total_n_trials}"
                     trials_counter.draw()
+                    
+                    # reset timer to start with probe1 presentation.
+                    resp.clock.reset()
 
                 # PROBE 1
-                if t_interval_1 >= frameN > t_fixation:
-                    # probe1.draw()
+                if t_probe_1 >= frameN > t_fixation:
                     probe_1a_L.draw()
                     probe_1b_dots.draw()
 
                     # SIMULTANEOUS CONDITION
                     if ISI == -1:
                         if sep <= 18:
-                            # probe2.draw()
                             probe_2a_dots.draw()
                             probe_2b_L.draw()
-
                     fixation.setRadius(3)
                     fixation.draw()
                     trials_counter.draw()
 
                 # ISI
-                if t_ISI >= frameN > t_interval_1:
+                if t_ISI >= frameN > t_probe_1:
                     fixation.setRadius(3)
                     fixation.draw()
                     trials_counter.draw()
 
                 # PROBE 2
-                if t_interval_2 >= frameN > t_ISI:
+                if t_probe_2 >= frameN > t_ISI:
                     if ISI >= 0:
                         if sep <= 18:
-                            # probe2.draw()
                             probe_2a_dots.draw()
                             probe_2b_L.draw()
                     fixation.setRadius(3)
@@ -552,13 +500,12 @@ for step in range(n_trials_per_stair):
                     trials_counter.draw()
 
                 # ANSWER
-                if frameN > t_interval_2:
+                if frameN > t_probe_2:
                     fixation.setRadius(2)
                     fixation.draw()
                     trials_counter.draw()
 
                     # ANSWER
-                    resp = event.BuilderKeyResponse()
                     theseKeys = event.getKeys(keyList=['num_5', 'num_4', 'num_1',
                                                        'num_2', 'w', 'q', 'a', 's'])
 
@@ -585,11 +532,12 @@ for step in range(n_trials_per_stair):
                         repeat = False
                         continueRoutine = False
 
-                # check for quit
+                # regardless of frameN, check for quit
                 if event.getKeys(keyList=["escape"]):
+                    thisExp.close()
                     core.quit()
 
-                # redo the trial if i think i made a mistake
+                # redo the trial if I think I made a mistake
                 if event.getKeys(keyList=["r"]) or event.getKeys(keyList=['num_9']):
                     repeat = True
                     continueRoutine = False
@@ -599,9 +547,9 @@ for step in range(n_trials_per_stair):
                 if continueRoutine:
                     win.flip()
 
-        thisExp.addData('n_trials_per_stair', n_trials_per_stair)
-        thisExp.addData('stair', stairNum)
-        thisExp.addData('stair_name', stair_name)
+        thisExp.addData('trial_number', trial_number)
+        thisExp.addData('stair', stair_idx)
+        thisExp.addData('stair_name', thisStair)
         thisExp.addData('step', step)
         thisExp.addData('separation', sep)
         thisExp.addData('ISI', ISI)
@@ -623,7 +571,8 @@ for step in range(n_trials_per_stair):
 
         thisStair.newValue(resp.corr)  # so that the staircase adjusts itself
 
-print("end of exp loop, saving data")
+print("end of experiment loop, saving data")
+thisExp.dataFileName = filename
 thisExp.close()
 
 while not event.getKeys():

@@ -8,17 +8,16 @@ from check_home_dir import switch_path
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\EXP1_R_G"
-exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\EXP1_R_G_rot"
+# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\EXP1_R_G_rot"
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\EXP1_sep4_5"
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\EXP1_split_probes"
-# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\jitter_multi_ISI_NM"
-# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\jitter_midmask_multi_ISI_NM"
+exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\jitter_rgb"
 
 convert_path1 = os.path.normpath(exp_path)
 exp_path = convert_path1
 
 print(f"exp_path: {exp_path}")
-participant_list = ['Nick']
+participant_list = ['Nick', 'Simon']
 
 n_runs = 12
 
@@ -46,13 +45,13 @@ for p_idx, participant_name in enumerate(participant_list):
         save_path = os.path.join(root_path, run_dir)
         # save_path = f'{root_path}'
 
-        # # search to automatically get probe)dur_dir_names
-        dir_list = os.listdir(save_path)
-        probeDur_folder_names = []
-        for i in range(12):  # numbers 0 to 11
-            check_dir = f'{participant_name}_{i + p_idx_plus}'  # numbers 1 to 12
-            if check_dir in dir_list:
-                run_folder_names.append(check_dir)
+        # # # search to automatically get probe)dur_dir_names
+        # dir_list = os.listdir(save_path)
+        # probeDur_folder_names = []
+        # for i in range(12):  # numbers 0 to 11
+        #     check_dir = f'{participant_name}_{i + p_idx_plus}'  # numbers 1 to 12
+        #     if check_dir in dir_list:
+        #         run_folder_names.append(check_dir)
 
         # don't delete this (participant_name = participant_name),
         # needed to ensure names go name1, name2, name3 not name1, name12, name123
@@ -62,7 +61,11 @@ for p_idx, participant_name in enumerate(participant_list):
         p_name = f'{participant_name}_output'  # use this one
 
         # # I don't need data extraction as all ISIs are in same df.
-        run_data_df = pd.read_csv(os.path.join(save_path, f'{p_name}.csv'))
+        try:
+            run_data_df = pd.read_csv(os.path.join(save_path, f'{p_name}.csv'))
+        except:
+            p_name = f'{participant_name}_{run_idx+1}_output'  # use this one
+            run_data_df = pd.read_csv(os.path.join(save_path, f'{p_name}.csv'))
 
         try:
             run_data_df = run_data_df.sort_values(by=['stair', 'total_nTrials'])
