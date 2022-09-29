@@ -59,18 +59,18 @@ probe_duration = int(expInfo['2. Probe duration in frames at 240hz'])
 probe_ecc = 4
 fps = int(expInfo['3. fps'])
 orientation = 'tangent'  # expInfo['5. Probe orientation']
-trials_counter = expInfo['4_Trials_counter']
-use_R_G = expInfo['5_use_R_G']
+trials_counter = eval(expInfo['4_Trials_counter'])
+use_R_G = eval(expInfo['5_use_R_G'])
 
 # VARIABLES
 '''Distances between probes (spatially and temporally)
 For 1probe condition, use separation==99.
 For concurrent probes, use ISI==-1.'''
 # todo: don't use ISI -1 as probes will overlap in the experiment
-separations = [0, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
-# separations = [0, 3, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
+# separations = [0, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
+separations = [0, 3, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
 print(f'separations: {separations}')
-ISI_values = [0, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+ISI_values = [0, 3, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 print(f'ISI_values: {ISI_values}')
 
 # repeat separation values for each ISI e.g., [0, 0, 6, 6]

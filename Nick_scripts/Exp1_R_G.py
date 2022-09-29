@@ -43,11 +43,6 @@ expInfo = {'1. Participant': 'Nick',
            '2. Probe duration in frames at 240hz': [2, 50, 100],
            '3. fps': [240, 60, 144],
            '4_Trials_counter': [True, False]
-           # '4. ISI duration in frame': [0, 2, 4, 6, 9, 12, 24, -1],
-           # '5. Probe orientation': ['tangent'],
-           # '6. Probe size': ['5pixels', '6pixels', '3pixels'],
-           # '7. Background lum in percent of maxLum': 20,
-           # '8. Red filter': ['no', 'yes']
            }
 
 
@@ -67,21 +62,19 @@ probe_duration = int(expInfo['2. Probe duration in frames at 240hz'])
 probe_ecc = 4
 fps = int(expInfo['3. fps'])
 orientation = 'tangent'  # expInfo['5. Probe orientation']
-trials_counter = expInfo['4_Trials_counter']
-# ISI durations, -1 correspond to simultaneous probes
-# ISI = int(expInfo['4. ISI duration in frame'])
+trials_counter = eval(expInfo['4_Trials_counter'])
 
 
 # VARIABLES
 # Distances between probes (spatioally and temporally)
 '''Sort separation and ISI types'''
 # separations = [0, 1, 2, 3, 6, 18]
-separations = [0, 2, 4, 6]
+separations = [0, 3, 6]
 # separations = [0]
 print(f'separations: {separations}')
 # # I also have two ISI types
 # ISI_values = [-1, 0, 2, 4, 6, 9, 12, 24]
-ISI_values = [-1, 0, 2, 4]
+ISI_values = [-1, 3, 4]
 # ISI_values = [-1]
 
 print(f'ISI_values: {ISI_values}')
@@ -104,13 +97,15 @@ filename = f'{_thisDir}{os.sep}' \
            f'{expName}{os.sep}' \
            f'{participant_name}{os.sep}' \
            f'{participant_name}_{run_number}{os.sep}' \
-           f'{participant_name}_output'
+           f'{participant_name}_{run_number}_output'
+# files are labelled as '_incomplete' unless entire script runs.
+save_output_name = filename + '_incomplete'
 
 # Experiment Handler
 thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
                                  extraInfo=expInfo, runtimeInfo=None,
                                  savePickle=None, saveWideText=True,
-                                 dataFileName=filename)
+                                 dataFileName=save_output_name)
 
 # COLORS AND LUMINANCE
 # Lum to Color255
@@ -621,6 +616,7 @@ for step in range(n_trials_per_stair):
 
 
 print("end of experiment loop, saving data")
+thisExp.dataFileName = filename
 thisExp.close()
 
 while not event.getKeys():
