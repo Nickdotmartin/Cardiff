@@ -23,7 +23,7 @@ This script contains the analysis pipeline for individual participants.
 def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='stair',
                                     stair_levels=None, 
                                     thr_col='probeLum', resp_col='trial_response',
-                                    quartile_bins=True, n_bins=10, save_np_path=None,
+                                    quartile_bins=True, n_bins=9, save_np_path=None,
                                     verbose=True):
 
     """
@@ -55,6 +55,9 @@ def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='sta
     """
 
     print('\n*** running results_csv_to_np_for_psignifit() ***')
+
+    # todo: sort out stair_levels variable - this is confusing and from a time when
+    #  I couldn't decide between separation and stairs.  I should rename or refactor this.
 
     if type(csv_path) == pd.core.frame.DataFrame:
         raw_data_df = csv_path
@@ -398,7 +401,7 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
 def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
                          sep_col='stair', stair_levels=None,
                          thr_col='probeLum', resp_col='trial_response',
-                         quartile_bins=False, n_bins=10, save_np=False,
+                         quartile_bins=False, n_bins=9, save_np=False,
                          target_threshold=.75,
                          sig_name='norm', est_type='MAP',
                          conf_int=True, thr_type='Bayes',
@@ -496,7 +499,7 @@ def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
 # # # # # #
 
 
-def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bins=True,
+def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=9, q_bins=True,
                                thr_col='probeLum',
                                sep_col='separation', sep_list=None,
                                isi_col=None, isi_list=None, group=None,
@@ -738,3 +741,163 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
 #                                     csv_name=p_run_name,
 #                                     n_bins=10, q_bins=True,
 #                                     isi_list=None, sep_list=None, verbose=True)
+
+
+def get_psig_thr_w_hue(root_path, p_run_name, output_df, n_bins=9, q_bins=True,
+                       thr_col='probeLum',
+                       sep_col='separation', sep_list=None,
+                       isi_col=None, isi_list=None,
+                       hue_col=None, hue_list=None,
+                       trial_correct_col='trial_response',
+                       conf_int=True, thr_type='Bayes',
+                       plot_both_curves=False,
+                       cols_to_add_dict=None, save_name=None,
+                       show_plots=False, save_plots=True,
+                       verbose=True):
+    """
+    Function to make a dataframe (stair x isi) of psignifit threshold values for an entire run.
+
+    :param root_path: path to folder containing ISI folders
+    :param p_run_name: Name of this run directory where csv is stored (e.g., P6a-Kim or P6b-Kim etc)
+    :param output_df: Dataframe to analyse or Name of results csv to load (e.g., Kim1, Kim2 etc)
+    :param n_bins: Default=10. Number of bins to use.
+    :param q_bins: Default=True. If True, uses quartile bins, if false will use equally space bins.
+    :param thr_col: name of column containing DV: e.g., 'probeLum' or 'NEW_probeLum'.
+    :param sep_col: name of column containing separations.
+    :param sep_list: list of separation values.
+    :param isi_list: Default=None. list of ISI values.  If None passed will use default values.
+    :param sep_list: Default=None.  List of separation values.  If None passed will use defualts.
+    :param hue_col: name of column containing third variable (e.g., probe_types, coherence etc).
+    :param hue_list: list of hue values.
+    :param conf_int: default: True.  Save and plot confidence/credible intervals
+    :param thr_type: default: 'Bayes'.  This gets threshold estimate from 'Fit' in results dict.
+            Can also pass 'CI95' to get threshold estimate from getThreshold.
+            Analysis of 1probe results suggests 'Bayes' is most reliable (lowest SD).
+    :param plot_both_curves: default: False.  If true will plot both 'Bayes' and 'CI95' on plots,
+            but currently needs thr_type set to CI95.
+    :param cols_to_add_dict: add dictionary of columns to insert to finished df (header=key, column=value)
+    :param save_name: Pass a name to save output or if None will save as 'psignifit_thresholds'.
+    :param show_plots: If True, will show plots immediately.
+    :param save_plots: If True, will save plots.
+    :param verbose: Print progress to screen
+
+    :return: Dataframe of thresholds from psignifit for each ISI and stair.
+    """
+
+    print('\n*** running get_psig_thr_w_hue() ***')
+
+    if thr_type not in ['Bayes', 'CI95']:
+        raise ValueError
+
+    if isi_list is None:
+        raise ValueError('Pass a list of ISI values to analyse')
+    isi_name_list = [f'{isi_col}_{i}' for i in isi_list]
+
+    # todo: tidy this up so it only uses hue if there is a hue.  Can maybe get rid of multiplier
+    if hue_col == None:
+        use_hue = False
+        hue_list = [None]
+        output_sep_col = sep_list
+    else:
+        use_hue = True
+        # output_sep_col cycles through separations e.g., [0, 3, 6, 0, 3, 6]
+        output_sep_col = list(np.tile(sep_list, len(hue_list)))
+        # repeat hue values for each separation e.g., ['inc', 'inc', 'inc', 'rot', 'rot', 'rot']
+        output_hue_col = list(np.repeat(hue_list, len(sep_list)))
+        hue_sep_names = [f'{c[:3]}_sep{s}' for c, s in zip(output_hue_col, output_sep_col)]
+    print(f"idiot check\n"
+          f"use_hue: {use_hue}, hue_list: {hue_list}, output_sep_col: {output_sep_col}")
+
+    print(f'root_path: {root_path}')
+    save_path = os.path.join(root_path, p_run_name)
+    print(f'save_path: {save_path}')
+
+
+    thr_array = np.zeros(shape=[len(sep_list)*len(hue_list), len(isi_list)])
+
+
+    # loop through isi values
+    for isi_idx, isi in enumerate(isi_list):
+        output_col_idx = isi_idx
+        if verbose:
+            print(f"\n{isi_idx}: isi: {isi}")
+
+        # get df for this isi only
+        isi_df = output_df[output_df[isi_col] == isi]
+
+        if verbose:
+            print(f'\nrunning analysis for {p_run_name}\n')
+            print(f"isi_df:\n{isi_df}")
+
+        #row to append thr to at end
+        output_row_idx = 0
+
+        for hue_idx, hue in enumerate(hue_list):
+
+            # if there is no hue, just use isi_df
+            if hue == None:  # could also use if not use_hue
+                hue_df = isi_df
+            else:
+                hue_df = isi_df[isi_df[hue_col] == hue]
+
+            for sep_idx, sep in enumerate(sep_list):
+                # get df just for one stair at this isi
+                sep_df = hue_df[hue_df[sep_col] == sep]
+
+                if verbose:
+                    print(f'\nsep_df (isi={isi}, hue={hue}, {sep_col}={sep}):\n{sep_df}')
+                    print(f'n correct = {hue_df[trial_correct_col].sum()}')
+
+                # todo: note, keep stairlevels set to None so it uses separation.  Stair_levels needs refactoring.
+                fit_curve_plot, psignifit_dict = results_to_psignifit(csv_path=sep_df,
+                                                                      save_path=save_path,
+                                                                      isi=isi, sep=sep, p_run_name=p_run_name,
+                                                                      sep_col=sep_col, stair_levels=None,
+                                                                      thr_col=thr_col, resp_col=trial_correct_col,
+                                                                      quartile_bins=q_bins, n_bins=n_bins,
+                                                                      save_np=False, target_threshold=.75,
+                                                                      sig_name='norm', est_type='MAP',
+                                                                      conf_int=conf_int,
+                                                                      thr_type=thr_type,
+                                                                      plot_both_curves=plot_both_curves,
+                                                                      save_plots=save_plots, show_plots=show_plots,
+                                                                      verbose=verbose
+                                                                      )
+
+                # append result to zeros_df
+                threshold = psignifit_dict['Threshold']
+                thr_array[output_row_idx, output_col_idx] = threshold
+
+                # update row of output df to put results in
+                output_row_idx += 1
+
+    print(f'thr_array:\n{thr_array}')
+
+    # make dataframe from array
+    thr_df = pd.DataFrame(thr_array, columns=isi_name_list)
+    thr_df.insert(0, sep_col, output_sep_col)
+    if use_hue:
+        thr_df.insert(0, hue_col, output_hue_col)
+        thr_df.insert(0, 'cond_type', hue_sep_names)
+
+    if cols_to_add_dict is not None:
+        for idx, (header, col_vals) in enumerate(cols_to_add_dict.items()):
+            thr_df.insert(idx+1, header, col_vals)
+
+    if verbose:
+        print(f"thr_df:\n{thr_df}")
+
+    # save threshold array
+    if save_name is None:
+        thr_filename = f'psignifit_thresholds'
+    else:
+        thr_filename = save_name
+    thr_filename = f'{thr_filename}.csv'
+
+    thr_filepath = os.path.join(root_path, p_run_name, thr_filename)
+    print(f'saving psignifit_thresholds.csv to {thr_filepath}')
+    thr_df.to_csv(thr_filepath, index=False)
+
+    print('\n*** finished get_psig_thr_w_hue() ***\n')
+
+    return thr_df

@@ -2324,6 +2324,7 @@ def c_plots(save_path, thr_col='newLum', isi_name_list=None, show_plots=True, ve
 
 def d_average_participant(root_path, run_dir_names_list,
                           thr_df_name='psignifit_thresholds',
+                          groupby_col=None, cols_to_drop=None, cols_to_replace=None,
                           error_type=None,
                           trim_n=None,
                           verbose=True):
@@ -2340,6 +2341,8 @@ def d_average_participant(root_path, run_dir_names_list,
     :param root_path: dir containing run folders
     :param run_dir_names_list: names of run folders
     :param thr_df_name: Name of threshold dataframe.  If no name is given it will use 'psignifit_thresholds'.
+    :param groupby: Name of column(s) to average over.  Can be a string or list of strings.
+    :param cols_to_drop: Name of column(s) to drop.  Can be a string or list of strings.
     :param error_type: Default: None. Can pass sd or se for standard deviation or error.
     :param trim_n: default None.  If int is passed, will call function trim_n_high_n_low(),
             which trims the n highest and lowest values.
@@ -2400,128 +2403,171 @@ def d_average_participant(root_path, run_dir_names_list,
           f'{get_means_df.head()}')
 
     # # get means and errors
-    if 'stair_names' in get_means_df.columns:
-        groupby_sep_df = get_means_df.drop('stack', axis=1)
-        if 'congruent' in groupby_sep_df.columns:
-            groupby_sep_df = groupby_sep_df.drop('congruent', axis=1)
+    # # If I have cols to groupby and drop then use those, if not use all that long code below.
+    # todo: update scripts to use groupby and cols_to_drop.
+    # if cols_to_drop is not None & groupby_col is not None:
+    print(f'cols_to_drop: {cols_to_drop}')
+    print(f'groupby_col: {groupby_col}')
 
-        if 'area_deg' in groupby_sep_df.columns:
-            # for ricco_v2 experiment
-            # print(f"\nwhatabouthis:\n{groupby_sep_df.groupby(['cond', 'separation'], sort=True).sem()}")
+    if all(v is not None for v in [cols_to_drop, groupby_col]):
+        print('yes running with grouby_col and cols_to_drop')
 
-            ave_psignifit_thr_df = groupby_sep_df.groupby(['cond', 'separation'], sort=False).mean()
-            # print(f'\njust made ave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
-            stair_names = groupby_sep_df['stair_names'].unique()
-            ave_psignifit_thr_df.insert(0, 'stair_names', stair_names)
-            cond_values = ave_psignifit_thr_df.index.get_level_values('cond').to_list()
-            sep_values = ave_psignifit_thr_df.index.get_level_values('separation').to_list()
-            area_deg_values = ave_psignifit_thr_df['area_deg'].to_list()
-            area_pix_vals = ave_psignifit_thr_df['n_pixels'].to_list()
-            len_values = ave_psignifit_thr_df['length'].to_list()
+        groupby_sep_df = get_means_df.drop(cols_to_drop, axis=1)
+        ave_psignifit_thr_df = groupby_sep_df.groupby(groupby_col, sort=False,
+                                                      # as_index=False
+                                                      ).mean()
 
-            print(f'\ncond_values:\n{cond_values}')
-            print(f'sep_values:\n{sep_values}')
-            # print('just made ave_psignifit_thr_df')
-        else:
-            groupby_sep_df = groupby_sep_df.drop('separation', axis=1)
-            if 'cond' in groupby_sep_df.columns:
-                groupby_sep_df = groupby_sep_df.drop('cond', axis=1)
-            ave_psignifit_thr_df = groupby_sep_df.groupby('stair_names', sort=False).mean()
+        if cols_to_replace is not None:
+            replace_cols = ave_psignifit_thr_df[[cols_to_replace]]
+            print(f"replace_cols: {cols_to_replace}\n{replace_cols}")
 
         if verbose:
-            print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
             print(f'\ngroupby_sep_df:\n{groupby_sep_df}')
-
-        # groupby_sep_df = groupby_sep_df.drop(['separation', 'cond', 'area_deg'], axis=1)
-        # print(f'\ngroupby_sep_df:\n{groupby_sep_df}')
+            print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
 
         if error_type in [False, None]:
             error_bars_df = None
         elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
-            error_bars_df = groupby_sep_df.groupby('stair_names', sort=False).sem()
+            error_bars_df = groupby_sep_df.groupby(groupby_col, sort=False).sem()
         elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
-            error_bars_df = groupby_sep_df.groupby('stair_names', sort=False).std()
+            error_bars_df = groupby_sep_df.groupby(groupby_col, sort=False).std()
         else:
             raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
                              f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standard_error']\n"
                              f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
                              f"'deviation', 'standard_deviation']")
-        # print('just made error_bars_df')
 
-        if 'area_deg' in error_bars_df.columns.to_list():
-            # todo:do I still need this - area_deg not in ricco df
+        error_bars_df = error_bars_df.drop(cols_to_replace, axis=1)
+        error_bars_df.insert(0, cols_to_replace, replace_cols)
+        if verbose:
             print(f'\nerror_bars_df:\n{error_bars_df}')
 
-            # getting sep and col vals from here, not above, as order changes if conds have NaNs due to only 1 run.
-            stair_names_list = error_bars_df.index.get_level_values('stair_names').to_list()
-            print(f'\nstair_names_list:\n{stair_names_list}')
-            sep_vals = []
-            cond_vals = []
-            for name in stair_names_list:
-                x = name.split("_")
-                sep_vals.append(int(x[0]))
-                cond_vals.append(x[1])
-            print(f'\nsep_vals:\n{sep_vals}')
-            print(f'\ncond_vals:\n{cond_vals}')
 
-            # for ricco_v2 exp - change order to match ave_psignifit_thr_df
-            error_bars_df.insert(0, 'cond', cond_vals)
-            error_bars_df['separation'] = sep_vals
-            error_bars_df['area_deg'] = area_deg_values
-            error_bars_df['n_pixels'] = area_pix_vals
-            error_bars_df['length'] = len_values
-            error_bars_df.reset_index()
-            print(f'check columns: {error_bars_df.columns.to_list()}')
-            # col_order = ['cond', 'separation', 'stair_names', 'area', 'weber_thr', 'ISI_0']
-            col_order = ['cond', 'separation', 'area_deg', 'n_pixels', 'length', 'delta_I', 'weber_thr', 'thr']
-
-            error_bars_df.reset_index(inplace=True)
-            error_bars_df = error_bars_df[col_order]
-            error_bars_df.set_index(['cond', 'separation'], inplace=True)
-
-            print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
-        print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
-
-    else:
-        # todo: do I still need this?
-        # for Exp2_Bloch_NM_v2
-        if thr_df_name == 'long_thr_df':
+    else:  # if there are no group_col by or cols_to_drop
+        if 'stair_names' in get_means_df.columns:
             groupby_sep_df = get_means_df.drop('stack', axis=1)
-            ave_psignifit_thr_df = groupby_sep_df.groupby(['cond_type', 'dur_ms', 'ISI'], sort=False).mean()
+            if 'congruent' in groupby_sep_df.columns:
+                groupby_sep_df = groupby_sep_df.drop('congruent', axis=1)
+
+            if 'area_deg' in groupby_sep_df.columns:
+                # for ricco_v2 experiment
+                # print(f"\nwhatabouthis:\n{groupby_sep_df.groupby(['cond', 'separation'], sort=True).sem()}")
+
+                ave_psignifit_thr_df = groupby_sep_df.groupby(['cond', 'separation'], sort=False).mean()
+                # print(f'\njust made ave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
+                stair_names = groupby_sep_df['stair_names'].unique()
+                ave_psignifit_thr_df.insert(0, 'stair_names', stair_names)
+                cond_values = ave_psignifit_thr_df.index.get_level_values('cond').to_list()
+                sep_values = ave_psignifit_thr_df.index.get_level_values('separation').to_list()
+                area_deg_values = ave_psignifit_thr_df['area_deg'].to_list()
+                area_pix_vals = ave_psignifit_thr_df['n_pixels'].to_list()
+                len_values = ave_psignifit_thr_df['length'].to_list()
+
+                print(f'\ncond_values:\n{cond_values}')
+                print(f'sep_values:\n{sep_values}')
+                # print('just made ave_psignifit_thr_df')
+            else:
+                groupby_sep_df = groupby_sep_df.drop('separation', axis=1)
+                if 'cond' in groupby_sep_df.columns:
+                    groupby_sep_df = groupby_sep_df.drop('cond', axis=1)
+                ave_psignifit_thr_df = groupby_sep_df.groupby('stair_names', sort=False).mean()
 
             if verbose:
                 print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
+                print(f'\ngroupby_sep_df:\n{groupby_sep_df}')
+
+            # groupby_sep_df = groupby_sep_df.drop(['separation', 'cond', 'area_deg'], axis=1)
+            # print(f'\ngroupby_sep_df:\n{groupby_sep_df}')
+
             if error_type in [False, None]:
                 error_bars_df = None
             elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
-                error_bars_df = groupby_sep_df.groupby(['cond_type', 'dur_ms', 'ISI'], sort=False).sem()
+                error_bars_df = groupby_sep_df.groupby('stair_names', sort=False).sem()
             elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
-                error_bars_df = groupby_sep_df.groupby(['cond_type', 'dur_ms', 'ISI'], sort=False).std()
+                error_bars_df = groupby_sep_df.groupby('stair_names', sort=False).std()
             else:
                 raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
                                  f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standard_error']\n"
                                  f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
                                  f"'deviation', 'standard_deviation']")
+            # print('just made error_bars_df')
+
+            if 'area_deg' in error_bars_df.columns.to_list():
+                # todo:do I still need this - area_deg not in ricco df
+                print(f'\nerror_bars_df:\n{error_bars_df}')
+
+                # getting sep and col vals from here, not above, as order changes if conds have NaNs due to only 1 run.
+                stair_names_list = error_bars_df.index.get_level_values('stair_names').to_list()
+                print(f'\nstair_names_list:\n{stair_names_list}')
+                sep_vals = []
+                cond_vals = []
+                for name in stair_names_list:
+                    x = name.split("_")
+                    sep_vals.append(int(x[0]))
+                    cond_vals.append(x[1])
+                print(f'\nsep_vals:\n{sep_vals}')
+                print(f'\ncond_vals:\n{cond_vals}')
+
+                # for ricco_v2 exp - change order to match ave_psignifit_thr_df
+                error_bars_df.insert(0, 'cond', cond_vals)
+                error_bars_df['separation'] = sep_vals
+                error_bars_df['area_deg'] = area_deg_values
+                error_bars_df['n_pixels'] = area_pix_vals
+                error_bars_df['length'] = len_values
+                error_bars_df.reset_index()
+                print(f'check columns: {error_bars_df.columns.to_list()}')
+                # col_order = ['cond', 'separation', 'stair_names', 'area', 'weber_thr', 'ISI_0']
+                col_order = ['cond', 'separation', 'area_deg', 'n_pixels', 'length', 'delta_I', 'weber_thr', 'thr']
+
+                error_bars_df.reset_index(inplace=True)
+                error_bars_df = error_bars_df[col_order]
+                error_bars_df.set_index(['cond', 'separation'], inplace=True)
+
+                print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
             print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
 
-        elif 'probeSpeed' in get_means_df.columns.to_list():
-            groupby_sep_df = get_means_df.drop('stack', axis=1)
-            ave_psignifit_thr_df = groupby_sep_df.groupby(['probeSpeed'], sort=True).mean()
-            if verbose:
-                print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
+        else:
+            # todo: do I still need this?
+            # for Exp2_Bloch_NM_v2
+            if thr_df_name == 'long_thr_df':
+                groupby_sep_df = get_means_df.drop('stack', axis=1)
+                ave_psignifit_thr_df = groupby_sep_df.groupby(['cond_type', 'dur_ms', 'ISI'], sort=False).mean()
 
-            if error_type in [False, None]:
-                error_bars_df = None
-            elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
-                error_bars_df = groupby_sep_df.groupby(['probeSpeed'], sort=True).sem()
-            elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
-                error_bars_df = groupby_sep_df.groupby(['probeSpeed'], sort=True).std()
-            else:
-                raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
-                                 f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standard_error']\n"
-                                 f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
-                                 f"'deviation', 'standard_deviation']")
-            print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
+                if verbose:
+                    print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
+                if error_type in [False, None]:
+                    error_bars_df = None
+                elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
+                    error_bars_df = groupby_sep_df.groupby(['cond_type', 'dur_ms', 'ISI'], sort=False).sem()
+                elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
+                    error_bars_df = groupby_sep_df.groupby(['cond_type', 'dur_ms', 'ISI'], sort=False).std()
+                else:
+                    raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
+                                     f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standard_error']\n"
+                                     f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
+                                     f"'deviation', 'standard_deviation']")
+                print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
+
+            elif 'probeSpeed' in get_means_df.columns.to_list():
+                groupby_sep_df = get_means_df.drop('stack', axis=1)
+                ave_psignifit_thr_df = groupby_sep_df.groupby(['probeSpeed'], sort=True).mean()
+                if verbose:
+                    print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
+
+                if error_type in [False, None]:
+                    error_bars_df = None
+                elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
+                    error_bars_df = groupby_sep_df.groupby(['probeSpeed'], sort=True).sem()
+                elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
+                    error_bars_df = groupby_sep_df.groupby(['probeSpeed'], sort=True).std()
+                else:
+                    raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
+                                     f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standard_error']\n"
+                                     f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
+                                     f"'deviation', 'standard_deviation']")
+                print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
+
+
 
     # save csv with average values
     # todo: since I added extra ISI conditions, ISI conds are not in ascending order.
