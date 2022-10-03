@@ -45,7 +45,7 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'Nick_work_laptop'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
+monitor_name = 'HP_24uh'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 
 # Store info about the experiment session
 expName = 'EXP4_missing_probe'  # from the Builder filename that created this script
@@ -420,7 +420,14 @@ for step in range(n_trials_per_stair):
         coherence = coherence_list[stair_idx]
         sep = sep_vals_list[stair_idx]
         ISI = ISI_vals_list[stair_idx]
-        print(f"coherence: {coherence}, ISI: {ISI}, sep: {sep}")
+
+        if coherence in ['incoherent', 'inc']:
+            neg_sep = 0-sep
+            if sep == 0:
+                neg_sep = -.1
+        else:
+            neg_sep = sep
+        print(f"coherence: {coherence}, ISI: {ISI}, sep: {sep} (neg_sep: {neg_sep})")
 
         # staircase varies probeLum
         probeLum = thisStair.next()
@@ -735,7 +742,8 @@ for step in range(n_trials_per_stair):
         thisExp.addData('step', step)
         thisExp.addData('separation', sep)
         thisExp.addData('ISI', ISI)
-        thisExp.addData('probes_type', probes_type)
+        thisExp.addData('cond_type', probes_type)
+        thisExp.addData('neg_sep', neg_sep)
         thisExp.addData('example_name ', example_name)
         thisExp.addData('probeColor1', probeColor1)
         thisExp.addData('probeColor255', probeColor255)
