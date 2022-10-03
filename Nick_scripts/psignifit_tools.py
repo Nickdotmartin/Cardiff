@@ -293,10 +293,6 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
         print(f'\nthreshold: {threshold}\n'
               f'CI_limits: {CI_limits}')
 
-    print(f'\n\nidiot check:\n'
-          f'res["Fit"]:\n{res["Fit"]}\n'
-          f'res["conf_Intervals"]\n{res["conf_Intervals"]}\n')
-
     '''I'm not sure whether the slope relates to Bayes or CI95 slope???'''
     # slope_at_target = round(ps.getSlopePC(res, target_threshold), 2)
     slope_at_target = ps.getSlopePC(res, target_threshold)
@@ -804,9 +800,6 @@ def get_psig_thr_w_hue(root_path, p_run_name, output_df, n_bins=9, q_bins=True,
         output_sep_col = list(np.tile(sep_list, len(hue_list)))
         # repeat hue values for each separation e.g., ['inc', 'inc', 'inc', 'rot', 'rot', 'rot']
         output_hue_col = list(np.repeat(hue_list, len(sep_list)))
-        hue_sep_names = [f'{c[:3]}_sep{s}' for c, s in zip(output_hue_col, output_sep_col)]
-    print(f"idiot check\n"
-          f"use_hue: {use_hue}, hue_list: {hue_list}, output_sep_col: {output_sep_col}")
 
     print(f'root_path: {root_path}')
     save_path = os.path.join(root_path, p_run_name)
@@ -878,11 +871,10 @@ def get_psig_thr_w_hue(root_path, p_run_name, output_df, n_bins=9, q_bins=True,
     thr_df.insert(0, sep_col, output_sep_col)
     if use_hue:
         thr_df.insert(0, hue_col, output_hue_col)
-        thr_df.insert(0, 'cond_type', hue_sep_names)
 
     if cols_to_add_dict is not None:
         for idx, (header, col_vals) in enumerate(cols_to_add_dict.items()):
-            thr_df.insert(idx+1, header, col_vals)
+            thr_df.insert(idx+2, header, col_vals)
 
     if verbose:
         print(f"thr_df:\n{thr_df}")

@@ -14,15 +14,15 @@ from exp1a_psignifit_analysis import plt_heatmap_row_col
 exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\EXP4_missing_probe'
 exp_path = os.path.normpath(exp_path)
 
-coherence_type = 'Rotation'  # 'Radial', Translation
+coherence_type = 'Radial'  # 'Radial', Translation, Rotation
 exp_path = os.path.join(exp_path, coherence_type)
 
-participant_list = ['Simon']  # , 'Nick']  # , 'Nick_half_speed']
+participant_list = ['Nick', 'Simon']  # , 'Nick_half_speed']
 
 verbose = True
 show_plots = True
 
-n_runs = 1  # 12
+n_runs = 12  # 12
 # if the first folder to analyse is 1, p_idx_plus = 1.  If the forst folder is 5, use 5 etc.
 p_idx_plus = 1
 
@@ -33,64 +33,100 @@ for p_idx, participant_name in enumerate(participant_list):
     # # search to automatically get run_folder_names
     dir_list = os.listdir(root_path)
     run_folder_names = []
-    for i in range(12):  # numbers 0 to 11
+    for i in range(n_runs):  # numbers 0 to 11
         check_dir = f'{participant_name}_{i+p_idx_plus}'   # numbers 1 to 12
         if check_dir in dir_list:
             run_folder_names.append(check_dir)
 
     print(f'run_folder_names: {run_folder_names}')
 
-    # for run_idx, run_dir in enumerate(run_folder_names):
-    #
-    #     # add run number , e.g., add five to access Nick_5 on the zeroth iteration
-    #     r_idx_plus = run_idx + p_idx_plus
-    #
-    #     print(f'\nrun_idx {run_idx+1}: running analysis for '
-    #           f'{participant_name}, {run_dir}, {participant_name}_{r_idx_plus}')
-    #     save_path = os.path.join(root_path, run_dir)
-    #
-    #     # don't delete this (p_name = participant_name),
-    #     # needed to ensure names go name1, name2, name3 not name1, name12, name123
-    #     p_name = participant_name
-    #
-    #     '''a'''
-    #     # # I don't need data extraction as all ISIs are in same df.
-    #     p_name = f'{participant_name}_output'  # use this one
-    #     try:
-    #         run_data_df = pd.read_csv(os.path.join(save_path, f'{p_name}.csv'))
-    #     except:
-    #         p_name = f'{participant_name}_{r_idx_plus}_output'
-    #         run_data_df = pd.read_csv(os.path.join(save_path, f'{p_name}.csv'))
-    #
-    #     run_data_df = pd.read_csv(os.path.join(save_path, f'{p_name}.csv'))
-    #     run_data_df = run_data_df.sort_values(by=['stair', 'trial_number'])
-    #     print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
-    #
-    #     # # # get cond details for this exp
-    #     separation_list = run_data_df['separation'].unique().tolist()
-    #     isi_list = run_data_df['ISI'].unique().tolist()
-    #     coherence_list = run_data_df['probes_type'].unique().tolist()
-    #     print(f'separation_list: {separation_list}')
-    #     print(f'isi_list: {isi_list}')
-    #     print(f'coherence_list: {coherence_list}')
-    #
-    #     thr_df = get_psig_thr_w_hue(root_path=root_path,
-    #                                 p_run_name=run_dir,
-    #                                 output_df=run_data_df,
-    #                                 n_bins=9, q_bins=True,
-    #                                 thr_col='probeLum',
-    #                                 sep_col='separation', sep_list=separation_list,
-    #                                 isi_col='ISI', isi_list=isi_list,
-    #                                 hue_col='probes_type', hue_list=coherence_list,
-    #                                 # stair_col="stair",
-    #                                 trial_correct_col='trial_response',
-    #                                 conf_int=True,
-    #                                 thr_type='Bayes',
-    #                                 plot_both_curves=False,
-    #                                 # cols_to_add_dict=cols_to_add_dict,
-    #                                 show_plots=False,
-    #                                 verbose=verbose)
-    #     print(f'thr_df:\n{thr_df}')
+    for run_idx, run_dir in enumerate(run_folder_names):
+
+        # add run number , e.g., add five to access Nick_5 on the zeroth iteration
+        r_idx_plus = run_idx + p_idx_plus
+
+        print(f'\nrun_idx {run_idx+1}: running analysis for '
+              f'{participant_name}, {run_dir}, {participant_name}_{r_idx_plus}')
+        save_path = os.path.join(root_path, run_dir)
+
+        # don't delete this (p_name = participant_name),
+        # needed to ensure names go name1, name2, name3 not name1, name12, name123
+        p_name = participant_name
+
+        '''a'''
+        # # I don't need data extraction as all ISIs are in same df.
+        p_name = f'{participant_name}_output'  # use this one
+        try:
+            run_data_df = pd.read_csv(os.path.join(save_path, f'{p_name}.csv'))
+        except:
+            p_name = f'{participant_name}_{r_idx_plus}_output'
+            run_data_df = pd.read_csv(os.path.join(save_path, f'{p_name}.csv'))
+
+        run_data_df = pd.read_csv(os.path.join(save_path, f'{p_name}.csv'))
+        run_data_df = run_data_df.sort_values(by=['stair', 'trial_number'])
+        print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
+
+        # # check for old column names and add new columns
+        col_names = run_data_df.columns.to_list()
+        # change probes_type to cond_type
+        if 'probes_type' in col_names:
+            run_data_df.rename(columns={'probes_type': 'cond_type'}, inplace=True)
+            print('\nrenamed probes_type to cond_type')
+
+        # add neg sep column to make batman plots
+        if 'neg_sep' not in col_names:
+            def make_neg_sep(df):
+                if (df.cond_type == 'incoherent') and (df.separation == 0.0):
+                    return -.1
+                elif df.cond_type == 'incoherent':
+                    return 0 - df.separation
+                else:
+                    return df.separation
+            run_data_df.insert(7, 'neg_sep', run_data_df.apply(make_neg_sep, axis=1))
+            print('\nadded neg_sep col')
+            print(run_data_df['neg_sep'].to_list())
+
+        # todo: not sure I actually need this column at all - I don't use it
+        # fix stairnames
+        if len(run_data_df['stair_name'].unique().tolist()) == 1:
+            run_data_df['stair_name'] = run_data_df['cond_type'].str[:3] + '_sep' + run_data_df['separation'].astype(str) + '_ISI' + run_data_df['ISI'].astype(str)
+            print('\nupdated stair_name')
+            print(run_data_df['stair_name'].to_list())
+
+        if 'Unnamed: 0' in col_names:
+            run_data_df.drop('Unnamed: 0', axis=1, inplace=True)
+
+        print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
+        run_data_df.to_csv(os.path.join(save_path, f'{p_name}.csv'), index=False)
+
+        # # # get cond details for this exp
+        separation_list = run_data_df['separation'].unique().tolist()
+        neg_sep_list = run_data_df['neg_sep'].unique().tolist()
+        isi_list = run_data_df['ISI'].unique().tolist()
+        cond_type_list = run_data_df['cond_type'].unique().tolist()
+        print(f'separation_list: {separation_list}')
+        print(f'neg_sep_list: {neg_sep_list}')
+        print(f'isi_list: {isi_list}')
+        print(f'cond_type_list: {cond_type_list}')
+
+        cols_to_add_dict = {'neg_sep': neg_sep_list}
+
+        thr_df = get_psig_thr_w_hue(root_path=root_path,
+                                    p_run_name=run_dir,
+                                    output_df=run_data_df,
+                                    n_bins=9, q_bins=True,
+                                    thr_col='probeLum',
+                                    sep_col='separation', sep_list=separation_list,
+                                    isi_col='ISI', isi_list=isi_list,
+                                    hue_col='cond_type', hue_list=cond_type_list,
+                                    trial_correct_col='trial_response',
+                                    conf_int=True,
+                                    thr_type='Bayes',
+                                    plot_both_curves=False,
+                                    cols_to_add_dict=cols_to_add_dict,
+                                    show_plots=False,
+                                    verbose=verbose)
+        print(f'thr_df:\n{thr_df}')
     #
     #     # '''b3'''
     #     # b3_plot_staircase(run_data_path, thr_col='probeLum', show_plots=show_plots, verbose=verbose)
@@ -106,7 +142,7 @@ for p_idx, participant_name in enumerate(participant_list):
     print(f'\ntrim_n: {trim_n}')
 
     d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-                          groupby_col=['cond_type', 'probes_type'], cols_to_drop='stack', cols_to_replace='separation',
+                          groupby_col=['cond_type', 'neg_sep'], cols_to_drop='stack', cols_to_replace='separation',
                           trim_n=trim_n, error_type='SE', verbose=verbose)
 
 
@@ -120,97 +156,44 @@ for p_idx, participant_name in enumerate(participant_list):
         err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
     exp_ave = False
 
-    # make separation values negative
-    all_df = pd.read_csv(all_df_path)
-    if 'stair_names' not in list(all_df.columns):
-        ave_df = pd.read_csv(p_ave_path)
-        err_df = pd.read_csv(err_path)
-        print(f'\nall_df:\n{all_df}')
-        print(f'\nave_df:\n{ave_df}')
-        print(f'\nerr_df:\n{err_df}')
 
-        # sort neg sep for all_df
-        all_df_neg_sep_options = [
-            (all_df['probes_type'] == 'rotation'),
-            (all_df['probes_type'] == 'radial'),
-            (all_df['probes_type'] == 'translation'),
-            (all_df['probes_type'] == 'incoherent'),
-            (all_df['probes_type'] == 'incoherent') & (all_df['separation'] == 0)]
-        values = [all_df['separation'], all_df['separation'], all_df['separation'], -all_df['separation'], -.1]
-        all_df.insert(3, 'stair_names', np.select(all_df_neg_sep_options, values))
-        print(f'\nall_df:\n{all_df}')
-        # all_df.to_csv(all_df_path)
-
-        # sort neg sep for ave_df
-        ave_df_neg_sep_options = [
-            (ave_df['probes_type'] == 'rotation'),
-            (ave_df['probes_type'] == 'radial'),
-            (ave_df['probes_type'] == 'translation'),
-            (ave_df['probes_type'] == 'incoherent'),
-            (ave_df['probes_type'] == 'incoherent') & (ave_df['separation'] == 0)]
-        values = [ave_df['separation'], ave_df['separation'], ave_df['separation'], -ave_df['separation'], -.1]
-        ave_df.insert(3, 'stair_names', np.select(ave_df_neg_sep_options, values))
-        print(f'\nave_df:\n{ave_df}')
-        # ave_df.to_csv(p_ave_path)
-
-
-        # sort neg sep for err_df
-        # err_df_neg_sep_options = [
-        #     (err_df['probes_type'] == 'rotation'),
-        #     (err_df['probes_type'] == 'radial'),
-        #     (err_df['probes_type'] == 'translation'),
-        #     (err_df['probes_type'] == 'incoherent'),
-        #     (err_df['probes_type'] == 'incoherent') & (err_df['separation'] == 3.00)]
-        # values = [err_df['separation'], err_df['separation'], err_df['separation'], -err_df['separation'], -.1999]
-        # err_df.insert(3, 'stair_names', np.select(err_df_neg_sep_options, values))
-        # print(f'\nerr_df:\n{err_df}')
-        # err_df.to_csv(err_path)
-        def make_neg_sep(df):
-            if (df.probes_type == 'incoherent') and (df.separation == 0.0):
-                return -.1
-            elif df.probes_type == 'incoherent':
-                return 0-df.separation
-            else:
-                return df.separation
-
-
-        # err_df['stair_names'] = err_df.apply(make_neg_sep, axis=1)
-        err_df.insert(3, 'stair_names', err_df.apply(make_neg_sep, axis=1))
-        print(f'\nerr_df:\n{err_df}')
+    make_average_plots(all_df_path=all_df_path,
+                       ave_df_path=p_ave_path,
+                       error_bars_path=err_path,
+                       thr_col='probeLum',
+                       stair_names_col='neg_sep',
+                       cond_type_col='cond_type',
+                       cond_type_order=['incoherent', coherence_type.lower()],
+                       n_trimmed=trim_n,
+                       ave_over_n=len(run_folder_names),
+                       exp_ave=False,
+                       show_plots=True, verbose=True)
 
 
 
-    # make_average_plots(all_df_path=all_df_path,
-    #                    ave_df_path=p_ave_path,
-    #                    error_bars_path=err_path,
-    #                    thr_col='probeLum',
-    #                    n_trimmed=trim_n,
-    #                    ave_over_n=len(run_folder_names),
-    #                    exp_ave=False,
-    #                    show_plots=True, verbose=True)
+print(f'exp_path: {exp_path}')
+# participant_list = ['Nick', 'Simon']
+print('\nget exp_average_data')
+trim_n = 2
+e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
+                   exp_type='missing_probe',
+                   error_type='SE', n_trimmed=trim_n, verbose=True)
 
 
-#
-# print(f'exp_path: {exp_path}')
-# # participant_list = ['Nick_half', 'Simon_half']
-# print('\nget exp_average_data')
-# trim_n = 2
-# # todo: sort script to automatically use trim=2 if its there, and not just use untrimmed
-# e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
-#                    error_type='SE', n_trimmed=trim_n, verbose=True)
-#
-#
-# all_df_path = os.path.join(exp_path, "MASTER_exp_thr.csv")
-# exp_ave_path = os.path.join(exp_path, "MASTER_exp_ave_thr.csv")
-# err_path = os.path.join(exp_path, "MASTER_ave_thr_error_SE.csv")
-#
-# make_average_plots(all_df_path=all_df_path,
-#                    ave_df_path=exp_ave_path,
-#                    error_bars_path=err_path,
-#                    thr_col='probeLum',
-#                    n_trimmed=trim_n,
-#                    ave_over_n=len(participant_list),
-#                    exp_ave=True,
-#                    show_plots=True, verbose=True)
+all_df_path = os.path.join(exp_path, "MASTER_exp_thr.csv")
+exp_ave_path = os.path.join(exp_path, "MASTER_exp_ave_thr.csv")
+err_path = os.path.join(exp_path, "MASTER_ave_thr_error_SE.csv")
+
+make_average_plots(all_df_path=all_df_path,
+                   ave_df_path=exp_ave_path,
+                   error_bars_path=err_path,
+                   thr_col='probeLum',
+                   stair_names_col='neg_sep',
+                   cond_type_col='cond_type',
+                   cond_type_order=['incoherent', coherence_type.lower()],
+                   n_trimmed=trim_n,
+                   ave_over_n=len(participant_list),
+                   exp_ave=True,
+                   show_plots=True, verbose=True)
 
 print('\nExp_4_missing_probe_analysis_pipe finished')

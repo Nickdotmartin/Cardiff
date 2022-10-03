@@ -245,6 +245,10 @@ def make_long_df(wide_df,
 
     long_df = pd.concat(long_list)
     long_df.reset_index(drop=True, inplace=True)
+
+    if new_col_name == 'ISI':
+        long_df["ISI"] = long_df["ISI"].astype(int)
+
     if verbose:
         print(f'long_df:\n{long_df}')
 
@@ -838,8 +842,8 @@ def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'
         jitter_vals = np.random.uniform(size=n_jitter, low=-jit_max, high=jit_max)
         jitter_dict = dict(zip(jitter_keys, jitter_vals))
         jitter_x = [a + jitter_dict[b] for a, b in zip(list(long_df[data_for_x]), list(long_df[hue_var]))]
-        long_df.insert(0, 'jitter_x', jitter_x)
-        data_for_x = 'jitter_x'
+        long_df.insert(0, f'jitter_{hue_var}_x', jitter_x)
+        data_for_x = f'jitter_{hue_var}_x'
 
     conf_interval = None
     if error_bars:
@@ -850,6 +854,11 @@ def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'
         print(f'error_bars: {error_bars}')
         print(f'conf_interval: {conf_interval}')
         print(f'x_tick_vals: {x_tick_vals}')
+        print(f'data_for_x: {data_for_x}')
+        print(f'y_axis: {y_axis}')
+        print(f'hue_var: {hue_var}')
+        print(f'style_var: {style_var}')
+        print(f'style_order: {style_order}')
 
     # initialize plot
     if hue_var is None:
@@ -968,6 +977,14 @@ def plot_diff(ave_thr_df, stair_names_col='stair_names', fig_title=None,
         incong_df.reset_index(drop=True, inplace=True)
         print(f'\nincong_df: {incong_df.shape}\n{incong_df}')
 
+
+    # # drop any string or object columns, then put back in later
+    df_dtypes = cong_df.dtypes
+    print(f"df_dtypes:\n{df_dtypes}")
+    cong_df = cong_df.select_dtypes(exclude=['object'])
+    print(f"cong_df:\n{cong_df}")
+    incong_df = incong_df.select_dtypes(exclude=['object'])
+    print(f"incong_df:\n{incong_df}")
 
     # subtract one from the other
     diff_df = cong_df - incong_df
@@ -1244,44 +1261,7 @@ def multi_pos_sep_per_isi(ave_thr_df, error_df,
               f'error_df:\n{error_df}')
         print(f'max_thr: {max_thr}\nmin_thr: {min_thr}')
 
-    print(f'idiot check: indices\n'
-          f'ave_thr_df.index.tolist(): {ave_thr_df.index.tolist()}\n'
-          f'type: {type(ave_thr_df.index.tolist()[0])}\n'
-          f'ave_thr_df[stair_names_col].tolist(): {ave_thr_df[stair_names_col].tolist()}\n'
-          f'type: {type(ave_thr_df[stair_names_col].tolist()[0])}\n'          
-          f''
-          f'')
-
-
-
     stair_names_list = ave_thr_df[stair_names_col].to_list()
-
-
-    # if abs(stair_names_list[0]) == abs(stair_names_list[1]):
-    #     print('these are alternating pairs of cong incong')
-    # elif abs(stair_names_list[0]) == abs(stair_names_list[-1]):
-    #     print('these are mirror image of all cong then all incong in rev order\n'
-    #           'I will need to resort these')
-
-    # cong_stairs = sorted([i for i in stair_names_list if i >= 0])
-    # incong_stairs = sorted([i for i in stair_names_list if i < 0])
-    #
-    # if ((incong_stairs[0] == -18) and (cong_stairs[0] == 0)):
-    #     print('mismatch')
-    #     cong_stairs = sorted(cong_stairs, reverse=True)
-    # elif ((incong_stairs[0] == -0.10) and (cong_stairs[0] == 18)):
-    #     print('mismatch2')
-    #     cong_stairs = sorted(cong_stairs, reverse=True)
-    #
-    # print(f"stair_names_list: {stair_names_list}\n"
-    #       f"cong_stairs: {cong_stairs}\n"
-    #       f"incong_stairs: {incong_stairs}")
-
-    # cong_df = ave_thr_df.loc[ave_thr_df[stair_names_col].isin(cong_stairs)]
-    # incong_df = ave_thr_df.loc[ave_thr_df[stair_names_col].isin(incong_stairs)]
-    #
-    # cong_err_df = error_df.loc[error_df[stair_names_col].isin(cong_stairs)]
-    # incong_err_df = error_df.loc[error_df[stair_names_col].isin(incong_stairs)]
 
 
     if abs(stair_names_list[0]) == abs(stair_names_list[1]):
@@ -1293,6 +1273,12 @@ def multi_pos_sep_per_isi(ave_thr_df, error_df,
               "don't reverse cong rows")
         cong_rows = sorted(ave_thr_df.index[ave_thr_df[stair_names_col] >= 0].tolist(), reverse=False)
         incong_rows = sorted(ave_thr_df.index[ave_thr_df[stair_names_col] < 0].tolist(), reverse=True)
+    elif abs(sorted(stair_names_list)[0]) == abs(sorted(stair_names_list)[-1]):
+        print("these values might be repeated (e.g., [-1, -2, -3, 1, 2, 3], so don't sort them")
+        cong_rows = ave_thr_df.index[ave_thr_df[stair_names_col] >= 0].tolist()
+        incong_rows = ave_thr_df.index[ave_thr_df[stair_names_col] < 0].tolist()
+    else:
+        raise ValueError(f"Not sure which rows are paired in this dataframe.\n{ave_thr_df}")
 
 
     if verbose:
@@ -2399,13 +2385,14 @@ def d_average_participant(root_path, run_dir_names_list,
     else:
         get_means_df = all_data_psignifit_df
 
-    print(f'get_means_df: {get_means_df.columns.to_list()}\n'
+    print(f'\nget_means_df(head): {get_means_df.columns.to_list()}\n'
           f'{get_means_df.head()}')
 
     # # get means and errors
     # # If I have cols to groupby and drop then use those, if not use all that long code below.
     # todo: update scripts to use groupby and cols_to_drop.
     # if cols_to_drop is not None & groupby_col is not None:
+    print("\ngetting means and errors")
     print(f'cols_to_drop: {cols_to_drop}')
     print(f'groupby_col: {groupby_col}')
 
@@ -2439,6 +2426,7 @@ def d_average_participant(root_path, run_dir_names_list,
 
         error_bars_df = error_bars_df.drop(cols_to_replace, axis=1)
         error_bars_df.insert(0, cols_to_replace, replace_cols)
+        error_bars_df.fillna(0)
         if verbose:
             print(f'\nerror_bars_df:\n{error_bars_df}')
 
@@ -2584,12 +2572,15 @@ def d_average_participant(root_path, run_dir_names_list,
 
 
 def e_average_exp_data(exp_path, p_names_list,
+                       # stair_names_col,
+                       # groupby_col=None, cols_to_drop=None, cols_to_replace=None,
                        exp_type='rad_flow',
                        error_type='SE',
                        n_trimmed=None,
                        verbose=True):
 
     # todo: if necessary, have a separate function to transform data before feeding it into here.
+    # todo: add col vars to docstring
     """
     e_average_over_participants: take MASTER_ave_TM_thresh.csv (or MASTER_ave_thresh.csv)
     in each participant folder and make master list
@@ -2654,6 +2645,12 @@ def e_average_exp_data(exp_path, p_names_list,
 
         if exp_type in ['Ricco', 'Bloch', 'speed_detection']:
             this_p_ave_df.rename(columns={'ISI_0': 'thr'}, inplace=True)
+        elif exp_type == 'missing_probe':
+            print('Do I need to do anything here for missing probe exp?')
+            # todo: I can probably delete these
+            cont_type_col = this_p_ave_df['cond_type'].tolist()
+            neg_sep_col = this_p_ave_df['neg_sep'].tolist()
+            sep_col = this_p_ave_df['separation'].tolist()
         else:
             stair_names_list = this_p_ave_df['stair_names'].tolist()
             if verbose:
@@ -2691,6 +2688,12 @@ def e_average_exp_data(exp_path, p_names_list,
     elif exp_type == 'speed_detection':
         groupby_col = 'participant'
         sort_rows = False
+    elif exp_type == 'missing_probe':
+        groupby_col = ['cond_type', 'neg_sep']
+        groupby_sep_df = groupby_sep_df.drop('separation', axis=1)
+        sort_rows = 'neg_sep'
+    # groupby_col=['cond_type', 'neg_sep'], cols_to_drop='stack', cols_to_replace='separation',
+
     else:
         groupby_sep_df = groupby_sep_df.drop('separation', axis=1)
         groupby_sep_df = groupby_sep_df.drop('congruent', axis=1)
@@ -2728,6 +2731,9 @@ def e_average_exp_data(exp_path, p_names_list,
 
 def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                        thr_col='newLum',
+                       stair_names_col='stair_names',
+                       cond_type_col='congruent',
+                       cond_type_order=[1, -1],
                        n_trimmed=False,
                        ave_over_n=None,
                        exp_ave=False,
@@ -2783,19 +2789,31 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     if isi_name_list is None:
         isi_name_list = list(all_df.columns[4:])
+        isi_vals_list = [int(i[4:]) for i in isi_name_list]
 
     if verbose:
         print(f'\nall_df:\n{all_df}')
         print(f'\nave_df:\n{ave_df}')
         print(f'\nerror_bars_df:\n{error_bars_df}')
-        print(f'isi_name_list: {isi_name_list}')
+        print(f'\nisi_name_list: {isi_name_list}')
+        print(f'isi_vals_list: {isi_vals_list}')
 
-    stair_names_list = sorted(list(all_df['stair_names'].unique()))
+    # get pos sep values and pos and neg values
+    stair_names_list = sorted(list(all_df[stair_names_col].unique()))
     stair_names_list = [-.1 if i == -.10 else int(i) for i in stair_names_list]
     stair_names_labels = ['-0' if i == -.10 else int(i) for i in stair_names_list]
     if verbose:
         print(f"stair_names_list: {stair_names_list}")
         print(f"stair_names_labels: {stair_names_labels}")
+
+    if 'separation' in list(ave_df.columns):
+        pos_sep_vals_list = ave_df['separation'].unique().tolist()
+    else:
+        pos_sep_vals_list = ave_df[stair_names_col].unique().tolist()
+        pos_sep_vals_list = list(set([int(0) if i == -.1 else abs(int(i)) for i in pos_sep_vals_list]))
+    if verbose:
+        print(f'pos_sep_vals_list: {pos_sep_vals_list}')
+
 
     """part 3. main Figures (these are the ones saved in the matlab script)
     Fig1: plot average threshold for each ISI and sep.
@@ -2815,9 +2833,12 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         fig_1a_savename = f'ave_thr_pos_and_neg.png'
 
     # use ave_w_sep_idx_df for fig 1a and heatmap
-    ave_w_sep_idx_df = ave_df.set_index('stair_names')
+    ave_w_sep_idx_df = ave_df.set_index(stair_names_col)
     ave_w_sep_idx_df.sort_index(inplace=True)
-
+    if 'cond_type' in list(ave_w_sep_idx_df.columns):
+        ave_w_sep_idx_df.drop('cond_type', axis=1, inplace=True)
+    if 'separation' in list(ave_w_sep_idx_df.columns):
+        ave_w_sep_idx_df.drop('separation', axis=1, inplace=True)
     print(f"ave_w_sep_idx_df:\n{ave_w_sep_idx_df}")
 
     # if I delete this messy plot, I can also delete the function that made it.
@@ -2826,7 +2847,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                            legend_names=isi_name_list,
                            x_tick_vals=stair_names_list,
                            x_tick_labels=stair_names_labels,
-                           even_spaced_x=False, fixed_y_range=False,
+                           even_spaced_x=True, fixed_y_range=False,
                            fig_title=fig_1a_title, save_name=fig_1a_savename,
                            save_path=save_path, verbose=verbose)
     if show_plots:
@@ -2845,14 +2866,14 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
         # tod: It also seems that using evenly_spaced_x is messing it up.  Not sure why.
 
-    plot_w_errors_either_x_axis(wide_df=all_df, cols_to_keep=['congruent', 'separation'],
+    plot_w_errors_either_x_axis(wide_df=all_df, cols_to_keep=[cond_type_col, 'separation'],
                                 cols_to_change=isi_name_list,
                                 cols_to_change_show=thr_col, new_col_name='ISI',
                                 strip_from_cols='ISI_', x_axis='ISI', y_axis=thr_col,
-                                hue_var='separation', style_var='congruent', style_order=[1, -1],
+                                hue_var='separation', style_var=cond_type_col, style_order=cond_type_order,
                                 error_bars=True, even_spaced_x=True, jitter=.05,
                                 fig_title=fig_1b_title, fig_savename=fig_1b_savename,
-                                save_path=save_path, x_tick_vals=isi_name_list, verbose=verbose)
+                                save_path=save_path, x_tick_vals=isi_vals_list, verbose=verbose)
     if show_plots:
         plt.show()
     plt.close()
@@ -2867,17 +2888,17 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                        f'Bars=.68 CI, n={ave_over_n}'
         fig_1c_savename = f'ave_thr_all_runs_isi.png'
 
-    plot_w_errors_either_x_axis(wide_df=all_df, cols_to_keep=['congruent', 'separation'],
+    plot_w_errors_either_x_axis(wide_df=all_df, cols_to_keep=[cond_type_col, 'separation'],
                                 cols_to_change=isi_name_list,
                                 cols_to_change_show=thr_col, new_col_name='ISI',
                                 strip_from_cols='ISI_',
                                 x_axis='separation', y_axis=thr_col,
-                                hue_var='ISI', style_var='congruent', style_order=[1, -1],
+                                hue_var='ISI', style_var=cond_type_col, style_order=cond_type_order,
                                 error_bars=True,
                                 log_scale=False,
                                 even_spaced_x=True, jitter=.05,
                                 fig_title=fig_1c_title, fig_savename=fig_1c_savename,
-                                x_tick_vals=[0, 1, 2, 3, 6, 18], save_path=save_path, verbose=verbose)
+                                x_tick_vals=pos_sep_vals_list, save_path=save_path, verbose=verbose)
     if show_plots:
         plt.show()
     plt.close()
@@ -2894,8 +2915,10 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                        f'Bars=SE, n={ave_over_n}'
         fig_1d_savename = f'ave_thr_pos_sep_per_isi.png'
 
-    multi_pos_sep_per_isi(ave_thr_df=ave_df, error_df=error_bars_df,
-                          stair_names_col='stair_names',
+    use_these_cols = [stair_names_col] + isi_name_list
+
+    multi_pos_sep_per_isi(ave_thr_df=ave_df[use_these_cols], error_df=error_bars_df[use_these_cols],
+                          stair_names_col=stair_names_col,
                           even_spaced_x=True, error_caps=True,
                           fig_title=fig_1d_title,
                           save_path=save_path, save_name=fig_1d_savename,
@@ -2914,7 +2937,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                        f'(x-axis=Sep), n={ave_over_n}'
         fig_2a_savename = f'ave_diff_x_sep.png'
 
-    plot_diff(ave_df, stair_names_col='stair_names',
+    plot_diff(ave_df[use_these_cols], stair_names_col=stair_names_col,
               fig_title=fig_2a_title, save_path=save_path, save_name=fig_2a_savename,
               x_axis_isi=False, verbose=verbose)
     if show_plots:
@@ -2932,7 +2955,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                        f'(Positive=congruent has higher threshold, n={ave_over_n}).'
         fig_2b_savename = f'ave_diff_x_isi.png'
 
-    plot_diff(ave_df, stair_names_col='stair_names',
+    plot_diff(ave_df[use_these_cols], stair_names_col=stair_names_col,
               fig_title=fig_2b_title, save_path=save_path, save_name=fig_2b_savename,
               x_axis_isi=True, verbose=verbose)
     if show_plots:
