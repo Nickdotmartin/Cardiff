@@ -11,6 +11,8 @@ from datetime import datetime
 from math import tan, sqrt
 from kestenSTmaxVal import Staircase
 
+from memory_profiler import profile
+
 
 '''
 Missing probe study.
@@ -40,12 +42,13 @@ There are no mirror symmetrical patterns (less coherent - but still a pattern)
 # sets psychoPy to only log critical messages
 # logging.console.setLevel(logging.CRITICAL)
 
+
 # Ensure that relative paths start from the same directory as this script
 _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'HP_24uh'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
+monitor_name = 'Nick_work_laptop'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 
 # Store info about the experiment session
 expName = 'EXP4_missing_probe'  # from the Builder filename that created this script
@@ -83,9 +86,12 @@ probe_coherence = expInfo['6_probe_coherence']
 For 1probe condition, use separation==99.
 For concurrent probes, use ISI==-1.
 '''
-separations = [0, 3, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
+# todo: change conds back
+separations = [3]  # select from [0, 1, 2, 3, 6, 18, 99]
+ISI_values = [3]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+# separations = [0, 3, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
+# ISI_values = [-1, 3, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 print(f'separations: {separations}')
-ISI_values = [-1, 3, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 print(f'ISI_values: {ISI_values}')
 # repeat separation values for each ISI e.g., [0, 0, 6, 6]
 sep_vals_list = list(np.repeat(separations, len(ISI_values))) + list(np.repeat(separations, len(ISI_values)))

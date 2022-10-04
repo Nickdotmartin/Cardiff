@@ -40,6 +40,12 @@ for p_idx, participant_name in enumerate(participant_list):
 
     print(f'run_folder_names: {run_folder_names}')
 
+    '''for trimming'''
+    trim_n = None
+    if len(run_folder_names) == 12:
+        trim_n = 2
+    print(f'\ntrim_n: {trim_n}')
+
     for run_idx, run_dir in enumerate(run_folder_names):
 
         # add run number , e.g., add five to access Nick_5 on the zeroth iteration
@@ -136,11 +142,6 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
     '''d participant averages'''
-    trim_n = None
-    if len(run_folder_names) == 12:
-        trim_n = 2
-    print(f'\ntrim_n: {trim_n}')
-
     d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
                           groupby_col=['cond_type', 'neg_sep'], cols_to_drop='stack', cols_to_replace='separation',
                           trim_n=trim_n, error_type='SE', verbose=verbose)
@@ -174,7 +175,7 @@ for p_idx, participant_name in enumerate(participant_list):
 print(f'exp_path: {exp_path}')
 # participant_list = ['Nick', 'Simon']
 print('\nget exp_average_data')
-trim_n = 2
+trim_n = None
 e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
                    exp_type='missing_probe',
                    error_type='SE', n_trimmed=trim_n, verbose=True)
