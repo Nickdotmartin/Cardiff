@@ -14,17 +14,17 @@ from exp1a_psignifit_analysis import plt_heatmap_row_col
 exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\EXP4_missing_probe'
 exp_path = os.path.normpath(exp_path)
 
-coherence_type = 'Radial'  # 'Radial', Translation, Rotation
+coherence_type = 'Rotation'  # 'Radial', Translation, Rotation
 exp_path = os.path.join(exp_path, coherence_type)
 
-participant_list = ['Nick', 'Simon']  # , 'Nick_half_speed']
+participant_list = ['Nick']  # , 'Simon']
+analyse_from_run = 4
 
 verbose = True
 show_plots = True
 
 n_runs = 12  # 12
-# if the first folder to analyse is 1, p_idx_plus = 1.  If the forst folder is 5, use 5 etc.
-p_idx_plus = 1
+# if the first folder to analyse is 1, analyse_from_run = 1.  If the forst folder is 5, use 5 etc.
 
 for p_idx, participant_name in enumerate(participant_list):
 
@@ -34,7 +34,7 @@ for p_idx, participant_name in enumerate(participant_list):
     dir_list = os.listdir(root_path)
     run_folder_names = []
     for i in range(n_runs):  # numbers 0 to 11
-        check_dir = f'{participant_name}_{i+p_idx_plus}'   # numbers 1 to 12
+        check_dir = f'{participant_name}_{i+analyse_from_run}'   # numbers 1 to 12
         if check_dir in dir_list:
             run_folder_names.append(check_dir)
 
@@ -49,7 +49,7 @@ for p_idx, participant_name in enumerate(participant_list):
     for run_idx, run_dir in enumerate(run_folder_names):
 
         # add run number , e.g., add five to access Nick_5 on the zeroth iteration
-        r_idx_plus = run_idx + p_idx_plus
+        r_idx_plus = run_idx + analyse_from_run
 
         print(f'\nrun_idx {run_idx+1}: running analysis for '
               f'{participant_name}, {run_dir}, {participant_name}_{r_idx_plus}')
@@ -133,14 +133,8 @@ for p_idx, participant_name in enumerate(participant_list):
                                     show_plots=False,
                                     verbose=verbose)
         print(f'thr_df:\n{thr_df}')
-    #
-    #     # '''b3'''
-    #     # b3_plot_staircase(run_data_path, thr_col='probeLum', show_plots=show_plots, verbose=verbose)
-    #     #
-    #     # '''c I don't actually need any of these, instead sort get psignifit thr ands make plots from those.'''
-    #     # c_plots(save_path=save_path, thr_col='probeLum', isi_name_list=run_isi_names_list, show_plots=show_plots, verbose=verbose)
 
-
+    run_folder_names = ['Nick_1', 'Nick_2', 'Nick_3', 'Nick_4']
     '''d participant averages'''
     d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
                           groupby_col=['cond_type', 'neg_sep'], cols_to_drop='stack', cols_to_replace='separation',
@@ -173,7 +167,7 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
 print(f'exp_path: {exp_path}')
-# participant_list = ['Nick', 'Simon']
+participant_list = ['Nick', 'Simon']
 print('\nget exp_average_data')
 trim_n = None
 e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,

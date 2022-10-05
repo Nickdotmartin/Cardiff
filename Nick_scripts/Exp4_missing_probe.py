@@ -11,14 +11,15 @@ from datetime import datetime
 from math import tan, sqrt
 from kestenSTmaxVal import Staircase
 
-from memory_profiler import profile
-
+# from memory_profiler import profile
+# @profile
+# def exp4MissingProbe():
 
 '''
 Missing probe study.
 Probes will appear in three corners, participants identify corner without probe.
 
-The script is designed it so that all 4 corners have probe motion planned, 
+The script is designed it so that all 4 corners have probe motion planned,
 then just don't draw the missing_corner that is selected
 
 We want to manipulate the coherence of the movement of the three probes.
@@ -30,13 +31,13 @@ This gives 8 possibilities for clear coherent motion
 
 Non-coherent if
 Mixed - two radial (one in, one out), two tangent (one CW one CCW).
-Only with this pattern can you be sure that when you delete one the other three aren't good.  
-However, with the pattern, there will always be two probes with same absolute (tr, tl, bl, br), 
-or relational (in, out, cw, ccw) motion, so I have made it so that the 
+Only with this pattern can you be sure that when you delete one the other three aren't good.
+However, with the pattern, there will always be two probes with same absolute (tr, tl, bl, br),
+or relational (in, out, cw, ccw) motion, so I have made it so that the
 incohenrent probes include all 4 absolute directions, but with two matching for cw/ccw.
- 
+
 There are no mirror symmetrical patterns (less coherent - but still a pattern)
-    - e.g., two move up and left, two move up and right  
+    - e.g., two move up and left, two move up and right
 '''
 
 # sets psychoPy to only log critical messages
@@ -51,7 +52,7 @@ os.chdir(_thisDir)
 monitor_name = 'Nick_work_laptop'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 
 # Store info about the experiment session
-expName = 'EXP4_missing_probe'  # from the Builder filename that created this script
+expName = 'EXP4_missing_probe'
 
 expInfo = {'1. Participant': 'nicktest',
            '1. run_number': '1',
@@ -420,6 +421,9 @@ for step in range(n_trials_per_stair):
 
         trial_number = trial_number + 1
 
+        # set text contents here rather than later updating each frame
+        trials_counter.text = f"{trial_number}/{total_n_trials}"
+
         stair_idx = thisStair.extraInfo['stair_idx']
         print(f"\ntrial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
 
@@ -640,7 +644,8 @@ for step in range(n_trials_per_stair):
                 if t_fixation >= frameN > 0:
                     fixation.setRadius(3)
                     fixation.draw()
-                    trials_counter.text = f"{trial_number}/{total_n_trials}"
+                    # todo: set the text earlier
+                    # trials_counter.text = f"{trial_number}/{total_n_trials}"
                     trials_counter.draw()
 
                     # reset timer to start with probe1 presentation.
@@ -779,3 +784,9 @@ else:
     # close and quit once a key is pressed
     win.close()
     core.quit()
+
+
+# exp4MissingProbe()
+
+# if __name__ == '__main__':
+#     exp4MissingProbe()
