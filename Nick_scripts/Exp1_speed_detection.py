@@ -163,11 +163,6 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     fullscr=use_full_screen,
                     )
 
-
-# CLOCK
-trialClock = core.Clock()
-
-
 # ELEMENTS
 # fixation bull eye
 if background == 'flow_rad':
@@ -252,6 +247,9 @@ probe = visual.ShapeStim(win, vertices=probeVert,
 
 # MOUSE - Hide cursor
 myMouse = event.Mouse(visible=False)
+
+# # KEYBOARD
+resp = event.BuilderKeyResponse()
 
 # INSTRUCTIONS
 instructions = visual.TextStim(win=win, name='instructions',
@@ -343,7 +341,6 @@ for stair_idx in expInfo['stair_list']:
 # EXPERIMENT
 trial_number = 0
 print('\n*** exp loop*** \n\n')
-
 for step in range(n_trials_per_stair):
     np.random.shuffle(stairs)
     for thisStair in stairs:
@@ -351,7 +348,8 @@ for step in range(n_trials_per_stair):
         print(f"\ntrial_number: {trial_number}, step: {step}, thisStair: {thisStair}")
 
         trial_number = trial_number + 1
-        trialClock.reset()
+        trials_counter.text = f"{trial_number}/{total_n_trials}"
+
 
         stair_idx = thisStair.extraInfo['stair_idx']
         # flow_dir = flow_directions[stair_idx]
@@ -447,7 +445,6 @@ for step in range(n_trials_per_stair):
                 # FIXATION
                 if t_fixation >= frameN > 0:
                     # before fixation has finished
-                    trials_counter.text = f"{trial_number}/{total_n_trials}"
 
                     # if background == 'flow_rad':
                     #     # draw flow_dots but with no motion
@@ -462,6 +459,9 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(3)
                     fixation.draw()
                     trials_counter.draw()
+
+                    # reset timer to start with probe1 presentation.
+                    resp.clock.reset()
 
                 # Background motion prior to probe1
                 # if t_bg_motion >= frameN > t_fixation:

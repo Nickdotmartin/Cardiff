@@ -353,7 +353,7 @@ instructions = visual.TextStim(win=win, name='instructions',
                                color='white')
 
 # Trial counter
-trials_counter = visual.TextStim(win=win, name='trials_counter', text="???",
+trials_counter = visual.TextStim(win=win, name='trials_counter', text="",
                                  font='Arial', height=20,
                                  # default set to black (e.g., invisible)
                                  color='black',
@@ -413,17 +413,13 @@ for stair_idx in expInfo['stair_list']:
     stairs.append(thisStair)
 
 trial_number = 0
-
 # EXPERIMENT
 for step in range(n_trials_per_stair):
     shuffle(stairs)
     for thisStair in stairs:
 
         trial_number = trial_number + 1
-
-        # set text contents here rather than later updating each frame
         trials_counter.text = f"{trial_number}/{total_n_trials}"
-
         stair_idx = thisStair.extraInfo['stair_idx']
         print(f"\ntrial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
 

@@ -276,6 +276,7 @@ for step in range(n_trials_per_stair):
     for thisStair in stairs:
 
         trial_number = trial_number + 1
+        trials_counter.text = f"{trial_number}/{total_n_trials}"
 
         stair_idx = thisStair.extraInfo['stair_idx']
         print(f"\ntrial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}, ")
@@ -409,7 +410,6 @@ for step in range(n_trials_per_stair):
 
                 # FIXATION
                 if t_fixation >= frameN > 0:
-                    trials_counter.text = f"{trial_number}/{total_n_trials}"
                     fixation.setRadius(3)
                     fixation.draw()
                     trials_counter.draw()

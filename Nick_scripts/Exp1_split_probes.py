@@ -321,14 +321,13 @@ for stair_idx in expInfo['stair_list']:
     stairs.append(thisStair)
 
 trial_number = 0
-
 # EXPERIMENT
 for step in range(n_trials_per_stair):
     shuffle(stairs)
     for thisStair in stairs:
 
         trial_number = trial_number + 1
-
+        trials_counter.text = f"{trial_number}/{total_n_trials}"
         stair_idx = thisStair.extraInfo['stair_idx']
         print(f"\ntrial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
 
@@ -463,7 +462,6 @@ for step in range(n_trials_per_stair):
                 if t_fixation >= frameN > 0:
                     fixation.setRadius(3)
                     fixation.draw()
-                    trials_counter.text = f"{trial_number}/{total_n_trials}"
                     trials_counter.draw()
                     
                     # reset timer to start with probe1 presentation.

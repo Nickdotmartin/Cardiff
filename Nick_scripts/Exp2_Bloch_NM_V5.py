@@ -209,8 +209,6 @@ except ValueError:
     # don't save csv, no trials have happened yet
     thisExp.abort()
 
-# CLOCK
-trialClock = core.Clock()
 
 # ELEMENTS
 # fixation bull eye
@@ -254,6 +252,9 @@ dotsMask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
 
 # MOUSE - Hide cursor
 myMouse = event.Mouse(visible=False)
+
+# # KEYBOARD
+resp = event.BuilderKeyResponse()
 
 # INSTRUCTION
 instructions = visual.TextStim(win=win, name='instructions',
@@ -347,13 +348,12 @@ for stair_idx in expInfo['stair_list']:
 # EXPERIMENT
 trial_number = 0
 print('\n*** exp loop*** \n\n')
-
 for step in range(n_trials_per_stair):
     np.random.shuffle(stairs)
     for thisStair in stairs:
 
         trial_number = trial_number + 1
-        trialClock.reset()
+        trials_counter.text = f"{trial_number}/{total_n_trials}"
 
         stair_idx = thisStair.extraInfo['stair_idx']
         sep = 0
@@ -526,7 +526,6 @@ for step in range(n_trials_per_stair):
                 # FIXATION
                 if t_fixation >= frameN > 0:
                     # before fixation has finished
-                    trials_counter.text = f"{trial_number}/{total_n_trials}"
 
                     fixation.setRadius(3)
                     fixation.draw()
@@ -538,6 +537,9 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(3)
                     fixation.draw()
                     trials_counter.draw()
+
+                    # reset timer to start with probe1 presentation.
+                    resp.clock.reset()
 
                 # PROBE 1
                 if t_interval_1 >= frameN > t_bg_motion:

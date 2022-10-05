@@ -254,6 +254,9 @@ probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor=[-1.0, 1.0, -1.0],
 # MOUSE - hide cursor
 myMouse = event.Mouse(visible=False)
 
+# # KEYBOARD
+resp = event.BuilderKeyResponse()
+
 # INSTRUCTION
 instructions = visual.TextStim(win=win, name='instructions',
                                text="\n\n\n\n\n\nFocus on the small circle at the centre of the screen.\n\n"
@@ -348,44 +351,28 @@ for step in range(n_trials_per_stair):
     shuffle(stairs)
     for thisStair in stairs:
 
-        # conditions
-        # separation experiment #################################################
-
+        trial_number = trial_number + 1
+        trials_counter.text = f"{trial_number}/{total_n_trials}"
         stair_idx = thisStair.extraInfo['stair_idx']
-
         print(f"\ntrial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}, ")
 
-        # sep = separations[thisStair.extraInfo['stair_idx']-1]
         sep = sep_vals_list[stair_idx]
-
         ISI = ISI_vals_list[stair_idx]
-
         print(f"sep: {sep}, ISI: {ISI}")
 
-
-        # direction in which the probe jumps : CW or CCW
-        # todo: should I remove code for if target_jump == 9?
-        '''original script for reset probe orientation has 3 possible values: 1, -1 or 9. 
-        I guess this is useless as there are only two choices here.
-                        elif target_jump == 9:
-                    probe1.ori = random.choice([0, 180])'''
-
-        target_jump = random.choice([1, -1])
         # staircase varied probeLum
         probeLum = thisStair.next()
         probeColor255 = int(probeLum * LumColor255Factor)
         probeColor1 = (probeColor255 * Color255Color1Factor) - 1
-
         print(f"probeLum: {probeLum}")
-
-        trial_number = trial_number + 1
 
         # Black or White
         probe1.color = [probeColor1, probeColor1*redfilter, probeColor1*redfilter]
         probe2.color = [probeColor1, probeColor1*redfilter, probeColor1*redfilter]
-
         # print(f"\nbgLum: {bgLum} bgColor255: {bgColor255} win.colorSpace: {win.colorSpace}")
 
+        # direction in which the probe jumps : CW or CCW
+        target_jump = random.choice([1, -1])
 
         # PROBE LOCATION
         # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
@@ -408,8 +395,6 @@ for step in range(n_trials_per_stair):
                     probe1.ori = 180
                     probe2.ori = 0
                     probe2.pos = [p1_x + sep-1, p1_y - sep]
-                elif target_jump == 9:
-                    probe1.ori = random.choice([0, 180])
         elif corner == 135:
             p1_x = x_prob * -1
             p1_y = y_prob * 1
@@ -422,8 +407,6 @@ for step in range(n_trials_per_stair):
                     probe1.ori = 270
                     probe2.ori = 90
                     probe2.pos = [p1_x - sep+1, p1_y - sep]
-                elif target_jump == 9:
-                    probe1.ori = random.choice([90, 270])
         elif corner == 225:
             p1_x = x_prob * -1
             p1_y = y_prob * -1
@@ -436,8 +419,6 @@ for step in range(n_trials_per_stair):
                     probe1.ori = 0
                     probe2.ori = 180
                     probe2.pos = [p1_x - sep+1, p1_y + sep]
-                elif target_jump == 9:
-                    probe1.ori = random.choice([0, 180])
         else:
             corner = 315
             p1_x = x_prob * 1
@@ -451,8 +432,6 @@ for step in range(n_trials_per_stair):
                     probe1.ori = 90
                     probe2.ori = 270
                     probe2.pos = [p1_x + sep-1, p1_y + sep]
-                elif target_jump == 9:
-                    probe1.ori = random.choice([90, 270])
 
         probe1.pos = [p1_x, p1_y]
 
@@ -497,8 +476,10 @@ for step in range(n_trials_per_stair):
                 if t_fixation >= frameN > 0:
                     fixation.setRadius(3)
                     fixation.draw()
-                    trials_counter.text = f"{trial_number}/{total_n_trials}"
                     trials_counter.draw()
+
+                    # reset timer to start with probe1 presentation.
+                    resp.clock.reset()
 
                 # PROBE 1
                 if t_interval_1 >= frameN > t_fixation:

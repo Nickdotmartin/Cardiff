@@ -221,9 +221,6 @@ except ValueError:
     # don't save csv, no trials have happened yet
     thisExp.abort()
 
-# CLOCK
-trialClock = core.Clock()
-
 
 # ELEMENTS
 # fixation bull eye
@@ -313,6 +310,9 @@ maxDist = 5
 
 # MOUSE - Hide cursor
 myMouse = event.Mouse(visible=False)
+
+# # KEYBOARD
+resp = event.BuilderKeyResponse()
 
 # INSTRUCTION
 instructions = visual.TextStim(win=win, name='instructions',
@@ -414,7 +414,7 @@ for step in range(n_trials_per_stair):
         print(f"thisStair: {thisStair}, step: {step}")
 
         trial_number = trial_number + 1
-        trialClock.reset()
+        trials_counter.text = f"{trial_number}/{total_n_trials}"
 
         stair_idx = thisStair.extraInfo['stair_idx']
         sep = separations[stair_idx]
@@ -618,7 +618,6 @@ for step in range(n_trials_per_stair):
                 # FIXATION
                 if t_fixation >= frameN > 0:
                     # before fixation has finished
-                    trials_counter.text = f"{trial_number}/{total_n_trials}"
 
                     if background == 'flow_rad':
                         # draw flow_dots but with no motion
@@ -658,6 +657,8 @@ for step in range(n_trials_per_stair):
                     # probe1.draw()
                     trials_counter.draw()
 
+                    # reset timer to start with probe1 presentation.
+                    resp.clock.reset()
 
                 # PROBE 1
                 if t_interval_1 >= frameN > t_bg_motion:
