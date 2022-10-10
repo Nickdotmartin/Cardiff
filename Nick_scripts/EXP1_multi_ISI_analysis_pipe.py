@@ -11,13 +11,16 @@ from check_home_dir import switch_path
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\EXP1_R_G_rot"
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\EXP1_sep4_5"
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\EXP1_split_probes"
-exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\jitter_rgb"
+# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\jitter_rgb"
+exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\eyetracking"
 
 convert_path1 = os.path.normpath(exp_path)
 exp_path = convert_path1
 
 print(f"exp_path: {exp_path}")
-participant_list = ['Nick', 'Simon']
+# participant_list = ['Nick', 'Simon']
+participant_list = ['p1', 'p2']
+split_1probe = False
 
 n_runs = 12
 
@@ -102,6 +105,10 @@ for p_idx, participant_name in enumerate(participant_list):
         stair_names_list = list(run_data_df['stair_name'].unique())
         cols_to_add_dict = {'stair': stair_list, 'stair_name': stair_names_list}
 
+        # does this exp use 1probe data?
+        if 99 in sep_list:
+            split_1probe = True
+
         '''get psignifit thresholds df - use stairs as sep levels rather than using groups'''
         thr_df = get_psignifit_threshold_df(root_path=root_path,
                                             p_run_name=run_dir,
@@ -157,7 +164,7 @@ for p_idx, participant_name in enumerate(participant_list):
                        error_type='SE',
                        n_trimmed=trim_n,
                        ave_over_n=len(run_folder_names),
-                       split_1probe=False,
+                       split_1probe=split_1probe,
                        isi_name_list=isi_name_list,
                        sep_vals_list=sep_vals_list,
                        sep_name_list=sep_name_list,
@@ -184,7 +191,7 @@ make_average_plots(all_df_path=all_df_path,
                    thr_col='newLum',
                    error_type='SE',
                    ave_over_n=len(participant_list),
-                   split_1probe=False,
+                   split_1probe=split_1probe,
                    isi_name_list=isi_name_list,
                    sep_vals_list=sep_vals_list,
                    sep_name_list=sep_name_list,

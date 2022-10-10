@@ -1,5 +1,4 @@
 from __future__ import division
-import pylink
 from psychopy import gui, visual, core, data, event, monitors
 from psychopy import __version__ as psychopy_version
 import os
@@ -11,7 +10,22 @@ import copy
 from datetime import datetime
 from math import tan, sqrt
 from kestenSTmaxVal import Staircase
-import pylink
+# import pylink
+
+# # # # # # # # # # # # ## # # # #  # #
+
+# todo: evaluate vary_fix to True/False not "True"/"False", otherwise it is always on.
+
+# todo: add in message for probe1 start!  This is currently missing.
+ # addd message here containing ISI, sep, corner and jump dir
+
+# todo: fix stairName at output.
+
+# todo: probe2 was only logged for isi=4 trials, not when isi==0.
+
+# # # # # # # # # # # #
+
+
 
 '''
 Script to demonstrate Exp1:
@@ -28,7 +42,6 @@ os.chdir(_thisDir)
 
 # Monitor config from monitor centre
 monitor_name = 'Cog Lab 5 Monitor'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
-# gamma set at 2.1  [####### this comment is incorrect, its set above i think ############]
 
 
 el = pylink.EyeLink() #set pylink up to speak to eyelink
@@ -42,11 +55,11 @@ el.sendCommand("saccade_acceleration_threshold = 9000")
 # Store info about the experiment session
 expName = 'EXP1_eyetrack'  # from the Builder filename that created this script
 
-expInfo = {'1. Participant': 'p1',
+expInfo = {'1. Participant': 'p2',
            '1. run_number': '1',
            '2. Probe duration in frames at 240hz': [2, 50, 100],
            '3. fps': [144, 60, 240],
-           '4_Trials_counter': [True, False], 
+           '4_Trials_counter': [True, False],
            '5_vary_fixation': [False, True]
            }
 
@@ -70,11 +83,7 @@ orientation = 'tangent'  # expInfo['5. Probe orientation']
 trials_counter = expInfo['4_Trials_counter']
 vary_fixation = expInfo['5_vary_fixation']
 
-# edfFileName = "cwpilot" + ".EDF"
 edfFileName = "%s_%s.EDF"%(participant_name, run_number)
-#edfFileName = "%s_%s_%s.EDF"%(expName, participant_name, run_number)
-#edfFileName = f"{expName}_{participant_name}_{run_number}"
-#print(f"edfFileName: {edfFileName}")
 el.openDataFile(edfFileName) #opens an EDF file
 
 # VARIABLES
@@ -99,18 +108,12 @@ ISI_vals_list = list(np.tile(ISI_values, len(separations)))
 #print(f'ISI_vals_list: {ISI_vals_list}')
 # stair_names_list joins sep_vals_list and ISI_vals_list
 # e.g., ['sep0_ISI-1', 'sep0_ISI6', 'sep6_ISI-1', 'sep6_ISI6']
-#stair_names_list = [f'sep{s}_ISI{c}' for s, c in zip(sep_vals_list, ISI_vals_list)]
 stair_names_list = ['sep%d_ISI%d'%(s, c) for s, c in zip(sep_vals_list, ISI_vals_list)]
 #print(f'stair_names_list: {stair_names_list}')
 n_stairs = len(sep_vals_list)
 #print(f'n_stairs: {n_stairs}')
 
 # FILENAME
-#filename = f'{_thisDir}{os.sep}' \
-#           f'{expName}{os.sep}' \
-#           f'{participant_name}{os.sep}' \
-#           f'{participant_name}_{run_number}{os.sep}' \
-#           f'{participant_name}_output'
 filename = "%s%s%s%s%s%s%s_%s%s%s_output"%(_thisDir, os.sep, expName, os.sep, participant_name, os.sep, participant_name, run_number, os.sep, participant_name)
 print("filename: %s"%(filename))
 # files are labelled as '_incomplete' unless entire script runs.
@@ -151,7 +154,6 @@ mon_dict = {'mon_name': monitor_name,
             'dist': thisMon.getDistance(),
             'notes': thisMon.getNotes()
             }
-#print(f"mon_dict: {mon_dict}")
 
 # double check using full screen in lab
 display_number = 1  # 0 indexed, 1 for external display, 0 for internal
@@ -178,7 +180,8 @@ pylink.closeGraphics()
 
 # WINDOW SPEC
 win = visual.Window(monitor=mon, size=(widthPix, heightPix),
-                    colorSpace='rgb255', color=bgColor255,
+                    # colorSpace='rgb255', color=bgColor255,  # old psychopy doesn't use rgb255
+                    colorSpace='rgb', color=bgColor1,
                     winType='pyglet',  # I've added this to make it work on pycharm/mac
                     pos=[1, -1],  # pos gives position of top-left of screen
                     units='pix',
@@ -187,12 +190,12 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     fullscr=use_full_screen,
                     )
 
+print(bgColor1)
+
 #print(f"check win.size: {win.size}")
 widthPix = widthPix/2
 heightPix = heightPix/2
-#print(f"widthPix: {widthPix}, hight: {heightPix}")
 widthPix, heightPix = win.size
-#print(f"check win.size: {win.size}")
 
 # ELEMENTS
 # fixation bull eye
@@ -206,12 +209,15 @@ probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
              (1, -2), (-1, -2), (-1, -1), (0, -1)]
 
 probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, -1.0, 1.0),
-                          lineWidth=0, opacity=1, size=1, interpolate=False)
+                          lineWidth=0, opacity=1, size=1, interpolate=False,
+                          fillColorSpace='rgb')
 probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor=[-1.0, 1.0, -1.0],
-                          lineWidth=0, opacity=1, size=1, interpolate=False)
+                          lineWidth=0, opacity=1, size=1, interpolate=False,
+                          fillColorSpace='rgb')
 
 # dist_from_fix is a constant to get 4dva distance from fixation,
 dist_from_fix = round((tan(deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
+
 
 # MOUSE - hide cursor
 myMouse = event.Mouse(visible=False)
@@ -245,17 +251,17 @@ if trials_counter:
     trials_counter.color = 'white'
 
 # BREAKS
-take_break = 76
 total_n_trials = int(n_trials_per_stair * n_stairs)
-# take_break = int(total_n_trials/2)+1
-#print(f"take_break every {take_break} trials.")
+take_break = int(total_n_trials/2)+1
 breaks = visual.TextStim(win=win, name='breaks',
                          # text="turn on the light and take at least 30-seconds break.",
                          text="Break\n"
                               "Remember, if you don't see the flash, just guess!\n"
                               "Keep focussed on the circle in the middle of the screen.",
-                         font='Arial', pos=[0, 0], height=20, ori=0, color=[255, 255, 255],
-                         colorSpace='rgb255', opacity=1,  depth=0.0)
+                         font='Arial', pos=[0, 0], height=20, ori=0,
+                         # color=[255, 255, 255], colorSpace='rgb255',
+                         color='white',
+                         opacity=1,  depth=0.0)
 
 end_of_exp = visual.TextStim(win=win, name='end_of_exp',
                              text="You have completed this experiment.\n"
@@ -306,11 +312,9 @@ for step in range(n_trials_per_stair):
     for thisStair in stairs:
 
         stair_idx = thisStair.extraInfo['stair_idx']
-#        print(f"\ntrial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
 
         sep = sep_vals_list[stair_idx]
         ISI = ISI_vals_list[stair_idx]
-#        print(f"ISI: {ISI}, sep: {sep}")
 
         # direction in which the probe jumps : CW or CCW
         target_jump = random.choice([1, -1])
@@ -319,12 +323,12 @@ for step in range(n_trials_per_stair):
         probeLum = thisStair.next()
         probeColor255 = int(probeLum * LumColor255Factor)  # rgb255 are ints.
         probeColor1 = (probeColor255 * Color255Color1Factor) - 1
-#        print(f"probeColor1: {probeColor1}")
-#        probe1.Color = ([1, 1, 1])
-#        probe2.Color = ([.9, .9, .9])
-        probe1.Color = [probeColor1, probeColor1, probeColor1]
-        probe2.Color = [probeColor1, probeColor1, probeColor1]        
-#        print(f"probeLum: {probeLum}, probeColor255: {probeColor255}, probeColor1: {probeColor1}")
+#        probe1.Color = [probeColor1, probeColor1, probeColor1]
+#        probe2.Color = [probeColor1, probeColor1, probeColor1]
+#        probe1.setColor([probeColor1, probeColor1, probeColor1], colorSpace='rgb')
+#        probe2.setColor([probeColor1, probeColor1, probeColor1], colorSpace='rgb')
+        probe1.fillColor = [probeColor1, probeColor1, probeColor1]
+        probe2.fillColor = [probeColor1, probeColor1, probeColor1]
 
         trial_number = trial_number + 1
 
@@ -336,9 +340,9 @@ for step in range(n_trials_per_stair):
         if corner == 135:
             corner_name = 'top-left'
         elif corner == 225:
-            corner_name = 'bottom_left'
+            corner_name = 'bottom-left'
         elif corner == 315:
-            corner_name = 'bottom_right'
+            corner_name = 'bottom-right'
 
         # reset probe ori
         probe1.ori = 0
@@ -436,13 +440,12 @@ for step in range(n_trials_per_stair):
                 if t_fixation >= frameN > 0:
                     fixation.setRadius(3)
                     fixation.draw()
-#                    trials_counter.text = f"{trial_number}/{total_n_trials}"
                     trials_counter.text = "%s/%s"%(trial_number, total_n_trials)
                     trials_counter.draw()
 
                     # reset timer to start with probe1 presentation.
                     resp.clock.reset()
-                    
+
                 if frameN == 0:
                     # log el start of trial_number
                     fix_time = el.trackerTime()
@@ -451,13 +454,16 @@ for step in range(n_trials_per_stair):
                     # log probe 1 presented
                     p1_time = el.trackerTime()
                     el.sendMessage("Start probe1 %d: %s"%p1_time, corner_name)
+
+                # todo: if isi==0, then t_probe_1 == t_ISI, so what should happen?
                 elif frameN == t_probe_1:
                     # log el ISI starts
                     ISI_time = el.trackerTime()
-                    el.sendMessage("Start ISI %d: %s"%ISI_time, corner_name)
+                    el.sendMessage("Start ISI %s"%ISI_time)
+                    el.sendMessage("Corner %s"%corner_name)
                 elif frameN == t_ISI:
-                    if ISI >= 0:  # don't log 2nd probe when probes are presented concurrently
-                        if sep <= 18:  # don't log 2nd probe if single probe condition
+                    if ISI > -1:  # don't log 2nd probe when probes are presented concurrently
+                        if sep < 19:  # don't log 2nd probe if single probe condition
                             # log el probe2 starts
                             p2_time = el.trackerTime()
                             el.sendMessage("Start probe2 %d"%p2_time)
@@ -532,7 +538,7 @@ for step in range(n_trials_per_stair):
                     #thisExp.close()
                     el.stopData() #stop data
                     el.receiveDataFile(edfFileName, edfFileName)
-                    el.stopRecording() #stop recording. 
+                    el.stopRecording() #stop recording.
                     core.quit()
 
                 # redo the trial if I think I made a mistake
@@ -564,6 +570,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('expName', expName)
         thisExp.addData('monitor_name', monitor_name)
         thisExp.addData('selected_fps', fps)
+        thisExp.addData('bgcolor1', bgColor1)
 
         thisExp.addData('fix_time', fix_time)
         thisExp.nextEntry()
@@ -572,7 +579,7 @@ for step in range(n_trials_per_stair):
 
 el.stopData() #stop data
 el.receiveDataFile(edfFileName, edfFileName)
-el.stopRecording() #stop recording. 
+el.stopRecording() #stop recording.
 
 print("end of experiment loop, saving data")
 thisExp.dataFileName = filename
