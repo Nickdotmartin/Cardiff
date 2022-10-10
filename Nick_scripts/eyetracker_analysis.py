@@ -5,9 +5,9 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
 from sklearn import metrics
-
+from sklearn.linear_model import LogisticRegression, LinearRegression
+from scipy.special import expit
 '''
 Part A
 If I re-do the experiment I might write a script to automate the stuff I did by hand in excel:
@@ -67,12 +67,12 @@ def make_eyetrack_csv(p_name, run, eye_track_dir=None):
     print(f'save_path: {save_path}')
     print(f'old_df_name: {old_df_name}')
     eye_df = pd.read_csv(old_csv_path, usecols=['time', 'X', 'Y'])
-    print(f"\neye_df: ({eye_df.shape})\n{eye_df.head()}\n")
+    print(f"\neye_df: {eye_df.shape}\n{eye_df.head()}\n")
 
     # get details from the ouput csv
     exp_output_path = os.path.join(save_path, f"{p_name}_{run}", f"{p_name}_output.csv")
     exp_df = pd.read_csv(exp_output_path, index_col='trial_number')
-    print(f"exp_df: ({exp_df.shape})\n{exp_df.head()}\n")
+    print(f"exp_df: {exp_df.shape}\n{exp_df.head()}\n")
 
 
     new_data_list = []
@@ -267,7 +267,7 @@ def count_missing_segments(p_list, run_list, eye_track_dir=None):
             print(f'csv_name: {csv_name}')
             print(f'csv_path: {csv_path}')
             eye_df = pd.read_csv(csv_path)
-            print(f"\neye_df: ({eye_df.shape})\n{eye_df.head()}\n")
+            print(f"\neye_df: {eye_df.shape}\n{eye_df.head()}\n")
 
             trial_numbers = eye_df['trial_num'].unique().tolist()
 
@@ -276,7 +276,7 @@ def count_missing_segments(p_list, run_list, eye_track_dir=None):
 
                 # get df just for one stair at this isi
                 trial_df = eye_df[eye_df['trial_num'] == trial_number]
-                print(f'\ntrial_df ({trial_number}) ({trial_df.shape}):\n{trial_df}')
+                print(f'\ntrial_df ({trial_number}) {trial_df.shape}:\n{trial_df}')
                 # print(f'\ntrial_number: {trial_number}')
                 # print(f"\ntrial_df['ISI']: {trial_df['ISI']}")
 
@@ -371,7 +371,7 @@ def fix_missing_segments(p_name, run, eye_track_dir=None):
     eye_df = pd.read_csv(old_csv_path, usecols=['time_stamp', 'trial_num', 'trial_frames', 'segment',
                                                 'x_pos', 'y_pos', 'eye_message',
                                                 'sep', 'ISI', 'probe_jump', 'corner', 'probeLum', 'resp'])
-    print(f"\neye_df: ({eye_df.shape})\n{eye_df.head()}\n")
+    print(f"\neye_df: {eye_df.shape}\n{eye_df.head()}\n")
 
 
     new_seg_list = []
@@ -394,7 +394,7 @@ def fix_missing_segments(p_name, run, eye_track_dir=None):
         isi_val = int(trial_df['ISI'].iloc[0])
         print(f'\nisi_val: {isi_val}')
 
-        print(f"\ntrial_df: ({trial_df.shape})\n{trial_df.head()}\n")
+        print(f"\ntrial_df: {trial_df.shape}\n{trial_df.head()}\n")
         rows, cols = trial_df.shape
 
         row_check.append(rows)
@@ -506,7 +506,7 @@ def short_trial_data(p_name, run, eye_track_dir=None):
     eye_df = pd.read_csv(old_csv_path, usecols=['trial_num', 'segment',
                                                 'x_pos', 'y_pos', 'eye_message',
                                                 'sep', 'ISI', 'probe_jump', 'corner', 'probeLum', 'resp'])
-    print(f"\neye_df: ({eye_df.shape})\n{eye_df.head()}\n")
+    print(f"\neye_df: {eye_df.shape}\n{eye_df.head()}\n")
 
 
     all_trials_list = []
@@ -516,7 +516,7 @@ def short_trial_data(p_name, run, eye_track_dir=None):
     for idx, trial_number in enumerate(trial_numbers):
 
         trial_df = eye_df[eye_df['trial_num'] == trial_number]
-        print(f'\ntrial_number ({trial_df.shape}): {trial_number}')
+        print(f'\ntrial_number {trial_df.shape}: {trial_number}')
 
         this_trial_list = []
 
@@ -557,7 +557,7 @@ def short_trial_data(p_name, run, eye_track_dir=None):
         else:
             # add new index col to df
             this_trial_df = pd.concat(this_trial_list)
-            print(f"\n{trial_number}. this_trial_df: ({this_trial_df.shape})\n{this_trial_df.head()}\n")
+            print(f"\n{trial_number}. this_trial_df: {this_trial_df.shape}\n{this_trial_df.head()}\n")
 
             rows, cols = this_trial_df.shape
             new_idx = list(range(-100, rows-100))
@@ -566,7 +566,7 @@ def short_trial_data(p_name, run, eye_track_dir=None):
             all_trials_list.append(this_trial_df)
 
     short_trial_df = pd.concat(all_trials_list)
-    print(f"\nshort_trial_df: ({short_trial_df.shape})\n{short_trial_df.head()}\n")
+    print(f"\nshort_trial_df: {short_trial_df.shape}\n{short_trial_df.head()}\n")
 
     new_df_name = f"{p_name.upper()}_{run}_eyetrack_short.csv"
     short_trial_df.to_csv(os.path.join(save_path, new_df_name), index=False)
@@ -614,7 +614,7 @@ def add_crner_0cntr_dist_motion(p_list, run_list, eye_track_dir=None, adjust_x=0
     trgt_0y_dict = {45: 175, 135: 175, 225: -175, 315: -175}
 
 
-    for p_name in participants:
+    for p_name in p_list:
         for run in run_list:
 
             # get file_path and csv_name
@@ -627,7 +627,7 @@ def add_crner_0cntr_dist_motion(p_list, run_list, eye_track_dir=None, adjust_x=0
             print(f'csv_path: {csv_path}')
             eye_df = pd.read_csv(csv_path)
             orig_cols = list(eye_df.columns)
-            print(f"\neye_df: ({eye_df.shape})\n{orig_cols}\n{eye_df.head()}\n")
+            print(f"\neye_df: {eye_df.shape}\n{orig_cols}\n{eye_df.head()}\n")
             print(eye_df.dtypes)
 
             # add target corner details.
@@ -640,7 +640,7 @@ def add_crner_0cntr_dist_motion(p_list, run_list, eye_track_dir=None, adjust_x=0
             fix_y = 540 + adjust_y
             eye_df['x0_pos'] = eye_df['x_pos'] - fix_x
             eye_df['y0_pos'] = eye_df['y_pos'] - fix_y
-            print(f"\neye_df: ({eye_df.shape})\n{list(eye_df.columns)}\n{eye_df.head()}\n")
+            print(f"\neye_df: {eye_df.shape}\n{list(eye_df.columns)}\n{eye_df.head()}\n")
 
 
             # # get distance from probe (x_dist, y_dist, sq_dist)
@@ -654,7 +654,7 @@ def add_crner_0cntr_dist_motion(p_list, run_list, eye_track_dir=None, adjust_x=0
             eye_df['sq_motion'] = np.sqrt(np.square(eye_df['x_motion']) + np.square(eye_df['y_motion']))
 
             all_cols = list(eye_df.columns)
-            print(f"\neye_df: ({eye_df.shape})\n{all_cols}\n{eye_df.head()}\n")
+            print(f"\neye_df: {eye_df.shape}\n{all_cols}\n{eye_df.head()}\n")
             new_csv_name = f"{p_name}_{run}_eyetrack_dist_motion.csv"
             new_csv_path = os.path.join(save_path, new_csv_name)
             eye_df.to_csv(new_csv_path, index=False)
@@ -672,7 +672,7 @@ def add_crner_0cntr_dist_motion(p_list, run_list, eye_track_dir=None, adjust_x=0
 
 
 
-def eye_pos_predict_resp(p_list, run_list, eye_track_dir=None):
+def trial_dist_from_trgt(p_list, run_list, eye_track_dir=None):
     """
     Does eye position during probes predict response?
     1. get eye positions during probe1 and probe2 (can ignore ISI) (7 or 14 frames max)
@@ -681,8 +681,6 @@ def eye_pos_predict_resp(p_list, run_list, eye_track_dir=None):
     4. append all participant/run results to new data frame.
         [p_name, run, trial, sep, ISI, probe_jump, crnr_name, resp, mean_sq_dist, min_sq_dist]
 
-    4. run analyses on mean distance and closest distance to answer question
-    logistic regression: sq distance to predict response
 
     :param p_name: name of participant, used for accessing dirs and files.
     :param run: run number, used for accessing dirs and files.
@@ -699,7 +697,7 @@ def eye_pos_predict_resp(p_list, run_list, eye_track_dir=None):
 
     new_list = []
 
-    for p_name in participants:
+    for p_name in p_list:
         for run in run_list:
 
             # get file_path and csv_name
@@ -715,7 +713,7 @@ def eye_pos_predict_resp(p_list, run_list, eye_track_dir=None):
                                  usecols=['trial_num', 'segment', 'sep', 'ISI',
                                           'probe_jump', 'crnr_name', 'resp', 'sq_dist']
                                  )
-            print(f"\neye_df: ({eye_df.shape})\n{eye_df.head()}\n")
+            print(f"\neye_df: {eye_df.shape}\n{eye_df.head()}\n")
 
 
             # # loop through trials
@@ -726,7 +724,7 @@ def eye_pos_predict_resp(p_list, run_list, eye_track_dir=None):
                 # # just select frames where probes are present
                 probe_segments = ['probe1', 'probe2']
                 probes_df = probes_df[probes_df['segment'].isin(probe_segments)]
-                print(f"\n{trial}. probes_df: ({probes_df.shape})\n{probes_df}\n")
+                print(f"\n{trial}. probes_df: {probes_df.shape}\n{probes_df}\n")
 
                 # # get mean distance from targets
                 mean_dist = probes_df['sq_dist'].mean()
@@ -752,56 +750,190 @@ def eye_pos_predict_resp(p_list, run_list, eye_track_dir=None):
                           columns=['p_name', 'run', 'trial', 'sep_val', 'isi_val', 'probe_jump',
                                    'crnr_name', 'resp', 'mean_dist', 'min_dist'])
     print(f'\ndist_from_trgt_df:\n{dist_from_trgt_df}')
-    print(f"\ndist_from_trgt_df: ({dist_from_trgt_df.shape})\n{list(dist_from_trgt_df.columns)}\n{dist_from_trgt_df.head()}\n")
-    # dist_from_trgt_df.to_csv(os.path.join(eye_track_dir, f'dist_from_trgt.csv'), index=False)
+    print(f"\ndist_from_trgt_df: {dist_from_trgt_df.shape}\n{list(dist_from_trgt_df.columns)}\n"
+          f"{dist_from_trgt_df.head()}\n")
+    dist_from_trgt_df.to_csv(os.path.join(eye_track_dir, f'dist_from_trgt.csv'), index=False)
+
+# # do one dfs
+# participants = ['p2']
+# run_list = [1]
+# trial_dist_from_trgt(p_list=participants, run_list=run_list)
+# do all dfs
+# participants = ['p1', 'p2']
+# run_list = [1, 2, 3]
+# trial_dist_from_trgt(p_list=participants, run_list=run_list)
+
+def dist_log_reg(p_name, run, eye_track_dir=None, predictor='mean_dist'):
+    """
+
+    :param p_name:
+    :param run:
+    :param eye_track_dir:
+    :param predictor:
+    :return:
+    """
+    print(f"\n*** running dist_log_reg(p_name={p_name}, run={run}, predictor={predictor}) ***\n")
+
+    if eye_track_dir is None:
+        eye_track_dir = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\eyetracking"
+
+    # get file_path and csv_name
+    # save_path = os.path.join(eye_track_dir, p_name)
+    df_name = "dist_from_trgt.csv"
+    csv_path = os.path.join(eye_track_dir, df_name)
+    print(f'eye_track_dir: {eye_track_dir}')
+    print(f'df_name: {df_name}')
+    print(f'csv_path: {csv_path}')
+    dist_from_trgt_df = pd.read_csv(csv_path)
+    print(f"\ndist_from_trgt_df: {dist_from_trgt_df.shape}\n{list(dist_from_trgt_df.columns)}\n"
+          f"{dist_from_trgt_df.head()}\n")
+
+    # # just data for thsi participant/run
+    p_run_df = dist_from_trgt_df[dist_from_trgt_df['p_name'] == p_name]
+    p_run_df = p_run_df[p_run_df['run'] == run]
+    print(f"\np_run_df: {p_run_df.shape}\n{p_run_df.head()}\n")
 
     # # # # # # # # # # # #
     # logistic regression #
     # # # # # # # # # # # #
+    txt_output = []
 
-    # should I run this per participant or for everyone?
-    # find total observations in dataset
-    len(dist_from_trgt_df.index)
+    # # make directory to save results
+    p_run_dir = os.path.join(eye_track_dir, p_name, f"{p_name}_{run}")
+    print(f'p_run_dir: {p_run_dir}')
+    if not os.path.isdir(os.path.join(p_run_dir, 'regression')):
+        os.makedirs(os.path.join(p_run_dir, 'regression'))
+    p_run_reg_dir = os.path.join(p_run_dir, 'regression')
+    print(f'p_run_reg_dir: {p_run_reg_dir}')
 
-    # FIT LOGISTIC REGRESSION MODEL
-    X = dist_from_trgt_df['mean_dist']
-    y = dist_from_trgt_df['resp']
+
+    txt_output.append(f"{p_name}_{run}\n")
+
+    # # get accuracy for weighting model
+    num_instances, cols_ = p_run_df.shape
+    trial_score = p_run_df['resp'].sum()
+    trial_acc_dict = {0: 1-trial_score/num_instances, 1: trial_score/num_instances}
+    print(f"trial_acc: {trial_score}/{num_instances}")
+    print(f"trial_acc_dict: {trial_acc_dict}")
+    txt_output.append(f"instance: {num_instances}, correct_resp: {trial_score}\nweighting:\n{trial_acc_dict}\n")
+
+    # # FIT LOGISTIC REGRESSION MODEL
+    X = np.array(p_run_df['mean_dist'].to_list()).reshape(-1, 1)
+    y = np.array(p_run_df['resp'].to_list())
 
     # split the dataset into training (70%) and testing (30%) sets
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 
     # instantiate the model
-    log_regression = LogisticRegression()
-
+    log_reg = LogisticRegression(class_weight='balanced')
+    print(f"params:\n{log_reg.get_params()}")
     # fit the model using the training data
-    log_regression.fit(X_train, y_train)
+    log_reg.fit(X_train, y_train)
+
+    # # get the intercept and coeficient
+    intercept = log_reg.intercept_
+    slope = log_reg.coef_
+    print(f"intercept: {intercept}, slope: {slope}")
+    txt_output.append(f"intercept: {intercept}, slope: {slope}\n")
 
     # use model to make predictions on test data
-    y_pred = log_regression.predict(X_test)
+    y_pred = log_reg.predict(X_test)
+
+    # # get the model score
+    score = log_reg.score(X_test, y_test)
+    print(f"score: {score}")
+    txt_output.append(f"model score: {score}\n")
 
     # MODEL DIAGNOSTICS
+    #           pred 0  pred1
+    # actual 0
+    # actual 1
     cnf_matrix = metrics.confusion_matrix(y_test, y_pred)
-    cnf_matrix
-    print("Accuracy:", metrics.accuracy_score(y_test, y_pred))
+    print(f"cnf_matrix\n{cnf_matrix}")
+    txt_conf_matrix = f"act0\t{cnf_matrix[0][0]}\t{cnf_matrix[0][1]}\n" \
+                      f"act1\t{cnf_matrix[1][0]}\t{cnf_matrix[1][1]}\n" \
+                      f"    \tpred0\tpred1\n"
+    print(f"txt_conf_matrix\n{txt_conf_matrix}")
+    txt_output.append(txt_conf_matrix)
+
+    fig, ax = plt.subplots(figsize=(8, 8))
+    ax.imshow(cnf_matrix)
+    ax.grid(False)
+    ax.xaxis.set(ticks=(0, 1), ticklabels=('Predicted 0s', 'Predicted 1s'))
+    ax.yaxis.set(ticks=(0, 1), ticklabels=('Actual 0s', 'Actual 1s'))
+    ax.set_ylim(1.5, -0.5)
+    for i in range(2):
+        for j in range(2):
+            ax.text(j, i, cnf_matrix[i, j], ha='center', va='center')
+    plt.savefig(os.path.join(p_run_reg_dir, 'conf_matrix_png'))
+    plt.show()
+
+    report = metrics.classification_report(y_test, y_pred)
+    print(f"report:\n{report}")
+    txt_output.append(report)
+
+    accuracy = metrics.accuracy_score(y_test, y_pred)
+    print(f"accuracy:\n{accuracy}")
+    txt_output.append(f"model_accuracy: {accuracy}")
 
     # plot ROC curve
-    y_pred_proba = log_regression.predict_proba(X_test)[::, 1]
+    y_pred_proba = log_reg.predict_proba(X_test)[::, 1]
     fpr, tpr, _ = metrics.roc_curve(y_test, y_pred_proba)
     auc = metrics.roc_auc_score(y_test, y_pred_proba)
     plt.plot(fpr, tpr, label="AUC=" + str(auc))
     plt.legend(loc=4)
+    plt.savefig(os.path.join(p_run_reg_dir, 'roc_auc.png'))
+    plt.show()
+    txt_output.append(f"auc: {auc}")
+
+
+    # # plot logistic function
+    plt.figure(1, figsize=(4, 3))
+    plt.clf()  # clear current figure
+    plt.scatter(X_test.ravel(), y_test, color="black", zorder=20)
+
+    loss = expit(X_test * log_reg.coef_ + log_reg.intercept_).ravel()
+    plt.plot(X_test, loss, color="red", linewidth=3)
+
+    ols = LinearRegression()
+    ols.fit(X_test, y_test)
+    plt.plot(X_test, ols.coef_ * X_test + ols.intercept_, linewidth=1)
+    plt.axhline(0.5, color=".5")
+
+    plt.ylabel("Response")
+    plt.xlabel("Distance from target")
+    plt.yticks([0, 1])
+    plt.title(f"{p_name} ({run}): score: {round(score, 2)}, slope: {round(slope[0][0], 3)} ")
+    plt.legend(
+        ("Log Reg", "Lin Reg"),
+        loc="lower right",
+        fontsize="small",
+    )
+    plt.tight_layout()
+    plt.savefig(os.path.join(p_run_reg_dir, 'reg_plot.png'))
+
     plt.show()
 
 
+    # # save output document
+    txt_doc_name = f"{p_name}_{run}_log_reg.txt"
+    txt_doc_path = os.path.join(p_run_reg_dir, txt_doc_name)
+    with open(txt_doc_path, 'w') as output:
+        for row in txt_output:
+            output.write(str(row) + '\n')
 
-# do one dfs
-participants = ['p1']
-run_list = [1]
-eye_pos_predict_resp(p_list=participants, run_list=run_list)
-# # do all dfs
+
+# do one df
+# p_name = 'p1'
+# run = 1
+# dist_log_reg(p_name=p_name, run=run)
+#
+# # # # do all dfs
 # participants = ['p1', 'p2']
 # run_list = [1, 2, 3]
-# eye_pos_predict_resp(p_list=participants, run_list=run_list)
+# for p_name in participants:
+#     for run in run_list:
+#         dist_log_reg(p_name=p_name, run=run)
 
 
 
@@ -927,7 +1059,7 @@ def plot_eye_pos(p_name, run, eye_track_dir=None):
     eye_df = pd.read_csv(csv_path, usecols=['time_stamp', 'trial_num', 'trial_frames', 'segment',
                                             'x_pos', 'y_pos', 'eye_message',
                                             'sep', 'ISI', 'probe_jump', 'corner', 'probeLum', 'resp'])
-    print(f"\neye_df: ({eye_df.shape})\n{list(eye_df.columns)}\n{eye_df.head()}\n")
+    print(f"\neye_df: {eye_df.shape}\n{list(eye_df.columns)}\n{eye_df.head()}\n")
 
     # sort corners to use as hue
     # change corner to str, so it is categorical not numeric
@@ -1010,7 +1142,7 @@ def plot_eye_pos(p_name, run, eye_track_dir=None):
     # # # this run mean pos probes
     print(f"\nplotting position during probes positions: {p_name}_{run}")
     probes_df = eye_df.loc[eye_df['segment'].isin(['probe1', 'ISI', 'probe2'])]
-    print(f"\nprobes_df: ({probes_df.shape})\n{list(probes_df.columns)}\n"
+    print(f"\nprobes_df: {probes_df.shape}\n{list(probes_df.columns)}\n"
           f"{probes_df.head()}\n{probes_df.tail()}\n")
 
     g = sns.jointplot(data=probes_df, x="x_pos", y="y_pos",
@@ -1085,7 +1217,7 @@ def plot_eye_movements(p_name, run, eye_track_dir=None):
     eye_df = pd.read_csv(csv_path, usecols=['time_stamp', 'trial_num', 'trial_frames', 'segment',
                                             'x_pos', 'y_pos', 'eye_message',
                                             'sep', 'ISI', 'probe_jump', 'corner', 'probeLum', 'resp'])
-    print(f"\neye_df: ({eye_df.shape})\n{list(eye_df.columns)}\n{eye_df.head()}\n")
+    print(f"\neye_df: {eye_df.shape}\n{list(eye_df.columns)}\n{eye_df.head()}\n")
 
     # sort corners to use as hue
     # change corner to str, so it is categorical not numeric

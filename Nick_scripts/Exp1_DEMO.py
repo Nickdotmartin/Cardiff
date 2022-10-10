@@ -32,7 +32,7 @@ monitor_name = 'Nick_work_laptop'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 
 # Store info about the experiment session
 expName = 'EXP1_DEMO'  # from the Builder filename that created this script
 
-expInfo = {'1. Participant': 'p1',
+expInfo = {'1. Participant': 'nicktest',
            '1. run_number': '1',
            '2. Probe duration in frames at 240hz': [2, 50, 100],
            '3. fps': [60, 144, 240],
@@ -365,6 +365,8 @@ for step in range(n_trials_per_stair):
                     probe2.pos = [p1_x + sep - 1, p1_y + sep]
 
         probe1.pos = [p1_x, p1_y]
+
+        print(f"probe1: {probe1.pos}, probe2.pos: {probe2.pos}. dff: {dist_from_fix}")
 
         # to avoid fixation times always being the same which might increase
         # anticipatory effects,
