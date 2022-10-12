@@ -11,15 +11,15 @@ from check_home_dir import switch_path
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\EXP1_R_G_rot"
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\EXP1_sep4_5"
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\EXP1_split_probes"
-# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\jitter_rgb"
-exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\eyetracking"
+exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\jitter_rgb"
+# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\eyetracking"
 
 convert_path1 = os.path.normpath(exp_path)
 exp_path = convert_path1
 
 print(f"exp_path: {exp_path}")
-# participant_list = ['Nick', 'Simon']
-participant_list = ['p1', 'p2']
+participant_list = ['Nick', 'Simon']
+# participant_list = ['p1', 'p2']
 split_1probe = False
 
 n_runs = 12
@@ -175,7 +175,7 @@ for p_idx, participant_name in enumerate(participant_list):
 
 print(f'exp_path: {exp_path}')
 print('\nget exp_average_data')
-# participant_list = ['Kim', 'Nick']
+participant_list = ['Nick', 'Simon']
 e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
                    error_type='SE', n_trimmed=trim_n, verbose=True)
 

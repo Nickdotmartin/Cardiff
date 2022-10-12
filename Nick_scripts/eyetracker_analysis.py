@@ -255,7 +255,7 @@ def count_missing_segments(p_list, run_list, eye_track_dir=None):
 
     new_list = []
 
-    for p_name in participants:
+    for p_name in p_list:
         for run in run_list:
 
             # get file_path and csv_name
@@ -560,7 +560,7 @@ def short_trial_data(p_name, run, eye_track_dir=None):
             print(f"\n{trial_number}. this_trial_df: {this_trial_df.shape}\n{this_trial_df.head()}\n")
 
             rows, cols = this_trial_df.shape
-            new_idx = list(range(-100, rows-100))
+            new_idx = list(range(-50, rows-50))
             this_trial_df.insert(1, 'trial_idx', new_idx)
 
             all_trials_list.append(this_trial_df)
@@ -578,7 +578,7 @@ def short_trial_data(p_name, run, eye_track_dir=None):
 # run = 1
 # short_trial_data(p_name=p_name, run=run)
 
-# # do all dfs
+# do all dfs
 # participants = ['p1', 'p2']
 # run_list = [1, 2, 3]
 # for p_name in participants:
@@ -665,7 +665,7 @@ def add_crner_0cntr_dist_motion(p_list, run_list, eye_track_dir=None, adjust_x=0
 # run_list = [1]
 # add_crner_0cntr_dist_motion(p_list=participants, run_list=run_list)
 
-# # do all dfs
+# do all dfs
 # participants = ['p1', 'p2']
 # run_list = [1, 2, 3]
 # add_crner_0cntr_dist_motion(p_list=participants, run_list=run_list)
@@ -822,13 +822,19 @@ def dist_log_reg(p_name, run, eye_track_dir=None, predictor='mean_dist'):
     y = np.array(p_run_df['resp'].to_list())
 
     # split the dataset into training (70%) and testing (30%) sets
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
 
     # instantiate the model
-    log_reg = LogisticRegression(class_weight='balanced')
+    log_reg = LogisticRegression(
+        # class_weight='balanced'
+        class_weight=trial_acc_dict
+    )
     print(f"params:\n{log_reg.get_params()}")
+
     # fit the model using the training data
-    log_reg.fit(X_train, y_train)
+    log_reg.fit(X_train, y_train,
+                sample_weight=trial_score/num_instances
+                )
 
     # # get the intercept and coeficient
     intercept = log_reg.intercept_
@@ -840,7 +846,7 @@ def dist_log_reg(p_name, run, eye_track_dir=None, predictor='mean_dist'):
     y_pred = log_reg.predict(X_test)
 
     # # get the model score
-    score = log_reg.score(X_test, y_test)
+    score = log_reg.score(X_test, y_test, sample_weight=trial_score/num_instances)
     print(f"score: {score}")
     txt_output.append(f"model score: {score}\n")
 
@@ -866,7 +872,7 @@ def dist_log_reg(p_name, run, eye_track_dir=None, predictor='mean_dist'):
         for j in range(2):
             ax.text(j, i, cnf_matrix[i, j], ha='center', va='center')
     plt.savefig(os.path.join(p_run_reg_dir, 'conf_matrix_png'))
-    plt.show()
+    # plt.show()
 
     report = metrics.classification_report(y_test, y_pred)
     print(f"report:\n{report}")
@@ -883,7 +889,7 @@ def dist_log_reg(p_name, run, eye_track_dir=None, predictor='mean_dist'):
     plt.plot(fpr, tpr, label="AUC=" + str(auc))
     plt.legend(loc=4)
     plt.savefig(os.path.join(p_run_reg_dir, 'roc_auc.png'))
-    plt.show()
+    # plt.show()
     txt_output.append(f"auc: {auc}")
 
 
@@ -923,12 +929,12 @@ def dist_log_reg(p_name, run, eye_track_dir=None, predictor='mean_dist'):
             output.write(str(row) + '\n')
 
 
-# do one df
+# # # do one df
 # p_name = 'p1'
 # run = 1
 # dist_log_reg(p_name=p_name, run=run)
 #
-# # # # do all dfs
+# # # do all dfs
 # participants = ['p1', 'p2']
 # run_list = [1, 2, 3]
 # for p_name in participants:
@@ -976,7 +982,7 @@ def get_mean_eye_pos(p_list, run_list, eye_track_dir=None):
 
     new_list = []
 
-    for p_name in participants:
+    for p_name in p_list:
         for run in run_list:
 
             # get file_path and csv_name
@@ -1048,7 +1054,7 @@ def plot_eye_pos(p_name, run, eye_track_dir=None):
 
     # get file_path and csv_name
     save_path = os.path.join(eye_track_dir, p_name)
-    df_name = f"{p_name.upper()}_{run}_eyetrack_fixed.csv"
+    df_name = f"{p_name.upper()}_{run}_eyetrack_dist_motion.csv"
     csv_path = os.path.join(save_path, df_name)
     p_run_dir = os.path.join(save_path, f"{p_name}_{run}")
     print(f'eye_track_dir: {eye_track_dir}')
@@ -1056,19 +1062,22 @@ def plot_eye_pos(p_name, run, eye_track_dir=None):
     print(f'p_run_dir: {p_run_dir}')
     print(f'df_name: {df_name}')
     print(f'csv_path: {csv_path}')
-    eye_df = pd.read_csv(csv_path, usecols=['time_stamp', 'trial_num', 'trial_frames', 'segment',
+    eye_df = pd.read_csv(csv_path, usecols=['trial_num', 'trial_idx', 'segment',
                                             'x_pos', 'y_pos', 'eye_message',
-                                            'sep', 'ISI', 'probe_jump', 'corner', 'probeLum', 'resp'])
+                                            'corner', 'crnr_name',
+                                            'sep', 'ISI', 'probe_jump', 'probeLum', 'resp']
+                         )
     print(f"\neye_df: {eye_df.shape}\n{list(eye_df.columns)}\n{eye_df.head()}\n")
 
     # sort corners to use as hue
-    # change corner to str, so it is categorical not numeric
-    eye_df = eye_df.astype({'corner': 'str'})
-    corner_label_dict = {'45': 'top-right', '135': 'top-left', '225': 'bottom-left', '315': 'bottom-right'}
-    # corner_palette = {'45': 'tab:blue', '135': 'tab:green', '225': 'tab:orange', '315': 'tab:red'}
     crnr_palette = {'top-right': 'tab:blue', 'top-left': 'tab:green', 'bottom-left': 'tab:orange',
                     'bottom-right': 'tab:red'}
-    eye_df['crnr_name'] = eye_df['corner'].map(corner_label_dict)
+
+    if 'crnr_name' not in list(eye_df.columns):
+    # change corner to str, so it is categorical not numeric
+        eye_df = eye_df.astype({'corner': 'str'})
+        corner_label_dict = {'45': 'top-right', '135': 'top-left', '225': 'bottom-left', '315': 'bottom-right'}
+        eye_df['crnr_name'] = eye_df['corner'].map(corner_label_dict)
 
     # # use expected locations for fixation and probes (e.g., fix_x = 1920/2; fix_y = 1080/2)
     fix_x = 960
@@ -1082,6 +1091,8 @@ def plot_eye_pos(p_name, run, eye_track_dir=None):
     print(f"fix pos: ({fix_x}, {fix_y})\nplot bounds (+/- {dist_from_fix}): ({min_x}, {max_x}), ({min_y}, {max_y})")
     print(f"fzoomed in bounds (+/- {zoomed_in_bounds}): ({fix_x - zoomed_in_bounds}, {fix_x + zoomed_in_bounds}), "
           f"({fix_y - zoomed_in_bounds}, {fix_y + zoomed_in_bounds})")
+
+    # # make three plots: fixation, probes(&ISI) and response
 
     # # # this run mean pos during fixation
     print(f"\nplotting fixation positions: {p_name}_{run}")
@@ -1173,14 +1184,14 @@ def plot_eye_pos(p_name, run, eye_track_dir=None):
 # old_csv_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\eyetracking\p1\P1_1_pylink.csv"
 # p_name = 'p1'
 # run = 1
-# plot_eye_movements(p_name=p_name, run=run)
-#
-# # # do all dfs
+# plot_eye_pos(p_name=p_name, run=run)
+
+# # do all dfs
 # participants = ['p1', 'p2']
 # run_list = [1, 2, 3]
 # for p_name in participants:
 #     for run in run_list:
-#         plot_eye_movements(p_name=p_name, run=run)
+#         plot_eye_pos(p_name=p_name, run=run)
 
 def plot_eye_movements(p_name, run, eye_track_dir=None):
     """
@@ -1206,7 +1217,7 @@ def plot_eye_movements(p_name, run, eye_track_dir=None):
 
     # get file_path and csv_name
     save_path = os.path.join(eye_track_dir, p_name)
-    df_name = f"{p_name.upper()}_{run}_eyetrack_fixed.csv"
+    df_name = f"{p_name.upper()}_{run}_eyetrack_dist_motion.csv"
     csv_path = os.path.join(save_path, df_name)
     p_run_dir = os.path.join(save_path, f"{p_name}_{run}")
     print(f'eye_track_dir: {eye_track_dir}')
@@ -1214,22 +1225,30 @@ def plot_eye_movements(p_name, run, eye_track_dir=None):
     print(f'p_run_dir: {p_run_dir}')
     print(f'df_name: {df_name}')
     print(f'csv_path: {csv_path}')
-    eye_df = pd.read_csv(csv_path, usecols=['time_stamp', 'trial_num', 'trial_frames', 'segment',
-                                            'x_pos', 'y_pos', 'eye_message',
-                                            'sep', 'ISI', 'probe_jump', 'corner', 'probeLum', 'resp'])
+    eye_df = pd.read_csv(csv_path,
+                         usecols=['trial_num', 'trial_idx', 'segment',
+                                  'x_pos', 'y_pos',
+                                  'eye_message', 'sep', 'ISI', 'resp',
+                                  'corner', 'crnr_name',
+                                  'x0_pos', 'y0_pos', ]
+
+                         # usecols=['time_stamp', 'trial_num', 'trial_frames', 'segment',
+                         #                    'x_pos', 'y_pos', 'eye_message',
+                         #                    'sep', 'ISI', 'probe_jump', 'corner', 'probeLum', 'resp']
+                         )
     print(f"\neye_df: {eye_df.shape}\n{list(eye_df.columns)}\n{eye_df.head()}\n")
 
-    # sort corners to use as hue
-    # change corner to str, so it is categorical not numeric
-    eye_df = eye_df.astype({'corner': 'str'})
-    corner_label_dict = {'45': 'top-right', '135': 'top-left', '225': 'bottom-left', '315': 'bottom-right'}
-    # corner_palette = {'45': 'tab:blue', '135': 'tab:green', '225': 'tab:orange', '315': 'tab:red'}
-    crnr_palette = {'top-right': 'tab:blue', 'top-left': 'tab:green', 'bottom-left': 'tab:orange', 'bottom-right': 'tab:red'}
-    eye_df['crnr_name'] = eye_df['corner'].map(corner_label_dict)
-
+    # # sort corners to use as hue
+    # # change corner to str, so it is categorical not numeric
+    # eye_df = eye_df.astype({'corner': 'str'})
+    # corner_label_dict = {'45': 'top-right', '135': 'top-left', '225': 'bottom-left', '315': 'bottom-right'}
+    # # corner_palette = {'45': 'tab:blue', '135': 'tab:green', '225': 'tab:orange', '315': 'tab:red'}
+    # crnr_palette = {'top-right': 'tab:blue', 'top-left': 'tab:green', 'bottom-left': 'tab:orange', 'bottom-right': 'tab:red'}
+    # eye_df['crnr_name'] = eye_df['corner'].map(corner_label_dict)
+    #
     # # use expected locations for fixation and probes (e.g., fix_x = 1920/2; fix_y = 1080/2)
-    fix_x = 960
-    fix_y = 540
+    fix_x = 0  # 960
+    fix_y = 0  # 540
     dist_from_fix = 175
     min_x = fix_x - dist_from_fix
     max_x = fix_x + dist_from_fix
@@ -1252,18 +1271,19 @@ def plot_eye_movements(p_name, run, eye_track_dir=None):
             # get df just for one stair at this isi
             trial_df = eye_df[eye_df['trial_num'] == trial_number]
 
-            # remove 'response' frames after probes dissapear
-            trial_df = trial_df[trial_df['segment'] != 'response']
+            # # remove 'response' frames after probes dissapear
+            # trial_df = trial_df[trial_df['segment'] != 'response']
 
             # get run details
             sep = int(trial_df['sep'].iloc[0])
             ISI = int(trial_df['ISI'].iloc[0])
-            probe_jump = int(trial_df['probe_jump'].iloc[0])
-            probe_dir = 'CW'
-            if probe_jump == -1:
-                probe_dir = 'ACW'
+            # probe_jump = int(trial_df['probe_jump'].iloc[0])
+            # probe_dir = 'CW'
+            # if probe_jump == -1:
+            #     probe_dir = 'ACW'
             corner = int(trial_df['corner'].iloc[0])
-            probeLum = float(trial_df['probeLum'].iloc[0])
+            crnr_name = str(trial_df['crnr_name'].iloc[0])
+            # probeLum = float(trial_df['probeLum'].iloc[0])
             resp = int(trial_df['resp'].iloc[0])
             response = 'correct'
             if resp == 0:
@@ -1274,15 +1294,19 @@ def plot_eye_movements(p_name, run, eye_track_dir=None):
 
             # # plot1 - zoomed out to include probe locations.
             fig, ax = plt.subplots(figsize=(6, 6))
-            sns.lineplot(data=trial_df, x="x_pos", y="y_pos", sort=False, hue='segment', palette=colour_dict,
-                         # hue_order=['fix_dot', 'response', 'probe2', 'ISI', 'probe1']
+            sns.lineplot(data=trial_df, x="x0_pos", y="y0_pos", sort=False, hue='segment',
+                         palette=colour_dict,
+                         style='eye_message',
+                         hue_order=['fix_dot', 'response', 'probe2', 'ISI', 'probe1']
                          )
 
             # plot extends to assumed probe locations
-            plt.plot((fix_x-dist_from_fix, fix_x+dist_from_fix), (fix_y-dist_from_fix, fix_y+dist_from_fix),
-                     linestyle='dashed', color='grey')
-            plt.plot((fix_x-dist_from_fix, fix_x+dist_from_fix), (fix_y+dist_from_fix, fix_y-dist_from_fix),
-                     linestyle='dashed', color='grey')
+            # plt.plot((fix_x-dist_from_fix, fix_x+dist_from_fix), (fix_y-dist_from_fix, fix_y+dist_from_fix),
+            #          linestyle='dashed', color='grey')
+            # plt.plot((fix_x-dist_from_fix, fix_x+dist_from_fix), (fix_y+dist_from_fix, fix_y-dist_from_fix),
+            #          linestyle='dashed', color='grey')
+            plt.plot((min_x, max_x), (min_y, max_y), linestyle='dashed', color='grey')
+            plt.plot((min_x, max_x), (max_y, min_y), linestyle='dashed', color='grey')
 
             # # add indication of where probe is
             if corner == 45:
@@ -1299,15 +1323,18 @@ def plot_eye_movements(p_name, run, eye_track_dir=None):
 
             # # (0, 0) in top-left corner (not bottom left, so flip y axis)
             plt.gca().invert_yaxis()
-            plt.title(f"Probes: {p_name}_{run}: {trial_number} sep{sep} ISI{ISI}.  {corner_label_dict[corner]}: {response}")
-            # plt.show()
+            # plt.title(f"Probes: {p_name}_{run}: {trial_number} sep{sep} ISI{ISI}.  {corner_label_dict[corner]}: {response}")
+            plt.title(f"Probes: {p_name}_{run}: {trial_number} sep{sep} ISI{ISI}.  {crnr_name}: {response}")
             fig_name = f"probes_{p_name}_{run}_{trial_number}_ISI{ISI}_sep{sep}_{response[:3]}.png"
             plt.savefig(os.path.join(p_run_dir, fig_name))
+            # plt.show()
 
             # # plot2 - zoomed in to focus on fixatation
             fig, ax = plt.subplots(figsize=(6, 6))
-            sns.lineplot(data=trial_df, x="x_pos", y="y_pos", sort=False, hue='segment', palette=colour_dict,
-                         # hue_order=['fix_dot', 'response', 'probe2', 'ISI', 'probe1']
+            # sns.lineplot(data=trial_df, x="x_pos", y="y_pos", sort=False, hue='segment', palette=colour_dict,
+            sns.lineplot(data=trial_df, x="x0_pos", y="y0_pos", sort=False, hue='segment', palette=colour_dict,
+                         style='eye_message',
+                         hue_order=['fix_dot', 'response', 'probe2', 'ISI', 'probe1']
                          )
 
             # plot extends to assumed probe locations
@@ -1331,23 +1358,24 @@ def plot_eye_movements(p_name, run, eye_track_dir=None):
 
             # # (0, 0) in top-left corner (not bottom left, so flip y axis)
             plt.gca().invert_yaxis()
-            plt.title(f"ZoomIn: {p_name}_{run}: {trial_number} sep{sep} ISI{ISI}.  {corner_label_dict[corner]}: {response}")
-            # plt.show()
+            plt.title(f"ZoomIn: {p_name}_{run}: {trial_number} sep{sep} ISI{ISI}.  {crnr_name}: {response}")
             fig_name = f"zommed_{p_name}_{run}_{trial_number}_ISI{ISI}_sep{sep}_{response[:3]}.png"
             plt.savefig(os.path.join(p_run_dir, fig_name))
+            # plt.show()
+
 
 # # do one df
 # old_csv_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\eyetracking\p1\P1_1_pylink.csv"
 # p_name = 'p1'
 # run = 1
 # plot_eye_movements(p_name=p_name, run=run)
-#
-# # # do all dfs
-# participants = ['p1', 'p2']
-# run_list = [1, 2, 3]
-# for p_name in participants:
-#     for run in run_list:
-#         plot_eye_movements(p_name=p_name, run=run)
+
+# # do all dfs
+participants = ['p1', 'p2']
+run_list = [1, 2, 3]
+for p_name in participants:
+    for run in run_list:
+        plot_eye_movements(p_name=p_name, run=run)
 
 
 

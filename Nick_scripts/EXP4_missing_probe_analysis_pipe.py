@@ -14,11 +14,11 @@ from exp1a_psignifit_analysis import plt_heatmap_row_col
 exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\EXP4_missing_probe'
 exp_path = os.path.normpath(exp_path)
 
-coherence_type = 'Rotation'  # 'Radial', Translation, Rotation
+coherence_type = 'Radial'  # 'Radial', Translation, Rotation
 exp_path = os.path.join(exp_path, coherence_type)
 
 participant_list = ['Nick']  # , 'Simon']
-analyse_from_run = 4
+analyse_from_run = 5
 
 verbose = True
 show_plots = True
@@ -134,7 +134,7 @@ for p_idx, participant_name in enumerate(participant_list):
                                     verbose=verbose)
         print(f'thr_df:\n{thr_df}')
 
-    run_folder_names = ['Nick_1', 'Nick_2', 'Nick_3', 'Nick_4']
+    # run_folder_names = ['Nick_1', 'Nick_5', 'Nick_6']
     '''d participant averages'''
     d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
                           groupby_col=['cond_type', 'neg_sep'], cols_to_drop='stack', cols_to_replace='separation',
