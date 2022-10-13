@@ -671,6 +671,141 @@ def add_crner_0cntr_dist_motion(p_list, run_list, eye_track_dir=None, adjust_x=0
 # add_crner_0cntr_dist_motion(p_list=participants, run_list=run_list)
 
 
+def saccade_count(p_list, run_list, eye_track_dir=None):
+    """
+    How many sacaddes are there?
+    What segments do they occur in?
+    What is there duration (frames/ms)
+    What is there magnitude (dist travelled)
+
+    Iterated through all trials.
+
+    Associate response (correct/incorrect)
+
+    1. do saccades predict effect?
+        per run - how many sacaddes, blinks and fixations are there (e.g., n_sacaddes, not number of frames containing sac
+    2. do saccades predict response?
+        Per run -
+
+
+    :param p_list: list of participants, used for accessing dirs and files.
+    :param run_list: list of run numbers, used for accessing dirs and files.
+    :param eye_track_dir: path to folder with participant folders containing run folders and plink csvs.
+    :return:
+    """
+
+    if eye_track_dir is None:
+        eye_track_dir = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\eyetracking"
+    print(f"\n*** running saccade_count(p_list={p_list}, run_list={run_list}, eye_track_dir={eye_track_dir}) ***\n")
+
+    new_list = []
+
+    for p_name in p_list:
+        for run in run_list:
+
+            # get file_path and csv_name
+            save_path = os.path.join(eye_track_dir, p_name)
+            csv_name = f"{p_name}_{run}_eyetrack_dist_motion.csv"
+            csv_path = os.path.join(save_path, csv_name)
+
+            print(f'eye_track_dir: {eye_track_dir}')
+            print(f'save_path: {save_path}')
+            print(f'csv_name: {csv_name}')
+            print(f'csv_path: {csv_path}')
+            eye_df = pd.read_csv(csv_path,
+                                 # usecols=['trial_num', 'trial_idx', 'segment', 'x_pos', 'y_pos', 'eye_message', 'sep', 'ISI', 'probe_jump', 'corner', 'probeLum', 'resp', 'crnr_name', 'trgt_X', 'trgt_Y', 'x0_pos', 'y0_pos', 'x_dist', 'y_dist', 'sq_dist', 'x_motion', 'y_motion', 'sq_motion']
+)
+            print(f"\neye_df: {eye_df.shape}\n{list(eye_df.columns)}\n{eye_df.head()}\n")
+
+
+
+# # do all dfs
+# participants = ['p1', 'p2']
+# run_list = [1, 2, 3]
+# saccade_count(p_list=participants, run_list=run_list)
+
+
+def count_errors(p_list, run_list, eye_track_dir=None):
+    """
+    Make a master df of all trials for all participants.  Get mean number of errors.
+    Do errors predict effect (only present for p1, runs 2 and 3).
+
+
+    :param p_list: list of participants, used for accessing dirs and files.
+    :param run_list: list of run numbers, used for accessing dirs and files.
+    :param eye_track_dir: path to folder with participant folders containing run folders and plink csvs.
+    :return:
+    """
+
+    if eye_track_dir is None:
+        eye_track_dir = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\eyetracking"
+    print(f"\n*** running count_errors(p_list={p_list}, run_list={run_list}, eye_track_dir={eye_track_dir}) ***\n")
+
+    new_list = []
+
+    for p_name in p_list:
+        for run in run_list:
+
+            # get file_path and csv_name
+            save_path = os.path.join(eye_track_dir, p_name)
+            csv_name = f"{p_name}_{run}_eyetrack_dist_motion.csv"
+            csv_path = os.path.join(save_path, csv_name)
+
+            print(f'eye_track_dir: {eye_track_dir}')
+            print(f'save_path: {save_path}')
+            print(f'csv_name: {csv_name}')
+            print(f'csv_path: {csv_path}')
+            eye_df = pd.read_csv(csv_path,
+                                 usecols=['trial_num', 'trial_idx',
+                                          'sep', 'ISI', 'probe_jump', 'corner',
+                                          'probeLum', 'resp', 'crnr_name']
+                                 )
+            print(f"\neye_df: {eye_df.shape}\n{list(eye_df.columns)}\n{eye_df.head()}\n")
+
+            trial_numbers = eye_df['trial_num'].unique().tolist()
+
+            # loop through stairs for this isi
+            for idx, trial_number in enumerate(trial_numbers):
+
+                # get df just for one trial
+                trial_df = eye_df[eye_df['trial_num'] == trial_number]
+                print(f'\ntrial_df ({trial_number}) {trial_df.shape}:\n{trial_df}')
+                print(f'\ntrial_number: {trial_number}')
+                # print(f"\ntrial_df['ISI']: {trial_df['ISI']}")
+
+                isi_val = int(trial_df['ISI'].iloc[0])
+                sep_val = int(trial_df['sep'].iloc[0])
+                probe_jump = int(trial_df['probe_jump'].iloc[0])
+                crnr_name = str(trial_df['crnr_name'].iloc[0])
+                probeLum = int(trial_df['probeLum'].iloc[0])
+                resp = int(trial_df['resp'].iloc[0])
+
+                # # apend to new dataframe
+                new_row = [p_name, run, trial_number, sep_val, isi_val, probe_jump,
+                           crnr_name, probeLum, resp]
+                new_list.append(new_row)
+
+    # make new output df
+    error_count_df = pd.DataFrame(new_list,
+                                  columns=['p_name', 'run', 'trial',
+                                           'sep_val', 'isi_val', 'probe_jump',
+                                           'crnr_name', 'probeLum', 'resp'])
+    print(f'\nerror_count_df:\n{error_count_df}')
+    print(f"\nerror_count_df: {error_count_df.shape}\n{list(error_count_df.columns)}\n"
+          f"{error_count_df.head()}\n")
+    error_count_df.to_csv(os.path.join(eye_track_dir, f'error_count.csv'), index=False)
+
+
+# # do one dfs
+# participants = ['p1']
+# run_list = [1]
+# count_errors(p_list=participants, run_list=run_list)
+
+# # do all dfs
+participants = ['p1', 'p2']
+run_list = [1, 2, 3]
+count_errors(p_list=participants, run_list=run_list)
+
 
 def trial_dist_from_trgt(p_list, run_list, eye_track_dir=None):
     """
@@ -972,8 +1107,8 @@ At the end I want to know
 def get_mean_eye_pos(p_list, run_list, eye_track_dir=None):
     """
 
-    :param p_name: name of participant, used for accessing dirs and files.
-    :param run: run number, used for accessing dirs and files.
+    :param p_list: list of participants, used for accessing dirs and files.
+    :param run_list: list of run numbers, used for accessing dirs and files.
     :param eye_track_dir: path to folder with participant folders containing run folders and plink csvs.
     :return:
     """
@@ -1370,12 +1505,12 @@ def plot_eye_movements(p_name, run, eye_track_dir=None):
 # run = 1
 # plot_eye_movements(p_name=p_name, run=run)
 
-# # do all dfs
-participants = ['p1', 'p2']
-run_list = [1, 2, 3]
-for p_name in participants:
-    for run in run_list:
-        plot_eye_movements(p_name=p_name, run=run)
+# # # do all dfs
+# participants = ['p1', 'p2']
+# run_list = [1, 2, 3]
+# for p_name in participants:
+#     for run in run_list:
+#         plot_eye_movements(p_name=p_name, run=run)
 
 
 
