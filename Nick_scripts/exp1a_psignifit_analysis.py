@@ -877,7 +877,8 @@ def plt_heatmap_row_col(heatmap_df,
             else:
                 ax.tick_params(left=False)
                 ax.set_ylabel(None)
-            fig.supxlabel(x_axis_label, fontsize=fontsize+2)
+            # todo: add in this axis label again (worked on windows but not mac)
+            # fig.supxlabel(x_axis_label, fontsize=fontsize+2)
             plt.subplots_adjust(wspace=-0.5, hspace=-.5)
 
         else:
@@ -886,7 +887,8 @@ def plt_heatmap_row_col(heatmap_df,
                 ax.set_xlabel(x_axis_label, fontsize=fontsize)
             else:
                 ax.tick_params(bottom=False)
-            fig.supylabel(y_axis_label, fontsize=fontsize+2, x=.1)
+            # todo: add in this axis label again (worked on windows but not mac)
+            # fig.supylabel(y_axis_label, fontsize=fontsize+2, x=.1)
             plt.subplots_adjust(hspace=0.1)
 
     # # make colourbar: numbers are (1) the horizontal and (2) vertical position
