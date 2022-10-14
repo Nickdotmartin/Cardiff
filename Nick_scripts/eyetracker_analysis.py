@@ -8,6 +8,9 @@ from sklearn.model_selection import train_test_split
 from sklearn import metrics
 from sklearn.linear_model import LogisticRegression, LinearRegression
 from scipy.special import expit
+
+from check_home_dir import which_path, running_on_laptop, switch_path
+
 '''
 Part A
 If I re-do the experiment I might write a script to automate the stuff I did by hand in excel:
@@ -693,7 +696,9 @@ def trial_dist_from_trgt(p_list, run_list, eye_track_dir=None):
 
     if eye_track_dir is None:
         eye_track_dir = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\eyetracking"
-
+    # if using my laptop, adjust dir
+    if running_on_laptop():
+        eye_track_dir = switch_path(eye_track_dir, 'mac_oneDrive')
 
     new_list = []
 
@@ -711,7 +716,8 @@ def trial_dist_from_trgt(p_list, run_list, eye_track_dir=None):
             print(f'csv_path: {csv_path}')
             eye_df = pd.read_csv(csv_path,
                                  usecols=['trial_num', 'segment', 'sep', 'ISI',
-                                          'probe_jump', 'crnr_name', 'resp', 'sq_dist']
+                                          'probe_jump', 'crnr_name', 'probeLum',
+                                          'resp', 'sq_dist']
                                  )
             print(f"\neye_df: {eye_df.shape}\n{eye_df.head()}\n")
 
@@ -737,18 +743,19 @@ def trial_dist_from_trgt(p_list, run_list, eye_track_dir=None):
                 isi_val = int(probes_df['ISI'].iloc[0])
                 probe_jump = int(probes_df['probe_jump'].iloc[0])
                 crnr_name = str(probes_df['crnr_name'].iloc[0])
+                probeLum = int(probes_df['probeLum'].iloc[0])
                 resp = int(probes_df['resp'].iloc[0])
 
                 # # apend to new dataframe
                 new_row = [p_name, run, trial, sep_val, isi_val, probe_jump,
-                           crnr_name, resp, mean_dist, min_dist]
+                           crnr_name, probeLum, resp, mean_dist, min_dist]
                 new_list.append(new_row)
 
 
     # make new output df
     dist_from_trgt_df = pd.DataFrame(new_list,
                           columns=['p_name', 'run', 'trial', 'sep_val', 'isi_val', 'probe_jump',
-                                   'crnr_name', 'resp', 'mean_dist', 'min_dist'])
+                                   'crnr_name', 'probeLum', 'resp', 'mean_dist', 'min_dist'])
     print(f'\ndist_from_trgt_df:\n{dist_from_trgt_df}')
     print(f"\ndist_from_trgt_df: {dist_from_trgt_df.shape}\n{list(dist_from_trgt_df.columns)}\n"
           f"{dist_from_trgt_df.head()}\n")
@@ -758,28 +765,32 @@ def trial_dist_from_trgt(p_list, run_list, eye_track_dir=None):
 # participants = ['p2']
 # run_list = [1]
 # trial_dist_from_trgt(p_list=participants, run_list=run_list)
-# do all dfs
+# # do all dfs
 # participants = ['p1', 'p2']
 # run_list = [1, 2, 3]
 # trial_dist_from_trgt(p_list=participants, run_list=run_list)
 
-def dist_log_reg(p_name, run, eye_track_dir=None, predictor='mean_dist'):
+def dist_log_reg(p_list, run_list, eye_track_dir=None,
+                 df_name="dist_from_trgt.csv", predictor='mean_dist'):
     """
 
-    :param p_name:
-    :param run:
+    :param p_list:
+    :param run_list:
     :param eye_track_dir:
-    :param predictor:
+    :param predictor: whether to use mean_dist, min_dist or some other predictor.
     :return:
     """
-    print(f"\n*** running dist_log_reg(p_name={p_name}, run={run}, predictor={predictor}) ***\n")
+    print(f"\n*** running dist_log_reg(p_list={p_list}, run_list={run_list}, predictor={predictor}) ***\n")
 
     if eye_track_dir is None:
         eye_track_dir = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\eyetracking"
 
+    # if using my laptop, adjust dir
+    if running_on_laptop():
+        eye_track_dir = switch_path(eye_track_dir, 'mac_oneDrive')
+
     # get file_path and csv_name
-    # save_path = os.path.join(eye_track_dir, p_name)
-    df_name = "dist_from_trgt.csv"
+    # df_name = "dist_from_trgt.csv"
     csv_path = os.path.join(eye_track_dir, df_name)
     print(f'eye_track_dir: {eye_track_dir}')
     print(f'df_name: {df_name}')
@@ -788,158 +799,220 @@ def dist_log_reg(p_name, run, eye_track_dir=None, predictor='mean_dist'):
     print(f"\ndist_from_trgt_df: {dist_from_trgt_df.shape}\n{list(dist_from_trgt_df.columns)}\n"
           f"{dist_from_trgt_df.head()}\n")
 
-    # # just data for thsi participant/run
-    p_run_df = dist_from_trgt_df[dist_from_trgt_df['p_name'] == p_name]
-    p_run_df = p_run_df[p_run_df['run'] == run]
-    print(f"\np_run_df: {p_run_df.shape}\n{p_run_df.head()}\n")
+    new_list = []
 
-    # # # # # # # # # # # #
-    # logistic regression #
-    # # # # # # # # # # # #
-    txt_output = []
+    for p_name in p_list:
 
-    # # make directory to save results
-    p_run_dir = os.path.join(eye_track_dir, p_name, f"{p_name}_{run}")
-    print(f'p_run_dir: {p_run_dir}')
-    if not os.path.isdir(os.path.join(p_run_dir, 'regression')):
-        os.makedirs(os.path.join(p_run_dir, 'regression'))
-    p_run_reg_dir = os.path.join(p_run_dir, 'regression')
-    print(f'p_run_reg_dir: {p_run_reg_dir}')
+        for run in run_list:
+
+            # # just data for thsi participant/run
+            p_run_df = dist_from_trgt_df[dist_from_trgt_df['p_name'] == p_name]
+            p_run_df = p_run_df[p_run_df['run'] == run]
+            print(f"\np_run_df: {p_run_df.shape}\n{p_run_df.head()}\n")
+
+            # # # # # # # # # # # #
+            # logistic regression #
+            # # # # # # # # # # # #
+            txt_output = []
+
+            # # make directory to save results
+            p_run_dir = os.path.join(eye_track_dir, p_name, f"{p_name}_{run}")
+            print(f'p_run_dir: {p_run_dir}')
+            if not os.path.isdir(os.path.join(p_run_dir, 'regression')):
+                os.makedirs(os.path.join(p_run_dir, 'regression'))
+            p_run_reg_dir = os.path.join(p_run_dir, 'regression')
+            print(f'p_run_reg_dir: {p_run_reg_dir}')
+
+            txt_output.append(f"{p_name}_{run}\n")
+
+            # # get accuracy for weighting model
+            num_instances, cols_ = p_run_df.shape
+            trial_score = p_run_df['resp'].sum()
+            corr_weight = trial_score/num_instances
+            incorr_weight = 1-corr_weight
+            trial_acc_dict = {0: incorr_weight, 1: corr_weight}
+            print(f"trial_acc: {trial_score}/{num_instances}")
+            print(f"trial_acc_dict: {trial_acc_dict}")
+            txt_output.append(f"instance: {num_instances}, correct_resp: {trial_score}\n"
+                              f"weighting:\n{trial_acc_dict}\n")
+
+            # # FIT LOGISTIC REGRESSION MODEL
+            X = np.array(p_run_df[predictor].to_list()).reshape(-1, 1)
+            y = np.array(p_run_df['resp'].to_list())
+
+            # split the dataset into training (80%) and testing (20%) sets
+            test_set_prop = .2
+            X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                                test_size=test_set_prop,
+                                                                random_state=0)
+
+            # instantiate the model
+            log_reg = LogisticRegression(
+                class_weight='balanced',
+                # solver='liblinear',
+                # C=10000,
+            )
+            params_dict = log_reg.get_params()
+            print(f"params_dict:\n{params_dict}")
+
+            # fit the model using the training data
+            log_reg.fit(X_train, y_train)
+
+            # # get the intercept and coeficient
+            intercept = log_reg.intercept_
+            slope = log_reg.coef_
+            print(f"intercept: {intercept}, slope: {slope}")
+            txt_output.append(f"intercept: {intercept}, slope: {slope}\n")
+
+            # use model to make predictions on test data
+            y_pred = log_reg.predict(X_test)
+
+            # # get the model score
+            score = log_reg.score(X_test, y_test)
+            print(f"score: {score}")
+            txt_output.append(f"model score: {score}\n")
+
+            # MODEL DIAGNOSTICS
+            cnf_matrix = metrics.confusion_matrix(y_test, y_pred)
+            print(f"cnf_matrix\n{cnf_matrix}")
+            txt_conf_matrix = f"act0\t{cnf_matrix[0][0]}\t{cnf_matrix[0][1]}\n" \
+                              f"act1\t{cnf_matrix[1][0]}\t{cnf_matrix[1][1]}\n" \
+                              f"    \tpred0\tpred1\n"
+            print(f"txt_conf_matrix\n{txt_conf_matrix}")
+            txt_output.append(txt_conf_matrix)
+
+            fig, ax = plt.subplots(figsize=(8, 8))
+            ax.imshow(cnf_matrix)
+            ax.grid(False)
+            ax.xaxis.set(ticks=(0, 1), ticklabels=('Predicted 0s', 'Predicted 1s'))
+            ax.yaxis.set(ticks=(0, 1), ticklabels=('Actual 0s', 'Actual 1s'))
+            ax.set_ylim(1.5, -0.5)
+            for i in range(2):
+                for j in range(2):
+                    ax.text(j, i, cnf_matrix[i, j], ha='center', va='center')
+            plt.savefig(os.path.join(p_run_reg_dir, f'{predictor}_conf_matrix_png'))
+            plt.show()
+
+            report = metrics.classification_report(y_test, y_pred)
+            print(f"report:\n{report}")
+            txt_output.append(report)
+
+            accuracy = metrics.accuracy_score(y_test, y_pred)
+            print(f"accuracy:\n{accuracy}")
+            txt_output.append(f"model_accuracy: {accuracy}")
+
+            # # plot ROC curve
+            y_pred_proba = log_reg.predict_proba(X_test)[::, 1]
+            fpr, tpr, _ = metrics.roc_curve(y_test, y_pred_proba)
+            auc = metrics.roc_auc_score(y_test, y_pred_proba)
+            plt.plot(fpr, tpr, label="AUC=" + str(auc))
+            plt.legend(loc=4)
+            plt.savefig(os.path.join(p_run_reg_dir, f'{predictor}_roc_auc.png'))
+            plt.show()
+            txt_output.append(f"auc: {auc}")
+            plt.close()
+
+            # get scores for a dummy model that predicts correct for each item
+            dummy_score = sum(y_test)/len(y_test)
+            model_improvement = score - dummy_score
+            print(f"dummy_score: {dummy_score}, model_improvement: {model_improvement}")
+
+            # # # plot logistic function
+            plt.clf()  # clear current figure
+            # plot true response
+            plt.scatter(X_test.ravel(), y_test, color="orange", s=100)
+            # plot log_reg predicted response
+            plt.scatter(X_test.ravel(), y_pred, color="black")
+            # plot logistic function
+            loss = expit(X_test * log_reg.coef_ + log_reg.intercept_).ravel()
+            plt.plot(X_test, loss, color="red", linewidth=3)
+
+            # add plot details
+            plt.ylabel("Response")
+            plt.xlabel("Distance from target")
+            plt.yticks([0, 1], ['incorrect', 'correct'])
+            plt.suptitle(f"{p_name} ({run}): score: {round(score, 2)}, "
+                         f"slope: {round(slope[0][0], 3)}, "
+                         f"intercept: {round(intercept[0], 5)}\n"
+                         f"dummy_score: {round(dummy_score, 2)}, ({round(model_improvement, 2)})",
+                         fontsize=20)
+            plt.legend(("Log Reg", "True response", "Pred response"), loc="center right")
+            plt.savefig(os.path.join(p_run_reg_dir, f'{predictor}_reg_plot.png'))
+            plt.show()
 
 
-    txt_output.append(f"{p_name}_{run}\n")
+            # # save output document
+            txt_doc_name = f"{p_name}_{run}_{predictor}_log_reg.txt"
+            txt_doc_path = os.path.join(p_run_reg_dir, txt_doc_name)
+            with open(txt_doc_path, 'w') as output:
+                for row in txt_output:
+                    output.write(str(row) + '\n')
 
-    # # get accuracy for weighting model
-    num_instances, cols_ = p_run_df.shape
-    trial_score = p_run_df['resp'].sum()
-    trial_acc_dict = {0: 1-trial_score/num_instances, 1: trial_score/num_instances}
-    print(f"trial_acc: {trial_score}/{num_instances}")
-    print(f"trial_acc_dict: {trial_acc_dict}")
-    txt_output.append(f"instance: {num_instances}, correct_resp: {trial_score}\nweighting:\n{trial_acc_dict}\n")
+            # add regression details to new list
+            new_list.append([p_name, run, predictor,
+                             params_dict['C'], params_dict['class_weight'],
+                             params_dict['solver'], params_dict['penalty'],
+                             params_dict['l1_ratio'],
+                             test_set_prop, len(y_test),
+                             corr_weight, dummy_score,
+                             score, model_improvement,
+                             intercept, slope,
+                             cnf_matrix[0][0], cnf_matrix[0][1],
+                             cnf_matrix[1][0], cnf_matrix[1][1]])
 
-    # # FIT LOGISTIC REGRESSION MODEL
-    X = np.array(p_run_df['mean_dist'].to_list()).reshape(-1, 1)
-    y = np.array(p_run_df['resp'].to_list())
+    # get means for this model
+    new_array = np.array(new_list)
+    mean_run_score = new_array[:, 10].mean()
+    mean_test_set_score = new_array[:, 11].mean()
+    mean_model_score = new_array[:, 12].mean()
+    mean_improvement = new_array[:, 13].mean()
+    mean_intercept = new_array[:, 14].mean()
+    mean_slope = new_array[:, 15].mean()
+    mean_TN = new_array[:, 16].mean()
+    mean_FP = new_array[:, 17].mean()
+    mean_FN = new_array[:, 18].mean()
+    mean_TP = new_array[:, 19].mean()
 
-    # split the dataset into training (70%) and testing (30%) sets
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
+    print(f"mean_model_score: {mean_model_score}, mean_improvement: {mean_improvement}")
 
-    # instantiate the model
-    log_reg = LogisticRegression(
-        # class_weight='balanced'
-        class_weight=trial_acc_dict
-    )
-    print(f"params:\n{log_reg.get_params()}")
+    new_list.append(['model_means', "all", predictor,
+                     params_dict['C'], params_dict['class_weight'],
+                     params_dict['solver'], params_dict['penalty'],
+                     params_dict['l1_ratio'],
+                     test_set_prop, len(y_test),
+                     mean_run_score, mean_test_set_score,
+                     mean_model_score, mean_improvement,
+                     mean_intercept, mean_slope,
+                     mean_TN, mean_FP, mean_FN, mean_TP])
 
-    # fit the model using the training data
-    log_reg.fit(X_train, y_train,
-                sample_weight=trial_score/num_instances
-                )
+    new_df = pd.DataFrame(new_list,
+                          columns=['p_name', 'run', 'predictor',
+                                   'neg_reg', 'class_weight',
+                                   'solver', 'penalty', 'l1_ratio',
+                                   'test_set_prop', 'test_size',
+                                   'run_score', 'test_set_score',
+                                   'model_score', 'model_improvement',
+                                   'intercept', 'slope',
+                                   "TN", "FP", 'FN', 'TP'])
+    print(f'\nnew_df:\n{new_df}')
 
-    # # get the intercept and coeficient
-    intercept = log_reg.intercept_
-    slope = log_reg.coef_
-    print(f"intercept: {intercept}, slope: {slope}")
-    txt_output.append(f"intercept: {intercept}, slope: {slope}\n")
-
-    # use model to make predictions on test data
-    y_pred = log_reg.predict(X_test)
-
-    # # get the model score
-    score = log_reg.score(X_test, y_test, sample_weight=trial_score/num_instances)
-    print(f"score: {score}")
-    txt_output.append(f"model score: {score}\n")
-
-    # MODEL DIAGNOSTICS
-    #           pred 0  pred1
-    # actual 0
-    # actual 1
-    cnf_matrix = metrics.confusion_matrix(y_test, y_pred)
-    print(f"cnf_matrix\n{cnf_matrix}")
-    txt_conf_matrix = f"act0\t{cnf_matrix[0][0]}\t{cnf_matrix[0][1]}\n" \
-                      f"act1\t{cnf_matrix[1][0]}\t{cnf_matrix[1][1]}\n" \
-                      f"    \tpred0\tpred1\n"
-    print(f"txt_conf_matrix\n{txt_conf_matrix}")
-    txt_output.append(txt_conf_matrix)
-
-    fig, ax = plt.subplots(figsize=(8, 8))
-    ax.imshow(cnf_matrix)
-    ax.grid(False)
-    ax.xaxis.set(ticks=(0, 1), ticklabels=('Predicted 0s', 'Predicted 1s'))
-    ax.yaxis.set(ticks=(0, 1), ticklabels=('Actual 0s', 'Actual 1s'))
-    ax.set_ylim(1.5, -0.5)
-    for i in range(2):
-        for j in range(2):
-            ax.text(j, i, cnf_matrix[i, j], ha='center', va='center')
-    plt.savefig(os.path.join(p_run_reg_dir, 'conf_matrix_png'))
-    # plt.show()
-
-    report = metrics.classification_report(y_test, y_pred)
-    print(f"report:\n{report}")
-    txt_output.append(report)
-
-    accuracy = metrics.accuracy_score(y_test, y_pred)
-    print(f"accuracy:\n{accuracy}")
-    txt_output.append(f"model_accuracy: {accuracy}")
-
-    # plot ROC curve
-    y_pred_proba = log_reg.predict_proba(X_test)[::, 1]
-    fpr, tpr, _ = metrics.roc_curve(y_test, y_pred_proba)
-    auc = metrics.roc_auc_score(y_test, y_pred_proba)
-    plt.plot(fpr, tpr, label="AUC=" + str(auc))
-    plt.legend(loc=4)
-    plt.savefig(os.path.join(p_run_reg_dir, 'roc_auc.png'))
-    # plt.show()
-    txt_output.append(f"auc: {auc}")
+    df_path = os.path.join(eye_track_dir, 'log_reg_details.csv')
+    if os.path.isfile(df_path):
+        orig_df = pd.read_csv(df_path)
+        df_list = [orig_df, new_df]
+        combined_df = pd.concat(df_list)
+        combined_df.to_csv(os.path.join(eye_track_dir, 'log_reg_details.csv'), index=False)
+    else:
+        new_df.to_csv(os.path.join(eye_track_dir, 'log_reg_details.csv'), index=False)
 
 
-    # # plot logistic function
-    plt.figure(1, figsize=(4, 3))
-    plt.clf()  # clear current figure
-    plt.scatter(X_test.ravel(), y_test, color="black", zorder=20)
-
-    loss = expit(X_test * log_reg.coef_ + log_reg.intercept_).ravel()
-    plt.plot(X_test, loss, color="red", linewidth=3)
-
-    ols = LinearRegression()
-    ols.fit(X_test, y_test)
-    plt.plot(X_test, ols.coef_ * X_test + ols.intercept_, linewidth=1)
-    plt.axhline(0.5, color=".5")
-
-    plt.ylabel("Response")
-    plt.xlabel("Distance from target")
-    plt.yticks([0, 1])
-    plt.title(f"{p_name} ({run}): score: {round(score, 2)}, slope: {round(slope[0][0], 3)} ")
-    plt.legend(
-        ("Log Reg", "Lin Reg"),
-        loc="lower right",
-        fontsize="small",
-    )
-    plt.tight_layout()
-    plt.savefig(os.path.join(p_run_reg_dir, 'reg_plot.png'))
-
-    plt.show()
 
 
-    # # save output document
-    txt_doc_name = f"{p_name}_{run}_log_reg.txt"
-    txt_doc_path = os.path.join(p_run_reg_dir, txt_doc_name)
-    with open(txt_doc_path, 'w') as output:
-        for row in txt_output:
-            output.write(str(row) + '\n')
-
-
-# # # do one df
-# p_name = 'p1'
-# run = 1
-# dist_log_reg(p_name=p_name, run=run)
-#
 # # # do all dfs
-# participants = ['p1', 'p2']
-# run_list = [1, 2, 3]
-# for p_name in participants:
-#     for run in run_list:
-#         dist_log_reg(p_name=p_name, run=run)
+participants = ['p1', 'p2']
+run_list = [1, 2, 3]
+dist_log_reg(p_list=participants, run_list=run_list,
+             df_name="dist_from_trgt.csv", predictor='min_dist')
 
 
 
@@ -1121,7 +1194,7 @@ def plot_eye_pos(p_name, run, eye_track_dir=None):
 
     # save and show plots
     fig_name = f"eye_pos_in_fix_{p_name}_{run}.png"
-    plt.savefig(os.path.join(p_run_dir, fig_name))
+    plt.savefig(os.path.join(p_run_dir, 'eye_pos', fig_name))
     plt.show()
 
     # # # this run mean pos during response time
@@ -1146,7 +1219,7 @@ def plot_eye_pos(p_name, run, eye_track_dir=None):
     plt.suptitle(f"{p_name}_{run}: response")
 
     fig_name = f"eye_pos_in_resp_{p_name}_{run}.png"
-    plt.savefig(os.path.join(p_run_dir, fig_name))
+    plt.savefig(os.path.join(p_run_dir, 'eye_pos', fig_name))
 
     plt.show()
 
@@ -1175,7 +1248,7 @@ def plot_eye_pos(p_name, run, eye_track_dir=None):
     plt.suptitle(f"{p_name}_{run}: during probes")
 
     fig_name = f"eye_pos_probes_{p_name}_{run}.png"
-    plt.savefig(os.path.join(p_run_dir, fig_name))
+    plt.savefig(os.path.join(p_run_dir, 'eye_pos', fig_name))
 
     plt.show()
 
@@ -1326,7 +1399,7 @@ def plot_eye_movements(p_name, run, eye_track_dir=None):
             # plt.title(f"Probes: {p_name}_{run}: {trial_number} sep{sep} ISI{ISI}.  {corner_label_dict[corner]}: {response}")
             plt.title(f"Probes: {p_name}_{run}: {trial_number} sep{sep} ISI{ISI}.  {crnr_name}: {response}")
             fig_name = f"probes_{p_name}_{run}_{trial_number}_ISI{ISI}_sep{sep}_{response[:3]}.png"
-            plt.savefig(os.path.join(p_run_dir, fig_name))
+            plt.savefig(os.path.join(p_run_dir, 'eye_movement', fig_name))
             # plt.show()
 
             # # plot2 - zoomed in to focus on fixatation
@@ -1359,8 +1432,8 @@ def plot_eye_movements(p_name, run, eye_track_dir=None):
             # # (0, 0) in top-left corner (not bottom left, so flip y axis)
             plt.gca().invert_yaxis()
             plt.title(f"ZoomIn: {p_name}_{run}: {trial_number} sep{sep} ISI{ISI}.  {crnr_name}: {response}")
-            fig_name = f"zommed_{p_name}_{run}_{trial_number}_ISI{ISI}_sep{sep}_{response[:3]}.png"
-            plt.savefig(os.path.join(p_run_dir, fig_name))
+            fig_name = f"zoomed_{p_name}_{run}_{trial_number}_ISI{ISI}_sep{sep}_{response[:3]}.png"
+            plt.savefig(os.path.join(p_run_dir, 'eye_movement', fig_name))
             # plt.show()
 
 
@@ -1370,12 +1443,12 @@ def plot_eye_movements(p_name, run, eye_track_dir=None):
 # run = 1
 # plot_eye_movements(p_name=p_name, run=run)
 
-# # do all dfs
-participants = ['p1', 'p2']
-run_list = [1, 2, 3]
-for p_name in participants:
-    for run in run_list:
-        plot_eye_movements(p_name=p_name, run=run)
+# # # do all dfs
+# participants = ['p1', 'p2']
+# run_list = [1, 2, 3]
+# for p_name in participants:
+#     for run in run_list:
+#         plot_eye_movements(p_name=p_name, run=run)
 
 
 
