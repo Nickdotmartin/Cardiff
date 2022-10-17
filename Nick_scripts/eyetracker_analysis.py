@@ -497,6 +497,8 @@ def short_trial_data(p_name, run, eye_track_dir=None):
 
     if eye_track_dir is None:
         eye_track_dir = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\eyetracking"
+    if running_on_laptop():
+        eye_track_dir = switch_path(eye_track_dir, 'mac_oneDrive')
     print(f'eye_track_dir:\n{eye_track_dir}')
 
     # get file_path and csv_name
@@ -610,6 +612,8 @@ def add_crner_0cntr_dist_motion(p_list, run_list, eye_track_dir=None, adjust_x=0
 
     if eye_track_dir is None:
         eye_track_dir = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\eyetracking"
+    if running_on_laptop():
+        eye_track_dir = switch_path(eye_track_dir, 'mac_oneDrive')
 
     # dicts for mapping new columns
     corner_label_dict = {45: 'top-right', 135: 'top-left', 225: 'bottom-left', 315: 'bottom-right'}
@@ -656,6 +660,10 @@ def add_crner_0cntr_dist_motion(p_list, run_list, eye_track_dir=None, adjust_x=0
             eye_df['y_motion'] = eye_df['y_pos'].diff().fillna(0)
             eye_df['sq_motion'] = np.sqrt(np.square(eye_df['x_motion']) + np.square(eye_df['y_motion']))
 
+            eye_df['cond_name'] = "sep" + eye_df['sep'].astype(str) + "_ISI" + eye_df['ISI'].astype(str)
+
+
+
             all_cols = list(eye_df.columns)
             print(f"\neye_df: {eye_df.shape}\n{all_cols}\n{eye_df.head()}\n")
             new_csv_name = f"{p_name}_{run}_eyetrack_dist_motion.csv"
@@ -668,7 +676,7 @@ def add_crner_0cntr_dist_motion(p_list, run_list, eye_track_dir=None, adjust_x=0
 # run_list = [1]
 # add_crner_0cntr_dist_motion(p_list=participants, run_list=run_list)
 
-# do all dfs
+# # do all dfs
 # participants = ['p1', 'p2']
 # run_list = [1, 2, 3]
 # add_crner_0cntr_dist_motion(p_list=participants, run_list=run_list)
@@ -710,6 +718,7 @@ def trial_dist_from_trgt(p_list, run_list, eye_track_dir=None):
             csv_name = f"{p_name}_{run}_eyetrack_dist_motion.csv"
             csv_path = os.path.join(save_path, csv_name)
 
+            print(f'p_name: {p_name}, run: {run}')
             print(f'eye_track_dir: {eye_track_dir}')
             print(f'save_path: {save_path}')
             print(f'csv_name: {csv_name}')
@@ -717,7 +726,7 @@ def trial_dist_from_trgt(p_list, run_list, eye_track_dir=None):
             eye_df = pd.read_csv(csv_path,
                                  usecols=['trial_num', 'segment', 'sep', 'ISI',
                                           'probe_jump', 'crnr_name', 'probeLum',
-                                          'resp', 'sq_dist']
+                                          'resp', 'sq_dist', 'cond_name']
                                  )
             print(f"\neye_df: {eye_df.shape}\n{eye_df.head()}\n")
 
@@ -742,20 +751,23 @@ def trial_dist_from_trgt(p_list, run_list, eye_track_dir=None):
                 sep_val = int(probes_df['sep'].iloc[0])
                 isi_val = int(probes_df['ISI'].iloc[0])
                 probe_jump = int(probes_df['probe_jump'].iloc[0])
+                cond_name = str(probes_df['cond_name'].iloc[0])
                 crnr_name = str(probes_df['crnr_name'].iloc[0])
                 probeLum = int(probes_df['probeLum'].iloc[0])
                 resp = int(probes_df['resp'].iloc[0])
 
                 # # apend to new dataframe
-                new_row = [p_name, run, trial, sep_val, isi_val, probe_jump,
-                           crnr_name, probeLum, resp, mean_dist, min_dist]
+                new_row = [p_name, run, trial, sep_val, isi_val,
+                           cond_name, probe_jump, crnr_name,
+                           probeLum, resp, mean_dist, min_dist]
                 new_list.append(new_row)
 
 
     # make new output df
     dist_from_trgt_df = pd.DataFrame(new_list,
-                          columns=['p_name', 'run', 'trial', 'sep_val', 'isi_val', 'probe_jump',
-                                   'crnr_name', 'probeLum', 'resp', 'mean_dist', 'min_dist'])
+                          columns=['p_name', 'run', 'trial', 'sep_val', 'isi_val',
+                                   'cond_name', 'probe_jump','crnr_name',
+                                   'probeLum', 'resp', 'mean_dist', 'min_dist'])
     print(f'\ndist_from_trgt_df:\n{dist_from_trgt_df}')
     print(f"\ndist_from_trgt_df: {dist_from_trgt_df.shape}\n{list(dist_from_trgt_df.columns)}\n"
           f"{dist_from_trgt_df.head()}\n")
@@ -1008,11 +1020,11 @@ def dist_log_reg(p_list, run_list, eye_track_dir=None,
 
 
 
-# # # do all dfs
-participants = ['p1', 'p2']
-run_list = [1, 2, 3]
-dist_log_reg(p_list=participants, run_list=run_list,
-             df_name="dist_from_trgt.csv", predictor='min_dist')
+# # # # do all dfs
+# participants = ['p1', 'p2']
+# run_list = [1, 2, 3]
+# dist_log_reg(p_list=participants, run_list=run_list,
+#              df_name="dist_from_trgt.csv", predictor='min_dist')
 
 
 
@@ -1041,6 +1053,135 @@ At the end I want to know
 2b. if so, do eyes move at speed similar probe presentation (e.g., 1 pixel per frame for sep4, ISI4)
 
 """
+
+def saccade_info(p_list, run_list, eye_track_dir=None):
+    """
+    for each trial, how many saccades and how many frames did they last.
+    # Also, what distance did they travel (straighline, e.g., start x_pos to end x_pos).
+    # Was the direction toward target?
+    # Were the saccades occuring during probes?
+
+    Get blink info too
+
+
+    :param p_name: name of participant, used for accessing dirs and files.
+    :param run: run number, used for accessing dirs and files.
+    :param eye_track_dir: path to folder with participant folders containing run folders and plink csvs.
+    :return:
+    """
+    if eye_track_dir is None:
+        eye_track_dir = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\eyetracking"
+    # if using my laptop, adjust dir
+    if running_on_laptop():
+        eye_track_dir = switch_path(eye_track_dir, 'mac_oneDrive')
+
+    new_list = []
+
+    for p_name in p_list:
+        for run in run_list:
+
+            # get file_path and csv_name
+            save_path = os.path.join(eye_track_dir, p_name)
+            csv_name = f"{p_name}_{run}_eyetrack_dist_motion.csv"
+            csv_path = os.path.join(save_path, csv_name)
+
+            print(f'eye_track_dir: {eye_track_dir}')
+            print(f'save_path: {save_path}')
+            print(f'csv_name: {csv_name}')
+            print(f'csv_path: {csv_path}')
+            eye_df = pd.read_csv(csv_path,
+                                 usecols=['trial_num', 'trial_idx', 'cond_name',
+                                          'segment',
+                                          'x_pos', 'y_pos', 'eye_message',
+                                          'sep', 'ISI', 'probe_jump', 'corner',
+                                          'probeLum', 'resp', 'crnr_name',
+                                          # 'trgt_X', 'trgt_Y', 'x0_pos', 'y0_pos',
+                                          # 'x_dist', 'y_dist', 'sq_dist',
+                                          # 'x_motion', 'y_motion', 'sq_motion'
+                                          ])
+            print(f"\neye_df: {eye_df.shape}\n{list(eye_df.columns)}\n{eye_df.head()}\n")
+
+
+            # # loop through frames for this trial
+            trial_list = eye_df['trial_num'].unique().tolist()
+
+            msg_list = eye_df['eye_message'].unique().tolist()
+            print(f"msg_list: {msg_list}")
+
+
+            for trial_num in trial_list:
+
+                # if trial_num > 20:
+                #     break
+                trial_df = eye_df[eye_df['trial_num'] == trial_num]
+
+                sep_val = int(trial_df['sep'].iloc[0])
+                isi_val = int(trial_df['ISI'].iloc[0])
+                probe_jump = int(trial_df['probe_jump'].iloc[0])
+                cond_name = str(trial_df['cond_name'].iloc[0])
+                crnr_name = str(trial_df['crnr_name'].iloc[0])
+                probeLum = int(trial_df['probeLum'].iloc[0])
+                resp = int(trial_df['resp'].iloc[0])
+
+                segment_list = trial_df['segment'].unique().tolist()
+
+                for segment in segment_list:
+
+                    seg_df = trial_df[trial_df['segment'] == segment]
+                    # print(seg_df.head())
+                    first_msg = str(seg_df.iloc[0]['eye_message'])
+
+                    fix_count = 0
+                    sacc_count = 0
+                    blink_count = 0
+                    nan_count = 0
+
+                    if first_msg == 'fixation':
+                        fix_count += 1
+                    elif first_msg == 'saccade':
+                        sacc_count += 1
+                    elif first_msg == 'blink':
+                        blink_count += 1
+                    else:
+                        nan_count += 1
+
+                    prev_msg = first_msg
+
+                    for idx, row in seg_df.iterrows():
+
+                        this_msg = row['eye_message']
+
+                        if this_msg != prev_msg:
+
+                            if this_msg == 'fixation':
+                                fix_count += 1
+                            elif this_msg == 'saccade':
+                                sacc_count += 1
+                            elif this_msg == 'blink':
+                                blink_count += 1
+                            else:
+                                nan_count += 1
+                            prev_msg = this_msg
+
+                    new_list.append([p_name, run, trial_num, cond_name, segment,
+                                    sep_val, isi_val, probe_jump, crnr_name, probeLum, resp,
+                                    fix_count, sacc_count, blink_count, nan_count])
+    new_df = pd.DataFrame(new_list,
+                          columns=['p_name', 'run', 'trial_num', 'cond_name', 'segment',
+                                   'sep_val', 'isi_val', 'probe_jump', 'crnr_name', 'probeLum', 'resp',
+                                   'fix_count', 'sacc_count', 'blink_count', 'nan_count'])
+    print(f'\nnew_df:\n{new_df}')
+
+    new_df.to_csv(os.path.join(eye_track_dir, 'eye_msg_count.csv'), index=False)
+
+
+
+# # do all dfs
+# participants = ['p1', 'p2']
+# run_list = [1, 2, 3]
+# # participants = ['p1']
+# # run_list = [1]
+# saccade_info(p_list=participants, run_list=run_list)
 
 def get_mean_eye_pos(p_list, run_list, eye_track_dir=None):
     """
@@ -1135,7 +1276,7 @@ def plot_eye_pos(p_name, run, eye_track_dir=None):
     print(f'p_run_dir: {p_run_dir}')
     print(f'df_name: {df_name}')
     print(f'csv_path: {csv_path}')
-    eye_df = pd.read_csv(csv_path, usecols=['trial_num', 'trial_idx', 'segment',
+    eye_df = pd.read_csv(csv_path, usecols=['trial_num', 'trial_idx', 'cond_name', 'segment',
                                             'x_pos', 'y_pos', 'eye_message',
                                             'corner', 'crnr_name',
                                             'sep', 'ISI', 'probe_jump', 'probeLum', 'resp']
@@ -1370,7 +1511,8 @@ def plot_eye_movements(p_name, run, eye_track_dir=None):
             sns.lineplot(data=trial_df, x="x0_pos", y="y0_pos", sort=False, hue='segment',
                          palette=colour_dict,
                          style='eye_message',
-                         hue_order=['fix_dot', 'response', 'probe2', 'ISI', 'probe1']
+                         hue_order=['fix_dot', 'response', 'probe2', 'ISI', 'probe1'],
+                         style_order=['fixation', 'saccade', 'blink']
                          )
 
             # plot extends to assumed probe locations
@@ -1407,7 +1549,9 @@ def plot_eye_movements(p_name, run, eye_track_dir=None):
             # sns.lineplot(data=trial_df, x="x_pos", y="y_pos", sort=False, hue='segment', palette=colour_dict,
             sns.lineplot(data=trial_df, x="x0_pos", y="y0_pos", sort=False, hue='segment', palette=colour_dict,
                          style='eye_message',
-                         hue_order=['fix_dot', 'response', 'probe2', 'ISI', 'probe1']
+                         hue_order=['fix_dot', 'response', 'probe2', 'ISI', 'probe1'],
+                         style_order=['fixation', 'saccade', 'blink']
+
                          )
 
             # plot extends to assumed probe locations
