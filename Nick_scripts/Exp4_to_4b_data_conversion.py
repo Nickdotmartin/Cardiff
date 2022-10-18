@@ -1,5 +1,6 @@
 import pandas as pd
-
+import os
+from check_home_dir import which_path, running_on_laptop, switch_path
 
 '''
 Original version of missing_probe exp had 3 conditions (radial, rotaion, translation), 
@@ -14,3 +15,11 @@ the incoherent trials from the coherent trials and put them into the correct res
 We will have more than 12 incoherent trials, so they will be numbered from 1, in the order
 radial, rotation, translation 
 '''
+
+file_path = "/Users/nickmartin/Library/CloudStorage/OneDrive-CardiffUniversity/PycharmProjects/Cardiff/EXP4_missing_probe"
+
+for cond in ['radial', 'rotation', 'translation']:
+    for p_name in ['Nick', 'Simon']:
+        for run in list(range(1, 12)):
+
+            # output_path =
