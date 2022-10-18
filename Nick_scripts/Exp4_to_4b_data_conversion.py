@@ -15,11 +15,26 @@ the incoherent trials from the coherent trials and put them into the correct res
 We will have more than 12 incoherent trials, so they will be numbered from 1, in the order
 radial, rotation, translation 
 '''
-
-file_path = "/Users/nickmartin/Library/CloudStorage/OneDrive-CardiffUniversity/PycharmProjects/Cardiff/EXP4_missing_probe"
+exp4a_path = "/Users/nickmartin/Library/CloudStorage/OneDrive-CardiffUniversity/PycharmProjects/Cardiff/EXP4_missing_probe"
 
 for cond in ['radial', 'rotation', 'translation']:
     for p_name in ['Nick', 'Simon']:
         for run in list(range(1, 12)):
 
-            # output_path =
+            run_dir = f"{p_name}_{run}"
+
+            output_path = os.path.join(exp4a_path, cond, p_name, run_dir)
+
+            if not os.path.isdir(output_path):
+                print(f"\tno: this conditons hasn't been done yet\n\t{output_path}")
+                print(f"yes: {output_path}")
+            else:
+                print(f"yes: {output_path}")
+                '''
+                load the output file, 
+                split it by cond type
+                    a) coherent
+                    b) incoherent.
+                save these as two new output files and put them into new 4b folders.
+                
+                '''
