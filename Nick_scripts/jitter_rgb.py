@@ -30,14 +30,14 @@ os.chdir(_thisDir)
 
 # Monitor config from monitor centre
 # todo: Use to ASUS_2_13_240Hz for testing: do NOT use asus_cal
-monitor_name = 'Nick_work_laptop'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
+monitor_name = 'NickMac'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 
 # Store info about the experiment session
 expName = 'jitter_rgb'  # from the Builder filename that created this script
 
 expInfo = {'1_Participant': 'Nick_test',
            '2_Run_number': '1',
-           '3_Probe_dur_in_frames_at_240hz': [2, 50],
+           '3_Probe_dur_in_frames_at_240hz': [2, 50, 100],
            '4_fps': [60, 240, 144, 60],
            '5_Trials_counter': [True, False],
            '6_Probe_orientation': ['tangent', 'radial'],
@@ -389,6 +389,10 @@ for step in range(n_trials_per_stair):
         print(f'\tcorner: {corner}')
         # direction in which the probe jumps : CW or CCW
         target_jump = np.random.choice([1, -1])
+        jump_dir = 'clockwise'
+        if target_jump == -1:
+            jump_dir = 'anticlockwise'
+        print(f'\ttarget_jump: {target_jump} ({jump_dir})')
 
         # set probe ori
         if corner == 45:
@@ -398,12 +402,12 @@ for step in range(n_trials_per_stair):
             #  'orientation' here refers to the relationship between probes,
             #  whereas probe1.ori refers to rotational angle of probe stimulus
             if orientation == 'tangent':
-                if target_jump == 1:  # CCW
+                if target_jump == 1:  # CW
                     probe1.ori = 180
                     probe2.ori = 0
                     # probe2 is left and up from probe1
                     probe2.pos = [p1_x + sep - 1, p1_y - sep]
-                elif target_jump == -1:  # CW
+                elif target_jump == -1:  # ACW
                     probe1.ori = 0
                     probe2.ori = 180
                     # probe2 is right and down from probe1
@@ -424,12 +428,12 @@ for step in range(n_trials_per_stair):
             p1_x = dist_from_fix * -1
             p1_y = dist_from_fix * 1
             if orientation == 'tangent':
-                if target_jump == 1:  # CCW
+                if target_jump == 1:  # CW
                     probe1.ori = 90
                     probe2.ori = 270
                     # probe2 is right and up from probe1
                     probe2.pos = [p1_x + sep - 1, p1_y + sep]
-                elif target_jump == -1:  # CW
+                elif target_jump == -1:  # ACW
                     probe1.ori = 270
                     probe2.ori = 90
                     # probe2 is left and down from probe1
@@ -450,11 +454,11 @@ for step in range(n_trials_per_stair):
             p1_x = dist_from_fix * -1
             p1_y = dist_from_fix * -1
             if orientation == 'tangent':
-                if target_jump == 1:  # CCW
+                if target_jump == 1:  # CW
                     probe1.ori = 0
                     probe2.ori = 180
                     probe2.pos = [p1_x - sep + 1, p1_y + sep]
-                elif target_jump == -1:  # CW
+                elif target_jump == -1:  # ACW
                     probe1.ori = 180
                     probe2.ori = 0
                     probe2.pos = [p1_x + sep - 1, p1_y - sep]
@@ -475,11 +479,11 @@ for step in range(n_trials_per_stair):
             p1_x = dist_from_fix * 1
             p1_y = dist_from_fix * -1
             if orientation == 'tangent':
-                if target_jump == 1:  # CCW
+                if target_jump == 1:  # CW
                     probe1.ori = 270
                     probe2.ori = 90
                     probe2.pos = [p1_x - sep + 1, p1_y - sep]
-                elif target_jump == -1:  # CW
+                elif target_jump == -1:  # ACW
                     probe1.ori = 90
                     probe2.ori = 270
                     probe2.pos = [p1_x + sep - 1, p1_y + sep]

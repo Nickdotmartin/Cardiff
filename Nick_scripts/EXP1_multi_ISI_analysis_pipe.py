@@ -127,6 +127,8 @@ for p_idx, participant_name in enumerate(participant_list):
     trim_n = None
     if len(run_folder_names) == 12:
         trim_n = 2
+    elif len(run_folder_names) > 12:
+        raise ValueError(f"for this exp you have {len(run_folder_names)} runs, set rules for trimming.")
 
     print(f"\n\ntrim_n: {trim_n}, \n\n")
 
