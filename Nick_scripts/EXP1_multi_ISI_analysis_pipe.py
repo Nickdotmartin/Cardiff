@@ -3,7 +3,7 @@ import pandas as pd
 from exp1a_psignifit_analysis import a_data_extraction, b3_plot_staircase, c_plots, \
     d_average_participant, e_average_exp_data, make_average_plots
 from psignifit_tools import get_psignifit_threshold_df
-from check_home_dir import switch_path
+from check_home_dir import which_path, running_on_laptop, switch_path
 
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
@@ -15,16 +15,19 @@ exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardi
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\eyetracking"
 
 convert_path1 = os.path.normpath(exp_path)
+if running_on_laptop():
+    convert_path1 = switch_path(convert_path1, 'mac_oneDrive')
+
 exp_path = convert_path1
 
 print(f"exp_path: {exp_path}")
-participant_list = ['Nick', 'Simon']
+participant_list = ['Simon', 'Nick']  # 'Simon', 'Nick'
 # participant_list = ['p1', 'p2']
 split_1probe = False
 
 n_runs = 12
 
-p_idx_plus = 1
+analyse_from_run = 1
 
 for p_idx, participant_name in enumerate(participant_list):
     root_path = os.path.join(exp_path, participant_name)
@@ -36,25 +39,18 @@ for p_idx, participant_name in enumerate(participant_list):
     dir_list = os.listdir(root_path)
     run_folder_names = []
     for i in range(12):  # numbers 0 to 11
-        check_dir = f'{participant_name}_{i+p_idx_plus}'   # numbers 1 to 12
+        check_dir = f'{participant_name}_{i+analyse_from_run}'   # numbers 1 to 12
         if check_dir in dir_list:
             run_folder_names.append(check_dir)
 
     for run_idx, run_dir in enumerate(run_folder_names):
 
-        print(f'\nrunning analysis for {participant_name}, {run_dir}, {participant_name}{run_idx+1}\n')
+        r_idx_plus = run_idx + analyse_from_run
+
+        print(f'\nrunning analysis for {participant_name}, {run_dir}, {participant_name}{r_idx_plus}\n')
         # print(f'\nrunning analysis for {participant_name}\n')
 
         save_path = os.path.join(root_path, run_dir)
-        # save_path = f'{root_path}'
-
-        # # # search to automatically get probe)dur_dir_names
-        # dir_list = os.listdir(save_path)
-        # probeDur_folder_names = []
-        # for i in range(12):  # numbers 0 to 11
-        #     check_dir = f'{participant_name}_{i + p_idx_plus}'  # numbers 1 to 12
-        #     if check_dir in dir_list:
-        #         run_folder_names.append(check_dir)
 
         # don't delete this (participant_name = participant_name),
         # needed to ensure names go name1, name2, name3 not name1, name12, name123
@@ -63,11 +59,11 @@ for p_idx, participant_name in enumerate(participant_list):
         # # '''a'''
         p_name = f'{participant_name}_output'  # use this one
 
-        # # I don't need data extraction as all ISIs are in same df.
+        # I don't need data extraction as all ISIs are in same df.
         try:
             run_data_df = pd.read_csv(os.path.join(save_path, f'{p_name}.csv'))
         except:
-            p_name = f'{participant_name}_{run_idx+1}_output'  # use this one
+            p_name = f'{participant_name}_{r_idx_plus}_output'  # use this one
             run_data_df = pd.read_csv(os.path.join(save_path, f'{p_name}.csv'))
 
         try:
@@ -131,6 +127,8 @@ for p_idx, participant_name in enumerate(participant_list):
     trim_n = None
     if len(run_folder_names) == 12:
         trim_n = 2
+    elif len(run_folder_names) > 12:
+        raise ValueError(f"for this exp you have {len(run_folder_names)} runs, set rules for trimming.")
 
     print(f"\n\ntrim_n: {trim_n}, \n\n")
 
@@ -175,7 +173,7 @@ for p_idx, participant_name in enumerate(participant_list):
 
 print(f'exp_path: {exp_path}')
 print('\nget exp_average_data')
-participant_list = ['Nick', 'Simon']
+# participant_list = ['Nick', 'Simon']
 e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
                    error_type='SE', n_trimmed=trim_n, verbose=True)
 

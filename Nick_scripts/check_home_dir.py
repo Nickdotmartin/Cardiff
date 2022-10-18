@@ -1,5 +1,6 @@
 import os
 import pathlib
+import sys
 
 
 def which_path(path):
@@ -23,6 +24,23 @@ def which_path(path):
         print('this is a wind_oneD_path')
     else:
         print('Unknown')
+
+
+def running_on_laptop(verbose=True):
+    """
+    Check if I am on my laptop (not my work machine), might need to change paths
+    :param verbose:
+    :return:
+    """
+    # if verbose:
+    # print("checking for laptop")
+    if sys.executable[:18] == '/Users/nickmartin/':
+        if verbose:
+            print("Script is running on Nick's laptop")
+    else:
+        if verbose:
+            print("Script is not running on Nick's laptop")
+    return sys.executable[:18] == '/Users/nickmartin/'
 
 
 def switch_path(orig_path, change_to):
