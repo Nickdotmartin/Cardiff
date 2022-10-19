@@ -355,8 +355,8 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
                 CI_res['conf_Intervals'][0][0] = CI_limits[0]
                 CI_res['conf_Intervals'][0][1] = CI_limits[1]
 
-                fit_curve_plot2 = ps.psigniplot.plotPsych(CI_res, plotData=False, CIthresh=True,
-                                                          showImediate=False)
+                # fit_curve_plot2 = ps.psigniplot.plotPsych(CI_res, plotData=False, CIthresh=True,
+                #                                           showImediate=False)
 
         else:
             fit_curve_plot = ps.psigniplot.plotPsych(res, showImediate=False)
@@ -790,7 +790,7 @@ def get_psig_thr_w_hue(root_path, p_run_name, output_df, n_bins=9, q_bins=True,
     isi_name_list = [f'{isi_col}_{i}' for i in isi_list]
 
     # todo: tidy this up so it only uses hue if there is a hue.  Can maybe get rid of multiplier
-    if hue_col == None:
+    if hue_col is None:
         use_hue = False
         hue_list = [None]
         output_sep_col = sep_list
@@ -828,7 +828,7 @@ def get_psig_thr_w_hue(root_path, p_run_name, output_df, n_bins=9, q_bins=True,
         for hue_idx, hue in enumerate(hue_list):
 
             # if there is no hue, just use isi_df
-            if hue == None:  # could also use if not use_hue
+            if hue is None:  # could also use if not use_hue
                 hue_df = isi_df
             else:
                 hue_df = isi_df[isi_df[hue_col] == hue]

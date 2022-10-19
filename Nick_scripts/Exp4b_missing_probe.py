@@ -49,7 +49,7 @@ os.chdir(_thisDir)
 monitor_name = 'asus_cal'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 
 # Store info about the experiment session
-expName = 'EXP4b_missing_probe'
+expName = 'Exp4b_missing_probe'
 
 expInfo = {'1. Participant': 'nicktest',
            '1. run_number': '1',

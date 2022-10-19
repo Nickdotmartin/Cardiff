@@ -2647,10 +2647,10 @@ def e_average_exp_data(exp_path, p_names_list,
             this_p_ave_df.rename(columns={'ISI_0': 'thr'}, inplace=True)
         elif exp_type == 'missing_probe':
             print('Do I need to do anything here for missing probe exp?')
-            # todo: I can probably delete these
-            cont_type_col = this_p_ave_df['cond_type'].tolist()
-            neg_sep_col = this_p_ave_df['neg_sep'].tolist()
-            sep_col = this_p_ave_df['separation'].tolist()
+            # # todo: I can probably delete these
+            # cont_type_col = this_p_ave_df['cond_type'].tolist()
+            # neg_sep_col = this_p_ave_df['neg_sep'].tolist()
+            # sep_col = this_p_ave_df['separation'].tolist()
         else:
             stair_names_list = this_p_ave_df['stair_names'].tolist()
             if verbose:
@@ -2659,6 +2659,7 @@ def e_average_exp_data(exp_path, p_names_list,
             cong_list = [-1 if x < 0 else 1 for x in stair_names_list]
             this_p_ave_df.insert(2, 'congruent', cong_list)
             this_p_ave_df.insert(3, 'separation', sep_list)
+
 
         all_p_ave_list.append(this_p_ave_df)
 

@@ -110,7 +110,7 @@ def make_eyetrack_csv(p_name, run, eye_track_dir=None):
             # # check to see row is a (str) message or (int) regular row by checking 'time' column.
             try:
                 time_stamp = int(row['time'])
-            except:
+            except:  # except isnt being used correctly here
                 time_stamp = None
 
             if time_stamp:
@@ -186,11 +186,11 @@ def make_eyetrack_csv(p_name, run, eye_track_dir=None):
                     eye_message = 'blink'
                 elif 'EBLINK' in row['time']:
                     eye_message =None
-                elif row['time'] == 'END':
-                    if row['Y'] == 'SAMPLES':
+                # elif row['time'] == 'END':
+                #     if row['Y'] == 'SAMPLES':
                         # stop iterating through df incase there is stuff at the bottom.
                         # I might not need this
-                        end_of_old_df = True
+                        # end_of_old_df = True
 
                 else:
                     other_message = row['time']
@@ -709,7 +709,7 @@ def saccade_count(p_list, run_list, eye_track_dir=None):
         eye_track_dir = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\eyetracking"
     print(f"\n*** running saccade_count(p_list={p_list}, run_list={run_list}, eye_track_dir={eye_track_dir}) ***\n")
 
-    new_list = []
+    # new_list = []
 
     for p_name in p_list:
         for run in run_list:
@@ -1642,7 +1642,7 @@ def plot_eye_movements(p_name, run, eye_track_dir=None):
 
 
             # # plot1 - zoomed out to include probe locations.
-            fig, ax = plt.subplots(figsize=(6, 6))
+            # fig, ax = plt.subplots(figsize=(6, 6))
             sns.lineplot(data=trial_df, x="x0_pos", y="y0_pos", sort=False, hue='segment',
                          palette=colour_dict,
                          style='eye_message',
@@ -1680,7 +1680,7 @@ def plot_eye_movements(p_name, run, eye_track_dir=None):
             # plt.show()
 
             # # plot2 - zoomed in to focus on fixatation
-            fig, ax = plt.subplots(figsize=(6, 6))
+            # fig, ax = plt.subplots(figsize=(6, 6))
             # sns.lineplot(data=trial_df, x="x_pos", y="y_pos", sort=False, hue='segment', palette=colour_dict,
             sns.lineplot(data=trial_df, x="x0_pos", y="y0_pos", sort=False, hue='segment', palette=colour_dict,
                          style='eye_message',

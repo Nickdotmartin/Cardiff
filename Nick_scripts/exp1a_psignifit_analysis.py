@@ -783,7 +783,7 @@ def plot_thr_heatmap(heatmap_df,
 
     heatmap = sns.heatmap(data=heatmap_df,
                           annot=True,
-                          # fmt=annot_fmt,
+                          fmt=annot_fmt,
                           center=mean_thr,
                           # cmap=sns.color_palette("Spectral", as_cmap=True),
                           cmap=my_colourmap,
@@ -865,7 +865,7 @@ def plt_heatmap_row_col(heatmap_df,
                     cmap=my_colourmap,
                     annot=True,
                     annot_kws={'fontsize': fontsize},
-                    # fmt=annot_fmt,
+                    fmt=annot_fmt,
                     cbar=False,
                     square=True)
 
@@ -1670,7 +1670,6 @@ def b3_plot_staircase(all_data_path, thr_col='newLum', resp_col='trial_response'
         isi_df = all_data_df[all_data_df['ISI'] == isi]
         print(f"isi_df:\n{isi_df}")
 
-        isi_name = isi_name_list[isi_idx]
 
         # psignifit series for this isi only
         isi_name = isi_name_list[isi_idx]
@@ -2253,6 +2252,8 @@ def e_average_exp_data(exp_path, p_names_list,
         ave_df_name = 'MASTER_ave_thresh'
         if type(n_trimmed) == int:
             ave_df_name = f'MASTER_ave_TM{n_trimmed}_thresh'
+        elif type(n_trimmed) == list:
+            ave_df_name = f'MASTER_ave_TM{n_trimmed[p_idx]}_thresh'
 
         this_p_ave_df = pd.read_csv(os.path.join(exp_path, p_name, f'{ave_df_name}.csv'))
 

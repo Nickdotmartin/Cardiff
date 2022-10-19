@@ -1621,7 +1621,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeSpeed', resp_col='answer',
     psig_thr_mean_df = pd.concat([psig_stair0_sep_df, psig_stair1_sep_df]).groupby(level=0).mean()
 
     # add stair_names column in
-    rows, cols = psig_thr_mean_df.shape
+    # rows, cols = psig_thr_mean_df.shape
 
     psig_thr_mean_df.insert(0, 'stair_name', 'mean')
     psig_stair0_sep_df.insert(0, 'stair_name', stair_names_list[0])
@@ -1644,7 +1644,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeSpeed', resp_col='answer',
 
         fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(12, 6))
 
-        ax_counter = 0
+        # ax_counter = 0
 
         # todo: don't need different plots for each sep cond - so just make one plot.
 
@@ -1985,9 +1985,9 @@ def d_average_participant(root_path, run_dir_names_list,
         if 'Unnamed: 0' in list(this_psignifit_df):
             this_psignifit_df.drop('Unnamed: 0', axis=1, inplace=True)
 
-        if 'stair' in list(this_psignifit_df):
-            stair_list = this_psignifit_df['stair'].to_list
-            # this_psignifit_df.drop(columns='stair', inplace=True)
+        # if 'stair' in list(this_psignifit_df):
+        #     stair_list = this_psignifit_df['stair'].to_list
+        #     # this_psignifit_df.drop(columns='stair', inplace=True)
 
         rows, cols = this_psignifit_df.shape
         this_psignifit_df.insert(0, 'stack', [run_idx] * rows)
@@ -2108,9 +2108,9 @@ def e_average_exp_data(exp_path, p_names_list,
 
         this_ave_df_path = os.path.join(exp_path, p_name, f'{ave_df_name}.csv')
         # # if trimmed mean doesn't exists (e.g., because participant hasn't done 12 runs)
-        if not os.path.isfile(this_ave_df_path):
-            print(f"Couldn't find trimmed mean data for {p_name}\nUsing untrimmed instead.")
-            this_ave_df_path = os.path.join(exp_path, p_name, 'MASTER_ave_thresh.csv')
+        # if not os.path.isfile(this_ave_df_path):
+        #     print(f"Couldn't find trimmed mean data for {p_name}\nUsing untrimmed instead.")
+        #     this_ave_df_path = os.path.join(exp_path, p_name, 'MASTER_ave_thresh.csv')
 
         if verbose:
             print(f'{p_idx}. {p_name} - this_p_ave_df:\n{this_p_ave_df}')
