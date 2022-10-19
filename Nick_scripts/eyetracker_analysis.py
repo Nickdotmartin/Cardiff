@@ -812,10 +812,10 @@ def count_errors(p_list, run_list, eye_track_dir=None):
 # run_list = [1]
 # count_errors(p_list=participants, run_list=run_list)
 
-# # do all dfs
-participants = ['p1', 'p2']
-run_list = [1, 2, 3]
-count_errors(p_list=participants, run_list=run_list)
+# # # do all dfs
+# participants = ['p1', 'p2']
+# run_list = [1, 2, 3]
+# count_errors(p_list=participants, run_list=run_list)
 
 
 def trial_dist_from_trgt(p_list, run_list, eye_track_dir=None):
