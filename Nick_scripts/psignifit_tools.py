@@ -535,6 +535,8 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=9, q_bins
     """
 
     print('\n*** running get_psignifit_threshold_df() ***')
+    if verbose:
+        print(f'\nrunning analysis for {p_run_name}\n')
 
     if thr_type not in ['Bayes', 'CI95']:
         raise ValueError
@@ -580,8 +582,7 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=9, q_bins
             isi_df = csv_name[csv_name[isi_col] == isi]
 
         if verbose:
-            print(f'\nrunning analysis for {p_run_name}\n')
-            print(f"isi_df:\n{isi_df}")
+            print(f"isi_df ({isi}):\n{isi_df.head()}")
 
         # stair_list = sorted(list(isi_df['stair'].unique()))
         # print(f"stair_list: {stair_list}")
@@ -597,9 +598,15 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=9, q_bins
             # get df just for one stair at this isi
             sep_df = isi_df[isi_df[sep_col] == sep]
             if verbose:
-                print(f'\nsep_df ({sep_col}={sep}, isi={isi}:\n{sep_df}')
+                print(f'\nsep_df ({sep_col}={sep}, isi={isi}:\n{sep_df.head()}')
 
                 print(f'n correct = {sep_df["trial_response"].sum()}')
+
+                print("\n\nidiot check")
+                sep_val = int(sep_df['separation'].iloc[0])
+                isi_val = int(sep_df['ISI'].iloc[0])
+                print(f"sep_val: {sep_val}")
+                print(f"isi_val: {isi_val}")
 
             # # # test with csv to numpy
             # yes script now works directly with df, don't need to load csv.
@@ -781,6 +788,8 @@ def get_psig_thr_w_hue(root_path, p_run_name, output_df, n_bins=9, q_bins=True,
     """
 
     print('\n*** running get_psig_thr_w_hue() ***')
+    if verbose:
+        print(f'\nrunning analysis for {p_run_name}\n')
 
     if thr_type not in ['Bayes', 'CI95']:
         raise ValueError
@@ -819,8 +828,7 @@ def get_psig_thr_w_hue(root_path, p_run_name, output_df, n_bins=9, q_bins=True,
         isi_df = output_df[output_df[isi_col] == isi]
 
         if verbose:
-            print(f'\nrunning analysis for {p_run_name}\n')
-            print(f"isi_df:\n{isi_df}")
+            print(f"isi_df ({isi}):\n{isi_df}")
 
         #row to append thr to at end
         output_row_idx = 0
@@ -839,7 +847,7 @@ def get_psig_thr_w_hue(root_path, p_run_name, output_df, n_bins=9, q_bins=True,
 
                 if verbose:
                     print(f'\nsep_df (isi={isi}, hue={hue}, {sep_col}={sep}):\n{sep_df}')
-                    print(f'n correct = {hue_df[trial_correct_col].sum()}')
+                    print(f'n correct = {sep_df[trial_correct_col].sum()}')
 
                 # todo: note, keep stairlevels set to None so it uses separation.  Stair_levels needs refactoring.
                 fit_curve_plot, psignifit_dict = results_to_psignifit(csv_path=sep_df,

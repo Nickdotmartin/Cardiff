@@ -76,7 +76,7 @@ for p_name in ['Nick', 'Simon']:
 
                 if not os.path.isdir(coh_p_run_dir):
                     os.makedirs(coh_p_run_dir)
-                coh_df.to_csv(os.path.join(coh_p_run_dir, f'{p_name}_{n_inc_df}_output.csv'), index=False)
+                coh_df.to_csv(os.path.join(coh_p_run_dir, f'{p_name}_{run}_output.csv'), index=False)
 
                 # coh_paths.to_csv(coh_df_path)
 

@@ -70,12 +70,12 @@ print("\nVariables")
 # Distances between probes (spatioally and temporally)
 '''Sort separation and ISI types'''
 # separations = [0, 1, 2, 3, 6, 18]
-separations = [0, 2, 4, 6]
+separations = [0, 3, 6]
 # separations = [0]
 print(f'separations: {separations}')
 # # I also have two ISI types
 # ISI_values = [-1, 0, 2, 4, 6, 9, 12, 24]
-ISI_values = [-1, 0, 2, 4]
+ISI_values = [-1, 3, 6]
 # ISI_values = [-1]
 print(f'ISI_values: {ISI_values}')
 # repeat separation values for each ISI e.g., [0, 0, 6, 6]

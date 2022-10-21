@@ -695,7 +695,7 @@ def plot_w_errors_no_1probe(wide_df, x_var, y_var, lines_var,
         cap_size = .1
 
     # convert wide_df to long for getting means and standard error.
-    long_fig_df = make_long_df(wide_df, idx_col=long_df_idx_col)
+    long_fig_df = make_long_df(wide_df, thr_col=y_var, idx_col=long_df_idx_col)
     if verbose:
         print(f'long_fig_df:\n{long_fig_df}')
 
@@ -722,7 +722,7 @@ def plot_w_errors_no_1probe(wide_df, x_var, y_var, lines_var,
         ax.set_xticklabels(x_tick_labels)
     ax.set_xlabel(x_var)
 
-    if y_var == 'newLum':
+    if y_var in ['newLum', 'probeLum']:
         ax.set_ylabel('Probe Luminance')
     else:
         ax.set_ylabel(y_var)
@@ -1330,7 +1330,7 @@ def plot_8_sep_thr(all_thr_df, thr_col='newLum', exp_ave=False, fig_title=None, 
         print(f'min_thr: {min_thr}; max_thr: {max_thr}')
 
     # convert wide_df to long for getting means and standard error.
-    long_fig_df = make_long_df(all_thr_df, idx_col=long_df_idx_col)
+    long_fig_df = make_long_df(all_thr_df, thr_col=thr_col, idx_col=long_df_idx_col)
     if verbose:
         print(f'long_fig_df:\n{long_fig_df}')
 
@@ -2253,7 +2253,8 @@ def e_average_exp_data(exp_path, p_names_list,
         if type(n_trimmed) == int:
             ave_df_name = f'MASTER_ave_TM{n_trimmed}_thresh'
         elif type(n_trimmed) == list:
-            ave_df_name = f'MASTER_ave_TM{n_trimmed[p_idx]}_thresh'
+            if n_trimmed[p_idx] is not None:
+                ave_df_name = f'MASTER_ave_TM{n_trimmed[p_idx]}_thresh'
 
         this_p_ave_df = pd.read_csv(os.path.join(exp_path, p_name, f'{ave_df_name}.csv'))
 
