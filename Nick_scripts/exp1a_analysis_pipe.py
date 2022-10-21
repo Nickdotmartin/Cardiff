@@ -1,16 +1,17 @@
 import os
 import pandas as pd
 from exp1a_psignifit_analysis import a_data_extraction, b3_plot_staircase, c_plots, \
-    d_average_participant, e_average_exp_data, make_average_plots
+    d_average_participant, e_average_exp_data, make_average_plots, plot_8_sep_thr
 from psignifit_tools import get_psignifit_threshold_df
 from check_home_dir import switch_path
+import matplotlib.pyplot as plt
 
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
-# old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data'
+old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data'
 # old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim_split_runs'
 # old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data_first_three_sessions'
-old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data_second_three_sessions'
+# old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data_second_three_sessions'
 exp_path = switch_path(old_exp_path, 'wind_oneDrive')
 print(f"exp_path: {exp_path}")
 participant_list = ['aa', 'bb', 'cc', 'dd', 'ee']
@@ -23,25 +24,25 @@ n_runs = 6
 
 p_idx_plus = 1
 
-for p_idx, participant_name in enumerate(participant_list):
-    root_path = os.path.join(exp_path, participant_name)
-
-    run_folder_names = [f'{participant_name}_{i+1}' for i in list(range(n_runs))]
-    print(f'run_folder_names: {run_folder_names}')
-
-    group_list = [1, 2]
-
-    for run_idx, run_dir in enumerate(run_folder_names):
-
-        print(f'\nrunning analysis for {participant_name}, {run_dir}, {participant_name}{run_idx+1}\n')
-        save_path = f'{root_path}{os.sep}{run_dir}'
-
-        # don't delete this (participant_name = participant_name),
-        # needed to ensure names go name1, name2, name3 not name1, name12, name123
-        p_name = participant_name
-
-        # # '''a'''
-        p_name = f'{participant_name}_output'  # use this one
+# for p_idx, participant_name in enumerate(participant_list):
+#     root_path = os.path.join(exp_path, participant_name)
+#
+#     run_folder_names = [f'{participant_name}_{i+1}' for i in list(range(n_runs))]
+#     print(f'run_folder_names: {run_folder_names}')
+#
+#     group_list = [1, 2]
+#
+#     for run_idx, run_dir in enumerate(run_folder_names):
+#
+#         print(f'\nrunning analysis for {participant_name}, {run_dir}, {participant_name}{run_idx+1}\n')
+#         save_path = f'{root_path}{os.sep}{run_dir}'
+#
+#         # don't delete this (participant_name = participant_name),
+#         # needed to ensure names go name1, name2, name3 not name1, name12, name123
+#         p_name = participant_name
+#
+#         # # '''a'''
+#         p_name = f'{participant_name}_output'  # use this one
 
         # run_data_df = a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=isi_list, verbose=True)
         #
@@ -105,63 +106,101 @@ for p_idx, participant_name in enumerate(participant_list):
         # c_plots(save_path=save_path, thr_col='newLum', show_plots=True)
 
 
-    trim_n = None
-    # if len(run_folder_names) == 6:
-    #     trim_n = 2
-
-    print(f"\n\ntrim_n: {trim_n}, \n\n")
-
-    if 'first_three_sessions' in old_exp_path:
-        run_folder_names = run_folder_names[:3]
-    elif 'second_three_sessions' in old_exp_path:
-        run_folder_names = run_folder_names[3:]
-    else:
-        raise ValueError('what experiment am I analysing?')
-
-
-    '''d'''
-    d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-                          trim_n=trim_n, error_type='SE')
-
-    all_df_path = os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv')
-    p_ave_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv')
-    err_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thr_error_SE.csv')
-    if trim_n is None:
-        all_df_path = os.path.join(root_path, 'MASTER_psignifit_thresholds.csv')
-        p_ave_path = os.path.join(root_path, 'MASTER_ave_thresh.csv')
-        err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
-
-    make_average_plots(all_df_path=all_df_path,
-                       ave_df_path=p_ave_path,
-                       error_bars_path=err_path,
-                       thr_col='newLum',
-                       error_type='SE',
-                       ave_over_n=len(run_folder_names),
-                       n_trimmed=trim_n,
-                       exp_ave=False,  # participant ave, not exp ave
-                       show_plots=True, verbose=True)
-
-
-print(f'exp_path: {exp_path}')
-print('\nget exp_average_data')
-participant_list = ['aa', 'bb', 'cc', 'dd', 'ee']
-
-e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
-                   error_type='SE', n_trimmed=trim_n, verbose=True)
+#     # trim_n = None
+#     # # if len(run_folder_names) == 6:
+#     # #     trim_n = 2
+#     #
+#     # print(f"\n\ntrim_n: {trim_n}, \n\n")
+#     #
+#     # if 'first_three_sessions' in old_exp_path:
+#     #     run_folder_names = run_folder_names[:3]
+#     # elif 'second_three_sessions' in old_exp_path:
+#     #     run_folder_names = run_folder_names[3:]
+#     # else:
+#     #     raise ValueError('what experiment am I analysing?')
+#     #
+#     #
+#     # '''d'''
+#     # d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
+#     #                       trim_n=trim_n, error_type='SE')
+#
+#     all_df_path = os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv')
+#     p_ave_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv')
+#     err_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thr_error_SE.csv')
+#     if trim_n is None:
+#         all_df_path = os.path.join(root_path, 'MASTER_psignifit_thresholds.csv')
+#         p_ave_path = os.path.join(root_path, 'MASTER_ave_thresh.csv')
+#         err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
+#
+#     make_average_plots(all_df_path=all_df_path,
+#                        ave_df_path=p_ave_path,
+#                        error_bars_path=err_path,
+#                        thr_col='newLum',
+#                        error_type='SE',
+#                        ave_over_n=len(run_folder_names),
+#                        n_trimmed=trim_n,
+#                        exp_ave=False,  # participant ave, not exp ave
+#                        show_plots=True, verbose=True)
+#
+#
+# print(f'exp_path: {exp_path}')
+# print('\nget exp_average_data')
+# participant_list = ['aa', 'bb', 'cc', 'dd', 'ee']
+#
+# e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
+#                    error_type='SE', n_trimmed=trim_n, verbose=True)
 
 
 all_df_path = os.path.join(exp_path, 'MASTER_exp_thr.csv')
 exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
 err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
 
-# make experiment average plots -
-make_average_plots(all_df_path=all_df_path,
-                   ave_df_path=exp_ave_path,
-                   error_bars_path=err_path,
-                   thr_col='newLum',
-                   error_type='SE',
-                   ave_over_n=len(participant_list),
-                   exp_ave=True,
-                   show_plots=True, verbose=True)
+# # make experiment average plots -
+# make_average_plots(all_df_path=all_df_path,
+#                    ave_df_path=exp_ave_path,
+#                    error_bars_path=err_path,
+#                    thr_col='newLum',
+#                    error_type='SE',
+#                    ave_over_n=len(participant_list),
+#                    exp_ave=True,
+#                    show_plots=True, verbose=True)
 
+# # plot diff from concurrent
+# save_path, df_name = os.path.split(all_df_path)
+#
+# all_df = pd.read_csv(all_df_path)
+# # print(list(all_df.columns))
+# # print(all_df.head())
+#
+# all_df['diff_conc'] = all_df['Concurrent'] - all_df['Concurrent']
+# all_df['diff_ISI0'] = all_df['ISI0'] - all_df['Concurrent']
+# all_df['diff_ISI2'] = all_df['ISI2'] - all_df['Concurrent']
+# all_df['diff_ISI4'] = all_df['ISI4'] - all_df['Concurrent']
+# all_df['diff_ISI6'] = all_df['ISI6'] - all_df['Concurrent']
+# all_df['diff_ISI9'] = all_df['ISI9'] - all_df['Concurrent']
+# all_df['diff_ISI12'] = all_df['ISI12'] - all_df['Concurrent']
+# all_df['diff_ISI24'] = all_df['ISI24'] - all_df['Concurrent']
+#
+# diff_df = all_df.loc[:, ['participant', 'separation',
+#                          'diff_conc', 'diff_ISI0', 'diff_ISI2', 'diff_ISI4',
+#                          'diff_ISI6', 'diff_ISI9', 'diff_ISI12', 'diff_ISI24']]
+#
+# print(list(diff_df.columns))
+# print(diff_df.head())
+# columns={'diff_conc': 'Concurrent', 'diff_ISI0': 'ISI0',
+#                         'diff_ISI2': 'ISI2', 'diff_ISI4': 'ISI4',
+#                         'diff_ISI6': 'ISI6', 'diff_ISI9': 'ISI9',
+#                         'diff_ISI12': 'ISI12', 'diff_ISI24': 'ISI24'}
+# diff_df.rename(columns=columns, inplace=True)
+# print(list(diff_df.columns))
+# print(diff_df.head())
+# ave_over = 'Exp'
+# n_trimmed=2
+# ave_over_n = 5
+# diff_title = f'{ave_over} average threshold difference from Concurrent per separation\n' \
+#              f'(n={ave_over_n}, trim={n_trimmed}).'
+# diff_savename = f'ave_TM{n_trimmed}_diff_from_conc_per_sep'
+# plot_8_sep_thr(all_thr_df=diff_df, exp_ave=True, fig_title=diff_title,
+#                save_name=diff_savename, save_path=save_path, verbose=True)
+# plt.show()
 print('\nexp1a_analysis_pipe finished\n')

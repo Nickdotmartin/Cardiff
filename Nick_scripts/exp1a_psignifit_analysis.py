@@ -1282,7 +1282,8 @@ def eight_batman_plots(mean_df, thr1_df, thr2_df,
     return fig
 
 
-def plot_8_sep_thr(all_thr_df, thr_col='newLum', exp_ave=False, fig_title=None, save_name=None, save_path=None, verbose=True):
+def plot_8_sep_thr(all_thr_df, thr_col='newLum', exp_ave=False, fig_title=None,
+                   save_name=None, save_path=None, verbose=True):
     """
     Function to make a page with seven axes showing the threshold for each separation,
     and an eighth plot showing all separations.
