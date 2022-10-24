@@ -106,6 +106,14 @@ for p_idx, participant_name in enumerate(participant_list):
                 print(f"added newLum column\n"
                       f"run_data_df: {run_data_df.columns.to_list()}")
 
+        # remove unnamed columns
+        substring = 'Unnamed: '
+        unnamed_cols = [i for i in run_data_df.columns.to_list() if substring in i]
+        print(f"unnamed_cols: {unnamed_cols}")
+
+        for col_name in unnamed_cols:
+            run_data_df.drop(col_name, axis=1, inplace=True)
+
         run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
         run_data_df.to_excel(run_data_path, index=False)
         # run_data_df = pd.read_excel(run_data_path, engine='openpyxl')
