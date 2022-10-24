@@ -21,7 +21,8 @@ This script contains the analysis pipeline for individual participants.
 
 
 def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='stair',
-                                    stair_levels=None, 
+                                    stair_levels=None,
+                                    hue_name=None, hue_level=None,
                                     thr_col='probeLum', resp_col='trial_response',
                                     quartile_bins=True, n_bins=9, save_np_path=None,
                                     verbose=True):
@@ -79,7 +80,12 @@ def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='sta
     if verbose:
         print(f"raw_data, stair_levels:{stair_levels}:\n{raw_data_df}")
 
-    dataset_name = f'{p_run_name}_ISI{isi}_{sep_col}{stair_levels[0]}'
+    if hue_name is None:
+        dataset_name = f'{p_run_name}_ISI{isi}_{sep_col}{stair_levels[0]}'
+    else:
+        dataset_name = f'{p_run_name}_{hue_name}_{hue_level}_ISI{isi}_{sep_col}{stair_levels[0]}'
+
+
 
     # get useful info
     n_rows, n_cols = raw_data_df.shape
@@ -226,7 +232,7 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
         options['confP'] = [.95]
 
     if verbose:
-        print(f'data_np:\n{data_np}')
+        print(f'data_np {np.shape(data_np)}:\n{data_np}')
         print(f'options (dict): {options}')
 
     # results
@@ -237,6 +243,10 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
         for k, v in res['options'].items():
             # if k in ['nblocks', 'stimulusRange']:
             print(f"{k}: {v}")
+
+    print(f"idiot check:\nres['data'] {np.shape(res['data'])}:\n{res['data']}")
+    print(f"idiot check:\nres['X1D'] {np.shape(res['X1D'])}:\n{res['X1D']}")
+    print(f"idiot check:\nres['X1D'][0] {np.shape(res['X1D'][0])}:\n{res['X1D'][0]}")
 
     '''
     get thresholds
@@ -396,6 +406,7 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
 
 def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
                          sep_col='stair', stair_levels=None,
+                         hue_name=None, hue_level=None,
                          thr_col='probeLum', resp_col='trial_response',
                          quartile_bins=False, n_bins=9, save_np=False,
                          target_threshold=.75,
@@ -460,6 +471,7 @@ def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
                                                                 p_run_name=p_run_name,
                                                                 sep_col=sep_col,
                                                                 stair_levels=stair_levels,
+                                                                hue_name=hue_name, hue_level=hue_level,
                                                                 thr_col=thr_col,
                                                                 resp_col=resp_col,
                                                                 quartile_bins=quartile_bins,
@@ -854,6 +866,7 @@ def get_psig_thr_w_hue(root_path, p_run_name, output_df, n_bins=9, q_bins=True,
                                                                       save_path=save_path,
                                                                       isi=isi, sep=sep, p_run_name=p_run_name,
                                                                       sep_col=sep_col, stair_levels=None,
+                                                                      hue_name=hue_col, hue_level=hue,
                                                                       thr_col=thr_col, resp_col=trial_correct_col,
                                                                       quartile_bins=q_bins, n_bins=n_bins,
                                                                       save_np=False, target_threshold=.75,

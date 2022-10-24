@@ -721,7 +721,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('separation', sep)
         thisExp.addData('ISI', ISI)
         thisExp.addData('cond_type', probe_coherence)
-        thisExp.addData('example_name ', example_name)
+        thisExp.addData('example_name', example_name)
         thisExp.addData('probeColor1', probeColor1)
         thisExp.addData('probeColor255', probeColor255)
         thisExp.addData('probeLum', probeLum)
