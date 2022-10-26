@@ -18,7 +18,7 @@ exp_path = convert_path1
 print(f"exp_path: {exp_path}")
 
 # other exp details
-participant_list = ['Nick', 'Simon']  # 'Simon', 'Nick'
+participant_list = ['Nick_sep4_strip']  #, 'Nick', 'Simon']  # , 'Simon']  # 'Simon', 'Nick'
 split_1probe = False
 n_runs = 12
 analyse_from_run = 1
@@ -134,8 +134,23 @@ for p_idx, participant_name in enumerate(participant_list):
     plt.savefig(save_as)
     plt.show()
 
+    # make plot to show radial in and out conditions
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.lineplot(data=long_psig_rad_dirs_df,
+                 x='ISI', y="probeLum",
+                 hue='separation',
+                 style='radial_dir',
+                 markers=True, dashes=True, ax=ax,)
+    fig_title = f'{participant_name} radial In and Out sepx'
+    plt.title(fig_title)
+    save_as = os.path.join(root_path, 'radial_In_v_Out_transpose.png')
+    plt.savefig(save_as)
+    plt.show()
+
     # # make participant plot to compare radial in and out conditions
     psig_rad_dirs_df = psig_rad_dirs_df.sort_values(by='radial_dir')
+    sep_list = list(psig_rad_dirs_df['separation'].unique())
+
     print(f'psig_rad_dirs_df:\n{psig_rad_dirs_df}')
     drop_hue_df = psig_rad_dirs_df.drop('radial_dir', axis=1)
     print(f'drop_hue_df:\n{drop_hue_df}')
@@ -152,6 +167,7 @@ for p_idx, participant_name in enumerate(participant_list):
     fig, ax = plt.subplots(figsize=(10, 6))
     sns.lineplot(data=rad_dirs_diff_df, ax=ax, markers=True)
     min_diff = rad_dirs_diff_df.min().min()
+
     max_diff = rad_dirs_diff_df.max().max()
     if min_diff < 0:
         if max_diff > 0:
@@ -175,7 +191,7 @@ for p_idx, participant_name in enumerate(participant_list):
 
 # join all stacks (run/group) data and save as master csv
 exp_outputs_df = pd.concat(exp_psig_list, ignore_index=True)
-# all_psig_rad_dirs_df.to_csv(f'{exp_path}{os.sep}MASTER_psig_rad_dirs.csv', index=False)
+exp_outputs_df.to_csv(f'{exp_path}{os.sep}MASTER_psig_rad_dirs.csv', index=False)
 if 'ISI 999' in list(exp_outputs_df.columns):
     print('fixing 999 inputs')
     exp_outputs_df = exp_outputs_df.rename(columns={'ISI 999': 'ISI -1', 'ISI 3': 'ISI_3', 'ISI 6': 'ISI_6'})
@@ -222,6 +238,8 @@ plt.show()
 
 # # make experiment plot to compare radial in and out conditions
 psig_rad_dirs_df = psig_rad_dirs_df.sort_values(by='radial_dir')
+sep_list = list(psig_rad_dirs_df['separation'].unique())
+
 print(f'psig_rad_dirs_df:\n{psig_rad_dirs_df}')
 drop_hue_df = psig_rad_dirs_df.drop('radial_dir', axis=1)
 print(f'drop_hue_df:\n{drop_hue_df}')
