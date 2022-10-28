@@ -378,11 +378,20 @@ for step in range(n_trials_per_stair):
         # timing in frames
         # fixation time is now 70ms shorter than rad_flow1, as we can have
         # priliminary bg_motion.
+        # isi_len = ISI
+        # if ISI < 0:
+        #     isi_len = 0
         t_fixation = (fps / 2) + vary_fix
         t_probe_1 = t_fixation + probe_duration
         t_ISI = t_probe_1 + ISI
         t_probe_2 = t_ISI + probe_duration
         t_response = t_probe_2 + 10000 * fps  # essentially unlimited time to respond
+
+        # print(f"t_fixation: {t_fixation}\n"
+        #       f"t_probe_1: {t_probe_1}\n"
+        #       f"t_ISI: {t_ISI}\n"
+        #       f"t_probe_2: {t_probe_2}\n"
+        #       f"t_response: {t_response}\n")
 
         # repeat the trial if [r] has been pressed
         repeat = True
