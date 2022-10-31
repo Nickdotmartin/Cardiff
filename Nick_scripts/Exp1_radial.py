@@ -338,6 +338,17 @@ for step in range(n_trials_per_stair):
                     jump_dir = 'exp'
         print(f"corner: {corner} {corner_name}; jump dir: {target_jump} {jump_dir}")
 
+        if exp_type == 'exp_v_cont':
+            if jump_dir in ['cont']:
+                neg_sep = 0-sep
+                if sep == 0:
+                    neg_sep = -.1
+            else:
+                neg_sep = sep
+        else:
+            neg_sep = sep
+        print(f"jump_dir: {jump_dir}, ISI: {ISI}, sep: {sep} (neg_sep: {neg_sep})")
+
         # reset probe ori
         probe1.ori = 0
         probe2.ori = 0
@@ -574,9 +585,10 @@ for step in range(n_trials_per_stair):
         thisExp.addData('stair_name', thisStair)
         thisExp.addData('step', step)
         thisExp.addData('separation', sep)
+        thisExp.addData('neg_sep', neg_sep)
         thisExp.addData('ISI', ISI)
         thisExp.addData('probe_jump', target_jump)
-        thisExp.addData('jump_dir', jump_dir)
+        thisExp.addData('cond_type', jump_dir)
         thisExp.addData('probeColor1', probeColor1)
         thisExp.addData('probeColor255', probeColor255)
         thisExp.addData('probeLum', probeLum)

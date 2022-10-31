@@ -308,10 +308,18 @@ for step in range(n_trials_per_stair):
 
         sep = sep_vals_list[stair_idx]
         ISI = ISI_vals_list[stair_idx]
-        print(f"ISI: {ISI}, sep: {sep}")
+        # print(f"ISI: {ISI}, sep: {sep}")
 
         probes_type = probes_type_list[stair_idx]
-        print(f"probes_type: {probes_type}")
+        # print(f"probes_type: {probes_type}")
+
+        if probes_type in ['orig']:
+            neg_sep = 0-sep
+            if sep == 0:
+                neg_sep = -.1
+        else:
+            neg_sep = sep
+        print(f"probes_type: {probes_type}, ISI: {ISI}, sep: {sep} (neg_sep: {neg_sep})")
 
 
         # staircase varies probeLum
@@ -604,8 +612,9 @@ for step in range(n_trials_per_stair):
         thisExp.addData('stair', stair_idx)
         thisExp.addData('stair_name', thisStair)
         thisExp.addData('step', step)
-        thisExp.addData('probes_type', probes_type)
+        thisExp.addData('cond_type', probes_type)
         thisExp.addData('separation', sep)
+        thisExp.addData('neg_sep', neg_sep)
         thisExp.addData('ISI', ISI)
         thisExp.addData('probe_jump', target_jump)
         thisExp.addData('jump_dir', jump_dir)
