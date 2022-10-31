@@ -30,7 +30,7 @@ monitor_name = 'Nick_work_laptop'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 
 
 
 # Store info about the experiment session
-expName = 'EXP1_DEMO'  # from the Builder filename that created this script
+expName = 'EXP1_radial'  # from the Builder filename that created this script
 
 expInfo = {'1. Participant': 'nicktest',
            '2. Run_number': '1',
@@ -38,7 +38,8 @@ expInfo = {'1. Participant': 'nicktest',
            '4. fps': [60, 144, 240],
            '5. Probe_orientation': ['radial', 'tangent'],
            '6. Trial_counter': [True, False], 
-           '7. Vary_fixation': [False, True]
+           '7. Vary_fixation': [False, True],
+           '8. Exp_type': ['orig', 'exp_v_cont']
            }
 
 # GUI
@@ -57,10 +58,9 @@ probe_duration = int(expInfo['3. Probe duration in frames at 240hz'])
 probe_ecc = 4
 fps = int(expInfo['4. fps'])
 orientation = expInfo['5. Probe_orientation']
-
-orientation = 'tangent'  # expInfo['5. Probe orientation']
 trials_counter = eval(expInfo['6. Trial_counter'])
 vary_fixation = eval(expInfo['7. Vary_fixation'])
+exp_type = expInfo['8. Exp_type']
 
 
 # VARIABLES
@@ -68,28 +68,46 @@ vary_fixation = eval(expInfo['7. Vary_fixation'])
 For 1probe condition, use separation==99.
 For concurrent probes, use ISI==-1.
 '''
+if exp_type == 'exp_v_cont':
+    if orientation == 'tangent':
+        raise ValueError('Can only have different in vs out stairs if orientation is radial.')
+    target_jump_vals = ['exp', 'cont']
+else:
+    print('mix split and orig probes with probes_type_list')
+    target_jump_vals = ['mixed']
+print(f'target_jump_vals: {target_jump_vals}')
 # separations = [0, 2, 4, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
-separations = [0, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
+separations = [0, 3, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
 print(f'separations: {separations}')
 # ISI_values = [0, 2, 4, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
-ISI_values = [-1, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+ISI_values = [-1, 3, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 print(f'ISI_values: {ISI_values}')
 # repeat separation values for each ISI e.g., [0, 0, 6, 6]
-sep_vals_list = list(np.repeat(separations, len(ISI_values)))
+sep_vals_list = list(np.repeat(separations, len(ISI_values))) * len(target_jump_vals)
 print(f'sep_vals_list: {sep_vals_list}')
 # ISI_vals_list cycles through ISIs e.g., [-1, 6, -1, 6]
-ISI_vals_list = list(np.tile(ISI_values, len(separations)))
+ISI_vals_list = list(np.tile(ISI_values, len(separations) * len(target_jump_vals)))
 print(f'ISI_vals_list: {ISI_vals_list}')
 # stair_names_list joins sep_vals_list and ISI_vals_list
-# e.g., ['sep0_ISI-1', 'sep0_ISI6', 'sep6_ISI-1', 'sep6_ISI6']
-stair_names_list = [f'sep{s}_ISI{c}' for s, c in zip(sep_vals_list, ISI_vals_list)]
+
+
+if exp_type == 'exp_v_cont':
+    # add target jump list here too
+    target_jump_list = list(np.repeat(target_jump_vals, len(sep_vals_list) / len(target_jump_vals)))
+    print(f'target_jump_list: {target_jump_list}')
+    stair_names_list = [f'{t}_sep{s}_ISI{i}' for t, s, i in zip(target_jump_list, sep_vals_list, ISI_vals_list)]
+else:
+    # e.g., ['sep0_ISI-1', 'sep0_ISI6', 'sep6_ISI-1', 'sep6_ISI6']
+    stair_names_list = [f'sep{s}_ISI{c}' for s, c in zip(sep_vals_list, ISI_vals_list)]
 print(f'stair_names_list: {stair_names_list}')
 n_stairs = len(sep_vals_list)
 print(f'n_stairs: {n_stairs}')
 
+
 # FILENAME
 filename = f'{_thisDir}{os.sep}' \
            f'{expName}{os.sep}' \
+           f'{exp_type}{os.sep}' \
            f'{participant_name}{os.sep}' \
            f'{participant_name}_{run_number}{os.sep}' \
            f'{participant_name}_{run_number}_output'
@@ -106,7 +124,7 @@ thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
 # Lum to Color255
 LumColor255Factor = 2.39538706913372
 # Color255 to Color1
-Color255Color1Factor = 1/127.5  # Color255 * Color255Color1Factor -1
+Color255Color1Factor = 1 / 127.5  # Color255 * Color255Color1Factor -1
 # Lum to Color1
 Color1LumFactor = 2.39538706913372
 
@@ -130,7 +148,7 @@ mon_dict = {'mon_name': monitor_name,
             'size': thisMon.getSizePix(),
             'dist': thisMon.getDistance(),
             'notes': thisMon.getNotes()}
-print(f"mon_dict: {mon_dict}")
+print(f"\nmon_dict: {mon_dict}")
 
 # double check using full screen in lab
 display_number = 1  # 0 indexed, 1 for external display, 0 for internal
@@ -159,8 +177,8 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     fullscr=use_full_screen)
 
 print(f"check win.size: {win.size}")
-widthPix = widthPix/2
-heightPix = heightPix/2
+widthPix = widthPix / 2
+heightPix = heightPix / 2
 print(f"widthPix: {widthPix}, hight: {heightPix}")
 widthPix, heightPix = win.size
 print(f"check win.size: {win.size}")
@@ -171,14 +189,15 @@ fixation = visual.Circle(win, radius=2, units='pix',
                          lineColor='white', fillColor='black')
 
 # PROBEs
-expInfo['6. Probe size'] = '5pixels'  # ignore this, all experiments use 5pixel probes now.
+# expInfo['6. Probe size'] = '5pixels'  # ignore this, all experiments use 5pixel probes now.
 probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
              (1, -2), (-1, -2), (-1, -1), (0, -1)]
+probe_size = 1
 
 probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, -1.0, 1.0),
-                          lineWidth=0, opacity=1, size=1, interpolate=False)
+                          lineWidth=0, opacity=1, size=probe_size, interpolate=False)
 probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor=[-1.0, 1.0, -1.0],
-                          lineWidth=0, opacity=1, size=1, interpolate=False)
+                          lineWidth=0, opacity=1, size=probe_size, interpolate=False)
 
 # dist_from_fix is a constant to get 4dva distance from fixation,
 dist_from_fix = round((tan(deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
@@ -198,7 +217,8 @@ instructions = visual.TextStim(win=win, name='instructions',
                                     "[1]/[A] bottom-left\t\t\t[2]/[S] bottom-right.\n\n\n"
                                     "Some targets will be easier to see than others,\n"
                                     "Some will be so dim that you won't see them, so just guess!\n\n"
-                                    "You don't need to think for long, respond quickly, but try to push press the correct key!\n\n"
+                                    "You don't need to think for long, respond quickly, "
+                                    "but try to push press the correct key!\n\n"
                                     "Don't let your eyes wander, keep focussed on the circle in the middle throughout.",
                                font='Arial', height=20,
                                color='white')
@@ -218,7 +238,6 @@ take_break = 76
 total_n_trials = int(n_trials_per_stair * n_stairs)
 print(f"take_break every {take_break} trials.")
 breaks = visual.TextStim(win=win, name='breaks',
-                         # text="turn on the light and take at least 30-seconds break.",
                          text="Break\nTurn on the light and take at least 30-seconds break.\n"
                               "Keep focussed on the fixation circle in the middle of the screen.\n"
                               "Remember, if you don't see the target, just guess!",
@@ -256,7 +275,7 @@ for stair_idx in expInfo['stair_list']:
     thisStair = Staircase(name=stair_names_list[stair_idx],
                           type='simple',
                           value=stairStart,
-                          C=stairStart*0.6,  # typically, 60% of reference stimulus
+                          C=stairStart * 0.6,  # typically, 60% of reference stimulus
                           minRevs=3,
                           minTrials=n_trials_per_stair,
                           minVal=miniVal,
@@ -266,7 +285,6 @@ for stair_idx in expInfo['stair_list']:
     stairs.append(thisStair)
 
 trial_number = 0
-
 # EXPERIMENT
 for step in range(n_trials_per_stair):
     shuffle(stairs)
@@ -274,7 +292,6 @@ for step in range(n_trials_per_stair):
 
         trial_number = trial_number + 1
         trials_counter.text = f"{trial_number}/{total_n_trials}"
-
         stair_idx = thisStair.extraInfo['stair_idx']
         print(f"\ntrial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
 
@@ -301,16 +318,24 @@ for step in range(n_trials_per_stair):
         elif corner == 315:
             corner_name = 'bottom_right'
 
-        # # direction in which the probe jumps : CW or CCW
-        target_jump = random.choice([1, -1])
-        if orientation == 'tangent':
-            jump_dir = 'clockwise'
-            if target_jump == -1:
-                jump_dir = 'anticlockwise'
+        # # direction in which the probe jumps : CW or CCW (tangent) or exp vs cont (radial)
+        if exp_type == 'exp_v_cont':
+            # jump_dir and target_jump selected from target_jump_list
+            jump_dir = target_jump_list[stair_idx]
+            target_jump = 1
+            if jump_dir == 'exp':
+                target_jump = -1
         else:
-            jump_dir = 'inward'
-            if target_jump == -1:
-                jump_dir = 'outward'
+            # jump_dir and target_jump randomly selected
+            target_jump = random.choice([1, -1])
+            if orientation == 'tangent':
+                jump_dir = 'clockwise'
+                if target_jump == -1:
+                    jump_dir = 'anticlockwise'
+            else:
+                jump_dir = 'cont'
+                if target_jump == -1:
+                    jump_dir = 'exp'
         print(f"corner: {corner} {corner_name}; jump dir: {target_jump} {jump_dir}")
 
         # reset probe ori
@@ -564,6 +589,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('vary_fixation', vary_fixation)
         thisExp.addData('expName', expName)
         thisExp.addData('monitor_name', monitor_name)
+        thisExp.addData('exp_type', exp_type)
         thisExp.addData('selected_fps', fps)
 
         thisExp.nextEntry()

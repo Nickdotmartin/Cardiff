@@ -352,9 +352,12 @@ while this_cond < n_conds:
     probe1.pos = [p1_x, p1_y]
 
     # timing in frames
-    # if ISI >= 0:
+    isi_len = ISI
+    if ISI < 0:
+        isi_len = 0
     t_fixation = int(fps/10)  # 1 * fps
     t_interval_1 = t_fixation + probe_duration
+    # todo: try with isi_len to see if that changes t_ISI
     t_ISI = t_interval_1 + ISI
     t_interval_2 = t_ISI + probe_duration
     # I presume this means almost unlimited time to respond?
@@ -410,6 +413,7 @@ while this_cond < n_conds:
                 frame_counter.draw()
 
             # ISI
+            # todo: try with elif instead of if
             if t_ISI >= frameN > t_interval_1:
                 fixation.setRadius(3)
                 fixation.draw()

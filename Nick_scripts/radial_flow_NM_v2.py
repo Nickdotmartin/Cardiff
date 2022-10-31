@@ -30,14 +30,14 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'Asus_VG24'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18'
+monitor_name = 'Nick_work_laptop'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18', 'Nick_work_laptop'
 display_number = 1  # 0 indexed, 1 for external display
 
 # Store info about the experiment session
 expName = 'rad_flow_2'  # from the Builder filename that created this script
 
 expInfo = {'1_Participant': 'Nick_60hz_test_1',
-           '2_Probe_dur_in_frames_at_240hz': [2, 50],
+           '2_Probe_dur_in_frames_at_240hz': [2, 50, 100],
            '3_fps': [240, 144, 60],
            '4_ISI_dur_in_ms': [100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0],
            '5_Probe_orientation': ['radial', 'tangent'],
@@ -425,6 +425,7 @@ for step in range(n_trials_per_stair):
 
         # PROBE
         # target_jump = np.random.choice([1, -1])  # direction in which the probe jumps : CW or CCW
+        # todo: double check corners for target jump are correct
         target_jump = congruent * flow_dir
 
         # flow_dots
@@ -487,16 +488,14 @@ for step in range(n_trials_per_stair):
             #  'orientation' here refers to the relationship between probes,
             #  whereas probe1.ori refers to rotational angle of probe stimulus
             if orientation == 'tangent':
-                if target_jump == 1:  # CCW
-                    probe1.ori = 0
-                    probe2.ori = 180
-                    # probe2 is left and up from probe1
-                    probe2.pos = [p1_x - sep + 1, p1_y + sep]
-                elif target_jump == -1:  # CW
+                if target_jump == 1:  # CW
                     probe1.ori = 180
                     probe2.ori = 0
-                    # probe2 is right and down from probe1
                     probe2.pos = [p1_x + sep - 1, p1_y - sep]
+                elif target_jump == -1:  # ACW
+                    probe1.ori = 0
+                    probe2.ori = 180
+                    probe2.pos = [p1_x - sep + 1, p1_y + sep]
             elif orientation == 'radial':
                 if target_jump == 1:  # inward
                     probe1.ori = 270
@@ -539,14 +538,14 @@ for step in range(n_trials_per_stair):
             p1_x = dist_from_fix * -1
             p1_y = dist_from_fix * -1
             if orientation == 'tangent':
-                if target_jump == 1:  # CCW
-                    probe1.ori = 180
-                    probe2.ori = 0
-                    probe2.pos = [p1_x + sep - 1, p1_y - sep]
-                elif target_jump == -1:  # CW
+                if target_jump == 1:  # CW
                     probe1.ori = 0
                     probe2.ori = 180
                     probe2.pos = [p1_x - sep + 1, p1_y + sep]
+                elif target_jump == -1:  # ACW
+                    probe1.ori = 180
+                    probe2.ori = 0
+                    probe2.pos = [p1_x + sep - 1, p1_y - sep]
             elif orientation == 'radial':
                 if target_jump == 1:  # inward
                     probe1.ori = 90
