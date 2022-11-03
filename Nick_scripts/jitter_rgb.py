@@ -12,6 +12,9 @@ from psychopy import gui, visual, core, data, event, monitors
 from PsychoPy_tools import check_correct_monitor, get_pixel_mm_deg_values
 from kestenSTmaxVal import Staircase
 
+
+'''Issues with concurrent timings resolved with use of isi_dur variable.'''
+
 """
 This script takes: 
 the probes from EXPERIMENT3_background_motion_SKR, and adds jitter.  
@@ -511,10 +514,13 @@ for step in range(n_trials_per_stair):
         # timing in frames
         # fixation time is now 70ms shorter than rad_flow1, as we can have
         # priliminary bg_motion.
+        isi_dur = ISI
+        if ISI < 0:
+            isi_dur = 0
         t_fixation = (fps / 2) - prelim_bg_flow_fr + vary_fix
         t_bg_motion = t_fixation + prelim_bg_flow_fr
         t_probe_1 = t_bg_motion + probe_duration
-        t_ISI = t_probe_1 + ISI
+        t_ISI = t_probe_1 + isi_dur
         t_probe_2 = t_ISI + probe_duration
         t_response = t_probe_2 + 10000 * fps  # essentially unlimited time to respond
 
@@ -697,6 +703,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('step', step)
         thisExp.addData('separation', sep)
         thisExp.addData('ISI', ISI)
+        thisExp.addData('isi_dur', isi_dur)
         thisExp.addData('probe_jump', target_jump)
         thisExp.addData('corner', corner)
         thisExp.addData('probeLum', probeLum)

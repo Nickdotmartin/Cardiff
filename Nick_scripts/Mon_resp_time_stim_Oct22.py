@@ -84,27 +84,30 @@ The logic is to take these, then 4, then these again (to double check I get them
 Then take a break.
 If there is time, then do 2 and 3.
 '''
-sep_vals1 = [0, 1, 2, 3, 6, 18]  # , 18, 2, 99]
-ISI_vals1 = [-1, 0, 2, 4, 6, 9, 12, 24]  # , 2, 6, 12, 24]
+# sep_vals1 = [0, 1, 2, 3, 6, 18]  # , 18, 2, 99]
+# ISI_vals1 = [-1, 0, 2, 4, 6, 9, 12, 24]  # , 2, 6, 12, 24]
+#
+# sep_list1 = list(np.repeat(sep_vals1, len(ISI_vals1)))
+# ISI_list1 = list(np.tile(ISI_vals1, len(sep_vals1)))
+#
+# sep_vals2 = [6, 3, 0]  # , 18, 2, 99]
+# ISI_vals2 = [3]
+# sep_list2 = list(np.repeat(sep_vals2, len(ISI_vals2)))
+# ISI_list2 = list(np.tile(ISI_vals2, len(sep_vals2)))
+#
+# sep_list3 = [99]
+# ISI_list3 = [0]
+#
+# sep_list4 = [400, 800, 2400]  # bloch
+# ISI_list4 = [0]  # bloch
+#
+# # sep_list = sep_list1 + sep_list4 + sep_list5 + sep_list1 + sep_list2 + sep_list3
+# # ISI_list = ISI_list1 + ISI_list4 + ISI_list5 + ISI_list1 + ISI_list2 + ISI_list3
+# sep_list = sep_list1 + sep_list2 + sep_list3 + sep_list4
+# ISI_list = ISI_list1 + ISI_list2 + ISI_list3 + ISI_list4
 
-sep_list1 = list(np.repeat(sep_vals1, len(ISI_vals1)))
-ISI_list1 = list(np.tile(ISI_vals1, len(sep_vals1)))
-
-sep_vals2 = [6, 3, 0]  # , 18, 2, 99]
-ISI_vals2 = [3]
-sep_list2 = list(np.repeat(sep_vals2, len(ISI_vals2)))
-ISI_list2 = list(np.tile(ISI_vals2, len(sep_vals2)))
-
-sep_list3 = [99]
-ISI_list3 = [0]
-
-sep_list4 = [400, 800, 2400]  # bloch
-ISI_list4 = [0]  # bloch
-
-# sep_list = sep_list1 + sep_list4 + sep_list5 + sep_list1 + sep_list2 + sep_list3
-# ISI_list = ISI_list1 + ISI_list4 + ISI_list5 + ISI_list1 + ISI_list2 + ISI_list3
-sep_list = sep_list1 + sep_list2 + sep_list3 + sep_list4
-ISI_list = ISI_list1 + ISI_list2 + ISI_list3 + ISI_list4
+sep_list = [3, 3, 3, 3]
+ISI_list = [0, 1, 2, -1]
 print(f"sep_list ({len(sep_list)}): {sep_list}")
 print(f"ISI_list: {ISI_list}")
 
@@ -362,6 +365,12 @@ while this_cond < n_conds:
     t_interval_2 = t_ISI + probe_duration
     # I presume this means almost unlimited time to respond?
     t_response = t_interval_2 + 100000*fps
+
+    print(f"t_fixation: {t_fixation}\n"
+          f"t_interval_1: {t_interval_1}\n"
+          f"t_ISI: {t_ISI}\n"
+          f"t_interval_2: {t_interval_2}\n"
+          f"t_response: {t_response}\n")
 
 
     # repeat the trial if [r] has been pressed

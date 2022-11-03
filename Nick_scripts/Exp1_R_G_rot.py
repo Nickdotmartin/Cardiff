@@ -15,6 +15,7 @@ from math import tan, sqrt
 from PsychoPy_tools import check_correct_monitor
 from kestenSTmaxVal import Staircase
 
+'''Issues with concurrent timings resolved with use of isi_dur variable.'''
 
 '''
 Script to demonstrate Exp1:
@@ -384,9 +385,12 @@ for step in range(n_trials_per_stair):
         probe1R.pos = [p1_x, p1_y]
 
         # timing in frames
+        isi_dur = ISI
+        if ISI < 0:
+            isi_dur = 0
         t_fixation = 1 * fps
         t_probe_1 = t_fixation + probe_duration
-        t_ISI = t_probe_1 + ISI
+        t_ISI = t_probe_1 + isi_dur
         t_probe_2 = t_ISI + probe_duration
         t_response = t_probe_2 + 10000 * fps # essentially unlimited time to respond
 
@@ -497,6 +501,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('step', step)
         thisExp.addData('separation', sep)
         thisExp.addData('ISI', ISI)
+        thisExp.addData('isi_dur', isi_dur)
         thisExp.addData('probe_jump', target_jump)
         thisExp.addData('probeColor1', probeColor1)
         thisExp.addData('probeColor255', probeColor255)

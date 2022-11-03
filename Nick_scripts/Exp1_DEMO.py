@@ -69,10 +69,10 @@ For 1probe condition, use separation==99.
 For concurrent probes, use ISI==-1.
 '''
 # separations = [0, 2, 4, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
-separations = [0, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
+separations = [0]  # select from [0, 1, 2, 3, 6, 18, 99]
 print(f'separations: {separations}')
 # ISI_values = [0, 2, 4, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
-ISI_values = [-1, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+ISI_values = [-1, 0, 1, 2]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 print(f'ISI_values: {ISI_values}')
 # repeat separation values for each ISI e.g., [0, 0, 6, 6]
 sep_vals_list = list(np.repeat(separations, len(ISI_values)))
@@ -550,6 +550,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('step', step)
         thisExp.addData('separation', sep)
         thisExp.addData('ISI', ISI)
+        thisExp.addData('isi_dur', isi_dur)
         thisExp.addData('probe_jump', target_jump)
         thisExp.addData('jump_dir', jump_dir)
         thisExp.addData('probeColor1', probeColor1)

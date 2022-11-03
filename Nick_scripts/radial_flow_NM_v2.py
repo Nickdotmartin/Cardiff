@@ -12,6 +12,9 @@ from psychopy import gui, visual, core, data, event, monitors
 from PsychoPy_tools import check_correct_monitor, get_pixel_mm_deg_values
 from kestenSTmaxVal import Staircase
 
+
+'''Issues with concurrent timings resolved with use of isi_dur variable.'''
+
 """
 This script takes: 
 the probes from EXPERIMENT3_background_motion_SKR, and adds the option for tangent or radial jump.
@@ -588,13 +591,16 @@ for step in range(n_trials_per_stair):
 
         # timing in frames
         # fixation time is now 70ms shorted than previously.
+        isi_dur = ISI
+        if ISI < 0:
+            isi_dur = 0
         t_fixation = 1 * (fps - prelim_bg_flow_fr)
         t_bg_motion = t_fixation + prelim_bg_flow_fr
-        t_interval_1 = t_bg_motion + probe_duration
-        t_ISI = t_interval_1 + ISI
-        t_interval_2 = t_ISI + probe_duration
+        t_probe_1 = t_bg_motion + probe_duration
+        t_ISI = t_probe_1 + isi_dur
+        t_probe_2 = t_ISI + probe_duration
         # essentially unlimited time to respond
-        t_response = t_interval_2 + 10000 * fps
+        t_response = t_probe_2 + 10000 * fps
 
         # repeat the trial if [r] has been pressed
         repeat = True
@@ -660,7 +666,7 @@ for step in range(n_trials_per_stair):
                     resp.clock.reset()
 
                 # PROBE 1
-                if t_interval_1 >= frameN > t_bg_motion:
+                if t_probe_1 >= frameN > t_bg_motion:
                     # after background motion, before end of probe1 interval
                     if background == 'flow_rad':
                         # radial flow_dots motion
@@ -685,7 +691,7 @@ for step in range(n_trials_per_stair):
 
 
                 # ISI
-                if t_ISI >= frameN > t_interval_1:
+                if t_ISI >= frameN > t_probe_1:
                     if background == 'flow_rad':
                         # radial flow_dots motion
                         z = z + flow_speed * flow_dir
@@ -707,7 +713,7 @@ for step in range(n_trials_per_stair):
                     trials_counter.draw()
 
                 # PROBE 2
-                if t_interval_2 >= frameN > t_ISI:
+                if t_probe_2 >= frameN > t_ISI:
                     # after ISI but before end of probe2 interval
                     if background == 'flow_rad':
                         # radial flow_dots motion
@@ -731,7 +737,7 @@ for step in range(n_trials_per_stair):
                     trials_counter.draw()
 
                 # ANSWER
-                if frameN > t_interval_2:
+                if frameN > t_probe_2:
                     # after probe 2 interval
                     if background == 'flow_rad':
                         # draw flow_dots but with no motion
@@ -811,6 +817,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('orientation', orientation)
         thisExp.addData('ISI_actual_ms', ISI_actual_ms)
         thisExp.addData('ISI_frames', ISI_frames)
+        thisExp.addData('isi_dur', isi_dur)
         thisExp.addData('actual_bg_color', actual_bg_color)
         thisExp.addData('bgcolor_to_rgb1', bgcolor_to_rgb1)
         thisExp.addData('bgLumP', bgLumP)

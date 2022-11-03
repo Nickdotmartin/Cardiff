@@ -15,6 +15,8 @@ from kestenSTmaxVal import Staircase
 # @profile
 # def exp4MissingProbe():
 
+'''Issues with concurrent timings resolved with use of isi_dur variable.'''
+
 '''
 Missing probe study.
 Probes will appear in three corners, participants identify corner without probe.
@@ -612,9 +614,12 @@ for step in range(n_trials_per_stair):
         # timing in frames
         # fixation time is now 70ms shorter than rad_flow1, as we can have
         # priliminary bg_motion.
+        isi_dur = ISI
+        if ISI < 0:
+            isi_dur = 0
         t_fixation = (fps / 2) + vary_fix
         t_probe_1 = t_fixation + probe_duration
-        t_ISI = t_probe_1 + ISI
+        t_ISI = t_probe_1 + isi_dur
         t_probe_2 = t_ISI + probe_duration
         t_response = t_probe_2 + 10000 * fps  # essentially unlimited time to respond
 
@@ -749,6 +754,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('step', step)
         thisExp.addData('separation', sep)
         thisExp.addData('ISI', ISI)
+        thisExp.addData('isi_dur', isi_dur)
         thisExp.addData('cond_type', probes_type)
         thisExp.addData('neg_sep', neg_sep)
         thisExp.addData('example_name ', example_name)

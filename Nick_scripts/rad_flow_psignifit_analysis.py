@@ -246,8 +246,8 @@ def make_long_df(wide_df,
     long_df = pd.concat(long_list)
     long_df.reset_index(drop=True, inplace=True)
 
-    if new_col_name == 'ISI':
-        long_df["ISI"] = long_df["ISI"].astype(int)
+    # if new_col_name == 'ISI':
+    #      long_df["ISI"] = long_df["ISI"].astype(int)
 
     if verbose:
         print(f'long_df:\n{long_df}')

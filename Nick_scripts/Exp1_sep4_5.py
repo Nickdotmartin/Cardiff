@@ -14,6 +14,7 @@ from math import *
 from PsychoPy_tools import check_correct_monitor
 from kestenSTmaxVal import Staircase
 
+'''Issues with concurrent timings resolved with use of isi_dur variable.'''
 
 '''
 Script to demonstrate Exp1:
@@ -436,19 +437,20 @@ for step in range(n_trials_per_stair):
         probe1.pos = [p1_x, p1_y]
 
         # timing in frames
-        # if ISI >= 0:
-        # todo: change t_interval_1 and 2 to t_probe_1 and 2?
+        isi_dur = ISI
+        if ISI < 0:
+            isi_dur = 0        
         t_fixation = 1 * fps
-        t_interval_1 = t_fixation + probe_duration
-        t_ISI = t_interval_1 + ISI
-        t_interval_2 = t_ISI + probe_duration
+        t_probe_1 = t_fixation + probe_duration
+        t_ISI = t_probe_1 + isi_dur
+        t_probe_2 = t_ISI + probe_duration
         # I presume this means almost unlimited time to respond?
-        t_response = t_interval_2 + 10000*fps
+        t_response = t_probe_2 + 10000*fps
 
         # print(f't_fixation: {t_fixation}')
-        # print(f't_interval_1: {t_interval_1}')
+        # print(f't_probe_1: {t_probe_1}')
         # print(f't_ISI: {t_ISI}')
-        # print(f't_interval_2: {t_interval_2}')
+        # print(f't_probe_2: {t_probe_2}')
         # print(f't_response: {t_response}')
         #
 
@@ -482,7 +484,7 @@ for step in range(n_trials_per_stair):
                     resp.clock.reset()
 
                 # PROBE 1
-                if t_interval_1 >= frameN > t_fixation:
+                if t_probe_1 >= frameN > t_fixation:
                     probe1.draw()
                     # SIMULTANEOUS CONDITION
                     if ISI == -1:
@@ -493,13 +495,13 @@ for step in range(n_trials_per_stair):
                     trials_counter.draw()
 
                 # ISI
-                if t_ISI >= frameN > t_interval_1:
+                if t_ISI >= frameN > t_probe_1:
                     fixation.setRadius(3)
                     fixation.draw()
                     trials_counter.draw()
 
                 # PROBE 2
-                if t_interval_2 >= frameN > t_ISI:
+                if t_probe_2 >= frameN > t_ISI:
                     if ISI >= 0:
                         if sep <= 18:
                             probe2.draw()
@@ -508,7 +510,7 @@ for step in range(n_trials_per_stair):
                     trials_counter.draw()
 
                 # ANSWER
-                if frameN > t_interval_2:
+                if frameN > t_probe_2:
                     fixation.setRadius(2)
                     fixation.draw()
                     trials_counter.draw()
@@ -561,6 +563,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('step', step)
         thisExp.addData('separation', sep)
         thisExp.addData('ISI', ISI)
+        thisExp.addData('isi_dur', isi_dur)
         thisExp.addData('probe_jump', target_jump)
         thisExp.addData('probeColor1', probeColor1)
         thisExp.addData('probeColor255', probeColor255)

@@ -13,6 +13,9 @@ from kestenSTmaxVal import Staircase
 from collections import defaultdict
 
 # todo: change sep and ISI back
+
+'''Issues with concurrent timings resolved with use of isi_dur variable.'''
+
 '''
 Version of Exp1a, but to be viewed at double the distance.
 So viewDist, probe_size and separation are all doubled.
@@ -436,9 +439,12 @@ for step in range(n_trials_per_stair):
         # timing in frames
         # fixation time is now 70ms shorter than rad_flow1, as we can have
         # priliminary bg_motion.
+        isi_dur = ISI
+        if ISI < 0:
+            isi_dur = 0
         t_fixation = (fps / 2) + vary_fix
         t_probe_1 = t_fixation + probe_duration
-        t_ISI = t_probe_1 + ISI
+        t_ISI = t_probe_1 + isi_dur
         t_probe_2 = t_ISI + probe_duration
         t_response = t_probe_2 + 10000 * fps  # essentially unlimited time to respond
 
@@ -552,6 +558,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('separation', sep)
         thisExp.addData('ISI', ISI)
         thisExp.addData('ISI_ms', ISI_ms)
+        thisExp.addData('isi_dur', isi_dur)
         thisExp.addData('probe_jump', target_jump)
         thisExp.addData('probeColor1', probeColor1)
         thisExp.addData('probeColor255', probeColor255)
