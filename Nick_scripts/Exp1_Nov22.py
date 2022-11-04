@@ -1,6 +1,7 @@
 from __future__ import division
 from psychopy import gui, visual, core, data, event, monitors, logging
 from psychopy import __version__ as psychopy_version
+from psychopy.hardware import keyboard
 import os
 import numpy as np
 from numpy import deg2rad
@@ -18,8 +19,8 @@ ISI of -1 (conc) and 6 frames.
 Sep of 0 and 6 pixels.  
 '''
 
-# todo: add variable presentation, blackout edges, isi_fr, check exit/closing
-
+# todo: add variable presentation, blackout edges, check exit/closing
+# todo: I've changed the responses to use the keyboard.  I've updated ISI and pr2 frames.  
 # todo: memory issues might be avoidable if I manually write to csv each trial myself
 #  rather than using addData.
 #  see https://discourse.psychopy.org/t/crashes-after-30-mins-wavs-have-clicks-cant-use-midi-files/4311/10
@@ -37,7 +38,7 @@ monitor_name = 'NickMac'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_1
 
 
 # Store info about the experiment session
-expName = 'EXP1_DEMO'  # from the Builder filename that created this script
+expName = 'EXP1_Nov22'  # from the Builder filename that created this script
 
 expInfo = {'1. Participant': 'nicktest',
            '2. Run_number': '1',
@@ -64,9 +65,7 @@ probe_duration = int(expInfo['3. Probe duration in frames at 240hz'])
 probe_ecc = 4
 fps = int(expInfo['4. fps'])
 orientation = expInfo['5. Probe_orientation']
-
-orientation = 'tangent'  # expInfo['5. Probe orientation']
-trials_counter = eval(expInfo['6. Trial_counter'])
+use_trials_counter = eval(expInfo['6. Trial_counter'])
 vary_fixation = eval(expInfo['7. Vary_fixation'])
 
 
@@ -76,10 +75,10 @@ For 1probe condition, use separation==99.
 For concurrent probes, use ISI==-1.
 '''
 # separations = [0, 2, 4, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
-separations = [0]  # select from [0, 1, 2, 3, 6, 18, 99]
+separations = [6]  # select from [0, 1, 2, 3, 6, 18, 99]
 print(f'separations: {separations}')
 # ISI_values = [0, 2, 4, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
-ISI_values = [-1]  # , 0, 1, 2]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+ISI_values = [1]  # , 0, 1, 2]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 print(f'ISI_values: {ISI_values}')
 # repeat separation values for each ISI e.g., [0, 0, 6, 6]
 sep_vals_list = list(np.repeat(separations, len(ISI_values)))
@@ -102,6 +101,7 @@ filename = f'{_thisDir}{os.sep}' \
            f'{participant_name}_{run_number}_output'
 # files are labelled as '_incomplete' unless entire script runs.
 save_output_name = filename + '_incomplete'
+print(f'filename: {filename}')
 
 # Experiment Handler
 # todo: I can try adding autolog=False to experiment handler if it is the logging that is slowing things down.
@@ -167,8 +167,8 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     fullscr=use_full_screen)
 
 print(f"check win.size: {win.size}")
-widthPix = widthPix/2
-heightPix = heightPix/2
+widthPix = widthPix / 2
+heightPix = heightPix / 2
 print(f"widthPix: {widthPix}, hight: {heightPix}")
 widthPix, heightPix = win.size
 print(f"check win.size: {win.size}")
@@ -179,7 +179,7 @@ fixation = visual.Circle(win, radius=2, units='pix',
                          lineColor='white', fillColor='black')
 
 # PROBEs
-expInfo['6. Probe size'] = '5pixels'  # ignore this, all experiments use 5pixel probes now.
+# expInfo['6. Probe size'] = '5pixels'  # ignore this, all experiments use 5pixel probes now.
 probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
              (1, -2), (-1, -2), (-1, -1), (0, -1)]
 
@@ -195,7 +195,9 @@ dist_from_fix = round((tan(deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
 myMouse = event.Mouse(visible=False)
 
 # # KEYBOARD
-resp = event.BuilderKeyResponse()
+# todo: change this from builder to keyboard
+# resp = event.BuilderKeyResponse()
+kb = keyboard.Keyboard()
 
 # INSTRUCTION
 instructions = visual.TextStim(win=win, name='instructions',
@@ -206,18 +208,21 @@ instructions = visual.TextStim(win=win, name='instructions',
                                     "[1]/[A] bottom-left\t\t\t[2]/[S] bottom-right.\n\n\n"
                                     "Some targets will be easier to see than others,\n"
                                     "Some will be so dim that you won't see them, so just guess!\n\n"
-                                    "You don't need to think for long, respond quickly, but try to push press the correct key!\n\n"
+                                    "You don't need to think for long, respond quickly, "
+                                    "but try to push press the correct key!\n\n"
                                     "Don't let your eyes wander, keep focussed on the circle in the middle throughout.",
                                font='Arial', height=20,
                                color='white')
 
 # Trial counter
+# todo: put trials counter back to .45
 trials_counter = visual.TextStim(win=win, name='trials_counter', text="???",
                                  font='Arial', height=20,
                                  # default set to black (e.g., invisible)
-                                 color='black',
-                                 pos=[-widthPix * .45, -heightPix * .45])
-if trials_counter:
+                                 color=bgColor255,
+                                 # pos=[-widthPix * .45, -heightPix * .45])
+                                 pos=[-widthPix * .20, -heightPix * .20])
+if use_trials_counter:
     # if trials counter yes, change colour to white.
     trials_counter.color = 'white'
 
@@ -226,7 +231,6 @@ take_break = 76
 total_n_trials = int(n_trials_per_stair * n_stairs)
 print(f"take_break every {take_break} trials.")
 breaks = visual.TextStim(win=win, name='breaks',
-                         # text="turn on the light and take at least 30-seconds break.",
                          text="Break\nTurn on the light and take at least 30-seconds break.\n"
                               "Keep focussed on the fixation circle in the middle of the screen.\n"
                               "Remember, if you don't see the target, just guess!",
@@ -239,7 +243,7 @@ end_of_exp = visual.TextStim(win=win, name='end_of_exp',
                                   "Press any key to return to the desktop.",
                              font='Arial', height=20)
 
-while not event.getKeys():
+while not kb.getKeys():
     fixation.setRadius(3)
     fixation.draw()
     instructions.draw()
@@ -264,7 +268,7 @@ for stair_idx in expInfo['stair_list']:
     thisStair = Staircase(name=stair_names_list[stair_idx],
                           type='simple',
                           value=stairStart,
-                          C=stairStart*0.6,  # typically, 60% of reference stimulus
+                          C=stairStart * 0.6,  # typically, 60% of reference stimulus
                           minRevs=3,
                           minTrials=n_trials_per_stair,
                           minVal=miniVal,
@@ -274,7 +278,6 @@ for stair_idx in expInfo['stair_list']:
     stairs.append(thisStair)
 
 trial_number = 0
-
 # EXPERIMENT
 for step in range(n_trials_per_stair):
     shuffle(stairs)
@@ -282,7 +285,6 @@ for step in range(n_trials_per_stair):
 
         trial_number = trial_number + 1
         trials_counter.text = f"{trial_number}/{total_n_trials}"
-
         stair_idx = thisStair.extraInfo['stair_idx']
         print(f"\ntrial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
 
@@ -425,23 +427,24 @@ for step in range(n_trials_per_stair):
 
         print(f"probe1: {probe1.pos}, probe2.pos: {probe2.pos}. dff: {dist_from_fix}")
 
+        # todo: decide max time vary_fix should be: 500ms?
         # to avoid fixation times always being the same which might increase
         # anticipatory effects,
         # add in a random number of frames (up to 1 second) to fixation time
         vary_fix = 0
         if vary_fixation:
-            vary_fix = np.random.randint(0, fps)
+            vary_fix = np.random.randint(0, fps/2)
 
         # timing in frames
-        # fixation time is now 70ms shorter than rad_flow1, as we can have
-        # priliminary bg_motion.
         isi_fr = ISI
+        p2_fr = probe_duration
         if ISI < 0:
-            isi_fr = 0
+            isi_fr = p2_fr = 0
+
         t_fixation = (fps / 2) + vary_fix
         t_probe_1 = t_fixation + probe_duration
         t_ISI = t_probe_1 + isi_fr
-        t_probe_2 = t_ISI + probe_duration
+        t_probe_2 = t_ISI + p2_fr
         t_response = t_probe_2 + 10000 * fps  # essentially unlimited time to respond
 
         print(f"t_fixation: {t_fixation}\n"
@@ -466,7 +469,7 @@ for step in range(n_trials_per_stair):
 
                 win.flip()
 
-                while not event.getKeys():
+                while not kb.getKeys():
                     continueRoutine = True
             else:
                 continueRoutine = True
@@ -474,85 +477,112 @@ for step in range(n_trials_per_stair):
             while continueRoutine:
                 frameN = frameN + 1
 
+                # todo: reset clock once.
+                # todo: Change ifs to elf?
+                if frameN == t_fixation:
+                    # reset timer to start with probe1 presentation (at last fixation frame).
+                    kb.clock.reset()
+                    print(f"{frameN}: frameN == t_fixation: reset timer")
+
                 # FIXATION
                 if t_fixation >= frameN > 0:
                     fixation.setRadius(3)
                     fixation.draw()
                     trials_counter.draw()
-
-                    # reset timer to start with probe1 presentation.
-                    resp.clock.reset()
+                    print(f"{frameN}: t_fixation >= frameN > 0: fixation")
 
 
                 # PROBE 1
-                if t_probe_1 >= frameN > t_fixation:
+                elif t_probe_1 >= frameN > t_fixation:
+                    print(f"{frameN}: t_probe_1 >= frameN > t_fixation: probe 1")
                     probe1.draw()
-
                     if ISI == -1:  # SIMULTANEOUS CONDITION (concurrent)
                         if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
                             probe2.draw()
+                            print(f"\t{frameN}: probe2.draw(): conc probes")
                     fixation.setRadius(3)
                     fixation.draw()
                     trials_counter.draw()
+
 
                 # ISI
-                if t_ISI >= frameN > t_probe_1:
+                elif t_ISI >= frameN > t_probe_1:
                     fixation.setRadius(3)
                     fixation.draw()
                     trials_counter.draw()
+                    print(f"{frameN}: t_ISI >= frameN > t_probe_1: ISI")
 
                 # PROBE 2
-                if t_probe_2 >= frameN > t_ISI:
+                elif t_probe_2 >= frameN > t_ISI:
+                    print(f"{frameN}: t_probe_2 >= frameN > t_ISI: probe 2")
                     if ISI >= 0:
                         if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
                             probe2.draw()
+                            print(f"\t{frameN}: probe2.draw()")
                     fixation.setRadius(3)
                     fixation.draw()
                     trials_counter.draw()
 
                 # ANSWER
-                if frameN > t_probe_2:
+                elif frameN > t_probe_2:
+                    # print(f"{frameN}: frameN > t_probe_2: response")
+
                     fixation.setRadius(2)
                     fixation.draw()
                     trials_counter.draw()
 
                     # ANSWER
-                    theseKeys = event.getKeys(keyList=['num_5', 'num_4', 'num_1',
-                                                       'num_2', 'w', 'q', 'a', 's'])
-
+                    # theseKeys = event.getKeys(keyList=['num_5', 'num_4', 'num_1',
+                    #                                    'num_2', 'w', 'q', 'a', 's'])
+                    theseKeys = kb.getKeys(keyList=['num_5', 'num_4', 'num_1',
+                                                    'num_2', 'w', 'q', 'a', 's'])
                     if len(theseKeys) > 0:  # at least one key was pressed
-                        resp.keys = theseKeys[-1]  # just the last key pressed
-                        resp.rt = resp.clock.getTime()
+                        print(f"theseKeys: {theseKeys}")
+                        last_key = theseKeys[-1]
+
+                        # resp.keys = theseKeys[-1]  # just the last key pressed
+                        # resp.rt = resp.clock.getTime()
+                        resp_key = last_key.name
+                        resp_rt = last_key.rt
+                        # print(f"resp.keys: {resp.keys}")
+                        # print(f"resp.rt: {resp.rt}")
+                        print(f"resp_key: {resp_key}")
+                        print(f"resp_rt: {resp_rt}")
+                        print(f"key.duration: {last_key.duration}")
+
 
                         # default assume response incorrect unless meets criteria below
-                        resp.corr = 0
+                        resp_corr = 0
 
                         if corner == 45:
-                            if (resp.keys == 'w') or (resp.keys == 'num_5'):
-                                resp.corr = 1
+                            if (resp_key == 'w') or (resp_key == 'num_5'):
+                                resp_corr = 1
                         elif corner == 135:
-                            if (resp.keys == 'q') or (resp.keys == 'num_4'):
-                                resp.corr = 1
+                            if (resp_key == 'q') or (resp_key == 'num_4'):
+                                resp_corr = 1
                         elif corner == 225:
-                            if (resp.keys == 'a') or (resp.keys == 'num_1'):
-                                resp.corr = 1
+                            if (resp_key == 'a') or (resp_key == 'num_1'):
+                                resp_corr = 1
                         elif corner == 315:
-                            if (resp.keys == 's') or (resp.keys == 'num_2'):
-                                resp.corr = 1
+                            if (resp_key == 's') or (resp_key == 'num_2'):
+                                resp_corr = 1
 
                         repeat = False
                         continueRoutine = False
 
                 # regardless of frameN, check for quit
-                if event.getKeys(keyList=["escape"]):
+                if kb.getKeys(keyList=["escape"]):
                     thisExp.close()
                     core.quit()
 
                 # redo the trial if I think I made a mistake
-                if event.getKeys(keyList=["r"]) or event.getKeys(keyList=['num_9']):
+                if kb.getKeys(keyList=["r"]) or kb.getKeys(keyList=['num_9']):
                     repeat = True
                     continueRoutine = False
                     continue
+
+                # gets rid of double presses
+                kb.getKeys(clear=True)
 
                 # refresh the screen
                 if continueRoutine:
@@ -570,11 +600,13 @@ for step in range(n_trials_per_stair):
         thisExp.addData('probeColor1', probeColor1)
         thisExp.addData('probeColor255', probeColor255)
         thisExp.addData('probeLum', probeLum)
-        thisExp.addData('trial_response', resp.corr)
+        thisExp.addData('trial_response', resp_corr)
         thisExp.addData('corner', corner)
         thisExp.addData('corner_name', corner_name)
         thisExp.addData('probe_ecc', probe_ecc)
-        thisExp.addData('resp.rt', resp.rt)
+        # thisExp.addData('resp.rt', resp.rt)
+        thisExp.addData('resp_key', resp_key)
+        thisExp.addData('resp_rt', resp_rt)
         thisExp.addData('orientation', orientation)
         thisExp.addData('vary_fixation', vary_fixation)
         thisExp.addData('expName', expName)
@@ -583,18 +615,17 @@ for step in range(n_trials_per_stair):
 
         thisExp.nextEntry()
 
-        thisStair.newValue(resp.corr)   # so that the staircase adjusts itself
+        thisStair.newValue(resp_corr)   # so that the staircase adjusts itself
 
 
 print("end of experiment loop, saving data")
 thisExp.dataFileName = filename
-thisExp.close()
-# todo: should it be thisExp.abort() rather than thisExp.close()?
-#  I think not, but maybe I don't need thisExp.close()?
+# todo: I don't think I need thisExp.close()?
+# thisExp.close()
 
-# even if I get rid of thisExp.close, the stuff below certainly seems to be whats recommened (close window then core quit)
+# the stuff below certainly seems to be whats recommened (close window then core quit)
 
-while not event.getKeys():
+while not kb.getKeys():
     # display end of experiment screen
     end_of_exp.draw()
     win.flip()
