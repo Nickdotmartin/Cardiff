@@ -14,18 +14,24 @@ from kestenSTmaxVal import Staircase
 
 
 '''
-Script to demonstrate Exp1:
-ISI of -1 (conc) and 6 frames.
-Sep of 0 and 6 pixels.  
-'''
+Updated Exp1 script.  
 
-# todo: add variable presentation, blackout edges, check exit/closing
-# todo: I've changed the responses to use the keyboard.  I've updated ISI and pr2 frames.  
-# todo: memory issues might be avoidable if I manually write to csv each trial myself
+make sure probes and trials counter are ontop of blanded mask.
+Definately hangs after if trials counter and debugger are both true and console logging is left to deafult.  .  
+
+Fixed timing issues for concurrent probes: I've updated ISI_fr and pr2_fr.
+I've changed the responses to use the keyboard as suggested for coder experiments, rather than imported builder code.    
+Hopefully reduced memory drain issues too: removed thisExp.close, put logginf controls back in.
+If memory issues stl not fixed, I could try to:
+1. set auto_log=False in the experiment handler: doesn't help
+2. get rid of trials_counter (or use textbox2 ather than text_stim?): doesn't help
+3. set theseKeys once earlier before frame loop.: can't do this
+4. check for take a break once earlier before per-frame loop.
+5. manually write to csv each trial myself: commenting out all addData calls didn't help either!
 #  rather than using addData.
 #  see https://discourse.psychopy.org/t/crashes-after-30-mins-wavs-have-clicks-cant-use-midi-files/4311/10
+'''
 
-# todo: check logging level - is this what is causing the crash?
 # sets psychoPy to only log critical messages
 # logging.console.setLevel(logging.CRITICAL)
 
@@ -46,7 +52,9 @@ expInfo = {'1. Participant': 'nicktest',
            '4. fps': [60, 144, 240],
            '5. Probe_orientation': ['radial', 'tangent'],
            '6. Trial_counter': [True, False], 
-           '7. Vary_fixation': [False, True]
+           '7. Vary_fixation': [False, True],
+           '8. Blend_off_edges': [False, True],
+           '9. testing/de-bugging': [False, True],
            }
 
 # GUI
@@ -67,6 +75,8 @@ fps = int(expInfo['4. fps'])
 orientation = expInfo['5. Probe_orientation']
 use_trials_counter = eval(expInfo['6. Trial_counter'])
 vary_fixation = eval(expInfo['7. Vary_fixation'])
+blend_off_edges = eval(expInfo['8. Blend_off_edges'])
+verbose = eval(expInfo['9. testing/de-bugging'])
 
 
 # VARIABLES
@@ -74,11 +84,13 @@ vary_fixation = eval(expInfo['7. Vary_fixation'])
 For 1probe condition, use separation==99.
 For concurrent probes, use ISI==-1.
 '''
-# separations = [0, 2, 4, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
-separations = [6]  # select from [0, 1, 2, 3, 6, 18, 99]
+separations = [0, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
+# separations = [6]  # select from [0, 1, 2, 3, 6, 18, 99]
 print(f'separations: {separations}')
-# ISI_values = [0, 2, 4, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
-ISI_values = [1]  # , 0, 1, 2]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+
+# todo: add in code to find equivallent ISI_frames for different fps from double_dist?
+ISI_values = [0, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+# ISI_values = [1]  # , 0, 1, 2]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 print(f'ISI_values: {ISI_values}')
 # repeat separation values for each ISI e.g., [0, 0, 6, 6]
 sep_vals_list = list(np.repeat(separations, len(ISI_values)))
@@ -108,7 +120,9 @@ print(f'filename: {filename}')
 thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
                                  extraInfo=expInfo, runtimeInfo=None,
                                  savePickle=None, saveWideText=True,
-                                 dataFileName=save_output_name)
+                                 dataFileName=save_output_name,
+                                 # autoLog=False
+                                 )
 
 # COLORS AND LUMINANCE
 # Lum to Color255
@@ -166,20 +180,18 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     allowGUI=False,
                     fullscr=use_full_screen)
 
-print(f"check win.size: {win.size}")
 widthPix = widthPix / 2
 heightPix = heightPix / 2
-print(f"widthPix: {widthPix}, hight: {heightPix}")
 widthPix, heightPix = win.size
-print(f"check win.size: {win.size}")
+if verbose:
+    print(f"check win.size: {win.size}")
+    print(f"widthPix: {widthPix}, hight: {heightPix}")
 
 # ELEMENTS
 # fixation bull eye
-fixation = visual.Circle(win, radius=2, units='pix',
-                         lineColor='white', fillColor='black')
+fixation = visual.Circle(win, radius=2, units='pix', lineColor='white', fillColor='black')
 
 # PROBEs
-# expInfo['6. Probe size'] = '5pixels'  # ignore this, all experiments use 5pixel probes now.
 probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
              (1, -2), (-1, -2), (-1, -1), (0, -1)]
 
@@ -191,11 +203,30 @@ probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor=[-1.0, 1.0, -1.0],
 # dist_from_fix is a constant to get 4dva distance from fixation,
 dist_from_fix = round((tan(deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
 
+
+# full screen mask to blend off edges and fade to black
+# Create a raisedCosine mask array and assign it to a Grating stimulus (grey outside, transparent inside)
+# this was useful http://www.cogsci.nl/blog/tutorials/211-a-bit-about-patches-textures-and-masks-in-psychopy
+raisedCosTexture2 = visual.filters.makeMask(heightPix, shape='raisedCosine', fringeWidth=0.6, radius=[1.0, 1.0])
+invRaisedCosTexture = -raisedCosTexture2  # inverts mask to blur edges instead of center
+# blankslab = np.ones((heightPix, 420))  # create blank slabs to put to left and right of image
+blankslab = np.ones((heightPix, int((widthPix-heightPix)/2)))  # create blank slabs to put to left and right of image
+mmask = np.append(blankslab, invRaisedCosTexture, axis=1)  # append blank slab to left
+mmask = np.append(mmask, blankslab, axis=1)  # and right
+blend_edge_mask = visual.GratingStim(win, mask=mmask,
+                                     tex=None,
+                                     contrast=1.0,
+                              size=(widthPix, heightPix), units='pix',
+                              color='black')
+# if blend_off_edges == False, set mask to be transparent
+if not blend_off_edges:
+    blend_edge_mask.opacity = 0.0
+
 # MOUSE - hide cursor
 myMouse = event.Mouse(visible=False)
 
 # # KEYBOARD
-# todo: change this from builder to keyboard
+# todo: changed this from builder to keyboard
 # resp = event.BuilderKeyResponse()
 kb = keyboard.Keyboard()
 
@@ -215,7 +246,7 @@ instructions = visual.TextStim(win=win, name='instructions',
                                color='white')
 
 # Trial counter
-# todo: put trials counter back to .45
+# todo: put trials counter back to .45 of width and height pos
 trials_counter = visual.TextStim(win=win, name='trials_counter', text="???",
                                  font='Arial', height=20,
                                  # default set to black (e.g., invisible)
@@ -229,7 +260,8 @@ if use_trials_counter:
 # BREAKS
 take_break = 76
 total_n_trials = int(n_trials_per_stair * n_stairs)
-print(f"take_break every {take_break} trials.")
+if verbose:
+    print(f"take_break every {take_break} trials.")
 breaks = visual.TextStim(win=win, name='breaks',
                          text="Break\nTurn on the light and take at least 30-seconds break.\n"
                               "Keep focussed on the fixation circle in the middle of the screen.\n"
@@ -290,7 +322,8 @@ for step in range(n_trials_per_stair):
 
         sep = sep_vals_list[stair_idx]
         ISI = ISI_vals_list[stair_idx]
-        print(f"ISI: {ISI}, sep: {sep}")
+        if verbose:
+            print(f"ISI: {ISI}, sep: {sep}")
 
         # staircase varies probeLum
         probeLum = thisStair.next()
@@ -298,7 +331,8 @@ for step in range(n_trials_per_stair):
         probeColor1 = (probeColor255 * Color255Color1Factor) - 1
         probe1.color = [probeColor1, probeColor1, probeColor1]
         probe2.color = [probeColor1, probeColor1, probeColor1]
-        print(f"probeLum: {probeLum}, probeColor255: {probeColor255}, probeColor1: {probeColor1}")
+        if verbose:
+            print(f"probeLum: {probeLum}, probeColor255: {probeColor255}, probeColor1: {probeColor1}")
 
         # PROBE LOCATION
         # # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
@@ -321,7 +355,8 @@ for step in range(n_trials_per_stair):
             jump_dir = 'inward'
             if target_jump == -1:
                 jump_dir = 'outward'
-        print(f"corner: {corner} {corner_name}; jump dir: {target_jump} {jump_dir}")
+        if verbose:
+            print(f"corner: {corner} {corner_name}; jump dir: {target_jump} {jump_dir}")
 
         # reset probe ori
         probe1.ori = 0
@@ -425,7 +460,8 @@ for step in range(n_trials_per_stair):
 
         probe1.pos = [p1_x, p1_y]
 
-        print(f"probe1: {probe1.pos}, probe2.pos: {probe2.pos}. dff: {dist_from_fix}")
+        if verbose:
+            print(f"probe1: {probe1.pos}, probe2.pos: {probe2.pos}. dff: {dist_from_fix}")
 
         # todo: decide max time vary_fix should be: 500ms?
         # to avoid fixation times always being the same which might increase
@@ -447,81 +483,100 @@ for step in range(n_trials_per_stair):
         t_probe_2 = t_ISI + p2_fr
         t_response = t_probe_2 + 10000 * fps  # essentially unlimited time to respond
 
-        print(f"t_fixation: {t_fixation}\n"
-              f"t_probe_1: {t_probe_1}\n"
-              f"t_ISI: {t_ISI}\n"
-              f"t_probe_2: {t_probe_2}\n"
-              f"t_response: {t_response}\n")
+        if verbose:
+            print(f"t_fixation: {t_fixation}\n"
+                  f"t_probe_1: {t_probe_1}\n"
+                  f"t_ISI: {t_ISI}\n"
+                  f"t_probe_2: {t_probe_2}\n"
+                  f"t_response: {t_response}\n")
 
         # repeat the trial if [r] has been pressed
         # todo: keep the per-frame stuff to a minimum to reduce the load.
+
+        # todo: moved check for take_break outside frame loop
+        # take a break every ? trials
+        if (trial_number % take_break == 1) & (trial_number > 1):
+            continueRoutine = False
+            breaks.draw()
+
+            # adding this to flush out any logged messages in the breaks.
+            logging.flush()  # write messages out to all targets
+
+            win.flip()
+
+            while not kb.getKeys():
+                continueRoutine = True
+        else:
+            continueRoutine = True
+
+
         repeat = True
         while repeat:
             frameN = -1
 
-            # take a break every ? trials
-            if (trial_number % take_break == 1) & (trial_number > 1):
-                continueRoutine = False
-                breaks.draw()
-
-                # adding this to flush out any logged messages in the breaks.
-                logging.flush()  # write messages out to all targets
-
-                win.flip()
-
-                while not kb.getKeys():
-                    continueRoutine = True
-            else:
-                continueRoutine = True
-
+            continueRoutine = True
             while continueRoutine:
                 frameN = frameN + 1
 
                 # todo: reset clock once.
-                # todo: Change ifs to elf?
                 if frameN == t_fixation:
+                    fixation.setRadius(3)
                     # reset timer to start with probe1 presentation (at last fixation frame).
                     kb.clock.reset()
-                    print(f"{frameN}: frameN == t_fixation: reset timer")
+                    if verbose:
+                        print(f"{frameN}: frameN == t_fixation: reset timer")
 
+                # todo: Changed ifs to elifs
                 # FIXATION
                 if t_fixation >= frameN > 0:
-                    fixation.setRadius(3)
+                    # fixation.setRadius(3)
                     fixation.draw()
                     trials_counter.draw()
-                    print(f"{frameN}: t_fixation >= frameN > 0: fixation")
+                    blend_edge_mask.draw()
+
+                    # if verbose:
+                    #     print(f"{frameN}: t_fixation >= frameN > 0: fixation")
 
 
                 # PROBE 1
                 elif t_probe_1 >= frameN > t_fixation:
-                    print(f"{frameN}: t_probe_1 >= frameN > t_fixation: probe 1")
+                    if verbose:
+                        print(f"{frameN}: t_probe_1 >= frameN > t_fixation: probe 1")
                     probe1.draw()
                     if ISI == -1:  # SIMULTANEOUS CONDITION (concurrent)
                         if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
                             probe2.draw()
-                            print(f"\t{frameN}: probe2.draw(): conc probes")
-                    fixation.setRadius(3)
+                            if verbose:
+                                print(f"\t{frameN}: probe2.draw(): conc probes")
+                    # fixation.setRadius(3)
                     fixation.draw()
                     trials_counter.draw()
+                    blend_edge_mask.draw()
 
 
                 # ISI
                 elif t_ISI >= frameN > t_probe_1:
-                    fixation.setRadius(3)
+                    # fixation.setRadius(3)
                     fixation.draw()
                     trials_counter.draw()
-                    print(f"{frameN}: t_ISI >= frameN > t_probe_1: ISI")
+                    blend_edge_mask.draw()
+                    if verbose:
+                        print(f"{frameN}: t_ISI >= frameN > t_probe_1: ISI")
 
                 # PROBE 2
                 elif t_probe_2 >= frameN > t_ISI:
-                    print(f"{frameN}: t_probe_2 >= frameN > t_ISI: probe 2")
+                    if verbose:
+                        print(f"{frameN}: t_probe_2 >= frameN > t_ISI: probe 2")
                     if ISI >= 0:
                         if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
                             probe2.draw()
-                            print(f"\t{frameN}: probe2.draw()")
-                    fixation.setRadius(3)
+                            if verbose:
+                                print(f"\t{frameN}: probe2.draw()")
+                    # fixation.setRadius(3)
                     fixation.draw()
                     trials_counter.draw()
+                    blend_edge_mask.draw()
+
 
                 # ANSWER
                 elif frameN > t_probe_2:
@@ -530,25 +585,20 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(2)
                     fixation.draw()
                     trials_counter.draw()
+                    blend_edge_mask.draw()
 
                     # ANSWER
-                    # theseKeys = event.getKeys(keyList=['num_5', 'num_4', 'num_1',
-                    #                                    'num_2', 'w', 'q', 'a', 's'])
                     theseKeys = kb.getKeys(keyList=['num_5', 'num_4', 'num_1',
                                                     'num_2', 'w', 'q', 'a', 's'])
                     if len(theseKeys) > 0:  # at least one key was pressed
-                        print(f"theseKeys: {theseKeys}")
                         last_key = theseKeys[-1]
-
-                        # resp.keys = theseKeys[-1]  # just the last key pressed
-                        # resp.rt = resp.clock.getTime()
                         resp_key = last_key.name
                         resp_rt = last_key.rt
-                        # print(f"resp.keys: {resp.keys}")
-                        # print(f"resp.rt: {resp.rt}")
-                        print(f"resp_key: {resp_key}")
-                        print(f"resp_rt: {resp_rt}")
-                        print(f"key.duration: {last_key.duration}")
+                        if verbose:
+                            print(f"theseKeys: {list(theseKeys)}")
+                            print(f"resp_key: {resp_key}")
+                            print(f"resp_rt: {resp_rt}")
+                            print(f"key.duration: {last_key.duration}")
 
 
                         # default assume response incorrect unless meets criteria below
@@ -621,7 +671,8 @@ for step in range(n_trials_per_stair):
 print("end of experiment loop, saving data")
 thisExp.dataFileName = filename
 # todo: I don't think I need thisExp.close()?
-# thisExp.close()
+thisExp.close()
+# thisExp.abort()
 
 # the stuff below certainly seems to be whats recommened (close window then core quit)
 
@@ -630,6 +681,8 @@ while not kb.getKeys():
     end_of_exp.draw()
     win.flip()
 else:
+    logging.flush()  # write messages out to all targets
+    thisExp.abort()
     # close and quit once a key is pressed
     win.close()
     core.quit()
