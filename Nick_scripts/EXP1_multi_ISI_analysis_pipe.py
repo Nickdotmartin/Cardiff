@@ -9,9 +9,9 @@ project_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\C
 
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
-# eyetracking, jitter_rgb, EXP1_split_probes, Exp1_double_dist
+# eyetracking, jitter_rgb, EXP1_split_probes, Exp1_double_dist, EXP1_sep4_5
 # Exp4b_missing_probe\rotation, incoherent, radial, rotation, translation,
-this_exp = r"Exp4b_missing_probe\radial"
+this_exp = r"EXP1_sep4_5"
 exp_path = os.path.join(project_path, this_exp)
 
 convert_path1 = os.path.normpath(exp_path)
@@ -21,12 +21,12 @@ if running_on_laptop():
 exp_path = convert_path1
 
 print(f"exp_path: {exp_path}")
-participant_list = ['Nick_sep4_strip']  #, 'Simon']  # 'Simon', 'Nick'
+participant_list = ['Nick']  #, 'Simon']  # 'Simon', 'Nick'
 # participant_list = ['p1', 'p2']
 split_1probe = False
 
-# n_runs = 12
-n_runs = 20
+n_runs = 12
+# n_runs = 20
 
 analyse_from_run = 1
 
@@ -153,7 +153,7 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
     print(f"\n\ntrim_list: {trim_list}, trim_n: {trim_n}\n\n")
-    # lum_col = 'probeLum'
+    lum_col = 'probeLum'
 
     '''d'''
     d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
@@ -193,10 +193,11 @@ for p_idx, participant_name in enumerate(participant_list):
                        heatmap_annot_fmt='.0f',  # use '.3g' for 3 significant figures, '.2f' for 2dp, '.0f' for int.
                        show_plots=True, verbose=True)
 
-#
+
 # print(f'exp_path: {exp_path}')
 # print('\nget exp_average_data')
 # # participant_list = ['Nick', 'Simon']
+# # trim_list = [2, 2]
 # # lum_col = 'probeLum'
 #
 # e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,

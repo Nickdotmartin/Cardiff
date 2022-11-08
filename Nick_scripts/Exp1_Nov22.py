@@ -12,6 +12,8 @@ from datetime import datetime
 from math import tan, sqrt
 from kestenSTmaxVal import Staircase
 
+import sys
+
 
 '''
 Updated Exp1 script.  
@@ -30,6 +32,7 @@ If memory issues stl not fixed, I could try to:
 5. manually write to csv each trial myself: commenting out all addData calls didn't help either!
 #  rather than using addData.
 #  see https://discourse.psychopy.org/t/crashes-after-30-mins-wavs-have-clicks-cant-use-midi-files/4311/10
+6. try turning off pyglet or using glfw
 '''
 
 # sets psychoPy to only log critical messages
@@ -40,7 +43,7 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'NickMac'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
+monitor_name = 'Nick_work_laptop'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 
 
 # Store info about the experiment session
@@ -669,12 +672,13 @@ for step in range(n_trials_per_stair):
 
 
 print("end of experiment loop, saving data")
+
 thisExp.dataFileName = filename
 # todo: I don't think I need thisExp.close()?
 thisExp.close()
 # thisExp.abort()
 
-# the stuff below certainly seems to be whats recommened (close window then core quit)
+# the stuff below certainly seems to be what's recommended (close window then core quit)
 
 while not kb.getKeys():
     # display end of experiment screen
