@@ -35,6 +35,7 @@ If memory issues stl not fixed, I could try to:
 6. try turning off pyglet or using glfw
 '''
 
+# todo: try with critical logging only
 # sets psychoPy to only log critical messages
 # logging.console.setLevel(logging.CRITICAL)
 
@@ -141,7 +142,7 @@ maxColor255 = 255
 minColor255 = 0
 maxColor1 = 1
 minColor1 = -1
-bgLumP = 20  # int(expInfo['7. Background lum in percent of maxLum'])  # 20
+bgLumP = 20
 bgLum = maxLum * bgLumP / 100
 bgColor255 = bgLum * LumColor255Factor
 bgColor1 = (bgColor255 * Color255Color1Factor) - 1
@@ -174,6 +175,7 @@ mon.setSizePix((widthPix, heightPix))
 mon.save()
 
 # WINDOW SPEC
+# todo: try toggling pyglet.  Could add a catch (if mon_name==mac, use pyglet if needed)?
 win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     colorSpace='rgb255', color=bgColor255,
                     winType='pyglet',  # I've added this to make it work on pycharm/mac
@@ -183,6 +185,7 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     allowGUI=False,
                     fullscr=use_full_screen)
 
+# todo: check this - is it just for apple retina screen
 widthPix = widthPix / 2
 heightPix = heightPix / 2
 widthPix, heightPix = win.size
@@ -206,7 +209,7 @@ probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor=[-1.0, 1.0, -1.0],
 # dist_from_fix is a constant to get 4dva distance from fixation,
 dist_from_fix = round((tan(deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
 
-
+# todo: check if we need this blend_edge_mask
 # full screen mask to blend off edges and fade to black
 # Create a raisedCosine mask array and assign it to a Grating stimulus (grey outside, transparent inside)
 # this was useful http://www.cogsci.nl/blog/tutorials/211-a-bit-about-patches-textures-and-masks-in-psychopy
@@ -225,6 +228,8 @@ blend_edge_mask = visual.GratingStim(win, mask=mmask,
 if not blend_off_edges:
     blend_edge_mask.opacity = 0.0
 
+
+# # HARDWARE
 # MOUSE - hide cursor
 myMouse = event.Mouse(visible=False)
 
@@ -233,6 +238,9 @@ myMouse = event.Mouse(visible=False)
 # resp = event.BuilderKeyResponse()
 kb = keyboard.Keyboard()
 
+
+# TEXT TO DISPLAY
+# todo: try using TextBox2 rather than TestStim
 # INSTRUCTION
 instructions = visual.TextStim(win=win, name='instructions',
                                text="\n\n\n\n\n\nFocus on the fixation circle at the centre of the screen.\n\n"
@@ -278,6 +286,8 @@ end_of_exp = visual.TextStim(win=win, name='end_of_exp',
                                   "Press any key to return to the desktop.",
                              font='Arial', height=20)
 
+
+# SCREEN BEFORE EXPERIMENT
 while not kb.getKeys():
     fixation.setRadius(3)
     fixation.draw()
@@ -312,23 +322,25 @@ for stair_idx in expInfo['stair_list']:
                           extraInfo=thisInfo)
     stairs.append(thisStair)
 
-trial_number = 0
 # EXPERIMENT
+trial_number = 0
 for step in range(n_trials_per_stair):
     shuffle(stairs)
     for thisStair in stairs:
 
+        # Trial, stair and step
         trial_number = trial_number + 1
         trials_counter.text = f"{trial_number}/{total_n_trials}"
         stair_idx = thisStair.extraInfo['stair_idx']
         print(f"\ntrial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
 
+        # condition (Seprataion, ISI)
         sep = sep_vals_list[stair_idx]
         ISI = ISI_vals_list[stair_idx]
         if verbose:
             print(f"ISI: {ISI}, sep: {sep}")
 
-        # staircase varies probeLum
+        # Luminance (staircase varies probeLum)
         probeLum = thisStair.next()
         probeColor255 = int(probeLum * LumColor255Factor)  # rgb255 are ints.
         probeColor1 = (probeColor255 * Color255Color1Factor) - 1
@@ -338,7 +350,8 @@ for step in range(n_trials_per_stair):
             print(f"probeLum: {probeLum}, probeColor255: {probeColor255}, probeColor1: {probeColor1}")
 
         # PROBE LOCATION
-        # # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
+        # # corners go ACW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
+        # todo: change to use tuple or names tuple?
         corner = random.choice([45, 135, 225, 315])
         corner_name = 'top_right'
         if corner == 135:
@@ -348,7 +361,8 @@ for step in range(n_trials_per_stair):
         elif corner == 315:
             corner_name = 'bottom_right'
 
-        # # direction in which the probe jumps : CW or CCW
+        # # direction in which the probe jumps : CW or ACW
+        # todo change to use dict or tuples?
         target_jump = random.choice([1, -1])
         if orientation == 'tangent':
             jump_dir = 'clockwise'
@@ -394,7 +408,7 @@ for step in range(n_trials_per_stair):
             p1_x = dist_from_fix * -1
             p1_y = dist_from_fix * 1
             if orientation == 'tangent':
-                if target_jump == 1:  # CCW
+                if target_jump == 1:  # ACW
                     probe1.ori = 90
                     probe2.ori = 270
                     probe2.pos = [p1_x + sep - 1, p1_y + sep]
@@ -441,7 +455,7 @@ for step in range(n_trials_per_stair):
             p1_x = dist_from_fix * 1
             p1_y = dist_from_fix * -1
             if orientation == 'tangent':
-                if target_jump == 1:  # CCW
+                if target_jump == 1:  # ACW
                     probe1.ori = 270
                     probe2.ori = 90
                     probe2.pos = [p1_x - sep + 1, p1_y - sep]
@@ -470,16 +484,18 @@ for step in range(n_trials_per_stair):
         # to avoid fixation times always being the same which might increase
         # anticipatory effects,
         # add in a random number of frames (up to 1 second) to fixation time
+        # todo: vary fix from .5 to 1.5 seconds
         vary_fix = 0
         if vary_fixation:
             vary_fix = np.random.randint(0, fps/2)
 
-        # timing in frames
+        # timing in frames for ISI and probe2
         isi_fr = ISI
         p2_fr = probe_duration
         if ISI < 0:
             isi_fr = p2_fr = 0
 
+        # timing in frames for each part of a trial
         t_fixation = (fps / 2) + vary_fix
         t_probe_1 = t_fixation + probe_duration
         t_ISI = t_probe_1 + isi_fr
@@ -502,7 +518,7 @@ for step in range(n_trials_per_stair):
             continueRoutine = False
             breaks.draw()
 
-            # adding this to flush out any logged messages in the breaks.
+            # adding this to flush out any logged messages during the breaks.
             logging.flush()  # write messages out to all targets
 
             win.flip()
@@ -512,7 +528,7 @@ for step in range(n_trials_per_stair):
         else:
             continueRoutine = True
 
-
+        # loop per frame
         repeat = True
         while repeat:
             frameN = -1
@@ -523,6 +539,7 @@ for step in range(n_trials_per_stair):
 
                 # todo: reset clock once.
                 if frameN == t_fixation:
+                    # radius is set twice, one here, and once at response time.
                     fixation.setRadius(3)
                     # reset timer to start with probe1 presentation (at last fixation frame).
                     kb.clock.reset()
@@ -533,9 +550,9 @@ for step in range(n_trials_per_stair):
                 # FIXATION
                 if t_fixation >= frameN > 0:
                     # fixation.setRadius(3)
+                    blend_edge_mask.draw()
                     fixation.draw()
                     trials_counter.draw()
-                    blend_edge_mask.draw()
 
                     # if verbose:
                     #     print(f"{frameN}: t_fixation >= frameN > 0: fixation")
@@ -545,28 +562,29 @@ for step in range(n_trials_per_stair):
                 elif t_probe_1 >= frameN > t_fixation:
                     if verbose:
                         print(f"{frameN}: t_probe_1 >= frameN > t_fixation: probe 1")
+                    # fixation.setRadius(3)
+                    blend_edge_mask.draw()
+                    fixation.draw()
+                    trials_counter.draw()
                     probe1.draw()
                     if ISI == -1:  # SIMULTANEOUS CONDITION (concurrent)
                         if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
                             probe2.draw()
                             if verbose:
                                 print(f"\t{frameN}: probe2.draw(): conc probes")
-                    # fixation.setRadius(3)
-                    fixation.draw()
-                    trials_counter.draw()
-                    blend_edge_mask.draw()
 
 
-                # ISI
+
+                # ISI (only occurs if ISI > 0)
                 elif t_ISI >= frameN > t_probe_1:
                     # fixation.setRadius(3)
+                    blend_edge_mask.draw()
                     fixation.draw()
                     trials_counter.draw()
-                    blend_edge_mask.draw()
                     if verbose:
                         print(f"{frameN}: t_ISI >= frameN > t_probe_1: ISI")
 
-                # PROBE 2
+                # PROBE 2 (Only occurs if ISI > -1, e.g., not concurrent probes)
                 elif t_probe_2 >= frameN > t_ISI:
                     if verbose:
                         print(f"{frameN}: t_probe_2 >= frameN > t_ISI: probe 2")
@@ -576,21 +594,21 @@ for step in range(n_trials_per_stair):
                             if verbose:
                                 print(f"\t{frameN}: probe2.draw()")
                     # fixation.setRadius(3)
+                    blend_edge_mask.draw()
                     fixation.draw()
                     trials_counter.draw()
-                    blend_edge_mask.draw()
 
 
-                # ANSWER
+                # Response time
                 elif frameN > t_probe_2:
                     # print(f"{frameN}: frameN > t_probe_2: response")
 
+                    blend_edge_mask.draw()
                     fixation.setRadius(2)
                     fixation.draw()
                     trials_counter.draw()
-                    blend_edge_mask.draw()
 
-                    # ANSWER
+                    # ANSWER keys
                     theseKeys = kb.getKeys(keyList=['num_5', 'num_4', 'num_1',
                                                     'num_2', 'w', 'q', 'a', 's'])
                     if len(theseKeys) > 0:  # at least one key was pressed
@@ -641,6 +659,7 @@ for step in range(n_trials_per_stair):
                 if continueRoutine:
                     win.flip()
 
+        # TrialHandler adds info to CSV (but stored in memory until end?)
         thisExp.addData('trial_number', trial_number)
         thisExp.addData('stair', stair_idx)
         thisExp.addData('stair_name', thisStair)
@@ -666,8 +685,10 @@ for step in range(n_trials_per_stair):
         thisExp.addData('monitor_name', monitor_name)
         thisExp.addData('selected_fps', fps)
 
+        # indicates that this trial has finished
         thisExp.nextEntry()
 
+        # updates staircase
         thisStair.newValue(resp_corr)   # so that the staircase adjusts itself
 
 

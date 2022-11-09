@@ -59,18 +59,19 @@ ISI_fr  p1+ISI  @960
 24      26      104
 '''
 
-videos_dir = r"C:\Users\sapnm4\Videos\check_conc_Nov22"
+videos_dir = r"C:\Users\sapnm4\Videos\check_conc_MartinExpScript_Nov22"
 videos_dir = os.path.normpath(videos_dir)
 
-images_dir = r"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\check_conc_Nov22"
+images_dir = r"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\check_conc_MartinExpScript_Nov22"
 images_dir = os.path.normpath(images_dir)
 
 # sep_vals = [0, 1, 2, 3, 6, 18, 99, 400, 800, 2400]
 # ISI_vals = [-1, 0, 2, 3, 4, 6, 9, 12, 24]
-sep_vals = [2]
+sep_vals = [3]
 ISI_vals = [-1]
 versions = [1, 2, 3, 4]
-conds_list = ['orig', 'isi_dur', 'ISI_elif', 'isi_dur_elif']
+# conds_list = ['orig', 'isi_dur', 'ISI_elif', 'isi_dur_elif']
+conds_list = ['exp1']
 
 # # there are 225 videos recorded.  How many are good?
 
@@ -201,10 +202,10 @@ NOTE: For some reason, y is first (vertical, down), then x (horiontal, right)
 '''
 #
 # isi = -1
-# sep = 2
-# ver = 2
-# cond = 'ISI_elif'  # 'orig', 'isi_dur', 'ISI_elif', 'isi_dur_elif'
-# first_frame = 140
+# sep = 3
+# ver = 4
+# cond = 'exp1'  # 'orig', 'isi_dur', 'ISI_elif', 'isi_dur_elif'
+# first_frame = 186
 # show_frame = first_frame + 4
 #
 # '''ROI_size was 5 for May but now using 10 so whole probe in with grey border'''
@@ -212,7 +213,7 @@ NOTE: For some reason, y is first (vertical, down), then x (horiontal, right)
 # enlarge_scale = 10  # 10  # 10
 #
 # # # [rows/vertical, cols/horizontal]
-# fixation = 330, 620  # top-left corner of cropped image
+# fixation = 435, 715  # top-left corner of cropped image
 # print(f'fixation: ({fixation[0]}, {fixation[1]})')
 #
 # if sep >= 99:
@@ -290,158 +291,158 @@ load images (and convert to grey for simplicity)
 Get pixel values from the bounding boxes
 save the mean and max values to new csv
 '''
-#
-# # load Excel sheet with frame numbers where probes appear and x, y co-ordinates for cropping probes.
-# excel_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\check_conc_Nov22\frame_and_bbox_details.xlsx"
-# excel_path = os.path.normpath(excel_path)
-# print(f'excel_path:\n{excel_path}')
-#
-# bb_box_df = pd.read_excel(excel_path, sheet_name='Sheet1', engine='openpyxl')
-# print(f'bb_box_df:\n{bb_box_df}')
-#
-# rows, cols = bb_box_df.shape
-# print(f'rows: {rows}, cols: {cols}')
-# print(f'headers: {bb_box_df.columns.to_list()}')
-#
-# empty_list = []
-#
-# # loop through each row for Excel, e.g., frames from each video/condition
-# for index, row in bb_box_df.iterrows():
-#     analyse_this = row['analyse']
-#     if analyse_this == 1:
-#         isi = row['isi']
-#         sep = row['sep']
-#         ver = row['version']
-#         cond = row['cond']
-#         filename = row['filename']
-#         print(f'\n{filename}, ISI_{isi}, sep_{sep}, ver: {ver}, cond: {cond}')
-#
-#         pr1_frame = int(row['first_pr1_fr'])
-#         pr2_frame = int(row['first_pr2_fr'])
-#         print(f"pr1_frame: {pr1_frame}")
-#         # set to process 100 frames (or 140 for isi24)
-#         # todo: Check I don't take frames <30 or >405 as these are not at 960
-#         from_fr = pr1_frame-8
-#         to_fr = from_fr+100
-#         if isi == 24:
-#             to_fr = from_fr+140
-#         if sep == 2400:
-#             to_fr = from_fr+140
-#         if to_fr > 435:
-#             to_fr = 435
-#         print(f'from_fr: {from_fr} : to_fr: {to_fr}')
-#
-#         # probe bounding box is nxn pixels
-#         # todo: note extra large bounding box
-#         ROI_size = 100  # 5 for may22
-#
-#         pr1_down = int(row['pr1_down'])
-#         pr1_right = int(row['pr1_right'])
-#
-#         if sep < 99:
-#             pr2_down = int(row['pr2_down'])
-#             pr2_right = int(row['pr2_right'])
-#         else:
-#             pr2_down = np.nan
-#             pr2_right = np.nan
-#         print(f'pr1: ({pr1_down}, {pr1_right}), pr2: ({pr2_down}, {pr2_right})')
-#
-#         # loop through each of the frames
-#         for idx, frame in enumerate(list(range(from_fr, to_fr))):
-#
-#             # load image of this frame
-#             cond_dir = rf"ISI_{isi}_sep_{sep}_{cond}_v{ver}\all_full_frames"
-#             image_name = f"ISI_{isi}_sep_{sep}_{cond}_v{ver}_fr{frame}.jpg"
-#             image_path = os.path.join(images_dir, cond_dir, image_name)
-#
-#             gray_img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-#
-#             p1_box = gray_img[pr1_down: pr1_down+ROI_size, pr1_right: pr1_right+ROI_size]
-#             # print(f'p1_box: {type(p1_box)}')
-#
-#
-#
-#             #
-#             # cv2.imshow('gray_img', gray_img)
-#             # cv2.imshow('p1_box', p1_box)
-#             # cv2.waitKey(0)
-#             # cv2.destroyAllWindows()
-#             #
-#             #
-#             #
-#             # this_vid_image_dir = os.path.join(images_dir, filename[:-4])
-#             # if not os.path.isdir(this_vid_image_dir):
-#             #     os.makedirs(this_vid_image_dir)
-#             # all_full_frames_dir = os.path.join(this_vid_image_dir, 'cropped_frames')
-#             # if not os.path.isdir(all_full_frames_dir):
-#             #     os.makedirs(all_full_frames_dir)
-#             #
-#             # image_save_path = os.path.join(os.path.join(all_full_frames_dir, image_name))
-#             #
-#             # cv2.imwrite(image_save_path, p1_box)  # save frame as JPG file
-#
-#
-#
-#
-#
-#
-#
-#             p1_box = gray_img[pr1_down: pr1_down+ROI_size, pr1_right: pr1_right+ROI_size]
-#             # print(f'p1_box: {type(p1_box)}')
-#             p1_mean = np.mean(p1_box)
-#             p1_max = np.max(p1_box)
-#             # print(f'p1_box array: \n{p1_box}')
-#             # print(f'p1_mean: {p1_mean}')
-#             # print(f'p1_max: {p1_max}')
-#             # print(f'p1_max: {type(p1_max)}')
-#
-#             if sep < 99:
-#                 p2_box = gray_img[pr2_down: pr2_down+ROI_size, pr2_right: pr2_right+ROI_size]
-#                 p2_mean = np.mean(p2_box)
-#                 p2_max = np.max(p2_box)
-#
-#                 joint_mean = np.mean([p1_mean, p2_mean])
-#
-#                 # joint_max = np.max([p1_max, p2_max])
-#                 if p1_max > p2_max:
-#                     joint_max = p1_max
-#                 else:
-#                     joint_max = p2_max
-#                 '''strange, the max scores are not saving to the csv as shown here.
-#                 I'm converting to str to try to avoid this.'''
-#
-#             else:
-#                 p2_box = np.nan
-#                 p2_mean = np.nan
-#                 p2_max = np.nan
-#
-#                 joint_mean = p1_mean
-#                 joint_max = p1_max
-#
-#
-#             # save details to empty list
-#             save_row = [filename, isi, sep, ver, cond, idx, frame,
-#                         pr1_frame, pr1_down, pr1_right, p1_mean, str(p1_max),
-#                         pr2_frame, pr2_down, pr2_right, p2_mean, str(p2_max),
-#                         joint_mean, str(joint_max)]
-#             empty_list.append(save_row)
-#             # print(f'{frame}: {save_row}')
-#
-# print(f'\nempty_list shape: {np.shape(empty_list)}')
-# print(empty_list)
-# results_df = pd.DataFrame(data=empty_list,
-#                           columns=['filename', 'isi', 'sep', 'version', 'cond', 'idx', 'frame',
-#                                    'pr1_frame', 'pr1_down', 'pr1_right',
-#                                    'p1_mean', 'p1_max',
-#                                    'pr2_frame', 'pr2_down', 'pr2_right',
-#                                    'p2_mean', 'p2_max',
-#                                    'joint_mean', 'joint_max'])
-#
-# results_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\project_stuff\monitor_calibration\ASUS\check_conc_Nov22.csv"
-# results_path = os.path.normpath(results_path)
-# results_df.to_csv(results_path, index=False)
-#
-# print('\nall finished making results csv')
+
+# load Excel sheet with frame numbers where probes appear and x, y co-ordinates for cropping probes.
+excel_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\check_conc_MartinExpScript_Nov22\frame_and_bbox_details.xlsx"
+excel_path = os.path.normpath(excel_path)
+print(f'excel_path:\n{excel_path}')
+
+bb_box_df = pd.read_excel(excel_path, sheet_name='Sheet1', engine='openpyxl')
+print(f'bb_box_df:\n{bb_box_df}')
+
+rows, cols = bb_box_df.shape
+print(f'rows: {rows}, cols: {cols}')
+print(f'headers: {bb_box_df.columns.to_list()}')
+
+empty_list = []
+
+# loop through each row for Excel, e.g., frames from each video/condition
+for index, row in bb_box_df.iterrows():
+    analyse_this = row['analyse']
+    if analyse_this == 1:
+        isi = row['isi']
+        sep = row['sep']
+        ver = row['version']
+        cond = row['cond']
+        filename = row['filename']
+        print(f'\n{filename}, ISI_{isi}, sep_{sep}, ver: {ver}, cond: {cond}')
+
+        pr1_frame = int(row['first_pr1_fr'])
+        pr2_frame = int(row['first_pr2_fr'])
+        print(f"pr1_frame: {pr1_frame}")
+        # set to process 100 frames (or 140 for isi24)
+        # todo: Check I don't take frames <30 or >405 as these are not at 960
+        from_fr = pr1_frame-8
+        to_fr = from_fr+100
+        if isi == 24:
+            to_fr = from_fr+140
+        if sep == 2400:
+            to_fr = from_fr+140
+        if to_fr > 435:
+            to_fr = 435
+        print(f'from_fr: {from_fr} : to_fr: {to_fr}')
+
+        # probe bounding box is nxn pixels
+        # todo: note extra large bounding box
+        ROI_size = 100  # 5 for may22
+
+        pr1_down = int(row['pr1_down'])
+        pr1_right = int(row['pr1_right'])
+
+        if sep < 99:
+            pr2_down = int(row['pr2_down'])
+            pr2_right = int(row['pr2_right'])
+        else:
+            pr2_down = np.nan
+            pr2_right = np.nan
+        print(f'pr1: ({pr1_down}, {pr1_right}), pr2: ({pr2_down}, {pr2_right})')
+
+        # loop through each of the frames
+        for idx, frame in enumerate(list(range(from_fr, to_fr))):
+
+            # load image of this frame
+            cond_dir = rf"ISI_{isi}_sep_{sep}_{cond}_v{ver}\all_full_frames"
+            image_name = f"ISI_{isi}_sep_{sep}_{cond}_v{ver}_fr{frame}.jpg"
+            image_path = os.path.join(images_dir, cond_dir, image_name)
+
+            gray_img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+
+            p1_box = gray_img[pr1_down: pr1_down+ROI_size, pr1_right: pr1_right+ROI_size]
+            # print(f'p1_box: {type(p1_box)}')
+
+
+
+            #
+            # cv2.imshow('gray_img', gray_img)
+            # cv2.imshow('p1_box', p1_box)
+            # cv2.waitKey(0)
+            # cv2.destroyAllWindows()
+            #
+            #
+            #
+            # this_vid_image_dir = os.path.join(images_dir, filename[:-4])
+            # if not os.path.isdir(this_vid_image_dir):
+            #     os.makedirs(this_vid_image_dir)
+            # all_full_frames_dir = os.path.join(this_vid_image_dir, 'cropped_frames')
+            # if not os.path.isdir(all_full_frames_dir):
+            #     os.makedirs(all_full_frames_dir)
+            #
+            # image_save_path = os.path.join(os.path.join(all_full_frames_dir, image_name))
+            #
+            # cv2.imwrite(image_save_path, p1_box)  # save frame as JPG file
+
+
+
+
+
+
+
+            p1_box = gray_img[pr1_down: pr1_down+ROI_size, pr1_right: pr1_right+ROI_size]
+            # print(f'p1_box: {type(p1_box)}')
+            p1_mean = np.mean(p1_box)
+            p1_max = np.max(p1_box)
+            # print(f'p1_box array: \n{p1_box}')
+            # print(f'p1_mean: {p1_mean}')
+            # print(f'p1_max: {p1_max}')
+            # print(f'p1_max: {type(p1_max)}')
+
+            if sep < 99:
+                p2_box = gray_img[pr2_down: pr2_down+ROI_size, pr2_right: pr2_right+ROI_size]
+                p2_mean = np.mean(p2_box)
+                p2_max = np.max(p2_box)
+
+                joint_mean = np.mean([p1_mean, p2_mean])
+
+                # joint_max = np.max([p1_max, p2_max])
+                if p1_max > p2_max:
+                    joint_max = p1_max
+                else:
+                    joint_max = p2_max
+                '''strange, the max scores are not saving to the csv as shown here.
+                I'm converting to str to try to avoid this.'''
+
+            else:
+                p2_box = np.nan
+                p2_mean = np.nan
+                p2_max = np.nan
+
+                joint_mean = p1_mean
+                joint_max = p1_max
+
+
+            # save details to empty list
+            save_row = [filename, isi, sep, ver, cond, idx, frame,
+                        pr1_frame, pr1_down, pr1_right, p1_mean, str(p1_max),
+                        pr2_frame, pr2_down, pr2_right, p2_mean, str(p2_max),
+                        joint_mean, str(joint_max)]
+            empty_list.append(save_row)
+            # print(f'{frame}: {save_row}')
+
+print(f'\nempty_list shape: {np.shape(empty_list)}')
+print(empty_list)
+results_df = pd.DataFrame(data=empty_list,
+                          columns=['filename', 'isi', 'sep', 'version', 'cond', 'idx', 'frame',
+                                   'pr1_frame', 'pr1_down', 'pr1_right',
+                                   'p1_mean', 'p1_max',
+                                   'pr2_frame', 'pr2_down', 'pr2_right',
+                                   'p2_mean', 'p2_max',
+                                   'joint_mean', 'joint_max'])
+
+results_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\project_stuff\monitor_calibration\ASUS\check_conc_MartinExpScript_Nov22.csv"
+results_path = os.path.normpath(results_path)
+results_df.to_csv(results_path, index=False)
+
+print('\nall finished making results csv')
 
 '''
 Part 4: Load results csv, 
@@ -463,7 +464,7 @@ per isi
 '''
 
 # load results csv
-results_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\project_stuff\monitor_calibration\ASUS\check_conc_Nov22.csv"
+results_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\project_stuff\monitor_calibration\ASUS\check_conc_MartinExpScript_Nov22.csv"
 results_path = os.path.normpath(results_path)
 
 results_df = pd.read_csv(results_path)
@@ -574,7 +575,7 @@ for cond_ver_name in cond_ver_list:
         plt.axvspan(x0, x1, color='black', alpha=0.05, zorder=0, linewidth=None)
 
     plt.title(f'{cond_ver_name}: mean luminance')
-    fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\check_conc_Nov22\cond_figs\mean_lum"
+    fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\check_conc_MartinExpScript_Nov22\cond_figs\mean_lum"
     if not os.path.isdir(fig_dir):
         os.makedirs(fig_dir)
     fig_savename = f'{cond_ver_name}_mean_lum.png'
@@ -611,7 +612,7 @@ for cond_ver_name in cond_ver_list:
         plt.axvspan(x0, x1, color='black', alpha=0.05, zorder=0, linewidth=None)
 
     plt.title(f'{cond_ver_name}: max luminance')
-    fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\check_conc_Nov22\cond_figs\max_lum"
+    fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\check_conc_MartinExpScript_Nov22\cond_figs\max_lum"
     if not os.path.isdir(fig_dir):
         os.makedirs(fig_dir)
     fig_savename = f'{cond_ver_name}_max_lum.png'
@@ -710,7 +711,7 @@ for cond_ver_name in cond_ver_list:
 #         plt.axvspan(x0, x1, color='black', alpha=0.05, zorder=0, linewidth=None)
 #
 #     plt.title(f'{isi}: mean luminance')
-#     fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\check_conc_Nov22\isi_figs\mean_lum"
+#     fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\check_conc_MartinExpScript_Nov22\isi_figs\mean_lum"
 #     if not os.path.isdir(fig_dir):
 #         os.makedirs(fig_dir)
 #     fig_savename = f'ISI_{isi}_mean_lum.png'
@@ -746,7 +747,7 @@ for cond_ver_name in cond_ver_list:
 #     for x0, x1 in zip(x_bg[::2], x_bg[1::2]):
 #         plt.axvspan(x0, x1, color='black', alpha=0.05, zorder=0, linewidth=None)
 #
-#     fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\check_conc_Nov22\isi_figs\max_lum"
+#     fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\check_conc_MartinExpScript_Nov22\isi_figs\max_lum"
 #     if not os.path.isdir(fig_dir):
 #         os.makedirs(fig_dir)
 #     fig_savename = f'ISI_{isi}_max_lum.png'
