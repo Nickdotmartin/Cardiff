@@ -1,6 +1,11 @@
-from __future__ import division
-from psychopy import gui, visual, core, data, event, monitors, logging
-from psychopy import __version__ as psychopy_version
+from __future__ import division  # always does true division, not int dividion (no remainder) as in python2.
+
+import psychopy
+# psychopyVersion = '2020.2.10'  # '2020.2.10'=MartinExp1Version', 2021.2.3'=nickMac version
+# psychopy.useVersion(psychopyVersion)
+from psychopy import __version__ as psychopyVersion  # uses the computer's downloaded version
+
+from psychopy import gui, visual, core, data, event, monitors, logging, info
 from psychopy.hardware import keyboard
 import os
 import numpy as np
@@ -26,7 +31,7 @@ I've changed the responses to use the keyboard as suggested for coder experiment
 Hopefully reduced memory drain issues too: removed thisExp.close, put logginf controls back in.
 If memory issues stl not fixed, I could try to:
 1. set auto_log=False in the experiment handler: doesn't help
-2. get rid of trials_counter (or use textbox2 ather than text_stim?): doesn't help
+2. get rid of trials_counter (or use TextBox2 rather than text_stim?): doesn't help
 3. set theseKeys once earlier before frame loop.: can't do this
 4. check for take a break once earlier before per-frame loop.
 5. manually write to csv each trial myself: commenting out all addData calls didn't help either!
@@ -35,16 +40,14 @@ If memory issues stl not fixed, I could try to:
 6. try turning off pyglet or using glfw
 '''
 
-# todo: try with critical logging only
-# sets psychoPy to only log critical messages
-# logging.console.setLevel(logging.CRITICAL)
+print(f"psychopy.version: {psychopy.__version__}")
 
 # Ensure that relative paths start from the same directory as this script
 _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'Nick_work_laptop'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
+monitor_name = 'NickMac'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 
 
 # Store info about the experiment session
@@ -82,6 +85,14 @@ vary_fixation = eval(expInfo['7. Vary_fixation'])
 blend_off_edges = eval(expInfo['8. Blend_off_edges'])
 verbose = eval(expInfo['9. testing/de-bugging'])
 
+# LOGGING AND PRINTING TO SCREEN
+# todo: try with critical logging only
+# sets psychoPy to only log critical messages
+if verbose:
+    logging.console.setLevel(logging.DEBUG)
+else:
+    logging.console.setLevel(logging.CRITICAL)
+
 
 # VARIABLES
 '''Distances between probes (spatially and temporally)
@@ -90,7 +101,7 @@ For concurrent probes, use ISI==-1.
 '''
 separations = [0, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
 # separations = [6]  # select from [0, 1, 2, 3, 6, 18, 99]
-print(f'separations: {separations}')
+print(f'\nseparations: {separations}')
 
 # todo: add in code to find equivallent ISI_frames for different fps from double_dist?
 ISI_values = [0, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
@@ -119,11 +130,16 @@ filename = f'{_thisDir}{os.sep}' \
 save_output_name = filename + '_incomplete'
 print(f'filename: {filename}')
 
+
 # Experiment Handler
 # todo: I can try adding autolog=False to experiment handler if it is the logging that is slowing things down.
-thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
-                                 extraInfo=expInfo, runtimeInfo=None,
-                                 savePickle=None, saveWideText=True,
+thisExp = data.ExperimentHandler(name=expName,
+                                 version=psychopyVersion,  # does not set anything, just saved as string for record-keeping.
+                                 extraInfo=expInfo,
+                                 # runtimeInfo=runInfo,
+                                 # runtimeInfo=psychopy.info.RunTimeInfo,
+                                 savePickle=True,
+                                 saveWideText=True,
                                  dataFileName=save_output_name,
                                  # autoLog=False
                                  )
@@ -132,7 +148,7 @@ thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
 # Lum to Color255
 LumColor255Factor = 2.39538706913372
 # Color255 to Color1
-Color255Color1Factor = 1/127.5  # Color255 * Color255Color1Factor -1
+Color255Color1Factor = 1 / 127.5  # Color255 * Color255Color1Factor -1
 # Lum to Color1
 Color1LumFactor = 2.39538706913372
 
@@ -147,6 +163,13 @@ bgLum = maxLum * bgLumP / 100
 bgColor255 = bgLum * LumColor255Factor
 bgColor1 = (bgColor255 * Color255Color1Factor) - 1
 
+# COLOUR SPACE
+colour_space = 'rgb255'
+background_col = bgColor255
+# probe_col =
+# if colour_space == 'rgb':
+#     background_col =
+    # probe_col =
 
 # MONITOR SPEC
 thisMon = monitors.Monitor(monitor_name)
@@ -169,7 +192,7 @@ widthPix = mon_dict['size'][0]
 heightPix = mon_dict['size'][1]
 monitorwidth = mon_dict['width']  # monitor width in cm
 viewdist = mon_dict['dist']  # viewing distance in cm
-viewdistPix = widthPix/monitorwidth*viewdist
+viewdistPix = widthPix / monitorwidth * viewdist
 mon = monitors.Monitor(monitor_name, width=monitorwidth, distance=viewdist)
 mon.setSizePix((widthPix, heightPix))
 mon.save()
@@ -177,13 +200,15 @@ mon.save()
 # WINDOW SPEC
 # todo: try toggling pyglet.  Could add a catch (if mon_name==mac, use pyglet if needed)?
 win = visual.Window(monitor=mon, size=(widthPix, heightPix),
-                    colorSpace='rgb255', color=bgColor255,
+                    colorSpace=colour_space, color=bgColor255,
                     winType='pyglet',  # I've added this to make it work on pycharm/mac
                     pos=[1, -1],  # pos gives position of top-left of screen
                     units='pix',
                     screen=display_number,
                     allowGUI=False,
                     fullscr=use_full_screen)
+print(f"win.colorSpace: {win.colorSpace}")
+print(f"win.winType: {win.winType}")
 
 # todo: check this - is it just for apple retina screen
 widthPix = widthPix / 2
@@ -193,18 +218,63 @@ if verbose:
     print(f"check win.size: {win.size}")
     print(f"widthPix: {widthPix}, hight: {heightPix}")
 
+# get system info
+runInfo = info.RunTimeInfo(verbose=True, win=win, userProcsDetailed=True)
+print(f"\nrun_info: {runInfo}")
+print(f"getMemoryUsage: {info.getMemoryUsage()}")
+print(f"getRAM: {info.getRAM()}")
+if "windowRefreshTimeAvg_ms" in runInfo:
+    print("or from the test of the screen refresh rate:")
+    print("  %.2f ms = average refresh time" % runInfo["windowRefreshTimeAvg_ms"])
+    print("  %.3f ms = standard deviation" % runInfo["windowRefreshTimeSD_ms"])
+
+    # Once you have run-time info, you can fine-tune things with the values, prior to running your experiment.
+    refreshSDwarningLevel_ms = 0.20  # ms
+    if runInfo["windowRefreshTimeSD_ms"] > refreshSDwarningLevel_ms:
+        print("\nThe variability of the refresh rate is sort of high (SD > %.2f ms)." % (refreshSDwarningLevel_ms))
+        # and here you could prompt the user with suggestions, possibly based on other info:
+        if runInfo["windowIsFullScr"]:
+            print("Your window is full-screen, which is good for timing.")
+            print('Possible issues: internet / wireless? bluetooth? recent startup (not finished)?')
+            if len(runInfo['systemUserProcFlagged']):
+                print('other programs running? (command, process-ID):' + str(runInfo['systemUserProcFlagged']))
+        else:
+            print("""Try defining the window as full-screen (it's not currently), 
+                  i.e. at the top of the demo change to: win = visual.Window((800, 600), fullscr=True,... 
+                  and re-run the demo.""")
+thisExp.runtimeInfo=runInfo
+
+# simpler way to test framerate
+# store frame rate of monitor if we can measure it
+expInfo['ActualFrameRate'] = win.getActualFrameRate()
+if expInfo['ActualFrameRate'] != None:
+    actualframeDur = 1.0 / round(expInfo['ActualFrameRate'])
+print(f"expInfo['ActualFrameRate']: {expInfo['ActualFrameRate']}, actualframeDur: {actualframeDur}")
+
+
+# CHECK FPS
+# todo: add check fps back in here
+
 # ELEMENTS
 # fixation bull eye
-fixation = visual.Circle(win, radius=2, units='pix', lineColor='white', fillColor='black')
+fixation = visual.Circle(win, radius=2, units='pix', lineColor='white', fillColor='black', name="fixation")
 
 # PROBEs
 probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
              (1, -2), (-1, -2), (-1, -1), (0, -1)]
 
-probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, -1.0, 1.0),
+probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor=[0, 0, 0], name='probe1',
                           lineWidth=0, opacity=1, size=1, interpolate=False)
-probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor=[-1.0, 1.0, -1.0],
+probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor=[0, 0, 0], name='probe2',
                           lineWidth=0, opacity=1, size=1, interpolate=False)
+probe1.colorSpace = 'rgb255'
+probe2.colorSpace = 'rgb255'
+print(f"probe1.colorSpace: {probe1.colorSpace}, probe2.colorSpace: {probe2.colorSpace}")
+
+# probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor=[1.0, -1.0, 1.0],
+#                           lineWidth=0, opacity=1, size=1, interpolate=False)
+# probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor=[-1.0, 1.0, -1.0],
+#                           lineWidth=0, opacity=1, size=1, interpolate=False)
 
 # dist_from_fix is a constant to get 4dva distance from fixation,
 dist_from_fix = round((tan(deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
@@ -216,14 +286,13 @@ dist_from_fix = round((tan(deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
 raisedCosTexture2 = visual.filters.makeMask(heightPix, shape='raisedCosine', fringeWidth=0.6, radius=[1.0, 1.0])
 invRaisedCosTexture = -raisedCosTexture2  # inverts mask to blur edges instead of center
 # blankslab = np.ones((heightPix, 420))  # create blank slabs to put to left and right of image
-blankslab = np.ones((heightPix, int((widthPix-heightPix)/2)))  # create blank slabs to put to left and right of image
+blankslab = np.ones((heightPix, int((widthPix-heightPix) / 2)))  # create blank slabs to put to left and right of image
 mmask = np.append(blankslab, invRaisedCosTexture, axis=1)  # append blank slab to left
 mmask = np.append(mmask, blankslab, axis=1)  # and right
 blend_edge_mask = visual.GratingStim(win, mask=mmask,
                                      tex=None,
-                                     contrast=1.0,
-                              size=(widthPix, heightPix), units='pix',
-                              color='black')
+                                     contrast=1.0, size=(widthPix, heightPix),
+                                     units='pix', color='black', name='blend_edge_mask')
 # if blend_off_edges == False, set mask to be transparent
 if not blend_off_edges:
     blend_edge_mask.opacity = 0.0
@@ -239,28 +308,30 @@ myMouse = event.Mouse(visible=False)
 kb = keyboard.Keyboard()
 
 
-# TEXT TO DISPLAY
+# TEXT TO DISPLAY (changed from textStim to TextBox2)
 # todo: try using TextBox2 rather than TestStim
-# INSTRUCTION
-instructions = visual.TextStim(win=win, name='instructions',
-                               text="\n\n\n\n\n\nFocus on the fixation circle at the centre of the screen.\n\n"
-                                    "A small white target will briefly appear on screen,\n"
-                                    "press the key related to the location of the probe:\n\n"
-                                    "[4]/[Q] top-left\t\t\t[5]/[W] top-right\n\n\n\n"
-                                    "[1]/[A] bottom-left\t\t\t[2]/[S] bottom-right.\n\n\n"
-                                    "Some targets will be easier to see than others,\n"
-                                    "Some will be so dim that you won't see them, so just guess!\n\n"
-                                    "You don't need to think for long, respond quickly, "
-                                    "but try to push press the correct key!\n\n"
-                                    "Don't let your eyes wander, keep focussed on the circle in the middle throughout.",
-                               font='Arial', height=20,
-                               color='white')
+# INSTRUCTIONS
+insturction_text = "\n\n\n\n\n\nFocus on the fixation circle at the centre of the screen.\n\n" \
+                   "A small white target will briefly appear on screen,\n" \
+                   "press the key related to the location of the probe:\n\n" \
+                   "[4]/[Q] top-left\t\t\t[5]/[W] top-right\n\n\n\n" \
+                   "[1]/[A] bottom-left\t\t\t[2]/[S] bottom-right.\n\n\n" \
+                   "Some targets will be easier to see than others,\n" \
+                   "Some will be so dim that you won't see them, so just guess!\n\n" \
+                   "You don't need to think for long, respond quickly, " \
+                   "but try to push press the correct key!\n\n" \
+                   "Don't let your eyes wander, keep focussed on the circle in the middle throughout."
+instructions = visual.TextBox2(win=win, name='instructions', text=insturction_text,
+                               # font='Arial',
+                               letterHeight=20, color='white', alignment='center',
+                               size=[None, None])
 
 # Trial counter
-# todo: put trials counter back to .45 of width and height pos
-trials_counter = visual.TextStim(win=win, name='trials_counter', text="???",
-                                 font='Arial', height=20,
-                                 # default set to black (e.g., invisible)
+# todo: put trials counter back to .45 of widthPix and heightPix pos
+trials_counter = visual.TextBox2(win=win, name='trials_counter', text="???",
+                                 # font='Arial',
+                                 letterHeight=20,
+                                 # default set to background colour (e.g., invisible)
                                  color=bgColor255,
                                  # pos=[-widthPix * .45, -heightPix * .45])
                                  pos=[-widthPix * .20, -heightPix * .20])
@@ -273,18 +344,24 @@ take_break = 76
 total_n_trials = int(n_trials_per_stair * n_stairs)
 if verbose:
     print(f"take_break every {take_break} trials.")
-breaks = visual.TextStim(win=win, name='breaks',
-                         text="Break\nTurn on the light and take at least 30-seconds break.\n"
-                              "Keep focussed on the fixation circle in the middle of the screen.\n"
-                              "Remember, if you don't see the target, just guess!",
-                         font='Arial', pos=[0, 0], height=20, ori=0, color=[255, 255, 255],
-                         colorSpace='rgb255', opacity=1, languageStyle='LTR', depth=0.0)
+breaks_text = "Break\nTurn on the light and take at least 30-seconds break.\n" \
+              "Keep focussed on the fixation circle in the middle of the screen.\n" \
+              "Remember, if you don't see the target, just guess!"
+breaks = visual.TextBox2(win=win, name='breaks', text=breaks_text,
+                         # font='Arial',
+                         color='white',
+                         # pos=[0, 0],
+                         # letterHeight=20, ori=0, color=[255, 255, 255],
+                         # colorSpace='rgb255', opacity=1, languageStyle='LTR', depth=0.0
+                         )
 
-end_of_exp = visual.TextStim(win=win, name='end_of_exp',
-                             text="You have completed this experiment.\n"
-                                  "Thank you for your time.\n\n"
-                                  "Press any key to return to the desktop.",
-                             font='Arial', height=20)
+# END OF EXPERIMENT MESSAGE
+end_of_exp_text = "You have completed this experiment.\n" \
+                  "Thank you for your time.\n\n" \
+                  "Press any key to return to the desktop."
+end_of_exp = visual.TextBox2(win=win, name='end_of_exp', text=end_of_exp_text,
+                             # font='Arial',
+                             letterHeight=20)
 
 
 # SCREEN BEFORE EXPERIMENT
@@ -344,10 +421,11 @@ for step in range(n_trials_per_stair):
         probeLum = thisStair.next()
         probeColor255 = int(probeLum * LumColor255Factor)  # rgb255 are ints.
         probeColor1 = (probeColor255 * Color255Color1Factor) - 1
-        probe1.color = [probeColor1, probeColor1, probeColor1]
-        probe2.color = [probeColor1, probeColor1, probeColor1]
+        probe1.setColor([probeColor255, probeColor255, probeColor255], colour_space)
+        probe2.setColor([probeColor255, probeColor255, probeColor255], colour_space)
         if verbose:
             print(f"probeLum: {probeLum}, probeColor255: {probeColor255}, probeColor1: {probeColor1}")
+            print(f"probe1.colorSpace: {probe1.colorSpace}, probe2.colorSpace: {probe2.colorSpace}")
 
         # PROBE LOCATION
         # # corners go ACW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
@@ -480,27 +558,28 @@ for step in range(n_trials_per_stair):
         if verbose:
             print(f"probe1: {probe1.pos}, probe2.pos: {probe2.pos}. dff: {dist_from_fix}")
 
-        # todo: decide max time vary_fix should be: 500ms?
-        # to avoid fixation times always being the same which might increase
-        # anticipatory effects,
-        # add in a random number of frames (up to 1 second) to fixation time
-        # todo: vary fix from .5 to 1.5 seconds
-        vary_fix = 0
+
+        # VARIABLE FIXATION TIME
+        # to reduce anticipatory effects that might arise from fixation always being same length.
+        # if False, vary_fix == .5 seconds, so t_fixation is 1 second.
+        # if Ture, vary_fix is between 0 and 1 second, so t_fixation is between .5 and 1.5 seconds.
+        vary_fix = int(fps / 2)
         if vary_fixation:
-            vary_fix = np.random.randint(0, fps/2)
+            vary_fix = np.random.randint(0, fps)
 
         # timing in frames for ISI and probe2
+        # If probes are presented concurrently, set ISI and probe2 to last for 0 frames.
         isi_fr = ISI
         p2_fr = probe_duration
         if ISI < 0:
             isi_fr = p2_fr = 0
 
-        # timing in frames for each part of a trial
-        t_fixation = (fps / 2) + vary_fix
+        # cumulative timing in frames for each part of a trial
+        t_fixation = int(fps / 2) + vary_fix
         t_probe_1 = t_fixation + probe_duration
         t_ISI = t_probe_1 + isi_fr
         t_probe_2 = t_ISI + p2_fr
-        t_response = t_probe_2 + 10000 * fps  # essentially unlimited time to respond
+        t_response = t_probe_2 + 10000 * fps  # ~40 seconds to respond
 
         if verbose:
             print(f"t_fixation: {t_fixation}\n"
@@ -616,7 +695,7 @@ for step in range(n_trials_per_stair):
                         resp_key = last_key.name
                         resp_rt = last_key.rt
                         if verbose:
-                            print(f"theseKeys: {list(theseKeys)}")
+                            print(f"theseKeys: {list([i for i in theseKeys])}")
                             print(f"resp_key: {resp_key}")
                             print(f"resp_rt: {resp_rt}")
                             print(f"key.duration: {last_key.duration}")
@@ -681,9 +760,11 @@ for step in range(n_trials_per_stair):
         thisExp.addData('resp_rt', resp_rt)
         thisExp.addData('orientation', orientation)
         thisExp.addData('vary_fixation', vary_fixation)
-        thisExp.addData('expName', expName)
+        thisExp.addData('t_fixation', t_fixation)
         thisExp.addData('monitor_name', monitor_name)
         thisExp.addData('selected_fps', fps)
+        thisExp.addData('expName', expName)
+        thisExp.addData('psychopyVersion', psychopyVersion)
 
         # indicates that this trial has finished
         thisExp.nextEntry()
@@ -695,6 +776,9 @@ for step in range(n_trials_per_stair):
 print("end of experiment loop, saving data")
 
 thisExp.dataFileName = filename
+
+print(f"thisExp: {thisExp.getAllEntries()}")
+
 # todo: I don't think I need thisExp.close()?
 thisExp.close()
 # thisExp.abort()

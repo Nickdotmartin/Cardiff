@@ -178,6 +178,7 @@ for p_idx, participant_name in enumerate(participant_list):
     print(f"sep_vals_list:\n{sep_vals_list}")
     print(f"sep_name_list:\n{sep_name_list}")
 
+    # todo: change plots to p_name at top
     make_average_plots(all_df_path=all_df_path,
                        ave_df_path=p_ave_path,
                        error_bars_path=err_path,

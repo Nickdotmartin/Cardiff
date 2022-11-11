@@ -141,6 +141,7 @@ for p_idx, participant_name in enumerate(participant_list):
         err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
     exp_ave = False
 
+    # todo: change plots to p_name at top
     make_average_plots(all_df_path=all_df_path,
                        ave_df_path=p_ave_path,
                        error_bars_path=err_path,
