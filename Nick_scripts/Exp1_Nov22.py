@@ -1,9 +1,15 @@
 from __future__ import division  # always does true division, not int dividion (no remainder) as in python2.
 
 import psychopy
-# psychopyVersion = '2020.2.10'  # '2020.2.10'=MartinExp1Version', 2021.2.3'=nickMac version
+# psychopyVersion = '2021.2.3'  # '2020.2.10'=MartinExp1Version', 2021.2.3'=nickMac version, latest nickmac version=2022.2.4
 # psychopy.useVersion(psychopyVersion)
 from psychopy import __version__ as psychopyVersion  # uses the computer's downloaded version
+#
+# This should work
+# from psychopy.iohub import launchHubServer
+# from psychopy import iohub
+# from psychopy import visual
+
 
 from psychopy import gui, visual, core, data, event, monitors, logging, info
 from psychopy.hardware import keyboard
@@ -19,7 +25,17 @@ from kestenSTmaxVal import Staircase
 
 import sys
 
+'''
+I now have latest version of PsycoPy as stand alone and callable.
+But I need to update to a 3.8 environment.
 
+Once I've done that, get on Linux.
+1. find good package for measuring memory.
+2. Compare running from terminal vs psychopy.
+3. Look at glfw vs pyglet
+4. look at psychtoolbox vs iohub
+5. look at frame rate at end of exp compared to beginning.
+'''
 '''
 Updated Exp1 script.  
 
@@ -40,10 +56,14 @@ If memory issues stl not fixed, I could try to:
 6. try turning off pyglet or using glfw
 '''
 
-@profile
+# @profile
 def Exp1_Nov22():
 
     print(f"psychopy.version: {psychopy.__version__}")
+
+    # test inHub
+    # io = iohub
+    # io.quit()
 
     # Ensure that relative paths start from the same directory as this script
     _thisDir = os.path.dirname(os.path.abspath(__file__))
@@ -228,25 +248,25 @@ def Exp1_Nov22():
     print(f"\nrun_info: {runInfo}")
     print(f"getMemoryUsage: {info.getMemoryUsage()}")
     print(f"getRAM: {info.getRAM()}")
-    if "windowRefreshTimeAvg_ms" in runInfo:
-        print("or from the test of the screen refresh rate:")
-        print("  %.2f ms = average refresh time" % runInfo["windowRefreshTimeAvg_ms"])
-        print("  %.3f ms = standard deviation" % runInfo["windowRefreshTimeSD_ms"])
-
-        # Once you have run-time info, you can fine-tune things with the values, prior to running your experiment.
-        refreshSDwarningLevel_ms = 0.20  # ms
-        if runInfo["windowRefreshTimeSD_ms"] > refreshSDwarningLevel_ms:
-            print("\nThe variability of the refresh rate is sort of high (SD > %.2f ms)." % (refreshSDwarningLevel_ms))
-            # and here you could prompt the user with suggestions, possibly based on other info:
-            if runInfo["windowIsFullScr"]:
-                print("Your window is full-screen, which is good for timing.")
-                print('Possible issues: internet / wireless? bluetooth? recent startup (not finished)?')
-                if len(runInfo['systemUserProcFlagged']):
-                    print('other programs running? (command, process-ID):' + str(runInfo['systemUserProcFlagged']))
-            else:
-                print("""Try defining the window as full-screen (it's not currently), 
-                      i.e. at the top of the demo change to: win = visual.Window((800, 600), fullscr=True,... 
-                      and re-run the demo.""")
+    # if "windowRefreshTimeAvg_ms" in runInfo:
+    #     print("or from the test of the screen refresh rate:")
+    #     print("  %.2f ms = average refresh time" % runInfo["windowRefreshTimeAvg_ms"])
+    #     print("  %.3f ms = standard deviation" % runInfo["windowRefreshTimeSD_ms"])
+    #
+    #     # Once you have run-time info, you can fine-tune things with the values, prior to running your experiment.
+    #     refreshSDwarningLevel_ms = 0.20  # ms
+    #     if runInfo["windowRefreshTimeSD_ms"] > refreshSDwarningLevel_ms:
+    #         print("\nThe variability of the refresh rate is sort of high (SD > %.2f ms)." % (refreshSDwarningLevel_ms))
+    #         # and here you could prompt the user with suggestions, possibly based on other info:
+    #         if runInfo["windowIsFullScr"]:
+    #             print("Your window is full-screen, which is good for timing.")
+    #             print('Possible issues: internet / wireless? bluetooth? recent startup (not finished)?')
+    #             if len(runInfo['systemUserProcFlagged']):
+    #                 print('other programs running? (command, process-ID):' + str(runInfo['systemUserProcFlagged']))
+    #         else:
+    #             print("""Try defining the window as full-screen (it's not currently),
+    #                   i.e. at the top of the demo change to: win = visual.Window((800, 600), fullscr=True,...
+    #                   and re-run the demo.""")
     thisExp.runtimeInfo=runInfo
 
     # simpler way to test framerate
@@ -311,6 +331,9 @@ def Exp1_Nov22():
     # todo: changed this from builder to keyboard
     # resp = event.BuilderKeyResponse()
     kb = keyboard.Keyboard()
+    print(f"keyboard.getKeyboards(): {keyboard.getKeyboards()}")
+    print(f"keyboard.getBackend(): {keyboard.getBackend()}")
+    # kb = keyboard.Keyboard(backend='ptb')  # use psychtoolbox rather than IOHub
 
 
     # TEXT TO DISPLAY (changed from textStim to TextBox2)
@@ -329,7 +352,8 @@ def Exp1_Nov22():
     instructions = visual.TextBox2(win=win, name='instructions', text=insturction_text,
                                    # font='Arial',
                                    font='Open Sans',
-                                   letterHeight=20, color='white', alignment='center',
+                                   letterHeight=20, color='white',
+                                   alignment='center',  anchor='center',
                                    size=[None, None])
 
     # Trial counter
@@ -358,6 +382,7 @@ def Exp1_Nov22():
                              # font='Arial',
                              font='Open Sans',
                              color='white',
+                             alignment='center', anchor='center',
                              # pos=[0, 0],
                              # letterHeight=20, ori=0, color=[255, 255, 255],
                              # colorSpace='rgb255', opacity=1, languageStyle='LTR', depth=0.0
@@ -370,6 +395,7 @@ def Exp1_Nov22():
     end_of_exp = visual.TextBox2(win=win, name='end_of_exp', text=end_of_exp_text,
                                  # font='Arial',
                                  font='Open Sans',
+                                 alignment='center', anchor='center',
                                  letterHeight=20)
 
 
@@ -390,399 +416,404 @@ def Exp1_Nov22():
     miniVal = bgLum
     maxiVal = maxLum
 
-    # stairs = []
-    # for stair_idx in expInfo['stair_list']:
-    #
-    #     thisInfo = copy.copy(expInfo)
-    #     thisInfo['stair_idx'] = stair_idx
-    #
-    #     thisStair = Staircase(name=stair_names_list[stair_idx],
-    #                           type='simple',
-    #                           value=stairStart,
-    #                           C=stairStart * 0.6,  # typically, 60% of reference stimulus
-    #                           minRevs=3,
-    #                           minTrials=n_trials_per_stair,
-    #                           minVal=miniVal,
-    #                           maxVal=maxiVal,
-    #                           targetThresh=0.75,
-    #                           extraInfo=thisInfo)
-    #     stairs.append(thisStair)
-    #
-    # # EXPERIMENT
-    # trial_number = 0
-    # for step in range(n_trials_per_stair):
-    #     shuffle(stairs)
-    #     for thisStair in stairs:
-    #
-    #         # Trial, stair and step
-    #         trial_number = trial_number + 1
-    #         trials_counter.text = f"{trial_number}/{total_n_trials}"
-    #         stair_idx = thisStair.extraInfo['stair_idx']
-    #         print(f"\ntrial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
-    #
-    #         # condition (Seprataion, ISI)
-    #         sep = sep_vals_list[stair_idx]
-    #         ISI = ISI_vals_list[stair_idx]
-    #         if verbose:
-    #             print(f"ISI: {ISI}, sep: {sep}")
-    #
-    #         # Luminance (staircase varies probeLum)
-    #         probeLum = thisStair.next()
-    #         probeColor255 = int(probeLum * LumColor255Factor)  # rgb255 are ints.
-    #         probeColor1 = (probeColor255 * Color255Color1Factor) - 1
-    #         probe1.setColor([probeColor255, probeColor255, probeColor255], colour_space)
-    #         probe2.setColor([probeColor255, probeColor255, probeColor255], colour_space)
-    #         if verbose:
-    #             print(f"probeLum: {probeLum}, probeColor255: {probeColor255}, probeColor1: {probeColor1}")
-    #             print(f"probe1.colorSpace: {probe1.colorSpace}, probe2.colorSpace: {probe2.colorSpace}")
-    #
-    #         # PROBE LOCATION
-    #         # # corners go ACW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
-    #         # todo: change to use tuple or names tuple?
-    #         corner = random.choice([45, 135, 225, 315])
-    #         corner_name = 'top_right'
-    #         if corner == 135:
-    #             corner_name = 'top_left'
-    #         elif corner == 225:
-    #             corner_name = 'bottom_left'
-    #         elif corner == 315:
-    #             corner_name = 'bottom_right'
-    #
-    #         # # direction in which the probe jumps : CW or ACW
-    #         # todo change to use dict or tuples?
-    #         target_jump = random.choice([1, -1])
-    #         if orientation == 'tangent':
-    #             jump_dir = 'clockwise'
-    #             if target_jump == -1:
-    #                 jump_dir = 'anticlockwise'
-    #         else:
-    #             jump_dir = 'inward'
-    #             if target_jump == -1:
-    #                 jump_dir = 'outward'
-    #         if verbose:
-    #             print(f"corner: {corner} {corner_name}; jump dir: {target_jump} {jump_dir}")
-    #
-    #         # reset probe ori
-    #         probe1.ori = 0
-    #         probe2.ori = 0
-    #         if corner == 45:
-    #             # in top-right corner, both x and y increase (right and up)
-    #             p1_x = dist_from_fix * 1
-    #             p1_y = dist_from_fix * 1
-    #             #  'orientation' here refers to the relationship between probes,
-    #             #  whereas probe1.ori refers to rotational angle of probe stimulus
-    #             if orientation == 'tangent':
-    #                 if target_jump == 1:  # CW
-    #                     probe1.ori = 180
-    #                     probe2.ori = 0
-    #                     probe2.pos = [p1_x + sep - 1, p1_y - sep]
-    #                 elif target_jump == -1:  # ACW
-    #                     probe1.ori = 0
-    #                     probe2.ori = 180
-    #                     probe2.pos = [p1_x - sep + 1, p1_y + sep]
-    #             elif orientation == 'radial':
-    #                 if target_jump == 1:  # inward
-    #                     probe1.ori = 270
-    #                     probe2.ori = 90
-    #                     # probe2 is left and down from probe1
-    #                     probe2.pos = [p1_x - sep + 1, p1_y - sep]
-    #                 elif target_jump == -1:  # outward
-    #                     probe1.ori = 90
-    #                     probe2.ori = 270
-    #                     # probe2 is right and up from probe1
-    #                     probe2.pos = [p1_x + sep - 1, p1_y + sep]
-    #         elif corner == 135:
-    #             p1_x = dist_from_fix * -1
-    #             p1_y = dist_from_fix * 1
-    #             if orientation == 'tangent':
-    #                 if target_jump == 1:  # ACW
-    #                     probe1.ori = 90
-    #                     probe2.ori = 270
-    #                     probe2.pos = [p1_x + sep - 1, p1_y + sep]
-    #                 elif target_jump == -1:  # CW
-    #                     probe1.ori = 270
-    #                     probe2.ori = 90
-    #                     probe2.pos = [p1_x - sep + 1, p1_y - sep]
-    #             elif orientation == 'radial':
-    #                 if target_jump == 1:  # inward
-    #                     probe1.ori = 180
-    #                     probe2.ori = 0
-    #                     # probe2 is right and down from probe1
-    #                     probe2.pos = [p1_x + sep - 1, p1_y - sep]
-    #                 elif target_jump == -1:  # outward
-    #                     probe1.ori = 0
-    #                     probe2.ori = 180
-    #                     # probe2 is left and up from probe1
-    #                     probe2.pos = [p1_x - sep + 1, p1_y + sep]
-    #         elif corner == 225:
-    #             p1_x = dist_from_fix * -1
-    #             p1_y = dist_from_fix * -1
-    #             if orientation == 'tangent':
-    #                 if target_jump == 1:  # CW
-    #                     probe1.ori = 0
-    #                     probe2.ori = 180
-    #                     probe2.pos = [p1_x - sep + 1, p1_y + sep]
-    #                 elif target_jump == -1:  # ACW
-    #                     probe1.ori = 180
-    #                     probe2.ori = 0
-    #                     probe2.pos = [p1_x + sep - 1, p1_y - sep]
-    #             elif orientation == 'radial':
-    #                 if target_jump == 1:  # inward
-    #                     probe1.ori = 90
-    #                     probe2.ori = 270
-    #                     # probe2 is right and up from probe1
-    #                     probe2.pos = [p1_x + sep - 1, p1_y + sep]
-    #                 elif target_jump == -1:  # outward
-    #                     probe1.ori = 270
-    #                     probe2.ori = 90
-    #                     # probe2 is left and down from probe1
-    #                     probe2.pos = [p1_x - sep + 1, p1_y - sep]
-    #         else:
-    #             corner = 315
-    #             p1_x = dist_from_fix * 1
-    #             p1_y = dist_from_fix * -1
-    #             if orientation == 'tangent':
-    #                 if target_jump == 1:  # ACW
-    #                     probe1.ori = 270
-    #                     probe2.ori = 90
-    #                     probe2.pos = [p1_x - sep + 1, p1_y - sep]
-    #                 elif target_jump == -1:  # CW
-    #                     probe1.ori = 90
-    #                     probe2.ori = 270
-    #                     probe2.pos = [p1_x + sep - 1, p1_y + sep]
-    #             elif orientation == 'radial':
-    #                 if target_jump == 1:  # inward
-    #                     probe1.ori = 0
-    #                     probe2.ori = 180
-    #                     # probe2 is left and up from probe1
-    #                     probe2.pos = [p1_x - sep + 1, p1_y + sep]
-    #                 elif target_jump == -1:  # outward
-    #                     probe1.ori = 180
-    #                     probe2.ori = 0
-    #                     # probe2 is right and down from probe1
-    #                     probe2.pos = [p1_x + sep - 1, p1_y - sep]
-    #
-    #         probe1.pos = [p1_x, p1_y]
-    #
-    #         if verbose:
-    #             print(f"probe1: {probe1.pos}, probe2.pos: {probe2.pos}. dff: {dist_from_fix}")
-    #
-    #
-    #         # VARIABLE FIXATION TIME
-    #         # to reduce anticipatory effects that might arise from fixation always being same length.
-    #         # if False, vary_fix == .5 seconds, so t_fixation is 1 second.
-    #         # if Ture, vary_fix is between 0 and 1 second, so t_fixation is between .5 and 1.5 seconds.
-    #         vary_fix = int(fps / 2)
-    #         if vary_fixation:
-    #             vary_fix = np.random.randint(0, fps)
-    #
-    #         # timing in frames for ISI and probe2
-    #         # If probes are presented concurrently, set ISI and probe2 to last for 0 frames.
-    #         isi_fr = ISI
-    #         p2_fr = probe_duration
-    #         if ISI < 0:
-    #             isi_fr = p2_fr = 0
-    #
-    #         # cumulative timing in frames for each part of a trial
-    #         t_fixation = int(fps / 2) + vary_fix
-    #         t_probe_1 = t_fixation + probe_duration
-    #         t_ISI = t_probe_1 + isi_fr
-    #         t_probe_2 = t_ISI + p2_fr
-    #         t_response = t_probe_2 + 10000 * fps  # ~40 seconds to respond
-    #
-    #         if verbose:
-    #             print(f"t_fixation: {t_fixation}\n"
-    #                   f"t_probe_1: {t_probe_1}\n"
-    #                   f"t_ISI: {t_ISI}\n"
-    #                   f"t_probe_2: {t_probe_2}\n"
-    #                   f"t_response: {t_response}\n")
-    #
-    #         # repeat the trial if [r] has been pressed
-    #         # todo: keep the per-frame stuff to a minimum to reduce the load.
-    #
-    #         # todo: moved check for take_break outside frame loop
-    #         # take a break every ? trials
-    #         if (trial_number % take_break == 1) & (trial_number > 1):
-    #             continueRoutine = False
-    #             breaks.draw()
-    #
-    #             # adding this to flush out any logged messages during the breaks.
-    #             logging.flush()  # write messages out to all targets
-    #
-    #             win.flip()
-    #
-    #             while not kb.getKeys():
-    #                 continueRoutine = True
-    #         else:
-    #             continueRoutine = True
-    #
-    #         # loop per frame
-    #         repeat = True
-    #         while repeat:
-    #             frameN = -1
-    #
-    #             continueRoutine = True
-    #             while continueRoutine:
-    #                 frameN = frameN + 1
-    #
-    #                 # todo: reset clock once.
-    #                 if frameN == t_fixation:
-    #                     # radius is set twice, one here, and once at response time.
-    #                     fixation.setRadius(3)
-    #                     # reset timer to start with probe1 presentation (at last fixation frame).
-    #                     kb.clock.reset()
-    #                     if verbose:
-    #                         print(f"{frameN}: frameN == t_fixation: reset timer")
-    #
-    #                 # todo: Changed ifs to elifs
-    #                 # FIXATION
-    #                 if t_fixation >= frameN > 0:
-    #                     # fixation.setRadius(3)
-    #                     blend_edge_mask.draw()
-    #                     fixation.draw()
-    #                     trials_counter.draw()
-    #
-    #                     # if verbose:
-    #                     #     print(f"{frameN}: t_fixation >= frameN > 0: fixation")
-    #
-    #
-    #                 # PROBE 1
-    #                 elif t_probe_1 >= frameN > t_fixation:
-    #                     if verbose:
-    #                         print(f"{frameN}: t_probe_1 >= frameN > t_fixation: probe 1")
-    #                     # fixation.setRadius(3)
-    #                     blend_edge_mask.draw()
-    #                     fixation.draw()
-    #                     trials_counter.draw()
-    #                     probe1.draw()
-    #                     if ISI == -1:  # SIMULTANEOUS CONDITION (concurrent)
-    #                         if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
-    #                             probe2.draw()
-    #                             if verbose:
-    #                                 print(f"\t{frameN}: probe2.draw(): conc probes")
-    #
-    #
-    #
-    #                 # ISI (only occurs if ISI > 0)
-    #                 elif t_ISI >= frameN > t_probe_1:
-    #                     # fixation.setRadius(3)
-    #                     blend_edge_mask.draw()
-    #                     fixation.draw()
-    #                     trials_counter.draw()
-    #                     if verbose:
-    #                         print(f"{frameN}: t_ISI >= frameN > t_probe_1: ISI")
-    #
-    #                 # PROBE 2 (Only occurs if ISI > -1, e.g., not concurrent probes)
-    #                 elif t_probe_2 >= frameN > t_ISI:
-    #                     if verbose:
-    #                         print(f"{frameN}: t_probe_2 >= frameN > t_ISI: probe 2")
-    #                     if ISI >= 0:
-    #                         if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
-    #                             probe2.draw()
-    #                             if verbose:
-    #                                 print(f"\t{frameN}: probe2.draw()")
-    #                     # fixation.setRadius(3)
-    #                     blend_edge_mask.draw()
-    #                     fixation.draw()
-    #                     trials_counter.draw()
-    #
-    #
-    #                 # Response time
-    #                 elif frameN > t_probe_2:
-    #                     # print(f"{frameN}: frameN > t_probe_2: response")
-    #
-    #                     blend_edge_mask.draw()
-    #                     fixation.setRadius(2)
-    #                     fixation.draw()
-    #                     trials_counter.draw()
-    #
-    #                     # ANSWER keys
-    #                     theseKeys = kb.getKeys(keyList=['num_5', 'num_4', 'num_1',
-    #                                                     'num_2', 'w', 'q', 'a', 's'])
-    #                     if len(theseKeys) > 0:  # at least one key was pressed
-    #                         last_key = theseKeys[-1]
-    #                         resp_key = last_key.name
-    #                         resp_rt = last_key.rt
-    #                         if verbose:
-    #                             print(f"theseKeys: {list([i for i in theseKeys])}")
-    #                             print(f"resp_key: {resp_key}")
-    #                             print(f"resp_rt: {resp_rt}")
-    #                             print(f"key.duration: {last_key.duration}")
-    #
-    #
-    #                         # default assume response incorrect unless meets criteria below
-    #                         resp_corr = 0
-    #
-    #                         if corner == 45:
-    #                             if (resp_key == 'w') or (resp_key == 'num_5'):
-    #                                 resp_corr = 1
-    #                         elif corner == 135:
-    #                             if (resp_key == 'q') or (resp_key == 'num_4'):
-    #                                 resp_corr = 1
-    #                         elif corner == 225:
-    #                             if (resp_key == 'a') or (resp_key == 'num_1'):
-    #                                 resp_corr = 1
-    #                         elif corner == 315:
-    #                             if (resp_key == 's') or (resp_key == 'num_2'):
-    #                                 resp_corr = 1
-    #
-    #                         repeat = False
-    #                         continueRoutine = False
-    #
-    #                 # regardless of frameN, check for quit
-    #                 if kb.getKeys(keyList=["escape"]):
-    #                     thisExp.close()
-    #                     core.quit()
-    #
-    #                 # redo the trial if I think I made a mistake
-    #                 if kb.getKeys(keyList=["r"]) or kb.getKeys(keyList=['num_9']):
-    #                     repeat = True
-    #                     continueRoutine = False
-    #                     continue
-    #
-    #                 # gets rid of double presses
-    #                 kb.getKeys(clear=True)
-    #
-    #                 # refresh the screen
-    #                 if continueRoutine:
-    #                     win.flip()
-    #
-    #         # TrialHandler adds info to CSV (but stored in memory until end?)
-    #         thisExp.addData('trial_number', trial_number)
-    #         thisExp.addData('stair', stair_idx)
-    #         thisExp.addData('stair_name', thisStair)
-    #         thisExp.addData('step', step)
-    #         thisExp.addData('separation', sep)
-    #         thisExp.addData('ISI', ISI)
-    #         thisExp.addData('isi_fr', isi_fr)
-    #         thisExp.addData('probe_jump', target_jump)
-    #         thisExp.addData('jump_dir', jump_dir)
-    #         thisExp.addData('probeColor1', probeColor1)
-    #         thisExp.addData('probeColor255', probeColor255)
-    #         thisExp.addData('probeLum', probeLum)
-    #         thisExp.addData('trial_response', resp_corr)
-    #         thisExp.addData('corner', corner)
-    #         thisExp.addData('corner_name', corner_name)
-    #         thisExp.addData('probe_ecc', probe_ecc)
-    #         # thisExp.addData('resp.rt', resp.rt)
-    #         thisExp.addData('resp_key', resp_key)
-    #         thisExp.addData('resp_rt', resp_rt)
-    #         thisExp.addData('orientation', orientation)
-    #         thisExp.addData('vary_fixation', vary_fixation)
-    #         thisExp.addData('t_fixation', t_fixation)
-    #         thisExp.addData('monitor_name', monitor_name)
-    #         thisExp.addData('selected_fps', fps)
-    #         thisExp.addData('expName', expName)
-    #         thisExp.addData('psychopyVersion', psychopyVersion)
-    #
-    #         # indicates that this trial has finished
-    #         thisExp.nextEntry()
-    #
-    #         # updates staircase
-    #         thisStair.newValue(resp_corr)   # so that the staircase adjusts itself
+    stairs = []
+    for stair_idx in expInfo['stair_list']:
+
+        thisInfo = copy.copy(expInfo)
+        thisInfo['stair_idx'] = stair_idx
+
+        thisStair = Staircase(name=stair_names_list[stair_idx],
+                              type='simple',
+                              value=stairStart,
+                              C=stairStart * 0.6,  # typically, 60% of reference stimulus
+                              minRevs=3,
+                              minTrials=n_trials_per_stair,
+                              minVal=miniVal,
+                              maxVal=maxiVal,
+                              targetThresh=0.75,
+                              extraInfo=thisInfo)
+        stairs.append(thisStair)
+
+    # EXPERIMENT
+    trial_number = 0
+    for step in range(n_trials_per_stair):
+        shuffle(stairs)
+        for thisStair in stairs:
+
+            # Trial, stair and step
+            trial_number = trial_number + 1
+            trials_counter.text = f"{trial_number}/{total_n_trials}"
+            stair_idx = thisStair.extraInfo['stair_idx']
+            print(f"\ntrial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
+
+            # condition (Seprataion, ISI)
+            sep = sep_vals_list[stair_idx]
+            ISI = ISI_vals_list[stair_idx]
+            if verbose:
+                print(f"ISI: {ISI}, sep: {sep}")
+
+            # Luminance (staircase varies probeLum)
+            probeLum = thisStair.next()
+            probeColor255 = int(probeLum * LumColor255Factor)  # rgb255 are ints.
+            probeColor1 = (probeColor255 * Color255Color1Factor) - 1
+            probe1.setColor([probeColor255, probeColor255, probeColor255], colour_space)
+            probe2.setColor([probeColor255, probeColor255, probeColor255], colour_space)
+            if verbose:
+                print(f"probeLum: {probeLum}, probeColor255: {probeColor255}, probeColor1: {probeColor1}")
+                print(f"probe1.colorSpace: {probe1.colorSpace}, probe2.colorSpace: {probe2.colorSpace}")
+
+            # PROBE LOCATION
+            # # corners go ACW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
+            # todo: change to use tuple or names tuple?
+            corner = random.choice([45, 135, 225, 315])
+            corner_name = 'top_right'
+            if corner == 135:
+                corner_name = 'top_left'
+            elif corner == 225:
+                corner_name = 'bottom_left'
+            elif corner == 315:
+                corner_name = 'bottom_right'
+
+            # # direction in which the probe jumps : CW or ACW
+            # todo change to use dict or tuples?
+            target_jump = random.choice([1, -1])
+            if orientation == 'tangent':
+                jump_dir = 'clockwise'
+                if target_jump == -1:
+                    jump_dir = 'anticlockwise'
+            else:
+                jump_dir = 'inward'
+                if target_jump == -1:
+                    jump_dir = 'outward'
+            if verbose:
+                print(f"corner: {corner} {corner_name}; jump dir: {target_jump} {jump_dir}")
+
+            # reset probe ori
+            probe1.ori = 0
+            probe2.ori = 0
+            if corner == 45:
+                # in top-right corner, both x and y increase (right and up)
+                p1_x = dist_from_fix * 1
+                p1_y = dist_from_fix * 1
+                #  'orientation' here refers to the relationship between probes,
+                #  whereas probe1.ori refers to rotational angle of probe stimulus
+                if orientation == 'tangent':
+                    if target_jump == 1:  # CW
+                        probe1.ori = 180
+                        probe2.ori = 0
+                        probe2.pos = [p1_x + sep - 1, p1_y - sep]
+                    elif target_jump == -1:  # ACW
+                        probe1.ori = 0
+                        probe2.ori = 180
+                        probe2.pos = [p1_x - sep + 1, p1_y + sep]
+                elif orientation == 'radial':
+                    if target_jump == 1:  # inward
+                        probe1.ori = 270
+                        probe2.ori = 90
+                        # probe2 is left and down from probe1
+                        probe2.pos = [p1_x - sep + 1, p1_y - sep]
+                    elif target_jump == -1:  # outward
+                        probe1.ori = 90
+                        probe2.ori = 270
+                        # probe2 is right and up from probe1
+                        probe2.pos = [p1_x + sep - 1, p1_y + sep]
+            elif corner == 135:
+                p1_x = dist_from_fix * -1
+                p1_y = dist_from_fix * 1
+                if orientation == 'tangent':
+                    if target_jump == 1:  # ACW
+                        probe1.ori = 90
+                        probe2.ori = 270
+                        probe2.pos = [p1_x + sep - 1, p1_y + sep]
+                    elif target_jump == -1:  # CW
+                        probe1.ori = 270
+                        probe2.ori = 90
+                        probe2.pos = [p1_x - sep + 1, p1_y - sep]
+                elif orientation == 'radial':
+                    if target_jump == 1:  # inward
+                        probe1.ori = 180
+                        probe2.ori = 0
+                        # probe2 is right and down from probe1
+                        probe2.pos = [p1_x + sep - 1, p1_y - sep]
+                    elif target_jump == -1:  # outward
+                        probe1.ori = 0
+                        probe2.ori = 180
+                        # probe2 is left and up from probe1
+                        probe2.pos = [p1_x - sep + 1, p1_y + sep]
+            elif corner == 225:
+                p1_x = dist_from_fix * -1
+                p1_y = dist_from_fix * -1
+                if orientation == 'tangent':
+                    if target_jump == 1:  # CW
+                        probe1.ori = 0
+                        probe2.ori = 180
+                        probe2.pos = [p1_x - sep + 1, p1_y + sep]
+                    elif target_jump == -1:  # ACW
+                        probe1.ori = 180
+                        probe2.ori = 0
+                        probe2.pos = [p1_x + sep - 1, p1_y - sep]
+                elif orientation == 'radial':
+                    if target_jump == 1:  # inward
+                        probe1.ori = 90
+                        probe2.ori = 270
+                        # probe2 is right and up from probe1
+                        probe2.pos = [p1_x + sep - 1, p1_y + sep]
+                    elif target_jump == -1:  # outward
+                        probe1.ori = 270
+                        probe2.ori = 90
+                        # probe2 is left and down from probe1
+                        probe2.pos = [p1_x - sep + 1, p1_y - sep]
+            else:
+                corner = 315
+                p1_x = dist_from_fix * 1
+                p1_y = dist_from_fix * -1
+                if orientation == 'tangent':
+                    if target_jump == 1:  # ACW
+                        probe1.ori = 270
+                        probe2.ori = 90
+                        probe2.pos = [p1_x - sep + 1, p1_y - sep]
+                    elif target_jump == -1:  # CW
+                        probe1.ori = 90
+                        probe2.ori = 270
+                        probe2.pos = [p1_x + sep - 1, p1_y + sep]
+                elif orientation == 'radial':
+                    if target_jump == 1:  # inward
+                        probe1.ori = 0
+                        probe2.ori = 180
+                        # probe2 is left and up from probe1
+                        probe2.pos = [p1_x - sep + 1, p1_y + sep]
+                    elif target_jump == -1:  # outward
+                        probe1.ori = 180
+                        probe2.ori = 0
+                        # probe2 is right and down from probe1
+                        probe2.pos = [p1_x + sep - 1, p1_y - sep]
+
+            probe1.pos = [p1_x, p1_y]
+
+            if verbose:
+                print(f"probe1: {probe1.pos}, probe2.pos: {probe2.pos}. dff: {dist_from_fix}")
+
+
+            # VARIABLE FIXATION TIME
+            # to reduce anticipatory effects that might arise from fixation always being same length.
+            # if False, vary_fix == .5 seconds, so t_fixation is 1 second.
+            # if Ture, vary_fix is between 0 and 1 second, so t_fixation is between .5 and 1.5 seconds.
+            vary_fix = int(fps / 2)
+            if vary_fixation:
+                vary_fix = np.random.randint(0, fps)
+
+            # timing in frames for ISI and probe2
+            # If probes are presented concurrently, set ISI and probe2 to last for 0 frames.
+            isi_fr = ISI
+            p2_fr = probe_duration
+            if ISI < 0:
+                isi_fr = p2_fr = 0
+
+            # cumulative timing in frames for each part of a trial
+            t_fixation = int(fps / 2) + vary_fix
+            t_probe_1 = t_fixation + probe_duration
+            t_ISI = t_probe_1 + isi_fr
+            t_probe_2 = t_ISI + p2_fr
+            t_response = t_probe_2 + 10000 * fps  # ~40 seconds to respond
+
+            if verbose:
+                print(f"t_fixation: {t_fixation}\n"
+                      f"t_probe_1: {t_probe_1}\n"
+                      f"t_ISI: {t_ISI}\n"
+                      f"t_probe_2: {t_probe_2}\n"
+                      f"t_response: {t_response}\n")
+
+            # repeat the trial if [r] has been pressed
+            # todo: keep the per-frame stuff to a minimum to reduce the load.
+
+            # todo: moved check for take_break outside frame loop
+            # take a break every ? trials
+            if (trial_number % take_break == 1) & (trial_number > 1):
+                continueRoutine = False
+                breaks.draw()
+
+                # adding this to flush out any logged messages during the breaks.
+                logging.flush()  # write messages out to all targets
+
+                win.flip()
+
+                while not kb.getKeys():
+                    continueRoutine = True
+            else:
+                continueRoutine = True
+
+            # loop per frame
+            repeat = True
+            while repeat:
+                frameN = -1
+
+                continueRoutine = True
+                while continueRoutine:
+                    frameN = frameN + 1
+
+                    # todo: reset clock once.
+                    if frameN == t_fixation:
+                        # radius is set twice, one here, and once at response time.
+                        fixation.setRadius(3)
+                        # reset timer to start with probe1 presentation (at last fixation frame).
+                        kb.clock.reset()
+                        if verbose:
+                            print(f"{frameN}: frameN == t_fixation: reset timer")
+
+                    # todo: Changed ifs to elifs
+                    # FIXATION
+                    if t_fixation >= frameN > 0:
+                        # fixation.setRadius(3)
+                        # blend_edge_mask.draw()
+                        fixation.draw()
+                        trials_counter.draw()
+
+                        # if verbose:
+                        #     print(f"{frameN}: t_fixation >= frameN > 0: fixation")
+
+
+                    # PROBE 1
+                    elif t_probe_1 >= frameN > t_fixation:
+                        if verbose:
+                            print(f"{frameN}: t_probe_1 >= frameN > t_fixation: probe 1")
+                        # fixation.setRadius(3)
+                        # blend_edge_mask.draw()
+                        fixation.draw()
+                        trials_counter.draw()
+                        probe1.draw()
+                        if ISI == -1:  # SIMULTANEOUS CONDITION (concurrent)
+                            if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
+                                probe2.draw()
+                                if verbose:
+                                    print(f"\t{frameN}: probe2.draw(): conc probes")
+
+
+
+                    # ISI (only occurs if ISI > 0)
+                    elif t_ISI >= frameN > t_probe_1:
+                        # fixation.setRadius(3)
+                        # blend_edge_mask.draw()
+                        fixation.draw()
+                        trials_counter.draw()
+                        if verbose:
+                            print(f"{frameN}: t_ISI >= frameN > t_probe_1: ISI")
+
+                    # PROBE 2 (Only occurs if ISI > -1, e.g., not concurrent probes)
+                    elif t_probe_2 >= frameN > t_ISI:
+                        if verbose:
+                            print(f"{frameN}: t_probe_2 >= frameN > t_ISI: probe 2")
+                        if ISI >= 0:
+                            if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
+                                probe2.draw()
+                                if verbose:
+                                    print(f"\t{frameN}: probe2.draw()")
+                        # fixation.setRadius(3)
+                        # blend_edge_mask.draw()
+                        fixation.draw()
+                        trials_counter.draw()
+
+
+                    # Response time
+                    elif frameN > t_probe_2:
+                        # print(f"{frameN}: frameN > t_probe_2: response")
+
+                        # blend_edge_mask.draw()
+                        fixation.setRadius(2)
+                        fixation.draw()
+                        trials_counter.draw()
+
+                        # ANSWER keys
+                        theseKeys = kb.getKeys(keyList=['num_5', 'num_4', 'num_1',
+                                                        'num_2', 'w', 'q', 'a', 's'])
+                        if len(theseKeys) > 0:  # at least one key was pressed
+                            last_key = theseKeys[-1]
+                            resp_key = last_key.name
+                            resp_rt = last_key.rt
+                            if verbose:
+                                print(f"theseKeys: {list([i for i in theseKeys])}")
+                                print(f"resp_key: {resp_key}")
+                                print(f"resp_rt: {resp_rt}")
+                                print(f"key.duration: {last_key.duration}")
+
+
+                            # default assume response incorrect unless meets criteria below
+                            resp_corr = 0
+
+                            if corner == 45:
+                                if (resp_key == 'w') or (resp_key == 'num_5'):
+                                    resp_corr = 1
+                            elif corner == 135:
+                                if (resp_key == 'q') or (resp_key == 'num_4'):
+                                    resp_corr = 1
+                            elif corner == 225:
+                                if (resp_key == 'a') or (resp_key == 'num_1'):
+                                    resp_corr = 1
+                            elif corner == 315:
+                                if (resp_key == 's') or (resp_key == 'num_2'):
+                                    resp_corr = 1
+
+                            repeat = False
+                            continueRoutine = False
+
+                    # regardless of frameN, check for quit
+                    if kb.getKeys(keyList=["escape"]):
+                        thisExp.close()
+                        core.quit()
+
+                    # redo the trial if I think I made a mistake
+                    if kb.getKeys(keyList=["r"]) or kb.getKeys(keyList=['num_9']):
+                        repeat = True
+                        continueRoutine = False
+                        continue
+
+                    # gets rid of double presses
+                    kb.getKeys(clear=True)
+
+                    # refresh the screen
+                    if continueRoutine:
+                        win.flip()
+
+            # TrialHandler adds info to CSV (but stored in memory until end?)
+            thisExp.addData('trial_number', trial_number)
+            thisExp.addData('stair', stair_idx)
+            thisExp.addData('stair_name', thisStair)
+            thisExp.addData('step', step)
+            thisExp.addData('separation', sep)
+            thisExp.addData('ISI', ISI)
+            thisExp.addData('isi_fr', isi_fr)
+            thisExp.addData('probe_jump', target_jump)
+            thisExp.addData('jump_dir', jump_dir)
+            thisExp.addData('probeColor1', probeColor1)
+            thisExp.addData('probeColor255', probeColor255)
+            thisExp.addData('probeLum', probeLum)
+            thisExp.addData('trial_response', resp_corr)
+            thisExp.addData('corner', corner)
+            thisExp.addData('corner_name', corner_name)
+            thisExp.addData('probe_ecc', probe_ecc)
+            # thisExp.addData('resp.rt', resp.rt)
+            thisExp.addData('resp_key', resp_key)
+            thisExp.addData('resp_rt', resp_rt)
+            thisExp.addData('orientation', orientation)
+            thisExp.addData('vary_fixation', vary_fixation)
+            thisExp.addData('t_fixation', t_fixation)
+            thisExp.addData('monitor_name', monitor_name)
+            thisExp.addData('selected_fps', fps)
+            thisExp.addData('expName', expName)
+            thisExp.addData('psychopyVersion', psychopyVersion)
+
+            # indicates that this trial has finished
+            thisExp.nextEntry()
+
+            # updates staircase
+            thisStair.newValue(resp_corr)   # so that the staircase adjusts itself
 
 
     print("end of experiment loop, saving data")
+
+    runInfo = info.RunTimeInfo(verbose=True, win=win, userProcsDetailed=True)
+    # print(f"\nrun_info: {runInfo}")
+    print(f"getMemoryUsage: {info.getMemoryUsage()}")
+    print(f"getRAM: {info.getRAM()}")
 
     thisExp.dataFileName = filename
 
