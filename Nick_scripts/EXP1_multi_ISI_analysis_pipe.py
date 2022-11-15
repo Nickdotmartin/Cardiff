@@ -25,10 +25,10 @@ participant_list = ['Nick']  #, 'Simon']  # 'Simon', 'Nick'
 # participant_list = ['p1', 'p2']
 split_1probe = False
 
-n_runs = 12
-# n_runs = 20
+# n_runs = 12
+n_runs = 24
 
-analyse_from_run = 1
+analyse_from_run = 17
 
 trim_list = []
 
@@ -47,13 +47,14 @@ for p_idx, participant_name in enumerate(participant_list):
             run_folder_names.append(check_dir)
 
     trim_n = None
-    if len(run_folder_names) == 12:
-        trim_n = 2
-    elif len(run_folder_names) > 12:
-        if len(run_folder_names) % 2 == 0:  # if even
-            trim_n = int((len(run_folder_names)-12)/2)
-        else:
-            raise ValueError(f"for this exp you have {len(run_folder_names)} runs, set rules for trimming.")
+    # if len(run_folder_names) == 12:
+    #     trim_n = 2
+    # elif len(run_folder_names) > 12:
+    #     # trim_n = 2
+    #     if len(run_folder_names) % 2 == 0:  # if even
+    #         trim_n = int((len(run_folder_names)-12)/2)
+    #     else:
+    #         raise ValueError(f"for this exp you have {len(run_folder_names)} runs, set rules for trimming.")
     trim_list.append(trim_n)
 
     for run_idx, run_dir in enumerate(run_folder_names):
@@ -152,47 +153,47 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
 
-    print(f"\n\ntrim_list: {trim_list}, trim_n: {trim_n}\n\n")
-    lum_col = 'probeLum'
-
-    '''d'''
-    d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-                          trim_n=trim_n, error_type='SE')
-
-    all_df_path = os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv')
-    p_ave_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv')
-    err_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thr_error_SE.csv')
-    if trim_n is None:
-        all_df_path = os.path.join(root_path, 'MASTER_psignifit_thresholds.csv')
-        p_ave_path = os.path.join(root_path, 'MASTER_ave_thresh.csv')
-        err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
-
-    p_ave_df = pd.read_csv(p_ave_path)
-    isi_name_list = list(p_ave_df.columns)[1:]
-    isi_vals_list = [int(i[4:]) for i in list(p_ave_df.columns)[1:]]
-    sep_vals_list = list(p_ave_df['separation'])
-    sep_name_list = [f"1probe" if i == 20 else i for i in sep_vals_list]
-    print(f"p_ave_df:\n{p_ave_df}")
-    print(f"isi_name_list:\n{isi_name_list}")
-    print(f"isi_vals_list:\n{isi_vals_list}")
-    print(f"sep_vals_list:\n{sep_vals_list}")
-    print(f"sep_name_list:\n{sep_name_list}")
-
-    # todo: change plots to p_name at top
-    make_average_plots(all_df_path=all_df_path,
-                       ave_df_path=p_ave_path,
-                       error_bars_path=err_path,
-                       thr_col=lum_col,
-                       error_type='SE',
-                       n_trimmed=trim_n,
-                       ave_over_n=len(run_folder_names),
-                       split_1probe=split_1probe,
-                       isi_name_list=isi_name_list,
-                       sep_vals_list=sep_vals_list,
-                       sep_name_list=sep_name_list,
-                       exp_ave=False,  # participant ave, not exp ave
-                       heatmap_annot_fmt='.0f',  # use '.3g' for 3 significant figures, '.2f' for 2dp, '.0f' for int.
-                       show_plots=True, verbose=True)
+    # print(f"\n\ntrim_list: {trim_list}, trim_n: {trim_n}\n\n")
+    # lum_col = 'probeLum'
+    #
+    # '''d'''
+    # d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
+    #                       trim_n=trim_n, error_type='SE')
+    #
+    # all_df_path = os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv')
+    # p_ave_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv')
+    # err_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thr_error_SE.csv')
+    # if trim_n is None:
+    #     all_df_path = os.path.join(root_path, 'MASTER_psignifit_thresholds.csv')
+    #     p_ave_path = os.path.join(root_path, 'MASTER_ave_thresh.csv')
+    #     err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
+    #
+    # p_ave_df = pd.read_csv(p_ave_path)
+    # isi_name_list = list(p_ave_df.columns)[1:]
+    # isi_vals_list = sorted([int(i[4:]) for i in list(p_ave_df.columns)[1:]])
+    # sep_vals_list = list(p_ave_df['separation'])
+    # sep_name_list = [f"1probe" if i == 20 else i for i in sep_vals_list]
+    # print(f"p_ave_df:\n{p_ave_df}")
+    # print(f"isi_name_list:\n{isi_name_list}")
+    # print(f"isi_vals_list:\n{isi_vals_list}")
+    # print(f"sep_vals_list:\n{sep_vals_list}")
+    # print(f"sep_name_list:\n{sep_name_list}")
+    #
+    # # todo: change plots to p_name at top
+    # make_average_plots(all_df_path=all_df_path,
+    #                    ave_df_path=p_ave_path,
+    #                    error_bars_path=err_path,
+    #                    thr_col=lum_col,
+    #                    error_type='SE',
+    #                    n_trimmed=trim_n,
+    #                    ave_over_n=len(run_folder_names),
+    #                    split_1probe=split_1probe,
+    #                    isi_name_list=isi_name_list,
+    #                    sep_vals_list=sep_vals_list,
+    #                    sep_name_list=sep_name_list,
+    #                    exp_ave=False,  # participant ave, not exp ave
+    #                    heatmap_annot_fmt='.0f',  # use '.3g' for 3 significant figures, '.2f' for 2dp, '.0f' for int.
+    #                    show_plots=True, verbose=True)
 
 
 # print(f'exp_path: {exp_path}')

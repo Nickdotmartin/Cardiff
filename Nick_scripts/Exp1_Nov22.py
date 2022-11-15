@@ -70,7 +70,7 @@ def Exp1_Nov22():
     os.chdir(_thisDir)
 
     # Monitor config from monitor centre
-    monitor_name = 'NickMac'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
+    monitor_name = 'Nick_work_laptop'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 
 
     # Store info about the experiment session
@@ -330,10 +330,12 @@ def Exp1_Nov22():
     # # KEYBOARD
     # todo: changed this from builder to keyboard
     # resp = event.BuilderKeyResponse()
-    kb = keyboard.Keyboard()
+    # kb = keyboard.Keyboard()
+    kb = keyboard.Keyboard(backend='ptb')  # use psychtoolbox rather than IOHub
     print(f"keyboard.getKeyboards(): {keyboard.getKeyboards()}")
-    print(f"keyboard.getBackend(): {keyboard.getBackend()}")
-    # kb = keyboard.Keyboard(backend='ptb')  # use psychtoolbox rather than IOHub
+    print(f"keyboard.Keyboard.havePTB: {keyboard.Keyboard.getBackend()}")
+    print(f"keyboard.havePTB: {keyboard.havePTB}")
+    # print(f"keyboard.getBackend(): {keyboard.getBackend()}")
 
 
     # TEXT TO DISPLAY (changed from textStim to TextBox2)
