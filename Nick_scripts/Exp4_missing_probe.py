@@ -790,7 +790,7 @@ def exp4MissingProbe():
         core.quit()
 
 
-exp4MissingProbe()
+# exp4MissingProbe()
 
 if __name__ == '__main__':
     exp4MissingProbe()
