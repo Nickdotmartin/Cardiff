@@ -2120,7 +2120,7 @@ def d_average_participant(root_path, run_dir_names_list,
         this_psignifit_df = pd.read_csv(os.path.join(root_path, run_name, 'psignifit_thresholds.csv'))
 
         if verbose:
-            print(f'{run_idx}. {run_name} - this_psignifit_df:\n{this_psignifit_df}')
+            print(f'\n{run_idx}. {run_name} - this_psignifit_df:\n{this_psignifit_df}')
 
         if 'Unnamed: 0' in list(this_psignifit_df):
             this_psignifit_df.drop('Unnamed: 0', axis=1, inplace=True)
@@ -2153,7 +2153,7 @@ def d_average_participant(root_path, run_dir_names_list,
             rows, cols = this_psignifit_df.shape
             this_psignifit_df.insert(0, 'stack', [run_idx] * rows)
             if verbose:
-                print(f'\nthis_psignifit_df:\n{this_psignifit_df}')
+                print(f'this_psignifit_df:\n{this_psignifit_df}')
 
             all_psignifit_list.append(this_psignifit_df)
 
@@ -2375,7 +2375,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     all_df_headers = list(all_df.columns)
     # isi_name_list = all_df_headers[2:]
     # pos_sep_list = sorted(list(all_df['separation'].unique()))
-    isi_name_list = isi_name_list
+    # isi_name_list = isi_name_list
     pos_sep_list = sep_vals_list
     if verbose:
         print(f'\nall_df_headers: {all_df_headers}')

@@ -26,7 +26,7 @@ participant_list = ['Nick']  #, 'Simon']  # 'Simon', 'Nick'
 split_1probe = False
 
 # n_runs = 12
-n_runs = 30
+n_runs = 36
 
 analyse_from_run = 1
 
@@ -121,7 +121,7 @@ for p_idx, participant_name in enumerate(participant_list):
         # print(f"run_data_df:\n{run_data_df}")
         #
         # sep_list = list(run_data_df['separation'].unique())
-        # isi_list = list(run_data_df['ISI'].unique())
+        # isi_list = sorted(list(run_data_df['ISI'].unique()))
         # print(f"sep_list: {sep_list}")
         # print(f"isi_list: {isi_list}")
         #
@@ -153,6 +153,7 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
 
+    trim_n = None
     print(f"\n\ntrim_list: {trim_list}, trim_n: {trim_n}\n\n")
     lum_col = 'probeLum'
 
@@ -170,8 +171,9 @@ for p_idx, participant_name in enumerate(participant_list):
 
     p_ave_df = pd.read_csv(p_ave_path)
     # isi_name_list = list(p_ave_df.columns)[1:]
+    # todo: note, this removes concurrent trials
     isi_vals_list = sorted([int(i[4:]) for i in list(p_ave_df.columns)[1:]])
-    isi_name_list = [f"conc" if i == -1 else f"ISI {i}" for i in isi_vals_list]
+    isi_name_list = [f"conc" if i == -1 else f"ISI_{i}" for i in isi_vals_list]
 
     sep_vals_list = list(p_ave_df['separation'])
     sep_name_list = [f"1probe" if i == 20 else i for i in sep_vals_list]
