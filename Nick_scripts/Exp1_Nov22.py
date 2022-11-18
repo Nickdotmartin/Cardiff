@@ -1,15 +1,11 @@
-from __future__ import division  # always does true division, not int dividion (no remainder) as in python2.
+# from __future__ import division  # always does true division, not int division (no remainder) as in python2.
 
 import psychopy
 # psychopyVersion = '2021.2.3'  # '2020.2.10'=MartinExp1Version', 2021.2.3'=nickMac version, latest nickmac version=2022.2.4
 # psychopy.useVersion(psychopyVersion)
 from psychopy import __version__ as psychopyVersion  # uses the computer's downloaded version
-#
-# This should work
-# from psychopy.iohub import launchHubServer
-# from psychopy import iohub
-# from psychopy import visual
 
+print(f"psychopy.version: {psychopyVersion}")
 
 from psychopy import gui, visual, core, data, event, monitors, logging, info
 from psychopy.hardware import keyboard
@@ -23,11 +19,9 @@ from datetime import datetime
 from math import tan, sqrt
 from kestenSTmaxVal import Staircase
 
-import sys
 
 '''
 I now have latest version of PsycoPy as stand alone and callable.
-But I need to update to a 3.8 environment.
 
 Once I've done that, get on Linux.
 1. find good package for measuring memory.
@@ -56,21 +50,22 @@ If memory issues stl not fixed, I could try to:
 6. try turning off pyglet or using glfw
 '''
 
+
+
 # @profile
 def Exp1_Nov22():
 
+
+
     print(f"psychopy.version: {psychopy.__version__}")
 
-    # test inHub
-    # io = iohub
-    # io.quit()
 
     # Ensure that relative paths start from the same directory as this script
     _thisDir = os.path.dirname(os.path.abspath(__file__))
     os.chdir(_thisDir)
 
     # Monitor config from monitor centre
-    monitor_name = 'Nick_work_laptop'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
+    monitor_name = 'NickMac'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 
 
     # Store info about the experiment session
@@ -99,7 +94,7 @@ def Exp1_Nov22():
     participant_name = expInfo['1. Participant']
     run_number = int(expInfo['2. Run_number'])
     # todo: return n_trials_per_stair to 25
-    n_trials_per_stair = 1
+    n_trials_per_stair = 25
     probe_duration = int(expInfo['3. Probe duration in frames at 240hz'])
     probe_ecc = 4
     fps = int(expInfo['4. fps'])
@@ -110,7 +105,7 @@ def Exp1_Nov22():
     verbose = eval(expInfo['9. testing/de-bugging'])
 
     # LOGGING AND PRINTING TO SCREEN
-    # todo: try with critical logging only
+    # # todo: try with critical logging only
     # sets psychoPy to only log critical messages
     if verbose:
         logging.console.setLevel(logging.DEBUG)
@@ -168,6 +163,7 @@ def Exp1_Nov22():
                                      # autoLog=False
                                      )
 
+    # todo: remove unused variables below
     # COLORS AND LUMINANCE
     # Lum to Color255
     LumColor255Factor = 2.39538706913372
@@ -190,10 +186,7 @@ def Exp1_Nov22():
     # COLOUR SPACE
     colour_space = 'rgb255'
     background_col = bgColor255
-    # probe_col =
-    # if colour_space == 'rgb':
-    #     background_col =
-        # probe_col =
+
 
     # MONITOR SPEC
     thisMon = monitors.Monitor(monitor_name)
@@ -235,6 +228,11 @@ def Exp1_Nov22():
     print(f"win.colorSpace: {win.colorSpace}")
     print(f"win.winType: {win.winType}")
 
+    win.recordFrameIntervals = True
+    # record as droppped with 4ms tollerance
+    win.refreshThreshold = 1 / fps + 0.004
+    # win.logOnFlip(level=logging.WARNING, msg='sent on actual flip')
+
     # todo: check this - is it just for apple retina screen
     widthPix = widthPix / 2
     heightPix = heightPix / 2
@@ -245,9 +243,14 @@ def Exp1_Nov22():
 
     # get system info
     runInfo = info.RunTimeInfo(verbose=True, win=win, userProcsDetailed=True)
-    print(f"\nrun_info: {runInfo}")
-    print(f"getMemoryUsage: {info.getMemoryUsage()}")
-    print(f"getRAM: {info.getRAM()}")
+    print(f"\nrun_info:\n")
+    for k, v in runInfo.items():
+        print(k, v)
+    # print(f"\nrun_info:\n{runInfo}")
+    start_mem = info.getMemoryUsage()
+    start_ram = info.getRAM()[1]
+    print(f"start_mem: {start_mem}")
+    print(f"start_ram: {start_ram}")
     # if "windowRefreshTimeAvg_ms" in runInfo:
     #     print("or from the test of the screen refresh rate:")
     #     print("  %.2f ms = average refresh time" % runInfo["windowRefreshTimeAvg_ms"])
@@ -274,6 +277,7 @@ def Exp1_Nov22():
     expInfo['ActualFrameRate'] = win.getActualFrameRate()
     if expInfo['ActualFrameRate'] != None:
         actualframeDur = 1.0 / round(expInfo['ActualFrameRate'])
+    start_fps = win.getActualFrameRate()
     print(f"expInfo['ActualFrameRate']: {expInfo['ActualFrameRate']}, actualframeDur: {actualframeDur}")
 
 
@@ -333,13 +337,12 @@ def Exp1_Nov22():
     # kb = keyboard.Keyboard()
     kb = keyboard.Keyboard(backend='ptb')  # use psychtoolbox rather than IOHub
     print(f"keyboard.getKeyboards(): {keyboard.getKeyboards()}")
-    print(f"keyboard.Keyboard.havePTB: {keyboard.Keyboard.getBackend()}")
-    print(f"keyboard.havePTB: {keyboard.havePTB}")
-    # print(f"keyboard.getBackend(): {keyboard.getBackend()}")
+    kb_backend = keyboard.Keyboard.getBackend()
+    print(f"keyboard.Keyboard.getBackend(): {kb_backend}")
 
 
     # TEXT TO DISPLAY (changed from textStim to TextBox2)
-    # todo: try using TextBox2 rather than TestStim
+    # todo: get rid of tabs
     # INSTRUCTIONS
     insturction_text = "\n\n\n\n\n\nFocus on the fixation circle at the centre of the screen.\n\n" \
                        "A small white target will briefly appear on screen,\n" \
@@ -644,6 +647,14 @@ def Exp1_Nov22():
             else:
                 continueRoutine = True
 
+            if trial_number == total_n_trials:
+                last_mem = info.getMemoryUsage()
+                last_ram = info.getRAM()[1]
+                last_fps = win.getActualFrameRate()
+                # print(f"last_mem: {last_mem}")
+                # print(f"last_ram: {last_ram}")
+                # print(f"last_fps: {last_fps}")
+
             # loop per frame
             repeat = True
             while repeat:
@@ -802,6 +813,10 @@ def Exp1_Nov22():
             thisExp.addData('selected_fps', fps)
             thisExp.addData('expName', expName)
             thisExp.addData('psychopyVersion', psychopyVersion)
+            thisExp.addData('date', expInfo['date'])
+            thisExp.addData('time', expInfo['time'])
+
+
 
             # indicates that this trial has finished
             thisExp.nextEntry()
@@ -812,10 +827,13 @@ def Exp1_Nov22():
 
     print("end of experiment loop, saving data")
 
-    runInfo = info.RunTimeInfo(verbose=True, win=win, userProcsDetailed=True)
-    # print(f"\nrun_info: {runInfo}")
-    print(f"getMemoryUsage: {info.getMemoryUsage()}")
-    print(f"getRAM: {info.getRAM()}")
+    # runInfo = info.RunTimeInfo(verbose=True, win=win, userProcsDetailed=True)
+    # # print(f"\nrun_info: {runInfo}")
+    # print(f"getMemoryUsage: {info.getMemoryUsage()}")
+    # print(f"getRAM: {info.getRAM()}")
+
+
+
 
     thisExp.dataFileName = filename
 
@@ -824,6 +842,66 @@ def Exp1_Nov22():
     thisExp.close()
     # thisExp.abort()
 
+    end_mem = info.getMemoryUsage()
+    end_ram = info.getRAM()[1]
+    print(f"expInfo['date']: {expInfo['date']}")
+    print(f"expInfo['time']: {expInfo['time']}")
+    print(f"windowWinType: {runInfo['windowWinType']}")
+    print(f"kb_backend: {kb_backend}")
+    print(f"psychopyVersion: {psychopyVersion}")
+    print(f"total_n_trials: {total_n_trials}")
+    print(f"start_mem: {start_mem}")
+    print(f"start_ram: {start_ram}")
+    print(f"start_fps: {start_fps}")
+    print(f"last_mem: {last_mem}")
+    print(f"last_ram: {last_ram}")
+    print(f"last_fps: {last_fps}")
+    print(f"end_mem: {end_mem}")
+    print(f"end_ram: {end_ram}")
+    mem_diff = start_mem - end_mem
+    ram_diff = start_ram - end_ram
+    # ram_diff = (start_ram[0] - end_ram[0], start_ram[1] - end_ram[1])
+    fps_diff = start_fps - last_fps
+    print(f"mem_diff: {mem_diff}")
+    print(f"ram_diff: {ram_diff}")
+    print(f"fps_diff: {fps_diff}")
+
+    n_dropped_fr = win.nDroppedFrames
+    print(f"n_dropped_fr: {n_dropped_fr}")
+
+
+    # Import writer class from csv module
+    from csv import writer
+
+    # List that we want to add as a new row
+    out_list = [expInfo['date'], expInfo['time'], 'psychopy', runInfo['windowWinType'], kb_backend,
+                psychopyVersion, total_n_trials,
+                start_mem, start_ram, start_fps, last_mem, last_ram, last_fps,
+                end_mem, end_ram, mem_diff, ram_diff, fps_diff, abs(fps_diff),
+                n_dropped_fr, n_dropped_fr/total_n_trials]
+
+    # Open our existing CSV file in append mode
+    # Create a file object for this file
+    with open('/Users/nickmartin/Library/CloudStorage/OneDrive-CardiffUniversity/PycharmProjects/Cardiff/project_stuff/Exp1_Nov22_mem_fps.csv', 'a') as f_object:
+
+        # Pass this file object to csv.writer()
+        # and get a writer object
+        writer_object = writer(f_object)
+
+        # Pass the list as an argument into
+        # the writerow()
+        writer_object.writerow([])  # makes a new row
+
+        writer_object.writerow(out_list)
+
+        # Close the file object
+        f_object.close()
+    print('written details to csv')
+
+    import matplotlib.pyplot as plt
+    plt.plot(win.frameIntervals)
+    plt.show()
+    win.saveFrameIntervals(fileName=None, clear=True)
     # the stuff below certainly seems to be what's recommended (close window then core quit)
 
     while not kb.getKeys():
@@ -838,9 +916,7 @@ def Exp1_Nov22():
         win.close()
         core.quit()
 
-    # Turn profiling off
-    # scalene_profiler.stop()
-    # scalene_profiler.Scalene.stop()
+
 
 Exp1_Nov22()
 
