@@ -15,15 +15,21 @@ def which_path(path):
     wind_oneD_path = os.path.normpath(r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff')
 
     if path[:len(mac_path)] == mac_path:
+        path_name = 'mac'
         print('this is a mac_path')
     elif path[:len(mac_oneD_path)] == mac_oneD_path:
+        path_name = 'mac_oneDrive'
         print('this is a mac_oneD_path')
     elif path[:len(wind_path)] == wind_path:
+        path_name = 'windows'
         print('this is a wind_path')
     elif path[:len(wind_oneD_path)] == wind_oneD_path:
+        path_name = 'windows_oneDrive'
         print('this is a wind_oneD_path')
     else:
         print('Unknown')
+
+    return path_name
 
 
 def running_on_laptop(verbose=True):
@@ -111,8 +117,10 @@ def switch_path(orig_path, change_to):
         join_paths = f'{new_prefix}\{suffix_to_keep}'
         new_path = pathlib.PureWindowsPath(join_paths)
 
-    elif change_to.lower() in ['wind_oned', 'wind_oned_path', 'wind_onedrive', 'wind_one_drive', 'wind_one_d',
-                               'win_oned', 'win_oned_path', 'win_onedrive', 'win_one_drive', 'win_one_d']:
+    elif change_to.lower() in ['windows_onedrive', 'wind_oned', 'wind_oned_path',
+                               'wind_onedrive', 'wind_one_drive', 'wind_one_d',
+                               'win_oned', 'win_oned_path', 'win_onedrive',
+                               'win_one_drive', 'win_one_d']:
         new_prefix = wind_oneD_path
         print(f"new_prefix ({change_to.lower()}): {new_prefix}")
         join_paths = f'{new_prefix}\{suffix_to_keep}'
