@@ -20,6 +20,16 @@ from math import tan, sqrt
 from kestenSTmaxVal import Staircase
 
 
+
+# # a function to be called on selected frames from callOnFlip.py coder demo
+# clock = core.Clock()  # a clock to check times from
+# def printFrame(frameN, tReceived):
+#     tPrinted = clock.getTime()
+#     print(frameN, tReceived, tPrinted)
+
+
+
+
 '''
 Updated Exp1 script.  
 
@@ -45,6 +55,7 @@ If memory issues stl not fixed, I could try to:
 # # @profile
 # def Exp1_Nov22():
 
+clock = core.Clock()  # a clock to check times from
 
 
 print(f"psychopy.version: {psychopy.__version__}")
@@ -55,7 +66,7 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'NickMac'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
+monitor_name = 'Nick_work_laptop'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 
 
 # Store info about the experiment session
@@ -218,27 +229,37 @@ print(f"win.winType: {win.winType}")
 
 # win.recordFrameIntervals = True
 # record as droppped with 4ms tollerance
-win.refreshThreshold = 1 / fps + 0.004
+# win.refreshThreshold = 1 / fps + 0.004
 # win.logOnFlip(level=logging.WARNING, msg='sent on actual flip')
+
+
+'''set an ideal frame time and margin of error for dropped frames'''
+fr_sec = 1/fps
+# fr_error = 1.5
+fr_error = 1.01
+max_fr_sec = fr_error * fr_sec
+print(f"expected frames duration is {fr_sec}.  An acceptable error is {fr_error} times this.\n"
+      f"If there are frames longer than {max_fr_sec}, the trial will be re-done.")
+
 
 # todo: check this - is it just for apple retina screen
 widthPix = widthPix / 2
 heightPix = heightPix / 2
 widthPix, heightPix = win.size
-if verbose:
-    print(f"check win.size: {win.size}")
-    print(f"widthPix: {widthPix}, hight: {heightPix}")
+# if verbose:
+print(f"check win.size: {win.size}")
+print(f"widthPix: {widthPix}, hight: {heightPix}")
 
-# get system info
-runInfo = info.RunTimeInfo(verbose=True, win=win, userProcsDetailed=True)
-print(f"\nrun_info:\n")
-for k, v in runInfo.items():
-    print(k, v)
-# print(f"\nrun_info:\n{runInfo}")
-start_mem = info.getMemoryUsage()
-start_ram = info.getRAM()[1]
-print(f"start_mem: {start_mem}")
-print(f"start_ram: {start_ram}")
+# # get system info
+# runInfo = info.RunTimeInfo(verbose=True, win=win, userProcsDetailed=True)
+# print(f"\nrun_info:\n")
+# for k, v in runInfo.items():
+#     print(k, v)
+# # print(f"\nrun_info:\n{runInfo}")
+# start_mem = info.getMemoryUsage()
+# start_ram = info.getRAM()[1]
+# print(f"start_mem: {start_mem}")
+# print(f"start_ram: {start_ram}")
 # if "windowRefreshTimeAvg_ms" in runInfo:
 #     print("or from the test of the screen refresh rate:")
 #     print("  %.2f ms = average refresh time" % runInfo["windowRefreshTimeAvg_ms"])
@@ -258,16 +279,16 @@ print(f"start_ram: {start_ram}")
 #             print("""Try defining the window as full-screen (it's not currently),
 #                   i.e. at the top of the demo change to: win = visual.Window((800, 600), fullscr=True,...
 #                   and re-run the demo.""")
-thisExp.runtimeInfo=runInfo
+# thisExp.runtimeInfo=runInfo
 
-# CHECK FPS
-# simpler way to test framerate
-# store frame rate of monitor if we can measure it
-expInfo['ActualFrameRate'] = win.getActualFrameRate()
-if expInfo['ActualFrameRate'] != None:
-    actualframeDur = 1.0 / round(expInfo['ActualFrameRate'])
-start_fps = win.getActualFrameRate()
-print(f"expInfo['ActualFrameRate']: {expInfo['ActualFrameRate']}, actualframeDur: {actualframeDur}")
+# # CHECK FPS
+# # simpler way to test framerate
+# # store frame rate of monitor if we can measure it
+# expInfo['ActualFrameRate'] = win.getActualFrameRate()
+# if expInfo['ActualFrameRate'] != None:
+#     actualframeDur = 1.0 / round(expInfo['ActualFrameRate'])
+# start_fps = win.getActualFrameRate()
+# print(f"expInfo['ActualFrameRate']: {expInfo['ActualFrameRate']}, actualframeDur: {actualframeDur}")
 
 
 
@@ -321,11 +342,11 @@ myMouse = event.Mouse(visible=False)
 # # KEYBOARD
 # todo: changed this from builder to keyboard
 # resp = event.BuilderKeyResponse()
-# kb = keyboard.Keyboard()
-kb = keyboard.Keyboard(backend='ptb')  # use psychtoolbox rather than IOHub
-print(f"keyboard.getKeyboards(): {keyboard.getKeyboards()}")
-kb_backend = keyboard.Keyboard.getBackend()
-print(f"keyboard.Keyboard.getBackend(): {kb_backend}")
+kb = keyboard.Keyboard()
+# kb = keyboard.Keyboard(backend='ptb')  # use psychtoolbox rather than IOHub
+# print(f"keyboard.getKeyboards(): {keyboard.getKeyboards()}")
+# kb_backend = keyboard.Keyboard.getBackend()
+# print(f"keyboard.Keyboard.getBackend(): {kb_backend}")
 
 
 # TEXT TO DISPLAY (changed from textStim to TextBox2)
@@ -621,6 +642,7 @@ for step in range(n_trials_per_stair):
         # take a break every ? trials
         if (trial_number % take_break == 1) & (trial_number > 1):
             continueRoutine = False
+            breaks.text = breaks_text + f"\nyou have completed {trial_number}/{total_n_trials} trials."
             breaks.draw()
 
             # adding this to flush out any logged messages during the breaks.
@@ -633,13 +655,18 @@ for step in range(n_trials_per_stair):
         else:
             continueRoutine = True
 
-        if trial_number == total_n_trials:
-            last_mem = info.getMemoryUsage()
-            last_ram = info.getRAM()[1]
-            last_fps = win.getActualFrameRate()
-            # print(f"last_mem: {last_mem}")
-            # print(f"last_ram: {last_ram}")
-            # print(f"last_fps: {last_fps}")
+        # if trial_number == total_n_trials:
+        #     last_mem = info.getMemoryUsage()
+        #     last_ram = info.getRAM()[1]
+        #     last_fps = win.getActualFrameRate()
+        #     # print(f"last_mem: {last_mem}")
+        #     # print(f"last_ram: {last_ram}")
+        #     # print(f"last_fps: {last_fps}")
+
+        # todo: add in core.rush(True) for these time critical parts of script.
+        # todo: add in global timer and get time from last frame f fixation until first frame of response.
+        #  I can later use this to see if there were dropped frames or other time issues across probe1, isi, probe2.
+
 
         # loop per frame
         repeat = True
@@ -659,6 +686,12 @@ for step in range(n_trials_per_stair):
                     if verbose:
                         print(f"{frameN}: frameN == t_fixation: reset timer")
 
+                    # record time of last fixation frame.
+                    # last_fix_fr_time = win.callOnFlip(clock.getTime())
+
+                    win.recordFrameIntervals = True
+
+
                 # todo: Changed ifs to elifs
                 # FIXATION
                 if t_fixation >= frameN > 0:
@@ -676,7 +709,7 @@ for step in range(n_trials_per_stair):
                     if verbose:
                         print(f"{frameN}: t_probe_1 >= frameN > t_fixation: probe 1")
 
-                    win.recordFrameIntervals = True
+                    # win.recordFrameIntervals = True
                     # fixation.setRadius(3)
                     # blend_edge_mask.draw()
                     fixation.draw()
@@ -713,13 +746,17 @@ for step in range(n_trials_per_stair):
                     fixation.draw()
                     trials_counter.draw()
 
+                # elif frameN == t_probe_2:
+                #     # record time of last probe frame.
+                #     last_probe_fr_time = win.callOnFlip(clock.getTime())
+
 
                 # Response time
                 elif frameN > t_probe_2:
                     # print(f"{frameN}: frameN > t_probe_2: response")
 
                     win.recordFrameIntervals = False
-                    win.saveFrameIntervals(f"/Users/nickmartin/Library/CloudStorage/OneDrive-CardiffUniversity/PycharmProjects/Cardiff/memory_and_timings/frameIntervals_20221121/run4/FrameIntervals_{trial_number}_ISI{ISI}")
+                    # win.saveFrameIntervals(f"/Users/nickmartin/Library/CloudStorage/OneDrive-CardiffUniversity/PycharmProjects/Cardiff/memory_and_timings/frameIntervals_20221121/run4/FrameIntervals_{trial_number}_ISI{ISI}")
 
                     # blend_edge_mask.draw()
                     fixation.setRadius(2)
@@ -770,12 +807,31 @@ for step in range(n_trials_per_stair):
                     continueRoutine = False
                     continue
 
+                # todo: sort out how to allow participants to respond, then go back and repeat the frame.
+                if len(win.frameIntervals) > 0:
+                    if max(win.frameIntervals) > max_fr_sec:
+                        print('Repeating this trial as dropped frame.')
+                        print(win.frameIntervals)
+                        win.frameIntervals.clear()
+                        repeat = True
+                        continueRoutine = False
+                        continue
+
+
                 # gets rid of double presses
                 kb.getKeys(clear=True)
 
                 # refresh the screen
                 if continueRoutine:
                     win.flip()
+
+        # get duration from last fixation frame to last probe frame
+        # probes_fr_dur = last_probe_fr_time - last_fix_fr_time
+
+        print(win.frameIntervals)
+
+        # keep this, so it only checks last set of frames.
+        win.frameIntervals.clear()
 
         # TrialHandler adds info to CSV (but stored in memory until end?)
         thisExp.addData('trial_number', trial_number)
@@ -800,6 +856,9 @@ for step in range(n_trials_per_stair):
         thisExp.addData('orientation', orientation)
         thisExp.addData('vary_fixation', vary_fixation)
         thisExp.addData('t_fixation', t_fixation)
+        # thisExp.addData('last_fix_fr_time', last_fix_fr_time)
+        # thisExp.addData('last_probe_fr_time', last_probe_fr_time)
+        # thisExp.addData('probes_fr_dur', probes_fr_dur)
         thisExp.addData('monitor_name', monitor_name)
         thisExp.addData('selected_fps', fps)
         thisExp.addData('expName', expName)
@@ -833,67 +892,67 @@ thisExp.dataFileName = filename
 thisExp.close()
 # thisExp.abort()
 
-end_mem = info.getMemoryUsage()
-end_ram = info.getRAM()[1]
-print(f"expInfo['date']: {expInfo['date']}")
-print(f"expInfo['time']: {expInfo['time']}")
-print(f"windowWinType: {runInfo['windowWinType']}")
-print(f"kb_backend: {kb_backend}")
-print(f"psychopyVersion: {psychopyVersion}")
-print(f"total_n_trials: {total_n_trials}")
-print(f"start_mem: {start_mem}")
-print(f"start_ram: {start_ram}")
-print(f"start_fps: {start_fps}")
-print(f"last_mem: {last_mem}")
-print(f"last_ram: {last_ram}")
-print(f"last_fps: {last_fps}")
-print(f"end_mem: {end_mem}")
-print(f"end_ram: {end_ram}")
-mem_diff = start_mem - end_mem
-ram_diff = start_ram - end_ram
-# ram_diff = (start_ram[0] - end_ram[0], start_ram[1] - end_ram[1])
-fps_diff = start_fps - last_fps
-print(f"mem_diff: {mem_diff}")
-print(f"ram_diff: {ram_diff}")
-print(f"fps_diff: {fps_diff}")
-
-n_dropped_fr = win.nDroppedFrames
-print(f"n_dropped_fr: {n_dropped_fr}")
-
-
-# Import writer class from csv module
-from csv import writer
-
-# List that we want to add as a new row
-out_list = [expInfo['date'], expInfo['time'], 'psychopy', runInfo['windowWinType'], kb_backend,
-            psychopyVersion, total_n_trials,
-            start_mem, start_ram, start_fps, last_mem, last_ram, last_fps,
-            end_mem, end_ram, mem_diff, ram_diff, fps_diff, abs(fps_diff),
-            n_dropped_fr, n_dropped_fr/total_n_trials]
-
-# Open our existing CSV file in append mode
-# Create a file object for this file
-with open('/Users/nickmartin/Library/CloudStorage/OneDrive-CardiffUniversity/PycharmProjects/Cardiff/project_stuff/Exp1_Nov22_mem_fps.csv', 'a') as f_object:
-
-    # Pass this file object to csv.writer()
-    # and get a writer object
-    writer_object = writer(f_object)
-
-    # Pass the list as an argument into
-    # the writerow()
-    writer_object.writerow([])  # makes a new row
-
-    writer_object.writerow(out_list)
-
-    # Close the file object
-    f_object.close()
-print('written details to csv')
-
-import matplotlib.pyplot as plt
-plt.plot(win.frameIntervals)
-plt.show()
-# win.saveFrameIntervals(fileName=None, clear=True)
-# the stuff below certainly seems to be what's recommended (close window then core quit)
+# end_mem = info.getMemoryUsage()
+# end_ram = info.getRAM()[1]
+# print(f"expInfo['date']: {expInfo['date']}")
+# print(f"expInfo['time']: {expInfo['time']}")
+# print(f"windowWinType: {runInfo['windowWinType']}")
+# print(f"kb_backend: {kb_backend}")
+# print(f"psychopyVersion: {psychopyVersion}")
+# print(f"total_n_trials: {total_n_trials}")
+# print(f"start_mem: {start_mem}")
+# print(f"start_ram: {start_ram}")
+# print(f"start_fps: {start_fps}")
+# print(f"last_mem: {last_mem}")
+# print(f"last_ram: {last_ram}")
+# print(f"last_fps: {last_fps}")
+# print(f"end_mem: {end_mem}")
+# print(f"end_ram: {end_ram}")
+# mem_diff = start_mem - end_mem
+# ram_diff = start_ram - end_ram
+# # ram_diff = (start_ram[0] - end_ram[0], start_ram[1] - end_ram[1])
+# fps_diff = start_fps - last_fps
+# print(f"mem_diff: {mem_diff}")
+# print(f"ram_diff: {ram_diff}")
+# print(f"fps_diff: {fps_diff}")
+#
+# n_dropped_fr = win.nDroppedFrames
+# print(f"n_dropped_fr: {n_dropped_fr}")
+#
+#
+# # Import writer class from csv module
+# from csv import writer
+#
+# # List that we want to add as a new row
+# out_list = [expInfo['date'], expInfo['time'], 'psychopy', runInfo['windowWinType'], kb_backend,
+#             psychopyVersion, total_n_trials,
+#             start_mem, start_ram, start_fps, last_mem, last_ram, last_fps,
+#             end_mem, end_ram, mem_diff, ram_diff, fps_diff, abs(fps_diff),
+#             n_dropped_fr, n_dropped_fr/total_n_trials]
+#
+# # Open our existing CSV file in append mode
+# # Create a file object for this file
+# with open('/Users/nickmartin/Library/CloudStorage/OneDrive-CardiffUniversity/PycharmProjects/Cardiff/project_stuff/Exp1_Nov22_mem_fps.csv', 'a') as f_object:
+#
+#     # Pass this file object to csv.writer()
+#     # and get a writer object
+#     writer_object = writer(f_object)
+#
+#     # Pass the list as an argument into
+#     # the writerow()
+#     writer_object.writerow([])  # makes a new row
+#
+#     writer_object.writerow(out_list)
+#
+#     # Close the file object
+#     f_object.close()
+# print('written details to csv')
+#
+# import matplotlib.pyplot as plt
+# plt.plot(win.frameIntervals)
+# plt.show()
+# # win.saveFrameIntervals(fileName=None, clear=True)
+# # the stuff below certainly seems to be what's recommended (close window then core quit)
 
 while not kb.getKeys():
     # display end of experiment screen
