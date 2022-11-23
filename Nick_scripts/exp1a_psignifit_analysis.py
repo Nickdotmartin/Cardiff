@@ -35,6 +35,32 @@ split_df_into_pos_sep_df_and_1probe_df():
 pd.options.display.float_format = "{:,.2f}".format
 
 
+def conc_to_first_isi_col(df):
+    """
+    Function to sort dataframe where concurrent is given as 'ISI_-1'.
+    This can appear as the last ISI column instead of first.
+
+    This simple function won't work if ISI columns aren't at the end,
+    and will require a bit more sophistication
+    (e.g., extract ISI columns first, then check if ISI_-1 is last)
+
+    :param df: dataframe to be tested and sorted if necessary.
+    :return: dataframe - which has been sorted if needed"""
+
+
+    if df.columns.tolist()[-1] == 'ISI_-1':
+        col_list = df.columns.tolist()
+        other_cols = [i for i in col_list if 'ISI' not in i]
+        isi_cols = [i for i in col_list if 'ISI' in i]
+        new_cols_list = other_cols + isi_cols[-1:] + isi_cols[:-1]
+        out_df = df.reindex(columns=new_cols_list)
+        print(f"Concurrent column moved to start\n{out_df}")
+    else:
+        out_df = df
+
+    return out_df
+
+
 def split_df_alternate_rows(df):
     """
     Split a dataframe into alternate rows.  Dataframes are organized by
@@ -1303,13 +1329,17 @@ def plot_8_sep_thr(all_thr_df, thr_col='newLum', exp_ave=False, fig_title=None,
     if type(all_thr_df) is str:
         if os.path.isfile(all_thr_df):
             all_thr_df = pd.read_csv(all_thr_df)
-
-    if exp_ave:
+    # Average over experiment or participant (with or without participant name)
+    if exp_ave is True:
         ave_over = 'Exp'
         long_df_idx_col = 'participant'
+    elif type(exp_ave) == str:
+        ave_over = exp_ave
+        long_df_idx_col = 'stack'
     else:
         ave_over = 'P'
         long_df_idx_col = 'stack'
+
 
     if not fig_title:
         fig_title = f'{ave_over} average thresholds per separation'
@@ -1389,9 +1419,10 @@ def plot_8_sep_thr(all_thr_df, thr_col='newLum', exp_ave=False, fig_title=None,
                               palette=my_colours)
                 ax.set_ylim([min_thr - 2, max_thr + 2])
                 ax.set_xticklabels(isi_vals_list)
-                plt.legend([], [], frameon=False, loc='right')
-                # plt.legend([], [], frameon=False, loc='right', bbox_to_anchor=(1.05, 1))
                 ax.set_title(f'All Separation conditions')
+
+                # no legend (I struggled to find this command for a while)
+                ax.legend([], [], frameon=False)
 
             ax_counter += 1
 
@@ -2159,6 +2190,9 @@ def d_average_participant(root_path, run_dir_names_list,
 
     # join all stacks (run/group) data and save as master csv
     all_data_psignifit_df = pd.concat(all_psignifit_list, ignore_index=True)
+
+    # check that ISI_-1 is at last position
+    all_data_psignifit_df = conc_to_first_isi_col(all_data_psignifit_df)
     all_data_psignifit_df.to_csv(f'{root_path}{os.sep}MASTER_psignifit_thresholds.csv', index=False)
     if verbose:
         print(f'\nall_data_psignifit_df:\n{all_data_psignifit_df}')
@@ -2341,9 +2375,13 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     save_path, df_name = os.path.split(ave_df_path)
 
-    if exp_ave:
+    # Average over experiment or participant (with or without participant name)
+    if exp_ave is True:
         ave_over = 'Exp'
         idx_col = 'participant'
+    elif type(exp_ave) == str:
+        ave_over = exp_ave
+        idx_col = 'stack'
     else:
         ave_over = 'P'
         idx_col = 'stack'
@@ -2658,59 +2696,65 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
             plt.show()
         plt.close()
 
-    print(f"\nHeatmap per row\n")
-    if 'separation' in list(ave_df.columns):
-        ave_df.set_index('separation', drop=True, inplace=True)
 
-    # get mean of each col, then mean of that
-    if n_trimmed is not None:
-        heatmap_pr_title = f'{ave_over} Heatmap per row (n={ave_over_n}, trim={n_trimmed}).'
-        heatmap_pr_savename = f'mean_TM{n_trimmed}_heatmap_per_row'
-    else:
-        heatmap_pr_title = f'{ave_over} Heatmap per row (n={ave_over_n})'
-        heatmap_pr_savename = 'mean_heatmap_per_row'
+    # only do per-row and per-col heatmaps if there is 2d data
 
-    plt_heatmap_row_col(heatmap_df=ave_df,
-                        colour_by='row',
-                        x_tick_labels=None,
-                        x_axis_label='ISI',
-                        y_tick_labels=None,
-                        y_axis_label='Separation',
-                        fig_title=heatmap_pr_title,
-                        annot_fmt=heatmap_annot_fmt,
-                        save_name=heatmap_pr_savename,
-                        save_path=save_path,
-                        verbose=True)
-    if show_plots:
-        plt.show()
-    plt.close()
+    if len(isi_name_list) > 1 and len(sep_name_list) > 1:
+        print('making heatmaps per-row and per-column')
 
-    print(f"\nHeatmap per col\n")
-    if 'separation' in list(ave_df.columns):
-        ave_df.set_index('separation', drop=True, inplace=True)
+        print(f"\nHeatmap per row\n")
+        if 'separation' in list(ave_df.columns):
+            ave_df.set_index('separation', drop=True, inplace=True)
 
-    # get mean of each col, then mean of that
-    if n_trimmed is not None:
-        heatmap_pr_title = f'{ave_over} Heatmap per col (n={ave_over_n}, trim={n_trimmed}).'
-        heatmap_pr_savename = f'mean_TM{n_trimmed}_heatmap_per_col'
-    else:
-        heatmap_pr_title = f'{ave_over} Heatmap per col (n={ave_over_n})'
-        heatmap_pr_savename = 'mean_heatmap_per_col'
+        # get mean of each col, then mean of that
+        if n_trimmed is not None:
+            heatmap_pr_title = f'{ave_over} Heatmap per row (n={ave_over_n}, trim={n_trimmed}).'
+            heatmap_pr_savename = f'mean_TM{n_trimmed}_heatmap_per_row'
+        else:
+            heatmap_pr_title = f'{ave_over} Heatmap per row (n={ave_over_n})'
+            heatmap_pr_savename = 'mean_heatmap_per_row'
 
-    plt_heatmap_row_col(heatmap_df=ave_df,
-                        colour_by='col',
-                        x_tick_labels=None,
-                        x_axis_label='ISI',
-                        y_tick_labels=None,
-                        y_axis_label='Separation',
-                        annot_fmt=heatmap_annot_fmt,
-                        fig_title=heatmap_pr_title,
-                        save_name=heatmap_pr_savename,
-                        save_path=save_path,
-                        verbose=True)
-    if show_plots:
-        plt.show()
-    plt.close()
+        plt_heatmap_row_col(heatmap_df=ave_df,
+                            colour_by='row',
+                            x_tick_labels=None,
+                            x_axis_label='ISI',
+                            y_tick_labels=None,
+                            y_axis_label='Separation',
+                            fig_title=heatmap_pr_title,
+                            annot_fmt=heatmap_annot_fmt,
+                            save_name=heatmap_pr_savename,
+                            save_path=save_path,
+                            verbose=True)
+        if show_plots:
+            plt.show()
+        plt.close()
+
+        print(f"\nHeatmap per col\n")
+        if 'separation' in list(ave_df.columns):
+            ave_df.set_index('separation', drop=True, inplace=True)
+
+        # get mean of each col, then mean of that
+        if n_trimmed is not None:
+            heatmap_pr_title = f'{ave_over} Heatmap per col (n={ave_over_n}, trim={n_trimmed}).'
+            heatmap_pr_savename = f'mean_TM{n_trimmed}_heatmap_per_col'
+        else:
+            heatmap_pr_title = f'{ave_over} Heatmap per col (n={ave_over_n})'
+            heatmap_pr_savename = 'mean_heatmap_per_col'
+
+        plt_heatmap_row_col(heatmap_df=ave_df,
+                            colour_by='col',
+                            x_tick_labels=None,
+                            x_axis_label='ISI',
+                            y_tick_labels=None,
+                            y_axis_label='Separation',
+                            annot_fmt=heatmap_annot_fmt,
+                            fig_title=heatmap_pr_title,
+                            save_name=heatmap_pr_savename,
+                            save_path=save_path,
+                            verbose=True)
+        if show_plots:
+            plt.show()
+        plt.close()
 
     # print(f"\n3d surface plot\n")
     # if 'separation' in list(ave_df.columns):
