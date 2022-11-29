@@ -184,7 +184,7 @@ def trim_n_high_n_low(all_data_df, trim_from_ends=None, reference_col='separatio
     sep_col_vals = sep_list * target_3d_depth
     trimmed_df.insert(0, 'stack', stack_col_vals)
     trimmed_df.insert(1, reference_col, sep_col_vals)
-    print(f'\ntrimmed_df {trimmed_df.shape}:\n{trimmed_df}')
+    print(f'\ntrimmed_df {trimmed_df.shape}\n{trimmed_df.dtypes}:\n{trimmed_df}')
 
     print(f'trimmed {trim_from_ends} highest and lowest values ({2 * trim_from_ends} in total) from each of the '
           f'{datapoints_per_cond} datapoints so there are now '
@@ -2329,6 +2329,7 @@ def d_average_participant(root_path, run_dir_names_list,
     :param thr_df_name: Name of threshold dataframe.  If no name is given it will use 'psignifit_thresholds'.
     :param groupby: Name of column(s) to average over.  Can be a string or list of strings.
     :param cols_to_drop: Name of column(s) to drop.  Can be a string or list of strings.
+    :param cols_to_replace: Name of column(s) to drop for average, then add back in.  Can be a string or list of strings.
     :param error_type: Default: None. Can pass sd or se for standard deviation or error.
     :param trim_n: default None.  If int is passed, will call function trim_n_high_n_low(),
             which trims the n highest and lowest values.
@@ -2366,7 +2367,7 @@ def d_average_participant(root_path, run_dir_names_list,
 
     all_data_psignifit_df.to_csv(os.path.join(root_path, f'MASTER_{thr_df_name}.csv'), index=False)
     if verbose:
-        print(f'\nall_data_psignifit_df:\n{all_data_psignifit_df}')
+        print(f'\nall_data_psignifit_df:\n{all_data_psignifit_df.dtypes}\n{all_data_psignifit_df}')
 
     """Part 2: trim highest and lowest values is required and get average vals and errors"""
     # # trim highest and lowest values
@@ -2386,7 +2387,7 @@ def d_average_participant(root_path, run_dir_names_list,
         get_means_df = all_data_psignifit_df
 
     print(f'\nget_means_df(head): {get_means_df.columns.to_list()}\n'
-          f'{get_means_df.head()}')
+          f'{get_means_df.dtypes}\n{get_means_df}')
 
     # # get means and errors
     # # If I have cols to groupby and drop then use those, if not use all that long code below.
@@ -2400,6 +2401,14 @@ def d_average_participant(root_path, run_dir_names_list,
         print('yes running with grouby_col and cols_to_drop')
 
         groupby_sep_df = get_means_df.drop(cols_to_drop, axis=1)
+
+        # for SImon's ricco data the dtypes were all object apart from stack.
+        # Will try to convert them to numeric
+        print(f'groupby_sep_df.dtypes:\n{groupby_sep_df.dtypes}\n{groupby_sep_df}')
+        cols_to_ave = groupby_sep_df.columns.to_list()
+        groupby_sep_df[cols_to_ave] = groupby_sep_df[cols_to_ave].apply(pd.to_numeric)
+        print(f'groupby_sep_df.dtypes:\n{groupby_sep_df.dtypes}\n{groupby_sep_df}')
+
         ave_psignifit_thr_df = groupby_sep_df.groupby(groupby_col, sort=False,
                                                       # as_index=False
                                                       ).mean()
@@ -2437,23 +2446,23 @@ def d_average_participant(root_path, run_dir_names_list,
             if 'congruent' in groupby_sep_df.columns:
                 groupby_sep_df = groupby_sep_df.drop('congruent', axis=1)
 
-            if 'area_deg' in groupby_sep_df.columns:
-                # for ricco_v2 experiment
-                # print(f"\nwhatabouthis:\n{groupby_sep_df.groupby(['cond', 'separation'], sort=True).sem()}")
-
-                ave_psignifit_thr_df = groupby_sep_df.groupby(['cond', 'separation'], sort=False).mean()
-                # print(f'\njust made ave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
-                stair_names = groupby_sep_df['stair_names'].unique()
-                ave_psignifit_thr_df.insert(0, 'stair_names', stair_names)
-                cond_values = ave_psignifit_thr_df.index.get_level_values('cond').to_list()
-                sep_values = ave_psignifit_thr_df.index.get_level_values('separation').to_list()
-                area_deg_values = ave_psignifit_thr_df['area_deg'].to_list()
-                area_pix_vals = ave_psignifit_thr_df['n_pixels'].to_list()
-                len_values = ave_psignifit_thr_df['length'].to_list()
-
-                print(f'\ncond_values:\n{cond_values}')
-                print(f'sep_values:\n{sep_values}')
-                # print('just made ave_psignifit_thr_df')
+            # if 'area_deg' in groupby_sep_df.columns:
+            #     # for ricco_v2 experiment
+            #     # print(f"\nwhatabouthis:\n{groupby_sep_df.groupby(['cond', 'separation'], sort=True).sem()}")
+            #
+            #     ave_psignifit_thr_df = groupby_sep_df.groupby(['cond', 'separation'], sort=False).mean()
+            #     # print(f'\njust made ave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
+            #     stair_names = groupby_sep_df['stair_names'].unique()
+            #     ave_psignifit_thr_df.insert(0, 'stair_names', stair_names)
+            #     cond_values = ave_psignifit_thr_df.index.get_level_values('cond').to_list()
+            #     sep_values = ave_psignifit_thr_df.index.get_level_values('separation').to_list()
+            #     area_deg_values = ave_psignifit_thr_df['area_deg'].to_list()
+            #     area_pix_vals = ave_psignifit_thr_df['n_pixels'].to_list()
+            #     len_values = ave_psignifit_thr_df['length'].to_list()
+            #
+            #     print(f'\ncond_values:\n{cond_values}')
+            #     print(f'sep_values:\n{sep_values}')
+            #     # print('just made ave_psignifit_thr_df')
             else:
                 groupby_sep_df = groupby_sep_df.drop('separation', axis=1)
                 if 'cond' in groupby_sep_df.columns:
@@ -2480,39 +2489,39 @@ def d_average_participant(root_path, run_dir_names_list,
                                  f"'deviation', 'standard_deviation']")
             # print('just made error_bars_df')
 
-            if 'area_deg' in error_bars_df.columns.to_list():
-                # todo:do I still need this - area_deg not in ricco df
-                print(f'\nerror_bars_df:\n{error_bars_df}')
-
-                # getting sep and col vals from here, not above, as order changes if conds have NaNs due to only 1 run.
-                stair_names_list = error_bars_df.index.get_level_values('stair_names').to_list()
-                print(f'\nstair_names_list:\n{stair_names_list}')
-                sep_vals = []
-                cond_vals = []
-                for name in stair_names_list:
-                    x = name.split("_")
-                    sep_vals.append(int(x[0]))
-                    cond_vals.append(x[1])
-                print(f'\nsep_vals:\n{sep_vals}')
-                print(f'\ncond_vals:\n{cond_vals}')
-
-                # for ricco_v2 exp - change order to match ave_psignifit_thr_df
-                error_bars_df.insert(0, 'cond', cond_vals)
-                error_bars_df['separation'] = sep_vals
-                error_bars_df['area_deg'] = area_deg_values
-                error_bars_df['n_pixels'] = area_pix_vals
-                error_bars_df['length'] = len_values
-                error_bars_df.reset_index()
-                print(f'check columns: {error_bars_df.columns.to_list()}')
-                # col_order = ['cond', 'separation', 'stair_names', 'area', 'weber_thr', 'ISI_0']
-                col_order = ['cond', 'separation', 'area_deg', 'n_pixels', 'length', 'delta_I', 'weber_thr', 'thr']
-
-                error_bars_df.reset_index(inplace=True)
-                error_bars_df = error_bars_df[col_order]
-                error_bars_df.set_index(['cond', 'separation'], inplace=True)
-
-                print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
-            print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
+            # if 'area_deg' in error_bars_df.columns.to_list():
+            #     # todo:do I still need this - area_deg not in ricco df
+            #     print(f'\nerror_bars_df:\n{error_bars_df}')
+            #
+            #     # getting sep and col vals from here, not above, as order changes if conds have NaNs due to only 1 run.
+            #     stair_names_list = error_bars_df.index.get_level_values('stair_names').to_list()
+            #     print(f'\nstair_names_list:\n{stair_names_list}')
+            #     sep_vals = []
+            #     cond_vals = []
+            #     for name in stair_names_list:
+            #         x = name.split("_")
+            #         sep_vals.append(int(x[0]))
+            #         cond_vals.append(x[1])
+            #     print(f'\nsep_vals:\n{sep_vals}')
+            #     print(f'\ncond_vals:\n{cond_vals}')
+            #
+            #     # for ricco_v2 exp - change order to match ave_psignifit_thr_df
+            #     error_bars_df.insert(0, 'cond', cond_vals)
+            #     error_bars_df['separation'] = sep_vals
+            #     error_bars_df['area_deg'] = area_deg_values
+            #     error_bars_df['n_pixels'] = area_pix_vals
+            #     error_bars_df['length'] = len_values
+            #     error_bars_df.reset_index()
+            #     print(f'check columns: {error_bars_df.columns.to_list()}')
+            #     # col_order = ['cond', 'separation', 'stair_names', 'area', 'weber_thr', 'ISI_0']
+            #     col_order = ['cond', 'separation', 'area_deg', 'n_pixels', 'length', 'delta_I', 'weber_thr', 'thr']
+            #
+            #     error_bars_df.reset_index(inplace=True)
+            #     error_bars_df = error_bars_df[col_order]
+            #     error_bars_df.set_index(['cond', 'separation'], inplace=True)
+            #
+            #     print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
+            # print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
 
         else:
             # todo: do I still need this?
