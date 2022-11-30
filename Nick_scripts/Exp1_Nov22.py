@@ -960,7 +960,7 @@ while not kb.getKeys():
     win.flip()
 else:
     logging.flush()  # write messages out to all targets
-    thisExp.abort()
+    thisExp.abort()  # or data files will save again on exit
 
     # close and quit once a key is pressed
     win.close()
