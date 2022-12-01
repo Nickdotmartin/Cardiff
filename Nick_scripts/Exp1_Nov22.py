@@ -11,7 +11,7 @@ from psychopy import gui, visual, core, data, event, monitors, logging, info
 from psychopy.hardware import keyboard
 import os
 import numpy as np
-from numpy import deg2rad
+# from numpy import deg2rad
 from numpy.random import shuffle
 import random
 import copy
@@ -119,7 +119,7 @@ For 1probe condition, use separation==99.
 For concurrent probes, use ISI==-1.
 '''
 # separations = [0, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
-separations = [6]  # select from [0, 1, 2, 3, 6, 18, 99]
+separations = [18]  # select from [0, 1, 2, 3, 6, 18, 99]
 print(f'\nseparations: {separations}')
 
 # todo: add in code to find equivallent ISI_frames for different fps from double_dist?
@@ -314,7 +314,7 @@ print(f"probe1.colorSpace: {probe1.colorSpace}, probe2.colorSpace: {probe2.color
 #                           lineWidth=0, opacity=1, size=1, interpolate=False)
 
 # dist_from_fix is a constant to get 4dva distance from fixation,
-dist_from_fix = round((tan(deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
+dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
 
 # # todo: check if we need this blend_edge_mask
 # # full screen mask to blend off edges and fade to black
@@ -498,12 +498,14 @@ for step in range(n_trials_per_stair):
             jump_dir = 'inward'
             if target_jump == -1:
                 jump_dir = 'outward'
-        if verbose:
-            print(f"corner: {corner} {corner_name}; jump dir: {target_jump} {jump_dir}")
+        # if verbose:
+        print(f"corner: {corner} {corner_name}; jump dir: {target_jump} {jump_dir}")
 
+
+        # NEW - set orientations to p1=zero and p2=180 (not zero), than add same orientation change to both
         # reset probe ori
         probe1.ori = 0
-        probe2.ori = 0
+        probe2.ori = 180
         if corner == 45:
             # in top-right corner, both x and y increase (right and up)
             p1_x = dist_from_fix * 1
@@ -512,22 +514,22 @@ for step in range(n_trials_per_stair):
             #  whereas probe1.ori refers to rotational angle of probe stimulus
             if orientation == 'tangent':
                 if target_jump == 1:  # CW
-                    probe1.ori = 180
-                    probe2.ori = 0
+                    probe1.ori += 180
+                    probe2.ori += 180
                     probe2.pos = [p1_x + sep - 1, p1_y - sep]
                 elif target_jump == -1:  # ACW
-                    probe1.ori = 0
-                    probe2.ori = 180
+                    probe1.ori += 0
+                    probe2.ori += 0
                     probe2.pos = [p1_x - sep + 1, p1_y + sep]
             elif orientation == 'radial':
                 if target_jump == 1:  # inward
-                    probe1.ori = 270
-                    probe2.ori = 90
+                    probe1.ori += 270
+                    probe2.ori += 270
                     # probe2 is left and down from probe1
                     probe2.pos = [p1_x - sep + 1, p1_y - sep]
                 elif target_jump == -1:  # outward
-                    probe1.ori = 90
-                    probe2.ori = 270
+                    probe1.ori += 90
+                    probe2.ori += 90
                     # probe2 is right and up from probe1
                     probe2.pos = [p1_x + sep - 1, p1_y + sep]
         elif corner == 135:
@@ -535,22 +537,22 @@ for step in range(n_trials_per_stair):
             p1_y = dist_from_fix * 1
             if orientation == 'tangent':
                 if target_jump == 1:  # ACW
-                    probe1.ori = 90
-                    probe2.ori = 270
+                    probe1.ori += 90
+                    probe2.ori += 90
                     probe2.pos = [p1_x + sep - 1, p1_y + sep]
                 elif target_jump == -1:  # CW
-                    probe1.ori = 270
-                    probe2.ori = 90
+                    probe1.ori += 270
+                    probe2.ori += 270
                     probe2.pos = [p1_x - sep + 1, p1_y - sep]
             elif orientation == 'radial':
                 if target_jump == 1:  # inward
-                    probe1.ori = 180
-                    probe2.ori = 0
+                    probe1.ori += 180
+                    probe2.ori += 180
                     # probe2 is right and down from probe1
                     probe2.pos = [p1_x + sep - 1, p1_y - sep]
                 elif target_jump == -1:  # outward
-                    probe1.ori = 0
-                    probe2.ori = 180
+                    probe1.ori += 0
+                    probe2.ori += 0
                     # probe2 is left and up from probe1
                     probe2.pos = [p1_x - sep + 1, p1_y + sep]
         elif corner == 225:
@@ -558,22 +560,22 @@ for step in range(n_trials_per_stair):
             p1_y = dist_from_fix * -1
             if orientation == 'tangent':
                 if target_jump == 1:  # CW
-                    probe1.ori = 0
-                    probe2.ori = 180
+                    probe1.ori += 0
+                    probe2.ori += 0
                     probe2.pos = [p1_x - sep + 1, p1_y + sep]
                 elif target_jump == -1:  # ACW
-                    probe1.ori = 180
-                    probe2.ori = 0
+                    probe1.ori += 180
+                    probe2.ori += 180
                     probe2.pos = [p1_x + sep - 1, p1_y - sep]
             elif orientation == 'radial':
                 if target_jump == 1:  # inward
-                    probe1.ori = 90
-                    probe2.ori = 270
+                    probe1.ori += 90
+                    probe2.ori += 90
                     # probe2 is right and up from probe1
                     probe2.pos = [p1_x + sep - 1, p1_y + sep]
                 elif target_jump == -1:  # outward
-                    probe1.ori = 270
-                    probe2.ori = 90
+                    probe1.ori += 270
+                    probe2.ori += 270
                     # probe2 is left and down from probe1
                     probe2.pos = [p1_x - sep + 1, p1_y - sep]
         else:
@@ -582,22 +584,22 @@ for step in range(n_trials_per_stair):
             p1_y = dist_from_fix * -1
             if orientation == 'tangent':
                 if target_jump == 1:  # ACW
-                    probe1.ori = 270
-                    probe2.ori = 90
+                    probe1.ori += 270
+                    probe2.ori += 270
                     probe2.pos = [p1_x - sep + 1, p1_y - sep]
                 elif target_jump == -1:  # CW
-                    probe1.ori = 90
-                    probe2.ori = 270
+                    probe1.ori += 90
+                    probe2.ori += 90
                     probe2.pos = [p1_x + sep - 1, p1_y + sep]
             elif orientation == 'radial':
                 if target_jump == 1:  # inward
-                    probe1.ori = 0
-                    probe2.ori = 180
+                    probe1.ori += 0
+                    probe2.ori += 0
                     # probe2 is left and up from probe1
                     probe2.pos = [p1_x - sep + 1, p1_y + sep]
                 elif target_jump == -1:  # outward
-                    probe1.ori = 180
-                    probe2.ori = 0
+                    probe1.ori += 180
+                    probe2.ori += 180
                     # probe2 is right and down from probe1
                     probe2.pos = [p1_x + sep - 1, p1_y - sep]
 
@@ -807,15 +809,16 @@ for step in range(n_trials_per_stair):
                     continueRoutine = False
                     continue
 
-                # todo: sort out how to allow participants to respond, then go back and repeat the frame.
-                if len(win.frameIntervals) > 0:
-                    if max(win.frameIntervals) > max_fr_sec:
-                        print('Repeating this trial as dropped frame.')
-                        print(win.frameIntervals)
-                        win.frameIntervals.clear()
-                        repeat = True
-                        continueRoutine = False
-                        continue
+                # # todo: sort out how to allow participants to respond, then go back and repeat the frame.
+                # #  At the moment it can get stuck in a loop!)
+                # if len(win.frameIntervals) > 0:
+                #     if max(win.frameIntervals) > max_fr_sec:
+                #         print('Repeating this trial as dropped frame.')
+                #         print(win.frameIntervals)
+                #         win.frameIntervals.clear()
+                #         repeat = True
+                #         continueRoutine = False
+                #         continue
 
 
                 # gets rid of double presses
