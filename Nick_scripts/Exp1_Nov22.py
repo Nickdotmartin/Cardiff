@@ -172,13 +172,13 @@ Color255Color1Factor = 1 / 127.5  # Color255 * Color255Color1Factor -1
 Color1LumFactor = 2.39538706913372
 
 maxLum = 106  # 255 RGB
-minLum = 0.12  # 0 RGB
-maxColor255 = 255
-minColor255 = 0
-maxColor1 = 1
-minColor1 = -1
-bgLumP = 20
-bgLum = maxLum * bgLumP / 100
+# minLum = 0.12  # 0 RGB
+# maxColor255 = 255
+# minColor255 = 0
+# maxColor1 = 1
+# minColor1 = -1
+bgLumProp = .2
+bgLum = maxLum * bgLumProp
 bgColor255 = bgLum * LumColor255Factor
 bgColor1 = (bgColor255 * Color255Color1Factor) - 1
 
@@ -438,7 +438,7 @@ for stair_idx in expInfo['stair_list']:
     thisStair = Staircase(name=stair_names_list[stair_idx],
                           type='simple',
                           value=stairStart,
-                          C=stairStart * 0.6,  # typically, 60% of reference stimulus
+                          C=stairStart * 0.6,  # initial step size, as prop of referene stim
                           minRevs=3,
                           minTrials=n_trials_per_stair,
                           minVal=miniVal,
@@ -504,109 +504,113 @@ for step in range(n_trials_per_stair):
 
         # NEW - set orientations to p1=zero and p2=180 (not zero), than add same orientation change to both
         # reset probe ori
-        probe1.ori = 0
-        probe2.ori = 180
+        probe1_ori = 0
+        probe2_ori = 180
         if corner == 45:
             # in top-right corner, both x and y increase (right and up)
             p1_x = dist_from_fix * 1
             p1_y = dist_from_fix * 1
             #  'orientation' here refers to the relationship between probes,
-            #  whereas probe1.ori refers to rotational angle of probe stimulus
+            #  whereas probe1_ori refers to rotational angle of probe stimulus
             if orientation == 'tangent':
                 if target_jump == 1:  # CW
-                    probe1.ori += 180
-                    probe2.ori += 180
-                    probe2.pos = [p1_x + sep - 1, p1_y - sep]
+                    probe1_ori += 180
+                    probe2_ori += 180
+                    probe2_pos = [p1_x + sep - 1, p1_y - sep]
                 elif target_jump == -1:  # ACW
-                    probe1.ori += 0
-                    probe2.ori += 0
-                    probe2.pos = [p1_x - sep + 1, p1_y + sep]
+                    probe1_ori += 0
+                    probe2_ori += 0
+                    probe2_pos = [p1_x - sep + 1, p1_y + sep]
             elif orientation == 'radial':
                 if target_jump == 1:  # inward
-                    probe1.ori += 270
-                    probe2.ori += 270
+                    probe1_ori += 270
+                    probe2_ori += 270
                     # probe2 is left and down from probe1
-                    probe2.pos = [p1_x - sep + 1, p1_y - sep]
+                    probe2_pos = [p1_x - sep + 1, p1_y - sep]
                 elif target_jump == -1:  # outward
-                    probe1.ori += 90
-                    probe2.ori += 90
+                    probe1_ori += 90
+                    probe2_ori += 90
                     # probe2 is right and up from probe1
-                    probe2.pos = [p1_x + sep - 1, p1_y + sep]
+                    probe2_pos = [p1_x + sep - 1, p1_y + sep]
         elif corner == 135:
             p1_x = dist_from_fix * -1
             p1_y = dist_from_fix * 1
             if orientation == 'tangent':
                 if target_jump == 1:  # ACW
-                    probe1.ori += 90
-                    probe2.ori += 90
-                    probe2.pos = [p1_x + sep - 1, p1_y + sep]
+                    probe1_ori += 90
+                    probe2_ori += 90
+                    probe2_pos = [p1_x + sep - 1, p1_y + sep]
                 elif target_jump == -1:  # CW
-                    probe1.ori += 270
-                    probe2.ori += 270
-                    probe2.pos = [p1_x - sep + 1, p1_y - sep]
+                    probe1_ori += 270
+                    probe2_ori += 270
+                    probe2_pos = [p1_x - sep + 1, p1_y - sep]
             elif orientation == 'radial':
                 if target_jump == 1:  # inward
-                    probe1.ori += 180
-                    probe2.ori += 180
+                    probe1_ori += 180
+                    probe2_ori += 180
                     # probe2 is right and down from probe1
-                    probe2.pos = [p1_x + sep - 1, p1_y - sep]
+                    probe2_pos = [p1_x + sep - 1, p1_y - sep]
                 elif target_jump == -1:  # outward
-                    probe1.ori += 0
-                    probe2.ori += 0
+                    probe1_ori += 0
+                    probe2_ori += 0
                     # probe2 is left and up from probe1
-                    probe2.pos = [p1_x - sep + 1, p1_y + sep]
+                    probe2_pos = [p1_x - sep + 1, p1_y + sep]
         elif corner == 225:
             p1_x = dist_from_fix * -1
             p1_y = dist_from_fix * -1
             if orientation == 'tangent':
                 if target_jump == 1:  # CW
-                    probe1.ori += 0
-                    probe2.ori += 0
-                    probe2.pos = [p1_x - sep + 1, p1_y + sep]
+                    probe1_ori += 0
+                    probe2_ori += 0
+                    probe2_pos = [p1_x - sep + 1, p1_y + sep]
                 elif target_jump == -1:  # ACW
-                    probe1.ori += 180
-                    probe2.ori += 180
-                    probe2.pos = [p1_x + sep - 1, p1_y - sep]
+                    probe1_ori += 180
+                    probe2_ori += 180
+                    probe2_pos = [p1_x + sep - 1, p1_y - sep]
             elif orientation == 'radial':
                 if target_jump == 1:  # inward
-                    probe1.ori += 90
-                    probe2.ori += 90
+                    probe1_ori += 90
+                    probe2_ori += 90
                     # probe2 is right and up from probe1
-                    probe2.pos = [p1_x + sep - 1, p1_y + sep]
+                    probe2_pos = [p1_x + sep - 1, p1_y + sep]
                 elif target_jump == -1:  # outward
-                    probe1.ori += 270
-                    probe2.ori += 270
+                    probe1_ori += 270
+                    probe2_ori += 270
                     # probe2 is left and down from probe1
-                    probe2.pos = [p1_x - sep + 1, p1_y - sep]
+                    probe2_pos = [p1_x - sep + 1, p1_y - sep]
         else:
             corner = 315
             p1_x = dist_from_fix * 1
             p1_y = dist_from_fix * -1
             if orientation == 'tangent':
                 if target_jump == 1:  # ACW
-                    probe1.ori += 270
-                    probe2.ori += 270
-                    probe2.pos = [p1_x - sep + 1, p1_y - sep]
+                    probe1_ori += 270
+                    probe2_ori += 270
+                    probe2_pos = [p1_x - sep + 1, p1_y - sep]
                 elif target_jump == -1:  # CW
-                    probe1.ori += 90
-                    probe2.ori += 90
-                    probe2.pos = [p1_x + sep - 1, p1_y + sep]
+                    probe1_ori += 90
+                    probe2_ori += 90
+                    probe2_pos = [p1_x + sep - 1, p1_y + sep]
             elif orientation == 'radial':
                 if target_jump == 1:  # inward
-                    probe1.ori += 0
-                    probe2.ori += 0
+                    probe1_ori += 0
+                    probe2_ori += 0
                     # probe2 is left and up from probe1
-                    probe2.pos = [p1_x - sep + 1, p1_y + sep]
+                    probe2_pos = [p1_x - sep + 1, p1_y + sep]
                 elif target_jump == -1:  # outward
-                    probe1.ori += 180
-                    probe2.ori += 180
+                    probe1_ori += 180
+                    probe2_ori += 180
                     # probe2 is right and down from probe1
-                    probe2.pos = [p1_x + sep - 1, p1_y - sep]
+                    probe2_pos = [p1_x + sep - 1, p1_y - sep]
 
-        probe1.pos = [p1_x, p1_y]
+        probe1.ori = probe1_ori
+        probe2.ori = probe2_ori
+        probe1_pos = [p1_x, p1_y]
+        probe1.pos = probe1_pos
+        probe2.pos = probe2_pos
 
         if verbose:
-            print(f"probe1: {probe1.pos}, probe2.pos: {probe2.pos}. dff: {dist_from_fix}")
+            print(f"probe1: {probe1_pos}, probe2_pos: {probe2_pos}. dff: {dist_from_fix}")
 
 
         # VARIABLE FIXATION TIME
