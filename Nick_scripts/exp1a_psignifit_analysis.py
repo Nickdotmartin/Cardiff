@@ -2394,6 +2394,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         all_df = all_df_path
     else:
         all_df = pd.read_csv(all_df_path)
+    all_df = conc_to_first_isi_col(all_df)
     print(f'\nall_df:\n{all_df}')
 
     # if type(ave_df_path) is 'pandas.core.frame.DataFrame':
@@ -2401,6 +2402,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         ave_df = ave_df_path
     else:
         ave_df = pd.read_csv(ave_df_path)
+    ave_df = conc_to_first_isi_col(ave_df)
     print(f'\nave_df:\n{ave_df}')
 
     # if type(error_bars_path) is 'pandas.core.frame.DataFrame':
@@ -2408,6 +2410,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         error_bars_df = error_bars_path
     else:
         error_bars_df = pd.read_csv(error_bars_path)
+    error_bars_df = conc_to_first_isi_col(error_bars_df)
     print(f'\nerror_bars_df:\n{error_bars_df}')
 
     all_df_headers = list(all_df.columns)

@@ -12,7 +12,7 @@ project_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\C
 # # then run script d to get master lists and averages
 # eyetracking, jitter_rgb, EXP1_split_probes, Exp1_double_dist, EXP1_sep4_5
 # Exp4b_missing_probe\rotation, incoherent, radial, rotation, translation,
-this_exp = r"Exp4b_missing_probe\translation"
+this_exp = r"EXP1_sep4_5"
 exp_path = os.path.join(project_path, this_exp)
 
 convert_path1 = os.path.normpath(exp_path)
@@ -22,7 +22,7 @@ if running_on_laptop():
 exp_path = convert_path1
 
 print(f"exp_path: {exp_path}")
-participant_list = ['Nick', 'Simon']  #, 'Nick_strip', 'Nick_sep4_strip']  # 'Simon', 'Nick'
+participant_list = ['Nick_sep0123', 'Nick_sep45', 'Nick_sep67', 'Nick_sep89']  #, 'Nick_strip', 'Nick_sep4_strip']  # 'Simon', 'Nick'
 # participant_list = ['p1', 'p2']
 split_1probe = False
 
@@ -42,6 +42,13 @@ for p_idx, participant_name in enumerate(participant_list):
         check_dir = f'{participant_name}_{i+analyse_from_run}'   # numbers 1 to 12
         if check_dir in dir_list:
             run_folder_names.append(check_dir)
+
+    if len(run_folder_names) > 0:
+        print("running analysis for:")
+        for i in run_folder_names:
+            print(i)
+    else:
+        print("no run folders found")
 
     trim_n = None
     if len(run_folder_names) == 12:
@@ -154,7 +161,7 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
         sep_list = list(run_data_df['separation'].unique())
-        isi_list = sorted(list(run_data_df['ISI'].unique()))
+        isi_list = list(run_data_df['ISI'].unique())
         print(f"sep_list: {sep_list}")
         print(f"isi_list: {isi_list}")
 
@@ -190,8 +197,8 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
 
-    # # trim_n = None
-    # # lum_col = 'probeLum'
+    # trim_n = None
+    # lum_col = 'probeLum'
     print(f"\n\ntrim_list: {trim_list}, trim_n: {trim_n}\n\n")
 
     '''d'''
@@ -238,8 +245,8 @@ print(f'exp_path: {exp_path}')
 print('\nget exp_average_data')
 print(f'trim_list: {trim_list}')
 
-# # participant_list = ['Nick', 'Simon']
-# # trim_list = [2, 2]
+# participant_list = ['Nick', 'Nick_sep0123']
+# trim_list = [2, 2, 2, 2]
 # # lum_col = 'probeLum'
 
 e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
@@ -253,7 +260,8 @@ err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
 exp_ave_df = pd.read_csv(exp_ave_path)
 print(f"exp_ave_df:\n{exp_ave_df}")
 
-isi_vals_list = [int(i[4:]) for i in list(exp_ave_df.columns)[1:]]
+isi_vals_list = sorted([int(i[4:]) for i in list(exp_ave_df.columns)[1:]])
+# isi_vals_list = [-1, 0, 2, 4, 6, 9, 12, 24]
 isi_name_list = [f"conc" if i == -1 else f"ISI_{i}" for i in isi_vals_list]
 
 sep_vals_list = list(exp_ave_df['separation'])
