@@ -79,7 +79,7 @@ expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
 # GUI SETTINGS
 participant_name = expInfo['1. Participant']
 run_number = int(expInfo['2. Run_number'])
-n_trials_per_stair = 25
+n_trials_per_stair = 5
 probe_duration = int(expInfo['3. Probe duration in frames at 240hz'])
 probe_ecc = 4
 fps = int(expInfo['4. fps'])
@@ -103,13 +103,13 @@ else:
 For 1probe condition, use separation==99.
 For concurrent probes, use ISI==-1.
 '''
-# separations = [0, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
-separations = [18]  # select from [0, 1, 2, 3, 6, 18, 99]
+separations = [0, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
+# separations = [18]  # select from [0, 1, 2, 3, 6, 18, 99]
 print(f'\nseparations: {separations}')
 
 # todo: add in code to find equivallent isi_dur_frames for different fps from double_dist?
-ISI_values = [-1, 0, 1, 2]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
-# ISI_values = [1]  # , 0, 1, 2]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+# ISI_values = [-1, 0, 1, 2]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+ISI_values = [-1, 6]  # , 0, 1, 2]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 print(f'ISI_values: {ISI_values}')
 # repeat separation values for each ISI e.g., [0, 0, 6, 6]
 sep_vals_list = list(np.repeat(separations, len(ISI_values)))
@@ -329,6 +329,14 @@ end_of_exp = visual.TextBox2(win=win, name='end_of_exp', text=end_of_exp_text,
                              alignment='center', anchor='center',
                              letterHeight=20)
 
+# todo: add record intervals in dlg
+frame_err_sec = win.refreshThreshold
+print(f"frame_err_sec (120%): {frame_err_sec}")
+
+# create empty variables to use later
+fr_recorded_list = []
+prev_total_recorded_fr = 0
+prev_total_dropped_fr = 0
 
 # SCREEN BEFORE EXPERIMENT
 while not kb.getKeys():
@@ -673,6 +681,7 @@ for step in range(n_trials_per_stair):
                     # print(f"{frameN}: frameN > t_probe_2: response")
 
                     win.recordFrameIntervals = False
+
                     # win.saveFrameIntervals(f"/Users/nickmartin/Library/CloudStorage/OneDrive-CardiffUniversity/PycharmProjects/Cardiff/memory_and_timings/frameIntervals_20221121/run4/FrameIntervals_{trial_number}_ISI{ISI}")
 
                     # blend_edge_mask.draw()
@@ -746,10 +755,19 @@ for step in range(n_trials_per_stair):
         # get duration from last fixation frame to last probe frame
         # probes_fr_dur = last_probe_fr_time - last_fix_fr_time
 
-        print(win.frameIntervals)
-
-        # keep this, so it only checks last set of frames.
-        win.frameIntervals.clear()
+        # print(win.frameIntervals)
+        #
+        # # keep this, so it only checks last set of frames.
+        # win.frameIntervals.clear()
+        total_recorded_fr = len(win.frameIntervals)
+        total_dropped_fr = win.nDroppedFrames
+        print(f"{total_dropped_fr}/{total_recorded_fr} dropped frames in total")
+        this_trial_recorded_fr = total_recorded_fr - prev_total_recorded_fr
+        this_trial_dropped_fr = total_dropped_fr - prev_total_dropped_fr
+        print(f"{this_trial_dropped_fr}/{this_trial_recorded_fr} dropped frames on this trial")
+        prev_total_recorded_fr = total_recorded_fr
+        prev_total_dropped_fr = total_dropped_fr
+        fr_recorded_list.append(total_recorded_fr)
 
         # TrialHandler adds info to CSV (but stored in memory until end?)
         thisExp.addData('trial_number', trial_number)
@@ -808,8 +826,17 @@ n_dropped_fr = win.nDroppedFrames
 print(f"n_dropped_fr: {n_dropped_fr}")
 
 import matplotlib.pyplot as plt
+# plt.plot(win.frameIntervals)
+# plt.show()
+total_recorded_fr = len(win.frameIntervals)
+total_dropped_fr = win.nDroppedFrames
+print(f"{total_dropped_fr}/{total_recorded_fr} dropped in total (expected: {round(expected_fr_ms, 2)}ms, 'dropped' if > {round(frame_err_ms, 2)})")
 plt.plot(win.frameIntervals)
-plt.show()
+plt.title(f"{mon_name}, {fps}Hz, {expInfo['date']}\n{total_dropped_fr}/{total_recorded_fr} dropped fr (expected: {round(expected_fr_ms, 2)}ms, 'dropped' if > {round(frame_err_ms, 2)})")
+plt.vlines(x=fr_recorded_list, ymin=min(win.frameIntervals), ymax=max(win.frameIntervals), colors='silver', linestyles='dashed')
+plt.axhline(y=frame_err_sec, color='red', linestyle='dashed')
+plt.savefig(f"{expInfo['participant']}{os.sep}{expInfo['participant']}_{expInfo['run_number']}{os.sep}{expInfo['participant']}_{expInfo['run_number']}_frames.png")
+#
 # win.saveFrameIntervals(fileName=None, clear=True)
 # the stuff below certainly seems to be what's recommended (close window then core quit)
 
