@@ -122,37 +122,39 @@ def get_pixel_mm_deg_values(monitor_name='ASUS_2_13_240Hz', n_pixels=1):
     :param n_pixels: default = 1.
     """
 
-    # # this_monitor = monitors.Monitor('NickMac')
     this_monitor = monitors.Monitor(monitor_name)
-    print(f'this_monitor: {monitor_name}')
-
-    print(f'n_pixels: {n_pixels}')
+    # print(f'this_monitor: {monitor_name}')
+    # print(f'n_pixels: {n_pixels}')
 
     # This gets horizontal pixel size.
     pix2cm = monitorunittools.pix2cm(pixels=n_pixels, monitor=this_monitor)
-    print(f'\nHorizontal pixel size:\n'
-          f'pix2cm: {pix2cm}')
+    # print(f'\nHorizontal pixel size:\npix2cm: {pix2cm}')
     width_mm = pix2cm * 10
-    print(f'width_mm = pix2cm*10: {width_mm}')
-    # width_mm = 0.27671875
+    # print(f'width_mm = pix2cm*10: {width_mm}')
 
     pix2deg = monitorunittools.pix2deg(pixels=n_pixels, monitor=this_monitor)
-    print(f'pix2deg: {pix2deg}')
-    # pix2deg: 0.027812746561333156
+    # print(f'pix2deg: {pix2deg}')
 
     # if pix measurements are horizontal then diag pix will be
     print('\nConverted to Diagonal pixel sizes')
     diag_mm = width_mm * np.sqrt(2)
-    print(f'diag_mm: {diag_mm}')
-    # diag_mm = 0.3913394092129299
+    # print(f'diag_mm: {diag_mm}')
 
     # get nnumber of widths that fit into diagonal.
     len_of_diag_to_w = 1 * np.sqrt(2)
     # print(f'len_of_diag_to_w: {len_of_diag_to_w}')
     diag_deg = monitorunittools.pix2deg(pixels=n_pixels * len_of_diag_to_w,
                                         monitor=this_monitor)
-    print(f'diag_deg: {diag_deg}')
-    # diag_deg: 0.039333163393883014
+    # print(f'diag_deg: {diag_deg}')
+
+    pixel_mm_deg_dict = {'this_monitor': monitor_name,
+                         'n_pixels': n_pixels,
+                         'horiz_mm': width_mm,
+                         'horiz_deg': pix2deg,
+                         'diag_mm': diag_mm,
+                         'diag_deg': diag_deg}
+
+    return pixel_mm_deg_dict
 
 
     # cm2deg = monitorunittools.cm2deg(cm=pix2cm, monitor=this_monitor, correctFlat=True)
