@@ -209,7 +209,7 @@ print(f"mon_dict: {mon_dict}")
 
 # double check using full screen in lab
 display_number = 1  # 0 indexed, 1 for external display
-if monitor_name in ['ASUS_2_13_240Hz', 'asus_cal']:
+if monitor_name in ['ASUS_2_13_240Hz', 'asus_cal', 'NickMac', 'Nick_work_laptop']:
     display_number = 0
 use_full_screen = True
 if display_number > 0:
@@ -354,23 +354,17 @@ probe_name_list = []
 vert_dict = {}
 for sep_cond in separation_values:
     probe_vertices = make_ricco_vertices(sep_cond)
-    if sep_cond in [-1, 99]:
-        probe_name = "oneP"
-        vert_dict[probe_name] = {}
+    if sep_cond == 99:
         len_pix = 1.5
-        vert_dict["oneP"]['len_pix'] = len_pix
-        vert_dict["oneP"]['diag_mm'] = len_pix * pixel_mm_deg_dict['diag_mm']
-        vert_dict["oneP"]['diag_deg'] = len_pix * pixel_mm_deg_dict['diag_deg']
-        vert_dict["oneP"]['vertices'] = probe_vertices
     else:
-        # vert_dict[f"sep{sep_cond}"] = new_verts
-        probe_name = f"sep{sep_cond}"
-        vert_dict[probe_name] = {}
         len_pix = 2.5 + sep_cond
-        vert_dict[f"sep{sep_cond}"]['len_pix'] = len_pix
-        vert_dict[f"sep{sep_cond}"]['diag_mm'] = len_pix * pixel_mm_deg_dict['diag_mm']
-        vert_dict[f"sep{sep_cond}"]['diag_deg'] = len_pix * pixel_mm_deg_dict['diag_deg']
-        vert_dict[f"sep{sep_cond}"]['vertices'] = probe_vertices
+
+    probe_name = f"sep{sep_cond}"
+    vert_dict[probe_name] = {}
+    vert_dict[f"sep{sep_cond}"]['len_pix'] = len_pix
+    vert_dict[f"sep{sep_cond}"]['diag_mm'] = len_pix * pixel_mm_deg_dict['diag_mm']
+    vert_dict[f"sep{sep_cond}"]['diag_deg'] = len_pix * pixel_mm_deg_dict['diag_deg']
+    vert_dict[f"sep{sep_cond}"]['vertices'] = probe_vertices
 
     probe_name_list.append(probe_name)
     probe_vert_list.append(probe_vertices)
@@ -729,6 +723,9 @@ for step in range(n_trials_per_stair):
         thisExp.addData('weber_lum', weber_lum)
         thisExp.addData('expName', expName)
         thisExp.addData('monitor_name', monitor_name)
+        thisExp.addData('len_pix', vert_dict[f"sep{sep}"]['len_pix'])
+        thisExp.addData('diag_mm', vert_dict[f"sep{sep}"]['diag_mm'])
+        thisExp.addData('diag_deg', vert_dict[f"sep{sep}"]['diag_deg'])
         thisExp.addData('selected_fps', fps)
         thisExp.addData('actual_fps', actual_fps)
 
