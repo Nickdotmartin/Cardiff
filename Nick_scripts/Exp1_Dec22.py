@@ -57,7 +57,7 @@ monitor_name = 'NickMac'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_1
 expName = 'Exp1_Dec22'  # from the Builder filename that created this script
 
 # todo: add monitor to drop down menu?
-expInfo = {'1. Participant': 'nick_fr_test_20221222',
+expInfo = {'1. Participant': 'nick_fr_test_20230103',
            '2. Run_number': '1',
            '3. Probe duration in frames at 240hz': [2, 50, 100],
            '4. fps': [60, 144, 240],

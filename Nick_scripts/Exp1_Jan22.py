@@ -1,9 +1,9 @@
-from __future__ import division
+from __future__ import division  # do I need this?
 from psychopy import gui, visual, core, data, event, monitors
 from psychopy import __version__ as psychopy_version
 import os
 import numpy as np
-from numpy import deg2rad
+from numpy import deg2rad  # recent version just imports numpy
 from numpy.random import shuffle
 import random
 import copy
@@ -21,6 +21,8 @@ Sep of 0 and 6 pixels.
 # prioritise psychopy
 #core.rush(True)
 
+# todo: add core.clock() to check times from?
+
 
 # sets psychoPy to only log critical messages
 # logging.console.setLevel(logging.CRITICAL)
@@ -34,14 +36,14 @@ monitor_name = 'NickMac'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_1
 
 
 # Store info about the experiment session
-expName = 'Exp1_fr_test'  # from the Builder filename that created this script
+expName = 'Exp1_Jan22'  # from the Builder filename that created this script
 
-expInfo = {'1. Participant': 'nick_fr_test_20230103',
+expInfo = {'1. Participant': 'nick_jan22_test',
            '2. Run_number': '1',
            '3. Probe duration in frames at 240hz': [2, 50, 100],
            '4. fps': [240, 60],
            '5. Probe_orientation': ['radial', 'tangent'],
-           '6. Trial_counter': [False, True], 
+           '6. Trial_counter': [False, True],  # get rid of trials_counter?
            '7. Vary_fixation': [False, True]
            }
 
@@ -112,21 +114,25 @@ thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
 # Lum to Color255
 LumColor255Factor = 2.39538706913372
 # Color255 to Color1
-Color255Color1Factor = 1/127.5  # Color255 * Color255Color1Factor -1
+Color255Color1Factor = 1 / 127.5  # Color255 * Color255Color1Factor -1
 # Lum to Color1
 Color1LumFactor = 2.39538706913372
 
 maxLum = 106  # 255 RGB
-minLum = 0.12  # 0 RGB
-maxColor255 = 255
-minColor255 = 0
-maxColor1 = 1
-minColor1 = -1
-bgLumP = 20  # int(expInfo['7. Background lum in percent of maxLum'])  # 20
-bgLum = maxLum * bgLumP / 100
+# minLum = 0.12  # 0 RGB
+# maxColor255 = 255
+# minColor255 = 0
+# maxColor1 = 1
+# minColor1 = -1
+# bgLumP = 20  # int(expInfo['7. Background lum in percent of maxLum'])  # 20
+# bgLum = maxLum * bgLumP / 100
+bgLumProp = .2
+bgLum = maxLum * bgLumProp
 bgColor255 = bgLum * LumColor255Factor
 bgColor1 = (bgColor255 * Color255Color1Factor) - 1
 
+
+# todo; check which colourspace is being used?
 
 # MONITOR SPEC
 thisMon = monitors.Monitor(monitor_name)
@@ -149,10 +155,10 @@ widthPix = mon_dict['size'][0]
 heightPix = mon_dict['size'][1]
 monitorwidth = mon_dict['width']  # monitor width in cm
 viewdist = mon_dict['dist']  # viewing distance in cm
-viewdistPix = widthPix/monitorwidth*viewdist
+viewdistPix = widthPix / monitorwidth * viewdist
 mon = monitors.Monitor(monitor_name, width=monitorwidth, distance=viewdist)
 mon.setSizePix((widthPix, heightPix))
-mon.save()
+# mon.save()  # get rid of this, don't update monitor centre
 
 # WINDOW SPEC
 win = visual.Window(monitor=mon, size=(widthPix, heightPix),
@@ -164,6 +170,7 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     allowGUI=False,
                     fullscr=use_full_screen)
 
+# todo: not sure I really need this, or if I do, only use for Mac.
 print(f"check win.size: {win.size}")
 widthPix = widthPix/2
 heightPix = heightPix/2
@@ -193,6 +200,7 @@ dist_from_fix = round((tan(deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
 myMouse = event.Mouse(visible=False)
 
 # # KEYBOARD
+# todo: change this to keyboard.Keyboard()?
 resp = event.BuilderKeyResponse()
 
 # INSTRUCTION
@@ -268,7 +276,7 @@ for stair_idx in expInfo['stair_list']:
     thisStair = Staircase(name=stair_names_list[stair_idx],
                           type='simple',
                           value=stairStart,
-                          C=stairStart*0.6,  # typically, 60% of reference stimulus
+                          C=stairStart * 0.6,  # typically, 60% of reference stimulus
                           minRevs=3,
                           minTrials=n_trials_per_stair,
                           minVal=miniVal,
@@ -326,6 +334,7 @@ for step in range(n_trials_per_stair):
         print(f"corner: {corner} {corner_name}; jump dir: {target_jump} {jump_dir}")
 
         # reset probe ori
+        # todo: couple update this to set probe2_ori to 180, then adjust both by same amount.
         probe1.ori = 0
         probe2.ori = 0
         if corner == 45:
@@ -439,6 +448,7 @@ for step in range(n_trials_per_stair):
         # timing in frames
         # fixation time is now 70ms shorter than rad_flow1, as we can have
         # priliminary bg_motion.
+        # todo: could add probe2 dur here, so I can set to zero for concurrent
         isi_fr = ISI
         if ISI < 0:
             isi_fr = 0
@@ -486,6 +496,7 @@ for step in range(n_trials_per_stair):
 
 
                 # PROBE 1
+                # todo: could change these Ifs to elifs.
                 if t_probe_1 >= frameN > t_fixation:                    
                     probe1.draw()
 
