@@ -5,7 +5,7 @@ from psychopy import __version__ as psychopyVersion  # uses the computer's downl
 
 print(f"psychopy.version: {psychopyVersion}")
 
-from psychopy import gui, visual, core, data, event, monitors, logging, info
+from psychopy import gui, visual, core, data, event, monitors  # logging, info
 from psychopy.hardware import keyboard
 import os
 import numpy as np
@@ -38,11 +38,11 @@ If memory issues stl not fixed, I could try to:
 6. try turning off pyglet or using glfw
 '''
 
-
+# todo: Exp1_fr_test doesn't use this
 clock = core.Clock()  # a clock to check times from
 
-
-print(f"psychopy.version: {psychopy.__version__}")
+# todo: Exp1_fr_test doesn't use this
+# print(f"psychopy.version: {psychopy.__version__}")
 
 
 # Ensure that relative paths start from the same directory as this script
@@ -50,20 +50,22 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'Nick_work_laptop'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
+monitor_name = 'NickMac'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 
 
 # Store info about the experiment session
 expName = 'Exp1_Dec22'  # from the Builder filename that created this script
 
 # todo: add monitor to drop down menu?
-expInfo = {'1. Participant': 'nicktest',
+expInfo = {'1. Participant': 'nick_fr_test_20221222',
            '2. Run_number': '1',
            '3. Probe duration in frames at 240hz': [2, 50, 100],
            '4. fps': [60, 144, 240],
            '5. Probe_orientation': ['radial', 'tangent'],
            '6. Trial_counter': [False, True],
            '7. Vary_fixation': [False, True],
+
+           # todo: Exp1_fr_test doesn't use this
            '8. Blend_off_edges': [False, True],
            '9. testing/de-bugging': [False, True],
            }
@@ -79,7 +81,7 @@ expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
 # GUI SETTINGS
 participant_name = expInfo['1. Participant']
 run_number = int(expInfo['2. Run_number'])
-n_trials_per_stair = 5
+n_trials_per_stair = 3
 probe_duration = int(expInfo['3. Probe duration in frames at 240hz'])
 probe_ecc = 4
 fps = int(expInfo['4. fps'])
@@ -89,13 +91,17 @@ vary_fixation = eval(expInfo['7. Vary_fixation'])
 blend_off_edges = eval(expInfo['8. Blend_off_edges'])
 verbose = eval(expInfo['9. testing/de-bugging'])
 
-# LOGGING AND PRINTING TO SCREEN
-# # todo: try with critical logging only
-# sets psychoPy to only log critical messages
-if verbose:
-    logging.console.setLevel(logging.DEBUG)
-else:
-    logging.console.setLevel(logging.CRITICAL)
+# expected frame duration
+expected_fr_ms = (1/fps) * 1000
+
+# todo: Exp1_fr_test doesn't use this
+# # LOGGING AND PRINTING TO SCREEN
+# # # todo: try with critical logging only
+# # sets psychoPy to only log critical messages
+# if verbose:
+#     logging.console.setLevel(logging.DEBUG)
+# else:
+#     logging.console.setLevel(logging.CRITICAL)
 
 
 # VARIABLES
@@ -139,7 +145,7 @@ print(f'filename: {filename}')
 thisExp = data.ExperimentHandler(name=expName,
                                  version=psychopyVersion,  # does not set anything, just saved as string for record-keeping.
                                  extraInfo=expInfo,
-                                 savePickle=True,
+                                 savePickle=True,  # todo: Exp1_fr_test doesn't use this
                                  saveWideText=True,
                                  dataFileName=save_output_name,
                                  )
@@ -164,6 +170,7 @@ bgColor255 = bgLum * LumColor255Factor
 bgColor1 = (bgColor255 * Color255Color1Factor) - 1
 
 # COLOUR SPACE
+# todo: Exp1_fr_test doesn't use this
 # todo: set to run with RGB, but still convert to rgb255 at output.
 colour_space = 'rgb255'
 background_col = bgColor255
@@ -200,7 +207,7 @@ mon.setSizePix((widthPix, heightPix))
 win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     colorSpace=colour_space, color=bgColor255,
                     # winType='pyglet',  # I've added this to make it work on pycharm/mac
-                    winType='glfw',
+                    winType='glfw',  # todo: Exp1_fr_test doesn't use this
                     pos=[1, -1],  # pos gives position of top-left of screen
                     units='pix',
                     screen=display_number,
@@ -219,13 +226,13 @@ print(f"check win.size: {win.size}")
 print(f"widthPix: {widthPix}, hight: {heightPix}")
 
 
-
-'''set an ideal frame time and margin of error for dropped frames'''
-fr_sec = 1/fps
-fr_error = 1.5
-max_fr_sec = fr_error * fr_sec
-print(f"expected frames duration is {fr_sec}.  An acceptable error is {fr_error} times this.\n"
-      f"If there are frames longer than {max_fr_sec}, the trial will be re-done.")
+# todo: Exp1_fr_test doesn't use this
+# '''set an ideal frame time and margin of error for dropped frames'''
+# fr_sec = 1/fps
+# fr_error = 1.5
+# max_fr_sec = fr_error * fr_sec
+# print(f"expected frames duration is {fr_sec}.  An acceptable error is {fr_error} times this.\n"
+#       f"If there are frames longer than {max_fr_sec}, the trial will be re-done.")
 
 
 
@@ -243,6 +250,7 @@ probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor=[0, 0, 0], name='pr
                           lineWidth=0, opacity=1, size=1, interpolate=False)
 probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor=[0, 0, 0], name='probe2',
                           lineWidth=0, opacity=1, size=1, interpolate=False)
+# todo: Exp1_fr_test doesn't use this
 probe1.colorSpace = 'rgb255'
 probe2.colorSpace = 'rgb255'
 print(f"probe1.colorSpace: {probe1.colorSpace}, probe2.colorSpace: {probe2.colorSpace}")
@@ -263,6 +271,7 @@ myMouse = event.Mouse(visible=False)
 
 # # KEYBOARD
 # todo: changed this from builder to keyboard
+# todo: Exp1_fr_test doesn't use this (it uses event.BuilderKeyResponse())
 kb = keyboard.Keyboard()
 
 
@@ -280,6 +289,7 @@ insturction_text = "\n\n\n\n\n\nFocus on the fixation circle at the centre of th
                    "You don't need to think for long, respond quickly, " \
                    "but try to push press the correct key!\n\n" \
                    "Don't let your eyes wander, keep focussed on the circle in the middle throughout."
+# todo: Exp1_fr_test doesn't use this - it uses TextStim
 instructions = visual.TextBox2(win=win, name='instructions', text=insturction_text,
                                # font='Arial',
                                font='Open Sans',
@@ -289,6 +299,7 @@ instructions = visual.TextBox2(win=win, name='instructions', text=insturction_te
 
 # Trial counter
 # todo: put trials counter back to .45 of widthPix and heightPix pos
+# todo: Exp1_fr_test doesn't use this - it uses TextStim
 trials_counter = visual.TextBox2(win=win, name='trials_counter', text="???",
                                  # font='Arial',
                                  font='Open Sans',
@@ -309,6 +320,7 @@ if verbose:
 breaks_text = "Break\nTurn on the light and take at least 30-seconds break.\n" \
               "Keep focussed on the fixation circle in the middle of the screen.\n" \
               "Remember, if you don't see the target, just guess!"
+# todo: Exp1_fr_test doesn't use this - it uses TextStim
 breaks = visual.TextBox2(win=win, name='breaks', text=breaks_text,
                          # font='Arial',
                          font='Open Sans',
@@ -323,18 +335,22 @@ breaks = visual.TextBox2(win=win, name='breaks', text=breaks_text,
 end_of_exp_text = "You have completed this experiment.\n" \
                   "Thank you for your time.\n\n" \
                   "Press any key to return to the desktop."
+# todo: Exp1_fr_test doesn't use this - it uses TextStim
 end_of_exp = visual.TextBox2(win=win, name='end_of_exp', text=end_of_exp_text,
                              # font='Arial',
                              font='Open Sans',
                              alignment='center', anchor='center',
                              letterHeight=20)
 
-# todo: add record intervals in dlg
-frame_err_sec = win.refreshThreshold
-print(f"frame_err_sec (120%): {frame_err_sec}")
+# # todo: add record intervals in dlg
+# frame_err_sec = win.refreshThreshold
+# print(f"frame_err_sec (120%): {frame_err_sec}")
+#
+# # create empty variables to use later
+# fr_recorded_list = []
 
-# create empty variables to use later
-fr_recorded_list = []
+
+# todo: Exp1_fr_test doesn't use this
 prev_total_recorded_fr = 0
 prev_total_dropped_fr = 0
 
@@ -346,6 +362,12 @@ while not kb.getKeys():
     trials_counter.text = f"0/{total_n_trials}"
     trials_counter.draw()
     win.flip()
+
+# freame error tollerance
+frame_err_sec = win.refreshThreshold
+frame_err_ms = frame_err_sec * 1000
+print(f"frame_err_sec (120%): {frame_err_sec} (or {frame_err_ms}ms)")
+fr_recorded_list = []
 
 # STAIRCASE
 expInfo['stair_list'] = list(range(n_stairs))
@@ -395,6 +417,7 @@ for step in range(n_trials_per_stair):
         probeLum = thisStair.next()
         probeColor255 = int(probeLum * LumColor255Factor)  # rgb255 are ints.
         probeColor1 = (probeColor255 * Color255Color1Factor) - 1
+        # todo: Exp1_fr_test doesn't use this - it uses probe1.color
         probe1.setColor([probeColor255, probeColor255, probeColor255], colour_space)
         probe2.setColor([probeColor255, probeColor255, probeColor255], colour_space)
         if verbose:
@@ -430,6 +453,7 @@ for step in range(n_trials_per_stair):
 
         # NEW - set orientations to p1=zero and p2=180 (not zero), than add same orientation change to both
         # reset probe ori
+        # todo: Exp1_fr_test doesn't use this - it has (0, 0) here and then different values throughout.
         probe1_ori = 0
         probe2_ori = 180
         if corner == 45:
@@ -529,6 +553,7 @@ for step in range(n_trials_per_stair):
                     # probe2 is right and down from probe1
                     probe2_pos = [p1_x + sep - 1, p1_y - sep]
 
+        # todo: Exp1_fr_test doesn't use this - it adjust .ori and .pos as it goes.
         probe1.ori = probe1_ori
         probe2.ori = probe2_ori
         probe1_pos = [p1_x, p1_y]
@@ -550,7 +575,7 @@ for step in range(n_trials_per_stair):
         # timing in frames for ISI and probe2
         # If probes are presented concurrently, set ISI and probe2 to last for 0 frames.
         isi_dur_fr = ISI
-        p2_fr = probe_duration
+        p2_fr = probe_duration # todo: Exp1_fr_test doesn't use this
         if ISI < 0:
             isi_dur_fr = p2_fr = 0
 
@@ -578,7 +603,8 @@ for step in range(n_trials_per_stair):
             breaks.draw()
 
             # adding this to flush out any logged messages during the breaks.
-            logging.flush()  # write messages out to all targets
+            # todo: Exp1_fr_test doesn't use this
+            # logging.flush()  # write messages out to all targets
 
             win.flip()
 
@@ -661,6 +687,9 @@ for step in range(n_trials_per_stair):
                 elif t_probe_2 >= frameN > t_ISI:
                     if verbose:
                         print(f"{frameN}: t_probe_2 >= frameN > t_ISI: probe 2")
+
+                    # todo: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    # todo: shouldn't this be if isi_dur_fr!!!
                     if ISI >= 0:
                         if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
                             probe2.draw()
@@ -681,7 +710,8 @@ for step in range(n_trials_per_stair):
                     # print(f"{frameN}: frameN > t_probe_2: response")
 
                     win.recordFrameIntervals = False
-
+                    total_recorded_fr = len(win.frameIntervals)
+                    fr_recorded_list.append(total_recorded_fr)
                     # win.saveFrameIntervals(f"/Users/nickmartin/Library/CloudStorage/OneDrive-CardiffUniversity/PycharmProjects/Cardiff/memory_and_timings/frameIntervals_20221121/run4/FrameIntervals_{trial_number}_ISI{ISI}")
 
                     # blend_edge_mask.draw()
@@ -690,6 +720,7 @@ for step in range(n_trials_per_stair):
                     trials_counter.draw()
 
                     # ANSWER keys
+                    # todo: Exp1_fr_test doesn't use this
                     theseKeys = kb.getKeys(keyList=['num_5', 'num_4', 'num_1',
                                                     'num_2', 'w', 'q', 'a', 's'])
                     if len(theseKeys) > 0:  # at least one key was pressed
@@ -759,15 +790,17 @@ for step in range(n_trials_per_stair):
         #
         # # keep this, so it only checks last set of frames.
         # win.frameIntervals.clear()
-        total_recorded_fr = len(win.frameIntervals)
-        total_dropped_fr = win.nDroppedFrames
-        print(f"{total_dropped_fr}/{total_recorded_fr} dropped frames in total")
-        this_trial_recorded_fr = total_recorded_fr - prev_total_recorded_fr
-        this_trial_dropped_fr = total_dropped_fr - prev_total_dropped_fr
-        print(f"{this_trial_dropped_fr}/{this_trial_recorded_fr} dropped frames on this trial")
-        prev_total_recorded_fr = total_recorded_fr
-        prev_total_dropped_fr = total_dropped_fr
-        fr_recorded_list.append(total_recorded_fr)
+        # total_recorded_fr = len(win.frameIntervals)
+        # total_dropped_fr = win.nDroppedFrames
+
+        # todo: Exp1_fr_test doesn't use this
+        # print(f"{total_dropped_fr}/{total_recorded_fr} dropped frames in total")
+        # this_trial_recorded_fr = total_recorded_fr - prev_total_recorded_fr
+        # this_trial_dropped_fr = total_dropped_fr - prev_total_dropped_fr
+        # print(f"{this_trial_dropped_fr}/{this_trial_recorded_fr} dropped frames on this trial")
+        # prev_total_recorded_fr = total_recorded_fr
+        # prev_total_dropped_fr = total_dropped_fr
+        # fr_recorded_list.append(total_recorded_fr)
 
         # TrialHandler adds info to CSV (but stored in memory until end?)
         thisExp.addData('trial_number', trial_number)
@@ -832,10 +865,18 @@ total_recorded_fr = len(win.frameIntervals)
 total_dropped_fr = win.nDroppedFrames
 print(f"{total_dropped_fr}/{total_recorded_fr} dropped in total (expected: {round(expected_fr_ms, 2)}ms, 'dropped' if > {round(frame_err_ms, 2)})")
 plt.plot(win.frameIntervals)
-plt.title(f"{mon_name}, {fps}Hz, {expInfo['date']}\n{total_dropped_fr}/{total_recorded_fr} dropped fr (expected: {round(expected_fr_ms, 2)}ms, 'dropped' if > {round(frame_err_ms, 2)})")
+plt.title(f"{monitor_name}, {fps}Hz, {expInfo['date']}\n{total_dropped_fr}/{total_recorded_fr} dropped fr (expected: {round(expected_fr_ms, 2)}ms, 'dropped' if > {round(frame_err_ms, 2)})")
 plt.vlines(x=fr_recorded_list, ymin=min(win.frameIntervals), ymax=max(win.frameIntervals), colors='silver', linestyles='dashed')
 plt.axhline(y=frame_err_sec, color='red', linestyle='dashed')
-plt.savefig(f"{expInfo['participant']}{os.sep}{expInfo['participant']}_{expInfo['run_number']}{os.sep}{expInfo['participant']}_{expInfo['run_number']}_frames.png")
+# plt.savefig(f"{expInfo['participant']}{os.sep}{expInfo['participant']}_{expInfo['run_number']}{os.sep}{expInfo['participant']}_{expInfo['run_number']}_frames.png")
+fig_name = filename = f'{_thisDir}{os.sep}' \
+                                         f'{expName}{os.sep}' \
+                                         f'{participant_name}{os.sep}' \
+                                         f'{participant_name}_{run_number}{os.sep}' \
+                                         f'{participant_name}_{run_number}_frames.png'
+print(f"fig_name: {fig_name}")
+plt.savefig(fig_name)
+
 #
 # win.saveFrameIntervals(fileName=None, clear=True)
 # the stuff below certainly seems to be what's recommended (close window then core quit)
@@ -845,7 +886,7 @@ while not kb.getKeys():
     end_of_exp.draw()
     win.flip()
 else:
-    logging.flush()  # write messages out to all targets
+    # logging.flush()  # write messages out to all targets
     thisExp.abort()  # or data files will save again on exit
 
     # close and quit once a key is pressed

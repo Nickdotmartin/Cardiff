@@ -40,4 +40,7 @@ import numpy as np
 #                    'startVal': startVal})
 # print(df)
 # df.to_csv('conds_list')
+take_break = 3
+for i in range(0, 13):
+    print(i, i % take_break)
 
