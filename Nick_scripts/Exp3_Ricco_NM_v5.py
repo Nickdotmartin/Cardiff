@@ -114,32 +114,34 @@ def make_ricco_vertices(sep_cond, balanced=False, verbose=False):
 _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 # Monitor config from monitor centre
-monitor_name = 'NickMac'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18'
+monitor_name = 'Asus_VG24'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18'
+
+# Use balanced probes to match previous Ricco expriments
+balanced_probes = True
 
 # Store info about the experiment session
 expName = 'Exp3_Ricco_NM_v5'  # from the Builder filename that created this script
 
-expInfo = {'1_Participant': 'Nick_test',
-           # 12 frames is 66ms, 29 frames is 120ms,
-           '2_Probe_dur_in_frames_at_240hz': [100, 2, 50, 100],
-           '3_fps': [60, 240, 144, 60],
-           '4_Trials_counter': [True, False]
+expInfo = {'1. Participant': 'Nick_test',
+           '2. Run_number': '1',
+           '3. Probe duration in frames at 240hz': [2, 50, 100],
+           '4. fps': [240, 60],
            }
 
 # GUI
 dlg = gui.DlgFromDict(dictionary=expInfo, title=expName)
 if not dlg.OK:
-    core.quit()  # user pressed cancel
+    core.quit()  # user pressed escape
 
 expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
 expInfo['time'] = datetime.now().strftime("%H:%M:%S")
 
 # GUI SETTINGS
-participant_name = expInfo['1_Participant']
-probe_duration = int(expInfo['2_Probe_dur_in_frames_at_240hz'])
-fps = int(expInfo['3_fps'])
+participant_name = expInfo['1. Participant']
+run_number = int(expInfo['2. Run_number'])
+probe_duration = int(expInfo['3. Probe duration in frames at 240hz'])
+fps = int(expInfo['4. fps'])
 orientation = 'tangent'
-trials_counter = eval(expInfo['4_Trials_counter'])
 background = None
 
 # VARIABLES
@@ -176,13 +178,16 @@ flow_dir_list = [1, -1]*len(sep_vals_list)
 filename = f'{_thisDir}{os.sep}' \
            f'{expName}{os.sep}' \
            f'{participant_name}{os.sep}' \
-           f'{participant_name}_output'
+           f'{participant_name}_{run_number}{os.sep}' \
+           f'{participant_name}_{run_number}_output'
+# files are labelled as '_incomplete' unless entire script runs.
+save_output_name = filename + '_incomplete'
 
 # Experiment Handler
 thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
                                  extraInfo=expInfo, runtimeInfo=None,
                                  savePickle=None, saveWideText=True,
-                                 dataFileName=filename)
+                                 dataFileName=save_output_name)
 
 # COLORS AND LUMINANCE
 # Lum to Color255
@@ -369,7 +374,7 @@ probe_vert_list = []
 probe_name_list = []
 vert_dict = {}
 for sep_cond in separation_values:
-    probe_vertices = make_ricco_vertices(sep_cond)
+    probe_vertices = make_ricco_vertices(sep_cond, balanced=balanced_probes)
     if sep_cond == 99:
         len_pix = 1.5
     else:
@@ -442,23 +447,16 @@ while not event.getKeys():
     instructions.draw()
     win.flip()
 
-# Trial counter
-trials_counter = visual.TextStim(win=win, name='trials_counter', text="???",
-                                 font='Arial', height=20,
-                                 # default set to black (e.g., invisible)
-                                 color='black',
-                                 pos=[-widthPix*.45, -heightPix*.45])
-if trials_counter:
-    # if trials counter yes, change colour to white.
-    trials_counter.color = 'white'
 
 # BREAKS
 total_n_trials = int(n_trials_per_stair * n_stairs)
 take_break = int(total_n_trials/2)+1
 print(f"take_break every {take_break} trials.")
+break_text = "Break\nTurn on the light and take at least 30-seconds break.\n" \
+             "Keep focussed on the fixation circle in the middle of the screen.\n" \
+             "Remember, if you don't see the target, just guess!"
 breaks = visual.TextStim(win=win, name='breaks',
-                         text="turn on the light and take at least 30-seconds break.\n\n"
-                              "When you are ready to continue, press any key.",
+                         text=break_text,
                          font='Arial', height=20,
                          color='white')
 
@@ -515,7 +513,6 @@ for step in range(n_trials_per_stair):
     for thisStair in stairs:
 
         trial_number = trial_number + 1
-        trials_counter.text = f"{trial_number}/{total_n_trials}"
 
         stair_idx = thisStair.extraInfo['stair_idx']
         sep = sep_vals_list[stair_idx]
@@ -630,6 +627,7 @@ for step in range(n_trials_per_stair):
             # Break after trials 75 and 150, or whatever set in take_break
             if (trial_number % take_break == 1) & (trial_number > 1):
                 continueRoutine = False
+                breaks.text = break_text + f"\n{trial_number}/{total_n_trials} trials completed."
                 breaks.draw()
                 win.flip()
                 while not event.getKeys():
@@ -646,14 +644,12 @@ for step in range(n_trials_per_stair):
 
                     fixation.setRadius(3)
                     fixation.draw()
-                    trials_counter.draw()
 
                 # Background motion prior to probe1
                 if t_bg_motion >= frameN > t_fixation:
                     # after fixation, before end of background motion
                     fixation.setRadius(3)
                     fixation.draw()
-                    trials_counter.draw()
 
                     # reset timer to start with probe1 presentation.
                     resp.clock.reset()
@@ -663,14 +659,12 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(3)
                     fixation.draw()
                     probe1.draw()
-                    trials_counter.draw()
 
 
                 # ANSWER
                 if frameN > t_interval_1:
                     fixation.setRadius(2)
                     fixation.draw()
-                    trials_counter.draw()
 
 
                     # ANSWER
@@ -750,6 +744,7 @@ for step in range(n_trials_per_stair):
         thisStair.newValue(resp.corr)  # so that the staircase adjusts itself
 
 print("end of exp loop, saving data")
+thisExp.dataFileName = filename
 thisExp.close()
 
 while not event.getKeys():
