@@ -22,10 +22,8 @@ Based on Ricco_v4 but with make_ricco_vertices function to generate vertices for
 
 '''
 
-def make_ricco_vertices(sep_cond, verbose=False):
+def make_ricco_vertices(sep_cond, balanced=False, verbose=False):
     """
-    Vertices are centered at (0, 0), the bottom of the middle part of the 'M' of probe1 for all probes.
-    In other words, they are not evenly spread around (0, 0), probe2 is further away for higher sep values.
     Probe vertices can be constructed from four parts.
         1. the top left edge of probe 1 (which is the same for all conds).
         2. zig-zag down top-right side (which is has more vertices as sep_cond increases).
@@ -35,6 +33,10 @@ def make_ricco_vertices(sep_cond, verbose=False):
     For 1probe condition (sep=99 or -1) it just loads vertices rather than generating them.
 
     :param sep_cond: equivalent separation condition from exp 1.
+    :param balanced: (default = False).  If False, (0, 0) is at the bottom of the middle part of the 'M' of probe1 for all probes.
+                    In other words, they are not evenly spread around (0, 0), probe2 is further away from (0, 0) for higher sep values.
+                    This is consistent with Exp1 stimuli, where probe1 is always in the same spo, regardless of sep.
+                    If True, stimuli are balanced around (0, 0), as was the case for previous Ricco experiments.
     :param verbose: print sections to screen as they are generated
 
     :return: verticies to draw probe.
@@ -91,6 +93,20 @@ def make_ricco_vertices(sep_cond, verbose=False):
         print(f"bl_zz_4: {bl_zz_4}")
 
     new_verticies = tl_pr1_1 + tr_zz_2 + br_pr2_3 + bl_zz_4
+
+    if balanced:
+        print('balancing probe around (0, 0)')
+        # balancing is roughly based on half the separation value, but with slight differences for odd and even numbers.
+        if sep_cond in [-1, 99]:
+            half_sep = 0
+        elif (sep_cond % 2) != 0:
+            half_sep = int(sep_cond / 2) + 1
+        else:
+            half_sep = int(sep_cond / 2)
+
+        balanced_vertices = [(tup[0] - (half_sep - 1), tup[1] + half_sep) for tup in new_verticies]
+
+        new_verticies = balanced_vertices
 
     return new_verticies
 
