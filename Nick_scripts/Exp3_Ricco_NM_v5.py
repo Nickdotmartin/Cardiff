@@ -450,7 +450,8 @@ while not event.getKeys():
 
 # BREAKS
 total_n_trials = int(n_trials_per_stair * n_stairs)
-take_break = int(total_n_trials/2)+1
+# take_break = int(total_n_trials/2)+1
+take_break = 76
 print(f"take_break every {take_break} trials.")
 break_text = "Break\nTurn on the light and take at least 30-seconds break.\n" \
              "Keep focussed on the fixation circle in the middle of the screen.\n" \
@@ -537,7 +538,7 @@ for step in range(n_trials_per_stair):
 
         # staircase varies probeLum
         probeLum = thisStair.next()
-        probeColor255 = probeLum * LumColor255Factor
+        probeColor255 = int(probeLum * LumColor255Factor)
         probeColor1 = (probeColor255 * Color255Color1Factor) - 1
         probe1.color = [probeColor1, probeColor1, probeColor1]
 
