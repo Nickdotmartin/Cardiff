@@ -114,7 +114,7 @@ def make_ricco_vertices(sep_cond, balanced=False, verbose=False):
 _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 # Monitor config from monitor centre
-monitor_name = 'Asus_VG24'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18'
+monitor_name = 'asus_cal'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18'
 
 # Use balanced probes to match previous Ricco expriments
 balanced_probes = True
@@ -122,7 +122,7 @@ balanced_probes = True
 # Store info about the experiment session
 expName = 'Exp3_Ricco_NM_v5'  # from the Builder filename that created this script
 
-expInfo = {'1. Participant': 'Nick_test',
+expInfo = {'1. Participant': 'Nick',
            '2. Run_number': '1',
            '3. Probe duration in frames at 240hz': [2, 50, 100],
            '4. fps': [240, 60],
@@ -154,7 +154,7 @@ prelim_bg_flow_fr = int(prelim_bg_flow_ms * fps / 1000)
 
 '''Sort separation and condition types'''
 # Distances between probes & flow direction
-separation_values = [-1, 0, 1, 2, 3, 6, 18]
+separation_values = [0, 2, 4, 6, 8, 10, 12, 18]
 print(f'separation_values: {separation_values}')
 cond_types = ['lines']
 print(f'cond_types: {cond_types}')
@@ -239,7 +239,7 @@ widthPix = mon_dict['size'][0]
 heightPix = mon_dict['size'][1]
 monitorwidth = mon_dict['width']  # monitor width in cm
 viewdist = mon_dict['dist']  # viewing distance in cm
-viewdistPix = widthPix/monitorwidth*viewdist
+viewdistPix = widthPix / monitorwidth*viewdist
 mon = monitors.Monitor(monitor_name, width=monitorwidth, distance=viewdist)
 mon.setSizePix((widthPix, heightPix))
 mon.save()
@@ -480,7 +480,7 @@ for k, v in expInfo.items():
     print(f"{k}: {v}")
 
 # todo: If colours are RGB255, change staircase to use int(RGB255 values),
-#  then later convert to float(probeLum).  Since montior can only use int(rgb255)
+#  then later convert to float(probeLum).  Since monitor can only use int(rgb255)
 
 stairs = []
 for stair_idx in expInfo['stair_list']:
