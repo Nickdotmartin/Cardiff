@@ -35,15 +35,16 @@ monitor_name = 'asus_cal'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_
 
 
 # Store info about the experiment session
-expName = 'Exp1_Jan23'  # from the Builder filename that created this script
+expName = 'Exp1_Jan23_radial'  # from the Builder filename that created this script
 # todo: add record frames as an option?
 expInfo = {'1. Participant': 'Jan23_fr_test',
            '2. Run_number': '1',
-           '3. Probe duration in frames at 240hz': [2, 50, 100],
-           '4. fps': [240, 60],
-           '5. Probe_orientation': ['tangent', 'radial'],
-           '6. Vary_fixation': [True, False],
-           '7. Record_frame_durs': [False, True]
+           '3. ISI duration in frames': [0, 2, 4, 6, 9, 12, 24, -1],
+           '4. Probe duration in frames at 240hz': [2, 50, 100],
+           '5. fps': [240, 60],
+           '6. Probe_orientation': ['radial', 'tangent'],
+           '7. Vary_fixation': [True, False],
+           '8. Record_frame_durs': [False, True]
            }
 
 
@@ -58,13 +59,14 @@ expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
 # GUI SETTINGS
 participant_name = expInfo['1. Participant']
 run_number = int(expInfo['2. Run_number'])
+this_ISI_value = int(expInfo['3. ISI duration in frames'])
 n_trials_per_stair = 25
-probe_duration = int(expInfo['3. Probe duration in frames at 240hz'])
+probe_duration = int(expInfo['4. Probe duration in frames at 240hz'])
 probe_ecc = 4
-fps = int(expInfo['4. fps'])
-orientation = expInfo['5. Probe_orientation']
-vary_fixation = eval(expInfo['6. Vary_fixation'])
-record_fr_durs = eval(expInfo['7. Record_frame_durs'])
+fps = int(expInfo['5. fps'])
+orientation = expInfo['6. Probe_orientation']
+vary_fixation = eval(expInfo['7. Vary_fixation'])
+record_fr_durs = eval(expInfo['8. Record_frame_durs'])
 
 # expected frame duration
 expected_fr_ms = (1/fps) * 1000
@@ -78,7 +80,8 @@ For concurrent probes, use ISI==-1.
 separations = [0, 1, 2, 3, 6, 18, 99]  # select from [0, 1, 2, 3, 6, 18, 99]
 print(f'separations: {separations}')
 # ISI_values = [-1, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
-ISI_values = [-1, 0, 2, 4, 6, 9, 12, 24]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+# ISI_values = [-1, 0, 2, 4, 6, 9, 12, 24]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+ISI_values = [this_ISI_value]
 print(f'ISI_values: {ISI_values}')
 # repeat separation values for each ISI e.g., [0, 0, 6, 6]
 sep_vals_list = list(np.repeat(separations, len(ISI_values)))
@@ -98,6 +101,7 @@ filename = f'{_thisDir}{os.sep}' \
            f'{expName}{os.sep}' \
            f'{participant_name}{os.sep}' \
            f'{participant_name}_{run_number}{os.sep}' \
+           f'ISI_{this_ISI_value}{os.sep}' \
            f'{participant_name}_{run_number}_output'
 # files are labelled as '_incomplete' unless entire script runs.
 save_output_name = filename + '_incomplete'
@@ -482,7 +486,6 @@ for step in range(n_trials_per_stair):
                     if record_fr_durs:
                         win.recordFrameIntervals = True
 
-
                 # PROBE 1
                 elif t_probe_1 >= frameN > t_fixation:
                     probe1.draw()
@@ -513,7 +516,6 @@ for step in range(n_trials_per_stair):
                         win.recordFrameIntervals = False
                         total_recorded_fr = len(win.frameIntervals)
                         fr_recorded_list.append(total_recorded_fr)
-
                     
                     fixation.setRadius(2)
                     fixation.draw()
@@ -609,6 +611,7 @@ if record_fr_durs:
                           f'{expName}{os.sep}' \
                           f'{participant_name}{os.sep}' \
                           f'{participant_name}_{run_number}{os.sep}' \
+                          f'ISI_{this_ISI_value}{os.sep}' \
                           f'{participant_name}_{run_number}_frames.png'
     print(f"fig_name: {fig_name}")
     plt.savefig(fig_name)

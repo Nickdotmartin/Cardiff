@@ -267,3 +267,6 @@
 #
 #
 # '''
+
+for sep_cond in list(range(10)):
+    print(sep_cond*5 + 10)

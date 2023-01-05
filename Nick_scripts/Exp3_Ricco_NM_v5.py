@@ -198,11 +198,6 @@ Color255Color1Factor = 1/127.5  # Color255 * Color255Color1Factor -1
 Color1LumFactor = 2.39538706913372
 
 maxLum = 106  # 255 RGB
-minLum = 0.12  # 0 RGB
-maxColor255 = 255
-minColor255 = 0
-maxColor1 = 1
-minColor1 = -1
 bgLumP = 20
 bgLum = maxLum * bgLumP / 100  # bgLum is 20% of max lum == 21.2
 # NEW using bgColor255 now, not just bgLum.
@@ -242,7 +237,7 @@ viewdist = mon_dict['dist']  # viewing distance in cm
 viewdistPix = widthPix / monitorwidth*viewdist
 mon = monitors.Monitor(monitor_name, width=monitorwidth, distance=viewdist)
 mon.setSizePix((widthPix, heightPix))
-mon.save()
+# mon.save()
 
 # WINDOW SPEC
 win = visual.Window(monitor=mon, size=(widthPix, heightPix),
@@ -284,92 +279,6 @@ fixation = visual.Circle(win, radius=2, units='pix', lineColor='white', fillColo
 
 
 # PROBEs
-# use this for the 2probe conditions
-# Martin_Vert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
-#                (1, -2), (-1, -2), (-1, -1), (0, -1)]
-# # use these for the lines conditions
-# oneP_vert = [(-1, -2), (-1, 0), (0, 0), (0, 1), (2, 1),
-#              (2, 0), (1, 0), (1, -1), (0, -1), (0, -2)]
-# sep0_vert = [(-2, -1), (-2, 1), (-1, 1), (-1, 2), (1, 2),
-#              (1, -1), (0, -1), (0, -2), (-2, -2)]
-# sep1_vert = [(-2, 0), (-2, 2), (-1, 2), (-1, 3), (1, 3), (1, 1), (2, 1),
-#              (2, -1), (1, -1), (1, -2), (-1, -2), (-1, -1), (-2, -1)]
-# sep2_vert = [(-2, 0), (-2, 2), (-1, 2), (-1, 3), (1, 3), (1, 1), (2, 1), (2, 0),
-#              (3, 0), (3, -2), (2, -2), (2, -3), (0, -3), (0, -2), (-1, -2),
-#              (-1, -1), (-2, -1)]
-# sep3_vert = [(-3, 1), (-3, 3), (-2, 3), (-2, 4), (0, 4), (0, 2), (1, 2), (1, 1),
-#              (2, 1), (2, 0), (3, 0), (3, -2), (2, -2), (2, -3), (0, -3), (0, -2),
-#              (-1, -2), (-1, -1), (-2, -1), (-2, 0), (-3, 0)]
-# sep6_vert = [(-4, 2), (-4, 4), (-3, 4), (-3, 5), (-1, 5), (-1, 3), (0, 3),
-#              (0, 2), (1, 2), (1, 1), (2, 1), (2, 0), (3, 0), (3, -1), (4, -1),
-#              (4, -2), (5, -2), (5, -4), (4, -4), (4, -5), (2, -5), (2, -4),
-#              (1, -4), (1, -3), (0, -3), (0, -2), (-1, -2), (-1, -1), (-2, -1),
-#              (-2, 0), (-3, 0), (-3, 1), (-4, 1)]
-# sep18_vert = [(-10, 8), (-10, 10), (-9, 10), (-9, 11), (-7, 11), (-7, 9),
-#               (-6, 9), (-6, 8), (-5, 8), (-5, 7), (-4, 7), (-4, 6), (-3, 6),
-#               (-3, 5), (-2, 5), (-2, 4), (-1, 4), (-1, 3), (0, 3), (0, 2),
-#               (1, 2), (1, 1), (2, 1), (2, 0), (3, 0), (3, -1), (4, -1),
-#               (4, -2), (5, -2), (5, -3), (6, -3), (6, -4), (7, -4), (7, -5),
-#               (8, -5), (8, -6), (9, -6), (9, -7), (10, -7), (10, -8), (11, -8),
-#               (11, -10), (10, -10), (10, -11), (8, -11), (8, -10), (7, -10),
-#               (7, -9), (6, -9), (6, -8), (5, -8), (5, -7), (4, -7), (4, -6),
-#               (3, -6), (3, -5), (2, -5), (2, -4), (1, -4), (1, -3), (0, -3),
-#               (0, -2), (-1, -2), (-1, -1), (-2, -1), (-2, 0), (-3, 0), (-3, 1),
-#               (-4, 1), (-4, 2), (-5, 2), (-5, 3), (-6, 3), (-6, 4), (-7, 4),
-#               (-7, 5), (-8, 5), (-8, 6), (-9, 6), (-9, 7), (-10, 7)]
-
-# # starts clockwise round probe1 from bottom left
-# sep36_vert = [(-20, 18), (-20, 20), (-19, 20), (-19, 21), (-17, 21),
-#               # then down and right diagonally towards mid-point
-#               (-17, 19), (-16, 19), (-16, 18), (-15, 18),
-#               (-15, 17), (-14, 17), (-14, 16), (-13, 16),
-#               (-13, 15), (-12, 15), (-12, 14), (-11, 14),
-#               (-11, 13), (-10, 13), (-10, 12), (-9, 12),
-#               (-9, 11), (-8, 11), (-8, 10), (-7, 10),
-#               (-7, 9), (-6, 9), (-6, 8), (-5, 8),
-#               (-5, 7), (-4, 7), (-4, 6), (-3, 6),
-#               (-3, 5), (-2, 5), (-2, 4), (-1, 4),
-#               (-1, 3), (0, 3), (0, 2), (1, 2),
-#               # (1, 1) is up and right one from bottom right of white spot
-#               (1, 1), (2, 1), (2, 0), (3, 0),
-#               (3, -1), (4, -1), (4, -2), (5, -2),
-#               (5, -3), (6, -3), (6, -4), (7, -4),
-#               (7, -5), (8, -5), (8, -6), (9, -6),
-#               (9, -7), (10, -7), (10, -8), (11, -8),
-#               (11, -9), (12, -9), (12, -10), (13, -10),
-#               (13, -11), (14, -11), (14, -12), (15, -12),
-#               (15, -13), (16, -13), (16, -14), (17, -14),
-#               (17, -15), (18, -15), (18, -16), (19, -16),
-#               # round probe2, (16, -19) is bottom left of probe2
-#               (19, -18), (18, -18), (18, -19), (16, -19),
-#               # then back up and left along diagonal
-#               (16, -18), (15, -18), (15, -17), (14, -17),
-#               (14, -16), (13, -16), (13, -15), (12, -15),
-#               (12, -14), (11, -14), (11, -13), (10, -13),
-#               (10, -12), (9, -12), (9, -11), (8, -11),
-#               (8, -10), (7, -10), (7, -9), (6, -9),
-#               (6, -8), (5, -8), (5, -7), (4, -7),
-#               (4, -6), (3, -6), (3, -5), (2, -5),
-#               (2, -4), (1, -4), (1, -3), (0, -3),
-#               (0, -2), (-1, -2),
-#               # (-1, 1) is down and left one from bottom right of white spot
-#               (-1, -1), (-2, -1), (-2, 0), (-3, 0),
-#               (-3, 1), (-4, 1), (-4, 2), (-5, 2),
-#               (-5, 3), (-6, 3), (-6, 4), (-7, 4),
-#               (-7, 5), (-8, 5), (-8, 6), (-9, 6),
-#               (-9, 7), (-10, 7), (-10, 8), (-11, 8),
-#               (-11, 9), (-12, 9), (-12, 10), (-13, 10),
-#               (-13, 11), (-14, 11), (-14, 12), (-15, 12),
-#               (-15, 13), (-16, 13), (-16, 14), (-17, 14),
-#               (-17, 15), (-18, 15), (-18, 16), (-19, 16),
-#               (-19, 17), (-20, 17),
-#               ]  # bottom left of probe1 is (-20, 18),
-
-# probe_vert_list = [oneP_vert, sep0_vert, sep1_vert, sep2_vert, sep3_vert, sep6_vert, sep18_vert, sep36_vert]
-# probe_name_list = ['oneP', 'sep0', 'sep1', 'sep2', 'sep3', 'sep6', 'sep18', 'sep36_vert']
-# # radii of circles for circle_probes
-# circle_rad_list = [2.15, 2.5, 2.8, 3.4, 4.1, 6.1, 14.6, 27.3]
-
 probe_vert_list = []
 probe_name_list = []
 vert_dict = {}
@@ -377,11 +286,14 @@ for sep_cond in separation_values:
     probe_vertices = make_ricco_vertices(sep_cond, balanced=balanced_probes)
     if sep_cond == 99:
         len_pix = 1.5
+        n_pix = 5
     else:
         len_pix = 2.5 + sep_cond
+        n_pix = sep_cond * 5 + 10
 
     probe_name = f"sep{sep_cond}"
     vert_dict[probe_name] = {}
+    vert_dict[f"sep{sep_cond}"]['n_pix'] = n_pix
     vert_dict[f"sep{sep_cond}"]['len_pix'] = len_pix
     vert_dict[f"sep{sep_cond}"]['diag_mm'] = len_pix * pixel_mm_deg_dict['diag_mm']
     vert_dict[f"sep{sep_cond}"]['diag_deg'] = len_pix * pixel_mm_deg_dict['diag_deg']
@@ -614,11 +526,7 @@ for step in range(n_trials_per_stair):
         t_fixation = 1 * (fps - prelim_bg_flow_fr)
         t_bg_motion = t_fixation + prelim_bg_flow_fr
         t_interval_1 = t_bg_motion + probe_duration
-        # there is no isi or probe2 time
-        # t_ISI = t_interval_1 + ISI
-        # t_interval_2 = t_ISI + probe_duration
-        # essentially unlimited time to respond
-        t_response = t_interval_1 + 10000 * fps
+        t_response = t_interval_1 + 10000 * fps  # essentially unlimited time to respond
 
         # repeat the trial if [r] has been pressed
         repeat = True
@@ -734,6 +642,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('weber_lum', weber_lum)
         thisExp.addData('expName', expName)
         thisExp.addData('monitor_name', monitor_name)
+        thisExp.addData('n_pix', vert_dict[f"sep{sep}"]['n_pix'])
         thisExp.addData('len_pix', vert_dict[f"sep{sep}"]['len_pix'])
         thisExp.addData('diag_mm', vert_dict[f"sep{sep}"]['diag_mm'])
         thisExp.addData('diag_deg', vert_dict[f"sep{sep}"]['diag_deg'])

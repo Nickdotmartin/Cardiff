@@ -35,7 +35,7 @@ monitor_name = 'asus_cal'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_
 
 
 # Store info about the experiment session
-expName = 'Exp1_Jan23'  # from the Builder filename that created this script
+expName = 'Exp1_Jan23_sep45'  # from the Builder filename that created this script
 # todo: add record frames as an option?
 expInfo = {'1. Participant': 'Jan23_fr_test',
            '2. Run_number': '1',
@@ -75,7 +75,7 @@ For 1probe condition, use separation==99.
 For concurrent probes, use ISI==-1.
 '''
 # separations = [0, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
-separations = [0, 1, 2, 3, 6, 18, 99]  # select from [0, 1, 2, 3, 6, 18, 99]
+separations = [4, 5]  # select from [0, 1, 2, 3, 6, 18, 99]
 print(f'separations: {separations}')
 # ISI_values = [-1, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 ISI_values = [-1, 0, 2, 4, 6, 9, 12, 24]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
@@ -482,7 +482,6 @@ for step in range(n_trials_per_stair):
                     if record_fr_durs:
                         win.recordFrameIntervals = True
 
-
                 # PROBE 1
                 elif t_probe_1 >= frameN > t_fixation:
                     probe1.draw()
@@ -513,7 +512,6 @@ for step in range(n_trials_per_stair):
                         win.recordFrameIntervals = False
                         total_recorded_fr = len(win.frameIntervals)
                         fr_recorded_list.append(total_recorded_fr)
-
                     
                     fixation.setRadius(2)
                     fixation.draw()
