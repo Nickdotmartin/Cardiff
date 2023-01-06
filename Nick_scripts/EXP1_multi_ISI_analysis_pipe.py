@@ -35,7 +35,7 @@ trim_list = []
 for p_idx, participant_name in enumerate(participant_list):
     root_path = os.path.join(exp_path, participant_name)
 
-    # # search to automatically get run_folder_names
+    # search to automatically get run_folder_names
     dir_list = os.listdir(root_path)
     run_folder_names = []
     for i in range(n_runs):  # numbers 0 to 11

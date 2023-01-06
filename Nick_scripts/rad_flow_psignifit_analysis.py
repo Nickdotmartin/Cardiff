@@ -2433,9 +2433,10 @@ def d_average_participant(root_path, run_dir_names_list,
                              f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
                              f"'deviation', 'standard_deviation']")
 
-        error_bars_df = error_bars_df.drop(cols_to_replace, axis=1)
-        error_bars_df.insert(0, cols_to_replace, replace_cols)
-        error_bars_df.fillna(0)
+        if cols_to_replace is not None:
+            error_bars_df = error_bars_df.drop(cols_to_replace, axis=1)
+            error_bars_df.insert(0, cols_to_replace, replace_cols)
+            error_bars_df.fillna(0)
         if verbose:
             print(f'\nerror_bars_df:\n{error_bars_df}')
 
@@ -2661,13 +2662,17 @@ def e_average_exp_data(exp_path, p_names_list,
             # neg_sep_col = this_p_ave_df['neg_sep'].tolist()
             # sep_col = this_p_ave_df['separation'].tolist()
         else:
-            stair_names_list = this_p_ave_df['stair_names'].tolist()
+            if 'stair_names' in this_p_ave_df.columns.tolist():
+                stair_names_list = this_p_ave_df['stair_names'].tolist()
+            elif 'separation' in this_p_ave_df.columns.tolist():
+                stair_names_list = this_p_ave_df['separation'].tolist()
             if verbose:
                 print(f'stair_names_list: {stair_names_list}')
             sep_list = [0 if x == -.10 else abs(int(x)) for x in stair_names_list]
             cong_list = [-1 if x < 0 else 1 for x in stair_names_list]
             this_p_ave_df.insert(2, 'congruent', cong_list)
-            this_p_ave_df.insert(3, 'separation', sep_list)
+            if 'separation' not in this_p_ave_df.columns.tolist():
+                this_p_ave_df.insert(3, 'separation', sep_list)
 
 
         all_p_ave_list.append(this_p_ave_df)
@@ -2689,6 +2694,9 @@ def e_average_exp_data(exp_path, p_names_list,
     groupby_sep_df = all_exp_thr_df.drop('participant', axis=1)
     if exp_type == 'Ricco':
         groupby_col = 'stair_names'
+        sort_rows = False
+    if exp_type == 'Ricco_v5':
+        groupby_col = 'separation'
         sort_rows = False
     elif exp_type == 'Bloch':
         groupby_sep_df['stair_names'] = groupby_sep_df['cond_type'] + "_" + groupby_sep_df["ISI"].map(str)
