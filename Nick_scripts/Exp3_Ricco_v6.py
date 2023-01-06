@@ -1,34 +1,31 @@
-from __future__ import division
-
-import copy
-import os
-from datetime import datetime
-from math import *
-
-import numpy as np
-from psychopy import __version__ as psychopy_version
+from __future__ import division  # do I need this?
 from psychopy import gui, visual, core, data, event, monitors
-
-from PsychoPy_tools import check_correct_monitor, get_pixel_mm_deg_values
+from psychopy import __version__ as psychopy_version
+from psychopy.hardware import keyboard
+import os
+import numpy as np
+# from numpy import deg2rad  # just import numpy and use np.deg2rad
+from numpy.random import shuffle  # just import numpy and use np.random.shuffle
+import random
+import copy
+from datetime import datetime
+from math import tan, sqrt
 from kestenSTmaxVal import Staircase
+from PsychoPy_tools import get_pixel_mm_deg_values
+
 
 '''
-This script is a follow on from exp1a (but uses radial_flow_NM_v2 as its basis):
-
-Exp3_Ricco_NM: no temporal summation, just spatial - test Ricco.
-No ISI, only one probe.
-
-Based on Ricco_v4 but with make_ricco_vertices function to generate vertices for probes of any size.
-
+Based on Exp1_Jan23.py but with function to make new Ricco Stim from Ricco_v5.
 '''
+
 
 def make_ricco_vertices(sep_cond, balanced=False, verbose=False):
     """
     Probe vertices can be constructed from four parts.
         1. the top left edge of probe 1 (which is the same for all conds).
-        2. zig-zag down top-right side (which is has more vertices as sep_cond increases).
+        2. zigzag down top-right side (which is has more vertices as sep_cond increases).
         3. bottom-right of probe 2 (calculated by adjusting values from sep0).
-        4. zig-zag back up bottom-left side (which is has more vertices as sep_cond increases).
+        4. zigzag back up bottom-left side (which is has more vertices as sep_cond increases).
 
     For 1probe condition (sep=99 or -1) it just loads vertices rather than generating them.
 
@@ -39,9 +36,8 @@ def make_ricco_vertices(sep_cond, balanced=False, verbose=False):
                     If True, stimuli are balanced around (0, 0), as was the case for previous Ricco experiments.
     :param verbose: print sections to screen as they are generated
 
-    :return: verticies to draw probe.
+    :return: vertices to draw probe.
     """
-    # print(f"\nsep_cond: {sep_cond}")
 
     '''top-left of pr1: Use these vertices for all probes'''
     tl_pr1_1 = [(-2, 1), (-1, 1), (-1, 2), (1, 2)]  # top-left of pr1
@@ -71,7 +67,7 @@ def make_ricco_vertices(sep_cond, balanced=False, verbose=False):
 
         '''zig-zag back up bottom-left side:
         For bl_zz_4_x_vals, generate x and y values based on separation, then zip.'''
-        # bl_zz_4_x_vals have same structure as tr_zz_2_x_vals:
+        # bl_zz_4_x_vals has the same structure as tr_zz_2_x_vals:
         #   first value, once, then each number repeats twice apart from last one (once).
         # bl_zz_4_x_vals start positive and decrement until -2.
         bl_zz_4_x_vals = list(np.repeat(list(range(-2+sep_cond, -3, -1)), 2))
@@ -92,7 +88,7 @@ def make_ricco_vertices(sep_cond, balanced=False, verbose=False):
         print(f"br_pr2_3: {br_pr2_3}")
         print(f"bl_zz_4: {bl_zz_4}")
 
-    new_verticies = tl_pr1_1 + tr_zz_2 + br_pr2_3 + bl_zz_4
+    new_vertices = tl_pr1_1 + tr_zz_2 + br_pr2_3 + bl_zz_4
 
     if balanced:
         print('balancing probe around (0, 0)')
@@ -104,28 +100,33 @@ def make_ricco_vertices(sep_cond, balanced=False, verbose=False):
         else:
             half_sep = int(sep_cond / 2)
 
-        balanced_vertices = [(tup[0] - (half_sep - 1), tup[1] + half_sep) for tup in new_verticies]
+        balanced_vertices = [(tup[0] - (half_sep - 1), tup[1] + half_sep) for tup in new_vertices]
 
-        new_verticies = balanced_vertices
+        new_vertices = balanced_vertices
 
-    return new_verticies
+    return new_vertices
+
 
 # Ensure that relative paths start from the same directory as this script
 _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
-# Monitor config from monitor centre
-monitor_name = 'HP_24uh'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18'
 
-# Use balanced probes to match previous Ricco expriments
+# Monitor config from monitor centre
+monitor_name = 'NickMac'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
+
+# Use balanced probes to match previous Ricco experiments
 balanced_probes = True
 
 # Store info about the experiment session
-expName = 'Exp3_Ricco_NM_v5'  # from the Builder filename that created this script
+expName = 'Exp3_Ricco_NM_v6'
 
 expInfo = {'1. Participant': 'Nick_test',
            '2. Run_number': '1',
            '3. Probe duration in frames at 240hz': [2, 50, 100],
            '4. fps': [240, 60],
+           '5. Probe_orientation': ['tangent', 'radial'],
+           '6. Vary_fixation': [True, False],
+           '7. Record_frame_durs': [False, True]
            }
 
 # GUI
@@ -133,27 +134,27 @@ dlg = gui.DlgFromDict(dictionary=expInfo, title=expName)
 if not dlg.OK:
     core.quit()  # user pressed escape
 
-expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
 expInfo['time'] = datetime.now().strftime("%H:%M:%S")
+expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
 
 # GUI SETTINGS
 participant_name = expInfo['1. Participant']
 run_number = int(expInfo['2. Run_number'])
 probe_duration = int(expInfo['3. Probe duration in frames at 240hz'])
 fps = int(expInfo['4. fps'])
-orientation = 'tangent'
-background = None
+orientation = expInfo['5. Probe_orientation']
+vary_fixation = eval(expInfo['6. Vary_fixation'])
+record_fr_durs = eval(expInfo['7. Record_frame_durs'])
+
+# expected frame duration
+expected_fr_ms = (1/fps) * 1000
 
 # VARIABLES
 n_trials_per_stair = 25
 probe_ecc = 4
 
-# background motion to start 70ms before probe1 (e.g., 17frames at 240Hz).
-prelim_bg_flow_ms = 70
-prelim_bg_flow_fr = int(prelim_bg_flow_ms * fps / 1000)
-
 '''Distances between probes (spatially and temporally)
-For 1probe condition, use separation==99.
+For 1probe condition, use separation==-1.
 For concurrent probes, use ISI==-1.
 '''
 separation_values = [0, 2, 4, 6, 8, 10, 12, 18]
@@ -172,9 +173,8 @@ print(f'cond_type_list: {cond_type_list}')
 # e.g., ['-1_2probe', '-1_lines', '-1_circles', '0_2probe', '0_lines', '0_circles'...]
 stair_names_list = [f'{s}_{c}' for s, c in zip(sep_vals_list, cond_type_list)]
 print(f'stair_names_list: {stair_names_list}')
-
-'''ignore background flow for now'''
-flow_dir_list = [1, -1]*len(sep_vals_list)
+n_stairs = len(sep_vals_list)
+print(f'n_stairs: {n_stairs}')
 
 # FILENAME
 filename = f'{_thisDir}{os.sep}' \
@@ -201,19 +201,10 @@ Color1LumFactor = 2.39538706913372
 
 maxLum = 106  # 255 RGB
 bgLumProp = .2
-bgLum = maxLum * bgLumProp  # bgLum is 20% of max lum == 21.2
-# NEW using bgColor255 now, not just bgLum.
+bgLum = maxLum * bgLumProp
 bgColor255 = bgLum * LumColor255Factor
-flow_bgcolor = [-0.1, -0.1, -0.1]  # darkgrey
+bgColor1 = (bgColor255 * Color255Color1Factor) - 1
 
-"""
-To relate rgb255 to rad_flow experiments using rgb...
-flow_bgcolor = [-0.1, -0.1, -0.1]  # darkgrey
-bgcolor = 114.75  # equivalent to rad_flow if used with colorSpace='rgb255'
-bgcolor = flow_bgcolor  # equivalent to rad_flow if used with colorSpace='rgb'
-"""
-
-print(f"\nbgLum: {bgLum}, bgColor255: {bgColor255}")
 
 # MONITOR SPEC
 thisMon = monitors.Monitor(monitor_name)
@@ -226,8 +217,8 @@ mon_dict = {'mon_name': monitor_name,
 print(f"mon_dict: {mon_dict}")
 
 # double check using full screen in lab
-display_number = 1  # 0 indexed, 1 for external display
-if monitor_name in ['ASUS_2_13_240Hz', 'asus_cal', 'NickMac', 'Nick_work_laptop']:
+display_number = 1  # 0 indexed, 1 for external display, 0 for internal
+if monitor_name in ['ASUS_2_13_240Hz', 'asus_cal', 'Nick_work_laptop', 'NickMac']:
     display_number = 0
 use_full_screen = True
 if display_number > 0:
@@ -239,46 +230,31 @@ viewdist = mon_dict['dist']  # viewing distance in cm
 viewdistPix = widthPix / monitorwidth*viewdist
 mon = monitors.Monitor(monitor_name, width=monitorwidth, distance=viewdist)
 mon.setSizePix((widthPix, heightPix))
-# mon.save()
 
 # WINDOW SPEC
 win = visual.Window(monitor=mon, size=(widthPix, heightPix),
-                    colorSpace='rgb255',
-                    color=bgColor255,
-                    winType='pyglet',  # I've added pyglet to make it work on pycharm/mac
+                    colorSpace='rgb255', color=bgColor255,
+                    winType='pyglet',  # I've added this to make it work on pycharm/mac
                     pos=[1, -1],  # pos gives position of top-left of screen
                     units='pix',
                     screen=display_number,
                     allowGUI=False,
                     fullscr=use_full_screen)
 
-# # check correct monitor details (fps, size) have been accessed.
+# refresh rate
 actual_fps = win.getActualFrameRate(nIdentical=240, nMaxFrames=240,
                                     nWarmUpFrames=10, threshold=1)
 print(f'actual_fps: {actual_fps}')
 
-try:
-    check_correct_monitor(monitor_name=monitor_name,
-                          actual_size=win.size,
-                          actual_fps=actual_fps,
-                          verbose=True)
-    print('\nsize of a single pixel at 57cm')
-    # get_pixel_mm_deg_values(monitor_name=monitor_name)
-    pixel_mm_deg_dict = get_pixel_mm_deg_values(monitor_name=monitor_name)
-    print('pixel_mm_deg_dict.items()')
-    for k, v in pixel_mm_deg_dict.items():
-        print(k, v)
-    print('Monitor setting all correct')
-except ValueError:
-    print("Value error when running check_correct_monitor()")
-    # don't save csv, no trials have happened yet
-    thisExp.abort()
-
+# pixel size
+pixel_mm_deg_dict = get_pixel_mm_deg_values(monitor_name=monitor_name)
+print('pixel_mm_deg_dict.items()')
+for k, v in pixel_mm_deg_dict.items():
+    print(k, v)
 
 # ELEMENTS
 # fixation bull eye
 fixation = visual.Circle(win, radius=2, units='pix', lineColor='white', fillColor='black')
-
 
 # PROBEs
 probe_vert_list = []
@@ -306,54 +282,50 @@ for sep_cond in separation_values:
 for k, v in vert_dict.items():
     print(k, v)
 
+# dist_from_fix is a constant to get 4dva distance from fixation,
+dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
 
-# MASK BEHIND PROBES
-raisedCosTexture1 = visual.filters.makeMask(256, shape='raisedCosine',
-                                            fringeWidth=0.3, radius=[1.0, 1.0])
-mask_size = 150
-probeMask1 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
-                                size=(mask_size, mask_size), units='pix', color=bgColor255)
-probeMask2 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
-                                size=(mask_size, mask_size), units='pix', color=bgColor255)
-probeMask3 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
-                                size=(mask_size, mask_size), units='pix', color=bgColor255)
-probeMask4 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
-                                size=(mask_size, mask_size), units='pix', color=bgColor255)
-
-
-# full screen mask to blend off edges and fade to black
-# Create a raisedCosine mask array and assign it to a Grating stimulus (grey outside, transparent inside)
-# this was useful http://www.cogsci.nl/blog/tutorials/211-a-bit-about-patches-textures-and-masks-in-psychopy
-raisedCosTexture2 = visual.filters.makeMask(1080, shape='raisedCosine', fringeWidth=0.6, radius=[1.0, 1.0])
-invRaisedCosTexture = -raisedCosTexture2  # inverts mask to blur edges instead of center
-blankslab = np.ones((1080, 420))  # create blank slabs to put to left and right of image
-mmask = np.append(blankslab, invRaisedCosTexture, axis=1)  # append blank slab to left
-mmask = np.append(mmask, blankslab, axis=1)  # and right
-dotsMask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
-                              size=(widthPix, heightPix), units='pix', color='black')
-
-
-# MOUSE - Hide cursor
+# MOUSE - hide cursor
 myMouse = event.Mouse(visible=False)
 
 # # KEYBOARD
+# todo: try using keyboard.Keyboard
+# kb = keyboard.Keyboard()
 resp = event.BuilderKeyResponse()
 
 # INSTRUCTION
 instructions = visual.TextStim(win=win, name='instructions',
-                               text="\n\n\nPlease maintain focus on the black cross at the centre of the screen.\n\n"
-                                    "A small white probe will briefly flash on screen,\n"
+                               text="\n\n\n\n\n\nFocus on the fixation circle at the centre of the screen.\n\n"
+                                    "A small white target will briefly appear on screen,\n"
                                     "press the key related to the location of the probe:\n\n"
-                                    "[4] top-left\t\t\t[5] top-right\n\n\n\n"
-                                    "[1] bottom-left\t\t\t[2] bottom-right.\n\n\n"
-                                    "Do not rush, aim to be as accurate as possible,\n"
-                                    "but if you did not see the probe, please guess.\n\n"
-                                    "If you pressed a wrong key by mistake, you can:\n"
-                                    "continue or\n"
-                                    "press [r] or [9] to redo the previous trial.\n\n"
-                                    "Press any key to start.",
+                                    "[4]/[Q] top-left\t\t\t[5]/[W] top-right\n\n\n\n"
+                                    "[1]/[A] bottom-left\t\t\t[2]/[S] bottom-right.\n\n\n"
+                                    "Some targets will be easier to see than others,\n"
+                                    "Some will be so dim that you won't see them, so just guess!\n\n"
+                                    "You don't need to think for long, respond quickly, but try to push press the correct key!\n\n"
+                                    "Don't let your eyes wander, keep focussed on the circle in the middle throughout.",
                                font='Arial', height=20,
                                color='white')
+
+
+# BREAKS
+take_break = 76
+total_n_trials = int(n_trials_per_stair * n_stairs)
+print(f"take_break every {take_break} trials.")
+break_text = "Break\nTurn on the light and take at least 30-seconds break.\n" \
+             "Keep focussed on the fixation circle in the middle of the screen.\n" \
+             "Remember, if you don't see the target, just guess!"
+breaks = visual.TextStim(win=win, name='breaks',
+                         # text="turn on the light and take at least 30-seconds break.",
+                         text=break_text,
+                         font='Arial', pos=[0, 0], height=20, ori=0, color=[255, 255, 255],
+                         colorSpace='rgb255', opacity=1, languageStyle='LTR', depth=0.0)
+
+end_of_exp = visual.TextStim(win=win, name='end_of_exp',
+                             text="You have completed this experiment.\n"
+                                  "Thank you for your time.\n\n"
+                                  "Press any key to return to the desktop.",
+                             font='Arial', height=20)
 
 while not event.getKeys():
     fixation.setRadius(3)
@@ -361,25 +333,11 @@ while not event.getKeys():
     instructions.draw()
     win.flip()
 
-
-# BREAKS
-total_n_trials = int(n_trials_per_stair * n_stairs)
-# take_break = int(total_n_trials/2)+1
-take_break = 76
-print(f"take_break every {take_break} trials.")
-break_text = "Break\nTurn on the light and take at least 30-seconds break.\n" \
-             "Keep focussed on the fixation circle in the middle of the screen.\n" \
-             "Remember, if you don't see the target, just guess!"
-breaks = visual.TextStim(win=win, name='breaks',
-                         text=break_text,
-                         font='Arial', height=20,
-                         color='white')
-
-end_of_exp = visual.TextStim(win=win, name='end_of_exp',
-                             text="You have completed this experiment.\n"
-                                  "Thank you for your time.\n\n"
-                                  "Press any key to return to the desktop.",
-                             font='Arial', height=20)
+# frame error tolerance
+frame_err_sec = win.refreshThreshold
+frame_err_ms = frame_err_sec * 1000
+print(f"frame_err_sec (120%): {frame_err_sec} (or {frame_err_ms}ms)")
+fr_recorded_list = []
 
 # STAIRCASE
 expInfo['stair_list'] = list(range(n_stairs))
@@ -393,42 +351,32 @@ print('\nexpInfo (dict)')
 for k, v in expInfo.items():
     print(f"{k}: {v}")
 
-# todo: If colours are RGB255, change staircase to use int(RGB255 values),
-#  then later convert to float(probeLum).  Since monitor can only use int(rgb255)
-
 stairs = []
 for stair_idx in expInfo['stair_list']:
+
     thisInfo = copy.copy(expInfo)
     thisInfo['stair_idx'] = stair_idx
 
-    stair_name = stair_names_list[stair_idx]
-    # ignore background flow for now
-    if background == 'flow_rad':
-        stair_name = stair_names_list[stair_idx] * flow_dir_list[stair_idx]
-
-    thisStair = Staircase(name=f'{stair_name}',
+    thisStair = Staircase(name=stair_names_list[stair_idx],
                           type='simple',
                           value=stairStart,
-                          C=stairStart * 0.6,  # step_size, typically 60% of reference stimulus
+                          C=stairStart * 0.6,  # initial step size, as prop of reference stim
                           minRevs=3,
                           minTrials=n_trials_per_stair,
                           minVal=miniVal,
                           maxVal=maxiVal,
                           targetThresh=0.75,
-                          extraInfo=thisInfo
-                          )
+                          extraInfo=thisInfo)
     stairs.append(thisStair)
-
 
 # EXPERIMENT
 trial_number = 0
-print('\n*** exp loop*** \n\n')
 for step in range(n_trials_per_stair):
-    np.random.shuffle(stairs)
+    shuffle(stairs)
     for thisStair in stairs:
 
+        # Trial, stair and step
         trial_number = trial_number + 1
-
         stair_idx = thisStair.extraInfo['stair_idx']
         sep = sep_vals_list[stair_idx]
         cond_type = cond_type_list[stair_idx]
@@ -442,41 +390,44 @@ for step in range(n_trials_per_stair):
             probe_vert_list_2 = list(np.repeat(probe_vert_list, len(cond_types)))
             probeVert = probe_vert_list_2[stair_idx]
             line_probe = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, 1.0, 1.0),
-                                          lineWidth=0, opacity=1, size=1, interpolate=False, )
+                                          lineWidth=0, opacity=1, size=10, interpolate=False, )
             probe1 = line_probe
         else:
             raise ValueError(f'Unknown cond type: {cond_type}')
 
-        flow_dir = flow_dir_list[stair_idx]
-        target_jump = np.random.choice([1, -1])  # direction in which the probe jumps : CW or CCW
-
-        # staircase varies probeLum
+        # Luminance (staircase varies probeLum)
         probeLum = thisStair.next()
-        probeColor255 = int(probeLum * LumColor255Factor)
+        probeColor255 = int(probeLum * LumColor255Factor)  # rgb255 are ints.
         probeColor1 = (probeColor255 * Color255Color1Factor) - 1
         probe1.color = [probeColor1, probeColor1, probeColor1]
-
-        # PROBE LOCATIONS
-        # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
-        corner = np.random.choice([45, 135, 225, 315])
-        print(f'\tcorner: {corner}, flow_dir: {flow_dir}, target_jump: {target_jump}')
+        print(f"probeLum: {probeLum}, probeColor255: {probeColor255}, probeColor1: {probeColor1}")
 
         weber_lum = (probeLum-bgLum)/probeLum
-
-        print(f'\t\tprobeLum: {probeLum}, bgLum: {bgLum}, weber_lum: {weber_lum}')
-        print(f'\t\t\tprobeColor255: {probeColor255}, probeColor1: {probeColor1}')
-        print(f'\t\t\t\twin.colorSpace: {win.colorSpace}, bgColor255: {bgColor255}\n')
+        print(f'\t\tbgLum: {bgLum}, weber_lum: {weber_lum}')
 
 
-        # dist_from_fix is a constant giving distance form fixation,
-        # dist_from_fix was previously 2 identical variables x_prob & y_prob.
-        dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
+        # PROBE LOCATION
+        # # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
+        corner = random.choice([45, 135, 225, 315])
+        corner_name = 'top_right'
+        if corner == 135:
+            corner_name = 'top_left'
+        elif corner == 225:
+            corner_name = 'bottom_left'
+        elif corner == 315:
+            corner_name = 'bottom_right'
 
-        # probe mask locations
-        probeMask1.setPos([dist_from_fix+1, dist_from_fix+1])
-        probeMask2.setPos([-dist_from_fix-1, dist_from_fix+1])
-        probeMask3.setPos([-dist_from_fix-1, -dist_from_fix-1])
-        probeMask4.setPos([dist_from_fix+1, -dist_from_fix-1])
+        # # direction in which the probe jumps : CW or CCW
+        target_jump = random.choice([1, -1])
+        if orientation == 'tangent':
+            jump_dir = 'clockwise'
+            if target_jump == -1:
+                jump_dir = 'anticlockwise'
+        else:
+            jump_dir = 'inward'
+            if target_jump == -1:
+                jump_dir = 'outward'
+        print(f"corner: {corner} {corner_name}; jump dir: {target_jump} {jump_dir}")
 
         # set probe ori
         if corner == 45:
@@ -490,6 +441,11 @@ for step in range(n_trials_per_stair):
                     probe1.ori = 0
                 elif target_jump == -1:  # CW
                     probe1.ori = 180
+            if orientation == 'radial':
+                if target_jump == 1:  # CCW
+                    probe1.ori = 90
+                elif target_jump == -1:  # CW
+                    probe1.ori = 270
         elif corner == 135:
             # in top-left corner, x decreases (left) and y increases (up)
             p1_x = dist_from_fix * -1
@@ -499,6 +455,11 @@ for step in range(n_trials_per_stair):
                     probe1.ori = 90
                 elif target_jump == -1:  # CW
                     probe1.ori = 270
+            if orientation == 'radial':
+                if target_jump == 1:  # CCW
+                    probe1.ori = 180
+                elif target_jump == -1:  # CW
+                    probe1.ori = 0
         elif corner == 225:
             # in bottom left corner, both x and y decrease (left and down)
             p1_x = dist_from_fix * -1
@@ -508,6 +469,11 @@ for step in range(n_trials_per_stair):
                     probe1.ori = 180
                 elif target_jump == -1:  # CW
                     probe1.ori = 0
+            if orientation == 'radial':
+                if target_jump == 1:  # CCW
+                    probe1.ori = 270
+                elif target_jump == -1:  # CW
+                    probe1.ori = 90
         else:
             corner = 315
             # in bottom-right corner, x increases (right) and y decreases (down)
@@ -518,24 +484,46 @@ for step in range(n_trials_per_stair):
                     probe1.ori = 270
                 elif target_jump == -1:  # CW
                     probe1.ori = 90
-
+            if orientation == 'radial':
+                if target_jump == 1:  # CCW
+                    probe1.ori = 0
+                elif target_jump == -1:  # CW
+                    probe1.ori = 180
 
         probe1.pos = [p1_x, p1_y]
 
+        print(f"probe1: {probe1.pos}, dist_from_fix: {dist_from_fix}")
 
-        # timing in frames
-        # fixation time is now 70ms shorted than previously, but t_bg motion adds 70ms.
-        t_fixation = 1 * (fps - prelim_bg_flow_fr)
-        t_bg_motion = t_fixation + prelim_bg_flow_fr
-        t_interval_1 = t_bg_motion + probe_duration
-        t_response = t_interval_1 + 10000 * fps  # essentially unlimited time to respond
+        # VARIABLE FIXATION TIME
+        # to reduce anticipatory effects that might arise from fixation always being same length.
+        # if False, vary_fix == .5 seconds, so t_fixation is 1 second.
+        # if Ture, vary_fix is between 0 and 1 second, so t_fixation is between .5 and 1.5 seconds.
+        vary_fix = int(fps / 2)
+        if vary_fixation:
+            vary_fix = np.random.randint(0, fps)
+
+        # # timing in frames for ISI and probe2
+        # # If probes are presented concurrently, set ISI and probe2 to last for 0 frames.
+        # isi_dur_fr = ISI
+        # p2_fr = probe_duration
+        # if ISI < 0:
+        #     isi_dur_fr = p2_fr = 0
+
+        # cumulative timing in frames for each part of a trial
+        t_fixation = int(fps / 2) + vary_fix
+        t_probe_1 = t_fixation + probe_duration
+        t_response = t_probe_1 + 10000 * fps  # essentially unlimited time to respond
+
+        print(f"t_fixation: {t_fixation}\n"
+              f"t_probe_1: {t_probe_1}\n"
+              f"t_response: {t_response}\n")
 
         # repeat the trial if [r] has been pressed
         repeat = True
         while repeat:
             frameN = -1
 
-            # Break after trials 75 and 150, or whatever set in take_break
+            # take a break every ? trials
             if (trial_number % take_break == 1) & (trial_number > 1):
                 continueRoutine = False
                 breaks.text = break_text + f"\n{trial_number}/{total_n_trials} trials completed."
@@ -551,35 +539,36 @@ for step in range(n_trials_per_stair):
 
                 # FIXATION
                 if t_fixation >= frameN > 0:
-                    # before fixation has finished
-
-                    fixation.setRadius(3)
-                    fixation.draw()
-
-                # Background motion prior to probe1
-                if t_bg_motion >= frameN > t_fixation:
-                    # after fixation, before end of background motion
                     fixation.setRadius(3)
                     fixation.draw()
 
                     # reset timer to start with probe1 presentation.
                     resp.clock.reset()
 
+                    # start recording frame intervals
+                    if record_fr_durs:
+                        win.recordFrameIntervals = True
+
+
                 # PROBE 1
-                if t_interval_1 >= frameN > t_bg_motion:
+                elif t_probe_1 >= frameN > t_fixation:
                     fixation.setRadius(3)
                     fixation.draw()
                     probe1.draw()
 
-
                 # ANSWER
-                if frameN > t_interval_1:
+                elif frameN > t_probe_1:
+                    
+                    if record_fr_durs:
+                        win.recordFrameIntervals = False
+                        total_recorded_fr = len(win.frameIntervals)
+                        fr_recorded_list.append(total_recorded_fr)
+
+                    
                     fixation.setRadius(2)
                     fixation.draw()
 
-
                     # ANSWER
-                    resp = event.BuilderKeyResponse()
                     theseKeys = event.getKeys(keyList=['num_5', 'num_4', 'num_1',
                                                        'num_2', 'w', 'q', 'a', 's'])
                     if len(theseKeys) > 0:  # at least one key was pressed
@@ -605,8 +594,7 @@ for step in range(n_trials_per_stair):
                         repeat = False
                         continueRoutine = False
 
-                # regardless of frameN
-                # check for quit
+                # regardless of frameN, check for quit
                 if event.getKeys(keyList=["escape"]):
                     thisExp.close()
                     core.quit()
@@ -621,49 +609,78 @@ for step in range(n_trials_per_stair):
                 if continueRoutine:
                     win.flip()
 
-        # add to exp dict
         thisExp.addData('trial_number', trial_number)
         thisExp.addData('stair', stair_idx)
+        thisExp.addData('stair_name', thisStair)
         thisExp.addData('step', step)
         thisExp.addData('cond_type', cond_type)
-        thisExp.addData('stair_name', thisStair)
         thisExp.addData('separation', sep)
-        thisExp.addData('ISI', 0)
-        thisExp.addData('probeLum', probeLum)
-        thisExp.addData('trial_response', resp.corr)
-        thisExp.addData('resp.rt', resp.rt)
-        thisExp.addData('flow_dir', flow_dir)
         thisExp.addData('probe_jump', target_jump)
+        thisExp.addData('jump_dir', jump_dir)
+        thisExp.addData('trial_response', resp.corr)
         thisExp.addData('corner', corner)
+        thisExp.addData('corner_name', corner_name)
+        thisExp.addData('resp.rt', resp.rt)
+        thisExp.addData('probeLum', probeLum)
         thisExp.addData('probeColor1', probeColor1)
         thisExp.addData('probeColor255', probeColor255)
-        thisExp.addData('probe_ecc', probe_ecc)
-        thisExp.addData('orientation', orientation)
         thisExp.addData('bgLum', bgLum)
         thisExp.addData('bgColor255', bgColor255)
         thisExp.addData('weber_lum', weber_lum)
-        thisExp.addData('expName', expName)
-        thisExp.addData('monitor_name', monitor_name)
         thisExp.addData('n_pix', vert_dict[f"sep{sep}"]['n_pix'])
         thisExp.addData('len_pix', vert_dict[f"sep{sep}"]['len_pix'])
         thisExp.addData('diag_mm', vert_dict[f"sep{sep}"]['diag_mm'])
         thisExp.addData('diag_deg', vert_dict[f"sep{sep}"]['diag_deg'])
+        thisExp.addData('probe_ecc', probe_ecc)
+        thisExp.addData('orientation', orientation)
+        thisExp.addData('vary_fixation', vary_fixation)
+        thisExp.addData('t_fixation', t_fixation)
+        thisExp.addData('expName', expName)
+        thisExp.addData('monitor_name', monitor_name)
         thisExp.addData('selected_fps', fps)
         thisExp.addData('actual_fps', actual_fps)
+        thisExp.addData('psychopy_version', psychopy_version)
+        thisExp.addData('date', expInfo['date'])
+        thisExp.addData('time', expInfo['time'])
 
         thisExp.nextEntry()
 
-        thisStair.newValue(resp.corr)  # so that the staircase adjusts itself
+        thisStair.newValue(resp.corr)   # so that the staircase adjusts itself
 
-print("end of exp loop, saving data")
+print("end of experiment loop, saving data")
 thisExp.dataFileName = filename
 thisExp.close()
+
+# plot frame intervals
+if record_fr_durs:
+    import matplotlib.pyplot as plt
+    total_recorded_fr = len(win.frameIntervals)
+    total_dropped_fr = win.nDroppedFrames
+    print(f"{total_dropped_fr}/{total_recorded_fr} dropped in total (expected: {round(expected_fr_ms, 2)}ms, "
+          f"'dropped' if > {round(frame_err_ms, 2)})")
+    plt.plot(win.frameIntervals)
+    plt.title(f"{monitor_name}, {fps}Hz, {expInfo['date']}\n{total_dropped_fr}/{total_recorded_fr} dropped fr "
+              f"(expected: {round(expected_fr_ms, 2)}ms, 'dropped' if > {round(frame_err_ms, 2)})")
+    plt.vlines(x=fr_recorded_list, ymin=min(win.frameIntervals), ymax=max(win.frameIntervals), 
+               colors='silver', linestyles='dashed')
+    plt.axhline(y=frame_err_sec, color='red', linestyle='dashed')
+    fig_name = filename = f'{_thisDir}{os.sep}' \
+                          f'{expName}{os.sep}' \
+                          f'{participant_name}{os.sep}' \
+                          f'{participant_name}_{run_number}{os.sep}' \
+                          f'{participant_name}_{run_number}_frames.png'
+    print(f"fig_name: {fig_name}")
+    plt.savefig(fig_name)
+
 
 while not event.getKeys():
     # display end of experiment screen
     end_of_exp.draw()
     win.flip()
 else:
+    # logging.flush()  # write messages out to all targets
+    thisExp.abort()  # or data files will save again on exit
+
     # close and quit once a key is pressed
     win.close()
     core.quit()

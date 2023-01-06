@@ -14,13 +14,15 @@ from kestenSTmaxVal import Staircase
 
 
 '''
-Script to demonstrate Exp1:
-ISI of -1 (conc) and 6 frames.
-Sep of 0 and 6 pixels.  
+Based on Exp1_Jan23 and Exp1_split_probes.
+
+Script to break relationship between spatial and temporal integration, which might reduce apparent motion effect.
+The two probes combined use the same pixels, but the first probe is now composed of pixels that were previously
+parts of probes 1 and 2.  e.g., three pixels from probe 1 and two from probe 2.  
+That is, participants still have to integrate over the same total space and time, but there is not the same coherent motion from
+probe 1 location to probe2 location.
 '''
 
-# prioritise psychopy
-#core.rush(True)
 
 # Ensure that relative paths start from the same directory as this script
 _thisDir = os.path.dirname(os.path.abspath(__file__))
@@ -31,7 +33,8 @@ monitor_name = 'NickMac'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_1
 
 
 # Store info about the experiment session
-expName = 'Exp1_Jan23'  # from the Builder filename that created this script
+expName = 'Exp1_split_probes_Jan23'  # from the Builder filename that created this script
+
 expInfo = {'1. Participant': 'Jan23_fr_test',
            '2. Run_number': '1',
            '3. Probe duration in frames at 240hz': [2, 50, 100],
@@ -59,7 +62,7 @@ orientation = expInfo['5. Probe_orientation']
 vary_fixation = eval(expInfo['6. Vary_fixation'])
 record_fr_durs = eval(expInfo['7. Record_frame_durs'])
 
-n_trials_per_stair = 3
+n_trials_per_stair = 25
 probe_ecc = 4
 
 
@@ -71,11 +74,11 @@ expected_fr_ms = (1/fps) * 1000
 For 1probe condition, use separation==99.
 For concurrent probes, use ISI==-1.
 '''
-separations = [0, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
-# separations = [0, 1, 2, 3, 6, 18, 99]  # select from [0, 1, 2, 3, 6, 18, 99]
+# separations = [0, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
+separations = [0, 1, 2, 3, 6, 18, 99]  # select from [0, 1, 2, 3, 6, 18, 99]
 print(f'separations: {separations}')
-ISI_values = [-1, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
-# ISI_values = [-1, 0, 2, 4, 6, 9, 12, 24]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+# ISI_values = [-1, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+ISI_values = [-1, 0, 2, 4, 6, 9, 12, 24]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 print(f'ISI_values: {ISI_values}')
 # repeat separation values for each ISI e.g., [0, 0, 6, 6]
 sep_vals_list = list(np.repeat(separations, len(ISI_values)))
@@ -141,7 +144,7 @@ widthPix = mon_dict['size'][0]
 heightPix = mon_dict['size'][1]
 monitorwidth = mon_dict['width']  # monitor width in cm
 viewdist = mon_dict['dist']  # viewing distance in cm
-viewdistPix = widthPix / monitorwidth*viewdist
+viewdistPix = widthPix/monitorwidth*viewdist
 mon = monitors.Monitor(monitor_name, width=monitorwidth, distance=viewdist)
 mon.setSizePix((widthPix, heightPix))
 
@@ -158,22 +161,26 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
 actualFrameRate = int(win.getActualFrameRate())
 print(f"actual fps: {type(win.getActualFrameRate())} {win.getActualFrameRate()}")
 
-if abs(fps-actualFrameRate) > 5:
-    raise ValueError(f"\nfps ({fps}) does not match actualFrameRate ({actualFrameRate}).")
 
 # ELEMENTS
 # fixation bull eye
 fixation = visual.Circle(win, radius=2, units='pix', lineColor='white', fillColor='black')
 
 # PROBEs
-expInfo['6. Probe size'] = '5pixels'  # ignore this, all experiments use 5pixel probes now.
-probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
-             (1, -2), (-1, -2), (-1, -1), (0, -1)]
+probe_size = 1
+probe_L_vert = [(0, 0), (2, 0), (2, 1), (1, 1), (1, -2), (0, -2)]
 
-probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, -1.0, 1.0),
-                          lineWidth=0, opacity=1, size=1, interpolate=False)
-probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor=[-1.0, 1.0, -1.0],
-                          lineWidth=0, opacity=1, size=1, interpolate=False)
+probe_dots_vert = [(0, -1), (0, -2), (-1, -2), (-1, -1),
+                   (2, -1), (2, 0), (1, 0), (1, -1)]
+probe_1a_L = visual.ShapeStim(win, vertices=probe_L_vert, fillColor='red',
+                              lineWidth=0, opacity=1, size=probe_size, interpolate=False)
+probe_2a_dots = visual.ShapeStim(win, vertices=probe_dots_vert, fillColor='green',
+                                 lineWidth=0, opacity=1, size=probe_size, interpolate=False)
+
+probe_2b_L = visual.ShapeStim(win, vertices=probe_L_vert, fillColor='green',
+                              lineWidth=0, opacity=1, size=probe_size, interpolate=False)
+probe_1b_dots = visual.ShapeStim(win, vertices=probe_dots_vert, fillColor='red',
+                                 lineWidth=0, opacity=1, size=probe_size, interpolate=False)
 
 # dist_from_fix is a constant to get 4dva distance from fixation,
 dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
@@ -242,7 +249,6 @@ maxiVal = maxLum
 
 stairs = []
 for stair_idx in expInfo['stair_list']:
-
     thisInfo = copy.copy(expInfo)
     thisInfo['stair_idx'] = stair_idx
 
@@ -278,9 +284,24 @@ for step in range(n_trials_per_stair):
         probeLum = thisStair.next()
         probeColor255 = int(probeLum * LumColor255Factor)  # rgb255 are ints.
         probeColor1 = (probeColor255 * Color255Color1Factor) - 1
-        probe1.color = [probeColor1, probeColor1, probeColor1]
-        probe2.color = [probeColor1, probeColor1, probeColor1]
         print(f"probeLum: {probeLum}, probeColor255: {probeColor255}, probeColor1: {probeColor1}")
+
+        # Black or White
+        probe_1a_L.color = [probeColor1, probeColor1, probeColor1]
+        probe_2a_dots.color = [probeColor1, probeColor1, probeColor1]
+        probe_2b_L.color = [probeColor1, probeColor1, probeColor1]
+        probe_1b_dots.color = [probeColor1, probeColor1, probeColor1]
+        print(f"\nbgLum: {bgLum} bgColor255: {bgColor255} win.colorSpace: {win.colorSpace}")
+
+        """
+        My new probes are called: probe_1a_L, probe_2a_dots, probe_2b_L, probe_1b_dots.
+        The two shapes are composed like this: 
+            (probe_1a_L, probe_2a_dots), (probe_2b_L, probe_1b_dots).
+        But temporally, both probe1s appear first, then both probe 2s.
+        For orientation and separation I need to treat them as shapes.
+        For timing I need to use 1&2
+
+        """
 
         # PROBE LOCATION
         # # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
@@ -305,117 +326,58 @@ for step in range(n_trials_per_stair):
                 jump_dir = 'outward'
         print(f"corner: {corner} {corner_name}; jump dir: {target_jump} {jump_dir}")
 
-        # set position and orientation of probes
-        '''NEW - set orientations to p1=zero and p2=180 (not zero), 
-        then add the same orientation change to both'''
-        probe1_ori = 0
-        probe2_ori = 180
+        # reset probe ori
+        probe_1a_L.ori = 0
+        probe_2a_dots.ori = 0
+        probe_2b_L.ori = 0
+        probe_1b_dots.ori = 0
         if corner == 45:
-            '''in top-right corner, both x and y increase (right and up)'''
             p1_x = dist_from_fix * 1
             p1_y = dist_from_fix * 1
-            '''orientation' here refers to the relationship between probes, 
-            whereas probe1_ori refers to rotational angle of probe stimulus'''
             if orientation == 'tangent':
-                if target_jump == 1:  # CW
-                    probe1_ori += 180
-                    probe2_ori += 180
-                    probe2_pos = [p1_x + sep - 1, p1_y - sep]
-                elif target_jump == -1:  # ACW
-                    probe1_ori += 0
-                    probe2_ori += 0
-                    probe2_pos = [p1_x - sep + 1, p1_y + sep]
-            elif orientation == 'radial':
-                if target_jump == 1:  # inward
-                    probe1_ori += 270
-                    probe2_ori += 270
-                    # probe2 is left and down from probe1
-                    probe2_pos = [p1_x - sep + 1, p1_y - sep]
-                elif target_jump == -1:  # outward
-                    probe1_ori += 90
-                    probe2_ori += 90
-                    # probe2 is right and up from probe1
-                    probe2_pos = [p1_x + sep - 1, p1_y + sep]
+                if target_jump == 1:  # CCW
+                    probe_2b_L.ori = probe_1b_dots.ori = 180
+                    probe_2b_L.pos = probe_1b_dots.pos = [p1_x - sep + 1, p1_y + sep]
+                elif target_jump == -1:  # CW
+                    probe_1a_L.ori = probe_2a_dots.ori = 180
+                    probe_2b_L.pos = probe_1b_dots.pos = [p1_x + sep - 1, p1_y - sep]
         elif corner == 135:
             p1_x = dist_from_fix * -1
             p1_y = dist_from_fix * 1
             if orientation == 'tangent':
-                if target_jump == 1:  # ACW
-                    probe1_ori += 90
-                    probe2_ori += 90
-                    probe2_pos = [p1_x + sep - 1, p1_y + sep]
+                if target_jump == 1:  # CCW
+                    probe_1a_L.ori = probe_2a_dots.ori = 90
+                    probe_2b_L.ori = probe_1b_dots.ori = 270
+                    probe_2b_L.pos = probe_1b_dots.pos = [p1_x + sep - 1, p1_y + sep]
                 elif target_jump == -1:  # CW
-                    probe1_ori += 270
-                    probe2_ori += 270
-                    probe2_pos = [p1_x - sep + 1, p1_y - sep]
-            elif orientation == 'radial':
-                if target_jump == 1:  # inward
-                    probe1_ori += 180
-                    probe2_ori += 180
-                    # probe2 is right and down from probe1
-                    probe2_pos = [p1_x + sep - 1, p1_y - sep]
-                elif target_jump == -1:  # outward
-                    probe1_ori += 0
-                    probe2_ori += 0
-                    # probe2 is left and up from probe1
-                    probe2_pos = [p1_x - sep + 1, p1_y + sep]
+                    probe_1a_L.ori = probe_2a_dots.ori = 270
+                    probe_2b_L.ori = probe_1b_dots.ori = 90
+                    probe_2b_L.pos = probe_1b_dots.pos = [p1_x - sep + 1, p1_y - sep]
         elif corner == 225:
             p1_x = dist_from_fix * -1
             p1_y = dist_from_fix * -1
             if orientation == 'tangent':
-                if target_jump == 1:  # CW
-                    probe1_ori += 0
-                    probe2_ori += 0
-                    probe2_pos = [p1_x - sep + 1, p1_y + sep]
-                elif target_jump == -1:  # ACW
-                    probe1_ori += 180
-                    probe2_ori += 180
-                    probe2_pos = [p1_x + sep - 1, p1_y - sep]
-            elif orientation == 'radial':
-                if target_jump == 1:  # inward
-                    probe1_ori += 90
-                    probe2_ori += 90
-                    # probe2 is right and up from probe1
-                    probe2_pos = [p1_x + sep - 1, p1_y + sep]
-                elif target_jump == -1:  # outward
-                    probe1_ori += 270
-                    probe2_ori += 270
-                    # probe2 is left and down from probe1
-                    probe2_pos = [p1_x - sep + 1, p1_y - sep]
+                if target_jump == 1:  # CCW
+                    probe_1a_L.ori = probe_2a_dots.ori = 180
+                    probe_2b_L.pos = probe_1b_dots.pos = [p1_x + sep - 1, p1_y - sep]
+                elif target_jump == -1:  # CW
+                    probe_2b_L.ori = probe_1b_dots.ori = 180
+                    probe_2b_L.pos = probe_1b_dots.pos = [p1_x - sep + 1, p1_y + sep]
         else:
             corner = 315
             p1_x = dist_from_fix * 1
             p1_y = dist_from_fix * -1
             if orientation == 'tangent':
-                if target_jump == 1:  # ACW
-                    probe1_ori += 270
-                    probe2_ori += 270
-                    probe2_pos = [p1_x - sep + 1, p1_y - sep]
+                if target_jump == 1:  # CCW
+                    probe_1a_L.ori = probe_2a_dots.ori = 270
+                    probe_2b_L.ori = probe_1b_dots.ori = 90
+                    probe_2b_L.pos = probe_1b_dots.pos = [p1_x - sep + 1, p1_y - sep]
                 elif target_jump == -1:  # CW
-                    probe1_ori += 90
-                    probe2_ori += 90
-                    probe2_pos = [p1_x + sep - 1, p1_y + sep]
-            elif orientation == 'radial':
-                if target_jump == 1:  # inward
-                    probe1_ori += 0
-                    probe2_ori += 0
-                    # probe2 is left and up from probe1
-                    probe2_pos = [p1_x - sep + 1, p1_y + sep]
-                elif target_jump == -1:  # outward
-                    probe1_ori += 180
-                    probe2_ori += 180
-                    # probe2 is right and down from probe1
-                    probe2_pos = [p1_x + sep - 1, p1_y - sep]
+                    probe_1a_L.ori = probe_2a_dots.ori = 90
+                    probe_2b_L.ori = probe_1b_dots.ori = 270
+                    probe_2b_L.pos = probe_1b_dots.pos = [p1_x + sep - 1, p1_y + sep]
 
-        probe1_pos = [p1_x, p1_y]
-
-        print(f"probe1_pos: {probe1_pos}, probe2_pos: {probe2_pos}. dff: {dist_from_fix}")
-
-        probe1.setPos(probe1_pos)
-        probe1.setOri(probe1_ori)
-        probe2.setPos(probe2_pos)
-        probe2.setOri(probe2_ori)
-
+        probe_1a_L.pos = probe_2a_dots.pos = [p1_x, p1_y]
 
         # VARIABLE FIXATION TIME
         # to reduce anticipatory effects that might arise from fixation always being same length.
@@ -479,11 +441,14 @@ for step in range(n_trials_per_stair):
 
                 # PROBE 1
                 elif t_probe_1 >= frameN > t_fixation:
-                    probe1.draw()
+                    probe_1a_L.draw()
+                    probe_1b_dots.draw()
 
-                    if ISI == -1:  # SIMULTANEOUS CONDITION (concurrent)
-                        if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
-                            probe2.draw()
+                    # SIMULTANEOUS CONDITION
+                    if ISI == -1:
+                        if sep <= 18:
+                            probe_2a_dots.draw()
+                            probe_2b_L.draw()
                     fixation.setRadius(3)
                     fixation.draw()
 
@@ -495,19 +460,20 @@ for step in range(n_trials_per_stair):
                 # PROBE 2
                 elif t_probe_2 >= frameN > t_ISI:
                     if ISI >= 0:
-                        if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
-                            probe2.draw()
+                        if sep <= 18:
+                            probe_2a_dots.draw()
+                            probe_2b_L.draw()
                     fixation.setRadius(3)
                     fixation.draw()
 
                 # ANSWER
                 elif frameN > t_probe_2:
+                    fixation.setRadius(2)
+                    fixation.draw()
                     if record_fr_durs:
                         win.recordFrameIntervals = False
                         total_recorded_fr = len(win.frameIntervals)
                         fr_recorded_list.append(total_recorded_fr)
-                    fixation.setRadius(2)
-                    fixation.draw()
 
                     # ANSWER
                     theseKeys = event.getKeys(keyList=['num_5', 'num_4', 'num_1',
