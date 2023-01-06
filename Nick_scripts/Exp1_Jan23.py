@@ -183,7 +183,7 @@ myMouse = event.Mouse(visible=False)
 
 # # KEYBOARD
 # todo: try using keyboard.Keyboard
-# kb = keyboard.Keyboard()
+# resp = keyboard.Keyboard()
 resp = event.BuilderKeyResponse()
 
 # INSTRUCTION
