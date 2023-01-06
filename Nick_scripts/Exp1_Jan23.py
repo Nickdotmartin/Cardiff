@@ -59,7 +59,7 @@ orientation = expInfo['5. Probe_orientation']
 vary_fixation = eval(expInfo['6. Vary_fixation'])
 record_fr_durs = eval(expInfo['7. Record_frame_durs'])
 
-n_trials_per_stair = 3
+n_trials_per_stair = 25
 probe_ecc = 4
 
 
