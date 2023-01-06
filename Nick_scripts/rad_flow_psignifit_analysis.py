@@ -485,6 +485,105 @@ def simple_log_log_plot(thr_df, x_col='area_deg', y_col='weber_thr', hue_col='co
     return fig
 
 
+def log_log_w_markers_plot(thr_df, x_col='area_deg', y_col='delta_I',
+                           # hue_col='separation',
+                           x_tick_names=None,
+                           x_axis_label='log(area_deg)',
+                           y_axis_label='log(∆ threshold)',
+                           fig_title='Ricco_v5: log(len) v log(thr)',
+                           show_neg1slope=True,
+                           save_as=None):
+    """
+    Function to make a simple plot log-log plot with legend showing x-vals.
+    Data is plotted on log-log axis (log(∆thr) and log(area_deg)).
+    Single threshold values so no error bars.
+
+    :param thr_df: dataframe from one run
+    :param x_col: column to use for x vals
+    :param y_col: column to use for y vals
+    # :param hue_col: column to use for hue (different coloured lines on plot)
+    # :param x_ticks_vals: values to place on x-axis ticks
+    :param x_tick_names: labels for x-tick values
+    :param x_axis_label: x-axis label
+    :param y_axis_label: y-axis label
+    :param fig_title: figure title
+    :param show_neg1slope: If True, plots a line with slope=-1 starting from
+            first datapoint of circles.
+    :param save_as: path and filename to save to
+    :return: figure
+    """
+    print(f'\n*** running simple_log_log_plot (x=log({x_col}), y=log(∆{y_col})) ***')
+    print(f'thr_df:\n{thr_df}')
+    fig, ax = plt.subplots(figsize=(6, 6))
+    sns.lineplot(data=thr_df, x=x_col, y=y_col,
+                 # hue=hue_col,
+                 marker=None, ax=ax)
+    sns.scatterplot(data=thr_df, x=x_col, y=y_col,
+                    hue=x_col,
+                    legend=True,
+                    s=100,
+                    palette=fig_colours(n_conditions=len(x_tick_names)),
+                    ax=ax)
+
+    # if x_ticks_vals:
+    #     ax.set_xticks(x_ticks_vals)
+    # if x_tick_names:
+    #     ax.set_xticklabels(x_tick_names)
+    ax.set_xlabel(x_axis_label)
+    ax.set_ylabel(y_axis_label)
+
+    # set scale for axes (same on each)
+    x_min = thr_df[x_col].min() * .9
+    x_max = thr_df[x_col].max() * 1.1
+    x_ratio = x_max / x_min
+    y_min = thr_df[y_col].min() * .9
+    y_max = thr_df[y_col].max() * 1.1
+    y_ratio = y_max / y_min
+    largest_diff = max([x_ratio, y_ratio])
+    axis_range = 10 ** math.ceil(math.log10(largest_diff))
+
+    ax.set(xlim=(x_min, x_min * axis_range), ylim=(y_min, y_min * axis_range))
+    ax.set(xscale="log", yscale="log")
+
+    # add guideline with slope of -1 which crosses through the circles 1probe weber_thr value.
+    if show_neg1slope:
+        # if x_col == 'area_deg':
+        #     if '-1_circles' in thr_df['stair_names'].unique():
+        #         start_point = '-1_circles'
+        #     elif '-1_lines' in thr_df['stair_names'].unique():
+        #         start_point = '-1_lines'
+        #     slope_start_x = thr_df.loc[thr_df['stair_names'] == start_point, x_col].item()
+        #     slope_start_y = thr_df.loc[thr_df['stair_names'] == start_point, y_col].item()
+        # elif x_col == 'dur_ms':
+        #     slope_start_x = thr_df.iloc[0]['dur_ms']
+        #     slope_start_y = thr_df.iloc[0][y_col]
+        # elif x_col == 'length':
+        #     slope_start_x = thr_df.iloc[0]['length']
+        #     slope_start_y = thr_df.iloc[0][y_col]
+        slope_start_x = thr_df.iloc[0][x_col]
+        slope_start_y = thr_df.iloc[0][y_col]
+        print(f'slope_start_x: {slope_start_x}')
+        print(f'slope_start_y: {slope_start_y}')
+        ax.plot([slope_start_x, slope_start_x * 100], [slope_start_y, slope_start_y / 100], c='r',
+                label='-1 slope', linestyle='dashed')
+    # ax.legend()
+    handles, labels = ax.get_legend_handles_labels()
+    for i, j in zip(handles, labels):
+        print(i, j)
+    labels = x_tick_names + [labels[-1]]
+    ax.legend(labels=labels, handles=handles
+        # labels=x_tick_names + ['-1 slope'],
+              # fontsize=6,
+              # framealpha=.5
+              )
+    plt.title(fig_title)
+    if save_as:
+        plt.savefig(save_as)
+    print('*** finished simple_log_log_plot ***')
+    return fig
+
+
+
 # # # all ISIs on one axis -
 # FIGURE 1 - shows one axis (x=separation (-18:18), y=probeLum) with multiple ISI lines.
 # dotted line at zero to make batman more apparent.
