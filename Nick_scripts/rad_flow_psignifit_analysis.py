@@ -406,6 +406,61 @@ def run_thr_plot(thr_df, x_col='separation', y_col='ISI_0', hue_col='cond',
     return fig
 
 
+def run_thr_plot_w_markers(thr_df, x_col='separation', y_col='ISI_0', hue_col='cond',
+                           x_ticks_vals=None, x_tick_names=None,
+                           x_axis_label='Probe cond (separation)',
+                           y_axis_label='Probe Luminance',
+                           legend_names=None,
+                           fig_title='Ricco_v2: probe cond vs thr', save_as=None):
+    """
+    Function to make a simple plot from one run showing lineplots for circles, lines and 2probe data.
+    Single threshold values so no error bars.
+
+    Legend names can relate datapoints back to Exp1 sep conds, different to x-axis labels.
+
+    :param thr_df: dataframe from one run
+    :param x_col: column to use for x vals
+    :param y_col: column to use for y vals
+    :param hue_col: column to use for hue (different coloured lines on plot)
+    :param x_ticks_vals: values to place on x-axis ticks
+    :param x_tick_names: labels for x-tick values
+    :param x_axis_label: x-axis label
+    :param y_axis_label: y-axis label
+    :param legend_names: labels for legend
+    :param fig_title: figure title
+    :param save_as: path and filename to save to
+    :return: figure
+    """
+    print('\n*** running run_thr_plot_w_markers (x=ordinal, y=thr) ***')
+    fig, ax = plt.subplots(figsize=(6, 6))
+    print(f'thr_df:\n{thr_df}')
+    sns.lineplot(data=thr_df, x=x_col, y=y_col, hue=hue_col, marker=None, ax=ax,
+                 legend=True)
+
+    sns.scatterplot(data=thr_df, x=x_col, y=y_col, hue=x_col, ax=ax,
+                    legend=True, s=100,
+                    palette=fig_colours(n_conditions=len(legend_names)),)
+
+    if x_ticks_vals is not None:
+        ax.set_xticks(x_ticks_vals)
+    if x_tick_names is not None:
+        ax.set_xticklabels(x_tick_names)
+    ax.set_xlabel(x_axis_label)
+    ax.set_ylabel(y_axis_label)
+
+    handles, labels = ax.get_legend_handles_labels()
+    # for i, j in zip(handles, labels):
+    #     print(i, j)
+    handles = handles[1:]  # removes first handle (blue line)
+    labels = legend_names  # + [labels[-1]]
+    ax.legend(labels=labels, handles=handles)
+
+    plt.title(fig_title)
+    if save_as:
+        plt.savefig(save_as)
+    print('*** finished run_thr_plot_w_markers ***\n')
+    return fig
+
 def simple_log_log_plot(thr_df, x_col='area_deg', y_col='weber_thr', hue_col='cond',
                         x_ticks_vals=None, x_tick_names=None,
                         x_axis_label='log(area_deg)',
@@ -485,12 +540,12 @@ def simple_log_log_plot(thr_df, x_col='area_deg', y_col='weber_thr', hue_col='co
     return fig
 
 
-def log_log_w_markers_plot(thr_df, x_col='area_deg', y_col='delta_I',
-                           # hue_col='separation',
-                           x_tick_names=None,
-                           x_axis_label='log(area_deg)',
+def log_log_w_markers_plot(thr_df, x_col='len_deg', y_col='delta_I',
+                           hue_col=None,
+                           legend_names=None,
+                           x_axis_label='log(len_deg)',
                            y_axis_label='log(∆ threshold)',
-                           fig_title='Ricco_v5: log(len) v log(thr)',
+                           fig_title='Ricco_v6: log(len) v log(thr)',
                            show_neg1slope=True,
                            save_as=None):
     """
@@ -503,7 +558,7 @@ def log_log_w_markers_plot(thr_df, x_col='area_deg', y_col='delta_I',
     :param y_col: column to use for y vals
     # :param hue_col: column to use for hue (different coloured lines on plot)
     # :param x_ticks_vals: values to place on x-axis ticks
-    :param x_tick_names: labels for x-tick values
+    :param legend_names: labels for legend
     :param x_axis_label: x-axis label
     :param y_axis_label: y-axis label
     :param fig_title: figure title
@@ -515,20 +570,12 @@ def log_log_w_markers_plot(thr_df, x_col='area_deg', y_col='delta_I',
     print(f'\n*** running simple_log_log_plot (x=log({x_col}), y=log(∆{y_col})) ***')
     print(f'thr_df:\n{thr_df}')
     fig, ax = plt.subplots(figsize=(6, 6))
-    sns.lineplot(data=thr_df, x=x_col, y=y_col,
-                 # hue=hue_col,
-                 marker=None, ax=ax)
-    sns.scatterplot(data=thr_df, x=x_col, y=y_col,
-                    hue=x_col,
-                    legend=True,
-                    s=100,
-                    palette=fig_colours(n_conditions=len(x_tick_names)),
-                    ax=ax)
+    sns.lineplot(data=thr_df, x=x_col, y=y_col, hue=hue_col, marker=None, ax=ax,
+                 legend=True)
+    sns.scatterplot(data=thr_df, x=x_col, y=y_col, hue=x_col, ax=ax,
+                    legend=True, s=100,
+                    palette=fig_colours(n_conditions=len(legend_names)),)
 
-    # if x_ticks_vals:
-    #     ax.set_xticks(x_ticks_vals)
-    # if x_tick_names:
-    #     ax.set_xticklabels(x_tick_names)
     ax.set_xlabel(x_axis_label)
     ax.set_ylabel(y_axis_label)
 
@@ -540,46 +587,33 @@ def log_log_w_markers_plot(thr_df, x_col='area_deg', y_col='delta_I',
     y_max = thr_df[y_col].max() * 1.1
     y_ratio = y_max / y_min
     largest_diff = max([x_ratio, y_ratio])
-    axis_range = 10 ** math.ceil(math.log10(largest_diff))
+    axis_range = 10 ** math.ceil(math.log10(largest_diff)) / 5
+    # axis_range = 10 ** math.ceil(math.log10(largest_diff))
 
     ax.set(xlim=(x_min, x_min * axis_range), ylim=(y_min, y_min * axis_range))
     ax.set(xscale="log", yscale="log")
 
     # add guideline with slope of -1 which crosses through the circles 1probe weber_thr value.
     if show_neg1slope:
-        # if x_col == 'area_deg':
-        #     if '-1_circles' in thr_df['stair_names'].unique():
-        #         start_point = '-1_circles'
-        #     elif '-1_lines' in thr_df['stair_names'].unique():
-        #         start_point = '-1_lines'
-        #     slope_start_x = thr_df.loc[thr_df['stair_names'] == start_point, x_col].item()
-        #     slope_start_y = thr_df.loc[thr_df['stair_names'] == start_point, y_col].item()
-        # elif x_col == 'dur_ms':
-        #     slope_start_x = thr_df.iloc[0]['dur_ms']
-        #     slope_start_y = thr_df.iloc[0][y_col]
-        # elif x_col == 'length':
-        #     slope_start_x = thr_df.iloc[0]['length']
-        #     slope_start_y = thr_df.iloc[0][y_col]
         slope_start_x = thr_df.iloc[0][x_col]
         slope_start_y = thr_df.iloc[0][y_col]
         print(f'slope_start_x: {slope_start_x}')
         print(f'slope_start_y: {slope_start_y}')
         ax.plot([slope_start_x, slope_start_x * 100], [slope_start_y, slope_start_y / 100], c='r',
                 label='-1 slope', linestyle='dashed')
-    # ax.legend()
+
     handles, labels = ax.get_legend_handles_labels()
-    for i, j in zip(handles, labels):
-        print(i, j)
-    labels = x_tick_names + [labels[-1]]
-    ax.legend(labels=labels, handles=handles
-        # labels=x_tick_names + ['-1 slope'],
-              # fontsize=6,
-              # framealpha=.5
-              )
+    # for i, j in zip(handles, labels):
+    #     print(i, j)
+    # remove first handle (blue line), but keep last one (-1 slope)
+    handles = handles[1:]
+    labels = legend_names + [labels[-1]]
+    ax.legend(labels=labels, handles=handles)
+
     plt.title(fig_title)
     if save_as:
         plt.savefig(save_as)
-    print('*** finished simple_log_log_plot ***')
+    print('*** finished log_log_w_markers_plot ***')
     return fig
 
 
@@ -839,6 +873,183 @@ def plot_runs_ave_w_errors(fig_df, error_df,
     if save_path is not None:
         if save_name is not None:
             plt.savefig(os.path.join(save_path, save_name))
+
+    return fig
+
+
+def plot_ave_w_errors_markers(fig_df, error_df,
+                              jitter=True, error_caps=False, alt_colours=False,
+                              legend_names=None,
+                              x_tick_vals=None,
+                              x_tick_labels=None,
+                              even_spaced_x=False,
+                              fixed_y_range=False,
+                              x_axis_label=None,
+                              y_axis_label=None,
+                              log_log_axes=False,
+                              neg1_slope=False,
+                              slope_ycol_name=None,
+                              slope_xcol_idx_depth=1,
+                              fig_title=None, save_name=None, save_path=None,
+                              verbose=True):
+    """
+    Calculate and plot the mean and error estimates (y-axis) at each separation values (x-axis).
+    Separate line for each ISI.  Error bar values taken from separate error_df.
+
+    :param fig_df: dataframe to build plot from.  Expects fig_df in the form:
+        separation as index, ISIs as columns.
+    :param error_df: dataframe of same shape as fig_df, but contains error values.
+    :param jitter: Jitter x_axis values so points don't overlap.
+    :param error_caps: caps on error bars for more easy reading.
+    :param alt_colours: Use different set of colours to normal (e.g., if ISI on
+        x-axis and lines for each separation).
+    :param legend_names: Names of markers (different to x-axis_labels, e.g., sep_cond)
+    :param x_tick_vals: Positions on x-axis.
+    :param x_tick_labels: labels for x-axis.
+    :param even_spaced_x: If True, x-ticks are evenly spaced,
+        if False they will be spaced according to numeric value (e.g., 0, 1, 2, 3, 6, 18).
+    :param fixed_y_range: default=False. If True, it uses full range of y values
+        (e.g., 0:110) or can pass a tuple to set y_limits.
+    :param x_axis_label: Label for x-axis.  If None passed, will use 'Probe separation in diagonal pixels'.
+    :param y_axis_label: Label for y-axis.  If None passed, will use 'Probe Luminance'.
+    :param log_log_axes: If True, both axes are in log scale, else in normal scale.
+    :param neg1_slope: If True, adds a reference line with slope=-1.
+    :param slope_ycol_name: Name of column to take the start of slope from
+    :param slope_xcol_idx_depth: Some dfs have 2 index cols, so input 2.
+    :param fig_title: Title for figure.
+    :param save_name: filename of plot.
+    :param save_path: path to folder where plots will be saved.
+    :param verbose: print progress to screen.
+
+    :return: figure
+    """
+    print('\n*** running plot_ave_w_errors_markers() ***\n')
+
+    if verbose:
+        print(f'fig_df:\n{fig_df}')
+        print(f'\nerror_df:\n{error_df}')
+
+    # get names for legend (e.g., different lines)
+    column_names = fig_df.columns.to_list()
+
+    if legend_names is None:
+        legend_names = column_names
+
+    if x_tick_vals is None:
+        x_tick_vals = fig_df.index
+
+    # for evenly spaced items on x_axis
+    if even_spaced_x:
+        x_tick_vals = list(range(len(x_tick_vals)))
+
+
+    if jitter:
+        # adding jitter works well if df.index are all int
+        # need to set it up to use x_tick_vals if df.index is not all int or float
+        check_idx_num = all(isinstance(x, (int, float)) for x in fig_df.index)
+        print(f'check_idx_num: {check_idx_num}')
+
+        check_x_val_num = all(isinstance(x, (int, float)) for x in x_tick_vals)
+        print(f'check_x_val_num: {check_x_val_num}')
+
+        if not all(isinstance(x, (int, float)) for x in x_tick_vals):
+            x_tick_vals = list(range(len(x_tick_vals)))
+
+    # get number of locations for jitter list
+    n_pos_sep = len(fig_df.index.to_list())
+
+    jit_max = 0
+    if jitter:
+        jit_max = .2
+        if type(jitter) in [float, np.float]:
+            jit_max = jitter
+
+    cap_size = 0
+    if error_caps:
+        cap_size = 5
+
+    # set colour palette
+    my_colours = fig_colours(len(legend_names), alternative_colours=alt_colours)
+    for i in my_colours:
+        print(i)
+    fig, ax = plt.subplots()
+
+    legend_handles_list = []
+
+    for idx, name in enumerate(column_names):
+        print(idx, name)
+        # get rand float to add to x-axis for jitter
+        jitter_list = np.random.uniform(size=n_pos_sep, low=-jit_max, high=jit_max)
+        x_values = x_tick_vals + jitter_list
+
+        y_values = fig_df[name].to_list()
+        y_err_values = error_df[name].to_list()
+
+        # blue line plot
+        sns.lineplot(data=fig_df, x=x_values, y=name, marker=None, ax=ax, zorder=1)
+
+        # error bars with different colours
+        for x_val, y_val, y_err_val, color, name in \
+                zip(x_values, y_values, y_err_values, my_colours, legend_names):
+            ax.errorbar(x=x_val, y=y_val, yerr=y_err_val,
+                        elinewidth=2, capsize=cap_size, ecolor=color, zorder=2)
+
+            leg_handle = mlines.Line2D([], [], color=color, label=name,
+                                       marker='P', linewidth=0)
+            legend_handles_list.append(leg_handle)
+
+    # decorate plot
+    if x_tick_vals is not None:
+        ax.set_xticks(x_tick_vals)
+    if x_tick_labels is not None:
+        ax.set_xticks(x_tick_vals)
+        ax.set_xticklabels(x_tick_labels)
+
+    if x_axis_label is None:
+        ax.set_xlabel('Probe separation in diagonal pixels')
+    else:
+        ax.set_xlabel(x_axis_label)
+
+    if y_axis_label is None:
+        ax.set_ylabel('Probe Luminance')
+    else:
+        ax.set_ylabel(y_axis_label)
+
+    if fixed_y_range:
+        ax.set_ylim([0, 110])
+        if type(fixed_y_range) in [tuple, list]:
+            ax.set_ylim([fixed_y_range[0], fixed_y_range[1]])
+
+    if log_log_axes:
+        ax.set(xscale="log", yscale="log")
+
+    if neg1_slope:
+        # add guideline with slope of -1 which crosses through the circles 1probe weber_thr value.
+        slope_start_x = fig_df.index[0]
+        if slope_xcol_idx_depth == 2:
+            slope_start_x = fig_df.index[0][0]
+        slope_start_y = fig_df.iloc[0][slope_ycol_name]
+        print(f'slope_start_x: {slope_start_x}')
+        print(f'slope_start_y: {slope_start_y}')
+        # ax.plot([slope_start_x, slope_start_x * 100], [slope_start_y, slope_start_y / 100], c='r',
+        ax.plot([slope_start_x, slope_start_x * 11], [slope_start_y, slope_start_y / 11], c='r',
+                label='-1 slope', linestyle='dashed', zorder=0)
+        leg_handle = mlines.Line2D([], [], color='r', label='-1 slope', linestyle='dashed',
+                                   # marker='.', linewidth=.5, markersize=4
+                                   )
+        legend_handles_list.append(leg_handle)
+
+    ax.legend(handles=legend_handles_list, framealpha=.5
+              # fontsize=6,
+              )
+
+    if fig_title is not None:
+        plt.title(fig_title)
+
+    if save_path is not None:
+        if save_name is not None:
+            plt.savefig(os.path.join(save_path, save_name))
+    print('\n*** finished plot_ave_w_errors_markers() ***\n')
 
     return fig
 
@@ -2628,16 +2839,19 @@ def d_average_participant(root_path, run_dir_names_list,
             # for Exp2_Bloch_NM_v2
             if thr_df_name == 'long_thr_df':
                 groupby_sep_df = get_means_df.drop('stack', axis=1)
-                ave_psignifit_thr_df = groupby_sep_df.groupby(['cond_type', 'dur_ms', 'ISI'], sort=False).mean()
+                # ave_psignifit_thr_df = groupby_sep_df.groupby(['cond_type', 'dur_ms', 'ISI'], sort=False).mean()
+                ave_psignifit_thr_df = groupby_sep_df.groupby(['cond_type', 'stair_name', 'isi_fr', 'dur_ms'], sort=False).mean()
 
                 if verbose:
                     print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
                 if error_type in [False, None]:
                     error_bars_df = None
                 elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
-                    error_bars_df = groupby_sep_df.groupby(['cond_type', 'dur_ms', 'ISI'], sort=False).sem()
+                    # error_bars_df = groupby_sep_df.groupby(['cond_type', 'dur_ms', 'ISI'], sort=False).sem()
+                    error_bars_df = groupby_sep_df.groupby(['cond_type', 'stair_name', 'isi_fr', 'dur_ms'], sort=False).sem()
                 elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
-                    error_bars_df = groupby_sep_df.groupby(['cond_type', 'dur_ms', 'ISI'], sort=False).std()
+                    # error_bars_df = groupby_sep_df.groupby(['cond_type', 'dur_ms', 'ISI'], sort=False).std()
+                    error_bars_df = groupby_sep_df.groupby(['cond_type', 'stair_name', 'isi_fr', 'dur_ms'], sort=False).std()
                 else:
                     raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
                                      f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standard_error']\n"
@@ -2799,6 +3013,11 @@ def e_average_exp_data(exp_path, p_names_list,
         sort_rows = False
     elif exp_type == 'Bloch':
         groupby_sep_df['stair_names'] = groupby_sep_df['cond_type'] + "_" + groupby_sep_df["ISI"].map(str)
+        groupby_sep_df = groupby_sep_df.drop('cond_type', axis=1)
+        groupby_col = 'stair_names'
+        sort_rows = False
+    elif exp_type == 'Bloch_v5':
+        groupby_sep_df['stair_names'] = groupby_sep_df['cond_type'] + "_" + groupby_sep_df["isi_fr"].map(str)
         groupby_sep_df = groupby_sep_df.drop('cond_type', axis=1)
         groupby_col = 'stair_names'
         sort_rows = False
