@@ -2968,6 +2968,9 @@ def e_average_exp_data(exp_path, p_names_list,
 
         if exp_type in ['Ricco', 'Bloch', 'speed_detection']:
             this_p_ave_df.rename(columns={'ISI_0': 'thr'}, inplace=True)
+        elif exp_type in ['Bloch_v5']:
+            if 'stair_name' in this_p_ave_df.columns.tolist():
+                this_p_ave_df.rename(columns={'stair_name': 'stair_names'}, inplace=True)
         elif exp_type == 'missing_probe':
             print('Do I need to do anything here for missing probe exp?')
             # # todo: I can probably delete these
@@ -3019,7 +3022,8 @@ def e_average_exp_data(exp_path, p_names_list,
     elif exp_type == 'Bloch_v5':
         groupby_sep_df['stair_names'] = groupby_sep_df['cond_type'] + "_" + groupby_sep_df["isi_fr"].map(str)
         groupby_sep_df = groupby_sep_df.drop('cond_type', axis=1)
-        groupby_col = 'stair_names'
+        # groupby_col = 'stair_names'
+        groupby_col = ['stair_names', 'isi_fr', 'dur_ms']
         sort_rows = False
     elif exp_type == 'speed_detection':
         groupby_col = 'participant'

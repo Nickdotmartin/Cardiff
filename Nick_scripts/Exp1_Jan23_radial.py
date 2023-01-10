@@ -31,18 +31,17 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'asus_cal'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
+monitor_name = 'Nick_work_laptop'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 
 
 # Store info about the experiment session
 expName = 'Exp1_Jan23_radial'  # from the Builder filename that created this script
-# todo: add record frames as an option?
-expInfo = {'1. Participant': 'Jan23_fr_test',
+expInfo = {'1. Participant': 'rad_fr_test',
            '2. Run_number': '1',
-           '3. ISI duration in frames': [0, 2, 4, 6, 9, 12, 24, -1],
+           # '3. ISI duration in frames': [0, 2, 4, 6, 9, 12, 24, -1],
+           '3. separation (pixels)': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 18],
            '4. Probe duration in frames at 240hz': [2, 50, 100],
            '5. fps': [240, 60],
-           '6. Probe_orientation': ['radial', 'tangent'],
            '7. Vary_fixation': [True, False],
            '8. Record_frame_durs': [False, True]
            }
@@ -59,12 +58,9 @@ expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
 # GUI SETTINGS
 participant_name = expInfo['1. Participant']
 run_number = int(expInfo['2. Run_number'])
-this_ISI_value = int(expInfo['3. ISI duration in frames'])
-n_trials_per_stair = 25
+this_sep_value = int(expInfo['3. separation (pixels)'])
 probe_duration = int(expInfo['4. Probe duration in frames at 240hz'])
-probe_ecc = 4
 fps = int(expInfo['5. fps'])
-orientation = expInfo['6. Probe_orientation']
 vary_fixation = eval(expInfo['7. Vary_fixation'])
 record_fr_durs = eval(expInfo['8. Record_frame_durs'])
 
@@ -72,26 +68,36 @@ record_fr_durs = eval(expInfo['8. Record_frame_durs'])
 expected_fr_ms = (1/fps) * 1000
 
 # VARIABLES
+orientation = 'radial'
+n_trials_per_stair = 2
+probe_ecc = 4
+
 '''Distances between probes (spatially and temporally)
 For 1probe condition, use separation==99.
 For concurrent probes, use ISI==-1.
 '''
-# separations = [0, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
-separations = [0, 1, 2, 3, 6, 18, 99]  # select from [0, 1, 2, 3, 6, 18, 99]
+# separations = [0, 1, 2, 3, 6, 18, 99]  # select from [0, 1, 2, 3, 6, 18, 99]
+separations = [this_sep_value]  # select from [0, 1, 2, 3, 6, 18, 99]
 print(f'separations: {separations}')
 # ISI_values = [-1, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
-# ISI_values = [-1, 0, 2, 4, 6, 9, 12, 24]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
-ISI_values = [this_ISI_value]
+ISI_values = [-1, 0, 2, 4, 6, 9, 12, 24]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 print(f'ISI_values: {ISI_values}')
+
+probe_dirs = ['inward', 'outward']
+print(f'probe_dirs: {probe_dirs}')
+
 # repeat separation values for each ISI e.g., [0, 0, 6, 6]
-sep_vals_list = list(np.repeat(separations, len(ISI_values)))
+sep_vals_list = list(np.repeat(separations, len(ISI_values))) * len(probe_dirs)
 print(f'sep_vals_list: {sep_vals_list}')
-# ISI_vals_list cycles through ISIs e.g., [-1, 6, -1, 6]
-ISI_vals_list = list(np.tile(ISI_values, len(separations)))
+ISI_vals_list = list(np.tile(ISI_values, len(separations) * len(probe_dirs)))
 print(f'ISI_vals_list: {ISI_vals_list}')
+probes_dirs_list = list(np.repeat(probe_dirs, len(sep_vals_list) / len(probe_dirs)))
+print(f'probes_dirs_list: {probes_dirs_list}')
+
 # stair_names_list joins sep_vals_list and ISI_vals_list
 # e.g., ['sep0_ISI-1', 'sep0_ISI6', 'sep6_ISI-1', 'sep6_ISI6']
-stair_names_list = [f'sep{s}_ISI{c}' for s, c in zip(sep_vals_list, ISI_vals_list)]
+# stair_names_list = [f'sep{s}_ISI{c}' for s, c in zip(sep_vals_list, ISI_vals_list)]
+stair_names_list = [f'{p}_sep{s}_ISI{i}' for p, s, i in zip(probes_dirs_list, sep_vals_list, ISI_vals_list)]
 print(f'stair_names_list: {stair_names_list}')
 n_stairs = len(sep_vals_list)
 print(f'n_stairs: {n_stairs}')
@@ -101,7 +107,7 @@ filename = f'{_thisDir}{os.sep}' \
            f'{expName}{os.sep}' \
            f'{participant_name}{os.sep}' \
            f'{participant_name}_{run_number}{os.sep}' \
-           f'ISI_{this_ISI_value}{os.sep}' \
+           f'sep_{this_sep_value}{os.sep}' \
            f'{participant_name}_{run_number}_output'
 # files are labelled as '_incomplete' unless entire script runs.
 save_output_name = filename + '_incomplete'
@@ -121,13 +127,6 @@ Color255Color1Factor = 1 / 127.5  # Color255 * Color255Color1Factor -1
 Color1LumFactor = 2.39538706913372
 
 maxLum = 106  # 255 RGB
-# minLum = 0.12  # 0 RGB
-# maxColor255 = 255
-# minColor255 = 0
-# maxColor1 = 1
-# minColor1 = -1
-# bgLumP = 20  # int(expInfo['7. Background lum in percent of maxLum'])  # 20
-# bgLum = maxLum * bgLumP / 100
 bgLumProp = .2
 bgLum = maxLum * bgLumProp
 bgColor255 = bgLum * LumColor255Factor
@@ -170,12 +169,6 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     allowGUI=False,
                     fullscr=use_full_screen)
 
-# print(f"check win.size: {win.size}")
-# widthPix = widthPix/2
-# heightPix = heightPix/2
-# print(f"widthPix: {widthPix}, hight: {heightPix}")
-# widthPix, heightPix = win.size
-# print(f"check win.size: {win.size}")
 
 # ELEMENTS
 # fixation bull eye
@@ -198,8 +191,6 @@ dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
 myMouse = event.Mouse(visible=False)
 
 # # KEYBOARD
-# todo: try using keyboard.Keyboard
-# kb = keyboard.Keyboard()
 resp = event.BuilderKeyResponse()
 
 # INSTRUCTION
@@ -310,15 +301,20 @@ for step in range(n_trials_per_stair):
             corner_name = 'bottom_right'
 
         # # direction in which the probe jumps : CW or CCW
-        target_jump = random.choice([1, -1])
-        if orientation == 'tangent':
-            jump_dir = 'clockwise'
-            if target_jump == -1:
-                jump_dir = 'anticlockwise'
-        else:
-            jump_dir = 'inward'
-            if target_jump == -1:
-                jump_dir = 'outward'
+        jump_dir = probes_dirs_list[stair_idx]
+        target_jump = 1
+        if jump_dir == 'outward':
+            target_jump = -1
+
+        # target_jump = random.choice([1, -1])
+        # if orientation == 'tangent':
+        #     jump_dir = 'clockwise'
+        #     if target_jump == -1:
+        #         jump_dir = 'anticlockwise'
+        # else:
+        #     jump_dir = 'inward'
+        #     if target_jump == -1:
+        #         jump_dir = 'outward'
         print(f"corner: {corner} {corner_name}; jump dir: {target_jump} {jump_dir}")
 
 
@@ -511,12 +507,12 @@ for step in range(n_trials_per_stair):
 
                 # ANSWER
                 elif frameN > t_probe_2:
-                    
+
                     if record_fr_durs:
                         win.recordFrameIntervals = False
                         total_recorded_fr = len(win.frameIntervals)
                         fr_recorded_list.append(total_recorded_fr)
-                    
+
                     fixation.setRadius(2)
                     fixation.draw()
 
@@ -611,7 +607,7 @@ if record_fr_durs:
                           f'{expName}{os.sep}' \
                           f'{participant_name}{os.sep}' \
                           f'{participant_name}_{run_number}{os.sep}' \
-                          f'ISI_{this_ISI_value}{os.sep}' \
+                          f'sep_{this_sep_value}{os.sep}' \
                           f'{participant_name}_{run_number}_frames.png'
     print(f"fig_name: {fig_name}")
     plt.savefig(fig_name)

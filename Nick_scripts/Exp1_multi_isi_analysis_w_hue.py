@@ -11,12 +11,13 @@ from check_home_dir import switch_path
 from exp1a_psignifit_analysis import plt_heatmap_row_col
 
 
-exp_path = r"C:\Users\sapnm4\PycharmProjects\Cardiff\Nick_scripts\EXP1b_split_probes\split_v_orig"
+# exp_path = r"C:\Users\sapnm4\PycharmProjects\Cardiff\Nick_scripts\EXP1b_split_probes\split_v_orig"
 # exp_path = r"C:\Users\sapnm4\PycharmProjects\Cardiff\Nick_scripts\EXP1_radial\exp_v_cont"
+exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp1_Jan23_radial\
 exp_path = os.path.normpath(exp_path)
 
 
-participant_list = ['nicktest']  # 'Nick'
+participant_list = ['Nick']  # 'Nick'
 analyse_from_run = 1
 
 verbose = True

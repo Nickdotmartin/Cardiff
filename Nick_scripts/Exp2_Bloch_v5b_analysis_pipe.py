@@ -300,11 +300,11 @@ for p_idx, participant_name in enumerate(participant_list):
 
 print(f'exp_path: {exp_path}')
 print('\nget exp_average_data')
-trim_n = 2
-participant_list = ['Kim', 'Nick', 'Tony', 'Simon', 'Kris']
+# trim_n = 2
+# participant_list = ['Kim', 'Nick', 'Tony', 'Simon', 'Kris']
 
-e_average_exp_data(exp_path=exp_path, p_names_list=participant_list, exp_type=f'Bloch_v{bloch_version}',
-                   error_type='SE', n_trimmed=trim_n, verbose=True)
+# e_average_exp_data(exp_path=exp_path, p_names_list=participant_list, exp_type=f'Bloch_v{bloch_version}',
+#                    error_type='SE', n_trimmed=trim_n, verbose=True)
 
 
 all_df_path = os.path.join(exp_path, 'MASTER_exp_thr.csv')
@@ -312,13 +312,32 @@ exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
 err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
 
 # print('*** making average plot ***')
-print('*** making average plot ***')
+# print('*** making average plot ***')
 fig_df = pd.read_csv(exp_ave_path)
 print(f'fig_df: {fig_df.columns.to_list()}\n{fig_df}')
 
 # isi_vals_list = fig_df['ISI'].to_list()
 # isi_names_list = ['1pr' if i == -2 else int(i) for i in isi_vals_list]
 # print(f'isi_names_list: {isi_names_list}')
+
+# dur_list = fig_df['dur_ms'].to_list()
+# print(f'dur_list: {dur_list}')
+# dur_labels = [format(i, '.3g') for i in dur_list]
+# print(f'dur_labels: {dur_labels}')
+#
+# isi_name_list = list(fig_df['isi_fr'].unique())
+# print(f'isi_name_list: {isi_name_list}')
+
+error_df = pd.read_csv(err_path)
+print(f'error_df:\n{error_df}')
+
+ave_thr_by_dur_df = fig_df[['dur_ms', 'newLum']]
+ave_thr_by_dur_df.set_index('dur_ms', inplace=True)
+err_thr_by_dur_df = error_df[['dur_ms', 'newLum']]
+err_thr_by_dur_df.set_index('dur_ms', inplace=True)
+print(f'ave_thr_by_dur_df:\n{ave_thr_by_dur_df}')
+
+
 
 dur_list = fig_df['dur_ms'].to_list()
 print(f'dur_list: {dur_list}')
@@ -328,8 +347,62 @@ print(f'dur_labels: {dur_labels}')
 isi_name_list = list(fig_df['isi_fr'].unique())
 print(f'isi_name_list: {isi_name_list}')
 
-error_df = pd.read_csv(err_path)
-print(f'error_df:\n{error_df}')
+# error_df = pd.read_csv(err_path)
+# wide_err_df = error_df.pivot(index=['dur_ms'], columns='cond_type', values='newLum')
+# print(f'wide_err_df:\n{wide_err_df}')
+fig_title = f'Experiment average thresholds - Bloch_v{bloch_version} (n={len(run_folder_names)})'
+save_name = f'bloch_v{bloch_version}_dur_v_thr.png'
+
+plot_ave_w_errors_markers(fig_df=ave_thr_by_dur_df, error_df=err_thr_by_dur_df,
+                          jitter=False, error_caps=True, alt_colours=False,
+                          legend_names=isi_name_list,
+                          even_spaced_x=False,
+                          fixed_y_range=False,
+                          x_tick_vals=dur_list,
+                          x_tick_labels=dur_labels,
+                          x_axis_label='Duration (ms)',
+                          y_axis_label='Threshold',
+                          log_log_axes=False,
+                          neg1_slope=False,
+                          fig_title=fig_title, save_name=save_name,
+                          save_path=root_path, verbose=True)
+plt.show()
+
+# # fig 2 - log dur, log(∆I)
+# wide_df = ave_df.pivot(index=['dur_ms'], columns='cond_type', values='delta_I')
+# print(f'wide_df:\n{wide_df}')
+#
+# error_df = pd.read_csv(err_path)
+# wide_err_df = error_df.pivot(index=['dur_ms'], columns='cond_type', values='delta_I')
+# print(f'wide_err_df:\n{wide_err_df}')
+
+# # plot 2: log-log axes - log(∆i)
+log_dur_log_delta_I_df = fig_df[['dur_ms', 'delta_I']]
+log_dur_log_delta_I_df.set_index('dur_ms', inplace=True)
+err_log_dur_log_delta_I_df = error_df[['dur_ms', 'delta_I']]
+err_log_dur_log_delta_I_df.set_index('dur_ms', inplace=True)
+print(f'log_dur_log_delta_I_df:\n{log_dur_log_delta_I_df}')
+fig_title = f'Experiment average log(∆I) thresholds - Bloch_v5 (n={len(participant_list)})'
+save_name = 'bloch_v5_log_dur_log_contrast.png'
+
+fig_title = f'Experiment average log(∆I) thresholds - Bloch_v{bloch_version} (n={len(participant_list)})'
+save_name = f'bloch_v{bloch_version}_log_dur_log_contrast.png'
+plot_ave_w_errors_markers(fig_df=log_dur_log_delta_I_df, error_df=err_log_dur_log_delta_I_df,
+                          jitter=False, error_caps=True, alt_colours=False,
+                          legend_names=isi_name_list,
+                          even_spaced_x=False,
+                          fixed_y_range=False,
+                          x_tick_vals=None,
+                          x_tick_labels=None,
+                          x_axis_label='log(duration ms)',
+                          y_axis_label='Contrast: log(∆I)',
+                          log_log_axes=True,
+                          neg1_slope=True,
+                          slope_ycol_name='delta_I',
+                          slope_xcol_idx_depth=1,
+                          fig_title=fig_title, save_name=save_name,
+                          save_path=root_path, verbose=True)
+plt.show()
 
 #
 # # fig 1 - ave thr by sep

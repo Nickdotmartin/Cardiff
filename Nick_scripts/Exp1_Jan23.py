@@ -182,8 +182,6 @@ dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
 myMouse = event.Mouse(visible=False)
 
 # # KEYBOARD
-# todo: try using keyboard.Keyboard
-# resp = keyboard.Keyboard()
 resp = event.BuilderKeyResponse()
 
 # INSTRUCTION
