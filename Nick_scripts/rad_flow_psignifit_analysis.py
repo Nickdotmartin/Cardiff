@@ -1065,6 +1065,7 @@ def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'
                                 log_scale=False,
                                 even_spaced_x=False,
                                 x_tick_vals=None,
+                                legend_names=None,
                                 fig_title=None,
                                 fig_savename=None,
                                 save_path=None,
@@ -1201,6 +1202,9 @@ def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'
     if hue_var != 'stair_names':
         handles, labels = ax.get_legend_handles_labels()
         # ax.legend(handles=handles, labels=labels[:-2] + ['True', 'False'])
+        if legend_names is not None:
+            if len(legend_names) == len(labels):
+                labels=legend_names
         ax.legend(handles=handles, labels=labels)
 
 
@@ -1815,7 +1819,7 @@ def plot_thr_heatmap(heatmap_df,
     plt.yticks(rotation=0)
 
     # add central mirror symmetry line
-    plt.axvline(x=6, color='grey', linestyle='dashed')
+    # plt.axvline(x=6, color='grey', linestyle='dashed')
 
     if x_axis_label is None:
         if 'ISI' in str(x_tick_labels[0]).upper():
@@ -3078,6 +3082,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                        ave_over_n=None,
                        exp_ave=False,
                        isi_name_list=None,
+                       isi_vals_list=None,
                        show_plots=True, verbose=True):
     """Plots:
     MASTER_ave_thresh saved as ave_thr_all_runs.png
@@ -3129,6 +3134,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     if isi_name_list is None:
         isi_name_list = list(all_df.columns[4:])
+    if isi_vals_list is None:
         isi_vals_list = [int(i[4:]) for i in isi_name_list]
 
     if verbose:
@@ -3211,6 +3217,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                                 cols_to_change_show=thr_col, new_col_name='ISI',
                                 strip_from_cols='ISI_', x_axis='ISI', y_axis=thr_col,
                                 hue_var='separation', style_var=cond_type_col, style_order=cond_type_order,
+                                legend_names=isi_name_list,
                                 error_bars=True, even_spaced_x=True, jitter=.05,
                                 fig_title=fig_1b_title, fig_savename=fig_1b_savename,
                                 save_path=save_path, x_tick_vals=isi_vals_list, verbose=verbose)

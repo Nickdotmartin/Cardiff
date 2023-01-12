@@ -112,7 +112,7 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'NickMac'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
+monitor_name = 'Nick_work_laptop'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 
 # Use balanced probes to match previous Ricco experiments
 balanced_probes = True
@@ -122,7 +122,7 @@ expName = 'Exp3_Ricco_NM_v6'
 
 expInfo = {'1. Participant': 'Nick_test',
            '2. Run_number': '1',
-           '3. Probe duration in frames at 240hz': [2, 50, 100],
+           '3. Probe duration in frames at 240hz': [2, 50, 100, 360],
            '4. fps': [240, 60],
            '5. Probe_orientation': ['tangent', 'radial'],
            '6. Vary_fixation': [True, False],
@@ -537,6 +537,8 @@ for step in range(n_trials_per_stair):
             while continueRoutine:
                 frameN = frameN + 1
 
+                # probe1.ori = probe1.ori+1
+
                 # FIXATION
                 if t_fixation >= frameN > 0:
                     fixation.setRadius(3)
@@ -639,6 +641,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('monitor_name', monitor_name)
         thisExp.addData('selected_fps', fps)
         thisExp.addData('actual_fps', actual_fps)
+        thisExp.addData('balanced_probes', balanced_probes)
         thisExp.addData('psychopy_version', psychopy_version)
         thisExp.addData('date', expInfo['date'])
         thisExp.addData('time', expInfo['time'])
