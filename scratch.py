@@ -1,33 +1,13 @@
-# import random
+import random
+from operator import itemgetter
+
+import pandas as pd
+import numpy as np
+
+
 #
-# import pandas as pd
-# import numpy as np
-#
-# # use these for the lines conditions
-# oneP_vert = [(-2, 1), (-1, 1), (-1, 2), (1, 2),
-#              (1, 1), (0, 1), (0, 0), (-1, 0), (-1, -1), (-2, -1)]
-# sep0_vert = [(-2, 1), (-1, 1), (-1, 2), (1, 2),  # top-left of pr1
-#              (1, -1), (0, -1), (0, -2), (-2, -2)]  # bottom-right of pr2
-# sep1_vert = [(-2, 1), (-1, 1), (-1, 2), (1, 2),  # top-left of pr1
-#              (1, 0), (2, 0), # zig-zag down top-right
-#              (2, -2), (1, -2), (1, -3), (-1, -3), # bottom-right of pr2
-#              (-1, -2), (-2, -2)]  # zig-zag back up bottom-left
-# sep2_vert = [(-2, 1), (-1, 1), (-1, 2), (1, 2),  # top-left of pr1
-#              (1, 0), (2, 0), (2, -1), (3, -1),  # zig-zag down top-right
-#              (3, -3), (2, -3), (2, -4), (0, -4),  # bottom-right of pr2
-#              (0, -3), (-1, -3), (-1, -2), (-2, -2)]  # zig-zag back up bottom-left
-# sep3_vert = [(-2, 1), (-1, 1), (-1, 2), (1, 2),  # top-left of pr1
-#              (1, 0), (2, 0), (2, -1), (3, -1), (3, -2), (4, -2), # zig-zag down top-right
-#              (4, -4), (3, -4), (3, -5), (1, -5),  # bottom-right of pr2
-#              (1, -4), (0, -4), (0, -3), (-1, -3), (-1, -2), (-2, -2)]  # zig-zag back up bottom-left
-# sep4_vert = [(-2, 1), (-1, 1), (-1, 2), (1, 2),  # top-left of pr1
-#              (1, 0), (2, 0), (2, -1), (3, -1), (3, -2), (4, -2), (4, -1), (5, -3), # zig-zag down top-right
-#              (5, -5), (4, -5), (4, -6), (2, -6),  # bottom-right of pr2
-#              (2, -5), (1, -5), (1, -4), (0, -4), (0, -3), (-1, -3), (-1, -2), (-2, -2)]  # zig-zag back up bottom-left
-# # probe_vert_list = [sep0_vert, sep1_vert, sep2_vert, sep3_vert]
 # def make_ricco_vertices(sep_cond, balanced=False, verbose=False):
 #     """
-#
 #     Probe vertices can be constructed from four parts.
 #         1. the top left edge of probe 1 (which is the same for all conds).
 #         2. zig-zag down top-right side (which is has more vertices as sep_cond increases).
@@ -99,7 +79,8 @@
 #     new_verticies = tl_pr1_1 + tr_zz_2 + br_pr2_3 + bl_zz_4
 #
 #     if balanced:
-#         print('balancing probe around (0, 0)')
+#         if verbose:
+#             print('balancing probe around (0, 0)')
 #         # balancing is roughly based on half the separation value, but with slight differences for odd and even numbers.
 #         if sep_cond in [-1, 99]:
 #             half_sep = 0
@@ -112,141 +93,89 @@
 #
 #         new_verticies = balanced_vertices
 #
-#
 #     return new_verticies
 #
-# from operator import itemgetter
-# separations = [-1, 0, 1, 2, 3, 6, 18, 36]
-# vert_dict = {}
-# for sep_cond in separations:
-#     # print(sep_cond, make_ricco_vertices(sep_cond))
-#     new_verts = make_ricco_vertices(sep_cond, balanced=True)
-#     vert_dict[f"sep{sep_cond}"] = new_verts
 #
-#     # vert_dict[f"sep{sep_cond}"] = {}
-#     # vert_dict[f"sep{sep_cond}"]['sep_cond'] = sep_cond
-#     # vert_dict[f"sep{sep_cond}"]['vertices'] = new_verts
-#     #
-#     # print(sep_cond, new_verts)
+# # use these for the lines conditions
+# oneP_vert = [(-1, -2), (-1, 0), (0, 0), (0, 1), (2, 1),
+#              (2, 0), (1, 0), (1, -1), (0, -1), (0, -2)]
+# sep0_vert = [(-2, -1), (-2, 1), (-1, 1), (-1, 2), (1, 2),
+#              (1, -1), (0, -1), (0, -2), (-2, -2)]
+# sep1_vert = [(-2, 0), (-2, 2), (-1, 2), (-1, 3), (1, 3), (1, 1), (2, 1),
+#              (2, -1), (1, -1), (1, -2), (-1, -2), (-1, -1), (-2, -1)]
+# sep2_vert = [(-2, 0), (-2, 2), (-1, 2), (-1, 3), (1, 3), (1, 1), (2, 1), (2, 0),
+#              (3, 0), (3, -2), (2, -2), (2, -3), (0, -3), (0, -2), (-1, -2),
+#              (-1, -1), (-2, -1)]
+# sep3_vert = [(-3, 1), (-3, 3), (-2, 3), (-2, 4), (0, 4), (0, 2), (1, 2), (1, 1),
+#              (2, 1), (2, 0), (3, 0), (3, -2), (2, -2), (2, -3), (0, -3), (0, -2),
+#              (-1, -2), (-1, -1), (-2, -1), (-2, 0), (-3, 0)]
+# sep6_vert = [(-4, 2), (-4, 4), (-3, 4), (-3, 5), (-1, 5), (-1, 3), (0, 3),
+#              (0, 2), (1, 2), (1, 1), (2, 1), (2, 0), (3, 0), (3, -1), (4, -1),
+#              (4, -2), (5, -2), (5, -4), (4, -4), (4, -5), (2, -5), (2, -4),
+#              (1, -4), (1, -3), (0, -3), (0, -2), (-1, -2), (-1, -1), (-2, -1),
+#              (-2, 0), (-3, 0), (-3, 1), (-4, 1)]
+# sep18_vert = [(-10, 8), (-10, 10), (-9, 10), (-9, 11), (-7, 11), (-7, 9),
+#               (-6, 9), (-6, 8), (-5, 8), (-5, 7), (-4, 7), (-4, 6), (-3, 6),
+#               (-3, 5), (-2, 5), (-2, 4), (-1, 4), (-1, 3), (0, 3), (0, 2),
+#               (1, 2), (1, 1), (2, 1), (2, 0), (3, 0), (3, -1), (4, -1),
+#               (4, -2), (5, -2), (5, -3), (6, -3), (6, -4), (7, -4), (7, -5),
+#               (8, -5), (8, -6), (9, -6), (9, -7), (10, -7), (10, -8), (11, -8),
+#               (11, -10), (10, -10), (10, -11), (8, -11), (8, -10), (7, -10),
+#               (7, -9), (6, -9), (6, -8), (5, -8), (5, -7), (4, -7), (4, -6),
+#               (3, -6), (3, -5), (2, -5), (2, -4), (1, -4), (1, -3), (0, -3),
+#               (0, -2), (-1, -2), (-1, -1), (-2, -1), (-2, 0), (-3, 0), (-3, 1),
+#               (-4, 1), (-4, 2), (-5, 2), (-5, 3), (-6, 3), (-6, 4), (-7, 4),
+#               (-7, 5), (-8, 5), (-8, 6), (-9, 6), (-9, 7), (-10, 7)]
 #
-#     # # balancing is roughly based on half the separation value, but with slight differences for odd and even numbers
-#     # if sep_cond in [-1, 99]:
-#     #     half_sep = 0
-#     # elif (sep_cond % 2) != 0:
-#     #     half_sep = int(sep_cond / 2) + 1
-#     # else:
-#     #     half_sep = int(sep_cond / 2)
-#     # print(half_sep)
-#     #
-#     # balanced_vert = [(tup[0] - half_sep - 1, tup[1] + half_sep) for tup in new_verts]
-#     # print(sep_cond, balanced_vert)
-#     #
-#     # print()
-#
-#
-#     # d["string{0}".format(x)] = "Hello"
-#     # print(sep_cond, new_verts)
-# for k, v in vert_dict.items():
-#     # print(k, v)
-#     alist = v
-#     print(k, 'x_min', min(alist)[0], 'x_max', max(alist)[0], 'y_min', min(alist, key=itemgetter(1))[1], 'y_max', max(alist, key=itemgetter(1))[1])
-#     # print(f"\n{k}: orig: {v}")
-#
-#     #
-#     # for i in v:
-#     #     print(i)
-#
-#
-# # probe_vert_list = [oneP_vert, sep0_vert, sep1_vert, sep2_vert, sep3_vert, sep6_vert, sep18_vert, sep36_vert]
-# # probe_name_list = ['oneP ', 'sep0 ', 'sep1 ', 'sep2 ', 'sep3 ', 'sep6 ', 'sep18', 'sep36']
-# #
-# # for i, vert in enumerate(probe_vert_list):
-# #     alist = vert
-# #     min(alist)[0], max(alist)[0]
-# #     print(i, probe_name_list[i], 'x_min', min(alist)[0], 'x_max', max(alist)[0], 'y_min', min(alist, key=itemgetter(1))[1], 'y_max', max(alist, key=itemgetter(1))[1])
-#
-#
-#
-# # # use these for the lines conditions
-# # oneP_vert = [(-1, -2), (-1, 0), (0, 0), (0, 1), (2, 1),
-# #              (2, 0), (1, 0), (1, -1), (0, -1), (0, -2)]
-# # sep0_vert = [(-2, -1), (-2, 1), (-1, 1), (-1, 2), (1, 2),
-# #              (1, -1), (0, -1), (0, -2), (-2, -2)]
-# # sep1_vert = [(-2, 0), (-2, 2), (-1, 2), (-1, 3), (1, 3), (1, 1), (2, 1),
-# #              (2, -1), (1, -1), (1, -2), (-1, -2), (-1, -1), (-2, -1)]
-# # sep2_vert = [(-2, 0), (-2, 2), (-1, 2), (-1, 3), (1, 3), (1, 1), (2, 1), (2, 0),
-# #              (3, 0), (3, -2), (2, -2), (2, -3), (0, -3), (0, -2), (-1, -2),
-# #              (-1, -1), (-2, -1)]
-# # sep3_vert = [(-3, 1), (-3, 3), (-2, 3), (-2, 4), (0, 4), (0, 2), (1, 2), (1, 1),
-# #              (2, 1), (2, 0), (3, 0), (3, -2), (2, -2), (2, -3), (0, -3), (0, -2),
-# #              (-1, -2), (-1, -1), (-2, -1), (-2, 0), (-3, 0)]
-# # sep6_vert = [(-4, 2), (-4, 4), (-3, 4), (-3, 5), (-1, 5), (-1, 3), (0, 3),
-# #              (0, 2), (1, 2), (1, 1), (2, 1), (2, 0), (3, 0), (3, -1), (4, -1),
-# #              (4, -2), (5, -2), (5, -4), (4, -4), (4, -5), (2, -5), (2, -4),
-# #              (1, -4), (1, -3), (0, -3), (0, -2), (-1, -2), (-1, -1), (-2, -1),
-# #              (-2, 0), (-3, 0), (-3, 1), (-4, 1)]
-# # sep18_vert = [(-10, 8), (-10, 10), (-9, 10), (-9, 11), (-7, 11), (-7, 9),
-# #               (-6, 9), (-6, 8), (-5, 8), (-5, 7), (-4, 7), (-4, 6), (-3, 6),
-# #               (-3, 5), (-2, 5), (-2, 4), (-1, 4), (-1, 3), (0, 3), (0, 2),
-# #               (1, 2), (1, 1), (2, 1), (2, 0), (3, 0), (3, -1), (4, -1),
-# #               (4, -2), (5, -2), (5, -3), (6, -3), (6, -4), (7, -4), (7, -5),
-# #               (8, -5), (8, -6), (9, -6), (9, -7), (10, -7), (10, -8), (11, -8),
-# #               (11, -10), (10, -10), (10, -11), (8, -11), (8, -10), (7, -10),
-# #               (7, -9), (6, -9), (6, -8), (5, -8), (5, -7), (4, -7), (4, -6),
-# #               (3, -6), (3, -5), (2, -5), (2, -4), (1, -4), (1, -3), (0, -3),
-# #               (0, -2), (-1, -2), (-1, -1), (-2, -1), (-2, 0), (-3, 0), (-3, 1),
-# #               (-4, 1), (-4, 2), (-5, 2), (-5, 3), (-6, 3), (-6, 4), (-7, 4),
-# #               (-7, 5), (-8, 5), (-8, 6), (-9, 6), (-9, 7), (-10, 7)]
-# #
-# # # starts clockwise round probe1 from bottom left
-# # sep36_vert = [(-20, 18), (-20, 20), (-19, 20), (-19, 21), (-17, 21),
-# #               # then down and right diagonally towards mid-point
-# #               (-17, 19), (-16, 19), (-16, 18), (-15, 18),
-# #               (-15, 17), (-14, 17), (-14, 16), (-13, 16),
-# #               (-13, 15), (-12, 15), (-12, 14), (-11, 14),
-# #               (-11, 13), (-10, 13), (-10, 12), (-9, 12),
-# #               (-9, 11), (-8, 11), (-8, 10), (-7, 10),
-# #               (-7, 9), (-6, 9), (-6, 8), (-5, 8),
-# #               (-5, 7), (-4, 7), (-4, 6), (-3, 6),
-# #               (-3, 5), (-2, 5), (-2, 4), (-1, 4),
-# #               (-1, 3), (0, 3), (0, 2), (1, 2),
-# #               # (1, 1) is up and right one from bottom right of white spot
-# #               (1, 1), (2, 1), (2, 0), (3, 0),
-# #               (3, -1), (4, -1), (4, -2), (5, -2),
-# #               (5, -3), (6, -3), (6, -4), (7, -4),
-# #               (7, -5), (8, -5), (8, -6), (9, -6),
-# #               (9, -7), (10, -7), (10, -8), (11, -8),
-# #               (11, -9), (12, -9), (12, -10), (13, -10),
-# #               (13, -11), (14, -11), (14, -12), (15, -12),
-# #               (15, -13), (16, -13), (16, -14), (17, -14),
-# #               (17, -15), (18, -15), (18, -16), (19, -16),
-# #               # round probe2, (16, -19) is bottom left of probe2
-# #               (19, -18), (18, -18), (18, -19), (16, -19),
-# #               # then back up and left along diagonal
-# #               (16, -18), (15, -18), (15, -17), (14, -17),
-# #               (14, -16), (13, -16), (13, -15), (12, -15),
-# #               (12, -14), (11, -14), (11, -13), (10, -13),
-# #               (10, -12), (9, -12), (9, -11), (8, -11),
-# #               (8, -10), (7, -10), (7, -9), (6, -9),
-# #               (6, -8), (5, -8), (5, -7), (4, -7),
-# #               (4, -6), (3, -6), (3, -5), (2, -5),
-# #               (2, -4), (1, -4), (1, -3), (0, -3),
-# #               (0, -2), (-1, -2),
-# #               # (-1, 1) is down and left one from bottom right of white spot
-# #               (-1, -1), (-2, -1), (-2, 0), (-3, 0),
-# #               (-3, 1), (-4, 1), (-4, 2), (-5, 2),
-# #               (-5, 3), (-6, 3), (-6, 4), (-7, 4),
-# #               (-7, 5), (-8, 5), (-8, 6), (-9, 6),
-# #               (-9, 7), (-10, 7), (-10, 8), (-11, 8),
-# #               (-11, 9), (-12, 9), (-12, 10), (-13, 10),
-# #               (-13, 11), (-14, 11), (-14, 12), (-15, 12),
-# #               (-15, 13), (-16, 13), (-16, 14), (-17, 14),
-# #               (-17, 15), (-18, 15), (-18, 16), (-19, 16),
-# #               (-19, 17), (-20, 17),
-# #               ]  # bottom left of probe1 is (-20, 18),
-# # probe_vert_list = [oneP_vert, sep0_vert, sep1_vert, sep2_vert, sep3_vert, sep6_vert, sep18_vert, sep36_vert]
-# # probe_name_list = ['oneP ', 'sep0 ', 'sep1 ', 'sep2 ', 'sep3 ', 'sep6 ', 'sep18', 'sep36']
-# #
+# # starts clockwise round probe1 from bottom left
+# sep36_vert = [(-20, 18), (-20, 20), (-19, 20), (-19, 21), (-17, 21),
+#               # then down and right diagonally towards mid-point
+#               (-17, 19), (-16, 19), (-16, 18), (-15, 18),
+#               (-15, 17), (-14, 17), (-14, 16), (-13, 16),
+#               (-13, 15), (-12, 15), (-12, 14), (-11, 14),
+#               (-11, 13), (-10, 13), (-10, 12), (-9, 12),
+#               (-9, 11), (-8, 11), (-8, 10), (-7, 10),
+#               (-7, 9), (-6, 9), (-6, 8), (-5, 8),
+#               (-5, 7), (-4, 7), (-4, 6), (-3, 6),
+#               (-3, 5), (-2, 5), (-2, 4), (-1, 4),
+#               (-1, 3), (0, 3), (0, 2), (1, 2),
+#               # (1, 1) is up and right one from bottom right of white spot
+#               (1, 1), (2, 1), (2, 0), (3, 0),
+#               (3, -1), (4, -1), (4, -2), (5, -2),
+#               (5, -3), (6, -3), (6, -4), (7, -4),
+#               (7, -5), (8, -5), (8, -6), (9, -6),
+#               (9, -7), (10, -7), (10, -8), (11, -8),
+#               (11, -9), (12, -9), (12, -10), (13, -10),
+#               (13, -11), (14, -11), (14, -12), (15, -12),
+#               (15, -13), (16, -13), (16, -14), (17, -14),
+#               (17, -15), (18, -15), (18, -16), (19, -16),
+#               # round probe2, (16, -19) is bottom left of probe2
+#               (19, -18), (18, -18), (18, -19), (16, -19),
+#               # then back up and left along diagonal
+#               (16, -18), (15, -18), (15, -17), (14, -17),
+#               (14, -16), (13, -16), (13, -15), (12, -15),
+#               (12, -14), (11, -14), (11, -13), (10, -13),
+#               (10, -12), (9, -12), (9, -11), (8, -11),
+#               (8, -10), (7, -10), (7, -9), (6, -9),
+#               (6, -8), (5, -8), (5, -7), (4, -7),
+#               (4, -6), (3, -6), (3, -5), (2, -5),
+#               (2, -4), (1, -4), (1, -3), (0, -3),
+#               (0, -2), (-1, -2),
+#               # (-1, 1) is down and left one from bottom right of white spot
+#               (-1, -1), (-2, -1), (-2, 0), (-3, 0),
+#               (-3, 1), (-4, 1), (-4, 2), (-5, 2),
+#               (-5, 3), (-6, 3), (-6, 4), (-7, 4),
+#               (-7, 5), (-8, 5), (-8, 6), (-9, 6),
+#               (-9, 7), (-10, 7), (-10, 8), (-11, 8),
+#               (-11, 9), (-12, 9), (-12, 10), (-13, 10),
+#               (-13, 11), (-14, 11), (-14, 12), (-15, 12),
+#               (-15, 13), (-16, 13), (-16, 14), (-17, 14),
+#               (-17, 15), (-18, 15), (-18, 16), (-19, 16),
+#               (-19, 17), (-20, 17),
+#               ]  # bottom left of probe1 is (-20, 18),
+# probe_vert_list = [oneP_vert, sep0_vert, sep1_vert, sep2_vert, sep3_vert, sep6_vert, sep18_vert, sep36_vert]
+# probe_name_list = ['oneP ', 'sep0 ', 'sep1 ', 'sep2 ', 'sep3 ', 'sep6 ', 'sep18', 'sep36']
+# # print('\nold probe manual')
 # # from operator import itemgetter
 # # for i, vert in enumerate(probe_vert_list):
 # #     alist = vert
@@ -267,6 +196,45 @@
 #
 #
 # '''
+#
+#
+#
+# # from operator import itemgetter
+# separations = [-1, 0, 1, 2, 3, 6, 18, 36]
+# vert_dict = {}
+# for sep_idx, sep_cond in enumerate(separations):
+#     print(f"\n{sep_idx}. sep_cond: {sep_cond}")
+#     # print(sep_cond, make_ricco_vertices(sep_cond))
+#     new_verts = make_ricco_vertices(sep_cond, balanced=True)
+#     orig_verts = probe_vert_list[sep_idx]
+#
+#     vert_dict[f"sep{sep_cond}"] = new_verts
+#     vert_dict[f"sep{sep_cond}"] = {}
+#     vert_dict[f"sep{sep_cond}"]['sep_cond'] = sep_cond
+#     vert_dict[f"sep{sep_cond}"]['vertices'] = new_verts
+#     vert_dict[f"sep{sep_cond}"]['orig_verts'] = orig_verts
+#
+#     for x, y in zip(new_verts, orig_verts):
+#         print(x, y, (x[0]-y[0], x[1]-y[1]))
 
-for sep_cond in list(range(10)):
-    print(sep_cond*5 + 10)
+
+
+
+# print("new probe generator")
+# for k, v in vert_dict.items():
+#     print(k, v)
+    # alist = v
+    # print(k, 'x_min', min(alist)[0], 'x_max', max(alist)[0], 'y_min', min(alist, key=itemgetter(1))[1], 'y_max', max(alist, key=itemgetter(1))[1])
+
+for i in list(range(10)):
+    if i % 2 == 0:
+        # even
+        a = i // 2
+        b = i // 2
+    else:
+        # odd
+        a = i // 2
+        b = (i // 2) + 1
+    print(i, a, b)
+
+

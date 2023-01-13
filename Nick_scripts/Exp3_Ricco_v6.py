@@ -91,8 +91,9 @@ def make_ricco_vertices(sep_cond, balanced=False, verbose=False):
     new_vertices = tl_pr1_1 + tr_zz_2 + br_pr2_3 + bl_zz_4
 
     if balanced:
-        print('balancing probe around (0, 0)')
         # balancing is roughly based on half the separation value, but with slight differences for odd and even numbers.
+        if verbose:
+            print('balancing probe around (0, 0)')
         if sep_cond in [-1, 99]:
             half_sep = 0
         elif (sep_cond % 2) != 0:

@@ -27,7 +27,7 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'NickMac'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
+monitor_name = 'asus_cal'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 
 
 # Store info about the experiment session
@@ -71,11 +71,12 @@ expected_fr_ms = (1/fps) * 1000
 For 1probe condition, use separation==99.
 For concurrent probes, use ISI==-1.
 '''
-separations = [0, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
-# separations = [0, 1, 2, 3, 6, 18, 99]  # select from [0, 1, 2, 3, 6, 18, 99]
+# separations = [0, 6]  # select from [0, 1, 2, 3, 6, 18, 99]
+separations = [0, 1, 2, 3, 6, 18, 99]  # select from [0, 1, 2, 3, 6, 18, 99]
 print(f'separations: {separations}')
-ISI_values = [-1, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
-# ISI_values = [-1, 0, 2, 4, 6, 9, 12, 24]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+# ISI_values = [-1]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+# ISI_values = [-1, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+ISI_values = [-1, 0, 2, 4, 6, 9, 12, 24]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 print(f'ISI_values: {ISI_values}')
 # repeat separation values for each ISI e.g., [0, 0, 6, 6]
 sep_vals_list = list(np.repeat(separations, len(ISI_values)))
@@ -164,16 +165,17 @@ if abs(fps-actualFrameRate) > 5:
 # ELEMENTS
 # fixation bull eye
 fixation = visual.Circle(win, radius=2, units='pix', lineColor='white', fillColor='black')
+# loc_marker = visual.Circle(win, radius=2, units='pix', lineColor='green', fillColor='red')
 
 # PROBEs
 expInfo['6. Probe size'] = '5pixels'  # ignore this, all experiments use 5pixel probes now.
 probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
              (1, -2), (-1, -2), (-1, -1), (0, -1)]
-
+probe_size = 1
 probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, -1.0, 1.0),
-                          lineWidth=0, opacity=1, size=1, interpolate=False)
+                          lineWidth=0, opacity=1, size=probe_size, interpolate=False)
 probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor=[-1.0, 1.0, -1.0],
-                          lineWidth=0, opacity=1, size=1, interpolate=False)
+                          lineWidth=0, opacity=1, size=probe_size, interpolate=False)
 
 # dist_from_fix is a constant to get 4dva distance from fixation,
 dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
@@ -291,17 +293,34 @@ for step in range(n_trials_per_stair):
         elif corner == 315:
             corner_name = 'bottom_right'
 
-        # # direction in which the probe jumps : CW or CCW
+        # # direction in which the probe jumps : CW or CCW (tangent) or expand vs contract (radial)
         target_jump = random.choice([1, -1])
         if orientation == 'tangent':
             jump_dir = 'clockwise'
             if target_jump == -1:
                 jump_dir = 'anticlockwise'
         else:
-            jump_dir = 'inward'
+            jump_dir = 'cont'
             if target_jump == -1:
-                jump_dir = 'outward'
+                jump_dir = 'exp'
         print(f"corner: {corner} {corner_name}; jump dir: {target_jump} {jump_dir}")
+        
+        # shift probes by separation
+        '''Both probes should be equally spaced around the meridian point.
+        E.g., if sep = 4, probe 1 will be shifted 2 pixels in one direction and 
+        probe 2 will be shifted 2 pixels in opposite direction. 
+        Where separation is an odd number (e.g., 5), they will be shifted by 2 and 3 pixels respectively.'''
+        if sep == 99:
+            p1_shift = 0
+            p2_shift = 0
+        elif sep % 2 == 0:
+            # even
+            p1_shift = sep // 2
+            p2_shift = sep // 2
+        else:
+            # odd
+            p1_shift = sep // 2
+            p2_shift = (sep // 2) + 1
 
         # set position and orientation of probes
         '''NEW - set orientations to p1=zero and p2=180 (not zero), 
@@ -310,102 +329,119 @@ for step in range(n_trials_per_stair):
         probe2_ori = 180
         if corner == 45:
             '''in top-right corner, both x and y increase (right and up)'''
-            p1_x = dist_from_fix * 1
-            p1_y = dist_from_fix * 1
+            loc_x = dist_from_fix * 1
+            loc_y = dist_from_fix * 1
             '''orientation' here refers to the relationship between probes, 
             whereas probe1_ori refers to rotational angle of probe stimulus'''
             if orientation == 'tangent':
                 if target_jump == 1:  # CW
                     probe1_ori += 180
                     probe2_ori += 180
-                    probe2_pos = [p1_x + sep - 1, p1_y - sep]
+                    probe1_pos = [loc_x - p1_shift, loc_y + p1_shift]
+                    probe2_pos = [loc_x + p2_shift - 1, loc_y - p2_shift]
                 elif target_jump == -1:  # ACW
                     probe1_ori += 0
                     probe2_ori += 0
-                    probe2_pos = [p1_x - sep + 1, p1_y + sep]
+                    probe1_pos = [loc_x + p1_shift, loc_y - p1_shift]
+                    probe2_pos = [loc_x - p2_shift + 1, loc_y + p2_shift]
             elif orientation == 'radial':
                 if target_jump == 1:  # inward
                     probe1_ori += 270
                     probe2_ori += 270
                     # probe2 is left and down from probe1
-                    probe2_pos = [p1_x - sep + 1, p1_y - sep]
+                    probe1_pos = [loc_x + p1_shift, loc_y + p1_shift]
+                    probe2_pos = [loc_x - p2_shift + 1, loc_y - p2_shift]
                 elif target_jump == -1:  # outward
                     probe1_ori += 90
                     probe2_ori += 90
                     # probe2 is right and up from probe1
-                    probe2_pos = [p1_x + sep - 1, p1_y + sep]
+                    probe1_pos = [loc_x - p1_shift, loc_y - p1_shift]
+                    probe2_pos = [loc_x + p2_shift - 1, loc_y + p2_shift]
         elif corner == 135:
-            p1_x = dist_from_fix * -1
-            p1_y = dist_from_fix * 1
+            loc_x = dist_from_fix * -1
+            loc_y = dist_from_fix * 1
             if orientation == 'tangent':
                 if target_jump == 1:  # ACW
                     probe1_ori += 90
                     probe2_ori += 90
-                    probe2_pos = [p1_x + sep - 1, p1_y + sep]
+                    probe1_pos = [loc_x - p1_shift, loc_y - p1_shift]
+                    probe2_pos = [loc_x + p2_shift - 1, loc_y + p2_shift]
                 elif target_jump == -1:  # CW
                     probe1_ori += 270
                     probe2_ori += 270
-                    probe2_pos = [p1_x - sep + 1, p1_y - sep]
+                    probe1_pos = [loc_x + p1_shift, loc_y + p1_shift]
+                    probe2_pos = [loc_x - p2_shift + 1, loc_y - p2_shift]
             elif orientation == 'radial':
                 if target_jump == 1:  # inward
                     probe1_ori += 180
                     probe2_ori += 180
                     # probe2 is right and down from probe1
-                    probe2_pos = [p1_x + sep - 1, p1_y - sep]
+                    probe1_pos = [loc_x - p1_shift, loc_y + p1_shift]
+                    probe2_pos = [loc_x + p2_shift - 1, loc_y - p2_shift]
                 elif target_jump == -1:  # outward
                     probe1_ori += 0
                     probe2_ori += 0
                     # probe2 is left and up from probe1
-                    probe2_pos = [p1_x - sep + 1, p1_y + sep]
+                    probe1_pos = [loc_x + p1_shift, loc_y - p1_shift]
+                    probe2_pos = [loc_x - p2_shift + 1, loc_y + p2_shift]
         elif corner == 225:
-            p1_x = dist_from_fix * -1
-            p1_y = dist_from_fix * -1
+            loc_x = dist_from_fix * -1
+            loc_y = dist_from_fix * -1
             if orientation == 'tangent':
                 if target_jump == 1:  # CW
                     probe1_ori += 0
                     probe2_ori += 0
-                    probe2_pos = [p1_x - sep + 1, p1_y + sep]
+                    probe1_pos = [loc_x + p1_shift, loc_y - p1_shift]
+                    probe2_pos = [loc_x - p2_shift + 1, loc_y + p2_shift]
                 elif target_jump == -1:  # ACW
                     probe1_ori += 180
                     probe2_ori += 180
-                    probe2_pos = [p1_x + sep - 1, p1_y - sep]
+                    probe1_pos = [loc_x - p1_shift, loc_y + p1_shift]
+                    probe2_pos = [loc_x + p2_shift - 1, loc_y - p2_shift]
             elif orientation == 'radial':
                 if target_jump == 1:  # inward
                     probe1_ori += 90
                     probe2_ori += 90
                     # probe2 is right and up from probe1
-                    probe2_pos = [p1_x + sep - 1, p1_y + sep]
+                    probe1_pos = [loc_x - p1_shift, loc_y - p1_shift]
+                    probe2_pos = [loc_x + p2_shift - 1, loc_y + p2_shift]
                 elif target_jump == -1:  # outward
                     probe1_ori += 270
                     probe2_ori += 270
                     # probe2 is left and down from probe1
-                    probe2_pos = [p1_x - sep + 1, p1_y - sep]
+                    probe1_pos = [loc_x + p1_shift, loc_y + p1_shift]
+                    probe2_pos = [loc_x - p2_shift + 1, loc_y - p2_shift]
         else:
             corner = 315
-            p1_x = dist_from_fix * 1
-            p1_y = dist_from_fix * -1
+            loc_x = dist_from_fix * 1
+            loc_y = dist_from_fix * -1
             if orientation == 'tangent':
                 if target_jump == 1:  # ACW
                     probe1_ori += 270
                     probe2_ori += 270
-                    probe2_pos = [p1_x - sep + 1, p1_y - sep]
+                    probe1_pos = [loc_x + p1_shift, loc_y + p1_shift]
+                    probe2_pos = [loc_x - p2_shift + 1, loc_y - p2_shift]
                 elif target_jump == -1:  # CW
                     probe1_ori += 90
                     probe2_ori += 90
-                    probe2_pos = [p1_x + sep - 1, p1_y + sep]
+                    probe1_pos = [loc_x - p1_shift, loc_y - p1_shift]
+                    probe2_pos = [loc_x + p2_shift - 1, loc_y + p2_shift]
             elif orientation == 'radial':
                 if target_jump == 1:  # inward
                     probe1_ori += 0
                     probe2_ori += 0
                     # probe2 is left and up from probe1
-                    probe2_pos = [p1_x - sep + 1, p1_y + sep]
+                    probe1_pos = [loc_x + p1_shift, loc_y - p1_shift]
+                    probe2_pos = [loc_x - p2_shift + 1, loc_y + p2_shift]
                 elif target_jump == -1:  # outward
                     probe1_ori += 180
                     probe2_ori += 180
                     # probe2 is right and down from probe1
-                    probe2_pos = [p1_x + sep - 1, p1_y - sep]
+                    probe1_pos = [loc_x - p1_shift, loc_y + p1_shift]
+                    probe2_pos = [loc_x + p2_shift - 1, loc_y - p2_shift]
 
-        probe1_pos = [p1_x, p1_y]
+        # probe1_pos = [loc_x, loc_y]
+        # loc_marker.setPos([loc_x, loc_y])
 
         print(f"probe1_pos: {probe1_pos}, probe2_pos: {probe2_pos}. dff: {dist_from_fix}")
 
@@ -467,6 +503,8 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(3)
                     fixation.draw()
 
+                    # loc_marker.draw()
+
                     # reset timer to start with probe1 presentation.
                     resp.clock.reset()
 
@@ -485,10 +523,16 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(3)
                     fixation.draw()
 
+                    # loc_marker.draw()
+
+
                 # ISI
                 elif t_ISI >= frameN > t_probe_1:
                     fixation.setRadius(3)
                     fixation.draw()
+
+                    # loc_marker.draw()
+
 
                 # PROBE 2
                 elif t_probe_2 >= frameN > t_ISI:
@@ -498,6 +542,9 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(3)
                     fixation.draw()
 
+                    # loc_marker.draw()
+
+
                 # ANSWER
                 elif frameN > t_probe_2:
                     if record_fr_durs:
@@ -506,6 +553,9 @@ for step in range(n_trials_per_stair):
                         fr_recorded_list.append(total_recorded_fr)
                     fixation.setRadius(2)
                     fixation.draw()
+
+                    # loc_marker.draw()
+
 
                     # ANSWER
                     theseKeys = event.getKeys(keyList=['num_5', 'num_4', 'num_1',
