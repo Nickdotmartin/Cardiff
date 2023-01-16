@@ -31,13 +31,13 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'Nick_work_laptop'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
+monitor_name = 'asus_cal'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 
 
 # Store info about the experiment session
 expName = 'Exp1_Jan23_radial_v2'  # from the Builder filename that created this script
-expInfo = {'1. Participant': 'rad_fr_test',
-           '2. Run_number': '1',
+expInfo = {'1. Participant': 'Nick',
+           '2. Run_number': '3',
            '3. separation (pixels)': [5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 18, 36],
            '4. Probe duration in frames at 240hz': [2, 50, 100],
            '5. fps': [240, 60],
@@ -68,7 +68,7 @@ expected_fr_ms = (1/fps) * 1000
 
 # VARIABLES
 orientation = 'radial'
-n_trials_per_stair = 2
+n_trials_per_stair = 25
 probe_ecc = 4
 
 '''Distances between probes (spatially and temporally)
@@ -78,8 +78,8 @@ For concurrent probes, use ISI==-1.
 # separations = [0, 1, 2, 3, 6, 18, 99]  # select from [0, 1, 2, 3, 6, 18, 99]
 separations = [this_sep_value]  # select from [0, 1, 2, 3, 6, 18, 99]
 print(f'separations: {separations}')
-ISI_values = [-1, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
-# ISI_values = [-1, 0, 2, 4, 6, 9, 12, 24]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+#ISI_values = [-1, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+ISI_values = [-1, 0, 2, 4, 6, 9, 12, 24]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 print(f'ISI_values: {ISI_values}')
 
 probe_dirs = ['cont', 'exp']
@@ -195,25 +195,25 @@ resp = event.BuilderKeyResponse()
 # INSTRUCTION
 instructions = visual.TextStim(win=win, name='instructions',
                                text="\n\n\n\n\n\nFocus on the fixation circle at the centre of the screen.\n\n"
-                                    "A small white target will briefly appear on screen,\n"
-                                    "press the key related to the location of the probe:\n\n"
-                                    "[4]/[Q] top-left\t\t\t[5]/[W] top-right\n\n\n\n"
-                                    "[1]/[A] bottom-left\t\t\t[2]/[S] bottom-right.\n\n\n"
-                                    "Some targets will be easier to see than others,\n"
-                                    "Some will be so dim that you won't see them, so just guess!\n\n"
-                                    "You don't need to think for long, respond quickly, but try to push press the correct key!\n\n"
-                                    "Don't let your eyes wander, keep focussed on the circle in the middle throughout.",
+                                         "A small white target will briefly appear on screen,\n"
+                                         "press the key related to the location of the probe:\n\n"
+                                         "[4]/[Q] top-left\t\t\t[5]/[W] top-right\n\n\n\n"
+                                         "[1]/[A] bottom-left\t\t\t[2]/[S] bottom-right.\n\n\n"
+                                         "Some targets will be easier to see than others,\n"
+                                         "Some will be so dim that you won't see them, so just guess!\n\n"
+                                         "You don't need to think for long, respond quickly, but try to push press the correct key!\n\n"
+                                         "Don't let your eyes wander, keep focussed on the circle in the middle throughout.",
                                font='Arial', height=20,
                                color='white')
 
 
 # BREAKS
-take_break = 76
+take_break = 100
 total_n_trials = int(n_trials_per_stair * n_stairs)
 print(f"take_break every {take_break} trials.")
 break_text = "Break\nTurn on the light and take at least 30-seconds break.\n" \
-             "Keep focussed on the fixation circle in the middle of the screen.\n" \
-             "Remember, if you don't see the target, just guess!"
+                        "Keep focussed on the fixation circle in the middle of the screen.\n" \
+                        "Remember, if you don't see the target, just guess!"
 breaks = visual.TextStim(win=win, name='breaks',
                          # text="turn on the light and take at least 30-seconds break.",
                          text=break_text,
@@ -222,8 +222,8 @@ breaks = visual.TextStim(win=win, name='breaks',
 
 end_of_exp = visual.TextStim(win=win, name='end_of_exp',
                              text="You have completed this experiment.\n"
-                                  "Thank you for your time.\n\n"
-                                  "Press any key to return to the desktop.",
+                                       "Thank you for your time.\n\n"
+                                       "Press any key to return to the desktop.",
                              font='Arial', height=20)
 
 while not event.getKeys():
@@ -286,6 +286,7 @@ for step in range(n_trials_per_stair):
         # condition (Separation, ISI)
         sep = sep_vals_list[stair_idx]
         ISI = ISI_vals_list[stair_idx]
+        jump_dir = probes_dirs_list[stair_idx]
 
         # make negative separation column for comparing inward (contract) and outward (expand).
         if jump_dir == 'exp':
