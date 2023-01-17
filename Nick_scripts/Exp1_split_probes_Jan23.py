@@ -1,11 +1,8 @@
 from __future__ import division  # do I need this?
 from psychopy import gui, visual, core, data, event, monitors
 from psychopy import __version__ as psychopy_version
-from psychopy.hardware import keyboard
 import os
 import numpy as np
-# from numpy import deg2rad  # just import numpy and use np.deg2rad
-from numpy.random import shuffle  # just import numpy and use np.random.shuffle
 import random
 import copy
 from datetime import datetime
@@ -29,7 +26,7 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'NickMac'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
+monitor_name = 'Nick_work_laptop'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 
 
 # Store info about the experiment session
@@ -144,7 +141,7 @@ widthPix = mon_dict['size'][0]
 heightPix = mon_dict['size'][1]
 monitorwidth = mon_dict['width']  # monitor width in cm
 viewdist = mon_dict['dist']  # viewing distance in cm
-viewdistPix = widthPix/monitorwidth*viewdist
+viewdistPix = widthPix / monitorwidth*viewdist
 mon = monitors.Monitor(monitor_name, width=monitorwidth, distance=viewdist)
 mon.setSizePix((widthPix, heightPix))
 
@@ -161,10 +158,13 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
 actualFrameRate = int(win.getActualFrameRate())
 print(f"actual fps: {type(win.getActualFrameRate())} {win.getActualFrameRate()}")
 
+if abs(fps-actualFrameRate) > 5:
+    raise ValueError(f"\nfps ({fps}) does not match actualFrameRate ({actualFrameRate}).")
 
 # ELEMENTS
 # fixation bull eye
 fixation = visual.Circle(win, radius=2, units='pix', lineColor='white', fillColor='black')
+# loc_marker = visual.Circle(win, radius=2, units='pix', lineColor='green', fillColor='red')
 
 # PROBEs
 probe_size = 1
@@ -189,8 +189,6 @@ dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
 myMouse = event.Mouse(visible=False)
 
 # # KEYBOARD
-# todo: try using keyboard.Keyboard
-# kb = keyboard.Keyboard()
 resp = event.BuilderKeyResponse()
 
 # INSTRUCTION
@@ -216,7 +214,6 @@ break_text = "Break\nTurn on the light and take at least 30-seconds break.\n" \
              "Keep focussed on the fixation circle in the middle of the screen.\n" \
              "Remember, if you don't see the target, just guess!"
 breaks = visual.TextStim(win=win, name='breaks',
-                         # text="turn on the light and take at least 30-seconds break.",
                          text=break_text,
                          font='Arial', pos=[0, 0], height=20, ori=0, color=[255, 255, 255],
                          colorSpace='rgb255', opacity=1, languageStyle='LTR', depth=0.0)
@@ -249,6 +246,7 @@ maxiVal = maxLum
 
 stairs = []
 for stair_idx in expInfo['stair_list']:
+
     thisInfo = copy.copy(expInfo)
     thisInfo['stair_idx'] = stair_idx
 
@@ -267,7 +265,7 @@ for stair_idx in expInfo['stair_list']:
 # EXPERIMENT
 trial_number = 0
 for step in range(n_trials_per_stair):
-    shuffle(stairs)
+    np.random.shuffle(stairs)
     for thisStair in stairs:
 
         # Trial, stair and step
@@ -295,10 +293,10 @@ for step in range(n_trials_per_stair):
 
         """
         My new probes are called: probe_1a_L, probe_2a_dots, probe_2b_L, probe_1b_dots.
-        The two shapes are composed like this: 
+        The two shapes (a and b) are composed like this: 
             (probe_1a_L, probe_2a_dots), (probe_2b_L, probe_1b_dots).
-        But temporally, both probe1s appear first, then both probe 2s.
-        For orientation and separation I need to treat them as shapes.
+        But temporally (1 and 2), both probe1s appear first, then both probe 2s.
+        For orientation and separation I need to treat them as shapes (a&b).
         For timing I need to use 1&2
 
         """
@@ -314,70 +312,111 @@ for step in range(n_trials_per_stair):
         elif corner == 315:
             corner_name = 'bottom_right'
 
-        # # direction in which the probe jumps : CW or CCW
+        # # direction in which the probe jumps : CW or CCW (tangent) or expand vs contract (radial)
         target_jump = random.choice([1, -1])
         if orientation == 'tangent':
             jump_dir = 'clockwise'
             if target_jump == -1:
                 jump_dir = 'anticlockwise'
         else:
-            jump_dir = 'inward'
+            jump_dir = 'cont'
             if target_jump == -1:
-                jump_dir = 'outward'
+                jump_dir = 'exp'
         print(f"corner: {corner} {corner_name}; jump dir: {target_jump} {jump_dir}")
 
+        # shift probes by separation
+        '''Probes should be equally spaced around the meridian point.
+        E.g., if sep = 4, probes 'a' will be shifted 2 pixels in one direction and 
+        probes 'b' will be shifted 2 pixels in opposite direction. 
+        Where separation is an odd number (e.g., 5), they will be shifted by 2 and 3 pixels; allocated randomly.'''
+        if sep == 99:
+            p_a_shift = p_b_shift = 0
+        elif sep % 2 == 0:  # even number
+            p_a_shift = p_b_shift = sep // 2
+        else:  # odd number
+            # p_a_shift = sep // 2
+            # p_b_shift = (sep // 2) + 1
+            extra_shifted_pixel = [0, 1]
+            np.random.shuffle(extra_shifted_pixel)
+            p_a_shift = sep // 2 + extra_shifted_pixel[0]
+            p_b_shift = (sep // 2) + extra_shifted_pixel[1]
+
+
+        # # todo: update this such that probes are centered around the meridian point.
         # reset probe ori
-        probe_1a_L.ori = 0
-        probe_2a_dots.ori = 0
-        probe_2b_L.ori = 0
-        probe_1b_dots.ori = 0
+        probe_1a_L_ori = 0
+        probe_2a_dots_ori = 0
+        probe_2b_L_ori = 0
+        probe_1b_dots_ori = 0
         if corner == 45:
-            p1_x = dist_from_fix * 1
-            p1_y = dist_from_fix * 1
+            loc_x = dist_from_fix * 1
+            loc_y = dist_from_fix * 1
             if orientation == 'tangent':
                 if target_jump == 1:  # CCW
-                    probe_2b_L.ori = probe_1b_dots.ori = 180
-                    probe_2b_L.pos = probe_1b_dots.pos = [p1_x - sep + 1, p1_y + sep]
+                    probe_2b_L_ori = probe_1b_dots_ori = 180
+                    probe_1a_L_pos = probe_2a_dots_pos = [loc_x + p_a_shift, loc_y - p_a_shift]
+                    probe_2b_L_pos = probe_1b_dots_pos = [loc_x - p_b_shift + 1, loc_y + p_b_shift]
                 elif target_jump == -1:  # CW
-                    probe_1a_L.ori = probe_2a_dots.ori = 180
-                    probe_2b_L.pos = probe_1b_dots.pos = [p1_x + sep - 1, p1_y - sep]
+                    probe_1a_L_ori = probe_2a_dots_ori = 180
+                    probe_1a_L_pos = probe_2a_dots_pos = [loc_x - p_a_shift, loc_y + p_a_shift]
+                    probe_2b_L_pos = probe_1b_dots_pos = [loc_x + p_b_shift - 1, loc_y - p_b_shift]
         elif corner == 135:
-            p1_x = dist_from_fix * -1
-            p1_y = dist_from_fix * 1
+            loc_x = dist_from_fix * -1
+            loc_y = dist_from_fix * 1
             if orientation == 'tangent':
                 if target_jump == 1:  # CCW
-                    probe_1a_L.ori = probe_2a_dots.ori = 90
-                    probe_2b_L.ori = probe_1b_dots.ori = 270
-                    probe_2b_L.pos = probe_1b_dots.pos = [p1_x + sep - 1, p1_y + sep]
+                    probe_1a_L_ori = probe_2a_dots_ori = 90
+                    probe_2b_L_ori = probe_1b_dots_ori = 270
+                    probe_1a_L_pos = probe_2a_dots_pos = [loc_x - p_a_shift, loc_y - p_a_shift]
+                    probe_2b_L_pos = probe_1b_dots_pos = [loc_x + p_b_shift - 1, loc_y + p_b_shift]
                 elif target_jump == -1:  # CW
-                    probe_1a_L.ori = probe_2a_dots.ori = 270
-                    probe_2b_L.ori = probe_1b_dots.ori = 90
-                    probe_2b_L.pos = probe_1b_dots.pos = [p1_x - sep + 1, p1_y - sep]
+                    probe_1a_L_ori = probe_2a_dots_ori = 270
+                    probe_2b_L_ori = probe_1b_dots_ori = 90
+                    probe_1a_L_pos = probe_2a_dots_pos = [loc_x + p_a_shift, loc_y + p_a_shift]
+                    probe_2b_L_pos = probe_1b_dots_pos = [loc_x - p_b_shift + 1, loc_y - p_b_shift]
         elif corner == 225:
-            p1_x = dist_from_fix * -1
-            p1_y = dist_from_fix * -1
+            loc_x = dist_from_fix * -1
+            loc_y = dist_from_fix * -1
             if orientation == 'tangent':
                 if target_jump == 1:  # CCW
-                    probe_1a_L.ori = probe_2a_dots.ori = 180
-                    probe_2b_L.pos = probe_1b_dots.pos = [p1_x + sep - 1, p1_y - sep]
+                    probe_1a_L_ori = probe_2a_dots_ori = 180
+                    probe_1a_L_pos = probe_2a_dots_pos = [loc_x - p_a_shift, loc_y + p_a_shift]
+                    probe_2b_L_pos = probe_1b_dots_pos = [loc_x + p_b_shift - 1, loc_y - p_b_shift]
                 elif target_jump == -1:  # CW
-                    probe_2b_L.ori = probe_1b_dots.ori = 180
-                    probe_2b_L.pos = probe_1b_dots.pos = [p1_x - sep + 1, p1_y + sep]
+                    probe_2b_L_ori = probe_1b_dots_ori = 180
+                    probe_1a_L_pos = probe_2a_dots_pos = [loc_x + p_a_shift, loc_y - p_a_shift]
+                    probe_2b_L_pos = probe_1b_dots_pos = [loc_x - p_b_shift + 1, loc_y + p_b_shift]
         else:
             corner = 315
-            p1_x = dist_from_fix * 1
-            p1_y = dist_from_fix * -1
+            loc_x = dist_from_fix * 1
+            loc_y = dist_from_fix * -1
             if orientation == 'tangent':
                 if target_jump == 1:  # CCW
-                    probe_1a_L.ori = probe_2a_dots.ori = 270
-                    probe_2b_L.ori = probe_1b_dots.ori = 90
-                    probe_2b_L.pos = probe_1b_dots.pos = [p1_x - sep + 1, p1_y - sep]
+                    probe_1a_L_ori = probe_2a_dots_ori = 270
+                    probe_2b_L_ori = probe_1b_dots_ori = 90
+                    probe_1a_L_pos = probe_2a_dots_pos = [loc_x + p_a_shift, loc_y + p_a_shift]
+                    probe_2b_L_pos = probe_1b_dots_pos = [loc_x - p_b_shift + 1, loc_y - p_b_shift]
                 elif target_jump == -1:  # CW
-                    probe_1a_L.ori = probe_2a_dots.ori = 90
-                    probe_2b_L.ori = probe_1b_dots.ori = 270
-                    probe_2b_L.pos = probe_1b_dots.pos = [p1_x + sep - 1, p1_y + sep]
+                    probe_1a_L_ori = probe_2a_dots_ori = 90
+                    probe_2b_L_ori = probe_1b_dots_ori = 270
+                    probe_1a_L_pos = probe_2a_dots_pos = [loc_x - p_a_shift, loc_y - p_a_shift]
+                    probe_2b_L_pos = probe_1b_dots_pos = [loc_x + p_b_shift - 1, loc_y + p_b_shift]
 
-        probe_1a_L.pos = probe_2a_dots.pos = [p1_x, p1_y]
+        # probe_1a_L_pos = probe_2a_dots_pos = [loc_x, loc_y]
+
+        print(f"probe_1a_L_pos: {probe_1a_L_pos}, probe_2a_dots_pos: {probe_2a_dots_pos}.\n"
+              f"probe_2b_L_pos: {probe_2b_L_pos}, probe_1b_dots_pos: {probe_1b_dots_pos}. dff: {dist_from_fix}")
+
+        probe_1a_L.setPos(probe_1a_L_pos)
+        probe_1a_L.setOri(probe_1a_L_ori)
+        probe_2a_dots.setPos(probe_2a_dots_pos)
+        probe_2a_dots.setOri(probe_2a_dots_ori)
+        probe_2b_L.setPos(probe_2b_L_pos)
+        probe_2b_L.setOri(probe_2b_L_ori)
+        probe_1b_dots.setPos(probe_1b_dots_pos)
+        probe_1b_dots.setOri(probe_1b_dots_ori)
+
+        # loc_marker.setPos([loc_x, loc_y])
 
         # VARIABLE FIXATION TIME
         # to reduce anticipatory effects that might arise from fixation always being same length.
@@ -431,6 +470,8 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(3)
                     fixation.draw()
 
+                    # loc_marker.draw()
+
                     # reset timer to start with probe1 presentation.
                     resp.clock.reset()
 
@@ -444,18 +485,21 @@ for step in range(n_trials_per_stair):
                     probe_1a_L.draw()
                     probe_1b_dots.draw()
 
-                    # SIMULTANEOUS CONDITION
-                    if ISI == -1:
-                        if sep <= 18:
+                    if ISI == -1:  # SIMULTANEOUS CONDITION
+                        if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
                             probe_2a_dots.draw()
                             probe_2b_L.draw()
                     fixation.setRadius(3)
                     fixation.draw()
 
+                    # loc_marker.draw()
+
                 # ISI
                 elif t_ISI >= frameN > t_probe_1:
                     fixation.setRadius(3)
                     fixation.draw()
+
+                    # loc_marker.draw()
 
                 # PROBE 2
                 elif t_probe_2 >= frameN > t_ISI:
@@ -466,14 +510,18 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(3)
                     fixation.draw()
 
+                    # loc_marker.draw()
+
                 # ANSWER
                 elif frameN > t_probe_2:
-                    fixation.setRadius(2)
-                    fixation.draw()
                     if record_fr_durs:
                         win.recordFrameIntervals = False
                         total_recorded_fr = len(win.frameIntervals)
                         fr_recorded_list.append(total_recorded_fr)
+                    fixation.setRadius(2)
+                    fixation.draw()
+
+                    # loc_marker.draw()
 
                     # ANSWER
                     theseKeys = event.getKeys(keyList=['num_5', 'num_4', 'num_1',

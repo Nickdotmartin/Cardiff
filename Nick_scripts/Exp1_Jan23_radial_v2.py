@@ -194,14 +194,14 @@ resp = event.BuilderKeyResponse()
 # INSTRUCTION
 instructions = visual.TextStim(win=win, name='instructions',
                                text="\n\n\n\n\n\nFocus on the fixation circle at the centre of the screen.\n\n"
-                                         "A small white target will briefly appear on screen,\n"
-                                         "press the key related to the location of the probe:\n\n"
-                                         "[4]/[Q] top-left\t\t\t[5]/[W] top-right\n\n\n\n"
-                                         "[1]/[A] bottom-left\t\t\t[2]/[S] bottom-right.\n\n\n"
-                                         "Some targets will be easier to see than others,\n"
-                                         "Some will be so dim that you won't see them, so just guess!\n\n"
-                                         "You don't need to think for long, respond quickly, but try to push press the correct key!\n\n"
-                                         "Don't let your eyes wander, keep focussed on the circle in the middle throughout.",
+                                    "A small white target will briefly appear on screen,\n"
+                                    "press the key related to the location of the probe:\n\n"
+                                    "[4]/[Q] top-left\t\t\t[5]/[W] top-right\n\n\n\n"
+                                    "[1]/[A] bottom-left\t\t\t[2]/[S] bottom-right.\n\n\n"
+                                    "Some targets will be easier to see than others,\n"
+                                    "Some will be so dim that you won't see them, so just guess!\n\n"
+                                    "You don't need to think for long, respond quickly, but try to push press the correct key!\n\n"
+                                    "Don't let your eyes wander, keep focussed on the circle in the middle throughout.",
                                font='Arial', height=20,
                                color='white')
 
@@ -211,8 +211,8 @@ take_break = 100
 total_n_trials = int(n_trials_per_stair * n_stairs)
 print(f"take_break every {take_break} trials.")
 break_text = "Break\nTurn on the light and take at least 30-seconds break.\n" \
-                        "Keep focussed on the fixation circle in the middle of the screen.\n" \
-                        "Remember, if you don't see the target, just guess!"
+             "Keep focussed on the fixation circle in the middle of the screen.\n" \
+             "Remember, if you don't see the target, just guess!"
 breaks = visual.TextStim(win=win, name='breaks',
                          # text="turn on the light and take at least 30-seconds break.",
                          text=break_text,
@@ -221,8 +221,8 @@ breaks = visual.TextStim(win=win, name='breaks',
 
 end_of_exp = visual.TextStim(win=win, name='end_of_exp',
                              text="You have completed this experiment.\n"
-                                       "Thank you for your time.\n\n"
-                                       "Press any key to return to the desktop.",
+                                  "Thank you for your time.\n\n"
+                                  "Press any key to return to the desktop.",
                              font='Arial', height=20)
 
 while not event.getKeys():

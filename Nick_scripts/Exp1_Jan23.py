@@ -44,8 +44,8 @@ dlg = gui.DlgFromDict(dictionary=expInfo, title=expName)
 if not dlg.OK:
     core.quit()  # user pressed escape
 
-expInfo['time'] = datetime.now().strftime("%H:%M:%S")
 expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
+expInfo['time'] = datetime.now().strftime("%H:%M:%S")
 
 # GUI SETTINGS
 participant_name = expInfo['1. Participant']
@@ -87,6 +87,8 @@ stair_names_list = [f'sep{s}_ISI{c}' for s, c in zip(sep_vals_list, ISI_vals_lis
 print(f'stair_names_list: {stair_names_list}')
 n_stairs = len(sep_vals_list)
 print(f'n_stairs: {n_stairs}')
+total_n_trials = int(n_trials_per_stair * n_stairs)
+print(f'total_n_trials: {total_n_trials}')
 
 # FILENAME
 filename = f'{_thisDir}{os.sep}' \
@@ -155,9 +157,15 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
 
 actualFrameRate = int(win.getActualFrameRate())
 print(f"actual fps: {type(win.getActualFrameRate())} {win.getActualFrameRate()}")
-
 if abs(fps-actualFrameRate) > 5:
     raise ValueError(f"\nfps ({fps}) does not match actualFrameRate ({actualFrameRate}).")
+
+# frame error tollerance
+frame_err_sec = win.refreshThreshold
+frame_err_ms = frame_err_sec * 1000
+print(f"frame_err_sec (120%): {frame_err_sec} (or {frame_err_ms}ms)")
+fr_recorded_list = []
+
 
 # ELEMENTS
 # fixation bull eye
@@ -199,13 +207,11 @@ instructions = visual.TextStim(win=win, name='instructions',
 
 # BREAKS
 take_break = 76
-total_n_trials = int(n_trials_per_stair * n_stairs)
 print(f"take_break every {take_break} trials.")
 break_text = "Break\nTurn on the light and take at least 30-seconds break.\n" \
              "Keep focussed on the fixation circle in the middle of the screen.\n" \
              "Remember, if you don't see the target, just guess!"
 breaks = visual.TextStim(win=win, name='breaks',
-                         # text="turn on the light and take at least 30-seconds break.",
                          text=break_text,
                          font='Arial', pos=[0, 0], height=20, ori=0, color=[255, 255, 255],
                          colorSpace='rgb255', opacity=1, languageStyle='LTR', depth=0.0)
@@ -221,12 +227,6 @@ while not event.getKeys():
     fixation.draw()
     instructions.draw()
     win.flip()
-
-# freame error tollerance
-frame_err_sec = win.refreshThreshold
-frame_err_ms = frame_err_sec * 1000
-print(f"frame_err_sec (120%): {frame_err_sec} (or {frame_err_ms}ms)")
-fr_recorded_list = []
 
 # STAIRCASE
 expInfo['stair_list'] = list(range(n_stairs))
@@ -261,7 +261,7 @@ for step in range(n_trials_per_stair):
     for thisStair in stairs:
 
         # Trial, stair and step
-        trial_number = trial_number + 1
+        trial_number += 1
         stair_idx = thisStair.extraInfo['stair_idx']
         print(f"\ntrial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
 
@@ -300,7 +300,7 @@ for step in range(n_trials_per_stair):
             if target_jump == -1:
                 jump_dir = 'exp'
         print(f"corner: {corner} {corner_name}; jump dir: {target_jump} {jump_dir}")
-        
+
         # shift probes by separation
         '''Both probes should be equally spaced around the meridian point.
         E.g., if sep = 4, probe 1 will be shifted 2 pixels in one direction and 
@@ -311,8 +311,6 @@ for step in range(n_trials_per_stair):
         elif sep % 2 == 0:  # even number
             p1_shift = p2_shift = sep // 2
         else:  # odd number
-            # p1_shift = sep // 2
-            # p2_shift = (sep // 2) + 1
             extra_shifted_pixel = [0, 1]
             np.random.shuffle(extra_shifted_pixel)
             p1_shift = sep // 2 + extra_shifted_pixel[0]
@@ -521,14 +519,12 @@ for step in range(n_trials_per_stair):
 
                     # loc_marker.draw()
 
-
                 # ISI
                 elif t_ISI >= frameN > t_probe_1:
                     fixation.setRadius(3)
                     fixation.draw()
 
                     # loc_marker.draw()
-
 
                 # PROBE 2
                 elif t_probe_2 >= frameN > t_ISI:
@@ -540,7 +536,6 @@ for step in range(n_trials_per_stair):
 
                     # loc_marker.draw()
 
-
                 # ANSWER
                 elif frameN > t_probe_2:
                     if record_fr_durs:
@@ -551,7 +546,6 @@ for step in range(n_trials_per_stair):
                     fixation.draw()
 
                     # loc_marker.draw()
-
 
                     # ANSWER
                     theseKeys = event.getKeys(keyList=['num_5', 'num_4', 'num_1',
@@ -641,6 +635,7 @@ if record_fr_durs:
     plt.title(f"{monitor_name}, {fps}Hz, {expInfo['date']}\n{total_dropped_fr}/{total_recorded_fr} dropped fr (expected: {round(expected_fr_ms, 2)}ms, 'dropped' if > {round(frame_err_ms, 2)})")
     plt.vlines(x=fr_recorded_list, ymin=min(win.frameIntervals), ymax=max(win.frameIntervals), colors='silver', linestyles='dashed')
     plt.axhline(y=frame_err_sec, color='red', linestyle='dashed')
+    # todo: check this is correct, should = filename =  be here?
     fig_name = filename = f'{_thisDir}{os.sep}' \
                           f'{expName}{os.sep}' \
                           f'{participant_name}{os.sep}' \
