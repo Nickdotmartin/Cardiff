@@ -1,11 +1,8 @@
 from __future__ import division  # do I need this?
 from psychopy import gui, visual, core, data, event, monitors
 from psychopy import __version__ as psychopy_version
-from psychopy.hardware import keyboard
 import os
 import numpy as np
-# from numpy import deg2rad  # just import numpy and use np.deg2rad
-from numpy.random import shuffle  # just import numpy and use np.random.shuffle
 import random
 import copy
 from datetime import datetime
@@ -168,13 +165,12 @@ fixation = visual.Circle(win, radius=2, units='pix', lineColor='white', fillColo
 # loc_marker = visual.Circle(win, radius=2, units='pix', lineColor='green', fillColor='red')
 
 # PROBEs
-expInfo['6. Probe size'] = '5pixels'  # ignore this, all experiments use 5pixel probes now.
 probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
              (1, -2), (-1, -2), (-1, -1), (0, -1)]
 probe_size = 1
-probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, -1.0, 1.0),
+probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, 1.0, 1.0),
                           lineWidth=0, opacity=1, size=probe_size, interpolate=False)
-probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor=[-1.0, 1.0, -1.0],
+probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor=[1.0, 1.0, 1.0],
                           lineWidth=0, opacity=1, size=probe_size, interpolate=False)
 
 # dist_from_fix is a constant to get 4dva distance from fixation,
@@ -261,7 +257,7 @@ for stair_idx in expInfo['stair_list']:
 # EXPERIMENT
 trial_number = 0
 for step in range(n_trials_per_stair):
-    shuffle(stairs)
+    np.random.shuffle(stairs)
     for thisStair in stairs:
 
         # Trial, stair and step
@@ -309,18 +305,18 @@ for step in range(n_trials_per_stair):
         '''Both probes should be equally spaced around the meridian point.
         E.g., if sep = 4, probe 1 will be shifted 2 pixels in one direction and 
         probe 2 will be shifted 2 pixels in opposite direction. 
-        Where separation is an odd number (e.g., 5), they will be shifted by 2 and 3 pixels respectively.'''
+        Where separation is an odd number (e.g., 5), they will be shifted by 2 and 3 pixels; allocated randomly.'''
         if sep == 99:
-            p1_shift = 0
-            p2_shift = 0
-        elif sep % 2 == 0:
-            # even
-            p1_shift = sep // 2
-            p2_shift = sep // 2
-        else:
-            # odd
-            p1_shift = sep // 2
-            p2_shift = (sep // 2) + 1
+            p1_shift = p2_shift = 0
+        elif sep % 2 == 0:  # even number
+            p1_shift = p2_shift = sep // 2
+        else:  # odd number
+            # p1_shift = sep // 2
+            # p2_shift = (sep // 2) + 1
+            extra_shifted_pixel = [0, 1]
+            np.random.shuffle(extra_shifted_pixel)
+            p1_shift = sep // 2 + extra_shifted_pixel[0]
+            p2_shift = (sep // 2) + extra_shifted_pixel[1]
 
         # set position and orientation of probes
         '''NEW - set orientations to p1=zero and p2=180 (not zero), 

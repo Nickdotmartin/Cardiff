@@ -1,11 +1,8 @@
 from __future__ import division  # do I need this?
 from psychopy import gui, visual, core, data, event, monitors
 from psychopy import __version__ as psychopy_version
-from psychopy.hardware import keyboard
 import os
 import numpy as np
-# from numpy import deg2rad  # just import numpy and use np.deg2rad
-from numpy.random import shuffle  # just import numpy and use np.random.shuffle
 import random
 import copy
 from datetime import datetime
@@ -113,7 +110,7 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'Nick_work_laptop'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
+monitor_name = 'asus_cal'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
 
 # Use balanced probes to match previous Ricco experiments
 balanced_probes = True
@@ -290,8 +287,6 @@ dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
 myMouse = event.Mouse(visible=False)
 
 # # KEYBOARD
-# todo: try using keyboard.Keyboard
-# kb = keyboard.Keyboard()
 resp = event.BuilderKeyResponse()
 
 # INSTRUCTION
@@ -317,7 +312,6 @@ break_text = "Break\nTurn on the light and take at least 30-seconds break.\n" \
              "Keep focussed on the fixation circle in the middle of the screen.\n" \
              "Remember, if you don't see the target, just guess!"
 breaks = visual.TextStim(win=win, name='breaks',
-                         # text="turn on the light and take at least 30-seconds break.",
                          text=break_text,
                          font='Arial', pos=[0, 0], height=20, ori=0, color=[255, 255, 255],
                          colorSpace='rgb255', opacity=1, languageStyle='LTR', depth=0.0)
@@ -373,7 +367,7 @@ for stair_idx in expInfo['stair_list']:
 # EXPERIMENT
 trial_number = 0
 for step in range(n_trials_per_stair):
-    shuffle(stairs)
+    np.random.shuffle(stairs)
     for thisStair in stairs:
 
         # Trial, stair and step
@@ -502,13 +496,6 @@ for step in range(n_trials_per_stair):
         vary_fix = int(fps / 2)
         if vary_fixation:
             vary_fix = np.random.randint(0, fps)
-
-        # # timing in frames for ISI and probe2
-        # # If probes are presented concurrently, set ISI and probe2 to last for 0 frames.
-        # isi_dur_fr = ISI
-        # p2_fr = probe_duration
-        # if ISI < 0:
-        #     isi_dur_fr = p2_fr = 0
 
         # cumulative timing in frames for each part of a trial
         t_fixation = int(fps / 2) + vary_fix
