@@ -1,11 +1,9 @@
 from __future__ import division  # do I need this?
 from psychopy import gui, visual, core, data, event, monitors
 from psychopy import __version__ as psychopy_version
-from psychopy.hardware import keyboard
 import os
 import numpy as np
-# from numpy import deg2rad  # just import numpy and use np.deg2rad
-from numpy.random import shuffle  # just import numpy and use np.random.shuffle
+# from numpy.random import shuffle  # just import numpy and use np.random.shuffle
 import random
 import copy
 from datetime import datetime
@@ -36,8 +34,8 @@ monitor_name = 'asus_cal'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_
 
 # Store info about the experiment session
 expName = 'Exp1_Jan23_radial_v2'  # from the Builder filename that created this script
-expInfo = {'1. Participant': 'Nick',
-           '2. Run_number': '3',
+expInfo = {'1. Participant': 'Nick_test',
+           '2. Run_number': '2',
            '3. separation (pixels)': [5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 18, 36],
            '4. Probe duration in frames at 240hz': [2, 50, 100],
            '5. fps': [240, 60],
@@ -78,7 +76,7 @@ For concurrent probes, use ISI==-1.
 # separations = [0, 1, 2, 3, 6, 18, 99]  # select from [0, 1, 2, 3, 6, 18, 99]
 separations = [this_sep_value]  # select from [0, 1, 2, 3, 6, 18, 99]
 print(f'separations: {separations}')
-#ISI_values = [-1, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+# ISI_values = [-1, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 ISI_values = [-1, 0, 2, 4, 6, 9, 12, 24]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 print(f'ISI_values: {ISI_values}')
 
@@ -172,16 +170,17 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
 # ELEMENTS
 # fixation bull eye
 fixation = visual.Circle(win, radius=2, units='pix', lineColor='white', fillColor='black')
+# loc_marker = visual.Circle(win, radius=2, units='pix', lineColor='green', fillColor='red')
 
 # PROBEs
-expInfo['6. Probe size'] = '5pixels'  # ignore this, all experiments use 5pixel probes now.
+# expInfo['6. Probe size'] = '5pixels'  # ignore this, all experiments use 5pixel probes now.
 probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
              (1, -2), (-1, -2), (-1, -1), (0, -1)]
-
-probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, -1.0, 1.0),
-                                                 lineWidth=0, opacity=1, size=1, interpolate=False)
-probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor=[-1.0, 1.0, -1.0],
-                                                 lineWidth=0, opacity=1, size=1, interpolate=False)
+probe_size = 1
+probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, 1.0, 1.0),
+                          lineWidth=0, opacity=1, size=probe_size, interpolate=False)
+probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor=[1.0, 1.0, 1.0],
+                          lineWidth=0, opacity=1, size=probe_size, interpolate=False)
 
 # dist_from_fix is a constant to get 4dva distance from fixation,
 dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
@@ -195,14 +194,14 @@ resp = event.BuilderKeyResponse()
 # INSTRUCTION
 instructions = visual.TextStim(win=win, name='instructions',
                                text="\n\n\n\n\n\nFocus on the fixation circle at the centre of the screen.\n\n"
-                                         "A small white target will briefly appear on screen,\n"
-                                         "press the key related to the location of the probe:\n\n"
-                                         "[4]/[Q] top-left\t\t\t[5]/[W] top-right\n\n\n\n"
-                                         "[1]/[A] bottom-left\t\t\t[2]/[S] bottom-right.\n\n\n"
-                                         "Some targets will be easier to see than others,\n"
-                                         "Some will be so dim that you won't see them, so just guess!\n\n"
-                                         "You don't need to think for long, respond quickly, but try to push press the correct key!\n\n"
-                                         "Don't let your eyes wander, keep focussed on the circle in the middle throughout.",
+                                    "A small white target will briefly appear on screen,\n"
+                                    "press the key related to the location of the probe:\n\n"
+                                    "[4]/[Q] top-left\t\t\t[5]/[W] top-right\n\n\n\n"
+                                    "[1]/[A] bottom-left\t\t\t[2]/[S] bottom-right.\n\n\n"
+                                    "Some targets will be easier to see than others,\n"
+                                    "Some will be so dim that you won't see them, so just guess!\n\n"
+                                    "You don't need to think for long, respond quickly, but try to push press the correct key!\n\n"
+                                    "Don't let your eyes wander, keep focussed on the circle in the middle throughout.",
                                font='Arial', height=20,
                                color='white')
 
@@ -212,8 +211,8 @@ take_break = 100
 total_n_trials = int(n_trials_per_stair * n_stairs)
 print(f"take_break every {take_break} trials.")
 break_text = "Break\nTurn on the light and take at least 30-seconds break.\n" \
-                        "Keep focussed on the fixation circle in the middle of the screen.\n" \
-                        "Remember, if you don't see the target, just guess!"
+             "Keep focussed on the fixation circle in the middle of the screen.\n" \
+             "Remember, if you don't see the target, just guess!"
 breaks = visual.TextStim(win=win, name='breaks',
                          # text="turn on the light and take at least 30-seconds break.",
                          text=break_text,
@@ -222,8 +221,8 @@ breaks = visual.TextStim(win=win, name='breaks',
 
 end_of_exp = visual.TextStim(win=win, name='end_of_exp',
                              text="You have completed this experiment.\n"
-                                       "Thank you for your time.\n\n"
-                                       "Press any key to return to the desktop.",
+                                  "Thank you for your time.\n\n"
+                                  "Press any key to return to the desktop.",
                              font='Arial', height=20)
 
 while not event.getKeys():
@@ -267,7 +266,7 @@ for stair_idx in expInfo['stair_list']:
 # EXPERIMENT
 trial_number = 0
 for step in range(n_trials_per_stair):
-    shuffle(stairs)
+    np.random.shuffle(stairs)
     for thisStair in stairs:
 
         # Trial, stair and step
@@ -301,14 +300,18 @@ for step in range(n_trials_per_stair):
         '''Both probes should be equally spaced around the meridian point.
         E.g., if sep = 4, probe 1 will be shifted 2 pixels in one direction and 
         probe 2 will be shifted 2 pixels in opposite direction. 
-        Where separation is an odd number (e.g., 5), they will be shifted by 2 and 3 pixels respectively.'''
+        Where separation is an odd number (e.g., 5), they will be shifted by 2 and 3 pixels; allocated randomly.'''
         if sep == 99:
             p1_shift = p2_shift = 0
         elif sep % 2 == 0:  # even number
             p1_shift = p2_shift = sep // 2
         else:  # odd number
-            p1_shift = sep // 2
-            p2_shift = (sep // 2) + 1
+            # p1_shift = sep // 2
+            # p2_shift = (sep // 2) + 1
+            extra_shifted_pixel = [0, 1]
+            np.random.shuffle(extra_shifted_pixel)
+            p1_shift = sep // 2 + extra_shifted_pixel[0]
+            p2_shift = (sep // 2) + extra_shifted_pixel[1]
 
         # PROBE LOCATION
         # # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
@@ -512,6 +515,8 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(3)
                     fixation.draw()
 
+                    # loc_marker.draw()
+
                     # reset timer to start with probe1 presentation.
                     resp.clock.reset()
 
@@ -522,17 +527,20 @@ for step in range(n_trials_per_stair):
                 # PROBE 1
                 elif t_probe_1 >= frameN > t_fixation:
                     probe1.draw()
-
                     if ISI == -1:  # SIMULTANEOUS CONDITION (concurrent)
                         if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
                             probe2.draw()
                     fixation.setRadius(3)
                     fixation.draw()
 
+                    # loc_marker.draw()
+
                 # ISI
                 elif t_ISI >= frameN > t_probe_1:
                     fixation.setRadius(3)
                     fixation.draw()
+
+                    # loc_marker.draw()
 
                 # PROBE 2
                 elif t_probe_2 >= frameN > t_ISI:
@@ -541,6 +549,8 @@ for step in range(n_trials_per_stair):
                             probe2.draw()
                     fixation.setRadius(3)
                     fixation.draw()
+
+                    # loc_marker.draw()
 
                 # ANSWER
                 elif frameN > t_probe_2:
@@ -552,6 +562,8 @@ for step in range(n_trials_per_stair):
 
                     fixation.setRadius(2)
                     fixation.draw()
+
+                    # loc_marker.draw()
 
                     # ANSWER
                     theseKeys = event.getKeys(keyList=['num_5', 'num_4', 'num_1',
@@ -603,6 +615,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('neg_sep', neg_sep)
         thisExp.addData('ISI', ISI)
         thisExp.addData('isi_dur_fr', isi_dur_fr)
+        thisExp.addData('cond_type', target_jump)
         thisExp.addData('probe_jump', target_jump)
         thisExp.addData('jump_dir', jump_dir)
         thisExp.addData('probeColor1', probeColor1)

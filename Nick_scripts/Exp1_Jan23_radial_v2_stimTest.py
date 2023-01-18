@@ -35,13 +35,13 @@ monitor_name = 'asus_cal'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_
 
 
 # Store info about the experiment session
-expName = 'Exp1_Jan23_radial_v2'  # from the Builder filename that created this script
-expInfo = {'1. Participant': 'Nick',
-           '2. Run_number': '3',
+expName = 'Exp1_Jan23_radial_v2_stimTest'  # from the Builder filename that created this script
+expInfo = {'1. Participant': 'stimTest',
+           '2. Run_number': '1',
            '3. separation (pixels)': [5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 18, 36],
            '4. Probe duration in frames at 240hz': [2, 50, 100],
            '5. fps': [240, 60],
-           '7. Vary_fixation': [True, False],
+           '7. Vary_fixation': [False, True, False],
            '8. Record_frame_durs': [False, True]
            }
 
@@ -79,7 +79,7 @@ For concurrent probes, use ISI==-1.
 separations = [this_sep_value]  # select from [0, 1, 2, 3, 6, 18, 99]
 print(f'separations: {separations}')
 #ISI_values = [-1, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
-ISI_values = [-1, 0, 2, 4, 6, 9, 12, 24]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+ISI_values = [-1, 0, 2]  #, 4, 6, 9, 12, 24]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 print(f'ISI_values: {ISI_values}')
 
 probe_dirs = ['cont', 'exp']
@@ -206,6 +206,11 @@ instructions = visual.TextStim(win=win, name='instructions',
                                font='Arial', height=20,
                                color='white')
 
+frame_counter = visual.TextStim(win=win, name='frame_counter', text="???",
+                                 font='Arial', height=20,
+                                 # default set to black (e.g., invisible)
+                                 color='white',
+                                 pos=[-widthPix*.20, -heightPix*.22])
 
 # BREAKS
 take_break = 100
@@ -312,8 +317,8 @@ for step in range(n_trials_per_stair):
 
         # PROBE LOCATION
         # # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
-        corner = random.choice([45, 135, 225, 315])
-        # corner = 315
+        # corner = random.choice([45, 135, 225, 315])
+        corner = 225
         corner_name = 'top_right'
         if corner == 135:
             corner_name = 'top_left'
@@ -512,6 +517,10 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(3)
                     fixation.draw()
 
+                    frame_counter.text = f"{frameN}, trial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, " \
+                                         f"ISI: {ISI}, sep: {sep}, jump_dir: {jump_dir}. fix"
+                    frame_counter.draw()
+
                     # reset timer to start with probe1 presentation.
                     resp.clock.reset()
 
@@ -529,10 +538,18 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(3)
                     fixation.draw()
 
+                    frame_counter.text = f"{frameN}, trial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, " \
+                                         f"ISI: {ISI}, sep: {sep}, jump_dir: {jump_dir}. p1"
+                    frame_counter.draw()
+
                 # ISI
                 elif t_ISI >= frameN > t_probe_1:
                     fixation.setRadius(3)
                     fixation.draw()
+
+                    frame_counter.text = f"{frameN}, trial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, " \
+                                         f"ISI: {ISI}, sep: {sep}, jump_dir: {jump_dir}. ISI"
+                    frame_counter.draw()
 
                 # PROBE 2
                 elif t_probe_2 >= frameN > t_ISI:
@@ -541,6 +558,10 @@ for step in range(n_trials_per_stair):
                             probe2.draw()
                     fixation.setRadius(3)
                     fixation.draw()
+
+                    frame_counter.text = f"{frameN}, trial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, " \
+                                         f"ISI: {ISI}, sep: {sep}, jump_dir: {jump_dir}. p2"
+                    frame_counter.draw()
 
                 # ANSWER
                 elif frameN > t_probe_2:
@@ -552,6 +573,10 @@ for step in range(n_trials_per_stair):
 
                     fixation.setRadius(2)
                     fixation.draw()
+
+                    frame_counter.text = f"{frameN}, trial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, " \
+                                         f"ISI: {ISI}, sep: {sep}, jump_dir: {jump_dir}. resp"
+                    frame_counter.draw()
 
                     # ANSWER
                     theseKeys = event.getKeys(keyList=['num_5', 'num_4', 'num_1',

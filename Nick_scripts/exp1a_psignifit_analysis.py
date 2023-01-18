@@ -809,7 +809,7 @@ def plot_thr_heatmap(heatmap_df,
 
     heatmap = sns.heatmap(data=heatmap_df,
                           annot=True,
-                          fmt=annot_fmt,
+                          # fmt=annot_fmt,
                           center=mean_thr,
                           # cmap=sns.color_palette("Spectral", as_cmap=True),
                           cmap=my_colourmap,
@@ -891,7 +891,7 @@ def plt_heatmap_row_col(heatmap_df,
                     cmap=my_colourmap,
                     annot=True,
                     annot_kws={'fontsize': fontsize},
-                    fmt=annot_fmt,
+                    # fmt=annot_fmt,
                     cbar=False,
                     square=True)
 

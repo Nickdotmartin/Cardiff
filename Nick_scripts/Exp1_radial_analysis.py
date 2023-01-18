@@ -11,11 +11,9 @@ from check_home_dir import switch_path
 from exp1a_psignifit_analysis import plt_heatmap_row_col, make_average_plots
 
 
-# exp_path = r"C:\Users\sapnm4\PycharmProjects\Cardiff\Nick_scripts\EXP1b_split_probes\split_v_orig"
-# exp_path = r"C:\Users\sapnm4\PycharmProjects\Cardiff\Nick_scripts\EXP1_radial\exp_v_cont"
 exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp1_Jan23_radial_v2"
 exp_path = os.path.normpath(exp_path)
-
+print(f'exp_path: {exp_path}')
 
 participant_list = ['Nick']  # 'Nick'
 analyse_from_run = 1
@@ -102,14 +100,6 @@ for p_idx, participant_name in enumerate(participant_list):
         #     print('\nadded neg_sep col')
         #     print(run_data_df['neg_sep'].to_list())
         #
-        # # # todo: not sure I actually need this column at all - I don't use it
-        # # # fix stairnames
-        # # if len(run_data_df['stair_name'].unique().tolist()) == 1:
-        # #     run_data_df['stair_name'] = run_data_df['cond_type'].str[:3] + '_sep' + run_data_df['separation'].astype(str) + '_ISI' + run_data_df['ISI'].astype(str)
-        # #     print('\nupdated stair_name')
-        # #     print(run_data_df['stair_name'].to_list())
-        # # else:
-        # #     print(f"lots of stairnames:\n{run_data_df['stair_name'].unique().tolist()}")
         #
         # if 'Unnamed: 0' in col_names:
         #     run_data_df.drop('Unnamed: 0', axis=1, inplace=True)
