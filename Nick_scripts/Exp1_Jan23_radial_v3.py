@@ -3,7 +3,6 @@ from psychopy import gui, visual, core, data, event, monitors
 from psychopy import __version__ as psychopy_version
 import os
 import numpy as np
-# from numpy.random import shuffle  # just import numpy and use np.random.shuffle
 import random
 import copy
 from datetime import datetime
@@ -30,11 +29,11 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'asus_cal'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
+monitor_name = 'asus_cal'  # 'asus_cal', 'Nick_work_laptop', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18',
 
 
 # Store info about the experiment session
-expName = 'Exp1_Jan23_radial_v2'  # from the Builder filename that created this script
+expName = 'Exp1_Jan23_radial_v3'  # from the Builder filename that created this script
 expInfo = {'1. Participant': 'Nick_test',
            '2. Run_number': '2',
            '3. separation (pixels)': [5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 18, 36],
@@ -322,8 +321,6 @@ for step in range(n_trials_per_stair):
         elif sep % 2 == 0:  # even number
             p1_shift = p2_shift = sep // 2
         else:  # odd number
-            # p1_shift = sep // 2
-            # p2_shift = (sep // 2) + 1
             extra_shifted_pixel = [0, 1]
             np.random.shuffle(extra_shifted_pixel)
             p1_shift = sep // 2 + extra_shifted_pixel[0]

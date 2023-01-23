@@ -46,7 +46,7 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'asus_cal'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'Nick_work_laptop' 'Iiyama_2_18' 'ASUS_2_13_240Hz'
+monitor_name = 'asus_cal'  # 'asus_cal', 'Nick_work_laptop', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18',
 
 # Store info about the experiment session
 expName = 'Exp4b_missing_probe_23'

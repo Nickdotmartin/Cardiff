@@ -29,16 +29,16 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'asus_cal'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
+monitor_name = 'Nick_work_laptop'  # 'asus_cal', 'Nick_work_laptop', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18',
 
 
 # Store info about the experiment session
 expName = 'Exp1_Jan23_radial_v3_stimTest'  # from the Builder filename that created this script
 expInfo = {'1. Participant': 'stimTest',
-           '2. Run_number': '1',
+           '2. Run_number': '2',
            '3. separation (pixels)': [5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 18, 36],
            '4. Probe duration in frames at 240hz': [2, 50, 100],
-           '5. fps': [240, 60],
+           '5. fps': [240, 120, 60],
            '7. Vary_fixation': [False, True, False],
            '8. Record_frame_durs': [False, True]
            }
@@ -172,6 +172,7 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
 fixation = visual.Circle(win, radius=2, units='pix', lineColor='white', fillColor='black')
 # loc_marker = visual.Circle(win, radius=2, units='pix', lineColor='green', fillColor='red')
 
+
 # PROBEs
 # expInfo['6. Probe size'] = '5pixels'  # ignore this, all experiments use 5pixel probes now.
 probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
@@ -181,6 +182,9 @@ probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, 1.0, 1.0),
                           lineWidth=0, opacity=1, size=probe_size, interpolate=False)
 probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor=[1.0, 1.0, 1.0],
                           lineWidth=0, opacity=1, size=probe_size, interpolate=False)
+
+loc_marker = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, 1.0, 1.0),
+                              lineWidth=0, opacity=1, size=probe_size, interpolate=False)
 
 # dist_from_fix is a constant to get 4dva distance from fixation,
 dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
@@ -460,6 +464,7 @@ for step in range(n_trials_per_stair):
 
         # probe1_pos = [loc_x, loc_y]
         # loc_marker.setPos([loc_x, loc_y])
+        loc_marker.setPos([loc_x - 40, loc_y - 20])
 
         print(f"probe1_pos: {probe1_pos}, probe2_pos: {probe2_pos}. dff: {dist_from_fix}")
 
@@ -521,7 +526,7 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(3)
                     fixation.draw()
 
-                    # loc_marker.draw()
+                    loc_marker.draw()
                     frame_counter.text = f"{frameN}, trial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, " \
                                          f"ISI: {ISI}, sep: {sep}, jump_dir: {jump_dir}. fix"
                     frame_counter.draw()
@@ -542,7 +547,7 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(3)
                     fixation.draw()
 
-                    # loc_marker.draw()
+                    loc_marker.draw()
 
                     frame_counter.text = f"{frameN}, trial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, " \
                                          f"ISI: {ISI}, sep: {sep}, jump_dir: {jump_dir}. p1"
@@ -553,7 +558,7 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(3)
                     fixation.draw()
 
-                    # loc_marker.draw()
+                    loc_marker.draw()
 
                     frame_counter.text = f"{frameN}, trial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, " \
                                          f"ISI: {ISI}, sep: {sep}, jump_dir: {jump_dir}. ISI"
@@ -567,7 +572,7 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(3)
                     fixation.draw()
 
-                    # loc_marker.draw()
+                    loc_marker.draw()
 
                     frame_counter.text = f"{frameN}, trial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, " \
                                          f"ISI: {ISI}, sep: {sep}, jump_dir: {jump_dir}. p2"
@@ -584,7 +589,7 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(2)
                     fixation.draw()
 
-                    # loc_marker.draw()
+                    loc_marker.draw()
 
                     frame_counter.text = f"{frameN}, trial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, " \
                                          f"ISI: {ISI}, sep: {sep}, jump_dir: {jump_dir}. resp"
