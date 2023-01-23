@@ -56,10 +56,10 @@ ISI_fr  p1+ISI  @960
 24      26      104
 '''
 
-# images_dir = r"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\Check_stim_Jan23\check_stim_images_Jan23\v2"
-# videos_dir = r"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\Check_stim_Jan23\check_stim_vids_Jan23\v2"
-videos_dir = r"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\Check_stim_Jan23\check_stim_vids_Jan23\v3"
-images_dir = r"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\Check_stim_Jan23\check_stim_images_Jan23\v3"
+images_dir = r"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\Check_stim_Jan23\check_stim_images_Jan23\v2"
+videos_dir = r"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\Check_stim_Jan23\check_stim_vids_Jan23\v2"
+# videos_dir = r"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\Check_stim_Jan23\check_stim_vids_Jan23\v3"
+# images_dir = r"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\Check_stim_Jan23\check_stim_images_Jan23\v3"
 videos_dir = os.path.normpath(videos_dir)
 images_dir = os.path.normpath(images_dir)
 
@@ -438,128 +438,128 @@ save the mean and max values to new csv
 #
 # '''delete'''
 
-# load Excel sheet with frame numbers where probes appear and x, y co-ordinates for cropping probes.
-excel_path = os.path.join(images_dir, 'frame_and_bbox_details.xlsx')
-excel_path = os.path.normpath(excel_path)
-print(f'excel_path:\n{excel_path}')
-
-bb_box_df = pd.read_excel(excel_path, sheet_name='Sheet1', engine='openpyxl')
-print(f'bb_box_df:\n{bb_box_df}')
-
-rows, cols = bb_box_df.shape
-print(f'rows: {rows}, cols: {cols}')
-print(f'headers: {bb_box_df.columns.to_list()}')
-
-empty_list = []
-
-# loop through each row for Excel, e.g., frames from each video/condition
-for index, row in bb_box_df.iterrows():
-    analyse_this = row['analyse']
-    if analyse_this == 1:
-        isi = row['isi']
-        sep_name = row['sep']
-        sep = int(sep_name[0])
-        probes_dir = sep_name[2:]
-        ver = row['version']
-        filename = row['filename']
-        print(f'\n{filename}, ISI_{isi}, sep_{sep_name}, ver: {ver}')
-
-        pr1_frame = int(row['first_pr1_fr'])
-        pr2_frame = int(row['first_pr2_fr'])
-
-        # set to process 100 frames (or 140 for isi24)
-        # todo: Check I don't take frames <30 or >405 as these are not at 960
-        from_fr = pr1_frame-8
-        to_fr = from_fr+100
-        if isi == 24:
-            to_fr = from_fr+140
-        if sep == 2400:
-            to_fr = from_fr+140
-        if to_fr > 435:
-            to_fr = 435
-        print(f'from_fr: {from_fr} : to_fr: {to_fr}')
-
-        # probe bounding box is 5x5 pixels
-        ROI_size = 10  # 5 for may22
-
-        pr1_down = int(row['pr1_down'])
-        pr1_right = int(row['pr1_right'])
-
-        if sep < 99:
-            pr2_down = int(row['pr2_down'])
-            pr2_right = int(row['pr2_right'])
-        else:
-            pr2_down = np.nan
-            pr2_right = np.nan
-        print(f'pr1: ({pr1_down}, {pr1_right}), pr2: ({pr2_down}, {pr2_right})')
-
-        # loop through each of the frames
-        for idx, frame in enumerate(list(range(from_fr, to_fr))):
-
-            # load image of this frame
-            # cond_dir = rf"ISI_{isi}_sep_{sep_name}_v{ver}\all_full_frames"
-            cond_dir = rf"ISI_{isi}_sep_{sep_name}_v{ver}"
-            image_name = f"ISI_{isi}_sep_{sep_name}_v{ver}_fr{frame}.jpg"
-            image_path = os.path.join(images_dir, cond_dir, image_name)
-
-            gray_img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-
-            p1_box = gray_img[pr1_down: pr1_down+ROI_size, pr1_right: pr1_right+ROI_size]
-            # print(f'p1_box: {type(p1_box)}')
-            p1_mean = np.mean(p1_box)
-            p1_max = np.max(p1_box)
-            # print(f'p1_box array: \n{p1_box}')
-            # print(f'p1_mean: {p1_mean}')
-            # print(f'p1_max: {p1_max}')
-            # print(f'p1_max: {type(p1_max)}')
-
-            if sep < 99:
-                p2_box = gray_img[pr2_down: pr2_down+ROI_size, pr2_right: pr2_right+ROI_size]
-                p2_mean = np.mean(p2_box)
-                p2_max = np.max(p2_box)
-
-                joint_mean = np.mean([p1_mean, p2_mean])
-
-                # joint_max = np.max([p1_max, p2_max])
-                if p1_max > p2_max:
-                    joint_max = p1_max
-                else:
-                    joint_max = p2_max
-                '''strange, the max scores are not saving to the csv as shown here.
-                I'm converting to str to try to avoid this.'''
-
-            else:
-                p2_box = np.nan
-                p2_mean = np.nan
-                p2_max = np.nan
-
-                joint_mean = p1_mean
-                joint_max = p1_max
-
-
-            # save details to empty list
-            save_row = [filename, isi, sep, sep_name, probes_dir, ver, idx, frame,
-                        pr1_frame, pr1_down, pr1_right, p1_mean, str(p1_max),
-                        pr2_frame, pr2_down, pr2_right, p2_mean, str(p2_max),
-                        joint_mean, str(joint_max)]
-            empty_list.append(save_row)
-            # print(f'{frame}: {save_row}')
-
-print(f'empty_list shape: {np.shape(empty_list)}')
-print(empty_list)
-results_df = pd.DataFrame(data=empty_list,
-                          columns=['filename', 'isi', 'sep', 'sep_name', 'probes_dir', 'version', 'idx', 'frame',
-                                   'pr1_frame', 'pr1_down', 'pr1_right',
-                                   'p1_mean', 'p1_max',
-                                   'pr2_frame', 'pr2_down', 'pr2_right',
-                                   'p2_mean', 'p2_max',
-                                   'joint_mean', 'joint_max'])
-
-results_path = os.path.join(images_dir, 'monitor_refresh_results_Jan23.csv')
-results_path = os.path.normpath(results_path)
-results_df.to_csv(results_path, index=False)
-
-print('\nall finished making results csv')
+# # load Excel sheet with frame numbers where probes appear and x, y co-ordinates for cropping probes.
+# excel_path = os.path.join(images_dir, 'frame_and_bbox_details.xlsx')
+# excel_path = os.path.normpath(excel_path)
+# print(f'excel_path:\n{excel_path}')
+#
+# bb_box_df = pd.read_excel(excel_path, sheet_name='Sheet1', engine='openpyxl')
+# print(f'bb_box_df:\n{bb_box_df}')
+#
+# rows, cols = bb_box_df.shape
+# print(f'rows: {rows}, cols: {cols}')
+# print(f'headers: {bb_box_df.columns.to_list()}')
+#
+# empty_list = []
+#
+# # loop through each row for Excel, e.g., frames from each video/condition
+# for index, row in bb_box_df.iterrows():
+#     analyse_this = row['analyse']
+#     if analyse_this == 1:
+#         isi = row['isi']
+#         sep_name = row['sep']
+#         sep = int(sep_name[0])
+#         probes_dir = sep_name[2:]
+#         ver = row['version']
+#         filename = row['filename']
+#         print(f'\n{filename}, ISI_{isi}, sep_{sep_name}, ver: {ver}')
+#
+#         pr1_frame = int(row['first_pr1_fr'])
+#         pr2_frame = int(row['first_pr2_fr'])
+#
+#         # set to process 100 frames (or 140 for isi24)
+#         # todo: Check I don't take frames <30 or >405 as these are not at 960
+#         from_fr = pr1_frame-8
+#         to_fr = from_fr+100
+#         if isi == 24:
+#             to_fr = from_fr+140
+#         if sep == 2400:
+#             to_fr = from_fr+140
+#         if to_fr > 435:
+#             to_fr = 435
+#         print(f'from_fr: {from_fr} : to_fr: {to_fr}')
+#
+#         # probe bounding box is 5x5 pixels
+#         ROI_size = 10  # 5 for may22
+#
+#         pr1_down = int(row['pr1_down'])
+#         pr1_right = int(row['pr1_right'])
+#
+#         if sep < 99:
+#             pr2_down = int(row['pr2_down'])
+#             pr2_right = int(row['pr2_right'])
+#         else:
+#             pr2_down = np.nan
+#             pr2_right = np.nan
+#         print(f'pr1: ({pr1_down}, {pr1_right}), pr2: ({pr2_down}, {pr2_right})')
+#
+#         # loop through each of the frames
+#         for idx, frame in enumerate(list(range(from_fr, to_fr))):
+#
+#             # load image of this frame
+#             # cond_dir = rf"ISI_{isi}_sep_{sep_name}_v{ver}\all_full_frames"
+#             cond_dir = rf"ISI_{isi}_sep_{sep_name}_v{ver}"
+#             image_name = f"ISI_{isi}_sep_{sep_name}_v{ver}_fr{frame}.jpg"
+#             image_path = os.path.join(images_dir, cond_dir, image_name)
+#
+#             gray_img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+#
+#             p1_box = gray_img[pr1_down: pr1_down+ROI_size, pr1_right: pr1_right+ROI_size]
+#             # print(f'p1_box: {type(p1_box)}')
+#             p1_mean = np.mean(p1_box)
+#             p1_max = np.max(p1_box)
+#             # print(f'p1_box array: \n{p1_box}')
+#             # print(f'p1_mean: {p1_mean}')
+#             # print(f'p1_max: {p1_max}')
+#             # print(f'p1_max: {type(p1_max)}')
+#
+#             if sep < 99:
+#                 p2_box = gray_img[pr2_down: pr2_down+ROI_size, pr2_right: pr2_right+ROI_size]
+#                 p2_mean = np.mean(p2_box)
+#                 p2_max = np.max(p2_box)
+#
+#                 joint_mean = np.mean([p1_mean, p2_mean])
+#
+#                 # joint_max = np.max([p1_max, p2_max])
+#                 if p1_max > p2_max:
+#                     joint_max = p1_max
+#                 else:
+#                     joint_max = p2_max
+#                 '''strange, the max scores are not saving to the csv as shown here.
+#                 I'm converting to str to try to avoid this.'''
+#
+#             else:
+#                 p2_box = np.nan
+#                 p2_mean = np.nan
+#                 p2_max = np.nan
+#
+#                 joint_mean = p1_mean
+#                 joint_max = p1_max
+#
+#
+#             # save details to empty list
+#             save_row = [filename, isi, sep, sep_name, probes_dir, ver, idx, frame,
+#                         pr1_frame, pr1_down, pr1_right, p1_mean, str(p1_max),
+#                         pr2_frame, pr2_down, pr2_right, p2_mean, str(p2_max),
+#                         joint_mean, str(joint_max)]
+#             empty_list.append(save_row)
+#             # print(f'{frame}: {save_row}')
+#
+# print(f'empty_list shape: {np.shape(empty_list)}')
+# print(empty_list)
+# results_df = pd.DataFrame(data=empty_list,
+#                           columns=['filename', 'isi', 'sep', 'sep_name', 'probes_dir', 'version', 'idx', 'frame',
+#                                    'pr1_frame', 'pr1_down', 'pr1_right',
+#                                    'p1_mean', 'p1_max',
+#                                    'pr2_frame', 'pr2_down', 'pr2_right',
+#                                    'p2_mean', 'p2_max',
+#                                    'joint_mean', 'joint_max'])
+#
+# results_path = os.path.join(images_dir, 'monitor_refresh_results_Jan23.csv')
+# results_path = os.path.normpath(results_path)
+# results_df.to_csv(results_path, index=False)
+#
+# print('\nall finished making results csv')
 
 '''
 Part 4: Load results csv,
@@ -625,121 +625,121 @@ x_tick_labels = np.arange(x_tick_label_start, 25 + x_tick_label_start, 2)
 print(f'\nx_tick_locs: {x_tick_locs}')
 print(f'x_tick_labels: {x_tick_labels}')
 
-# for cond_ver_name in conds_to_use:
-for cond_ver_name in cond_ver_list:
-
-    print(f'\ncond_ver_name: {cond_ver_name}')
-
-    split_txt = cond_ver_name.split("_")
-    isi_val = int(split_txt[1])
-    isi_name = f"ISI{isi_val}"
-    sep_val = int(split_txt[3])
-    probes_dir = split_txt[4]
-    sep_name = f"sep{sep_val}"
-    # ver_name = split_txt[4][:2]
-    ver_name = split_txt[5][:2]
-    print(f'split_txt: {split_txt}')
-    print(f'isi_val: {isi_val}')
-    print(f'isi_name: {isi_name}')
-    print(f'sep_val: {sep_val}')
-    print(f'sep_name: {sep_name}')
-    print(f'probes_dir: {probes_dir}')
-    print(f'ver_name: {ver_name}')
-
-
-    '''insert vertical lines marking start and finish of each probe.
-    First probe should appear at frame 8 (@960)'''
-    vline_pr1_on = 8
-    vline_pr1_off = vline_pr1_on + 8
-
-    if sep_val == 400:
-        vline_pr1_off = vline_pr1_on + 16
-    if sep_val == 800:
-        vline_pr1_off = vline_pr1_on + 32
-    if sep_val == 2400:
-        vline_pr1_off = vline_pr1_on + 96
-
-    vline_pr2_on = 8 + probe2_dict[isi_val]
-    vline_pr2_off = vline_pr2_on + 8
-
-    cond_df = results_df[results_df['filename'] == cond_ver_name]
-    print(f'cond_df:\n{cond_df}')
-
-    # 1. p1, p2, joint mean on same plot
-    long_df = make_long_df(wide_df=cond_df,
-                           cols_to_keep=['filename', 'idx'],
-                           cols_to_change=['p1_mean', 'p2_mean', 'joint_mean'],
-                           cols_to_change_show='mean_lum',
-                           new_col_name='loc', strip_from_cols='_mean', verbose=True)
-    print(f'long_df:\n{long_df}')
-
-    fig, ax = plt.subplots(figsize=(6, 6))
-    sns.lineplot(data=long_df, x='idx', y='mean_lum', hue='loc', ax=ax)
-    ax.set_xlabel('frames @ 240Hz')
-    ax.set_ylabel('pixel values (0:255')
-
-    # probe on/off markers
-    plt.axvline(x=vline_pr1_on, color='grey', linestyle='--')
-    plt.axvline(x=vline_pr1_off, color='grey', linestyle='--')
-    if sep_val not in [99, 400, 800, 2400]:
-        plt.axvline(x=vline_pr2_on, color='grey', linestyle='-.')
-        plt.axvline(x=vline_pr2_off, color='grey', linestyle='-.')
-
-    ax.set_xticks(x_tick_locs)
-    ax.set_xticklabels(x_tick_labels)
-    # add shaded background for frames at 240
-    x_bg = np.arange(0, 100, 4)
-    for x0, x1 in zip(x_bg[::2], x_bg[1::2]):
-        plt.axvspan(x0, x1, color='black', alpha=0.05, zorder=0, linewidth=None)
-
-    plt.title(f'{cond_ver_name}: mean luminance')
-    # fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\mon_cali_images_Oct22\cond_figs\mean_lum"
-    fig_dir = os.path.join(images_dir, 'cond_figs', 'mean_lum')
-    if not os.path.isdir(fig_dir):
-        os.makedirs(fig_dir)
-    fig_savename = f'{cond_ver_name}_mean_lum.png'
-    fig_path = os.path.join(fig_dir, fig_savename)
-    plt.savefig(fig_path)
-    plt.show()
-    plt.close()
-
-    # 2. p1, p2, joint max on same plot
-    long_df = make_long_df(wide_df=cond_df,
-                           cols_to_keep=['filename', 'idx'],
-                           cols_to_change=['p1_max', 'p2_max', 'joint_max'],
-                           cols_to_change_show='max_lum',
-                           new_col_name='loc', strip_from_cols='_max', verbose=True)
-    print(f'long_df:\n{long_df}')
-
-    fig, ax = plt.subplots(figsize=(6, 6))
-    sns.lineplot(data=long_df, x='idx', y='max_lum', hue='loc', ax=ax)
-    ax.set_xlabel('frames @ 240Hz')
-    ax.set_ylabel('pixel values (0:255')
-
-    # probe on/off markers
-    plt.axvline(x=vline_pr1_on, color='grey', linestyle='--')
-    plt.axvline(x=vline_pr1_off, color='grey', linestyle='--')
-    if sep_val not in [99, 400, 800, 2400]:
-        plt.axvline(x=vline_pr2_on, color='grey', linestyle='-.')
-        plt.axvline(x=vline_pr2_off, color='grey', linestyle='-.')
-
-    ax.set_xticks(x_tick_locs)
-    ax.set_xticklabels(x_tick_labels)
-    # add shaded background for frames at 240
-    x_bg = np.arange(0, 100, 4)
-    for x0, x1 in zip(x_bg[::2], x_bg[1::2]):
-        plt.axvspan(x0, x1, color='black', alpha=0.05, zorder=0, linewidth=None)
-
-    plt.title(f'{cond_ver_name}: max luminance')
-    # fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\mon_cali_images_Oct22\cond_figs\max_lum"
-    fig_dir = os.path.join(images_dir, 'cond_figs', 'max_lum')
-    if not os.path.isdir(fig_dir):
-        os.makedirs(fig_dir)
-    fig_savename = f'{cond_ver_name}_max_lum.png'
-    fig_path = os.path.join(fig_dir, fig_savename)
-    plt.savefig(fig_path)
-    plt.show()
-    plt.close()
+# # for cond_ver_name in conds_to_use:
+# for cond_ver_name in cond_ver_list:
+#
+#     print(f'\ncond_ver_name: {cond_ver_name}')
+#
+#     split_txt = cond_ver_name.split("_")
+#     isi_val = int(split_txt[1])
+#     isi_name = f"ISI{isi_val}"
+#     sep_val = int(split_txt[3])
+#     probes_dir = split_txt[4]
+#     sep_name = f"sep{sep_val}"
+#     # ver_name = split_txt[4][:2]
+#     ver_name = split_txt[5][:2]
+#     print(f'split_txt: {split_txt}')
+#     print(f'isi_val: {isi_val}')
+#     print(f'isi_name: {isi_name}')
+#     print(f'sep_val: {sep_val}')
+#     print(f'sep_name: {sep_name}')
+#     print(f'probes_dir: {probes_dir}')
+#     print(f'ver_name: {ver_name}')
+#
+#
+#     '''insert vertical lines marking start and finish of each probe.
+#     First probe should appear at frame 8 (@960)'''
+#     vline_pr1_on = 8
+#     vline_pr1_off = vline_pr1_on + 8
+#
+#     if sep_val == 400:
+#         vline_pr1_off = vline_pr1_on + 16
+#     if sep_val == 800:
+#         vline_pr1_off = vline_pr1_on + 32
+#     if sep_val == 2400:
+#         vline_pr1_off = vline_pr1_on + 96
+#
+#     vline_pr2_on = 8 + probe2_dict[isi_val]
+#     vline_pr2_off = vline_pr2_on + 8
+#
+#     cond_df = results_df[results_df['filename'] == cond_ver_name]
+#     print(f'cond_df:\n{cond_df}')
+#
+#     # 1. p1, p2, joint mean on same plot
+#     long_df = make_long_df(wide_df=cond_df,
+#                            cols_to_keep=['filename', 'idx'],
+#                            cols_to_change=['p1_mean', 'p2_mean', 'joint_mean'],
+#                            cols_to_change_show='mean_lum',
+#                            new_col_name='loc', strip_from_cols='_mean', verbose=True)
+#     print(f'long_df:\n{long_df}')
+#
+#     fig, ax = plt.subplots(figsize=(6, 6))
+#     sns.lineplot(data=long_df, x='idx', y='mean_lum', hue='loc', ax=ax)
+#     ax.set_xlabel('frames @ 240Hz')
+#     ax.set_ylabel('pixel values (0:255')
+#
+#     # probe on/off markers
+#     plt.axvline(x=vline_pr1_on, color='grey', linestyle='--')
+#     plt.axvline(x=vline_pr1_off, color='grey', linestyle='--')
+#     if sep_val not in [99, 400, 800, 2400]:
+#         plt.axvline(x=vline_pr2_on, color='grey', linestyle='-.')
+#         plt.axvline(x=vline_pr2_off, color='grey', linestyle='-.')
+#
+#     ax.set_xticks(x_tick_locs)
+#     ax.set_xticklabels(x_tick_labels)
+#     # add shaded background for frames at 240
+#     x_bg = np.arange(0, 100, 4)
+#     for x0, x1 in zip(x_bg[::2], x_bg[1::2]):
+#         plt.axvspan(x0, x1, color='black', alpha=0.05, zorder=0, linewidth=None)
+#
+#     plt.title(f'{cond_ver_name}: mean luminance')
+#     # fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\mon_cali_images_Oct22\cond_figs\mean_lum"
+#     fig_dir = os.path.join(images_dir, 'cond_figs', 'mean_lum')
+#     if not os.path.isdir(fig_dir):
+#         os.makedirs(fig_dir)
+#     fig_savename = f'{cond_ver_name}_mean_lum.png'
+#     fig_path = os.path.join(fig_dir, fig_savename)
+#     plt.savefig(fig_path)
+#     plt.show()
+#     plt.close()
+#
+#     # 2. p1, p2, joint max on same plot
+#     long_df = make_long_df(wide_df=cond_df,
+#                            cols_to_keep=['filename', 'idx'],
+#                            cols_to_change=['p1_max', 'p2_max', 'joint_max'],
+#                            cols_to_change_show='max_lum',
+#                            new_col_name='loc', strip_from_cols='_max', verbose=True)
+#     print(f'long_df:\n{long_df}')
+#
+#     fig, ax = plt.subplots(figsize=(6, 6))
+#     sns.lineplot(data=long_df, x='idx', y='max_lum', hue='loc', ax=ax)
+#     ax.set_xlabel('frames @ 240Hz')
+#     ax.set_ylabel('pixel values (0:255')
+#
+#     # probe on/off markers
+#     plt.axvline(x=vline_pr1_on, color='grey', linestyle='--')
+#     plt.axvline(x=vline_pr1_off, color='grey', linestyle='--')
+#     if sep_val not in [99, 400, 800, 2400]:
+#         plt.axvline(x=vline_pr2_on, color='grey', linestyle='-.')
+#         plt.axvline(x=vline_pr2_off, color='grey', linestyle='-.')
+#
+#     ax.set_xticks(x_tick_locs)
+#     ax.set_xticklabels(x_tick_labels)
+#     # add shaded background for frames at 240
+#     x_bg = np.arange(0, 100, 4)
+#     for x0, x1 in zip(x_bg[::2], x_bg[1::2]):
+#         plt.axvspan(x0, x1, color='black', alpha=0.05, zorder=0, linewidth=None)
+#
+#     plt.title(f'{cond_ver_name}: max luminance')
+#     # fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\mon_cali_images_Oct22\cond_figs\max_lum"
+#     fig_dir = os.path.join(images_dir, 'cond_figs', 'max_lum')
+#     if not os.path.isdir(fig_dir):
+#         os.makedirs(fig_dir)
+#     fig_savename = f'{cond_ver_name}_max_lum.png'
+#     fig_path = os.path.join(fig_dir, fig_savename)
+#     plt.savefig(fig_path)
+#     plt.show()
+#     plt.close()
 
 
 
@@ -751,7 +751,7 @@ I will make a plot for each ISI comparing all exp plots (blue) with cont plots (
 3. plot all exp conditions onto plots in one colour.
 4. plot all cont cont conditions onto plots in another colour.'''
 
-probe_dir_palette = {'exp': 'tab:blue', 'cont': 'tab:orange'}
+probe_dir_palette = {'exp': 'tab:red', 'cont': 'tab:green'}
 
 
 for isi in ISI_vals:
@@ -773,7 +773,7 @@ for isi in ISI_vals:
 
     sns.lineplot(data=isi_df, x='idx', y='joint_mean', hue='probes_dir',
                  units='filename', estimator=None, palette=probe_dir_palette,
-                 ax=ax)
+                 alpha=.5, ax=ax)
     ax.set_xlabel('frames @ 240Hz')
     ax.set_ylabel('pixel values (0:255')
 
@@ -809,7 +809,7 @@ for isi in ISI_vals:
     fig, ax = plt.subplots(figsize=(6, 6))
 
     sns.lineplot(data=isi_df, x='idx', y='joint_mean', hue='probes_dir',
-                 palette=probe_dir_palette,
+                 palette=probe_dir_palette, alpha=.5,
                  # units='filename', estimator=None,
                  ax=ax)
     ax.set_xlabel('frames @ 240Hz')
@@ -847,7 +847,7 @@ for isi in ISI_vals:
     fig, ax = plt.subplots(figsize=(6, 6))
 
     sns.lineplot(data=isi_df, x='idx', y='joint_max', hue='probes_dir',
-                 palette=probe_dir_palette,
+                 palette=probe_dir_palette, alpha=.5,
                  units='filename', estimator=None,
                  ax=ax)
     ax.set_xlabel('frames @ 240Hz')
@@ -883,7 +883,7 @@ for isi in ISI_vals:
     fig, ax = plt.subplots(figsize=(6, 6))
 
     sns.lineplot(data=isi_df, x='idx', y='joint_max', hue='probes_dir',
-                 palette=probe_dir_palette,
+                 palette=probe_dir_palette, alpha=.5,
                  # units='filename', estimator=None,
                  ax=ax)
     ax.set_xlabel('frames @ 240Hz')
@@ -918,7 +918,10 @@ for isi in ISI_vals:
 
 '''
 these plots just do one per ISI
+not using these anymore as there is just one per cond
 '''
+
+
 # print('ISI figs')
 # # just take one version of each cond for now.
 # conds_to_use = []
