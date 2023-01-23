@@ -10,7 +10,7 @@ from exp1a_psignifit_analysis import plot_thr_heatmap, plt_heatmap_row_col
 # from flow_parsing_psignifit_analysis import make_average_plots, e_average_exp_data
 
 from psignifit_tools import get_psignifit_threshold_df
-from check_home_dir import switch_path
+from python_tools import switch_path
 
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages

@@ -1,11 +1,12 @@
 import os
 import pandas as pd
+from psignifit_tools import get_psig_thr_w_hue
 import numpy as np
 from psignifit_tools import get_psignifit_threshold_df, get_psig_thr_w_hue
 from rad_flow_psignifit_analysis import a_data_extraction, b3_plot_staircase
 from rad_flow_psignifit_analysis import c_plots, d_average_participant
 from rad_flow_psignifit_analysis import make_average_plots, e_average_exp_data
-from check_home_dir import switch_path
+from python_tools import switch_path
 # from exp1a_psignifit_analysis import a_data_extraction, b3_plot_staircase, c_plots, \
 #     d_average_participant, e_average_exp_data, make_average_plots
 from exp1a_psignifit_analysis import plt_heatmap_row_col

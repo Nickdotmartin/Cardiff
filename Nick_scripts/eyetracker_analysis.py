@@ -9,7 +9,7 @@ from sklearn import metrics
 from sklearn.linear_model import LogisticRegression, LinearRegression
 from scipy.special import expit
 
-from check_home_dir import which_path, running_on_laptop, switch_path
+from python_tools import which_path, running_on_laptop, switch_path
 
 '''
 Part A

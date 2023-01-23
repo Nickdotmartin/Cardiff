@@ -34,7 +34,7 @@ expName = 'Exp2_Bloch_NM_v5'  # from the Builder filename that created this scri
 
 expInfo = {'1_Participant': 'Nick_test',
            '2_Probe_dur_in_frames_at_240hz': [2, 50],
-           '3_fps': [240, 144, 60],
+           '3_fps': [240, 120, 60],
            '4_Trials_counter': [True, False]}
 
 # GUI

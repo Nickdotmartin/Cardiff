@@ -40,7 +40,7 @@ expInfo = {'1. Participant': 'Nick',
            '2. Run_number': '3',
            '3. separation (pixels)': [5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 18, 36],
            '4. Probe duration in frames at 240hz': [2, 50, 100],
-           '5. fps': [240, 60],
+           '5. fps': [240, 120, 60],
            '7. Vary_fixation': [True, False],
            '8. Record_frame_durs': [False, True]
            }

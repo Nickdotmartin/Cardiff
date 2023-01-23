@@ -5,7 +5,7 @@ from psignifit_tools import get_psignifit_threshold_df, get_psig_thr_w_hue
 from rad_flow_psignifit_analysis import a_data_extraction, b3_plot_staircase
 from rad_flow_psignifit_analysis import c_plots, d_average_participant
 from rad_flow_psignifit_analysis import make_average_plots, e_average_exp_data
-from check_home_dir import switch_path
+from python_tools import switch_path
 # from exp1a_psignifit_analysis import a_data_extraction, b3_plot_staircase, c_plots, \
 #     d_average_participant, e_average_exp_data, make_average_plots
 from exp1a_psignifit_analysis import plt_heatmap_row_col
@@ -13,7 +13,7 @@ from exp1a_psignifit_analysis import plt_heatmap_row_col
 
 # exp_path = r"C:\Users\sapnm4\PycharmProjects\Cardiff\Nick_scripts\EXP1b_split_probes\split_v_orig"
 # exp_path = r"C:\Users\sapnm4\PycharmProjects\Cardiff\Nick_scripts\EXP1_radial\exp_v_cont"
-exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp1_Jan23_radial\
+exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp1_Jan23_radial"
 exp_path = os.path.normpath(exp_path)
 
 

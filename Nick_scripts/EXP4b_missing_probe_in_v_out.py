@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from exp1a_psignifit_analysis import make_long_df
 from psignifit_tools import get_psig_thr_w_hue
-from check_home_dir import running_on_laptop, switch_path
+from python_tools import running_on_laptop, switch_path
 
 
 # get exp path

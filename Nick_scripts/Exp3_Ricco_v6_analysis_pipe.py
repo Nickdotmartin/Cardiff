@@ -8,7 +8,7 @@ from rad_flow_psignifit_analysis import make_average_plots, e_average_exp_data, 
     plot_runs_ave_w_errors, plot_w_errors_either_x_axis, run_thr_plot, \
     simple_log_log_plot, log_log_w_markers_plot, run_thr_plot_w_markers, plot_ave_w_errors_markers
 from psignifit_tools import get_psignifit_threshold_df
-from check_home_dir import which_path, running_on_laptop, switch_path
+from python_tools import which_path, running_on_laptop, switch_path
 
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages

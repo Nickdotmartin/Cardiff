@@ -3,7 +3,7 @@ import pandas as pd
 from exp1a_psignifit_analysis import a_data_extraction, b3_plot_staircase, c_plots, \
     d_average_participant, e_average_exp_data, make_average_plots, plot_8_sep_thr
 from psignifit_tools import get_psignifit_threshold_df
-from check_home_dir import switch_path
+from python_tools import switch_path
 import matplotlib.pyplot as plt
 
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)

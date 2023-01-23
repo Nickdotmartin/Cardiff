@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-from check_home_dir import running_on_laptop, which_path, switch_path
+from python_tools import running_on_laptop, which_path, switch_path
 
 """
 1. Get path to dir containing intervals

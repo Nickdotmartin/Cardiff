@@ -4,7 +4,7 @@ from exp1a_psignifit_analysis import plot_thr_heatmap, plt_heatmap_row_col, \
     a_data_extraction, b3_plot_staircase, c_plots, \
     d_average_participant, e_average_exp_data, make_average_plots
 from psignifit_tools import get_psignifit_threshold_df
-from check_home_dir import switch_path
+from python_tools import switch_path
 
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages

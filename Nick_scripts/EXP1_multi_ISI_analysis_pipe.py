@@ -4,7 +4,7 @@ import datetime
 from exp1a_psignifit_analysis import a_data_extraction, b3_plot_staircase, c_plots, \
     d_average_participant, e_average_exp_data, make_average_plots
 from psignifit_tools import get_psignifit_threshold_df
-from check_home_dir import which_path, running_on_laptop, switch_path
+from python_tools import which_path, running_on_laptop, switch_path
 
 project_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff"
 

@@ -121,7 +121,7 @@ expName = 'Exp3_Ricco_NM_v6'
 expInfo = {'1. Participant': 'Nick_test',
            '2. Run_number': '1',
            '3. Probe duration in frames at 240hz': [2, 50, 100, 360],
-           '4. fps': [240, 60],
+           '4. fps': [240, 120, 60],
            '5. Probe_orientation': ['tangent', 'radial'],
            '6. Vary_fixation': [True, False],
            '7. Record_frame_durs': [False, True]
