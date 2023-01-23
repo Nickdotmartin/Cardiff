@@ -631,6 +631,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('separation', sep)
         thisExp.addData('ISI', ISI_cond)
         thisExp.addData('ISI_time', ISI_time)
+        thisExp.addData('isi_ms', ISI_actual_ms)
         thisExp.addData('probeLum', probeLum)
         thisExp.addData('trial_response', resp.corr)
         thisExp.addData('resp.rt', resp.rt)

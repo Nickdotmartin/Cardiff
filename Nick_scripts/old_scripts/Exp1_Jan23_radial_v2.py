@@ -603,6 +603,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('neg_sep', neg_sep)
         thisExp.addData('ISI', ISI)
         thisExp.addData('isi_dur_fr', isi_dur_fr)
+        thisExp.addData('isi_ms', (1000 / fps) * isi_dur_fr)
         thisExp.addData('probe_jump', target_jump)
         thisExp.addData('jump_dir', jump_dir)
         thisExp.addData('probeColor1', probeColor1)

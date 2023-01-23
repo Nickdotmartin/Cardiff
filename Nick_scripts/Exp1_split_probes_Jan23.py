@@ -8,6 +8,7 @@ import copy
 from datetime import datetime
 from math import tan, sqrt
 from kestenSTmaxVal import Staircase
+from PsychoPy_tools import get_pixel_mm_deg_values
 
 
 '''
@@ -157,9 +158,14 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
 
 actualFrameRate = int(win.getActualFrameRate())
 print(f"actual fps: {type(win.getActualFrameRate())} {win.getActualFrameRate()}")
-
 if abs(fps-actualFrameRate) > 5:
     raise ValueError(f"\nfps ({fps}) does not match actualFrameRate ({actualFrameRate}).")
+
+# pixel size
+pixel_mm_deg_dict = get_pixel_mm_deg_values(monitor_name=monitor_name)
+print('pixel_mm_deg_dict.items()')
+for k, v in pixel_mm_deg_dict.items():
+    print(k, v)
 
 # ELEMENTS
 # fixation bull eye
@@ -275,6 +281,11 @@ for step in range(n_trials_per_stair):
 
         # condition (Separation, ISI)
         sep = sep_vals_list[stair_idx]
+        # separation expressed as degrees.
+        if -1 < sep < 99:
+            sep * pixel_mm_deg_dict['diag_deg']
+        else:
+            sep_deg = 0
         ISI = ISI_vals_list[stair_idx]
         print(f"ISI: {ISI}, sep: {sep}")
 
@@ -570,8 +581,10 @@ for step in range(n_trials_per_stair):
         thisExp.addData('stair_name', thisStair)
         thisExp.addData('step', step)
         thisExp.addData('separation', sep)
+        thisExp.addData('sep_deg', sep_deg)
         thisExp.addData('ISI', ISI)
         thisExp.addData('isi_dur_fr', isi_dur_fr)
+        thisExp.addData('isi_ms', (1000 / fps) * isi_dur_fr)
         thisExp.addData('probe_jump', target_jump)
         thisExp.addData('jump_dir', jump_dir)
         thisExp.addData('probeColor1', probeColor1)
