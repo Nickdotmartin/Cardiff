@@ -29,13 +29,13 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'Nick_work_laptop'  # 'asus_cal', 'Nick_work_laptop', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18',
+monitor_name = 'asus_cal'  # 'asus_cal', 'Nick_work_laptop', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18',
 
 
 # Store info about the experiment session
 expName = 'Exp1_Jan23_radial_v3_stimTest'  # from the Builder filename that created this script
 expInfo = {'1. Participant': 'stimTest',
-           '2. Run_number': '2',
+           '2. Run_number': '1',
            '3. separation (pixels)': [5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 18, 36],
            '4. Probe duration in frames at 240hz': [2, 50, 100],
            '5. fps': [240, 120, 60],
@@ -66,7 +66,7 @@ expected_fr_ms = (1/fps) * 1000
 
 # VARIABLES
 orientation = 'radial'
-n_trials_per_stair = 25
+n_trials_per_stair = 5
 probe_ecc = 4
 
 '''Distances between probes (spatially and temporally)
@@ -490,7 +490,7 @@ for step in range(n_trials_per_stair):
             isi_dur_fr = p2_fr = 0
 
         # cumulative timing in frames for each part of a trial
-        t_fixation = int(fps / 2) + vary_fix
+        t_fixation = 30  # int(fps / 2) + vary_fix
         t_probe_1 = t_fixation + probe_duration
         t_ISI = t_probe_1 + isi_dur_fr
         t_probe_2 = t_ISI + p2_fr
@@ -527,7 +527,7 @@ for step in range(n_trials_per_stair):
                     fixation.draw()
 
                     loc_marker.draw()
-                    frame_counter.text = f"{frameN}, trial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, " \
+                    frame_counter.text = f"v3. {frameN}, trial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, " \
                                          f"ISI: {ISI}, sep: {sep}, jump_dir: {jump_dir}. fix"
                     frame_counter.draw()
 
@@ -549,7 +549,7 @@ for step in range(n_trials_per_stair):
 
                     loc_marker.draw()
 
-                    frame_counter.text = f"{frameN}, trial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, " \
+                    frame_counter.text = f"v3. {frameN}, trial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, " \
                                          f"ISI: {ISI}, sep: {sep}, jump_dir: {jump_dir}. p1"
                     frame_counter.draw()
 
@@ -560,7 +560,7 @@ for step in range(n_trials_per_stair):
 
                     loc_marker.draw()
 
-                    frame_counter.text = f"{frameN}, trial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, " \
+                    frame_counter.text = f"v3. {frameN}, trial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, " \
                                          f"ISI: {ISI}, sep: {sep}, jump_dir: {jump_dir}. ISI"
                     frame_counter.draw()
 
@@ -574,7 +574,7 @@ for step in range(n_trials_per_stair):
 
                     loc_marker.draw()
 
-                    frame_counter.text = f"{frameN}, trial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, " \
+                    frame_counter.text = f"v3. {frameN}, trial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, " \
                                          f"ISI: {ISI}, sep: {sep}, jump_dir: {jump_dir}. p2"
                     frame_counter.draw()
 
@@ -591,7 +591,7 @@ for step in range(n_trials_per_stair):
 
                     loc_marker.draw()
 
-                    frame_counter.text = f"{frameN}, trial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, " \
+                    frame_counter.text = f"v3. {frameN}, trial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, " \
                                          f"ISI: {ISI}, sep: {sep}, jump_dir: {jump_dir}. resp"
                     frame_counter.draw()
 
