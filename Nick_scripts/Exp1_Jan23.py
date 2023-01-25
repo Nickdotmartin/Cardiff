@@ -275,7 +275,7 @@ for step in range(n_trials_per_stair):
         sep = sep_vals_list[stair_idx]
         # separation expressed as degrees.
         if -1 < sep < 99:
-            sep * pixel_mm_deg_dict['diag_deg']
+            sep_deg = sep * pixel_mm_deg_dict['diag_deg']
         else:
             sep_deg = 0
         ISI = ISI_vals_list[stair_idx]
