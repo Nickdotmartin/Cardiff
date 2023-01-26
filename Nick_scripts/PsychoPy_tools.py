@@ -136,6 +136,7 @@ def get_pixel_mm_deg_values(monitor_name='ASUS_2_13_240Hz', n_pixels=1):
     # print(f'pix2deg: {pix2deg}')
 
     # if pix measurements are horizontal then diag pix will be
+    # todo: this assumes that pixels are square, which they are not.
     print('\nConverted to Diagonal pixel sizes')
     diag_mm = width_mm * np.sqrt(2)
     # print(f'diag_mm: {diag_mm}')
