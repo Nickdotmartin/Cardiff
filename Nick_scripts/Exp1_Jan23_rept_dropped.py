@@ -59,10 +59,6 @@ record_fr_durs = eval(expInfo['7. Record_frame_durs'])
 n_trials_per_stair = 2  # 25
 probe_ecc = 4
 
-
-# expected frame duration
-expected_fr_ms = (1/fps) * 1000
-
 # VARIABLES
 '''Distances between probes (spatially and temporally)
 For 1probe condition, use separation==99.
@@ -166,6 +162,12 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     allowGUI=False,
                     fullscr=use_full_screen)
 
+
+# expected frame duration
+expected_fr_sec = 1/fps
+expected_fr_ms = expected_fr_sec * 1000
+print(f"expected frame duraction: {expected_fr_sec}seconds (or {expected_fr_ms}ms).")
+
 actualFrameRate = int(win.getActualFrameRate())
 print(f"actual fps: {type(win.getActualFrameRate())} {win.getActualFrameRate()}")
 if abs(fps-actualFrameRate) > 5:
@@ -178,19 +180,31 @@ print('pixel_mm_deg_dict.items()')
 for k, v in pixel_mm_deg_dict.items():
     print(k, v)
 
+'''set the max and min frame duration to accept, trials with critial frames beyond these bound will be repeated.'''
 # frame error tollerance
-# I've got 60Hz monitor and want to allow .1 ms tolerance; any refresh that
-# takes longer than the specified period will be considered a "dropped"
-# frame and increase the count of win.nDroppedFrames.
-win.refreshThreshold = 1/60 + 0.0003
-frame_err_sec = win.refreshThreshold
-frame_err_ms = frame_err_sec * 1000
-print(f"\nframe_err_sec (120%): {frame_err_sec} (or {frame_err_ms}ms)")
+# todo: set error tollerance with Simon.
+frame_tollerance_prop = .015
+max_fr_dur_sec = expected_fr_sec + (expected_fr_sec * frame_tollerance_prop)
+min_fr_dur_sec = expected_fr_sec - (expected_fr_sec * frame_tollerance_prop)
+win.refreshThreshold = max_fr_dur_sec
+# win.refreshThreshold = 1/60 + 0.0003
+max_fr_dur_sec = win.refreshThreshold
+max_fr_dur_ms = max_fr_dur_sec * 1000
+print(f"\nmax_fr_dur_sec ({100 + (100 * frame_tollerance_prop)}%): {max_fr_dur_sec} (or {max_fr_dur_ms}ms)")
+print(f"\nmin_fr_dur_sec ({100 - (100 * frame_tollerance_prop)}%): {min_fr_dur_sec} (or {min_fr_dur_sec * 1000}ms)")
+
+# empty variable to store recorded frame durations
 exp_fr_intervals = []
 exp_n_fr_recorded_list = [0]
 exp_n_dropped_fr = 0
-repeated_trial_counter = 0
-rptd_trial_x_locs = []
+dropped_fr_trial_counter = 0
+dropped_fr_trial_x_locs = []
+user_rpt_trial_x_locs = []
+
+# quit experiment if there are more than 10 trials with dropped frames
+# todo: change this back to 10
+max_droped_fr_trials = 100
+
 
 # ELEMENTS
 # fixation bull eye
@@ -231,9 +245,10 @@ instructions = visual.TextStim(win=win, name='instructions',
 
 
 # BREAKS
-take_break = 76
+take_break = 5
+break_dur = 5
 print(f"take_break every {take_break} trials.")
-break_text = "Break\nTurn on the light and take at least 30-seconds break.\n" \
+break_text = f"Break\nTurn on the light and take at least {break_dur} seconds break.\n" \
              "Keep focussed on the fixation circle in the middle of the screen.\n" \
              "Remember, if you don't see the target, just guess!"
 breaks = visual.TextStim(win=win, name='breaks',
@@ -241,11 +256,19 @@ breaks = visual.TextStim(win=win, name='breaks',
                          font='Arial', pos=[0, 0], height=20, ori=0, color=[255, 255, 255],
                          colorSpace='rgb255', opacity=1, languageStyle='LTR', depth=0.0)
 
+
 end_of_exp = visual.TextStim(win=win, name='end_of_exp',
                              text="You have completed this experiment.\n"
                                   "Thank you for your time.\n\n"
                                   "Press any key to return to the desktop.",
                              font='Arial', height=20)
+
+too_many_dropped_fr = visual.TextStim(win=win, name='too_many_dropped_fr',
+                                      text="The experiment had quit as the computer is dropping frames.\n"
+                                           "Sorry for the inconvenience.\n"
+                                           "Please contact the experimenter.\n\n"
+                                           "Press any key to return to the desktop.",
+                                      font='Arial', height=20)
 
 while not event.getKeys():
     fixation.setRadius(3)
@@ -280,7 +303,11 @@ for stair_idx in expInfo['stair_list']:
     stairs.append(thisStair)
 
 # EXPERIMENT
+# the number of the trial for the output file
 trial_number = 0
+
+# the actual number of trials including repeated trials (trial_number stays the same for these)
+actual_trials_inc_rpt = 0
 for step in range(n_trials_per_stair):
     np.random.shuffle(stairs)
     for thisStair in stairs:
@@ -291,8 +318,9 @@ for step in range(n_trials_per_stair):
 
             # Trial, stair and step
             trial_number += 1
+            actual_trials_inc_rpt += 1
             stair_idx = thisStair.extraInfo['stair_idx']
-            print(f"\ntrial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
+            print(f"\n({actual_trials_inc_rpt}) trial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
 
             # condition (Separation, ISI)
             sep = sep_vals_list[stair_idx]
@@ -511,17 +539,26 @@ for step in range(n_trials_per_stair):
             # continue_routine refers to flipping the screen to show next frame
 
             # take a break every ? trials
-            if (trial_number % take_break == 1) & (trial_number > 1):
+            # if (trial_number % take_break == 1) & (trial_number > 1):
+            if (actual_trials_inc_rpt % take_break == 1) & (actual_trials_inc_rpt > 1):
                 print("\nTaking a break.\n")
-                continueRoutine = False
-                breaks.text = break_text + f"\n{trial_number}/{total_n_trials} trials completed."
+                # continueRoutine = False
+                breaks.text = break_text + f"\n{trial_number-1}/{total_n_trials} trials completed."
                 breaks.draw()
                 win.flip()
-                core.wait(secs=10)
+                event.clearEvents(eventType='keyboard')
+                core.wait(secs=5)
+                event.clearEvents(eventType='keyboard')
+                breaks.text = break_text + "\n\nPress any key to continue."
+                breaks.draw()
+                win.flip()
+                # continue_after_break.draw()
 
                 while not event.getKeys():
+                    # continue the breaks routine until a key is pressed
                     continueRoutine = True
             else:
+                # else continue the trial routine.
                 continueRoutine = True
 
             # initialise frame number
@@ -542,40 +579,8 @@ for step in range(n_trials_per_stair):
                         win.recordFrameIntervals = False
                         print(f"{frameN}: win.recordFrameIntervals : {win.recordFrameIntervals}")
 
-                        # '''Get frame intervals and dropped frames for this trial, add to experiment and empty cache'''
-                        # # get trial frameIntervals details
-                        # trial_fr_intervals = win.frameIntervals
-                        # n_fr_recorded = len(trial_fr_intervals)
-                        # trial_n_dropped_fr = win.nDroppedFrames
-                        # print(f"n_fr_recorded: {n_fr_recorded}, trial_n_dropped_fr: {trial_n_dropped_fr}, trial_fr_intervals: {trial_fr_intervals}")
-                        #
-                        # # check for dropped frames
-                        # # if trial_n_dropped_fr > 0:
-                        # if max(trial_fr_intervals) > frame_err_sec:
-                        #     print(f"\n\twe got dropped frames! {max(trial_fr_intervals)} > {frame_err_sec}\n")
-                        #     repeat = True
-                        #     continueRoutine = False
-                        #     # empty frameIntervals
-                        #     win.frameIntervals = []
-                        #     core.wait(3)
-                        #     # continue
-                        # else:
-                        #     repeat = False
-                        #     continueRoutine = True
-                        #
-                        #
-                        # # add to experiment info.
-                        # exp_fr_intervals += trial_fr_intervals
-                        # exp_n_fr_recorded_list.append(exp_n_fr_recorded_list[-1] + n_fr_recorded)
-                        # exp_n_dropped_fr += trial_n_dropped_fr
-                        # print(f"exp_n_fr_recorded_list: {exp_n_fr_recorded_list}, exp_n_dropped_fr: {exp_n_dropped_fr}")
-                        # print(f"exp_fr_intervals ({len(exp_fr_intervals)}): {exp_fr_intervals}")
-                        #
-                        # # empty frameIntervals
-                        # win.frameIntervals = []
 
-
-
+                '''Experiment timings'''
                 # FIXATION
                 if t_fixation >= frameN > 0:
                     fixation.setRadius(3)
@@ -585,10 +590,6 @@ for step in range(n_trials_per_stair):
 
                     # reset timer to start with probe1 presentation.
                     resp.clock.reset()
-
-                    # # start recording frame intervals
-                    # if record_fr_durs:
-                    #     win.recordFrameIntervals = True
 
 
                 # PROBE 1
@@ -622,14 +623,6 @@ for step in range(n_trials_per_stair):
 
                 # ANSWER
                 elif frameN > t_probe_2:
-                    # if record_fr_durs:
-                    #     win.recordFrameIntervals = False
-                    #     n_fr_recorded = len(win.frameIntervals)
-                    #     exp_n_fr_recorded_list.append(n_fr_recorded)
-                    #     print(f"n_fr_recorded: {n_fr_recorded}\nwin.frameIntervals: {win.frameIntervals}\n"
-                    #           f"exp_n_fr_recorded_list: {exp_n_fr_recorded_list}")
-                    #     trial_n_dropped_fr = win.nDroppedFrames
-                    #     print(f"trial_n_dropped_fr: {trial_n_dropped_fr}")
 
                     fixation.setRadius(2)
                     fixation.draw()
@@ -660,44 +653,39 @@ for step in range(n_trials_per_stair):
                             if (resp.keys == 's') or (resp.keys == 'num_2'):
                                 resp.corr = 1
 
+                        '''Get frame intervals for this trial, add to experiment and empty cache'''
                         if record_fr_durs:
-                            print(f"yup, recording frame durations")
-                            '''Get frame intervals and dropped frames for this trial, add to experiment and empty cache'''
                             # get trial frameIntervals details
                             trial_fr_intervals = win.frameIntervals
                             n_fr_recorded = len(trial_fr_intervals)
                             trial_n_dropped_fr = win.nDroppedFrames
-                            print(
-                                f"n_fr_recorded: {n_fr_recorded}, trial_n_dropped_fr: {trial_n_dropped_fr}, trial_fr_intervals: {trial_fr_intervals}")
+                            print(f"n_fr_recorded: {n_fr_recorded}, trial_n_dropped_fr: {trial_n_dropped_fr}, "
+                                  f"trial_fr_intervals: {trial_fr_intervals}")
 
                             # add to experiment info.
                             exp_fr_intervals += trial_fr_intervals
                             exp_n_fr_recorded_list.append(exp_n_fr_recorded_list[-1] + n_fr_recorded)
                             exp_n_dropped_fr += trial_n_dropped_fr
-                            print(
-                                f"exp_n_fr_recorded_list: {exp_n_fr_recorded_list}, exp_n_dropped_fr: {exp_n_dropped_fr}")
+                            print(f"exp_n_fr_recorded_list: {exp_n_fr_recorded_list}, "
+                                  f"exp_n_dropped_fr: {exp_n_dropped_fr}")
                             print(f"exp_fr_intervals ({len(exp_fr_intervals)}): {exp_fr_intervals}")
 
-                            # check for dropped frames
-                            # todo: check for frames that are too short too!
-                            if max(trial_fr_intervals) > frame_err_sec:
-                                repeated_trial_counter += 1
-                                print(f"\n\toh no! we got dropped frames! {max(trial_fr_intervals)} > {frame_err_sec}\n")
+                            # check for dropped frames (or frames that are too short)
+                            if max(trial_fr_intervals) > max_fr_dur_sec or min(trial_fr_intervals) < min_fr_dur_sec:
+                                if max(trial_fr_intervals) > max_fr_dur_sec:
+                                    print(f"\n\toh no! Frame too long! {max(trial_fr_intervals)} > {max_fr_dur_sec}")
+                                elif min(trial_fr_intervals) < min_fr_dur_sec:
+                                    print(f"\n\toh no! Frame too short! {min(trial_fr_intervals)} < {min_fr_dur_sec}")
                                 repeat = True
-                                trial_number += -1
+                                dropped_fr_trial_counter += 1
+                                trial_number -= 1
                                 win.frameIntervals = []
                                 continueRoutine = False
-                                trial_x_locs = [exp_n_fr_recorded_list[-1], exp_n_fr_recorded_list[-1] + n_fr_recorded]
-                                rptd_trial_x_locs.append(trial_x_locs)
-                                # empty frameIntervals
-                                # core.wait(3)
+                                trial_x_locs = [exp_n_fr_recorded_list[-2], exp_n_fr_recorded_list[-1]]
+                                dropped_fr_trial_x_locs.append(trial_x_locs)
                                 continue
-                            #     repeat = False
-                            #     continueRoutine = True
 
-
-
-                            # empty frameIntervals
+                            # empty frameIntervals cache
                             win.frameIntervals = []
 
 
@@ -710,13 +698,27 @@ for step in range(n_trials_per_stair):
                     thisExp.close()
                     core.quit()
 
+                # If too many trials have had droppped frames, quit experiment
+                if dropped_fr_trial_counter > max_droped_fr_trials:
+                    while not event.getKeys():
+                        # display end of experiment screen
+                        too_many_dropped_fr.draw()
+                        win.flip()
+                    else:
+                        # close and quit once a key is pressed
+                        # thisExp.abort()  # or data files will save again on exit
+                        thisExp.close()
+                        win.close()
+                        core.quit()
+
                 # redo the trial if I think I made a mistake
-                # todo: this is unlikely to help, repeats current trial, but if they press a wrong key before pressing 'r', then it should repeat n-1.
+                # todo: this repeats current trial, which might be too late if they wanted to repeat the one before...
                 if event.getKeys(keyList=["r"]) or event.getKeys(keyList=['num_9']):
-                    print("participant pressed repeat.")
-                    # todo: add something to colour participant repeated trials on output.
+                    print("\n\tparticipant pressed repeat.")
+                    trial_x_locs = [exp_n_fr_recorded_list[-1], exp_n_fr_recorded_list[-1] + n_fr_recorded]
+                    user_rpt_trial_x_locs.append(trial_x_locs)
                     repeat = True
-                    trial_number += -1
+                    trial_number -= 1
                     continueRoutine = False
                     continue
 
@@ -726,6 +728,7 @@ for step in range(n_trials_per_stair):
                     win.flip()
 
         thisExp.addData('trial_number', trial_number)
+        thisExp.addData('trial_n_inc_rpt', actual_trials_inc_rpt)
         thisExp.addData('stair', stair_idx)
         thisExp.addData('stair_name', thisStair)
         thisExp.addData('step', step)
@@ -768,44 +771,33 @@ thisExp.close()
 if record_fr_durs:
     import matplotlib.pyplot as plt
 
-    print(f"exp_fr_intervals ({len(exp_fr_intervals)}): {exp_fr_intervals}")
-    print(f"exp_n_fr_recorded_list: {exp_n_fr_recorded_list}")
-    print(f"exp_n_dropped_fr: {exp_n_dropped_fr}")
-    print(f"rptd_trial_x_locs: {rptd_trial_x_locs}")
-
-
     total_recorded_fr = len(exp_fr_intervals)
     # exp_n_dropped_fr = win.nDroppedFrames
-    print(f"{exp_n_dropped_fr}/{total_recorded_fr} dropped in total (expected: {round(expected_fr_ms, 2)}ms, 'dropped' if > {round(frame_err_ms, 2)})")
+    print(f"{exp_n_dropped_fr}/{total_recorded_fr} dropped in total (expected: {round(expected_fr_ms, 2)}ms, 'dropped' if > {round(max_fr_dur_ms, 2)})")
     plt.plot(exp_fr_intervals)
-    plt.title(f"{monitor_name}, {fps}Hz, {expInfo['date']}\n{exp_n_dropped_fr}/{total_recorded_fr} dropped fr (expected: {round(expected_fr_ms, 2)}ms, 'dropped' if > {round(frame_err_ms, 2)})")
+    plt.title(f"{monitor_name}, {fps}Hz, {expInfo['date']}\n{exp_n_dropped_fr}/{total_recorded_fr} dropped fr (expected: {round(expected_fr_ms, 2)}ms, 'dropped' if > {round(max_fr_dur_ms, 2)})")
 
     # add vertical lines to signify trials
-    plt.vlines(x=exp_n_fr_recorded_list, ymin=min(exp_fr_intervals), ymax=max(exp_fr_intervals), colors='silver', linestyles='dashed')
+    fr_v_lines = [i - .5 for i in exp_n_fr_recorded_list]
+    plt.vlines(x=fr_v_lines, ymin=min(exp_fr_intervals), ymax=max(exp_fr_intervals), colors='silver', linestyles='dashed')
 
-    # add horizontal line to signify frame error tollerance
-    plt.axhline(y=frame_err_sec, color='red', linestyle='dashed')
-    # todo: add in vertical line for minimum error allowed
+    # add green horizontal lines to signify expected frame duration
+    plt.axhline(y=expected_fr_sec, color='green', linestyle='dashed')
+    
+    # add red horizontal lines to signify frame error tollerance
+    plt.axhline(y=max_fr_dur_sec, color='red', linestyle='dashed')
+    plt.axhline(y=min_fr_dur_sec, color='red', linestyle='dashed')
 
+    # shade trials that were repeated due to dropped frames in red
+    for loc_pair in dropped_fr_trial_x_locs:
+        print(loc_pair)
+        x0, x1 = loc_pair[0] - .5, loc_pair[1] - .5
+        plt.axvspan(x0, x1, color='red', alpha=0.15, zorder=0, linewidth=None)
 
-    # shade trials that were repeated in red
-    for loc_pair in rptd_trial_x_locs:
-        x0, x1 = loc_pair[0], loc_pair[1]
-        plt.axvspan(x0, x1, color='red', alpha=0.05, zorder=0, linewidth=None)
-    # total_recorded_fr = len(win.frameIntervals)
-    # exp_n_dropped_fr = win.nDroppedFrames
-    # print(f"{exp_n_dropped_fr}/{total_recorded_fr} dropped in total (expected: {round(expected_fr_ms, 2)}ms, 'dropped' if > {round(frame_err_ms, 2)})")
-    # plt.plot(win.frameIntervals)
-    # plt.title(f"{monitor_name}, {fps}Hz, {expInfo['date']}\n{exp_n_dropped_fr}/{total_recorded_fr} dropped fr (expected: {round(expected_fr_ms, 2)}ms, 'dropped' if > {round(frame_err_ms, 2)})")
-    # plt.vlines(x=exp_n_fr_recorded_list, ymin=min(win.frameIntervals), ymax=max(win.frameIntervals), colors='silver', linestyles='dashed')
-    # plt.axhline(y=frame_err_sec, color='red', linestyle='dashed')
-    # todo: check this is correct, should = filename =  be here?
-    # fig_name = f'{_thisDir}{os.sep}' \
-    #                       f'{expName}{os.sep}' \
-    #                       f'{participant_name}{os.sep}' \
-    #                       f'{participant_name}_{run_number}{os.sep}' \
-    #                       f'{participant_name}_{run_number}_frames.png'
-    # plt.savefig(fig_name)
+    # shade trials that were repeated due to user pressing repeat in orange
+    for loc_pair in user_rpt_trial_x_locs:
+        x0, x1 = loc_pair[0] - .5, loc_pair[1] - .5
+        plt.axvspan(x0, x1, color='orange', alpha=0.15, zorder=0, linewidth=None)
     fig_name = f'{participant_name}_{run_number}_frames.png'
     print(f"fig_name: {fig_name}")
     plt.savefig(os.path.join(save_dir, fig_name))
