@@ -1,6 +1,8 @@
 from psychopy import monitors
 from psychopy.tools import monitorunittools
 import numpy as np
+import math
+
 '''
 Page has tools to use for psychoPy experiments.
 
@@ -113,60 +115,135 @@ def check_correct_monitor(monitor_name, actual_size, actual_fps, verbose=False):
         print("check_correct_monitor() complete")
 
 
+# def get_pixel_mm_deg_values(monitor_name='ASUS_2_13_240Hz', n_pixels=1):
+#     """
+#     use psychopy's monitor tools to convert pixels to mm or degrees at a certain viewing distance.
+#     Choose horizontal or diagonal pixels.
+#     :param monitor_name: default='Asus_VG24', monitor in lab 2.13.
+#             str - should match saved file in psychopy's monitor centre.
+#     :param n_pixels: default = 1.
+#     """
+#
+#     this_monitor = monitors.Monitor(monitor_name)
+#     # print(f'this_monitor: {monitor_name}')
+#     # print(f'n_pixels: {n_pixels}')
+#
+#     # This gets horizontal pixel size.
+#     pix2cm = monitorunittools.pix2cm(pixels=n_pixels, monitor=this_monitor)
+#     # print(f'\nHorizontal pixel size:\npix2cm: {pix2cm}')
+#     width_mm = pix2cm * 10
+#     # print(f'width_mm = pix2cm*10: {width_mm}')
+#
+#     pix2deg = monitorunittools.pix2deg(pixels=n_pixels, monitor=this_monitor)
+#     # print(f'pix2deg: {pix2deg}')
+#
+#     # if pix measurements are horizontal then diag pix will be
+#     # todo: this assumes that pixels are square, which they are not.
+#     print('\nConverted to Diagonal pixel sizes')
+#     diag_mm = width_mm * np.sqrt(2)
+#     # print(f'diag_mm: {diag_mm}')
+#
+#     # get nnumber of widths that fit into diagonal.
+#     len_of_diag_to_w = 1 * np.sqrt(2)
+#     # print(f'len_of_diag_to_w: {len_of_diag_to_w}')
+#     diag_deg = monitorunittools.pix2deg(pixels=n_pixels * len_of_diag_to_w,
+#                                         monitor=this_monitor)
+#     # print(f'diag_deg: {diag_deg}')
+#
+#     pixel_mm_deg_dict = {'this_monitor': monitor_name,
+#                          'n_pixels': n_pixels,
+#                          'horiz_mm': width_mm,
+#                          'horiz_deg': pix2deg,
+#                          'diag_mm': diag_mm,
+#                          'diag_deg': diag_deg}
+#
+#     return pixel_mm_deg_dict
+
+
+# todo: make disctionary with diagonal pixel sizes in mm/cm
+# todo: write function for converting diaginal pixels distance into degrees.
+
+monitor_pixel_size_dict = {
+    'asus_cal': {'model_name': 'Asus_VG279VM',
+                 'dimensions_mm': [567.6, 336.15],
+                 'dimensions_pix': [1920, 1080]},
+    'OLED': {'model_name': 'Dell_AW3423DW',
+                 'dimensions_mm': [797.22, 333.72],
+                 'dimensions_pix': [3440, 1440]},
+    'Nick_work_laptop': {'model_name': 'Dell_latitude_5400',
+                 'dimensions_mm': [309.4, 173.95],
+                 'dimensions_pix': [1920, 1080]},
+    'Asus_VG24': {'model_name': 'Asus_VG24',
+                 'dimensions_mm': [521.395, 293.285],
+                 'dimensions_pix': [1920, 1080]},
+    'HP_24uh': {'model_name': 'HP_24uh',
+                'dimensions_mm': [531.36, 298.89],
+                'dimensions_pix': [1920, 1080]},
+    'NickMac': {'model_name': 'Macbook_air_(retina)_13"_2018',
+                'dimensions_mm': [304.1, 191.9],
+                'dimensions_pix': [2560, 1600]},
+
+    'Iiyama_2_18': {'model_name': '',  # todo: get model name
+                'dimensions_mm': [],  # todo: get screen dimensions
+                'dimensions_pix': [1920, 1080]},
+
+}
+
+
+
+def mm_to_degrees(pixel_size_mm, distance_mm):
+
+    # convert size of pixel to visual angle in degrees
+    dva = 2 * math.degrees(math.atan(pixel_size_mm / (2 * distance_mm)))
+
+    return dva
+
 def get_pixel_mm_deg_values(monitor_name='ASUS_2_13_240Hz', n_pixels=1):
     """
     use psychopy's monitor tools to convert pixels to mm or degrees at a certain viewing distance.
-    Choose horizontal or diagonal pixels.
+    Use monitor_pixel_size_dict for calculating diagonal pixel size as monitor centre only has width.
+    My old version gave square pixels as the output.
     :param monitor_name: default='Asus_VG24', monitor in lab 2.13.
             str - should match saved file in psychopy's monitor centre.
     :param n_pixels: default = 1.
     """
+    # print("\n***running get_pixel_mm_deg_values()***")
 
     this_monitor = monitors.Monitor(monitor_name)
-    # print(f'this_monitor: {monitor_name}')
-    # print(f'n_pixels: {n_pixels}')
+    # print(f'monitor_name: {monitor_name}, (n_pixels: {n_pixels})')
 
-    # This gets horizontal pixel size.
-    pix2cm = monitorunittools.pix2cm(pixels=n_pixels, monitor=this_monitor)
-    # print(f'\nHorizontal pixel size:\npix2cm: {pix2cm}')
-    width_mm = pix2cm * 10
-    # print(f'width_mm = pix2cm*10: {width_mm}')
+    # check for details in monitor_pixel_size_dict
+    dimensions_mm = monitor_pixel_size_dict[monitor_name]['dimensions_mm']
+    dimensions_pix = monitor_pixel_size_dict[monitor_name]['dimensions_pix']
 
-    pix2deg = monitorunittools.pix2deg(pixels=n_pixels, monitor=this_monitor)
-    # print(f'pix2deg: {pix2deg}')
+    # get pixel sizes in mm
+    pix_width_mm = dimensions_mm[0] / dimensions_pix[0]
+    pix_height_mm = dimensions_mm[1] / dimensions_pix[1]
+    pix_diag_mm = np.sqrt(pix_width_mm ** 2 + pix_height_mm ** 2)
+    # print(f"pix_width_mm: {pix_width_mm}\n"
+    #       f"pix_width_mm ** 2: {pix_width_mm ** 2}\n"
+    #       f"pix_height_mm: {pix_height_mm}\n"
+    #       f"pix_height_mm ** 2: {pix_height_mm ** 2}\n"
+    #       f"pix_width_mm ** 2 + pix_height_mm ** 2: {pix_width_mm ** 2 + pix_height_mm ** 2}\n"
+    #       f"pix_diag_mm = np.sqrt(pix_width_mm ** 2 + pix_height_mm ** 2): {np.sqrt(pix_width_mm ** 2 + pix_height_mm ** 2)}"
+    #       )
 
-    # if pix measurements are horizontal then diag pix will be
-    # todo: this assumes that pixels are square, which they are not.
-    print('\nConverted to Diagonal pixel sizes')
-    diag_mm = width_mm * np.sqrt(2)
-    # print(f'diag_mm: {diag_mm}')
 
-    # get nnumber of widths that fit into diagonal.
-    len_of_diag_to_w = 1 * np.sqrt(2)
-    # print(f'len_of_diag_to_w: {len_of_diag_to_w}')
-    diag_deg = monitorunittools.pix2deg(pixels=n_pixels * len_of_diag_to_w,
-                                        monitor=this_monitor)
-    # print(f'diag_deg: {diag_deg}')
+    # convert pixel chosen pixel size to dva
+    viewdist_mm = this_monitor.getDistance() * 10  # view dist is stored in cm
+    pix_width_deg = mm_to_degrees(pixel_size_mm=pix_width_mm, distance_mm=viewdist_mm)
+    pix_height_deg = mm_to_degrees(pixel_size_mm=pix_height_mm, distance_mm=viewdist_mm)
+    pix_diag_deg = mm_to_degrees(pixel_size_mm=pix_diag_mm, distance_mm=viewdist_mm)
 
     pixel_mm_deg_dict = {'this_monitor': monitor_name,
                          'n_pixels': n_pixels,
-                         'horiz_mm': width_mm,
-                         'horiz_deg': pix2deg,
-                         'diag_mm': diag_mm,
-                         'diag_deg': diag_deg}
+                         'width_mm': pix_width_mm,
+                         'height_mm': pix_height_mm,
+                         'diag_mm': pix_diag_mm,
+                         'width_deg': pix_width_deg,
+                         'heigth_deg': pix_height_deg,
+                         'diag_deg': pix_diag_deg}
+
+    # print("***finished get_pixel_mm_deg_values()***\n")
 
     return pixel_mm_deg_dict
-
-
-    # cm2deg = monitorunittools.cm2deg(cm=pix2cm, monitor=this_monitor, correctFlat=True)
-    # print(f'cm2deg: {cm2deg}')
-    # # cm2deg: 0.02781546533608415
-    #
-    # cm2pix = monitorunittools.cm2pix(cm=pix2cm, monitor=this_monitor)
-    # print(f'cm2pix: {cm2pix}')
-    # # cm2pix: 1.0
-
-# monitor_name = 'Asus_VG24'
-
-# get_pixel_mm_deg_values()
-

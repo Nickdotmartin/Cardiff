@@ -5,6 +5,7 @@ import os
 import numpy as np
 import random
 import copy
+import matplotlib.pyplot as plt
 from datetime import datetime
 from math import tan, sqrt
 from kestenSTmaxVal import Staircase
@@ -12,25 +13,24 @@ from PsychoPy_tools import get_pixel_mm_deg_values
 
 
 '''
-Script to demonstrate Exp1:
-ISI of -1 (conc) and 6 frames.
-Sep of 0 and 6 pixels.  
+Jan23 version of experiment 1.  Now has code to measure frame duration and repeat any trials with bad frame timings.
+Also has an enforced break, with core.wait() to do cpu housekeeping.
+Also has core.wait() when closing to hopefully reduce hanging.
 '''
 
-# prioritise psychopy
-#core.rush(True)
+
 
 # Ensure that relative paths start from the same directory as this script
 _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'Nick_work_laptop'  # 'asus_cal', 'Nick_work_laptop', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18',
+monitor_name = 'Nick_work_laptop'  # 'asus_cal', 'Nick_work_laptop', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18', 'Dell_AW3423DW' 'OLED'
 
 # Store info about the experiment session
 expName = 'Exp1_Jan23_rept_dropped'  # from the Builder filename that created this script
-expInfo = {'1. Participant': 'Jan23_rept_dropped',
-           '2. Run_number': '1',
+expInfo = {'1. Participant': 'Nick_test',
+           '2. Run_number': '2',
            '3. Probe duration in frames at 240hz': [2, 1, 50, 100],
            '4. fps': [60, 240, 120, 60],
            '5. Probe_orientation': ['tangent', 'radial'],
@@ -39,15 +39,12 @@ expInfo = {'1. Participant': 'Jan23_rept_dropped',
            }
 
 
-# GUI
+# dialogue box
 dlg = gui.DlgFromDict(dictionary=expInfo, title=expName)
 if not dlg.OK:
     core.quit()  # user pressed escape
 
-expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
-expInfo['time'] = datetime.now().strftime("%H:%M:%S")
-
-# GUI SETTINGS
+# dialogue box settings
 participant_name = expInfo['1. Participant']
 run_number = int(expInfo['2. Run_number'])
 probe_duration = int(expInfo['3. Probe duration in frames at 240hz'])
@@ -58,12 +55,15 @@ record_fr_durs = eval(expInfo['7. Record_frame_durs'])
 
 n_trials_per_stair = 2  # 25
 probe_ecc = 4
+expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
+expInfo['time'] = datetime.now().strftime("%H:%M:%S")
 
 # VARIABLES
 '''Distances between probes (spatially and temporally)
 For 1probe condition, use separation==99.
 For concurrent probes, use ISI==-1.
 '''
+print(f'\nTrial condition details:')
 separations = [5]  # select from [0, 1, 2, 3, 6, 18, 99]
 # separations = [0, 1, 2, 3, 6, 18, 99]  # select from [0, 1, 2, 3, 6, 18, 99]
 print(f'separations: {separations}')
@@ -87,22 +87,15 @@ total_n_trials = int(n_trials_per_stair * n_stairs)
 print(f'total_n_trials: {total_n_trials}')
 
 # FILENAME
-# filename = f'{_thisDir}{os.sep}' \
-#            f'{expName}{os.sep}' \
-#            f'{participant_name}{os.sep}' \
-#            f'{participant_name}_{run_number}{os.sep}' \
-#            f'{participant_name}_{run_number}_output'
-# todo: check it is saving correctly, then delete commented out stuff.
 save_dir = f'{_thisDir}{os.sep}' \
             f'{expName}{os.sep}' \
             f'{participant_name}{os.sep}' \
             f'{participant_name}_{run_number}{os.sep}'
 
-complete_output_filename = f'{participant_name}_{run_number}_output'
-incomplete_output_filename = f'{participant_name}_{run_number}_incomplete'
-
 # files are labelled as '_incomplete' unless entire script runs.
+incomplete_output_filename = f'{participant_name}_{run_number}_incomplete'
 save_output_as = os.path.join(save_dir, incomplete_output_filename)
+
 
 # Experiment Handler
 thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
@@ -110,51 +103,55 @@ thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
                                  savePickle=None, saveWideText=True,
                                  dataFileName=save_output_as)
 
-# COLORS AND LUMINANCE
-# Lum to Color255
-LumColor255Factor = 2.39538706913372
-# Color255 to Color1
-Color255Color1Factor = 1 / 127.5  # Color255 * Color255Color1Factor -1
-# Lum to Color1
-Color1LumFactor = 2.39538706913372
+# Monitor details: colour, luminance, pixel size and frame rate
+print(f"monitor_name: {monitor_name}")
+thisMon = monitors.Monitor(monitor_name)
 
+# COLORS AND LUMINANCE
+# todo: check with Simon about these values before deleting
+# # Lum to Color255
+# LumColor255Factor = 2.39538706913372
+# # Color255 to Color1
+# Color255Color1Factor = 1 / 127.5  # Color255 * Color255Color1Factor -1
+# # Lum to Color1
+# Color1LumFactor = 2.39538706913372
 maxLum = 106  # 255 RGB
 bgLumProp = .2
 bgLum = maxLum * bgLumProp
-bgColor255 = bgLum * LumColor255Factor
-bgColor1 = (bgColor255 * Color255Color1Factor) - 1
+# bgColor255 = bgLum * LumColor255Factor
+# bgColor1 = (bgColor255 * Color255Color1Factor) - 1
+bgColor1 = bgLum / maxLum
+bgColor255 = int(bgColor1 * 255)
+
+# colour space
+this_colourSpace = 'rgb255'
+this_bgColour = bgColor255
+if monitor_name == 'OLED':
+    this_colourSpace = 'rgb1'
+    this_bgColour = bgColor1
+print(f"\nthis_colourSpace: {this_colourSpace}, this_bgColour: {this_bgColour}")
 
 
-# MONITOR SPEC
-thisMon = monitors.Monitor(monitor_name)
-this_width = thisMon.getWidth()
-mon_dict = {'mon_name': monitor_name,
-            'width': thisMon.getWidth(),
-            'size': thisMon.getSizePix(),
-            'dist': thisMon.getDistance(),
-            'notes': thisMon.getNotes()}
-print(f"mon_dict: {mon_dict}")
-
-# double check using full screen in lab
+# don't use full screen on external monitor
 display_number = 1  # 0 indexed, 1 for external display, 0 for internal
 #todo: check OLED montor name
-if monitor_name in ['ASUS_2_13_240Hz', 'asus_cal', 'Nick_work_laptop', 'NickMac', 'Dell_AW3423DW']:
+if monitor_name in ['asus_cal', 'Nick_work_laptop', 'NickMac', 'Dell_AW3423DW', 'ASUS_2_13_240Hz']:
     display_number = 0
 use_full_screen = True
 if display_number > 0:
     use_full_screen = False
-widthPix = mon_dict['size'][0]
-heightPix = mon_dict['size'][1]
-monitorwidth = mon_dict['width']  # monitor width in cm
-viewdist = mon_dict['dist']  # viewing distance in cm
+
+widthPix = thisMon.getSizePix()[0]
+heightPix = thisMon.getSizePix()[1]
+monitorwidth = thisMon.getWidth()  # monitor width in cm
+viewdist = thisMon.getDistance()  # viewing distance in cm
 viewdistPix = widthPix / monitorwidth*viewdist
 mon = monitors.Monitor(monitor_name, width=monitorwidth, distance=viewdist)
 mon.setSizePix((widthPix, heightPix))
 
 # WINDOW SPEC
-# todo: if it is on the OLED, I guess it needs to use rgb, not rgb255
 win = visual.Window(monitor=mon, size=(widthPix, heightPix),
-                    colorSpace='rgb255', color=bgColor255,
+                    colorSpace=this_colourSpace, color=this_bgColour,
                     winType='pyglet',  # I've added this to make it work on pycharm/mac
                     pos=[1, -1],  # pos gives position of top-left of screen
                     units='pix',
@@ -163,22 +160,20 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     fullscr=use_full_screen)
 
 
+# pixel size
+pixel_mm_deg_dict = get_pixel_mm_deg_values(monitor_name=monitor_name)
+print(f"diagonal pixel size: {pixel_mm_deg_dict['diag_mm']} mm, or {pixel_mm_deg_dict['diag_deg']} dva")
+
+
 # expected frame duration
 expected_fr_sec = 1/fps
 expected_fr_ms = expected_fr_sec * 1000
-print(f"expected frame duraction: {expected_fr_sec}seconds (or {expected_fr_ms}ms).")
+print(f"\nexpected frame duraction: {expected_fr_ms} ms (or {round(expected_fr_sec, 5)} seconds).")
 
 actualFrameRate = int(win.getActualFrameRate())
-print(f"actual fps: {type(win.getActualFrameRate())} {win.getActualFrameRate()}")
+print(f"actual fps: {win.getActualFrameRate()}")
 if abs(fps-actualFrameRate) > 5:
     raise ValueError(f"\nfps ({fps}) does not match actualFrameRate ({actualFrameRate}).")
-
-# todo: get rid of this as it assumes square pixles.
-# pixel size
-pixel_mm_deg_dict = get_pixel_mm_deg_values(monitor_name=monitor_name)
-print('pixel_mm_deg_dict.items()')
-for k, v in pixel_mm_deg_dict.items():
-    print(k, v)
 
 '''set the max and min frame duration to accept, trials with critial frames beyond these bound will be repeated.'''
 # frame error tollerance
@@ -191,15 +186,7 @@ win.refreshThreshold = max_fr_dur_sec
 max_fr_dur_sec = win.refreshThreshold
 max_fr_dur_ms = max_fr_dur_sec * 1000
 print(f"\nmax_fr_dur_sec ({100 + (100 * frame_tollerance_prop)}%): {max_fr_dur_sec} (or {max_fr_dur_ms}ms)")
-print(f"\nmin_fr_dur_sec ({100 - (100 * frame_tollerance_prop)}%): {min_fr_dur_sec} (or {min_fr_dur_sec * 1000}ms)")
-
-# empty variable to store recorded frame durations
-exp_fr_intervals = []
-exp_n_fr_recorded_list = [0]
-exp_n_dropped_fr = 0
-dropped_fr_trial_counter = 0
-dropped_fr_trial_x_locs = []
-user_rpt_trial_x_locs = []
+print(f"min_fr_dur_sec ({100 - (100 * frame_tollerance_prop)}%): {min_fr_dur_sec} (or {min_fr_dur_sec * 1000}ms)")
 
 # quit experiment if there are more than 10 trials with dropped frames
 # todo: change this back to 10
@@ -215,9 +202,9 @@ fixation = visual.Circle(win, radius=2, units='pix', lineColor='white', fillColo
 probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
              (1, -2), (-1, -2), (-1, -1), (0, -1)]
 probe_size = 1
-probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, 1.0, 1.0),
+probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor='white',
                           lineWidth=0, opacity=1, size=probe_size, interpolate=False)
-probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor=[1.0, 1.0, 1.0],
+probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor='white',
                           lineWidth=0, opacity=1, size=probe_size, interpolate=False)
 
 # dist_from_fix is a constant to get 4dva distance from fixation,
@@ -247,14 +234,13 @@ instructions = visual.TextStim(win=win, name='instructions',
 # BREAKS
 take_break = 5
 break_dur = 5
-print(f"take_break every {take_break} trials.")
+print(f"\ntake_break every {take_break} trials.")
 break_text = f"Break\nTurn on the light and take at least {break_dur} seconds break.\n" \
              "Keep focussed on the fixation circle in the middle of the screen.\n" \
              "Remember, if you don't see the target, just guess!"
 breaks = visual.TextStim(win=win, name='breaks',
                          text=break_text,
-                         font='Arial', pos=[0, 0], height=20, ori=0, color=[255, 255, 255],
-                         colorSpace='rgb255', opacity=1, languageStyle='LTR', depth=0.0)
+                         font='Arial', pos=[0, 0], height=20, ori=0, color='white')
 
 
 end_of_exp = visual.TextStim(win=win, name='end_of_exp',
@@ -275,6 +261,18 @@ while not event.getKeys():
     fixation.draw()
     instructions.draw()
     win.flip()
+
+
+# empty variable to store recorded frame durations
+exp_n_fr_recorded_list = [0]
+exp_n_dropped_fr = 0
+dropped_fr_trial_counter = 0
+dropped_fr_trial_x_locs = []
+user_rpt_trial_x_locs = []
+fr_int_per_trial = []
+recorded_fr_counter = 0
+fr_counter_per_trial = []
+
 
 # STAIRCASE
 expInfo['stair_list'] = list(range(n_stairs))
@@ -302,12 +300,12 @@ for stair_idx in expInfo['stair_list']:
                           extraInfo=thisInfo)
     stairs.append(thisStair)
 
-# EXPERIMENT
 # the number of the trial for the output file
 trial_number = 0
-
 # the actual number of trials including repeated trials (trial_number stays the same for these)
 actual_trials_inc_rpt = 0
+
+# EXPERIMENT
 for step in range(n_trials_per_stair):
     np.random.shuffle(stairs)
     for thisStair in stairs:
@@ -334,10 +332,16 @@ for step in range(n_trials_per_stair):
 
             # Luminance (staircase varies probeLum)
             probeLum = thisStair.next()
-            probeColor255 = int(probeLum * LumColor255Factor)  # rgb255 are ints.
-            probeColor1 = (probeColor255 * Color255Color1Factor) - 1
-            probe1.color = [probeColor1, probeColor1, probeColor1]
-            probe2.color = [probeColor1, probeColor1, probeColor1]
+            # probeColor255 = int(probeLum * LumColor255Factor)  # rgb255 are ints.
+            # probeColor1 = (probeColor255 * Color255Color1Factor) - 1  # todo: change this so it isn't converted from int(rgb255) but from probeLum
+            probeColor1 = probeLum / maxLum  # todo: change this so it isn't converted from int(rgb255) but from probeLum
+            probeColor255 = int(probeColor1 * 255)  # rgb255 are ints.
+
+            this_probeColor = probeColor255
+            if this_colourSpace == 'rgb1':
+                this_probeColor = probeColor1
+            probe1.color = [this_probeColor, this_probeColor, this_probeColor]
+            probe2.color = [this_probeColor, this_probeColor, this_probeColor]
             print(f"probeLum: {probeLum}, probeColor255: {probeColor255}, probeColor1: {probeColor1}")
 
             # PROBE LOCATION
@@ -367,7 +371,8 @@ for step in range(n_trials_per_stair):
             '''Both probes should be equally spaced around the meridian point.
             E.g., if sep = 4, probe 1 will be shifted 2 pixels in one direction and 
             probe 2 will be shifted 2 pixels in opposite direction. 
-            Where separation is an odd number (e.g., 5), they will be shifted by 2 and 3 pixels; allocated randomly.'''
+            Where separation is an odd number (e.g., 5), they will be shifted by 2 and 3 pixels; allocated randomly.
+            To check probe locations, uncomment loc_marker'''
             if sep == 99:
                 p1_shift = p2_shift = 0
             elif sep % 2 == 0:  # even number
@@ -496,21 +501,18 @@ for step in range(n_trials_per_stair):
                         probe1_pos = [loc_x - p1_shift, loc_y + p1_shift]
                         probe2_pos = [loc_x + p2_shift - 1, loc_y - p2_shift]
 
-            # probe1_pos = [loc_x, loc_y]
             # loc_marker.setPos([loc_x, loc_y])
-
-            # print(f"probe1_pos: {probe1_pos}, probe2_pos: {probe2_pos}. dff: {dist_from_fix}")
-
             probe1.setPos(probe1_pos)
             probe1.setOri(probe1_ori)
             probe2.setPos(probe2_pos)
             probe2.setOri(probe2_ori)
+            print(f"loc_marker: {[loc_x, loc_y]}, probe1_pos: {probe1_pos}, probe2_pos: {probe2_pos}. dff: {dist_from_fix}")
 
 
             # VARIABLE FIXATION TIME
-            # to reduce anticipatory effects that might arise from fixation always being same length.
-            # if False, vary_fix == .5 seconds, so t_fixation is 1 second.
-            # if Ture, vary_fix is between 0 and 1 second, so t_fixation is between .5 and 1.5 seconds.
+            '''to reduce anticipatory effects that might arise from fixation always being same length.
+            if False, vary_fix == .5 seconds, so t_fixation is 1 second.
+            if Ture, vary_fix is between 0 and 1 second, so t_fixation is between .5 and 1.5 seconds.'''
             vary_fix = int(fps / 2)
             if vary_fixation:
                 vary_fix = np.random.randint(0, fps)
@@ -531,6 +533,7 @@ for step in range(n_trials_per_stair):
 
             print(f"t_fixation: {t_fixation}, t_probe_1: {t_probe_1}, t_ISI: {t_ISI}, t_probe_2: {t_probe_2}, t_response: {t_response}\n")
 
+            # I've moved the repat option to the top so repetitions don't appear in same corner
             # repeat the trial if [r] has been pressed
             # repeat = True
             # while repeat:
@@ -552,8 +555,6 @@ for step in range(n_trials_per_stair):
                 breaks.text = break_text + "\n\nPress any key to continue."
                 breaks.draw()
                 win.flip()
-                # continue_after_break.draw()
-
                 while not event.getKeys():
                     # continue the breaks routine until a key is pressed
                     continueRoutine = True
@@ -566,15 +567,22 @@ for step in range(n_trials_per_stair):
             while continueRoutine:
                 frameN = frameN + 1
 
-
                 # recording frame durations - from t_fixation (1 frame before p1), until 1 frame after p2.
                 if frameN == t_fixation:
+
+                    # todo: test this on windows, Linux and mac to see if it matters
+                    # prioritise psychopy
+                    # core.rush(True)
+
                     # start recording frame intervals
                     if record_fr_durs:
                         win.recordFrameIntervals = True
                         print(f"{frameN}: win.recordFrameIntervals : {win.recordFrameIntervals}")
 
                 if frameN == t_probe_2 + 1:
+                    # relax psychopy prioritization
+                    # core.rush(False)
+
                     if record_fr_durs:
                         win.recordFrameIntervals = False
                         print(f"{frameN}: win.recordFrameIntervals : {win.recordFrameIntervals}")
@@ -585,7 +593,6 @@ for step in range(n_trials_per_stair):
                 if t_fixation >= frameN > 0:
                     fixation.setRadius(3)
                     fixation.draw()
-
                     # loc_marker.draw()
 
                     # reset timer to start with probe1 presentation.
@@ -601,14 +608,12 @@ for step in range(n_trials_per_stair):
                             probe2.draw()
                     fixation.setRadius(3)
                     fixation.draw()
-
                     # loc_marker.draw()
 
                 # ISI
                 elif t_ISI >= frameN > t_probe_1:
                     fixation.setRadius(3)
                     fixation.draw()
-
                     # loc_marker.draw()
 
                 # PROBE 2
@@ -618,15 +623,12 @@ for step in range(n_trials_per_stair):
                             probe2.draw()
                     fixation.setRadius(3)
                     fixation.draw()
-
                     # loc_marker.draw()
 
                 # ANSWER
                 elif frameN > t_probe_2:
-
                     fixation.setRadius(2)
                     fixation.draw()
-
                     # loc_marker.draw()
 
                     # ANSWER
@@ -653,6 +655,7 @@ for step in range(n_trials_per_stair):
                             if (resp.keys == 's') or (resp.keys == 'num_2'):
                                 resp.corr = 1
 
+
                         '''Get frame intervals for this trial, add to experiment and empty cache'''
                         if record_fr_durs:
                             # get trial frameIntervals details
@@ -663,14 +666,15 @@ for step in range(n_trials_per_stair):
                                   f"trial_fr_intervals: {trial_fr_intervals}")
 
                             # add to experiment info.
-                            exp_fr_intervals += trial_fr_intervals
+                            # exp_fr_intervals += trial_fr_intervals
+                            fr_int_per_trial.append(trial_fr_intervals)
+                            fr_counter_per_trial.append(list(range(recorded_fr_counter, recorded_fr_counter + len(trial_fr_intervals))))
+                            recorded_fr_counter += len(trial_fr_intervals)
                             exp_n_fr_recorded_list.append(exp_n_fr_recorded_list[-1] + n_fr_recorded)
                             exp_n_dropped_fr += trial_n_dropped_fr
-                            print(f"exp_n_fr_recorded_list: {exp_n_fr_recorded_list}, "
-                                  f"exp_n_dropped_fr: {exp_n_dropped_fr}")
-                            print(f"exp_fr_intervals ({len(exp_fr_intervals)}): {exp_fr_intervals}")
 
                             # check for dropped frames (or frames that are too short)
+                            # if timings are bad, repeat trial
                             if max(trial_fr_intervals) > max_fr_dur_sec or min(trial_fr_intervals) < min_fr_dur_sec:
                                 if max(trial_fr_intervals) > max_fr_dur_sec:
                                     print(f"\n\toh no! Frame too long! {max(trial_fr_intervals)} > {max_fr_dur_sec}")
@@ -688,10 +692,10 @@ for step in range(n_trials_per_stair):
                             # empty frameIntervals cache
                             win.frameIntervals = []
 
-
                         # these belong to the end of the answers section
                         repeat = False
                         continueRoutine = False
+
 
                 # regardless of frameN, check for quit
                 if event.getKeys(keyList=["escape"]):
@@ -711,8 +715,9 @@ for step in range(n_trials_per_stair):
                         win.close()
                         core.quit()
 
-                # redo the trial if I think I made a mistake
-                # todo: this repeats current trial, which might be too late if they wanted to repeat the one before...
+                # User can repeat previous trial.
+                # Note, if they respond incorrectly on trial n, then press 'r',
+                # it is probably too late, as it will be repeating n+1, not n.
                 if event.getKeys(keyList=["r"]) or event.getKeys(keyList=['num_9']):
                     print("\n\tparticipant pressed repeat.")
                     trial_x_locs = [exp_n_fr_recorded_list[-1], exp_n_fr_recorded_list[-1] + n_fr_recorded]
@@ -727,6 +732,7 @@ for step in range(n_trials_per_stair):
                 if continueRoutine:
                     win.flip()
 
+        # add info to output csv
         thisExp.addData('trial_number', trial_number)
         thisExp.addData('trial_n_inc_rpt', actual_trials_inc_rpt)
         thisExp.addData('stair', stair_idx)
@@ -750,63 +756,78 @@ for step in range(n_trials_per_stair):
         thisExp.addData('orientation', orientation)
         thisExp.addData('vary_fixation', vary_fixation)
         thisExp.addData('t_fixation', t_fixation)
-        thisExp.addData('expName', expName)
         thisExp.addData('monitor_name', monitor_name)
+        thisExp.addData('this_colourSpace', this_colourSpace)
+        thisExp.addData('this_bgColour', this_bgColour)
         thisExp.addData('selected_fps', fps)
         thisExp.addData('actual_fps', actualFrameRate)
+        thisExp.addData('expName', expName)
         thisExp.addData('psychopy_version', psychopy_version)
         thisExp.addData('date', expInfo['date'])
         thisExp.addData('time', expInfo['time'])
 
+        # tell psychopy to move to next trial
         thisExp.nextEntry()
 
-        thisStair.newValue(resp.corr)   # so that the staircase adjusts itself
+        # update staircase based on whether response was correct or incorrect
+        thisStair.newValue(resp.corr)
+
 
 print("\nend of experiment loop, saving data\n")
-# thisExp.dataFileName = filename
-thisExp.dataFileName = os.path.join(save_dir, complete_output_filename)
+# now exp is completed, save as '_output' rather than '_incomplete'
+thisExp.dataFileName = os.path.join(save_dir, f'{participant_name}_{run_number}_output')
 thisExp.close()
+
 
 # plot frame intervals
 if record_fr_durs:
-    import matplotlib.pyplot as plt
 
-    total_recorded_fr = len(exp_fr_intervals)
-    # exp_n_dropped_fr = win.nDroppedFrames
+    # flatten list of lists (fr_int_per_trial) to get len, min and max
+    all_fr_intervals = [val for sublist in fr_int_per_trial for val in sublist]
+    total_recorded_fr = len(all_fr_intervals)
     print(f"{exp_n_dropped_fr}/{total_recorded_fr} dropped in total (expected: {round(expected_fr_ms, 2)}ms, 'dropped' if > {round(max_fr_dur_ms, 2)})")
-    plt.plot(exp_fr_intervals)
-    plt.title(f"{monitor_name}, {fps}Hz, {expInfo['date']}\n{exp_n_dropped_fr}/{total_recorded_fr} dropped fr (expected: {round(expected_fr_ms, 2)}ms, 'dropped' if > {round(max_fr_dur_ms, 2)})")
+
+    # plot frame intervals across the experiment with discontinuous line
+    for trial_x_vals, trial_fr_durs in zip(fr_counter_per_trial, fr_int_per_trial):
+        plt.plot(trial_x_vals, trial_fr_durs, color='#1f77b4')
 
     # add vertical lines to signify trials
+    print(f"exp_n_fr_recorded_list: {exp_n_fr_recorded_list}")
     fr_v_lines = [i - .5 for i in exp_n_fr_recorded_list]
-    plt.vlines(x=fr_v_lines, ymin=min(exp_fr_intervals), ymax=max(exp_fr_intervals), colors='silver', linestyles='dashed')
+    plt.vlines(x=fr_v_lines, ymin=min(all_fr_intervals), ymax=max(all_fr_intervals), colors='silver', linestyles='dashed')
 
-    # add green horizontal lines to signify expected frame duration
+    # add horizontal lines: green = expected frame duration, red = frame error tollerance
     plt.axhline(y=expected_fr_sec, color='green', linestyle='dashed')
-    
-    # add red horizontal lines to signify frame error tollerance
     plt.axhline(y=max_fr_dur_sec, color='red', linestyle='dashed')
     plt.axhline(y=min_fr_dur_sec, color='red', linestyle='dashed')
 
-    # shade trials that were repeated due to dropped frames in red
+    # shade trials that were repeated: red = bad timing, orange = user repeat
     for loc_pair in dropped_fr_trial_x_locs:
         print(loc_pair)
         x0, x1 = loc_pair[0] - .5, loc_pair[1] - .5
         plt.axvspan(x0, x1, color='red', alpha=0.15, zorder=0, linewidth=None)
 
-    # shade trials that were repeated due to user pressing repeat in orange
     for loc_pair in user_rpt_trial_x_locs:
         x0, x1 = loc_pair[0] - .5, loc_pair[1] - .5
         plt.axvspan(x0, x1, color='orange', alpha=0.15, zorder=0, linewidth=None)
+
+    plt.title(f"{monitor_name}, {fps}Hz, {expInfo['date']}\n{exp_n_dropped_fr}/{total_recorded_fr} "
+              f"dropped fr (expected: {round(expected_fr_ms, 2)}ms, "
+              f"'dropped' if > {round(max_fr_dur_ms, 2)})")
+
     fig_name = f'{participant_name}_{run_number}_frames.png'
     print(f"fig_name: {fig_name}")
     plt.savefig(os.path.join(save_dir, fig_name))
+    plt.show()
+    plt.close()
 
 
 while not event.getKeys():
     # display end of experiment screen
     end_of_exp.draw()
     win.flip()
+    core.wait(secs=5)
+    # todo: add message to signify key press allowed here.
 else:
     # logging.flush()  # write messages out to all targets
     thisExp.abort()  # or data files will save again on exit
