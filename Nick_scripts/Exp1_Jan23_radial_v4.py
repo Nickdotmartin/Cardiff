@@ -13,7 +13,8 @@ from PsychoPy_tools import get_pixel_mm_deg_values
 
 
 '''
-Jan23 version of experiment 1.  Now has code to measure frame duration and repeat any trials with bad frame timings.
+Jan23 version of experiment 1 - radial to compare in vs out.  
+Now has code to measure frame duration and repeat any trials with bad frame timings.
 Also has an enforced break, with core.wait() to do cpu housekeeping.
 Also has core.wait() when closing to hopefully reduce hanging.
 '''
@@ -23,17 +24,17 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'Nick_work_laptop'  # 'asus_cal', 'Nick_work_laptop', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18', 'Dell_AW3423DW' 'OLED'
+monitor_name = 'asus_cal'  # 'asus_cal', 'Nick_work_laptop', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18',
 
 # Store info about the experiment session (numbers keep the order)
-expName = 'Exp1_Jan23_rept_dropped'  # from the Builder filename that created this script
+expName = 'Exp1_Jan23_radial_v4'  # from the Builder filename that created this script
 expInfo = {'1. Participant': 'Nick_test',
-           '2. Run_number': '4',
-           '3. Probe duration in frames at 240hz': [2, 1, 50, 100],
-           '4. fps': [60, 240, 120, 60],
-           '5. Probe_orientation': ['tangent', 'radial'],
-           '6. Vary_fixation': [False, True, False],
-           '7. Record_frame_durs': [True, False]
+           '2. Run_number': '1',
+           '3. separation (pixels)': [5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 18, 36],
+           '4. Probe duration in frames at 240hz': [2, 1, 50, 100],
+           '5. fps': [240, 120, 60],
+           '6. Vary_fixation': [True, False],
+           '7. Record_frame_durs': [True, False54]
            }
 
 
@@ -45,39 +46,45 @@ if not dlg.OK:
 # dialogue box settings
 participant_name = expInfo['1. Participant']
 run_number = int(expInfo['2. Run_number'])
-probe_duration = int(expInfo['3. Probe duration in frames at 240hz'])
-fps = int(expInfo['4. fps'])
-orientation = expInfo['5. Probe_orientation']
+this_sep_value = int(expInfo['3. separation (pixels)'])
+probe_duration = int(expInfo['4. Probe duration in frames at 240hz'])
+fps = int(expInfo['5. fps'])
 vary_fixation = eval(expInfo['6. Vary_fixation'])
 record_fr_durs = eval(expInfo['7. Record_frame_durs'])
 
-n_trials_per_stair = 2  # 25
-probe_ecc = 4
-expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
-expInfo['time'] = datetime.now().strftime("%H:%M:%S")
-
 # VARIABLES
+orientation = 'radial'
+n_trials_per_stair = 2
+probe_ecc = 4
+expInfo['time'] = datetime.now().strftime("%H:%M:%S")
+expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
+
 '''Distances between probes (spatially and temporally)
 For 1probe condition, use separation==99.
 For concurrent probes, use ISI==-1.
 '''
-print(f'\nTrial condition details:')
-separations = [5]  # select from [0, 1, 2, 3, 6, 18, 99]
 # separations = [0, 1, 2, 3, 6, 18, 99]  # select from [0, 1, 2, 3, 6, 18, 99]
+separations = [this_sep_value]  # select from [0, 1, 2, 3, 6, 18, 99]
 print(f'separations: {separations}')
-# ISI_values = [-1]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
-ISI_values = [-1, 0, 2]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
-# ISI_values = [-1, 0, 2, 4, 6, 9, 12, 24]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+# ISI_values = [-1, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+ISI_values = [-1, 0, 2]  #, 4, 6, 9, 12, 24]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 print(f'ISI_values: {ISI_values}')
+
+probe_dirs = ['cont', 'exp']
+print(f'probe_dirs: {probe_dirs}')
+
 # repeat separation values for each ISI e.g., [0, 0, 6, 6]
-sep_vals_list = list(np.repeat(separations, len(ISI_values)))
+sep_vals_list = list(np.repeat(separations, len(ISI_values))) * len(probe_dirs)
 print(f'sep_vals_list: {sep_vals_list}')
-# ISI_vals_list cycles through ISIs e.g., [-1, 6, -1, 6]
-ISI_vals_list = list(np.tile(ISI_values, len(separations)))
+ISI_vals_list = list(np.tile(ISI_values, len(separations) * len(probe_dirs)))
 print(f'ISI_vals_list: {ISI_vals_list}')
+probes_dirs_list = list(np.repeat(probe_dirs, len(sep_vals_list) / len(probe_dirs)))
+print(f'probes_dirs_list: {probes_dirs_list}')
+
 # stair_names_list joins sep_vals_list and ISI_vals_list
 # e.g., ['sep0_ISI-1', 'sep0_ISI6', 'sep6_ISI-1', 'sep6_ISI6']
-stair_names_list = [f'sep{s}_ISI{c}' for s, c in zip(sep_vals_list, ISI_vals_list)]
+# stair_names_list = [f'sep{s}_ISI{c}' for s, c in zip(sep_vals_list, ISI_vals_list)]
+stair_names_list = [f'{p}_sep{s}_ISI{i}' for p, s, i in zip(probes_dirs_list, sep_vals_list, ISI_vals_list)]
 print(f'stair_names_list: {stair_names_list}')
 n_stairs = len(sep_vals_list)
 print(f'n_stairs: {n_stairs}')
@@ -86,10 +93,10 @@ print(f'total_n_trials: {total_n_trials}')
 
 # FILENAME
 save_dir = f'{_thisDir}{os.sep}' \
-            f'{expName}{os.sep}' \
-            f'{participant_name}{os.sep}' \
-            f'{participant_name}_{run_number}{os.sep}'
-
+           f'{expName}{os.sep}' \
+           f'{participant_name}{os.sep}' \
+           f'{participant_name}_{run_number}{os.sep}' \
+           f'sep_{this_sep_value}{os.sep}'
 # files are labelled as '_incomplete' unless entire script runs.
 incomplete_output_filename = f'{participant_name}_{run_number}_incomplete'
 save_output_as = os.path.join(save_dir, incomplete_output_filename)
@@ -124,7 +131,6 @@ print(f"\nthis_colourSpace: {this_colourSpace}, this_bgColour: {this_bgColour}")
 
 # don't use full screen on external monitor
 display_number = 1  # 0 indexed, 1 for external display, 0 for internal
-#todo: check OLED montor name
 if monitor_name in ['asus_cal', 'Nick_work_laptop', 'NickMac', 'Dell_AW3423DW', 'ASUS_2_13_240Hz']:
     display_number = 0
 use_full_screen = True
@@ -314,7 +320,6 @@ for step in range(n_trials_per_stair):
             else:
                 sep_deg = 0
             ISI = ISI_vals_list[stair_idx]
-            print(f"ISI: {ISI}, sep: {sep}")
 
             # Luminance (staircase varies probeLum)
             probeLum = thisStair.next()
@@ -331,6 +336,7 @@ for step in range(n_trials_per_stair):
             # PROBE LOCATION
             # # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
             corner = random.choice([45, 135, 225, 315])
+            # corner = 315
             corner_name = 'top_right'
             if corner == 135:
                 corner_name = 'top_left'
@@ -340,16 +346,21 @@ for step in range(n_trials_per_stair):
                 corner_name = 'bottom_right'
 
             # # direction in which the probe jumps : CW or CCW (tangent) or expand vs contract (radial)
-            target_jump = random.choice([1, -1])
-            if orientation == 'tangent':
-                jump_dir = 'clockwise'
-                if target_jump == -1:
-                    jump_dir = 'anticlockwise'
-            else:
-                jump_dir = 'cont'
-                if target_jump == -1:
-                    jump_dir = 'exp'
+            jump_dir = probes_dirs_list[stair_idx]
+            target_jump = 1
+            if jump_dir == 'exp':
+                target_jump = -1
+
             print(f"corner: {corner} {corner_name}; jump dir: {target_jump} {jump_dir}")
+
+            # make negative separation column for comparing inward (contract) and outward (expand).
+            if jump_dir == 'exp':
+                neg_sep = 0-sep
+                if sep == 0:
+                    neg_sep = -.1
+            else:
+                neg_sep = sep
+            print(f"ISI: {ISI}, sep: {sep} (neg_sep: {neg_sep})")
 
             # shift probes by separation
             '''Both probes should be equally spaced around the meridian point.
@@ -390,13 +401,13 @@ for step in range(n_trials_per_stair):
                         probe1_pos = [loc_x + p1_shift, loc_y - p1_shift]
                         probe2_pos = [loc_x - p2_shift + 1, loc_y + p2_shift]
                 elif orientation == 'radial':
-                    if target_jump == 1:  # inward
+                    if target_jump == 1:  # contract
                         probe1_ori += 270
                         probe2_ori += 270
                         # probe2 is left and down from probe1
                         probe1_pos = [loc_x + p1_shift, loc_y + p1_shift]
                         probe2_pos = [loc_x - p2_shift + 1, loc_y - p2_shift]
-                    elif target_jump == -1:  # outward
+                    elif target_jump == -1:  # expand
                         probe1_ori += 90
                         probe2_ori += 90
                         # probe2 is right and up from probe1
@@ -417,13 +428,13 @@ for step in range(n_trials_per_stair):
                         probe1_pos = [loc_x + p1_shift, loc_y + p1_shift]
                         probe2_pos = [loc_x - p2_shift + 1, loc_y - p2_shift]
                 elif orientation == 'radial':
-                    if target_jump == 1:  # inward
+                    if target_jump == 1:  # contract
                         probe1_ori += 180
                         probe2_ori += 180
                         # probe2 is right and down from probe1
                         probe1_pos = [loc_x - p1_shift, loc_y + p1_shift]
                         probe2_pos = [loc_x + p2_shift - 1, loc_y - p2_shift]
-                    elif target_jump == -1:  # outward
+                    elif target_jump == -1:  # expand
                         probe1_ori += 0
                         probe2_ori += 0
                         # probe2 is left and up from probe1
@@ -444,13 +455,13 @@ for step in range(n_trials_per_stair):
                         probe1_pos = [loc_x - p1_shift, loc_y + p1_shift]
                         probe2_pos = [loc_x + p2_shift - 1, loc_y - p2_shift]
                 elif orientation == 'radial':
-                    if target_jump == 1:  # inward
+                    if target_jump == 1:  # contract
                         probe1_ori += 90
                         probe2_ori += 90
                         # probe2 is right and up from probe1
                         probe1_pos = [loc_x - p1_shift, loc_y - p1_shift]
                         probe2_pos = [loc_x + p2_shift - 1, loc_y + p2_shift]
-                    elif target_jump == -1:  # outward
+                    elif target_jump == -1:  # expand
                         probe1_ori += 270
                         probe2_ori += 270
                         # probe2 is left and down from probe1
@@ -472,13 +483,13 @@ for step in range(n_trials_per_stair):
                         probe1_pos = [loc_x - p1_shift, loc_y - p1_shift]
                         probe2_pos = [loc_x + p2_shift - 1, loc_y + p2_shift]
                 elif orientation == 'radial':
-                    if target_jump == 1:  # inward
+                    if target_jump == 1:  # contract
                         probe1_ori += 0
                         probe2_ori += 0
                         # probe2 is left and up from probe1
                         probe1_pos = [loc_x + p1_shift, loc_y - p1_shift]
                         probe2_pos = [loc_x - p2_shift + 1, loc_y + p2_shift]
-                    elif target_jump == -1:  # outward
+                    elif target_jump == -1:  # expand
                         probe1_ori += 180
                         probe2_ori += 180
                         # probe2 is right and down from probe1
@@ -721,10 +732,12 @@ for step in range(n_trials_per_stair):
         thisExp.addData('stair_name', thisStair)
         thisExp.addData('step', step)
         thisExp.addData('separation', sep)
+        thisExp.addData('neg_sep', neg_sep)
         thisExp.addData('sep_deg', sep_deg)
         thisExp.addData('ISI', ISI)
         thisExp.addData('isi_dur_fr', isi_dur_fr)
         thisExp.addData('isi_ms', (1000 / fps) * isi_dur_fr)
+        thisExp.addData('cond_type', target_jump)
         thisExp.addData('probe_jump', target_jump)
         thisExp.addData('jump_dir', jump_dir)
         thisExp.addData('probeColor1', probeColor1)
