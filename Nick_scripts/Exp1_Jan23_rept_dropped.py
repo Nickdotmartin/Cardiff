@@ -108,20 +108,13 @@ print(f"monitor_name: {monitor_name}")
 thisMon = monitors.Monitor(monitor_name)
 
 # COLORS AND LUMINANCE
-# todo: check with Simon about these values before deleting
-# # Lum to Color255
-# LumColor255Factor = 2.39538706913372
-# # Color255 to Color1
-# Color255Color1Factor = 1 / 127.5  # Color255 * Color255Color1Factor -1
-# # Lum to Color1
-# Color1LumFactor = 2.39538706913372
+# # Lum to Color255 (maxLum = 253)
+LumColor255Factor = 2.39538706913372
 maxLum = 106  # 255 RGB
 bgLumProp = .2
 bgLum = maxLum * bgLumProp
-# bgColor255 = bgLum * LumColor255Factor
-# bgColor1 = (bgColor255 * Color255Color1Factor) - 1
+bgColor255 = bgLum * LumColor255Factor
 bgColor1 = bgLum / maxLum
-bgColor255 = int(bgColor1 * 255)
 
 # colour space
 this_colourSpace = 'rgb255'
@@ -176,13 +169,11 @@ if abs(fps-actualFrameRate) > 5:
     raise ValueError(f"\nfps ({fps}) does not match actualFrameRate ({actualFrameRate}).")
 
 '''set the max and min frame duration to accept, trials with critial frames beyond these bound will be repeated.'''
-# frame error tollerance
-# todo: set error tollerance with Simon.
-frame_tollerance_prop = .015
+# frame error tollerance - stick with 20%, which is the default?
+frame_tollerance_prop = .2
 max_fr_dur_sec = expected_fr_sec + (expected_fr_sec * frame_tollerance_prop)
 min_fr_dur_sec = expected_fr_sec - (expected_fr_sec * frame_tollerance_prop)
 win.refreshThreshold = max_fr_dur_sec
-# win.refreshThreshold = 1/60 + 0.0003
 max_fr_dur_sec = win.refreshThreshold
 max_fr_dur_ms = max_fr_dur_sec * 1000
 print(f"\nmax_fr_dur_sec ({100 + (100 * frame_tollerance_prop)}%): {max_fr_dur_sec} (or {max_fr_dur_ms}ms)")
@@ -268,7 +259,7 @@ exp_n_fr_recorded_list = [0]
 exp_n_dropped_fr = 0
 dropped_fr_trial_counter = 0
 dropped_fr_trial_x_locs = []
-user_rpt_trial_x_locs = []
+# user_rpt_trial_x_locs = []
 fr_int_per_trial = []
 recorded_fr_counter = 0
 fr_counter_per_trial = []
@@ -332,10 +323,8 @@ for step in range(n_trials_per_stair):
 
             # Luminance (staircase varies probeLum)
             probeLum = thisStair.next()
-            # probeColor255 = int(probeLum * LumColor255Factor)  # rgb255 are ints.
-            # probeColor1 = (probeColor255 * Color255Color1Factor) - 1  # todo: change this so it isn't converted from int(rgb255) but from probeLum
-            probeColor1 = probeLum / maxLum  # todo: change this so it isn't converted from int(rgb255) but from probeLum
-            probeColor255 = int(probeColor1 * 255)  # rgb255 are ints.
+            probeColor255 = int(probeLum * LumColor255Factor)  # rgb255 are ints.
+            probeColor1 = probeLum / maxLum
 
             this_probeColor = probeColor255
             if this_colourSpace == 'rgb1':
@@ -715,17 +704,17 @@ for step in range(n_trials_per_stair):
                         win.close()
                         core.quit()
 
-                # User can repeat previous trial.
-                # Note, if they respond incorrectly on trial n, then press 'r',
-                # it is probably too late, as it will be repeating n+1, not n.
-                if event.getKeys(keyList=["r"]) or event.getKeys(keyList=['num_9']):
-                    print("\n\tparticipant pressed repeat.")
-                    trial_x_locs = [exp_n_fr_recorded_list[-1], exp_n_fr_recorded_list[-1] + n_fr_recorded]
-                    user_rpt_trial_x_locs.append(trial_x_locs)
-                    repeat = True
-                    trial_number -= 1
-                    continueRoutine = False
-                    continue
+                # # User can repeat previous trial.
+                # # Note, if they respond incorrectly on trial n, then press 'r',
+                # # it is probably too late, as it will be repeating n+1, not n.
+                # if event.getKeys(keyList=["r"]) or event.getKeys(keyList=['num_9']):
+                #     print("\n\tparticipant pressed repeat.")
+                #     trial_x_locs = [exp_n_fr_recorded_list[-1], exp_n_fr_recorded_list[-1] + n_fr_recorded]
+                #     user_rpt_trial_x_locs.append(trial_x_locs)
+                #     repeat = True
+                #     trial_number -= 1
+                #     continueRoutine = False
+                #     continue
 
 
                 # refresh the screen
@@ -807,9 +796,9 @@ if record_fr_durs:
         x0, x1 = loc_pair[0] - .5, loc_pair[1] - .5
         plt.axvspan(x0, x1, color='red', alpha=0.15, zorder=0, linewidth=None)
 
-    for loc_pair in user_rpt_trial_x_locs:
-        x0, x1 = loc_pair[0] - .5, loc_pair[1] - .5
-        plt.axvspan(x0, x1, color='orange', alpha=0.15, zorder=0, linewidth=None)
+    # for loc_pair in user_rpt_trial_x_locs:
+    #     x0, x1 = loc_pair[0] - .5, loc_pair[1] - .5
+    #     plt.axvspan(x0, x1, color='orange', alpha=0.15, zorder=0, linewidth=None)
 
     plt.title(f"{monitor_name}, {fps}Hz, {expInfo['date']}\n{exp_n_dropped_fr}/{total_recorded_fr} "
               f"dropped fr (expected: {round(expected_fr_ms, 2)}ms, "
