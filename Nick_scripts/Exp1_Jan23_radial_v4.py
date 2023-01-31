@@ -172,19 +172,19 @@ if abs(fps-actualFrameRate) > 5:
     raise ValueError(f"\nfps ({fps}) does not match actualFrameRate ({actualFrameRate}).")
 
 '''set the max and min frame duration to accept, trials with critial frames beyond these bound will be repeated.'''
-# frame error tollerance - stick with the default (around 20%)?
-# frame_tollerance_prop = .2
-# max_fr_dur_sec = expected_fr_sec + (expected_fr_sec * frame_tollerance_prop)
-# min_fr_dur_sec = expected_fr_sec - (expected_fr_sec * frame_tollerance_prop)
+# frame error tolerance - stick with the default (around 20%)?
+# frame_tolerance_prop = .2
+# max_fr_dur_sec = expected_fr_sec + (expected_fr_sec * frame_tolerance_prop)
+# min_fr_dur_sec = expected_fr_sec - (expected_fr_sec * frame_tolerance_prop)
 # win.refreshThreshold = max_fr_dur_sec
 max_fr_dur_sec = win.refreshThreshold
-frame_tollerance_sec = max_fr_dur_sec - expected_fr_sec
-frame_tollerance_prop = frame_tollerance_sec / expected_fr_sec
-min_fr_dur_sec = expected_fr_sec - frame_tollerance_sec
+frame_tolerance_sec = max_fr_dur_sec - expected_fr_sec
+frame_tolerance_prop = frame_tolerance_sec / expected_fr_sec
+min_fr_dur_sec = expected_fr_sec - frame_tolerance_sec
 max_fr_dur_ms = max_fr_dur_sec * 1000
-print(f"\nframe_tollerance_sec: {frame_tollerance_sec} ({frame_tollerance_prop}% of {expected_fr_sec}ms)")
-print(f"max_fr_dur_sec ({100 + (100 * frame_tollerance_prop)}%): {max_fr_dur_sec} (or {max_fr_dur_ms}ms)")
-print(f"min_fr_dur_sec ({100 - (100 * frame_tollerance_prop)}%): {min_fr_dur_sec} (or {min_fr_dur_sec * 1000}ms)")
+print(f"\nframe_tolerance_sec: {frame_tolerance_sec} ({frame_tolerance_prop}% of {expected_fr_sec}ms)")
+print(f"max_fr_dur_sec ({100 + (100 * frame_tolerance_prop)}%): {max_fr_dur_sec} (or {max_fr_dur_ms}ms)")
+print(f"min_fr_dur_sec ({100 - (100 * frame_tolerance_prop)}%): {min_fr_dur_sec} (or {min_fr_dur_sec * 1000}ms)")
 
 # quit experiment if there are more than 10 trials with dropped frames
 max_droped_fr_trials = 10
@@ -658,9 +658,9 @@ for step in range(n_trials_per_stair):
                             # get trial frameIntervals details
                             trial_fr_intervals = win.frameIntervals
                             n_fr_recorded = len(trial_fr_intervals)
-                            trial_n_dropped_fr = win.nDroppedFrames
-                            print(f"n_fr_recorded: {n_fr_recorded}, trial_n_dropped_fr: {trial_n_dropped_fr}, "
-                                  f"trial_fr_intervals: {trial_fr_intervals}")
+                            # trial_n_dropped_fr = win.nDroppedFrames
+                            # print(f"n_fr_recorded: {n_fr_recorded}, trial_n_dropped_fr: {trial_n_dropped_fr}, "
+                            #       f"trial_fr_intervals: {trial_fr_intervals}")
 
                             # add to experiment info.
                             # exp_fr_intervals += trial_fr_intervals
@@ -668,7 +668,7 @@ for step in range(n_trials_per_stair):
                             fr_counter_per_trial.append(list(range(recorded_fr_counter, recorded_fr_counter + len(trial_fr_intervals))))
                             recorded_fr_counter += len(trial_fr_intervals)
                             exp_n_fr_recorded_list.append(exp_n_fr_recorded_list[-1] + n_fr_recorded)
-                            exp_n_dropped_fr += trial_n_dropped_fr
+                            # exp_n_dropped_fr += trial_n_dropped_fr
 
                             # check for dropped frames (or frames that are too short)
                             # if timings are bad, repeat trial
@@ -786,7 +786,9 @@ if record_fr_durs:
     # flatten list of lists (fr_int_per_trial) to get len, min and max
     all_fr_intervals = [val for sublist in fr_int_per_trial for val in sublist]
     total_recorded_fr = len(all_fr_intervals)
-    print(f"{exp_n_dropped_fr}/{total_recorded_fr} dropped in total (expected: {round(expected_fr_ms, 2)}ms, 'dropped' if > {round(max_fr_dur_ms, 2)})")
+
+    # print(f"{exp_n_dropped_fr}/{total_recorded_fr} dropped in total (expected: {round(expected_fr_ms, 2)}ms, 'dropped' if > {round(max_fr_dur_ms, 2)})")
+    print(f"{dropped_fr_trial_counter}/{total_n_trials} trials with bad timing (expected: {round(expected_fr_ms, 2)}ms, frame_tolerance_sec: +/- {round(frame_tolerance_sec, 2)})")
 
     # plot frame intervals across the experiment with discontinuous line
     for trial_x_vals, trial_fr_durs in zip(fr_counter_per_trial, fr_int_per_trial):
@@ -800,7 +802,7 @@ if record_fr_durs:
         plt.axvline(x=trial_line, color='silver', linestyle='dashed', zorder=0)
 
 
-    # add horizontal lines: green = expected frame duration, red = frame error tollerance
+    # add horizontal lines: green = expected frame duration, red = frame error tolerance
     plt.axhline(y=expected_fr_sec, color='green', linestyle='dashed')
     plt.axhline(y=max_fr_dur_sec, color='red', linestyle='dashed')
     plt.axhline(y=min_fr_dur_sec, color='red', linestyle='dashed')
@@ -815,10 +817,12 @@ if record_fr_durs:
     #     x0, x1 = loc_pair[0] - .5, loc_pair[1] - .5
     #     plt.axvspan(x0, x1, color='orange', alpha=0.15, zorder=0, linewidth=None)
 
-    plt.title(f"{monitor_name}, {fps}Hz, {expInfo['date']}\n{exp_n_dropped_fr}/{total_recorded_fr} "
+    # plt.title(f"{monitor_name}, {fps}Hz, {expInfo['date']}\n{exp_n_dropped_fr}/{total_recorded_fr} "
+    #           f"dropped fr (expected: {round(expected_fr_ms, 2)}ms, "
+    #           f"'dropped' if > {round(max_fr_dur_ms, 2)})")
+    plt.title(f"{monitor_name}, {fps}Hz, {expInfo['date']}\n{dropped_fr_trial_counter}/{total_n_trials} trials."
               f"dropped fr (expected: {round(expected_fr_ms, 2)}ms, "
-              f"'dropped' if > {round(max_fr_dur_ms, 2)})")
-
+              f"frame_tolerance_sec: +/- {round(frame_tolerance_sec, 2)})")
     fig_name = f'{participant_name}_{run_number}_frames.png'
     print(f"fig_name: {fig_name}")
     plt.savefig(os.path.join(save_dir, fig_name))
