@@ -24,11 +24,11 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'asus_cal'  # 'asus_cal', 'Nick_work_laptop', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18',
+monitor_name = 'Nick_work_laptop'  # 'asus_cal', 'Nick_work_laptop', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18',
 
 # Store info about the experiment session (numbers keep the order)
 expName = 'Exp1_Jan23_radial_v4'  # from the Builder filename that created this script
-expInfo = {'1. Participant': 'Nick_test',
+expInfo = {'1. Participant': 'Nick_fr_test',
            '2. Run_number': '1',
            '3. separation (pixels)': [5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 18, 36],
            '4. Probe duration in frames at 240hz': [2, 1, 50, 100],
@@ -63,7 +63,6 @@ expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
 For 1probe condition, use separation==99.
 For concurrent probes, use ISI==-1.
 '''
-# separations = [0, 1, 2, 3, 6, 18, 99]  # select from [0, 1, 2, 3, 6, 18, 99]
 separations = [this_sep_value]  # select from [0, 1, 2, 3, 6, 18, 99]
 print(f'separations: {separations}')
 # ISI_values = [-1, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
@@ -311,11 +310,15 @@ for step in range(n_trials_per_stair):
         repeat = True
         while repeat:
 
+            # clear any previous key presses
+            event.clearEvents(eventType='keyboard')
+
             # Trial, stair and step
             trial_number += 1
             actual_trials_inc_rpt += 1
             stair_idx = thisStair.extraInfo['stair_idx']
-            print(f"\n({actual_trials_inc_rpt}) trial_number: {trial_number}, stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
+            print(f"\n({actual_trials_inc_rpt}) trial_number: {trial_number}, "
+                  f"stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
 
             # condition (Separation, ISI)
             sep = sep_vals_list[stair_idx]
@@ -360,7 +363,7 @@ for step in range(n_trials_per_stair):
 
             # make negative separation column for comparing inward (contract) and outward (expand).
             if jump_dir == 'exp':
-                neg_sep = 0-sep
+                neg_sep = 0 - sep
                 if sep == 0:
                     neg_sep = -.1
             else:
@@ -506,7 +509,8 @@ for step in range(n_trials_per_stair):
             probe1.setOri(probe1_ori)
             probe2.setPos(probe2_pos)
             probe2.setOri(probe2_ori)
-            print(f"loc_marker: {[loc_x, loc_y]}, probe1_pos: {probe1_pos}, probe2_pos: {probe2_pos}. dff: {dist_from_fix}")
+            print(f"loc_marker: {[loc_x, loc_y]}, probe1_pos: {probe1_pos}, "
+                  f"probe2_pos: {probe2_pos}. dff: {dist_from_fix}")
 
 
             # VARIABLE FIXATION TIME
@@ -530,7 +534,8 @@ for step in range(n_trials_per_stair):
             t_ISI = t_probe_1 + isi_dur_fr
             t_probe_2 = t_ISI + p2_fr
             t_response = t_probe_2 + 10000 * fps  # ~40 seconds to respond
-            print(f"t_fixation: {t_fixation}, t_probe_1: {t_probe_1}, t_ISI: {t_ISI}, t_probe_2: {t_probe_2}, t_response: {t_response}\n")
+            print(f"t_fixation: {t_fixation}, t_probe_1: {t_probe_1}, t_ISI: {t_ISI}, "
+                  f"t_probe_2: {t_probe_2}, t_response: {t_response}\n")
 
             # I've moved the repat option to the top so repetitions don't appear in same corner
             # repeat the trial if [r] has been pressed
@@ -544,12 +549,16 @@ for step in range(n_trials_per_stair):
             # if (trial_number % take_break == 1) & (trial_number > 1):
             if (actual_trials_inc_rpt % take_break == 1) & (actual_trials_inc_rpt > 1):
                 print("\nTaking a break.\n")
-                # continueRoutine = False
-                breaks.text = break_text + f"\n{trial_number-1}/{total_n_trials} trials completed."
+
+                # Brighten screen to avoid dark adaptation
+                win.color = [0.8, 0.8, 0.8]
+                # todo: return screen to usual this_bgColour?
+
+                breaks.text = break_text + f"\n{trial_number - 1}/{total_n_trials} trials completed."
                 breaks.draw()
                 win.flip()
                 event.clearEvents(eventType='keyboard')
-                core.wait(secs=5)
+                core.wait(secs=break_dur)
                 event.clearEvents(eventType='keyboard')
                 breaks.text = break_text + "\n\nPress any key to continue."
                 breaks.draw()
@@ -763,6 +772,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('this_bgColour', this_bgColour)
         thisExp.addData('selected_fps', fps)
         thisExp.addData('actual_fps', actualFrameRate)
+        thisExp.addData('frame_tolerance_prop', frame_tolerance_prop)
         thisExp.addData('expName', expName)
         thisExp.addData('psychopy_version', psychopy_version)
         thisExp.addData('date', expInfo['date'])
@@ -789,7 +799,9 @@ if record_fr_durs:
     total_recorded_fr = len(all_fr_intervals)
 
     # print(f"{exp_n_dropped_fr}/{total_recorded_fr} dropped in total (expected: {round(expected_fr_ms, 2)}ms, 'dropped' if > {round(max_fr_dur_ms, 2)})")
-    print(f"{dropped_fr_trial_counter}/{total_n_trials} trials with bad timing (expected: {round(expected_fr_ms, 2)}ms, frame_tolerance_ms: +/- {round(frame_tolerance_ms, 2)})")
+    print(f"{dropped_fr_trial_counter}/{total_n_trials} trials with bad timing "
+          f"(expected: {round(expected_fr_ms, 2)}ms, "
+          f"frame_tolerance_ms: +/- {round(frame_tolerance_ms, 2)})")
 
     # plot frame intervals across the experiment with discontinuous line
     for trial_x_vals, trial_fr_durs in zip(fr_counter_per_trial, fr_int_per_trial):
@@ -801,7 +813,6 @@ if record_fr_durs:
     # plt.vlines(x=fr_v_lines, ymin=min(all_fr_intervals), ymax=max(all_fr_intervals), colors='silver', linestyles='dashed')
     for trial_line in fr_v_lines:
         plt.axvline(x=trial_line, color='silver', linestyle='dashed', zorder=0)
-
 
     # add horizontal lines: green = expected frame duration, red = frame error tolerance
     plt.axhline(y=expected_fr_sec, color='green', linestyle='dashed')

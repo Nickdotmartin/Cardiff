@@ -305,6 +305,9 @@ for step in range(n_trials_per_stair):
         repeat = True
         while repeat:
 
+            # clear any previous key presses
+            event.clearEvents(eventType='keyboard')
+
             # Trial, stair and step
             trial_number += 1
             actual_trials_inc_rpt += 1
@@ -534,11 +537,16 @@ for step in range(n_trials_per_stair):
             if (actual_trials_inc_rpt % take_break == 1) & (actual_trials_inc_rpt > 1):
                 print("\nTaking a break.\n")
                 # continueRoutine = False
+
+                # Brighten screen to avoid dark adaptation
+                win.color = [0.8, 0.8, 0.8]
+                # todo: return screen to usual this_bgColour?
+
                 breaks.text = break_text + f"\n{trial_number-1}/{total_n_trials} trials completed."
                 breaks.draw()
                 win.flip()
                 event.clearEvents(eventType='keyboard')
-                core.wait(secs=5)
+                core.wait(secs=break_dur)
                 event.clearEvents(eventType='keyboard')
                 breaks.text = break_text + "\n\nPress any key to continue."
                 breaks.draw()
@@ -750,6 +758,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('this_bgColour', this_bgColour)
         thisExp.addData('selected_fps', fps)
         thisExp.addData('actual_fps', actualFrameRate)
+        thisExp.addData('frame_tolerance_prop', frame_tolerance_prop)
         thisExp.addData('expName', expName)
         thisExp.addData('psychopy_version', psychopy_version)
         thisExp.addData('date', expInfo['date'])
