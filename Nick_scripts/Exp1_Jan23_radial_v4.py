@@ -6,10 +6,12 @@ import numpy as np
 import random
 import copy
 import matplotlib.pyplot as plt
+import matplotlib.lines as mlines
 from datetime import datetime
 from math import tan, sqrt
 from kestenSTmaxVal import Staircase
 from PsychoPy_tools import get_pixel_mm_deg_values
+from exp1a_psignifit_analysis import fig_colours
 
 
 '''
@@ -171,18 +173,18 @@ if abs(fps-actualFrameRate) > 5:
     raise ValueError(f"\nfps ({fps}) does not match actualFrameRate ({actualFrameRate}).")
 
 '''set the max and min frame duration to accept, trials with critial frames beyond these bound will be repeated.'''
-# frame error tolerance - stick with the default (around 20%)?
-# frame_tolerance_prop = .2
-# max_fr_dur_sec = expected_fr_sec + (expected_fr_sec * frame_tolerance_prop)
-# min_fr_dur_sec = expected_fr_sec - (expected_fr_sec * frame_tolerance_prop)
-# win.refreshThreshold = max_fr_dur_sec
-max_fr_dur_sec = win.refreshThreshold
+# frame error tolerance - default is approx 20% but seems to vary between runs(!), so set it manually.
+frame_tolerance_prop = .2
+max_fr_dur_sec = expected_fr_sec + (expected_fr_sec * frame_tolerance_prop)
+# max_fr_dur_sec = win.refreshThreshold
+max_fr_dur_ms = max_fr_dur_sec * 1000
+win.refreshThreshold = max_fr_dur_sec
 frame_tolerance_sec = max_fr_dur_sec - expected_fr_sec
 frame_tolerance_ms = frame_tolerance_sec * 1000
 frame_tolerance_prop = frame_tolerance_sec / expected_fr_sec
-min_fr_dur_sec = expected_fr_sec - frame_tolerance_sec
-max_fr_dur_ms = max_fr_dur_sec * 1000
-print(f"\nframe_tolerance_sec: {frame_tolerance_sec} ({frame_tolerance_prop}% of {expected_fr_sec} seconds)")
+min_fr_dur_sec = expected_fr_sec - (expected_fr_sec * frame_tolerance_prop)
+# min_fr_dur_sec = expected_fr_sec - frame_tolerance_sec
+print(f"\nframe_tolerance_sec: {frame_tolerance_sec} ({frame_tolerance_prop}% of {expected_fr_sec} sec)")
 print(f"max_fr_dur_sec ({100 + (100 * frame_tolerance_prop)}%): {max_fr_dur_sec} (or {max_fr_dur_ms}ms)")
 print(f"min_fr_dur_sec ({100 - (100 * frame_tolerance_prop)}%): {min_fr_dur_sec} (or {min_fr_dur_sec * 1000}ms)")
 
@@ -268,6 +270,7 @@ dropped_fr_trial_x_locs = []
 fr_int_per_trial = []
 recorded_fr_counter = 0
 fr_counter_per_trial = []
+cond_list = []
 
 
 # STAIRCASE
@@ -344,7 +347,7 @@ for step in range(n_trials_per_stair):
             # PROBE LOCATION
             # # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
             corner = random.choice([45, 135, 225, 315])
-            # corner = 315
+            # corner = 225
             corner_name = 'top_right'
             if corner == 135:
                 corner_name = 'top_left'
@@ -534,8 +537,8 @@ for step in range(n_trials_per_stair):
             t_ISI = t_probe_1 + isi_dur_fr
             t_probe_2 = t_ISI + p2_fr
             t_response = t_probe_2 + 10000 * fps  # ~40 seconds to respond
-            print(f"t_fixation: {t_fixation}, t_probe_1: {t_probe_1}, t_ISI: {t_ISI}, "
-                  f"t_probe_2: {t_probe_2}, t_response: {t_response}\n")
+            print(f"t_fixation: {t_fixation}, t_probe_1: {t_probe_1}, "
+                  f"t_ISI: {t_ISI}, t_probe_2: {t_probe_2}, t_response: {t_response}\n")
 
             # I've moved the repat option to the top so repetitions don't appear in same corner
             # repeat the trial if [r] has been pressed
@@ -669,16 +672,38 @@ for step in range(n_trials_per_stair):
                             trial_fr_intervals = win.frameIntervals
                             n_fr_recorded = len(trial_fr_intervals)
                             # trial_n_dropped_fr = win.nDroppedFrames
-                            # print(f"n_fr_recorded: {n_fr_recorded}, trial_n_dropped_fr: {trial_n_dropped_fr}, "
-                            #       f"trial_fr_intervals: {trial_fr_intervals}")
+                            print(f"n_fr_recorded: {n_fr_recorded}, trial_fr_intervals: {trial_fr_intervals}")
 
-                            # add to experiment info.
+                            # add to empty lists etc.
                             # exp_fr_intervals += trial_fr_intervals
                             fr_int_per_trial.append(trial_fr_intervals)
                             fr_counter_per_trial.append(list(range(recorded_fr_counter, recorded_fr_counter + len(trial_fr_intervals))))
                             recorded_fr_counter += len(trial_fr_intervals)
                             exp_n_fr_recorded_list.append(exp_n_fr_recorded_list[-1] + n_fr_recorded)
                             # exp_n_dropped_fr += trial_n_dropped_fr
+                            cond_list.append(thisStair.name)
+
+                            # get timings for each segment (probe1, ISI, probe2).
+                            fr_diff_ms = [(expected_fr_sec - i) * 1000 for i in trial_fr_intervals]
+                            print(f"fr_diff_ms: {fr_diff_ms}, sum: {sum(fr_diff_ms)}")
+
+                            p1_durs = fr_diff_ms[:2]
+                            p1_diff = sum(p1_durs)
+                            if ISI > 0:
+                                isi_durs = fr_diff_ms[2:-2]
+                            else:
+                                isi_durs = []
+                            isi_diff = sum(isi_durs)
+
+                            if ISI > -1:
+                                p2_durs = fr_diff_ms[-2:]
+                            else:
+                                p2_durs = []
+                            p2_diff = sum(p2_durs)
+
+                            print(f"\np1_durs: {p1_durs}, p1_diff: {p1_diff}\n"
+                                  f"isi_durs: {isi_durs}, isi_diff: {isi_diff}\n"
+                                  f"p2_durs: {p2_durs}, p2_diff: {p2_diff}\n")
 
                             # check for dropped frames (or frames that are too short)
                             # if timings are bad, repeat trial
@@ -767,6 +792,9 @@ for step in range(n_trials_per_stair):
         thisExp.addData('orientation', orientation)
         thisExp.addData('vary_fixation', vary_fixation)
         thisExp.addData('t_fixation', t_fixation)
+        thisExp.addData('p1_diff', p1_diff)
+        thisExp.addData('isi_diff', isi_diff)
+        thisExp.addData('p2_diff', p2_diff)
         thisExp.addData('monitor_name', monitor_name)
         thisExp.addData('this_colourSpace', this_colourSpace)
         thisExp.addData('this_bgColour', this_bgColour)
@@ -799,25 +827,41 @@ if record_fr_durs:
     total_recorded_fr = len(all_fr_intervals)
 
     # print(f"{exp_n_dropped_fr}/{total_recorded_fr} dropped in total (expected: {round(expected_fr_ms, 2)}ms, 'dropped' if > {round(max_fr_dur_ms, 2)})")
+    # print(f"{exp_n_dropped_fr}/{total_recorded_fr} dropped in total (expected: {round(expected_fr_ms, 2)}ms, 'dropped' if > {round(max_fr_dur_ms, 2)})")
     print(f"{dropped_fr_trial_counter}/{total_n_trials} trials with bad timing "
           f"(expected: {round(expected_fr_ms, 2)}ms, "
           f"frame_tolerance_ms: +/- {round(frame_tolerance_ms, 2)})")
 
-    # plot frame intervals across the experiment with discontinuous line
-    for trial_x_vals, trial_fr_durs in zip(fr_counter_per_trial, fr_int_per_trial):
-        plt.plot(trial_x_vals, trial_fr_durs, color='#1f77b4')
+    '''set colours for lines on plot.'''
+    # get set of colours
+    my_colours = fig_colours(n_stairs, alternative_colours=False)
+    # associate colours with conditions
+    colour_dict = {k: v for (k, v) in zip(stair_names_list, my_colours)}
+    # make list of colours based on order of conditions
+    cond_colour_list = [colour_dict[i] for i in cond_list]
 
-    # add vertical lines to signify trials
-    print(f"exp_n_fr_recorded_list: {exp_n_fr_recorded_list}")
+    # plot frame intervals across the experiment with discontinuous line, coloured for each cond
+    for trial_x_vals, trial_fr_durs, colour in zip(fr_counter_per_trial, fr_int_per_trial, cond_colour_list):
+        plt.plot(trial_x_vals, trial_fr_durs, color=colour)
+
+    # add legend with colours per condition
+    legend_handles_list = []
+    for cond in stair_names_list:
+        leg_handle = mlines.Line2D([], [], color=colour_dict[cond], label=cond,
+                                   marker='.', linewidth=.5, markersize=4)
+        legend_handles_list.append(leg_handle)
+
+    plt.legend(handles=legend_handles_list, fontsize=6, title='conditions', framealpha=.5)
+
+    # add vertical lines to signify trials, shifted back so trials fall between lines
     fr_v_lines = [i - .5 for i in exp_n_fr_recorded_list]
-    # plt.vlines(x=fr_v_lines, ymin=min(all_fr_intervals), ymax=max(all_fr_intervals), colors='silver', linestyles='dashed')
     for trial_line in fr_v_lines:
         plt.axvline(x=trial_line, color='silver', linestyle='dashed', zorder=0)
 
     # add horizontal lines: green = expected frame duration, red = frame error tolerance
-    plt.axhline(y=expected_fr_sec, color='green', linestyle='dashed')
-    plt.axhline(y=max_fr_dur_sec, color='red', linestyle='dashed')
-    plt.axhline(y=min_fr_dur_sec, color='red', linestyle='dashed')
+    plt.axhline(y=expected_fr_sec, color='grey', linestyle='dotted', alpha=.5)
+    plt.axhline(y=max_fr_dur_sec, color='red', linestyle='dotted', alpha=.5)
+    plt.axhline(y=min_fr_dur_sec, color='red', linestyle='dotted', alpha=.5)
 
     # shade trials that were repeated: red = bad timing, orange = user repeat
     for loc_pair in dropped_fr_trial_x_locs:
@@ -829,16 +873,13 @@ if record_fr_durs:
     #     x0, x1 = loc_pair[0] - .5, loc_pair[1] - .5
     #     plt.axvspan(x0, x1, color='orange', alpha=0.15, zorder=0, linewidth=None)
 
-    # plt.title(f"{monitor_name}, {fps}Hz, {expInfo['date']}\n{exp_n_dropped_fr}/{total_recorded_fr} "
-    #           f"dropped fr (expected: {round(expected_fr_ms, 2)}ms, "
-    #           f"'dropped' if > {round(max_fr_dur_ms, 2)})")
     plt.title(f"{monitor_name}, {fps}Hz, {expInfo['date']}\n{dropped_fr_trial_counter}/{total_n_trials} trials."
               f"dropped fr (expected: {round(expected_fr_ms, 2)}ms, "
               f"frame_tolerance_ms: +/- {round(frame_tolerance_ms, 2)})")
     fig_name = f'{participant_name}_{run_number}_frames.png'
     print(f"fig_name: {fig_name}")
     plt.savefig(os.path.join(save_dir, fig_name))
-    # plt.show()
+    plt.show()
     plt.close()
 
 
