@@ -1436,6 +1436,155 @@ def plot_8_sep_thr(all_thr_df, thr_col='newLum', exp_ave=False, fig_title=None,
 
     return fig
 
+def plot_8_sep_thr_w_scatter(all_thr_df, thr_col='newLum', exp_ave=False, fig_title=None,
+                             save_name=None, save_path=None, verbose=True):
+    """
+    Function to make a page with seven axes showing the threshold for each separation,
+    and an eighth plot showing all separations.
+
+    :param all_thr_df: Dataframe with thresholds from multiple runs or participants
+                        (e.g., MASTER_thresholds.csv or MASTER_exp_thr.csv)
+    :param exp_ave: Use True for experiment thr from multiple participants or
+                    False for thr from multiple runs from a single participant.
+    :param fig_title: Title for figure.
+    :param save_name: File name to save plot.
+    :param save_path: Directory to save plot into.
+    :param verbose: print progress to screen,
+
+    :return: Figure
+    """
+    print('\n*** running plot_8_sep_thr()***')
+    if type(all_thr_df) is str:
+        if os.path.isfile(all_thr_df):
+            all_thr_df = pd.read_csv(all_thr_df)
+    # Average over experiment or participant (with or without participant name)
+    if exp_ave is True:
+        ave_over = 'Exp'
+        long_df_idx_col = 'participant'
+    elif type(exp_ave) == str:
+        ave_over = exp_ave
+        long_df_idx_col = 'stack'
+    else:
+        ave_over = 'P'
+        long_df_idx_col = 'stack'
+
+
+    if not fig_title:
+        fig_title = f'{ave_over} average thresholds per separation'
+
+    if verbose:
+        print(f'input: all_thr_df: \n{all_thr_df}')
+
+    # just_thr_df = all_thr_df.loc[:, 'ISI 999':]
+    if 'Concurrent' in list(all_thr_df.columns):
+        just_thr_df = all_thr_df.loc[:, 'Concurrent':]
+    # elif 'ISI_-1' in list(all_thr_df.columns):
+    else:
+        just_thr_df = all_thr_df.iloc[:, 2:]
+
+    min_thr = just_thr_df.min().min()
+    max_thr = just_thr_df.max().max()
+    if verbose:
+        print(f'just_thr_df:\n{just_thr_df}')
+        print(f'min_thr: {min_thr}; max_thr: {max_thr}')
+
+    # convert wide_df to long for getting means and standard error.
+    long_fig_df = make_long_df(all_thr_df, thr_col=thr_col, idx_col=long_df_idx_col)
+    if verbose:
+        print(f'long_fig_df:\n{long_fig_df}')
+
+    sep_list = sorted(list(long_fig_df['separation'].unique()))
+    isi_names_list = sorted(list(long_fig_df['ISI'].unique()))
+    print(f'isi_labels:\n{isi_names_list}')
+    if type(isi_names_list[0]) == str:
+        if 'ISI ' in isi_names_list[0]:
+            isi_vals_list = [int(i.strip('ISI ')) for i in isi_names_list]
+        elif 'ISI_' in isi_names_list[0]:
+            isi_vals_list = [int(i.strip('ISI_')) for i in isi_names_list]
+    isi_vals_list = sorted(isi_vals_list)
+    isi_vals_list = ['conc' if i == -1 else i for i in isi_vals_list]
+
+
+    my_colours = fig_colours(len(sep_list))
+
+    fig, axes = plt.subplots(nrows=2, ncols=4, figsize=(12, 6))
+    ax_counter = 0
+
+    for row_idx, row in enumerate(axes):
+        for col_idx, ax in enumerate(row):
+
+            # for the first seven plots...
+            if ax_counter < len(sep_list):
+
+                fig.suptitle(fig_title)
+                this_sep = sep_list[ax_counter]
+                sep_df = long_fig_df[long_fig_df['separation'] == this_sep]
+
+                print(f"sep_df:\n{sep_df}")
+
+                # sns.violinplot(data=sep_df, x='ISI', y=thr_col,
+                #                ax=axes[row_idx, col_idx],
+                #                color=my_colours[ax_counter],
+                #                inner='point',
+                #                alpha=.5)
+
+                sns.stripplot(data=sep_df, x='ISI', y=thr_col,
+                               ax=axes[row_idx, col_idx],
+                               color=my_colours[ax_counter],
+                               alpha=.5)
+
+                sns.pointplot(ax=axes[row_idx, col_idx],
+                              data=sep_df, x='ISI', y=thr_col,
+                              estimator=np.mean, ci=68,
+                              markers='.',
+                              errwidth=1,
+                              color=my_colours[ax_counter],
+                              capsize=.1)
+
+                if this_sep == 20:
+                    this_sep = '1probe'
+
+                ax.set_title(f'Separation = {this_sep}')
+                ax.set_xticklabels(isi_vals_list)
+                ax.set_ylim([min_thr - 2, max_thr + 2])
+            elif ax_counter == len(sep_list):
+
+                sns.stripplot(data=long_fig_df, x='ISI', y=thr_col,
+                               hue='separation',
+                               dodge=True,
+                               ax=axes[row_idx, col_idx],
+                               palette=my_colours,
+                               alpha=.5)
+
+                sns.pointplot(ax=axes[row_idx, col_idx],
+                              data=long_fig_df, x='ISI', y=thr_col,
+                              hue='separation',
+                              estimator=np.mean, ci=68,
+                              markers='.',
+                              errwidth=1,
+                              capsize=.1,
+                              palette=my_colours)
+
+                ax.set_ylim([min_thr - 2, max_thr + 2])
+                ax.set_xticklabels(isi_vals_list)
+                ax.set_title(f'All Separation conditions')
+
+                # no legend (I struggled to find this command for a while)
+                ax.legend([], [], frameon=False)
+
+            ax_counter += 1
+
+    plt.tight_layout()
+
+    plt.show()
+
+    if save_path:
+        if save_name:
+            plt.savefig(os.path.join(save_path, save_name))
+
+    print('\n*** finished plot_8_sep_thr()***')
+
+    return fig
 
 
 def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=True):
