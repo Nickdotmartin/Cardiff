@@ -6,9 +6,8 @@ from rad_flow_psignifit_analysis import a_data_extraction, b3_plot_staircase
 from rad_flow_psignifit_analysis import c_plots, d_average_participant
 from rad_flow_psignifit_analysis import make_average_plots, e_average_exp_data
 from python_tools import switch_path
-# from exp1a_psignifit_analysis import a_data_extraction, b3_plot_staircase, c_plots, \
-#     d_average_participant, e_average_exp_data, make_average_plots
-from exp1a_psignifit_analysis import plt_heatmap_row_col, make_average_plots, plot_8_sep_thr_w_scatter
+
+from exp1a_psignifit_analysis import plt_heatmap_row_col, make_average_plots
 
 
 exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp1_Jan23_radial_v4"
@@ -51,129 +50,98 @@ for p_idx, participant_name in enumerate(participant_list):
 
         print(f'\nrun_idx {run_idx+1}: running analysis for '
               f'{participant_name}, {run_dir}, {participant_name}_{r_idx_plus}')
-        # save_path = os.path.join(root_path, run_dir, 'sep_5')
-        #
-        # # don't delete this (p_name = participant_name),
-        # # needed to ensure names go name1, name2, name3 not name1, name12, name123
-        # p_name = participant_name
-        #
-        # '''a'''
-        # # # I don't need data extraction as all ISIs are in same df.
-        # p_name = f'{participant_name}_output'  # use this one
-        # try:
-        #     run_data_df = pd.read_csv(os.path.join(save_path, f'{p_name}.csv'))
-        # except:
-        #     p_name = f'{participant_name}_{r_idx_plus}_output'
-        #     run_data_df = pd.read_csv(os.path.join(save_path, f'{p_name}.csv'))
-        #
-        # run_data_df = pd.read_csv(os.path.join(save_path, f'{p_name}.csv'))
-        # run_data_df = run_data_df.sort_values(by=['stair', 'trial_number'])
-        # print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
-        #
-        # # # check for old column names and add new columns
-        # col_names = run_data_df.columns.to_list()
-        # # change probes_type to cond_type
-        # # if 'probes_type' in col_names:
-        # #     run_data_df.rename(columns={'probes_type': 'cond_type'}, inplace=True)
-        # #     print('\nrenamed probes_type to cond_type')
-        #
-        # #############
-        # # # todo: sanity check for Simon, swap condition labels.
-        # # orig_jump_dirs = run_data_df['jump_dir'].to_list()
-        # # swapped_jump_dirs = ['cont' if i == 'exp' else 'exp' for i in orig_jump_dirs]
-        # # print(f'\norig_jump_dirs: {orig_jump_dirs}')
-        # # run_data_df['jump_dir'] = swapped_jump_dirs
-        # # print(f"swapped_jump_dirs: {run_data_df['jump_dir'].to_list()}")
-        # #
-        # # orig_cond_type = run_data_df['cond_type'].to_list()
-        # # swapped_cond_type = [-1 if i == 1 else 1 for i in orig_cond_type]
-        # # print(f'orig_cond_type: {orig_cond_type}')
-        # # run_data_df['cond_type'] = swapped_cond_type
-        # # print(f"swapped_cond_type: {run_data_df['cond_type'].to_list()}")
-        # #
-        # # swapped_stair_names = []
-        # # print(f"orig_stair_names: {run_data_df['stair_name'].to_list()}")
-        # # for stair_name in run_data_df['stair_name'].to_list():
-        # #     if stair_name[:4] == 'cont':
-        # #         new_stair_name = 'exp' + stair_name[4:]
-        # #     else:
-        # #         new_stair_name = 'cont' + stair_name[3:]
-        # #     swapped_stair_names.append(new_stair_name)
-        # # run_data_df['stair_name'] = swapped_stair_names
-        # # print(f"swapped stair_names: {run_data_df['stair_name'].to_list()}")
-        # #############
-        #
-        #
-        # if 'cond_type' not in col_names:
-        #     if 'jump_dir' in col_names:
-        #         if 'outward' in run_data_df['jump_dir'].to_list():
-        #             cond_type_list = [-1 if x == 'outward' else 1 for x in run_data_df['jump_dir'].to_list()]
-        #         elif 'cont' in run_data_df['jump_dir'].to_list():
-        #             cond_type_list = [-1 if x == 'exp' else 1 for x in run_data_df['jump_dir'].to_list()]
-        #         run_data_df['cond_type'] = cond_type_list
-        #         # run_data_df.rename(columns={'jump_dir': 'cond_type'}, inplace=True)
-        #
-        # # # todo: should be able to delete this now I've added neg_sep to exp scripts.
-        # # add neg sep column to make batman plots
-        # if 'neg_sep' not in col_names:
-        #     def make_neg_sep(df):
-        #         if (df.cond_type in [-1]) and (df.separation == 0.0):
-        #             return -.1
-        #         elif df.cond_type in [-1]:
-        #             return 0 - df.separation
-        #         else:
-        #             return df.separation
-        #     run_data_df.insert(7, 'neg_sep', run_data_df.apply(make_neg_sep, axis=1))
-        #     print('\nadded neg_sep col')
-        #     print(run_data_df['neg_sep'].to_list())
-        #
-        #
-        # if 'Unnamed: 0' in col_names:
-        #     run_data_df.drop('Unnamed: 0', axis=1, inplace=True)
-        #
-        # print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
-        #
-        # # todo: save csv?
-        # # run_data_df.to_csv(os.path.join(save_path, f'{p_name}.csv'), index=False)
-        #
-        # # # # get cond details for this exp
-        # isi_list = run_data_df['ISI'].unique().tolist()
-        # separation_list = run_data_df['separation'].unique().tolist()
-        # neg_sep_list = run_data_df['neg_sep'].unique().tolist()
-        # jump_dir_list = run_data_df['jump_dir'].unique().tolist()
-        # cond_type_list = run_data_df['cond_type'].unique().tolist()
-        # plot_names_list = ['sep5_exp' if i == -1 else 'sep5_cont' for i in cond_type_list]
-        # print(f'isi_list: {isi_list}')
-        # print(f'separation_list: {separation_list}')
-        # print(f'neg_sep_list: {neg_sep_list}')
-        # print(f'jump_dir_list: {jump_dir_list}')
-        # print(f'cond_type_list: {cond_type_list}')
-        # print(f'plot_names_list: {plot_names_list}')
-        #
-        # cols_to_add_dict = {'neg_sep': neg_sep_list,
-        #                     'jump_dir': jump_dir_list,
-        #                     'plot_names': plot_names_list}
-        #
-        # print(f'cols_to_add_dict:')
-        # for k, v in cols_to_add_dict.items():
-        #     print(k, v)
-        # thr_df = get_psig_thr_w_hue(root_path=root_path,
-        #                             p_run_name=run_dir,
-        #                             output_df=run_data_df,
-        #                             n_bins=9, q_bins=True,
-        #                             thr_col='probeLum',
-        #                             sep_col='separation', sep_list=separation_list,
-        #                             isi_col='ISI', isi_list=isi_list,
-        #                             hue_col='cond_type', hue_list=cond_type_list,
-        #                             trial_correct_col='trial_response',
-        #                             conf_int=True,
-        #                             thr_type='Bayes',
-        #                             plot_both_curves=False,
-        #                             cols_to_add_dict=cols_to_add_dict,
-        #                             show_plots=False,
-        #                             save_plots=False,
-        #                             verbose=verbose)
-        # print(f'thr_df:\n{thr_df}')
+        save_path = os.path.join(root_path, run_dir, 'sep_5')
+
+        # don't delete this (p_name = participant_name),
+        # needed to ensure names go name1, name2, name3 not name1, name12, name123
+        p_name = participant_name
+
+        '''a'''
+        # # I don't need data extraction as all ISIs are in same df.
+        p_name = f'{participant_name}_output'  # use this one
+        try:
+            run_data_df = pd.read_csv(os.path.join(save_path, f'{p_name}.csv'))
+        except:
+            p_name = f'{participant_name}_{r_idx_plus}_output'
+            run_data_df = pd.read_csv(os.path.join(save_path, f'{p_name}.csv'))
+
+        run_data_df = pd.read_csv(os.path.join(save_path, f'{p_name}.csv'))
+        run_data_df = run_data_df.sort_values(by=['stair', 'trial_number'])
+        print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
+
+        # # check for old column names and add new columns
+        col_names = run_data_df.columns.to_list()
+
+        if 'cond_type' not in col_names:
+            if 'jump_dir' in col_names:
+                if 'outward' in run_data_df['jump_dir'].to_list():
+                    cond_type_list = [-1 if x == 'outward' else 1 for x in run_data_df['jump_dir'].to_list()]
+                elif 'cont' in run_data_df['jump_dir'].to_list():
+                    cond_type_list = [-1 if x == 'exp' else 1 for x in run_data_df['jump_dir'].to_list()]
+                run_data_df['cond_type'] = cond_type_list
+                # run_data_df.rename(columns={'jump_dir': 'cond_type'}, inplace=True)
+
+        # # todo: should be able to delete this now I've added neg_sep to exp scripts.
+        # add neg sep column to make batman plots
+        if 'neg_sep' not in col_names:
+            def make_neg_sep(df):
+                if (df.cond_type in [-1]) and (df.separation == 0.0):
+                    return -.1
+                elif df.cond_type in [-1]:
+                    return 0 - df.separation
+                else:
+                    return df.separation
+            run_data_df.insert(7, 'neg_sep', run_data_df.apply(make_neg_sep, axis=1))
+            print('\nadded neg_sep col')
+            print(run_data_df['neg_sep'].to_list())
+
+
+        if 'Unnamed: 0' in col_names:
+            run_data_df.drop('Unnamed: 0', axis=1, inplace=True)
+
+        print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
+
+        # todo: save csv?
+        # run_data_df.to_csv(os.path.join(save_path, f'{p_name}.csv'), index=False)
+
+        # # # get cond details for this exp
+        isi_list = run_data_df['ISI'].unique().tolist()
+        separation_list = run_data_df['separation'].unique().tolist()
+        neg_sep_list = run_data_df['neg_sep'].unique().tolist()
+        jump_dir_list = run_data_df['jump_dir'].unique().tolist()
+        cond_type_list = run_data_df['cond_type'].unique().tolist()
+        plot_names_list = ['sep5_exp' if i == -1 else 'sep5_cont' for i in cond_type_list]
+        print(f'isi_list: {isi_list}')
+        print(f'separation_list: {separation_list}')
+        print(f'neg_sep_list: {neg_sep_list}')
+        print(f'jump_dir_list: {jump_dir_list}')
+        print(f'cond_type_list: {cond_type_list}')
+        print(f'plot_names_list: {plot_names_list}')
+
+        cols_to_add_dict = {'neg_sep': neg_sep_list,
+                            'jump_dir': jump_dir_list,
+                            'plot_names': plot_names_list}
+
+        print(f'cols_to_add_dict:')
+        for k, v in cols_to_add_dict.items():
+            print(k, v)
+        thr_df = get_psig_thr_w_hue(root_path=root_path,
+                                    p_run_name=run_dir,
+                                    output_df=run_data_df,
+                                    n_bins=9, q_bins=True,
+                                    thr_col='probeLum',
+                                    sep_col='separation', sep_list=separation_list,
+                                    isi_col='ISI', isi_list=isi_list,
+                                    hue_col='cond_type', hue_list=cond_type_list,
+                                    trial_correct_col='trial_response',
+                                    conf_int=True,
+                                    thr_type='Bayes',
+                                    plot_both_curves=False,
+                                    cols_to_add_dict=cols_to_add_dict,
+                                    show_plots=False,
+                                    save_plots=False,
+                                    verbose=verbose)
+        print(f'thr_df:\n{thr_df}')
 
     # run_folder_names = ['Nick_1', 'Nick_5', 'Nick_6']
     '''d participant averages'''
@@ -194,30 +162,6 @@ for p_idx, participant_name in enumerate(participant_list):
         err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
     exp_ave = False
 
-    # all_df = pd.read_csv(all_df_path)
-    # p_ave_df = pd.read_csv(p_ave_path)
-    # err_df = pd.read_csv(err_path)
-    # #
-    # # df_list = [all_df, p_ave_df, err_df]
-    # # df_path_list = [all_df_path, p_ave_path, err_path]
-    # # for idx, df in enumerate(df_list):
-    # #     col_names = df.columns.to_list()
-    # #     if 'jump_dir' not in col_names:
-    # #         jump_dir_list = ['exp' if i == -1 else 'cont' for i in df['cond_type'].to_list()]
-    # #     #     df.insert(3, 'jump_dir', jump_dir_list)
-    # #     # if 'plot_sep_name' not in col_names:
-    # #     #     plot_name_list = ['sep 5\nexp' if i == -1 else 'sep 5\ncont' for i in df['cond_type'].to_list()]
-    # #     #     df.insert(4, 'plot_sep_name', plot_name_list)
-    # #
-    # #     if 'plot_sep_name' in col_names:
-    # #         df.drop('plot_sep_name', axis=1, inplace=True)
-    # #
-    # #     if 'Unnamed: 0' in col_names:
-    # #         df.drop('Unnamed: 0', axis=1, inplace=True)
-    # #     df.to_csv(df_path_list[idx], index=False)
-    # #         # run_data_df.rename(columns={'jump_dir': 'cond_type'}, inplace=True)
-
-
     all_df = pd.read_csv(all_df_path)
     separation_list = all_df['separation'].unique().tolist()
 
@@ -235,14 +179,10 @@ for p_idx, participant_name in enumerate(participant_list):
                            ave_df_path=p_ave_path,
                            error_bars_path=err_path,
                            thr_col='probeLum',
-                           stair_names_col='neg_sep',
-                           cond_type_col='jump_dir',
-                           # cond_type_order=[''],
                            n_trimmed=trim_n,
                            ave_over_n=len(run_folder_names),
                            exp_ave=participant_name,
                            isi_name_list=isi_cols_list,
-                           # isi_vals_list=isi_cols_list,
                            show_plots=True, verbose=True)
 
     else:
@@ -257,12 +197,9 @@ for p_idx, participant_name in enumerate(participant_list):
         df_path_list = [all_df_path, p_ave_path, err_path]
         for idx, df in enumerate(df_list):
             col_names = df.columns.to_list()
-            # if 'jump_dir' not in col_names:
-            #     jump_dir_list = ['exp' if i == -1 else 'cont' for i in df['cond_type'].to_list()]
-            #     df.insert(3, 'jump_dir', jump_dir_list)
+
             if 'plot_sep_name' not in col_names:
                 plot_sep_name_list = ['sep -5\nexp' if i == -1 else 'sep +5\ncont' for i in df['cond_type'].to_list()]
-                # df.insert(0, 'plot_sep_name', plot_sep_name_list)
 
             if 'separation' in col_names:
                 df.drop('separation', axis=1, inplace=True)
@@ -287,10 +224,7 @@ for p_idx, participant_name in enumerate(participant_list):
                 df.drop('Unnamed: 0', axis=1, inplace=True)
 
             df.to_csv(df_path_list[idx], index=False)
-                # run_data_df.rename(columns={'jump_dir': 'cond_type'}, inplace=True)
 
-            # plot_sep_name_list = df['plot_sep_name'].unique().tolist()
-            # neg_sep_list = df['neg_sep'].unique().tolist()
             col_names = df.columns.to_list()
             isi_cols_list = [i for i in col_names if 'ISI_' in i]
             print(f"plot_sep_name_list: {plot_sep_name_list}")
@@ -298,8 +232,6 @@ for p_idx, participant_name in enumerate(participant_list):
             print(f"col_names: {col_names}")
             print(f"isi_cols_list: {isi_cols_list}")
 
-        # plot_8_sep_thr_w_scatter(all_thr_df=all_df, exp_ave=exp_ave, fig_title=None,
-        #                save_name=None, save_path=None, verbose=True)
 
         make_average_plots(all_df_path=all_df_path,
                            ave_df_path=p_ave_path,
@@ -317,20 +249,24 @@ for p_idx, participant_name in enumerate(participant_list):
                            heatmap_annot_fmt='{:.0f}',
                            show_plots=True, verbose=True)
 
-#
-#
-# print(f'exp_path: {exp_path}')
+
+# todo: not tested this code yet.
+# print(f'\nexp_path: {exp_path}')
 # # participant_list = ['Nick', 'Simon']
 # print('\nget exp_average_data')
 # # trim_n = None
 # e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
-#                    exp_type='missing_probe',
+#                    exp_type='radial',
 #                    error_type='SE', n_trimmed=trim_n, verbose=True)
 #
 #
 # all_df_path = os.path.join(exp_path, "MASTER_exp_thr.csv")
 # exp_ave_path = os.path.join(exp_path, "MASTER_exp_ave_thr.csv")
 # err_path = os.path.join(exp_path, "MASTER_ave_thr_error_SE.csv")
+#
+# all_df = pd.read_csv(all_df_path)
+# cond_type_list = all_df['cond_type'].unique().tolist()
+#
 #
 # make_average_plots(all_df_path=all_df_path,
 #                    ave_df_path=exp_ave_path,

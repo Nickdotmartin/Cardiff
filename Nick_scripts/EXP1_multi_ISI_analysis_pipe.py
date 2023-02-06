@@ -22,7 +22,7 @@ if running_on_laptop():
 exp_path = convert_path1
 
 print(f"exp_path: {exp_path}")
-participant_list = ['Nick_sep0123', 'Nick_sep45', 'Nick_sep67', 'Nick_sep89']  #, 'Nick_strip', 'Nick_sep4_strip']  # 'Simon', 'Nick'
+participant_list = ['Simon']  # 'Nick_sep0123', 'Nick_sep45', 'Nick_sep67', 'Nick_sep89' 'Simon', 'Nick'
 # participant_list = ['p1', 'p2']
 split_1probe = False
 
@@ -245,9 +245,9 @@ print(f'exp_path: {exp_path}')
 print('\nget exp_average_data')
 print(f'trim_list: {trim_list}')
 
-# participant_list = ['Nick', 'Nick_sep0123']
-# trim_list = [2, 2, 2, 2]
-# # lum_col = 'probeLum'
+participant_list = ['Nick_sep0123', 'Nick_sep45', 'Nick_sep67', 'Nick_sep89', 'Simon']
+trim_list = [2, 2, 2, 2, 2]
+# lum_col = 'probeLum'
 
 e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
                    error_type='SE', n_trimmed=trim_list, verbose=True)
@@ -270,7 +270,6 @@ print(f"isi_name_list:\n{isi_name_list}")
 print(f"isi_vals_list:\n{isi_vals_list}")
 print(f"sep_vals_list:\n{sep_vals_list}")
 print(f"sep_name_list:\n{sep_name_list}")
-
 
 make_average_plots(all_df_path=all_df_path,
                    ave_df_path=exp_ave_path,

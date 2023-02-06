@@ -283,40 +283,37 @@ def fig_colours(n_conditions, alternative_colours=False):
     return my_colours
 
 
-def multi_plot_shape(n_figs, min_rows=1):
+def get_n_rows_n_cols(n_plots):
     """
-    Function to make multi-plot figure with right number of rows and cols,
-    to fit n_figs, but with the smallest shape for landscape.
-    :param n_figs: Number of plots I need to make.
-    :param min_rows: Minimum number of rows (sometimes won't work with just 1)
+    Function to get the optimal configuration of subplot (upto n=25).
+    Ideally plots will be in a square arrangement, or in a rectangle.
+    Start by adding columns to each row upto 4 columns, then add rows.
 
+    :param n_plots: number of plots
     :return: n_rows, n_cols
     """
-    n_rows = 1
-    if n_figs > 3:
-        n_rows = 2
-    if n_figs > 8:
-        n_rows = 3
-    if n_figs > 12:
-        n_rows = 4
 
-    if n_rows < min_rows:
-        n_rows = min_rows
+    if n_plots > 25:
+        raise ValueError(f"\t\tToo many plots for this function: {n_plots}\n\n")
 
-    td = n_figs // n_rows
-    mod = n_figs % n_rows
-    n_cols = td + mod
+    # ideally have no more than 4 rows, unless more than 16 plots
+    if n_plots <= 16:
+        row_whole_divide = n_plots // 4  # how many times this number of plots goes into 4.
+        row_remainder = n_plots % 4  # remainder after the above calculation.
+        if row_remainder == 0:
+            n_rows = row_whole_divide
+        else:
+            n_rows = row_whole_divide + 1
+    else:
+        n_rows = 5
 
-    # there are some weird results, this helps catch 11, 14, 15 etc. from going mad.
-    if n_rows * (n_cols - 1) > n_figs:
-        n_cols = n_cols - 1
-        if n_rows * (n_cols - 1) > n_figs:
-            n_cols = n_cols - 1
-    # plots = n_rows * n_cols
-    # print(f"{n_figs}: n_rows: {n_rows}, td: {td}, mod: {mod}, n_cols: {n_cols}, plots: {plots}, ")
-
-    if n_figs > 20:
-        raise ValueError('too many plots for one page!')
+    # ideally have no more than 4 cols, unless more than 20 plots
+    col_whole_divide = n_plots // n_rows  # how many times this number of plots goes into n_rows.
+    col_remainder = n_plots % n_rows  # remainder after the above calculation.
+    if col_remainder == 0:
+        n_cols = col_whole_divide
+    else:
+        n_cols = col_whole_divide + 1
 
     return n_rows, n_cols
 
@@ -1387,7 +1384,9 @@ def multi_batman_plots(mean_df, thr1_df, thr2_df,
 
     # make plots
     my_colours = fig_colours(len(isi_name_list))
-    n_rows, n_cols = multi_plot_shape(len(isi_name_list), min_rows=2)
+    # n_rows, n_cols = multi_plot_shape(len(isi_name_list), min_rows=2)
+    n_rows, n_cols = get_n_rows_n_cols((len(isi_name_list)))
+
     fig, axes = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(12, 6))
     print(f'\nplotting {n_rows} rows and {n_cols} cols for {len(axes)} plots')
 
@@ -1630,10 +1629,15 @@ def multi_pos_sep_per_isi(ave_thr_df, error_df,
     else:
         x_values = pos_sep_list
 
+    # todo: update make colours to allow me to use tab20 to give me 10 pairs of colours.
+    #  Check that they are correctly arranged so that inward and outward motion colours go together for each isi.
+
     # make plots
     my_colours = fig_colours(len(isi_names_list))
-    n_rows, n_cols = multi_plot_shape(len(isi_names_list), min_rows=2)
-    fig, axes = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(12, 6))
+    # n_rows, n_cols = multi_plot_shape(len(isi_names_list), min_rows=2)
+    n_rows, n_cols = get_n_rows_n_cols((len(isi_names_list)))
+
+    fig, axes = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(n_rows * 3, n_cols * 3))
     print(f'\nplotting {n_rows} rows and {n_cols} cols for {len(axes)} plots')
 
     if fig_title is not None:
@@ -1651,12 +1655,19 @@ def multi_pos_sep_per_isi(ave_thr_df, error_df,
 
                     this_isi = isi_names_list[ax_counter]
 
+                    # plot each datapoint for congruent
+
+                    # plot each datapoint for incongruent
+
+
+                    # plots means and errors for congruent
                     ax.errorbar(x=x_values, y=cong_df[this_isi],
                                 yerr=cong_err_df[this_isi],
                                 marker=None, lw=2, elinewidth=.7,
                                 capsize=cap_size,
                                 color=my_colours[ax_counter])
 
+                    # plots means and errors for incongruent
                     ax.errorbar(x=x_values, y=incong_df[this_isi],
                                 yerr=incong_err_df[this_isi],
                                 linestyle='dashed',
@@ -2320,7 +2331,9 @@ def b3_plot_stair_sep0(all_data_path, thr_col='newLum', resp_col='trial_response
 
     # initialise 8 plot figure - last plot will be blank
     # # this is a figure showing n_reversals per staircase condition.
-    n_rows, n_cols = multi_plot_shape(len(isi_name_list), min_rows=2)
+    # n_rows, n_cols = multi_plot_shape(len(isi_name_list), min_rows=2)
+    n_rows, n_cols = get_n_rows_n_cols((len(isi_name_list)))
+
     print(f"making {len(isi_name_list)} plots, rows={n_rows}, cols={n_cols}")
 
     fig, axes = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(12, 6))
@@ -3028,6 +3041,9 @@ def e_average_exp_data(exp_path, p_names_list,
         groupby_sep_df = groupby_sep_df.drop('cond_type', axis=1)
         # groupby_col = 'stair_names'
         groupby_col = ['stair_names', 'isi_fr', 'dur_ms']
+        sort_rows = False
+    elif exp_type == 'radial':
+        groupby_col = 'participant'
         sort_rows = False
     elif exp_type == 'speed_detection':
         groupby_col = 'participant'
