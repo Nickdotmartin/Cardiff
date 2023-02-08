@@ -14,7 +14,7 @@ exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardi
 exp_path = os.path.normpath(exp_path)
 print(f'exp_path: {exp_path}')
 
-participant_list = ['Nick_test']  # 'Nick'
+participant_list = ['Nick_120Hz']  # 'Nick'
 analyse_from_run = 1
 
 verbose = True
@@ -251,33 +251,33 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
 # todo: not tested this code yet.
-# print(f'\nexp_path: {exp_path}')
-# # participant_list = ['Nick', 'Simon']
-# print('\nget exp_average_data')
-# # trim_n = None
-# e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
-#                    exp_type='radial',
-#                    error_type='SE', n_trimmed=trim_n, verbose=True)
-#
-#
-# all_df_path = os.path.join(exp_path, "MASTER_exp_thr.csv")
-# exp_ave_path = os.path.join(exp_path, "MASTER_exp_ave_thr.csv")
-# err_path = os.path.join(exp_path, "MASTER_ave_thr_error_SE.csv")
-#
-# all_df = pd.read_csv(all_df_path)
-# cond_type_list = all_df['cond_type'].unique().tolist()
-#
-#
-# make_average_plots(all_df_path=all_df_path,
-#                    ave_df_path=exp_ave_path,
-#                    error_bars_path=err_path,
-#                    thr_col='probeLum',
-#                    stair_names_col='neg_sep',
-#                    cond_type_col='cond_type',
-#                    cond_type_order=cond_type_list,
-#                    n_trimmed=trim_n,
-#                    ave_over_n=len(participant_list),
-#                    exp_ave=True,
-#                    show_plots=True, verbose=True)
+print(f'\nexp_path: {exp_path}')
+participant_list = ['Nick_test', 'Nick_120Hz']
+print('\nget exp_average_data')
+trim_n = [None, 2]
+e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
+                   exp_type='radial',
+                   error_type='SE', n_trimmed=trim_n, verbose=True)
+
+
+all_df_path = os.path.join(exp_path, "MASTER_exp_thr.csv")
+exp_ave_path = os.path.join(exp_path, "MASTER_exp_ave_thr.csv")
+err_path = os.path.join(exp_path, "MASTER_ave_thr_error_SE.csv")
+
+all_df = pd.read_csv(all_df_path)
+cond_type_list = all_df['cond_type'].unique().tolist()
+
+
+make_average_plots(all_df_path=all_df_path,
+                   ave_df_path=exp_ave_path,
+                   error_bars_path=err_path,
+                   thr_col='probeLum',
+                   stair_names_col='neg_sep',
+                   cond_type_col='cond_type',
+                   cond_type_order=cond_type_list,
+                   n_trimmed=trim_n,
+                   ave_over_n=len(participant_list),
+                   exp_ave=True,
+                   show_plots=True, verbose=True)
 
 print('\nExp1_radial_analysis finished')

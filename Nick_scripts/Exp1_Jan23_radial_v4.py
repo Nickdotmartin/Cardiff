@@ -13,7 +13,6 @@ from kestenSTmaxVal import Staircase
 from PsychoPy_tools import get_pixel_mm_deg_values
 from exp1a_psignifit_analysis import fig_colours
 
-
 '''
 Jan23 version of experiment 1 - radial to compare in vs out.  
 Now has code to measure frame duration and repeat any trials with bad frame timings.
@@ -27,14 +26,15 @@ os.chdir(_thisDir)
 
 # Monitor config from monitor centre
 monitor_name = 'Nick_work_laptop'  # 'asus_cal', 'Nick_work_laptop', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18',
+# todo: put probe size and conditions back
 
 # Store info about the experiment session (numbers keep the order)
 expName = 'Exp1_Jan23_radial_v4'  # from the Builder filename that created this script
 expInfo = {'1. Participant': 'Nick_fr_test',
            '2. Run_number': '1',
            '3. separation (pixels)': [5, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 18, 36],
-           '4. Probe duration in frames at 240hz': [2, 1, 50, 100],
-           '5. fps': [240, 120, 60],
+           '4. Probe duration in frames': [1, 2, 1, 50, 100],
+           '5. fps': [120, 240, 120, 60],
            '6. Vary_fixation': [True, False],
            '7. Record_frame_durs': [True, False]
            }
@@ -49,14 +49,14 @@ if not dlg.OK:
 participant_name = expInfo['1. Participant']
 run_number = int(expInfo['2. Run_number'])
 this_sep_value = int(expInfo['3. separation (pixels)'])
-probe_duration = int(expInfo['4. Probe duration in frames at 240hz'])
+probe_duration = int(expInfo['4. Probe duration in frames'])
 fps = int(expInfo['5. fps'])
 vary_fixation = eval(expInfo['6. Vary_fixation'])
 record_fr_durs = eval(expInfo['7. Record_frame_durs'])
 
 # VARIABLES
 orientation = 'radial'
-n_trials_per_stair = 2
+n_trials_per_stair = 25
 probe_ecc = 4
 expInfo['time'] = datetime.now().strftime("%H:%M:%S")
 expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
@@ -67,7 +67,7 @@ For concurrent probes, use ISI==-1.
 '''
 separations = [this_sep_value]  # select from [0, 1, 2, 3, 6, 18, 99]
 print(f'separations: {separations}')
-# ISI_values = [-1, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+# ISI_values = [-1]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 ISI_values = [-1, 0, 2]  #, 4, 6, 9, 12, 24]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 print(f'ISI_values: {ISI_values}')
 
@@ -194,16 +194,18 @@ max_droped_fr_trials = 10
 
 # ELEMENTS
 # fixation bull eye
-fixation = visual.Circle(win, radius=2, units='pix', lineColor='white', fillColor='black')
-# loc_marker = visual.Circle(win, radius=2, units='pix', lineColor='green', fillColor='red')
+fixation = visual.Circle(win, radius=2, units='pix',
+                         lineColor='white', fillColor='black', colorSpace=this_colourSpace)
+# loc_marker = visual.Circle(win, radius=2, units='pix',
+#                            lineColor='green', fillColor='red', colorSpace=this_colourSpace,)
 
 # PROBEs
 probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
              (1, -2), (-1, -2), (-1, -1), (0, -1)]
 probe_size = 1
-probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor='white',
+probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor='white', colorSpace=this_colourSpace,
                           lineWidth=0, opacity=1, size=probe_size, interpolate=False)
-probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor='white',
+probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor='white', colorSpace=this_colourSpace,
                           lineWidth=0, opacity=1, size=probe_size, interpolate=False)
 
 # dist_from_fix is a constant to get 4dva distance from fixation,
@@ -226,33 +228,30 @@ instructions = visual.TextStim(win=win, name='instructions',
                                     "Some will be so dim that you won't see them, so just guess!\n\n"
                                     "You don't need to think for long, respond quickly, but try to push press the correct key!\n\n"
                                     "Don't let your eyes wander, keep focussed on the circle in the middle throughout.",
-                               font='Arial', height=20,
-                               color='white')
+                               font='Arial', height=20, color='white', colorSpace=this_colourSpace,)
 
 
 # BREAKS
-take_break = 100
+take_break = 76
 break_dur = 30
 print(f"\ntake_break every {take_break} trials.")
 break_text = f"Break\nTurn on the light and take at least {break_dur} seconds break.\n" \
              "Keep focussed on the fixation circle in the middle of the screen.\n" \
              "Remember, if you don't see the target, just guess!"
-breaks = visual.TextStim(win=win, name='breaks',
-                         text=break_text,
-                         font='Arial', pos=[0, 0], height=20, ori=0, color='white')
+breaks = visual.TextStim(win=win, name='breaks', text=break_text, font='Arial',
+                         pos=[0, 0], height=20, ori=0, color='white', colorSpace=this_colourSpace,)
 
+end_of_exp_text = "You have completed this experiment.\nThank you for your time.\n\n"
 end_of_exp = visual.TextStim(win=win, name='end_of_exp',
-                             text="You have completed this experiment.\n"
-                                  "Thank you for your time.\n\n"
-                                  "Press any key to return to the desktop.",
-                             font='Arial', height=20)
+                             text=end_of_exp_text,
+                             font='Arial', height=20, colorSpace=this_colourSpace,)
 
 too_many_dropped_fr = visual.TextStim(win=win, name='too_many_dropped_fr',
                                       text="The experiment had quit as the computer is dropping frames.\n"
                                            "Sorry for the inconvenience.\n"
                                            "Please contact the experimenter.\n\n"
                                            "Press any key to return to the desktop.",
-                                      font='Arial', height=20)
+                                      font='Arial', height=20, colorSpace=this_colourSpace,)
 
 while not event.getKeys():
     fixation.setRadius(3)
@@ -313,9 +312,6 @@ for step in range(n_trials_per_stair):
         repeat = True
         while repeat:
 
-            # clear any previous key presses
-            event.clearEvents(eventType='keyboard')
-
             # Trial, stair and step
             trial_number += 1
             actual_trials_inc_rpt += 1
@@ -340,14 +336,13 @@ for step in range(n_trials_per_stair):
             this_probeColor = probeColor255
             if this_colourSpace == 'rgb1':
                 this_probeColor = probeColor1
-            probe1.color = [this_probeColor, this_probeColor, this_probeColor]
-            probe2.color = [this_probeColor, this_probeColor, this_probeColor]
-            print(f"probeLum: {probeLum}, probeColor255: {probeColor255}, probeColor1: {probeColor1}")
+            probe1.setFillColor([this_probeColor, this_probeColor, this_probeColor])
+            probe2.setFillColor([this_probeColor, this_probeColor, this_probeColor])
+            print(f"probeLum: {probeLum}, this_probeColor: {this_probeColor}, probeColor255: {probeColor255}, probeColor1: {probeColor1}")
 
             # PROBE LOCATION
             # # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
             corner = random.choice([45, 135, 225, 315])
-            # corner = 225
             corner_name = 'top_right'
             if corner == 135:
                 corner_name = 'top_left'
@@ -553,10 +548,6 @@ for step in range(n_trials_per_stair):
             if (actual_trials_inc_rpt % take_break == 1) & (actual_trials_inc_rpt > 1):
                 print("\nTaking a break.\n")
 
-                # Brighten screen to avoid dark adaptation
-                win.color = [0.8, 0.8, 0.8]
-                # todo: return screen to usual this_bgColour?
-
                 breaks.text = break_text + f"\n{trial_number - 1}/{total_n_trials} trials completed."
                 breaks.draw()
                 win.flip()
@@ -572,6 +563,7 @@ for step in range(n_trials_per_stair):
             else:
                 # else continue the trial routine.
                 continueRoutine = True
+
 
             # initialise frame number
             frameN = -1
@@ -590,6 +582,13 @@ for step in range(n_trials_per_stair):
                         win.recordFrameIntervals = True
                         print(f"{frameN}: win.recordFrameIntervals : {win.recordFrameIntervals}")
 
+                    # reset timer to start with probe1 presentation.
+                    resp.clock.reset()
+
+                    # clear any previous key presses
+                    event.clearEvents(eventType='keyboard')
+                    theseKeys = []
+
                 if frameN == t_probe_2 + 1:
                     # relax psychopy prioritization
                     # core.rush(False)
@@ -605,9 +604,6 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(3)
                     fixation.draw()
                     # loc_marker.draw()
-
-                    # reset timer to start with probe1 presentation.
-                    resp.clock.reset()
 
 
                 # PROBE 1
@@ -646,7 +642,8 @@ for step in range(n_trials_per_stair):
                                                        'num_2', 'w', 'q', 'a', 's'])
 
                     if len(theseKeys) > 0:  # at least one key was pressed
-                        resp.keys = theseKeys[-1]  # just the last key pressed
+                        theseKeys = theseKeys[-1]  # just the last key pressed
+                        resp.keys = theseKeys
                         resp.rt = resp.clock.getTime()
 
                         # default assume response incorrect unless meets criteria below
@@ -826,8 +823,6 @@ if record_fr_durs:
     all_fr_intervals = [val for sublist in fr_int_per_trial for val in sublist]
     total_recorded_fr = len(all_fr_intervals)
 
-    # print(f"{exp_n_dropped_fr}/{total_recorded_fr} dropped in total (expected: {round(expected_fr_ms, 2)}ms, 'dropped' if > {round(max_fr_dur_ms, 2)})")
-    # print(f"{exp_n_dropped_fr}/{total_recorded_fr} dropped in total (expected: {round(expected_fr_ms, 2)}ms, 'dropped' if > {round(max_fr_dur_ms, 2)})")
     print(f"{dropped_fr_trial_counter}/{total_n_trials} trials with bad timing "
           f"(expected: {round(expected_fr_ms, 2)}ms, "
           f"frame_tolerance_ms: +/- {round(frame_tolerance_ms, 2)})")
@@ -879,7 +874,7 @@ if record_fr_durs:
     fig_name = f'{participant_name}_{run_number}_frames.png'
     print(f"fig_name: {fig_name}")
     plt.savefig(os.path.join(save_dir, fig_name))
-    plt.show()
+    # plt.show()
     plt.close()
 
 
@@ -888,7 +883,9 @@ while not event.getKeys():
     end_of_exp.draw()
     win.flip()
     core.wait(secs=5)
-    # todo: add message to signify key press allowed here.
+    end_of_exp.text = end_of_exp_text + "\n\nPress any key to continue."
+    end_of_exp.draw()
+    win.flip()
 else:
     # logging.flush()  # write messages out to all targets
     thisExp.abort()  # or data files will save again on exit
