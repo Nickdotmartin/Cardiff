@@ -981,9 +981,52 @@ def plt_heatmap_row_col(heatmap_df,
     return fig
 
 
+def make_diff_from_conc_df(thr_df_path):
+    """
+    Function to convert a results dataframe into a dataframe showing each ISIs difference from concurrent.
 
-def plot_diff_from_concurrent(thr_df_path, div_by_1probe=False,
-                              fig_title=None, save_name=None, save_path=None):
+    :param thr_df_path: Either an actual DataFrame or a path to dataframe.
+        thr_df is a ISI (columns) x separation (rows) dataframe.
+
+    :return: dataframe
+    """
+    print('\n*** running make_diff_from_conc_df() ***')
+
+    if isinstance(thr_df_path, str):
+        thr_df = pd.read_csv(thr_df_path)
+        # save_path, df_name = os.path.split(thr_df_path)
+
+    elif isinstance(thr_df_path, pd.DataFrame):
+        thr_df = thr_df_path
+        # if save_path is None:
+        #     raise ValueError('In order to save plot, please pass a save path or path to df.')
+    else:
+        raise TypeError(f'thr_df_path should be str (path to dataframe) or '
+                        f'DataFrame, not {type(thr_df_path)}')
+
+    print(f'thr_df:\n{thr_df}')
+
+    if 'separation' in list(thr_df.columns):
+        thr_df.set_index('separation', inplace=True, drop=True)
+    thr_df.rename(index={20: '1Probe'}, inplace=True)
+    print(f'thr_df:\n{thr_df}')
+
+    '''diff_from_conc_df is an ISI x Sep df where the concurrent column is subtracted from all columns.
+    therefore, the first column has zero for all values,
+    and all other columns show the difference between an ISI and concurrent.'''
+    if 'Concurrent' in list(thr_df.columns):
+        diff_from_conc_df = thr_df.iloc[:, :].sub(thr_df.Concurrent, axis=0)
+    elif 'ISI_-1' in list(thr_df.columns):
+        diff_from_conc_df = thr_df.iloc[:, :].sub(thr_df['ISI_-1'], axis=0)
+    print(f'diff_from_conc_df:\n{diff_from_conc_df}')
+
+
+    print('\n*** finished make_diff_from_conc_df() ***')
+
+    return diff_from_conc_df
+
+def plot_diff_from_conc_lineplot(thr_df_path, div_by_1probe=False,
+                                 fig_title=None, save_name=None, save_path=None):
     """
     Function to plot the difference in threshold from concurrent for each ISI.
 
@@ -996,40 +1039,42 @@ def plot_diff_from_concurrent(thr_df_path, div_by_1probe=False,
 
     :return: Fig
     """
-    print('\n*** running plot_diff_from_concurrent() ***')
+    print('\n*** running plot_diff_from_conc_lineplot() ***')
 
-    if isinstance(thr_df_path, str):
-        thr_df = pd.read_csv(thr_df_path)
-        save_path, df_name = os.path.split(thr_df_path)
+    # if isinstance(thr_df_path, str):
+    #     thr_df = pd.read_csv(thr_df_path)
+    #     save_path, df_name = os.path.split(thr_df_path)
+    #
+    # elif isinstance(thr_df_path, pd.DataFrame):
+    #     thr_df = thr_df_path
+    #     if save_path is None:
+    #         raise ValueError('In order to save plot, please pass a save path or path to df.')
+    # else:
+    #     raise TypeError(f'thr_df_path should be str (path to dataframe) or '
+    #                     f'DataFrame, not {type(thr_df_path)}')
+    #
+    # print(f'thr_df:\n{thr_df}')
+    #
+    # if 'separation' in list(thr_df.columns):
+    #     thr_df.set_index('separation', inplace=True, drop=True)
+    # thr_df.rename(index={20: '1Probe'}, inplace=True)
+    # print(f'thr_df:\n{thr_df}')
+    #
+    # # div by 1probe
+    # if div_by_1probe:
+    #     thr_df = thr_df.iloc[:-1, :].div(thr_df.iloc[-1][:], axis=1)
+    #     print(f'thr_df:\n{thr_df}')
+    #
+    # # diff_from_conc_df is an ISI x Sep df where the concurrent column is subtracted from all columns.
+    # # therefore, the first column has zero for all values,
+    # # and all other columns show the difference between an ISI and concurrent.
+    # if 'Concurrent' in list(thr_df.columns):
+    #     diff_from_conc_df = thr_df.iloc[:, :].sub(thr_df.Concurrent, axis=0)
+    # elif 'ISI_-1' in list(thr_df.columns):
+    #     diff_from_conc_df = thr_df.iloc[:, :].sub(thr_df['ISI_-1'], axis=0)
+    # print(f'diff_from_conc_df:\n{diff_from_conc_df}')
 
-    elif isinstance(thr_df_path, pd.DataFrame):
-        thr_df = thr_df_path
-        if save_path is None:
-            raise ValueError('In order to save plot, please pass a save path or path to df.')
-    else:
-        raise TypeError(f'thr_df_path should be str (path to dataframe) or '
-                        f'DataFrame, not {type(thr_df_path)}')
-
-    print(f'thr_df:\n{thr_df}')
-
-    if 'separation' in list(thr_df.columns):
-        thr_df.set_index('separation', inplace=True, drop=True)
-    thr_df.rename(index={20: '1Probe'}, inplace=True)
-    print(f'thr_df:\n{thr_df}')
-
-    # div by 1probe
-    if div_by_1probe:
-        thr_df = thr_df.iloc[:-1, :].div(thr_df.iloc[-1][:], axis=1)
-        print(f'thr_df:\n{thr_df}')
-
-    # diff_from_conc_df is an ISI x Sep df where the concurrent column is subtracted from all columns.
-    # therefore, the first column has zero for all values,
-    # and all other columns show the difference between an ISI and concurrent.
-    if 'Concurrent' in list(thr_df.columns):
-        diff_from_conc_df = thr_df.iloc[:, :].sub(thr_df.Concurrent, axis=0)
-    elif 'ISI_-1' in list(thr_df.columns):
-        diff_from_conc_df = thr_df.iloc[:, :].sub(thr_df['ISI_-1'], axis=0)
-    print(f'diff_from_conc_df:\n{diff_from_conc_df}')
+    diff_from_conc_df = make_diff_from_conc_df(thr_df_path)
 
     fig, ax = plt.subplots(figsize=(10, 6))
 
@@ -1040,9 +1085,11 @@ def plot_diff_from_concurrent(thr_df_path, div_by_1probe=False,
     plt.title(fig_title)
     plt.savefig(f'{save_path}/{save_name}')
 
-    print('\n*** finished plot_diff_from_concurrent() ***')
+    print('\n*** finished plot_diff_from_conc_lineplot() ***')
 
     return fig
+
+
 
 
 def plot_thr_3dsurface(plot_df, my_rotation=True, even_spaced=False,
@@ -2812,7 +2859,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         else:
             fig3a_save_name = 'diff_from_conc.png'
             fig3a_title = f'{ave_over} ISI different in threshold from concurrent (n={ave_over_n})'
-        plot_diff_from_concurrent(ave_df, div_by_1probe=False,
+        plot_diff_from_conc_lineplot(ave_df, div_by_1probe=False,
                                   fig_title=fig3a_title, save_name=fig3a_save_name,
                                   save_path=save_path)
         if show_plots:
@@ -2830,7 +2877,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         else:
             fig3b_save_name = 'diff_from_conc_div1probe.png'
             fig3b_title = f'{ave_over} ISI different in threshold from concurrent (div1probe, n={ave_over_n})'
-        plot_diff_from_concurrent(ave_df, div_by_1probe=True,
+        plot_diff_from_conc_lineplot(ave_df, div_by_1probe=True,
                                   fig_title=fig3b_title, save_name=fig3b_save_name, save_path=save_path)
         if show_plots:
             plt.show()
@@ -2953,6 +3000,58 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         if show_plots:
             plt.show()
         plt.close()
+
+        print(f"\nplot_diff_from_conc_heatmap\n")
+        # if 'separation' in list(ave_df.columns):
+        #     ave_df.set_index('separation', drop=True, inplace=True)
+
+        # get mean of each col, then mean of that
+        if n_trimmed is not None:
+            heatmap_dfc_title = f'{ave_over} plot_diff_from_conc_heatmap (n={ave_over_n}, trim={n_trimmed}).'
+            heatmap_dfc_savename = f'mean_TM{n_trimmed}_plot_diff_from_conc_heatmap'
+        else:
+            heatmap_dfc_title = f'{ave_over} plot_diff_from_conc_heatmap (n={ave_over_n})'
+            heatmap_dfc_savename = 'mean_plot_diff_from_conc_heatmap'
+
+        diff_from_conc_df = make_diff_from_conc_df(ave_df)
+        plot_thr_heatmap(heatmap_df=diff_from_conc_df,
+                         # x_tick_labels=isi_labels, y_tick_labels=sep_labels,
+                         annot_fmt=heatmap_annot_fmt,
+                         fig_title=heatmap_dfc_title, save_name=heatmap_dfc_savename,
+                         save_path=save_path, verbose=True)
+
+        if show_plots:
+            plt.show()
+        plt.close()
+
+    print(f"\nplot_diff_from_conc_per_row\n")
+    # if 'separation' in list(ave_df.columns):
+    #     ave_df.set_index('separation', drop=True, inplace=True)
+
+    # get mean of each col, then mean of that
+    if n_trimmed is not None:
+        heatmap_dfc_title = f'{ave_over} plot_diff_from_conc_per_row (n={ave_over_n}, trim={n_trimmed}).'
+        heatmap_dfc_savename = f'mean_TM{n_trimmed}_plot_diff_from_conc_per_row'
+    else:
+        heatmap_dfc_title = f'{ave_over} plot_diff_from_conc_per_row (n={ave_over_n})'
+        heatmap_dfc_savename = 'mean_plot_diff_from_conc_per_row'
+
+    diff_from_conc_df = make_diff_from_conc_df(ave_df)
+    plt_heatmap_row_col(heatmap_df=diff_from_conc_df,
+                        colour_by='row',
+                        x_tick_labels=None,
+                        x_axis_label='ISI',
+                        y_tick_labels=None,
+                        y_axis_label='Separation',
+                        fig_title=heatmap_dfc_title,
+                        fontsize=10,
+                        annot_fmt=heatmap_annot_fmt,
+                        save_name=heatmap_dfc_savename,
+                        save_path=save_path,
+                        verbose=True)
+    if show_plots:
+        plt.show()
+    plt.close()
 
     # print(f"\n3d surface plot\n")
     # if 'separation' in list(ave_df.columns):
