@@ -819,6 +819,7 @@ def plot_w_errors_no_1probe(wide_df, x_var, y_var, lines_var,
 def plot_thr_heatmap(heatmap_df,
                      x_tick_labels=None,
                      y_tick_labels=None,
+                     midpoint=None,
                      fig_title=None,
                      save_name=None,
                      save_path=None,
@@ -848,14 +849,17 @@ def plot_thr_heatmap(heatmap_df,
         y_tick_labels = list(heatmap_df.index)
 
     # get mean of each column, then mean of those
-    mean_thr = float(np.mean(heatmap_df.mean()))
-    if verbose:
-        print(f'mean_val: {round(mean_thr, 2)}')
+    if midpoint is None:
+        mean_thr = float(np.mean(heatmap_df.mean()))
+        midpoint = mean_thr
+        if verbose:
+            print(f'midpoint (mean_val_: {round(mean_thr, 2)}')
+
 
     heatmap = sns.heatmap(data=heatmap_df,
                           annot=True,
                           # fmt=annot_fmt,
-                          center=mean_thr,
+                          center=midpoint,
                           # cmap=sns.color_palette("Spectral", as_cmap=True),
                           cmap=my_colourmap,
                           xticklabels=x_tick_labels, yticklabels=y_tick_labels,
@@ -887,6 +891,7 @@ def plt_heatmap_row_col(heatmap_df,
                         y_tick_labels=None,
                         y_axis_label=None,
                         fig_title=None,
+                        midpoint=None,
                         fontsize=16,
                         annot_fmt='.0f',
                         save_name=None,
@@ -934,6 +939,7 @@ def plt_heatmap_row_col(heatmap_df,
                     ax=ax,
                     linewidths=.05,
                     cmap=my_colourmap,
+                    center=midpoint,
                     annot=True,
                     annot_kws={'fontsize': fontsize},
                     # fmt=annot_fmt,
@@ -3016,6 +3022,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         diff_from_conc_df = make_diff_from_conc_df(ave_df)
         plot_thr_heatmap(heatmap_df=diff_from_conc_df,
                          # x_tick_labels=isi_labels, y_tick_labels=sep_labels,
+                         midpoint=0,
                          annot_fmt=heatmap_annot_fmt,
                          fig_title=heatmap_dfc_title, save_name=heatmap_dfc_savename,
                          save_path=save_path, verbose=True)
@@ -3039,6 +3046,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     diff_from_conc_df = make_diff_from_conc_df(ave_df)
     plt_heatmap_row_col(heatmap_df=diff_from_conc_df,
                         colour_by='row',
+                        midpoint=0,
                         x_tick_labels=None,
                         x_axis_label='ISI',
                         y_tick_labels=None,

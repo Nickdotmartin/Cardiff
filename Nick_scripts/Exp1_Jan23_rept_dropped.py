@@ -32,12 +32,11 @@ expName = 'Exp1_Jan23_rept_dropped'  # from the Builder filename that created th
 expInfo = {'1. Participant': 'Nick_test',
            '2. Run_number': '1',
            '3. Probe duration in frames': [2, 1, 50, 100],
-           '4. fps': [60, 240, 120, 60],
+           '4. fps': [240, 120, 60],
            '5. Probe_orientation': ['tangent', 'radial'],
-           '6. Vary_fixation': [False, True, False],
+           '6. Vary_fixation': [True, False],
            '7. Record_frame_durs': [True, False]
            }
-
 
 # dialogue box
 dlg = gui.DlgFromDict(dictionary=expInfo, title=expName)
@@ -87,10 +86,8 @@ total_n_trials = int(n_trials_per_stair * n_stairs)
 print(f'total_n_trials: {total_n_trials}')
 
 # FILENAME
-save_dir = f'{_thisDir}{os.sep}' \
-            f'{expName}{os.sep}' \
-            f'{participant_name}{os.sep}' \
-            f'{participant_name}_{run_number}{os.sep}'
+save_dir = os.path.join(_thisDir, expName, participant_name,
+                        f'{participant_name}_{run_number}')
 
 # files are labelled as '_incomplete' unless entire script runs.
 incomplete_output_filename = f'{participant_name}_{run_number}_incomplete'
@@ -192,7 +189,7 @@ max_droped_fr_trials = 10
 fixation = visual.Circle(win, radius=2, units='pix', 
                          lineColor='white', fillColor='black', colorSpace=this_colourSpace)
 # loc_marker = visual.Circle(win, radius=2, units='pix', 
-#                            lineColor='green', fillColor='red', colorSpace=this_colourSpace,)
+#                            lineColor='green', fillColor='red', colorSpace=this_colourSpace)
 
 # PROBEs
 probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
@@ -239,8 +236,8 @@ breaks = visual.TextStim(win=win, name='breaks', text=break_text, font='Arial',
 
 end_of_exp_text = "You have completed this experiment.\nThank you for your time.\n\n"
 end_of_exp = visual.TextStim(win=win, name='end_of_exp',
-                             text=end_of_exp_text,
-                             font='Arial', height=20, colorSpace=this_colourSpace,)
+                             text=end_of_exp_text, color='white',
+                             font='Arial', height=20, colorSpace=this_colourSpace)
 
 too_many_dropped_fr = visual.TextStim(win=win, name='too_many_dropped_fr',
                                       text="The experiment had quit as the computer is dropping frames.\n"
@@ -261,7 +258,6 @@ exp_n_fr_recorded_list = [0]
 exp_n_dropped_fr = 0
 dropped_fr_trial_counter = 0
 dropped_fr_trial_x_locs = []
-# user_rpt_trial_x_locs = []
 fr_int_per_trial = []
 recorded_fr_counter = 0
 fr_counter_per_trial = []
@@ -527,7 +523,7 @@ for step in range(n_trials_per_stair):
             print(f"t_fixation: {t_fixation}, t_probe_1: {t_probe_1}, "
                   f"t_ISI: {t_ISI}, t_probe_2: {t_probe_2}, t_response: {t_response}\n")
 
-            # I've moved the repat option to the top so repetitions don't appear in same corner
+            # I've moved the repeat option to the top so repetitions don't appear in same corner
             # repeat the trial if [r] has been pressed
             # repeat = True
             # while repeat:
@@ -660,16 +656,14 @@ for step in range(n_trials_per_stair):
                             # get trial frameIntervals details
                             trial_fr_intervals = win.frameIntervals
                             n_fr_recorded = len(trial_fr_intervals)
-                            # trial_n_dropped_fr = win.nDroppedFrames
                             print(f"n_fr_recorded: {n_fr_recorded}, trial_fr_intervals: {trial_fr_intervals}")
 
                             # add to empty lists etc.
-                            # exp_fr_intervals += trial_fr_intervals
                             fr_int_per_trial.append(trial_fr_intervals)
-                            fr_counter_per_trial.append(list(range(recorded_fr_counter, recorded_fr_counter + len(trial_fr_intervals))))
+                            fr_counter_per_trial.append(list(range(recorded_fr_counter,
+                                                                   recorded_fr_counter + len(trial_fr_intervals))))
                             recorded_fr_counter += len(trial_fr_intervals)
                             exp_n_fr_recorded_list.append(exp_n_fr_recorded_list[-1] + n_fr_recorded)
-                            # exp_n_dropped_fr += trial_n_dropped_fr
                             cond_list.append(thisStair.name)
 
                             # get timings for each segment (probe1, ISI, probe2).

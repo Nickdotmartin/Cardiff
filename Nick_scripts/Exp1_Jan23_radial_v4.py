@@ -243,7 +243,7 @@ breaks = visual.TextStim(win=win, name='breaks', text=break_text, font='Arial',
 
 end_of_exp_text = "You have completed this experiment.\nThank you for your time.\n\n"
 end_of_exp = visual.TextStim(win=win, name='end_of_exp',
-                             text=end_of_exp_text,
+                             text=end_of_exp_text, color='white',
                              font='Arial', height=20, colorSpace=this_colourSpace,)
 
 too_many_dropped_fr = visual.TextStim(win=win, name='too_many_dropped_fr',
