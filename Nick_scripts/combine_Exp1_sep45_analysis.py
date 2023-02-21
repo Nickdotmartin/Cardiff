@@ -39,8 +39,8 @@ if running_on_laptop():
 exp_path = convert_path1
 
 print(f"exp_path: {exp_path}")
-participant_name = 'Simon'  # 'Nick_sep0123', 'Nick_sep45', 'Nick_sep67', 'Nick_sep89' 'Simon', 'Nick'
-exp_list = ['exp1a', 'sep_45']
+participant_name = 'Nick'  # 'Nick_sep0123', 'Nick_sep45', 'Nick_sep67', 'Nick_sep89' 'Simon', 'Nick'
+exp_list = ['radial_v4', 'sep_45']
 for idx, exp_name in enumerate(exp_list):
     if idx == 0:
         new_save_name = participant_name
@@ -48,16 +48,17 @@ for idx, exp_name in enumerate(exp_list):
 print(f"new_save_name: {new_save_name}")
 
 # make this before running script
-new_save_dir = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\exp1a_data\Simon_w_sep45"
+new_save_dir = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Nick_sep5_all"
 
 
 
-p_master_lists_dirs = [r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\EXP1_sep4_5\Simon",
-                       r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\exp1a_data\bb"]
+p_master_lists_dirs = [r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\EXP1_sep4_5\Nick_sep45",
+                       r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp1_Jan23_radial_v4\Nick"]
 
 results_df_list = ['MASTER_TM2_thresholds.csv',
-               'MASTER_ave_TM2_thresh.csv',
-               'MASTER_ave_TM2_thr_error_SE.csv']
+                   'MASTER_ave_TM2_thresh.csv',
+                   'MASTER_ave_TM2_thr_error_SE.csv',
+                   ]
 
 for results_df_name in results_df_list:
     print(f"\n\n\nresults_df_name: {results_df_name}")
@@ -67,6 +68,13 @@ for results_df_name in results_df_list:
         print(f"\n\nexp_dir: {exp_dir}")
 
         results_df_path = os.path.join(exp_dir, results_df_name)
+
+        if os.path.isfile(results_df_path):
+            print(f'found: {results_df_path}')
+        else:
+            print(f'\tmissing: {results_df_path}')
+            continue
+
 
         results_df = pd.read_csv(results_df_path)
 
@@ -84,9 +92,27 @@ for results_df_name in results_df_list:
                                                     'ISI12': 'ISI_12',
                                                     'ISI24': 'ISI_24'})
 
+        # just take sep 5 data
+        if 'separation' in list(results_df):
+            results_df = results_df[results_df['separation'].isin([-5, 5])]
+
+        # change all participant names to Nick
+        rows, cols = results_df.shape
+        # if 'participant' in list(results_df):
+        # results_df['participant'] = ['Nick'] * rows
+
+
+        # add probe orientation info
+        if 'EXP1_sep4_5' in exp_dir:
+            results_df['separation'] = [0] * rows
+            # results_df['ori'] = ['tangent'] * rows
+        # else:
+            # results_df['ori'] = ['exp' if i < 0 else 'cont' for i in results_df['separation'].tolist()]
+
+
         # print(f"\nlist(results_df):\n{list(results_df)}")
         #
-        # print(f"\nresults_df:\n{results_df}")
+        print(f"\neditted results_df:\n{results_df}")
 
         combine_results.append(results_df)
 
@@ -100,7 +126,7 @@ for results_df_name in results_df_list:
     combined_data_df = conc_to_first_isi_col(combined_data_df)
     combined_data_df.to_csv(os.path.join(new_save_dir, results_df_name), index=False)
     # if verbose:
-    print(f'\n{results_df_name}:\n{combined_data_df}')
+    print(f'\ncombined {results_df_name}:\n{combined_data_df}')
 
 
 all_df_path = os.path.join(new_save_dir, results_df_list[0])
@@ -109,13 +135,33 @@ err_path = os.path.join(new_save_dir, results_df_list[2])
 make_average_plots(all_df_path=all_df_path,
                    ave_df_path=p_ave_path,
                    error_bars_path=err_path,
-                   thr_col='newLum',
+                   # thr_col='newLum',
                    error_type='SE',
-                   ave_over_n=12,
+                   # ave_over_n=12,
+                   sep_vals_list=[-5, 0, 5], # 0, 1, 2, 3, 6, 18, 20],
+                   sep_name_list=['exp', 'tang', 'cont'],
                    n_trimmed=2,
                    split_1probe=False,
                    exp_ave=False,  # participant ave, not exp ave
                    show_plots=True, verbose=True)
+
+# make_average_plots(all_df_path, ave_df_path, error_bars_path,
+#                        thr_col='probeLum',
+#                        ave_over_n=None,
+#                        n_trimmed=None,
+#                        error_type='SE',
+#                        exp_ave=False,
+#                        split_1probe=True,
+#                        isi_name_list=['Concurrent', 'ISI 0', 'ISI 2', 'ISI 4',
+#                                        'ISI 6', 'ISI 9', 'ISI 12', 'ISI 24'],
+#                        sep_vals_list=[5], # 0, 1, 2, 3, 6, 18, 20],
+#                        sep_name_list=[0, 1, 2, 3, 6, 18, '1probe'],
+#                        heatmap_annot_fmt='{:.2f}',
+#                        show_plots=True, verbose=True
+
+
+
+
 
 # # participant_list = ['p1', 'p2']
 # split_1probe = False
