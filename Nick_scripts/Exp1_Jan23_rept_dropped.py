@@ -318,6 +318,8 @@ for step in range(n_trials_per_stair):
             stair_idx = thisStair.extraInfo['stair_idx']
             print(f"\n({actual_trials_inc_rpt}) trial_number: {trial_number}, "
                   f"stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
+            print(f"trialCount: {thisStair.trialCount}; responses: {len(thisStair.getResps())} ({thisStair.getResps()})\n"
+                  f"Reversals: {thisStair.countReversals()} ({thisStair.reversalIndices()})")
 
             # condition (Separation, ISI)
             sep = sep_vals_list[stair_idx]
@@ -667,7 +669,9 @@ for step in range(n_trials_per_stair):
                             # get trial frameIntervals details
                             trial_fr_intervals = win.frameIntervals
                             n_fr_recorded = len(trial_fr_intervals)
-                            print(f"n_fr_recorded: {n_fr_recorded}, trial_fr_intervals: {trial_fr_intervals}")
+                            print(f"n_fr_recorded: {n_fr_recorded}, "
+                                  # f"trial_fr_intervals: {trial_fr_intervals}"
+                                  f"")
 
                             # add to empty lists etc.
                             fr_int_per_trial.append(trial_fr_intervals)
@@ -679,7 +683,9 @@ for step in range(n_trials_per_stair):
 
                             # get timings for each segment (probe1, ISI, probe2).
                             fr_diff_ms = [(expected_fr_sec - i) * 1000 for i in trial_fr_intervals]
-                            print(f"fr_diff_ms: {fr_diff_ms}, sum: {sum(fr_diff_ms)}")
+                            print(f""
+                                  # f"fr_diff_ms: {fr_diff_ms}, "
+                                  f"sum(fr_diff_ms): {sum(fr_diff_ms)}")
 
                             p1_durs = fr_diff_ms[:2]
                             p1_diff = sum(p1_durs)
@@ -709,6 +715,7 @@ for step in range(n_trials_per_stair):
                                 repeat = True
                                 dropped_fr_trial_counter += 1
                                 trial_number -= 1
+                                thisStair.trialCount = thisStair.trialCount - 1 # so Kesten doesn't count this trial
                                 win.frameIntervals = []
                                 continueRoutine = False
                                 trial_x_locs = [exp_n_fr_recorded_list[-2], exp_n_fr_recorded_list[-1]]
