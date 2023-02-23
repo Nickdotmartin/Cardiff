@@ -35,7 +35,8 @@ expInfo = {'1. Participant': 'Nick_test',
            '4. fps': [240, 120, 60],
            '5. Probe_orientation': ['tangent', 'radial'],
            '6. Vary_fixation': [True, False],
-           '7. Record_frame_durs': [True, False]
+           '7. Record_frame_durs': [True, False],
+           '8. probe_n_pixels': [5, 7]
            }
 
 # dialogue box
@@ -51,6 +52,7 @@ fps = int(expInfo['4. fps'])
 orientation = expInfo['5. Probe_orientation']
 vary_fixation = eval(expInfo['6. Vary_fixation'])
 record_fr_durs = eval(expInfo['7. Record_frame_durs'])
+probe_n_pixels = int(expInfo['8. probe_n_pixels'])
 
 n_trials_per_stair = 25  # 25
 probe_ecc = 4
@@ -63,11 +65,11 @@ For 1probe condition, use separation==99.
 For concurrent probes, use ISI==-1.
 '''
 print(f'\nTrial condition details:')
-separations = [5]  # select from [0, 1, 2, 3, 6, 18, 99]
+separations = [5, 12]  # select from [0, 1, 2, 3, 6, 18, 99]
 # separations = [0, 1, 2, 3, 6, 18, 99]  # select from [0, 1, 2, 3, 6, 18, 99]
 print(f'separations: {separations}')
-# ISI_values = [-1]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
-ISI_values = [-1, 0, 2]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+ISI_values = [-1]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+# ISI_values = [-1, 0, 2]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 # ISI_values = [-1, 0, 2, 4, 6, 9, 12, 24]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 print(f'ISI_values: {ISI_values}')
 # repeat separation values for each ISI e.g., [0, 0, 6, 6]
@@ -194,6 +196,12 @@ fixation = visual.Circle(win, radius=2, units='pix',
 # PROBEs
 probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
              (1, -2), (-1, -2), (-1, -1), (0, -1)]
+if probe_n_pixels == 7:
+    # this one looks back-to-front as the extra bits have turned the 'm's into 'w's,
+    # so probes are rotated 180 degrees compared to regular probes.
+    probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, 2), (0, 2), (0, 1),
+                 (-1, 1), (-1, 0), (-2, 0), (-2, -2), (-1, -2), (-1, -1), (0, -1)]
+
 probe_size = 1
 probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor='white', colorSpace=this_colourSpace,
                           lineWidth=0, opacity=1, size=probe_size, interpolate=False)
@@ -377,6 +385,9 @@ for step in range(n_trials_per_stair):
             then add the same orientation change to both'''
             probe1_ori = 0
             probe2_ori = 180
+            if probe_n_pixels == 7:
+                probe1_ori = 180
+                probe2_ori = 0
             if corner == 45:
                 '''in top-right corner, both x and y increase (right and up)'''
                 loc_x = dist_from_fix * 1
@@ -388,25 +399,25 @@ for step in range(n_trials_per_stair):
                         probe1_ori += 180
                         probe2_ori += 180
                         probe1_pos = [loc_x - p1_shift, loc_y + p1_shift]
-                        probe2_pos = [loc_x + p2_shift - 1, loc_y - p2_shift]
+                        probe2_pos = [loc_x + p2_shift - probe_size, loc_y - p2_shift]
                     elif target_jump == -1:  # ACW
                         probe1_ori += 0
                         probe2_ori += 0
                         probe1_pos = [loc_x + p1_shift, loc_y - p1_shift]
-                        probe2_pos = [loc_x - p2_shift + 1, loc_y + p2_shift]
+                        probe2_pos = [loc_x - p2_shift + probe_size, loc_y + p2_shift]
                 elif orientation == 'radial':
                     if target_jump == 1:  # inward
                         probe1_ori += 270
                         probe2_ori += 270
                         # probe2 is left and down from probe1
                         probe1_pos = [loc_x + p1_shift, loc_y + p1_shift]
-                        probe2_pos = [loc_x - p2_shift + 1, loc_y - p2_shift]
+                        probe2_pos = [loc_x - p2_shift + probe_size, loc_y - p2_shift]
                     elif target_jump == -1:  # outward
                         probe1_ori += 90
                         probe2_ori += 90
                         # probe2 is right and up from probe1
                         probe1_pos = [loc_x - p1_shift, loc_y - p1_shift]
-                        probe2_pos = [loc_x + p2_shift - 1, loc_y + p2_shift]
+                        probe2_pos = [loc_x + p2_shift - probe_size, loc_y + p2_shift]
             elif corner == 135:
                 loc_x = dist_from_fix * -1
                 loc_y = dist_from_fix * 1
@@ -415,25 +426,25 @@ for step in range(n_trials_per_stair):
                         probe1_ori += 90
                         probe2_ori += 90
                         probe1_pos = [loc_x - p1_shift, loc_y - p1_shift]
-                        probe2_pos = [loc_x + p2_shift - 1, loc_y + p2_shift]
+                        probe2_pos = [loc_x + p2_shift - probe_size, loc_y + p2_shift]
                     elif target_jump == -1:  # CW
                         probe1_ori += 270
                         probe2_ori += 270
                         probe1_pos = [loc_x + p1_shift, loc_y + p1_shift]
-                        probe2_pos = [loc_x - p2_shift + 1, loc_y - p2_shift]
+                        probe2_pos = [loc_x - p2_shift + probe_size, loc_y - p2_shift]
                 elif orientation == 'radial':
                     if target_jump == 1:  # inward
                         probe1_ori += 180
                         probe2_ori += 180
                         # probe2 is right and down from probe1
                         probe1_pos = [loc_x - p1_shift, loc_y + p1_shift]
-                        probe2_pos = [loc_x + p2_shift - 1, loc_y - p2_shift]
+                        probe2_pos = [loc_x + p2_shift - probe_size, loc_y - p2_shift]
                     elif target_jump == -1:  # outward
                         probe1_ori += 0
                         probe2_ori += 0
                         # probe2 is left and up from probe1
                         probe1_pos = [loc_x + p1_shift, loc_y - p1_shift]
-                        probe2_pos = [loc_x - p2_shift + 1, loc_y + p2_shift]
+                        probe2_pos = [loc_x - p2_shift + probe_size, loc_y + p2_shift]
             elif corner == 225:
                 loc_x = dist_from_fix * -1
                 loc_y = dist_from_fix * -1
@@ -442,25 +453,25 @@ for step in range(n_trials_per_stair):
                         probe1_ori += 0
                         probe2_ori += 0
                         probe1_pos = [loc_x + p1_shift, loc_y - p1_shift]
-                        probe2_pos = [loc_x - p2_shift + 1, loc_y + p2_shift]
+                        probe2_pos = [loc_x - p2_shift + probe_size, loc_y + p2_shift]
                     elif target_jump == -1:  # ACW
                         probe1_ori += 180
                         probe2_ori += 180
                         probe1_pos = [loc_x - p1_shift, loc_y + p1_shift]
-                        probe2_pos = [loc_x + p2_shift - 1, loc_y - p2_shift]
+                        probe2_pos = [loc_x + p2_shift - probe_size, loc_y - p2_shift]
                 elif orientation == 'radial':
                     if target_jump == 1:  # inward
                         probe1_ori += 90
                         probe2_ori += 90
                         # probe2 is right and up from probe1
                         probe1_pos = [loc_x - p1_shift, loc_y - p1_shift]
-                        probe2_pos = [loc_x + p2_shift - 1, loc_y + p2_shift]
+                        probe2_pos = [loc_x + p2_shift - probe_size, loc_y + p2_shift]
                     elif target_jump == -1:  # outward
                         probe1_ori += 270
                         probe2_ori += 270
                         # probe2 is left and down from probe1
                         probe1_pos = [loc_x + p1_shift, loc_y + p1_shift]
-                        probe2_pos = [loc_x - p2_shift + 1, loc_y - p2_shift]
+                        probe2_pos = [loc_x - p2_shift + probe_size, loc_y - p2_shift]
             else:
                 corner = 315
                 loc_x = dist_from_fix * 1
@@ -470,25 +481,25 @@ for step in range(n_trials_per_stair):
                         probe1_ori += 270
                         probe2_ori += 270
                         probe1_pos = [loc_x + p1_shift, loc_y + p1_shift]
-                        probe2_pos = [loc_x - p2_shift + 1, loc_y - p2_shift]
+                        probe2_pos = [loc_x - p2_shift + probe_size, loc_y - p2_shift]
                     elif target_jump == -1:  # CW
                         probe1_ori += 90
                         probe2_ori += 90
                         probe1_pos = [loc_x - p1_shift, loc_y - p1_shift]
-                        probe2_pos = [loc_x + p2_shift - 1, loc_y + p2_shift]
+                        probe2_pos = [loc_x + p2_shift - probe_size, loc_y + p2_shift]
                 elif orientation == 'radial':
                     if target_jump == 1:  # inward
                         probe1_ori += 0
                         probe2_ori += 0
                         # probe2 is left and up from probe1
                         probe1_pos = [loc_x + p1_shift, loc_y - p1_shift]
-                        probe2_pos = [loc_x - p2_shift + 1, loc_y + p2_shift]
+                        probe2_pos = [loc_x - p2_shift + probe_size, loc_y + p2_shift]
                     elif target_jump == -1:  # outward
                         probe1_ori += 180
                         probe2_ori += 180
                         # probe2 is right and down from probe1
                         probe1_pos = [loc_x - p1_shift, loc_y + p1_shift]
-                        probe2_pos = [loc_x + p2_shift - 1, loc_y - p2_shift]
+                        probe2_pos = [loc_x + p2_shift - probe_size, loc_y - p2_shift]
 
             # loc_marker.setPos([loc_x, loc_y])
             probe1.setPos(probe1_pos)

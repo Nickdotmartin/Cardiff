@@ -198,7 +198,7 @@ def mm_to_degrees(pixel_size_mm, distance_mm):
 
     return dva
 
-def get_pixel_mm_deg_values(monitor_name='ASUS_2_13_240Hz', n_pixels=1):
+def get_pixel_mm_deg_values(monitor_name='asus_cal', n_pixels=1):
     """
     use psychopy's monitor tools to convert pixels to mm or degrees at a certain viewing distance.
     Use monitor_pixel_size_dict for calculating diagonal pixel size as monitor centre only has width.
@@ -210,7 +210,7 @@ def get_pixel_mm_deg_values(monitor_name='ASUS_2_13_240Hz', n_pixels=1):
     # print("\n***running get_pixel_mm_deg_values()***")
 
     this_monitor = monitors.Monitor(monitor_name)
-    # print(f'monitor_name: {monitor_name}, (n_pixels: {n_pixels})')
+    print(f'monitor_name: {monitor_name}, (n_pixels: {n_pixels})')
 
     # check for details in monitor_pixel_size_dict
     dimensions_mm = monitor_pixel_size_dict[monitor_name]['dimensions_mm']
@@ -231,6 +231,8 @@ def get_pixel_mm_deg_values(monitor_name='ASUS_2_13_240Hz', n_pixels=1):
 
     # convert pixel chosen pixel size to dva
     viewdist_mm = this_monitor.getDistance() * 10  # view dist is stored in cm
+    if viewdist_mm is None:
+        viewdist_mm = 57.3
     pix_width_deg = mm_to_degrees(pixel_size_mm=pix_width_mm, distance_mm=viewdist_mm)
     pix_height_deg = mm_to_degrees(pixel_size_mm=pix_height_mm, distance_mm=viewdist_mm)
     pix_diag_deg = mm_to_degrees(pixel_size_mm=pix_diag_mm, distance_mm=viewdist_mm)
