@@ -4,14 +4,31 @@ import matplotlib.pyplot as plt
 
 import pandas as pd
 import numpy as np
+#
+max_droped_fr_trials = 10
 
-probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, 2), (0, 2), (0, 1),
-             (-1, 1), (-1, 0), (-2, 0), (-2, -2), (-1, -2), (-1, -1), (0, -1)]
+trial_nums = [25, 50, 75, 100, 125, 150, 175, 200, 250, 300, 350, 400, 600, 800, 1000]
 
-new_vert = []
+for total_n_trials in trial_nums:
 
-for i in probeVert:
-    this_vert = (i[0] + 1, i[1]-1)
-    new_vert.append(this_vert)
+    # expected trials plus repeats
+    max_trials = total_n_trials + max_droped_fr_trials
 
-print(new_vert)
+    # limit on number of trials without a break
+    max_without_break = 120
+
+    n_breaks = max_trials // max_without_break
+
+    if n_breaks > 0:
+        take_break = int(max_trials / (n_breaks + 1))
+    else:
+        take_break = max_without_break
+
+    print(f"take_break: {take_break}, n_breaks: {n_breaks}")
+    print(f"max_trials: {max_trials}, take_break: {take_break}, n_breaks: {n_breaks}")
+
+# take_break = 6
+# for actual_trials_inc_rpt in list(range(20)):
+#     print(actual_trials_inc_rpt)
+#     if (actual_trials_inc_rpt % take_break == 1) & (actual_trials_inc_rpt > 1):
+#         print('break\n')

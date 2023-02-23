@@ -47,7 +47,7 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'Nick_work_laptop'  # 'asus_cal', 'Nick_work_laptop', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18',
+monitor_name = 'asus_cal'  # 'asus_cal', 'Nick_work_laptop', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18', 'OLED'
 
 # Store info about the experiment session
 expName = 'Exp4b_missing_probe_23'
@@ -56,8 +56,8 @@ expInfo = {'1. Participant': 'nicktest',
            '3. Probe duration in frames': [2, 50, 100],
            '4. fps': [240, 120, 60],
            '5. vary fixation': [True, False],
-           '6. probe coherence': ['rotation', 'radial', 'translation', 'incoherent'],
-           '7. exp type': ['stair_per_dir', 'mixed_dir'],
+           '6. probe coherence': ['incoherent', 'rotation', 'radial', 'translation'],
+           '7. exp type': ['mixed_dir', 'stair_per_dir'],
            '8. Record_frame_durs': [True, False]
            }
 
@@ -104,8 +104,8 @@ else:
     target_jump_vals = ['mixed']
 
 
-separations = [6]  # select from [0, 1, 2, 3, 6, 18, 99]
-ISI_values = [-1, 3, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+separations = [2]  # select from [0, 1, 2, 3, 6, 18, 99]
+ISI_values = [-1, 0, 2, 4, 6, 9, 12, 24]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 print(f'separations: {separations}')
 print(f'ISI_values: {ISI_values}')
 
@@ -135,8 +135,7 @@ print(f'total_n_trials: {total_n_trials}')
 
 
 # FILENAME
-save_dir = os.path.join(_thisDir, expName, exp_type, probe_coherence,
-                        participant_name, f'{participant_name}_{run_number}')
+save_dir = os.path.join(_thisDir, expName, exp_type, probe_coherence, participant_name, f'{participant_name}_{run_number}')
 
 # files are labelled as '_incomplete' unless entire script runs.
 incomplete_output_filename = f'{participant_name}_{run_number}_incomplete'
@@ -172,8 +171,7 @@ print(f"\nthis_colourSpace: {this_colourSpace}, this_bgColour: {this_bgColour}")
 
 # don't use full screen on external monitor
 display_number = 1  # 0 indexed, 1 for external display, 0 for internal
-#todo: check OLED montor name
-if monitor_name in ['asus_cal', 'Nick_work_laptop', 'NickMac', 'Dell_AW3423DW', 'ASUS_2_13_240Hz']:
+if monitor_name in ['asus_cal', 'Nick_work_laptop', 'NickMac', 'OLED', 'ASUS_2_13_240Hz']:
     display_number = 0
 use_full_screen = True
 if display_number > 0:
@@ -397,9 +395,18 @@ instructions = visual.TextStim(win=win, name='instructions',
 
 
 # BREAKS
-take_break = 76
+# expected trials plus repeats
+max_trials = total_n_trials + max_droped_fr_trials
+# limit on number of trials without a break
+max_without_break = 120
+# number of breaks
+n_breaks = max_trials // max_without_break
+if n_breaks > 0:
+    take_break = int(max_trials / (n_breaks + 1))
+else:
+    take_break = max_without_break
 break_dur = 30
-print(f"\ntake_break every {take_break} trials.")
+print(f"\ntake a {break_dur} second break every {take_break} trials ({n_breaks} breaks in total).")
 break_text = f"Break\nTurn on the light and take at least {break_dur} seconds break.\n" \
              "Keep focussed on the fixation circle in the middle of the screen.\n" \
              "Remember, if you don't see the target, just guess!"
@@ -409,7 +416,7 @@ breaks = visual.TextStim(win=win, name='breaks', text=break_text, font='Arial',
 end_of_exp_text = "You have completed this experiment.\nThank you for your time.\n\n"
 end_of_exp = visual.TextStim(win=win, name='end_of_exp',
                              text=end_of_exp_text, color='white',
-                             font='Arial', height=20, colorSpace=this_colourSpace,)
+                             font='Arial', height=20, colorSpace=this_colourSpace)
 
 too_many_dropped_fr = visual.TextStim(win=win, name='too_many_dropped_fr',
                                       text="The experiment had quit as the computer is dropping frames.\n"
@@ -919,7 +926,7 @@ for step in range(n_trials_per_stair):
                             # get trial frameIntervals details
                             trial_fr_intervals = win.frameIntervals
                             n_fr_recorded = len(trial_fr_intervals)
-                            print(f"n_fr_recorded: {n_fr_recorded}, trial_fr_intervals: {trial_fr_intervals}")
+                            print(f"n_fr_recorded: {n_fr_recorded}")
 
                             # add to empty lists etc.
                             fr_int_per_trial.append(trial_fr_intervals)
@@ -931,7 +938,7 @@ for step in range(n_trials_per_stair):
 
                             # get timings for each segment (probe1, ISI, probe2).
                             fr_diff_ms = [(expected_fr_sec - i) * 1000 for i in trial_fr_intervals]
-                            print(f"fr_diff_ms: {fr_diff_ms}, sum: {sum(fr_diff_ms)}")
+                            print(f"sum(fr_diff_ms): {sum(fr_diff_ms)}")
 
                             p1_durs = fr_diff_ms[:2]
                             p1_diff = sum(p1_durs)
@@ -961,6 +968,7 @@ for step in range(n_trials_per_stair):
                                 repeat = True
                                 dropped_fr_trial_counter += 1
                                 trial_number -= 1
+                                thisStair.trialCount = thisStair.trialCount - 1  # so Kesten doesn't count this trial
                                 win.frameIntervals = []
                                 continueRoutine = False
                                 trial_x_locs = [exp_n_fr_recorded_list[-2], exp_n_fr_recorded_list[-1]]
