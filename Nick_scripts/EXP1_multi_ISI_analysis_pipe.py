@@ -12,7 +12,7 @@ project_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\C
 # # then run script d to get master lists and averages
 # eyetracking, jitter_rgb, EXP1_split_probes, Exp1_double_dist, EXP1_sep4_5
 # Exp4b_missing_probe\rotation, incoherent, radial, rotation, translation,
-this_exp = r"EXP1_sep4_5"
+this_exp = r"EXP1_Jan23_rept_dropped"
 exp_path = os.path.join(project_path, this_exp)
 
 convert_path1 = os.path.normpath(exp_path)
@@ -22,7 +22,7 @@ if running_on_laptop():
 exp_path = convert_path1
 
 print(f"exp_path: {exp_path}")
-participant_list = ['Nick_sep45']  # 'Nick_sep0123', 'Nick_sep45', 'Nick_sep67', 'Nick_sep89' 'Simon', 'Nick'
+participant_list = ['Nick_OLED']  # 'Nick_sep0123', 'Nick_sep45', 'Nick_sep67', 'Nick_sep89' 'Simon', 'Nick'
 # participant_list = ['p1', 'p2']
 split_1probe = False
 
@@ -200,9 +200,9 @@ for p_idx, participant_name in enumerate(participant_list):
     # trim_n = None
     # lum_col = 'probeLum'
     print(f"\n\ntrim_list: {trim_list}, trim_n: {trim_n}\n\n")
-    # todo: use trim 2 for Nick's sep_34 various names.
-    trim_list = [2]
-    trim_n = 2
+    # # todo: use trim 2 for Nick's sep_34 various names.
+    # trim_list = [2]
+    # trim_n = 2
     '''d'''
     d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
                           trim_n=trim_n, error_type='SE')

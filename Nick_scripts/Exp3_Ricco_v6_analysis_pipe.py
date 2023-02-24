@@ -13,8 +13,8 @@ from PsychoPy_tools import get_pixel_mm_deg_values
 
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
-# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp3_Ricco_NM_v5"
-exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp3_Ricco_NM_v4"
+exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp3_Ricco_NM_v5"
+# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp3_Ricco_NM_v4"
 # exp_path = r"C:\Users\sapnm4\PycharmProjects\Cardiff\Nick_scripts\Exp3_Ricco_NM_DEMO"
 
 convert_path1 = os.path.normpath(exp_path)
@@ -24,8 +24,8 @@ exp_path = convert_path1
 print(f"exp_path: {exp_path}")
 
 # participant_list = ['Kim']  # , 'bb', 'cc', 'dd', 'ee']
-participant_list = ['Kim', 'Kris', 'Nick', 'Simon']  # , 'bb', 'cc', 'dd', 'ee']
-# participant_list = ['Nick']
+# participant_list = ['Kim', 'Kris', 'Nick', 'Simon']  # , 'bb', 'cc', 'dd', 'ee']
+participant_list = ['Nick']
 
 
 ricco_version = 5
@@ -351,13 +351,13 @@ for p_idx, participant_name in enumerate(participant_list):
     print('*** finished participant average plots ***')
 
 
-# participant_list = ['Nick']  #, 'Kim', 'Kris', 'Simon']
-# print(f'exp_path: {exp_path}')
-# print('\nget exp_average_data')
-# e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
-#                    # exp_type='Ricco',
-#                    exp_type=f'Ricco_v{ricco_version}',
-#                    error_type='SE', n_trimmed=trim_n, verbose=True)
+participant_list = ['Nick']  #, 'Kim', 'Kris', 'Simon']
+print(f'exp_path: {exp_path}')
+print('\nget exp_average_data')
+e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
+                   # exp_type='Ricco',
+                   exp_type=f'Ricco_v{ricco_version}',
+                   error_type='SE', n_trimmed=trim_n, verbose=True)
 
 
 all_df_path = os.path.join(exp_path, 'MASTER_exp_thr.csv')

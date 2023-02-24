@@ -963,7 +963,7 @@ def plot_ave_w_errors_markers(fig_df, error_df,
 
     cap_size = 0
     if error_caps:
-        cap_size = 5
+        cap_size = 10
 
     # set colour palette
     my_colours = fig_colours(len(legend_names), alternative_colours=alt_colours)
@@ -989,7 +989,7 @@ def plot_ave_w_errors_markers(fig_df, error_df,
         for x_val, y_val, y_err_val, color, name in \
                 zip(x_values, y_values, y_err_values, my_colours, legend_names):
             ax.errorbar(x=x_val, y=y_val, yerr=y_err_val,
-                        elinewidth=2, capsize=cap_size, ecolor=color, zorder=2)
+                        elinewidth=3, capsize=cap_size, ecolor=color, zorder=2)
 
             leg_handle = mlines.Line2D([], [], color=color, label=name,
                                        marker='P', linewidth=0)
