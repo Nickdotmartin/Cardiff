@@ -385,7 +385,7 @@ for step in range(n_trials_per_stair):
             probe_vert_list_2 = list(np.repeat(probe_vert_list, len(cond_types)))
             probeVert = probe_vert_list_2[stair_idx]
             line_probe = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, 1.0, 1.0),
-                                          lineWidth=0, opacity=1, size=10, interpolate=False, )
+                                          lineWidth=0, opacity=1, size=1, interpolate=False, )
             probe1 = line_probe
         else:
             raise ValueError(f'Unknown cond type: {cond_type}')
