@@ -3,7 +3,8 @@ import pandas as pd
 from exp1a_psignifit_analysis import a_data_extraction, b3_plot_staircase, c_plots, \
     d_average_participant, e_average_exp_data, make_average_plots
 from psignifit_tools import get_psignifit_threshold_df
-from python_tools import switch_path
+from python_tools import which_path, running_on_laptop, switch_path
+
 import matplotlib.pyplot as plt
 
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
@@ -12,7 +13,13 @@ old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data'
 # old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/Kim_split_runs'
 # old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data_first_three_sessions'
 # old_exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data_second_three_sessions'
-exp_path = switch_path(old_exp_path, 'wind_oneDrive')
+convert_path1 = os.path.normpath(old_exp_path)
+if running_on_laptop():
+    convert_path1 = switch_path(convert_path1, 'mac_oneDrive')
+exp_path = convert_path1
+
+
+# exp_path = switch_path(old_exp_path, 'wind_oneDrive')
 print(f"exp_path: {exp_path}")
 participant_list = ['aa', 'bb', 'cc', 'dd', 'ee']
 # participant_list = ['bb', 'cc', 'dd', 'ee']
@@ -139,7 +146,7 @@ for p_idx, participant_name in enumerate(participant_list):
                        error_type='SE',
                        ave_over_n=len(run_folder_names),
                        n_trimmed=trim_n,
-                       exp_ave=False,  # participant ave, not exp ave
+                       exp_ave=participant_name,  # participant ave, not exp ave
                        show_plots=True, verbose=True)
 
 

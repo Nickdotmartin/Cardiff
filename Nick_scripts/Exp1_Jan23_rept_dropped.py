@@ -25,18 +25,19 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'asus_cal'  # 'asus_cal', 'Nick_work_laptop', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18', 'OLED' 'OLED'
+monitor_name = 'NickMac'  # 'asus_cal', 'Nick_work_laptop', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18', 'OLED' 'OLED'
 
 # Store info about the experiment session (numbers keep the order)
 expName = 'Exp1_Jan23_rept_dropped'  # from the Builder filename that created this script
 expInfo = {'1. Participant': 'Nick_test',
            '2. Run_number': '1',
            '3. Probe duration in frames': [2, 1, 50, 100],
-           '4. fps': [240, 120, 60],
+           '4. fps': [60, 240, 120, 60],
            '5. Probe_orientation': ['tangent', 'radial'],
            '6. Vary_fixation': [True, False],
            '7. Record_frame_durs': [True, False],
-           '8. probe_n_pixels': [5, 7]
+           '8. probe_n_pixels': [5, 7],
+           '9. Fusion lock rings': [False, True]
            }
 
 # dialogue box
@@ -53,6 +54,7 @@ orientation = expInfo['5. Probe_orientation']
 vary_fixation = eval(expInfo['6. Vary_fixation'])
 record_fr_durs = eval(expInfo['7. Record_frame_durs'])
 probe_n_pixels = int(expInfo['8. probe_n_pixels'])
+fusion_lock_rings = eval(expInfo['9. Fusion lock rings'])
 
 n_trials_per_stair = 25  # 25
 probe_ecc = 4
@@ -210,6 +212,25 @@ probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor='white', colorSpace
 
 # dist_from_fix is a constant to get 4dva distance from fixation,
 dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
+
+# high contrast marker to help fusion lock when on OLED.  rings are white, black, white, black, white (then bgColour inner circle fill)
+outer_ring_rad_dva = 7
+circle_radius_pixels = round((tan(np.deg2rad(outer_ring_rad_dva)) * viewdistPix) / sqrt(2))
+fusion_lock_circle = visual.Circle(win=win, units="pix", radius=circle_radius_pixels,
+                                   colorSpace=this_colourSpace, lineWidth=5,
+                                   fillColor='black', lineColor='white')
+fusion_lock_circle2 = visual.Circle(win=win, units="pix", radius=circle_radius_pixels-10,
+                                   colorSpace=this_colourSpace, lineWidth=5,
+                                   fillColor='black', lineColor='white')
+fusion_lock_circle3 = visual.Circle(win=win, units="pix", radius=circle_radius_pixels-20,
+                                   colorSpace=this_colourSpace, lineWidth=5,
+                                   fillColor=this_bgColour, lineColor='white')
+
+# print(f"dist_from_fix: {dist_from_fix}, circle_radius_pixels: {circle_radius_pixels},\n"
+#       f"circle_radius_pixels2: {circle_radius_pixels2}, circle_radius_pixels3: {circle_radius_pixels3}")
+if monitor_name == 'OLED':
+    fusion_lock_rings = True
+
 
 # MOUSE - hide cursor
 myMouse = event.Mouse(visible=False)
@@ -577,6 +598,14 @@ for step in range(n_trials_per_stair):
             while continueRoutine:
                 frameN = frameN + 1
 
+                # blank screen for n frames if on OLED to stop it adapting to bgColor
+                if monitor_name == 'OLED':
+                    if frameN == 1:
+                        win.color = 'black'
+
+                    if frameN == 5:
+                        win.color = this_bgColour
+
                 # recording frame durations - from t_fixation (1 frame before p1), until 1 frame after p2.
                 if frameN == t_fixation:
 
@@ -608,13 +637,24 @@ for step in range(n_trials_per_stair):
                 '''Experiment timings'''
                 # FIXATION
                 if t_fixation >= frameN > 0:
+                    if fusion_lock_rings:
+                        fusion_lock_circle.draw()
+                        fusion_lock_circle2.draw()
+                        fusion_lock_circle3.draw()
+
                     fixation.setRadius(3)
                     fixation.draw()
                     # loc_marker.draw()
 
 
+
                 # PROBE 1
                 elif t_probe_1 >= frameN > t_fixation:
+                    if fusion_lock_rings:
+                        fusion_lock_circle.draw()
+                        fusion_lock_circle2.draw()
+                        fusion_lock_circle3.draw()
+
                     probe1.draw()
                     if ISI == -1:  # SIMULTANEOUS CONDITION (concurrent)
                         if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
@@ -625,12 +665,22 @@ for step in range(n_trials_per_stair):
 
                 # ISI
                 elif t_ISI >= frameN > t_probe_1:
+                    if fusion_lock_rings:
+                        fusion_lock_circle.draw()
+                        fusion_lock_circle2.draw()
+                        fusion_lock_circle3.draw()
+
                     fixation.setRadius(3)
                     fixation.draw()
                     # loc_marker.draw()
 
                 # PROBE 2
                 elif t_probe_2 >= frameN > t_ISI:
+                    if fusion_lock_rings:
+                        fusion_lock_circle.draw()
+                        fusion_lock_circle2.draw()
+                        fusion_lock_circle3.draw()
+
                     if ISI >= 0:
                         if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
                             probe2.draw()
@@ -640,6 +690,11 @@ for step in range(n_trials_per_stair):
 
                 # ANSWER
                 elif frameN > t_probe_2:
+                    if fusion_lock_rings:
+                        fusion_lock_circle.draw()
+                        fusion_lock_circle2.draw()
+                        fusion_lock_circle3.draw()
+
                     fixation.setRadius(2)
                     fixation.draw()
                     # loc_marker.draw()

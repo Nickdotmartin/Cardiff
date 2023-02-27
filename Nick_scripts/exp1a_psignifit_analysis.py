@@ -86,14 +86,6 @@ def split_df_alternate_rows(df):
     return pos_sep_df, neg_sep_df
 
 
-#######
-# save_path = ''
-# last_response_df = pd.read_csv(f'{save_path}{os.sep}last_response.csv', dtype=int)
-# print(f'last_response_df:\n{last_response_df}')
-# df1, df2 = split_df_alternate_rows(last_response_df)
-# print(df1)
-# print(df2)
-
 def merge_pos_and_neg_sep_dfs(pos_sep_df, neg_sep_df):
     """
     Takes two dataframes relating to positive and negative separation values:
@@ -125,11 +117,6 @@ def merge_pos_and_neg_sep_dfs(pos_sep_df, neg_sep_df):
     return merged_df
 
 
-######
-# combo_df = merge_pos_and_neg_sep_dfs(last_response_df, df2)
-# print(f'combo:\n{combo_df}')
-
-
 def split_df_into_pos_sep_df_and_1probe_df(pos_sep_and_1probe_df,
                                            thr_col='newLum',
                                            isi_name_list=None,
@@ -141,6 +128,7 @@ def split_df_into_pos_sep_df_and_1probe_df(pos_sep_and_1probe_df,
     
     :param pos_sep_and_1probe_df: Dataframe of positive separations with
         one_probe conds at bottom of df (e.g., shown as 20 or 99).  df must be indexed with the separation column.
+    :param thr_col: Column to extract threshold values from - expects either probeLum or newLum.
     :param isi_name_list: List of isi names.  If None, will use default values.
     :param one_probe_pos: Default=None, use value from df.  Where to set location of 1probes on x-axis.
     :param verbose: whether to print progress info to screen
@@ -339,8 +327,6 @@ def trim_n_high_n_low(all_data_df, trim_from_ends=None, reference_col='separatio
                 trimmed = depth_slice[trim_from_ends: -trim_from_ends]
             else:
                 trimmed = depth_slice[:]
-            # if verbose:
-                # print(f'{counter}: {trimmed}')
             row_list.append(trimmed)
             counter += 1
         trimmed_3d_list.append(row_list)
@@ -407,6 +393,7 @@ def make_long_df(wide_df, wide_stubnames='ISI', thr_col='newLum',
     :param wide_df: Expects a dataframe made by concatenating data from several runs.
         Dataframe expected to contain columns for: Run, separation and ISI levels.
     :param wide_stubnames: repeated prefix for several columns (e.g., ISI0, ISI1, ISI2, ISI4 etc).
+    :param thr_col: Column to extract threshold values from - expects either probeLum or newLum.
     :param col_to_keep: Existing columns of useful data (e.g., separation)
     :param idx_col: Existing column of irrelevant data to use as index (e.g., Run)
     :param verbose: print progress to screen.
@@ -462,11 +449,6 @@ def make_long_df(wide_df, wide_stubnames='ISI', thr_col='newLum',
 
 ###########################
 
-
-
-# # # all ISIs on one axis - pos sep only, plus single probe
-# FIGURE 1 - shows one axis (x=separation (0-18), y=newLum) with all ISIs added.
-# it also seems that for isi=99 there are simple dots added at -1 on the x-axis.
 
 def plot_pos_sep_and_1probe(pos_sep_and_1probe_df,
                             thr_col='newLum',
@@ -585,6 +567,7 @@ def plot_1probe_w_errors(fig_df, error_df,
     :param fig_df: dataframe to build plot from.  Expects fig_df in the form:
         separation as index, 1probe as bottom row, ISIs as columns.
     :param error_df: dataframe of same shape as fig_df, but contains error values
+    :param thr_col: Column to extract threshold values from - expects either probeLum or newLum.
     :param split_1probe: Default=True - whether to treat 1probe data separately,
         e.g., not joined with line to 2probe data.
     :param jitter: Jitter x_axis values so points don't overlap.
@@ -723,7 +706,7 @@ def plot_w_errors_no_1probe(wide_df, x_var, y_var, lines_var,
                             verbose=True):
     """
     Function to plot pointplot with error bars.  Use this for plots unless
-    there is a need for the separate 1probe condition.  Note: x-axis is categorical
+    there is a need for the separate 1probe condition.  Note: x-axis is categorical,
     so it's not easy to move ticks.  If I want to do this, use plot_1probe_w_errors().
 
     :param wide_df: wide form dataframe with data from multiple runs
@@ -775,7 +758,7 @@ def plot_w_errors_no_1probe(wide_df, x_var, y_var, lines_var,
 
     fig, ax = plt.subplots()
     sns.pointplot(data=long_fig_df, x=x_var, y=y_var, hue=lines_var,
-                  estimator=np.mean, ci=68, dodge=jitter, markers='.',
+                  estimator=np.mean, errorbar='se', dodge=jitter, markers='.',
                   errwidth=1, capsize=cap_size, palette=my_colours, ax=ax)
 
     # sort legend
@@ -831,10 +814,12 @@ def plot_thr_heatmap(heatmap_df,
     :param heatmap_df: Expects dataframe with separation as index and ISIs as columns.
     :param x_tick_labels: Labels for columns
     :param y_tick_labels: Labels for rows
-    :param fig_title:
-    :param save_name:
-    :param save_path:
-    :param verbose:
+    :param midpoint: Value to use as midpoint of colour range (e.g., mean or zero etc).
+    :param fig_title: title for figure
+    :param save_name: filename for plot
+    :param save_path: path to save plot to.
+    :param my_colourmap: Colours to use.  
+    :param verbose: Whether to print progress to screen.
     :return: Heatmap
     """
 
@@ -860,12 +845,11 @@ def plot_thr_heatmap(heatmap_df,
                           annot=True,
                           # fmt=annot_fmt,
                           center=midpoint,
-                          # cmap=sns.color_palette("Spectral", as_cmap=True),
                           cmap=my_colourmap,
                           xticklabels=x_tick_labels, yticklabels=y_tick_labels,
                           square=False)
 
-    if 'ISI' in str(x_tick_labels[0]).upper():
+    if 'ISI' in str(x_tick_labels[-1]).upper():
         heatmap.set_xlabel('ISI')
         heatmap.set_ylabel('Separation')
     else:
@@ -902,11 +886,17 @@ def plt_heatmap_row_col(heatmap_df,
     Function for making a heatmap
     :param heatmap_df: Expects dataframe with separation as index and ISIs as columns.
     :param colour_by: colour plots by 'rows' or 'cols.  That is, each row or column is coloured individually.
+    :param x_tick_labels: Labels for columns
+    :param x_axis_label: Name for x_axis
     :param y_tick_labels: Labels for rows
-    :param fig_title:
-    :param save_name:
-    :param save_path:
-    :param verbose:
+    :param y_axis_label: name for y_axis
+    :param fig_title: Title for figure.
+    :param midpoint: Value to use a midpoint for colours (e.g., mean or zero).
+    :param fontsize: Textsize for heatmap values.
+    :param save_name: Name for figure.
+    :param save_path: Path to save figure to.
+    :param verbose: Whether to print progress to screen.
+    :param my_colourmap: Colourmap to use
     :return: Heatmap
     """
 
@@ -954,8 +944,6 @@ def plt_heatmap_row_col(heatmap_df,
             else:
                 ax.tick_params(left=False)
                 ax.set_ylabel(None)
-            # todo: add in this axis label again (worked on windows but not mac)
-            # fig.supxlabel(x_axis_label, fontsize=fontsize+2)
             plt.subplots_adjust(wspace=-0.5, hspace=-.5)
 
         else:
@@ -964,15 +952,13 @@ def plt_heatmap_row_col(heatmap_df,
                 ax.set_xlabel(x_axis_label, fontsize=fontsize)
             else:
                 ax.tick_params(bottom=False)
-            # todo: add in this axis label again (worked on windows but not mac)
-            # fig.supylabel(y_axis_label, fontsize=fontsize+2, x=.1)
             plt.subplots_adjust(hspace=0.1)
 
     # # make colourbar: numbers are (1) the horizontal and (2) vertical position
     # # of the bottom left corner, then (3) width and (4) height of colourbar.
     cb_ax = fig.add_axes([0.85, 0.11, 0.02, 0.77])
     cbar = plt.colorbar(cm.ScalarMappable(cmap=my_colourmap), cax=cb_ax)
-    # set the colorbar ticks and tick labels
+    # set the colourbar ticks and tick labels
     cbar.set_ticks(np.arange(0, 1.1, 0.5))
     cbar.set_ticklabels(['Lowest', 'Med', 'Highest'])
     cbar.set_label(f'Luminance threshold per {colour_by}')
@@ -1000,12 +986,9 @@ def make_diff_from_conc_df(thr_df_path):
 
     if isinstance(thr_df_path, str):
         thr_df = pd.read_csv(thr_df_path)
-        # save_path, df_name = os.path.split(thr_df_path)
 
     elif isinstance(thr_df_path, pd.DataFrame):
         thr_df = thr_df_path
-        # if save_path is None:
-        #     raise ValueError('In order to save plot, please pass a save path or path to df.')
     else:
         raise TypeError(f'thr_df_path should be str (path to dataframe) or '
                         f'DataFrame, not {type(thr_df_path)}')
@@ -1026,19 +1009,19 @@ def make_diff_from_conc_df(thr_df_path):
         diff_from_conc_df = thr_df.iloc[:, :].sub(thr_df['ISI_-1'], axis=0)
     print(f'diff_from_conc_df:\n{diff_from_conc_df}')
 
-
     print('\n*** finished make_diff_from_conc_df() ***')
 
     return diff_from_conc_df
 
-def plot_diff_from_conc_lineplot(thr_df_path, div_by_1probe=False,
-                                 fig_title=None, save_name=None, save_path=None):
+
+
+def plot_diff_from_conc_lineplot(thr_df_path, fig_title=None, 
+                                 save_name=None, save_path=None):
     """
     Function to plot the difference in threshold from concurrent for each ISI.
 
     :param thr_df_path: Either an actual DataFrame or a path to dataframe.
         thr_df is a ISI (columns) x separation (rows) dataframe.
-    :param div_by_1probe: If True, divide all 2probe thr by 1probe.
     :param fig_title: Title for figure.
     :param save_name: File name to save figure.
     :param save_path: Path to save file if a thr_df_path is a dataframe.
@@ -1047,38 +1030,6 @@ def plot_diff_from_conc_lineplot(thr_df_path, div_by_1probe=False,
     """
     print('\n*** running plot_diff_from_conc_lineplot() ***')
 
-    # if isinstance(thr_df_path, str):
-    #     thr_df = pd.read_csv(thr_df_path)
-    #     save_path, df_name = os.path.split(thr_df_path)
-    #
-    # elif isinstance(thr_df_path, pd.DataFrame):
-    #     thr_df = thr_df_path
-    #     if save_path is None:
-    #         raise ValueError('In order to save plot, please pass a save path or path to df.')
-    # else:
-    #     raise TypeError(f'thr_df_path should be str (path to dataframe) or '
-    #                     f'DataFrame, not {type(thr_df_path)}')
-    #
-    # print(f'thr_df:\n{thr_df}')
-    #
-    # if 'separation' in list(thr_df.columns):
-    #     thr_df.set_index('separation', inplace=True, drop=True)
-    # thr_df.rename(index={20: '1Probe'}, inplace=True)
-    # print(f'thr_df:\n{thr_df}')
-    #
-    # # div by 1probe
-    # if div_by_1probe:
-    #     thr_df = thr_df.iloc[:-1, :].div(thr_df.iloc[-1][:], axis=1)
-    #     print(f'thr_df:\n{thr_df}')
-    #
-    # # diff_from_conc_df is an ISI x Sep df where the concurrent column is subtracted from all columns.
-    # # therefore, the first column has zero for all values,
-    # # and all other columns show the difference between an ISI and concurrent.
-    # if 'Concurrent' in list(thr_df.columns):
-    #     diff_from_conc_df = thr_df.iloc[:, :].sub(thr_df.Concurrent, axis=0)
-    # elif 'ISI_-1' in list(thr_df.columns):
-    #     diff_from_conc_df = thr_df.iloc[:, :].sub(thr_df['ISI_-1'], axis=0)
-    # print(f'diff_from_conc_df:\n{diff_from_conc_df}')
 
     diff_from_conc_df = make_diff_from_conc_df(thr_df_path)
 
@@ -1110,12 +1061,12 @@ def plot_thr_3dsurface(plot_df, my_rotation=True, even_spaced=False,
     Can add markers to show minimum per ISI or Separation.
 
     :param plot_df: dataframe (sep index, ISI columns)
-    :param my_rotation: transform df to my prefered alignement (reverse columns)
+    :param my_rotation: transform df to my preferred alignment (reverse columns)
     :param even_spaced: Evenly spaced axis are better if I am transforming data (not sure why)
     :param transpose_df: If not using my_rotation, I can manually transpose df.
     :param rev_rows: If not using my_rotation, I can manually reverse order of rows.
     :param rev_cols: If not using my_rotation, I can manually reverse order of columns.
-    :param show_min_per_sep: If True, Show minumim value per separation with markers.
+    :param show_min_per_sep: If True, Show minimum value per separation with markers.
     :param min_per_df_row: If False (and if show_min_per_sep) shows minimum value
                           per ISI with markers.
     :param my_elev: Change viewing angle elevation.
@@ -1145,7 +1096,6 @@ def plot_thr_3dsurface(plot_df, my_rotation=True, even_spaced=False,
         plot_df = plot_df.loc[:, ::-1]
     else:
         # for future reference, to reverse order of rows and columns
-        # plot_df = plot_df.loc[::-1, ::-1]
         if transpose_df:
             # swap index and columns
             plot_df = plot_df.T
@@ -1202,12 +1152,9 @@ def plot_thr_3dsurface(plot_df, my_rotation=True, even_spaced=False,
         print(f'rows_array: {rows_array}')
         print(f'cols_array: {cols_array}')
         print(f'z_array:\n{z_array}')
-    # z_min = np.amin(z_array)
-    # z_max = np.amax(z_array)
 
     # make figure
     fig = plt.figure()
-    # ax = Axes3D(fig)
     ax = fig.gca(projection='3d')  # to work in 3d
 
     # my_cmap = plt.get_cmap('Spectral')
@@ -1216,9 +1163,7 @@ def plot_thr_3dsurface(plot_df, my_rotation=True, even_spaced=False,
                            cmap=my_cmap,
                            edgecolor='grey',
                            alpha=.5,
-                           # vmin=z_min, vmax=z_max
                            )
-    # ax.set_zlim(z_min, z_max)
     fig.colorbar(surf, ax=ax, shrink=0.75)
 
     if show_min_per_sep:
@@ -1231,9 +1176,6 @@ def plot_thr_3dsurface(plot_df, my_rotation=True, even_spaced=False,
             figure_title = 'Average threshold for each ISI and separation condition.\n' \
                            'Markers show min thr per Separation'
             for index, row in plot_df.iterrows():
-                # print("")
-                # print(index, row.min(), row.argmin())
-                # print(list(row))
                 scat_x.append(row.argmin())
                 scat_y.append(index)
                 scat_z.append(row.min()+.1)
@@ -1254,7 +1196,6 @@ def plot_thr_3dsurface(plot_df, my_rotation=True, even_spaced=False,
         # Creating scatter plot
         ax.scatter3D(scat_x, scat_y, scat_z,
                      color="black",
-                     # alpha=.99,
                      marker='D'
                      )
 
@@ -1277,12 +1218,14 @@ def plot_thr_3dsurface(plot_df, my_rotation=True, even_spaced=False,
         if save_name is not None:
             plt.savefig(f'{save_path}/{save_name}.png')
 
-    # change viewing angle:  default elev=30, azim=300 (counterclockwize on z axis)
+    # change viewing angle:  default elev=30, azim=300 (counterclockwise on z axis)
     ax.view_init(elev=my_elev, azim=my_azim)
 
     print('*** finished plot_thr_3dsurface() ***')
 
     return fig
+
+
 
 def eight_batman_plots(mean_df, thr1_df, thr2_df,
                        fig_title=None, isi_name_list=None,
@@ -1406,133 +1349,6 @@ def eight_batman_plots(mean_df, thr1_df, thr2_df,
     return fig
 
 
-# def plot_8_sep_thr(all_thr_df, thr_col='newLum', exp_ave=False, fig_title=None,
-#                    save_name=None, save_path=None, verbose=True):
-#     """
-#     Function to make a page with seven axes showing the threshold for each separation,
-#     and an eighth plot showing all separations.
-#
-#     :param all_thr_df: Dataframe with thresholds from multiple runs or participants
-#                         (e.g., MASTER_thresholds.csv or MASTER_exp_thr.csv)
-#     :param exp_ave: Use True for experiment thr from multiple participants or
-#                     False for thr from multiple runs from a single participant.
-#     :param fig_title: Title for figure.
-#     :param save_name: File name to save plot.
-#     :param save_path: Directory to save plot into.
-#     :param verbose: print progress to screen,
-#
-#     :return: Figure
-#     """
-#     print('\n*** running plot_8_sep_thr()***')
-#     if type(all_thr_df) is str:
-#         if os.path.isfile(all_thr_df):
-#             all_thr_df = pd.read_csv(all_thr_df)
-#     # Average over experiment or participant (with or without participant name)
-#     if exp_ave is True:
-#         ave_over = 'Exp'
-#         long_df_idx_col = 'participant'
-#     elif type(exp_ave) == str:
-#         ave_over = exp_ave
-#         long_df_idx_col = 'stack'
-#     else:
-#         ave_over = 'P'
-#         long_df_idx_col = 'stack'
-#
-#
-#     if not fig_title:
-#         fig_title = f'{ave_over} average thresholds per separation'
-#
-#     if verbose:
-#         print(f'input: all_thr_df: \n{all_thr_df}')
-#
-#     # just_thr_df = all_thr_df.loc[:, 'ISI 999':]
-#     if 'Concurrent' in list(all_thr_df.columns):
-#         just_thr_df = all_thr_df.loc[:, 'Concurrent':]
-#     # elif 'ISI_-1' in list(all_thr_df.columns):
-#     else:
-#         just_thr_df = all_thr_df.iloc[:, 2:]
-#
-#     min_thr = just_thr_df.min().min()
-#     max_thr = just_thr_df.max().max()
-#     if verbose:
-#         print(f'just_thr_df:\n{just_thr_df}')
-#         print(f'min_thr: {min_thr}; max_thr: {max_thr}')
-#
-#     # convert wide_df to long for getting means and standard error.
-#     long_fig_df = make_long_df(all_thr_df, thr_col=thr_col, idx_col=long_df_idx_col)
-#     if verbose:
-#         print(f'long_fig_df:\n{long_fig_df}')
-#
-#     sep_list = sorted(list(long_fig_df['separation'].unique()))
-#     isi_names_list = sorted(list(long_fig_df['ISI'].unique()))
-#     print(f'isi_labels:\n{isi_names_list}')
-#     if type(isi_names_list[0]) == str:
-#         if 'ISI ' in isi_names_list[0]:
-#             isi_vals_list = [int(i.strip('ISI ')) for i in isi_names_list]
-#         elif 'ISI_' in isi_names_list[0]:
-#             isi_vals_list = [int(i.strip('ISI_')) for i in isi_names_list]
-#     isi_vals_list = sorted(isi_vals_list)
-#     isi_vals_list = ['conc' if i == -1 else i for i in isi_vals_list]
-#
-#
-#     my_colours = fig_colours(len(sep_list))
-#
-#     fig, axes = plt.subplots(nrows=2, ncols=4, figsize=(12, 6))
-#     ax_counter = 0
-#
-#     for row_idx, row in enumerate(axes):
-#         for col_idx, ax in enumerate(row):
-#
-#             # for the first seven plots...
-#             if ax_counter < len(sep_list):
-#
-#                 fig.suptitle(fig_title)
-#                 this_sep = sep_list[ax_counter]
-#                 sep_df = long_fig_df[long_fig_df['separation'] == this_sep]
-#
-#                 print(f"sep_df:\n{sep_df}")
-#
-#                 sns.pointplot(ax=axes[row_idx, col_idx],
-#                               data=sep_df, x='ISI', y=thr_col,
-#                               estimator=np.mean, ci=68,
-#                               markers='.',
-#                               errwidth=1,
-#                               color=my_colours[ax_counter],
-#                               capsize=.1)
-#
-#                 if this_sep == 20:
-#                     this_sep = '1probe'
-#
-#                 ax.set_title(f'Separation = {this_sep}')
-#                 ax.set_xticklabels(isi_vals_list)
-#                 ax.set_ylim([min_thr - 2, max_thr + 2])
-#             elif ax_counter == len(sep_list):
-#                 sns.pointplot(ax=axes[row_idx, col_idx],
-#                               data=long_fig_df, x='ISI', y=thr_col,
-#                               hue='separation',
-#                               estimator=np.mean, ci=68,
-#                               markers='.',
-#                               errwidth=1,
-#                               capsize=.1,
-#                               palette=my_colours)
-#                 ax.set_ylim([min_thr - 2, max_thr + 2])
-#                 ax.set_xticklabels(isi_vals_list)
-#                 ax.set_title(f'All Separation conditions')
-#
-#                 # no legend (I struggled to find this command for a while)
-#                 ax.legend([], [], frameon=False)
-#
-#             ax_counter += 1
-#
-#     plt.tight_layout()
-#
-#     if save_path:
-#         if save_name:
-#             plt.savefig(os.path.join(save_path, save_name))
-#
-#     print('\n*** finished plot_8_sep_thr()***')
-#
-#     return fig
 
 def plot_n_sep_thr_w_scatter(all_thr_df, thr_col='probeLum', exp_ave=False, fig_title=None,
                              save_name=None, save_path=None, verbose=True):
@@ -1542,6 +1358,7 @@ def plot_n_sep_thr_w_scatter(all_thr_df, thr_col='probeLum', exp_ave=False, fig_
 
     :param all_thr_df: Dataframe with thresholds from multiple runs or participants
                         (e.g., MASTER_thresholds.csv or MASTER_exp_thr.csv)
+    :param thr_col: Column to extract threshold values from, expects 'probeLum' or 'newLum'.
     :param exp_ave: Use True for experiment thr from multiple participants or
                     False for thr from multiple runs from a single participant.
     :param fig_title: Title for figure.
@@ -1566,7 +1383,6 @@ def plot_n_sep_thr_w_scatter(all_thr_df, thr_col='probeLum', exp_ave=False, fig_
         ave_over = 'P'
         long_df_idx_col = 'stack'
 
-
     if not fig_title:
         fig_title = f'{ave_over} average thresholds per separation'
 
@@ -1576,7 +1392,6 @@ def plot_n_sep_thr_w_scatter(all_thr_df, thr_col='probeLum', exp_ave=False, fig_
     # just_thr_df = all_thr_df.loc[:, 'ISI 999':]
     if 'Concurrent' in list(all_thr_df.columns):
         just_thr_df = all_thr_df.loc[:, 'Concurrent':]
-    # elif 'ISI_-1' in list(all_thr_df.columns):
     else:
         just_thr_df = all_thr_df.iloc[:, 2:]
 
@@ -1602,7 +1417,6 @@ def plot_n_sep_thr_w_scatter(all_thr_df, thr_col='probeLum', exp_ave=False, fig_
     isi_vals_list = sorted(isi_vals_list)
     isi_vals_list = ['conc' if i == -1 else i for i in isi_vals_list]
 
-
     if len(sep_list) > 1:
 
         my_colours = fig_colours(len(sep_list))
@@ -1615,7 +1429,6 @@ def plot_n_sep_thr_w_scatter(all_thr_df, thr_col='probeLum', exp_ave=False, fig_
         fig, axes = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(3 * n_rows, 3 * n_cols))
 
         ax_counter = 0
-
 
         for row_idx, row in enumerate(axes):
             for col_idx, ax in enumerate(row):
@@ -1638,7 +1451,7 @@ def plot_n_sep_thr_w_scatter(all_thr_df, thr_col='probeLum', exp_ave=False, fig_
                     # show mean and error bars
                     sns.pointplot(ax=axes[row_idx, col_idx],
                                   data=sep_df, x='ISI', y=thr_col,
-                                  estimator=np.mean, ci=68,
+                                  estimator=np.mean, errorbar='se',
                                   markers='.', errwidth=2, capsize=.1,
                                   color=my_colours[ax_counter])
 
@@ -1661,7 +1474,7 @@ def plot_n_sep_thr_w_scatter(all_thr_df, thr_col='probeLum', exp_ave=False, fig_
                     sns.pointplot(ax=axes[row_idx, col_idx],
                                   data=long_fig_df, x='ISI', y=thr_col,
                                   hue='separation',
-                                  estimator=np.mean, ci=68,
+                                  estimator=np.mean, errorbar='se',
                                   markers='.', dodge=.3,
                                   errwidth=2, capsize=.1,
                                   palette=my_colours)
@@ -1693,7 +1506,7 @@ def plot_n_sep_thr_w_scatter(all_thr_df, thr_col='probeLum', exp_ave=False, fig_
 
         # show mean and error bars
         sns.pointplot(data=sep_df, x='ISI', y=thr_col,
-                      estimator=np.mean, ci=68,
+                      estimator=np.mean, errorbar='se',
                       markers='.', errwidth=2, capsize=.1,
                       )
 
@@ -1748,9 +1561,6 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
     stair_group_dict = {1: 1, 2: 2, 3: 1, 4: 2, 5: 1, 6: 2, 7: 1,
                         8: 2, 9: 1, 10: 2, 11: 1, 12: 2, 13: 1, 14: 2, 0: 2}
 
-    # raw results csv doesn't have separation or group columns, so assume I'll add them and re-save raw data.
-    # resave_results = True
-
     # empty array to append info into
     all_data = []
 
@@ -1770,9 +1580,6 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
         if any("Unnamed" in i for i in list(this_isi_df.columns)):
             unnamed_col = [i for i in list(this_isi_df.columns) if "Unnamed" in i][0]
             this_isi_df.drop(unnamed_col, axis=1, inplace=True)
-
-        # if 'separation' in list(this_isi_df.columns):
-        #     resave_results = False
 
         # add isi column for multi-indexing
         this_isi_df.insert(0, 'ISI', isi)
@@ -1803,10 +1610,6 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
         # add to all_data
         all_data.append(this_isi_df)
 
-        # if resave_results:
-        #     this_isi_df.to_csv(f'{run_dir}{os.path.sep}ISI_{isi}_probeDur2{os.path.sep}'
-        #                        f'{p_name}_w_sep.csv', index=False)
-
     # create all_data_df - reshape to 2d
     all_data_shape = np.shape(all_data)
     sheets, rows, columns = np.shape(all_data)
@@ -1828,22 +1631,6 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
     print("\n***finished a_data_extraction()***\n")
 
     return all_data_df
-
-
-# # # # # # #
-# participant_name = ''
-# isi_list = [-1, 0, 2, 4, 6, 9, 12, 24]
-# # isi_list = [0, 2]  # , 4, 6, 9, 12, 24, -1]
-# run_dir = ''
-#
-# a_data_extraction(p_name=participant_name, run_dir=run_dir, isi_list=isi_list, verbose=True)
-
-"""
-4. b3_plot_staircase.m: staircases-ISIxxx.png: xxx corresponds to isi conditions. 
-    Eight figure (8 isi conditions) with seven panels on each (7 probes separation 
-    conditions) showing the Luminance value of two staircases as function of 
-    trial number. 
-"""
 
 
 def b3_plot_staircase(all_data_path, thr_col='newLum', resp_col='trial_response',
@@ -1879,10 +1666,7 @@ def b3_plot_staircase(all_data_path, thr_col='newLum', resp_col='trial_response'
     if xlsx_name[-3:] == 'csv':
         all_data_df = pd.read_csv(all_data_path)
     else:
-        all_data_df = pd.read_excel(all_data_path, engine='openpyxl',
-                                    # usecols=['ISI', 'separation', 'stair', 'total_nTrials',
-                                    #          f'{thr_col}', 'trial_response', 'resp.rt']
-                                    )
+        all_data_df = pd.read_excel(all_data_path, engine='openpyxl')
 
     # get list of isi and stair values to loop through
     stair_list = all_data_df['stair'].unique()
@@ -1891,7 +1675,6 @@ def b3_plot_staircase(all_data_path, thr_col='newLum', resp_col='trial_response'
     # get isi string for column names
     isi_name_list = ['Concurrent' if i == -1 else f'isi{i}' for i in isi_list]
     sep_name_list = ['1pr' if i == 99 else f'sep{i}' for i in sep_list]
-    # separation_title = ['18sep', '06sep', '03sep', '02sep', '01sep', '00sep', 'onePb']
 
     trials, columns = np.shape(all_data_df)
     trials_per_stair = int(trials / len(isi_list) / len(stair_list))
@@ -1907,7 +1690,8 @@ def b3_plot_staircase(all_data_path, thr_col='newLum', resp_col='trial_response'
 
     '''the eighth plot is the psignifit thr for each sep (+sep, -sep and mean).
     get data from psignifit_thresholds.csv and reshape here'''
-    thr_csv_name = f'{save_path}{os.sep}psignifit_thresholds.csv'
+    thr_csv_name = os.path.join(save_path, 'psignifit_thresholds.csv')
+
     psignifit_thr_df = pd.read_csv(thr_csv_name)
     if verbose:
         print(f'\npsignifit_thr_df:\n{psignifit_thr_df}')
@@ -1948,25 +1732,6 @@ def b3_plot_staircase(all_data_path, thr_col='newLum', resp_col='trial_response'
         print(f'\npsig_even_stair_df:\n{psig_even_stair_df}')
         print(f'\npsig_thr_mean_df:\n{psig_thr_mean_df}')
 
-    '''I'm no longer pltting psignifit thr here, so I don't need this.'''
-    # # the values listed as separation=20 are actually for the single probe cond.
-    # # Chop last row off and add values later.
-    # psig_thr_mean_df, mean_1probe_df = \
-    #     psig_thr_mean_df.drop(psig_thr_mean_df.tail(1).index), psig_thr_mean_df.tail(1)
-    # psig_odd_stair_df, thr1_1probe_df = \
-    #     psig_odd_stair_df.drop(psig_odd_stair_df.tail(1).index), psig_odd_stair_df.tail(1)
-    # psig_even_stair_df, thr2_1probe_df = \
-    #     psig_even_stair_df.drop(psig_even_stair_df.tail(1).index), psig_even_stair_df.tail(1)
-    # if verbose:
-    #     print(f'\npsig_thr_mean_df (chopped off one_probe):\n{psig_thr_mean_df}')
-    #
-    # # put the one_probe values into a df to use later
-    # one_probe_df = pd.concat([mean_1probe_df, thr1_1probe_df, thr2_1probe_df],
-    #                          ignore_index=True)
-    # one_probe_df.insert(0, 'dset', ['mean', 'group1', 'group2'])
-    # one_probe_df.insert(0, 'x_val', [-1, -1, -1])
-    # if verbose:
-    #     print(f'one_probe_df:\n{one_probe_df}')
 
     # make empty arrays to save reversal n_reversals
     n_reversals_np = np.zeros(shape=[len(stair_list), len(isi_list)])
@@ -1987,7 +1752,7 @@ def b3_plot_staircase(all_data_path, thr_col='newLum', resp_col='trial_response'
         print(f"psig_odd_isi_S:\n{psig_odd_isi_S}")
         print(f"psig_even_isi_S:\n{psig_even_isi_S}")
 
-        # initialise 8 plot figure
+        # initialize 8 plot figure
         # # this is a figure showing n_reversals per staircase condition.
         fig, axes = plt.subplots(nrows=2, ncols=4, figsize=(12, 6))
         ax_counter = 0
@@ -2071,82 +1836,7 @@ def b3_plot_staircase(all_data_path, thr_col='newLum', resp_col='trial_response'
                     ax.set_xticks(np.arange(0, trials_per_stair, 5))
                     ax.set_ylim([0, 110])
 
-                    # artist for legend
-                    # if ax_counter == 0:
-                    #     # st1 = mlines.Line2D([], [], color='tab:red',
-                    #     #                     marker='v',
-                    #     #                     markersize=5, label='group1')
-                    #     # st1_last_val = mlines.Line2D([], [], color='tab:red',
-                    #     #                              linestyle="dotted", marker=None,
-                    #     #                              label='g1_last_val')
-                    #     # st1_psig = mlines.Line2D([], [], color='tab:brown',
-                    #     #                              linestyle="dashed", marker=None,
-                    #     #                              label='g1_psig_thr')
-                    #     # st2 = mlines.Line2D([], [], color='tab:blue',
-                    #     #                     marker='o',
-                    #     #                     markersize=5, label='group2')
-                    #     # st2_last_val = mlines.Line2D([], [], color='tab:blue',
-                    #     #                              linestyle="dotted", marker=None,
-                    #     #                              label='g2_last_val')
-                    #     # st2_psig = mlines.Line2D([], [], color='royalblue',
-                    #     #                              linestyle="dashed", marker=None,
-                    #     #                              label='g2_psig_thr')
-                    #     # ax.legend(handles=[st1, st1_last_val, st1_psig, st2, st2_last_val, st2_psig],
-                    #     #           fontsize=5, loc='lower right')
-
                 else:
-                    '''I'm no longer plotting the psignifit threshold here'''
-                    # """use the psignifit values from each stair pair (e.g., 18, -18) to
-                    # get the mean threshold for each sep condition.
-                    # """
-                    # if verbose:
-                    #     print("\nEighth plot")
-                    #     print(f'psig_thr_mean_df:\n{psig_thr_mean_df}')
-                    #     print(f'\none_probe_df:\n{one_probe_df}')
-                    #
-                    # isi_thr_mean_df = pd.concat([psig_thr_mean_df['separation'], psig_thr_mean_df[isi_name]],
-                    #                             axis=1, keys=['separation', isi_name])
-                    # if verbose:
-                    #     print(f'isi_thr_mean_df:\n{isi_thr_mean_df}')
-                    #
-                    # # line plot for thr1, th2 and mean thr
-                    # sns.lineplot(ax=axes[row_idx, col_idx], data=isi_thr_mean_df,
-                    #              x='separation', y=isi_name, color='lightgreen',
-                    #              linewidth=3)
-                    #
-                    # sns.lineplot(ax=axes[row_idx, col_idx], data=psig_odd_stair_df,
-                    #              x='separation', y=isi_name, color='red',
-                    #              linestyle="--")
-                    # sns.lineplot(ax=axes[row_idx, col_idx], data=psig_even_stair_df,
-                    #              x='separation', y=isi_name, color='blue',
-                    #              linestyle="--")
-                    #
-                    # # scatter plot for single probe conditions
-                    # sns.scatterplot(data=one_probe_df, x="x_val", y=isi_name,
-                    #                 hue='dset',
-                    #                 palette=['lightgreen', 'red', 'blue'])
-                    #
-                    # # artist for legend
-                    # group1 = mlines.Line2D([], [], color='red',
-                    #                        linestyle="--", marker=None,
-                    #                        label='Group1 thr')
-                    #
-                    # group2 = mlines.Line2D([], [], color='blue',
-                    #                        linestyle="--", marker=None,
-                    #                        label='Group2 thr')
-                    # mean_thr = mlines.Line2D([], [], color='lightgreen',
-                    #                          linestyle="solid", marker=None,
-                    #                          label='mean thr')
-                    # ax.legend(handles=[group1, group2, mean_thr], fontsize=6,
-                    #           loc='lower right')
-                    #
-                    # # decorate plot
-                    # ax.set_title(f'{isi_name} psignifit thresholds')
-                    # ax.set_xticks([-2, -1, 0, 1, 2, 3, 6, 18])
-                    # ax.set_xticklabels(['', '\n1probe', 0, 1, 2, 3, 6, 18])
-                    # ax.set_xlabel('Probe separation')
-                    # ax.set_ylim([0, 110])
-                    # ax.set_ylabel('Probe Luminance')
                     st1 = mlines.Line2D([], [], color='tab:red',
                                         marker='v',
                                         markersize=5, label='group1')
@@ -2175,7 +1865,6 @@ def b3_plot_staircase(all_data_path, thr_col='newLum', resp_col='trial_response'
 
         # show and close plots
         if save_plots:
-            # savename = f'staircases_{isi_name}.png'
             save_fig_path = os.path.join(save_path, f'staircases_{isi_name}.png')
             print(f'saving fig to: {save_fig_path}')
             plt.savefig(save_fig_path)
@@ -2192,15 +1881,12 @@ def b3_plot_staircase(all_data_path, thr_col='newLum', resp_col='trial_response'
     if verbose:
         print(f'\nn_reversals_df:\n{n_reversals_df}')
 
-    n_reversal_save_name = f'{save_path}{os.sep}n_reversals.csv'
+    n_reversal_save_name = os.path.join(save_path, 'n_reversals.csv')
     n_reversals_df.to_csv(n_reversal_save_name, index=False)
 
     print("\n***finished b3_plot_staircases()***\n")
 
-####################
-# all_data_path = ''
-# b3_plot_staircase(all_data_path, thr_col='newLum', resp_col='trial_response',
-#                   show_plots=True, save_plots=True, verbose=True)
+
 
 def c_plots(save_path, thr_col='newLum', show_plots=True, verbose=True):
 
@@ -2222,7 +1908,7 @@ def c_plots(save_path, thr_col='newLum', show_plots=True, verbose=True):
                       one panel one isi condition.
                       use eight_batman_plots()
                       
-    :param save_path: path to run dir containing psignifit_thresholds.csv, where plots will be save.
+    :param save_path: path to run dir containing psignifit_thresholds.csv, where plots will be saved.
     :param thr_col: column for threshold (e.g., 'newLum', 'probeLum')
     :param show_plots: Default True
     :param verbose: Default True.
@@ -2236,7 +1922,7 @@ def c_plots(save_path, thr_col='newLum', show_plots=True, verbose=True):
     pos_sep_list = [0, 1, 2, 3, 6, 18, 20]
 
     # load df mean of last n luminance values (14 stairs x 8 isi).
-    thr_csv_name = f'{save_path}{os.sep}psignifit_thresholds.csv'
+    thr_csv_name = os.path.join(save_path, 'psignifit_thresholds.csv')
     psig_thr_df = pd.read_csv(thr_csv_name)
     if verbose:
         print(f'psig_thr_df:\n{psig_thr_df}')
@@ -2378,10 +2064,6 @@ def c_plots(save_path, thr_col='newLum', show_plots=True, verbose=True):
     print("\n***finished c_plots()***\n")
 
 
-# #########
-# c_plots(save_path='',
-#         thr_col='newLum', last_vals_list=[1, 4, 7],
-#         show_plots=True, verbose=True)
 
 
 def d_average_participant(root_path, run_dir_names_list,
@@ -2404,7 +2086,8 @@ def d_average_participant(root_path, run_dir_names_list,
     :param error_type: Default: None. Can pass sd or se for standard deviation or error.
     :param trim_n: default None.  If int is passed, will call function trim_n_high_n_low(),
             which trims the n highest and lowest values.
-    :param verbose: Defaut true, print progress to screen
+    :param isi_names_list: List of ISI column names.
+    :param verbose: Default True, print progress to screen
 
     :returns: ave_psignifit_thr_df: (trimmed?) mean threshold for each separation and ISI.
     """
@@ -2419,7 +2102,7 @@ def d_average_participant(root_path, run_dir_names_list,
 
     if isi_names_list is None:
         isi_names_list = ['Concurrent', 'ISI0', 'ISI2', 'ISI4',
-                         'ISI6', 'ISI9', 'ISI12', 'ISI24']
+                          'ISI6', 'ISI9', 'ISI12', 'ISI24']
 
     all_psignifit_list = []
     for run_idx, run_name in enumerate(run_dir_names_list):
@@ -2469,7 +2152,7 @@ def d_average_participant(root_path, run_dir_names_list,
 
     # check that ISI_-1 is at last position
     all_data_psignifit_df = conc_to_first_isi_col(all_data_psignifit_df)
-    all_data_psignifit_df.to_csv(f'{root_path}{os.sep}MASTER_psignifit_thresholds.csv', index=False)
+    all_data_psignifit_df.to_csv(os.path.join(root_path, 'MASTER_psignifit_thresholds.csv'), index=False)
     if verbose:
         print(f'\nall_data_psignifit_df:\n{all_data_psignifit_df}')
 
@@ -2480,7 +2163,8 @@ def d_average_participant(root_path, run_dir_names_list,
                                        reference_col='separation',
                                        stack_col_id='stack',
                                        verbose=verbose)
-        trimmed_df.to_csv(f'{root_path}{os.sep}MASTER_TM{trim_n}_thresholds.csv', index=False)
+        trimmed_df.to_csv(os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv'), index=False)
+        trimmed_df.to_csv(os.path.join(root_path, 'MASTER_TM{trim_n}_thresholds.csv'), index=False)
 
         get_means_df = trimmed_df
     else:
@@ -2500,7 +2184,7 @@ def d_average_participant(root_path, run_dir_names_list,
         error_bars_df = groupby_sep_df.groupby('separation', sort=True).std()
     else:
         raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
-                         f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standrad_error']\n"
+                         f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standard_error']\n"
                          f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
                          f"'deviation', 'standard_deviation']")
     if verbose:
@@ -2508,11 +2192,11 @@ def d_average_participant(root_path, run_dir_names_list,
 
     # save csv with average values
     if trim_n is not None:
-        ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM{trim_n}_thresh.csv')
-        error_bars_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM{trim_n}_thr_error_{error_type}.csv')
+        ave_psignifit_thr_df.to_csv(os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv'))
+        error_bars_df.to_csv(os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thr_error_{error_type}.csv'))
     else:
-        ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_thresh.csv')
-        error_bars_df.to_csv(f'{root_path}{os.sep}MASTER_ave_thr_error_{error_type}.csv')
+        ave_psignifit_thr_df.to_csv(os.path.join(root_path, 'MASTER_ave_thresh.csv'))
+        error_bars_df.to_csv(os.path.join(root_path, f'MASTER_ave_thr_error_{error_type}.csv'))
 
     print("\n*** finished d_average_participant()***\n")
 
@@ -2580,10 +2264,10 @@ def e_average_exp_data(exp_path, p_names_list,
 
         all_p_ave_list.append(this_p_ave_df)
 
-
     # join all participants' data and save as master csv
     all_exp_thr_df = pd.concat(all_p_ave_list, ignore_index=True)
-    all_exp_thr_df.to_csv(f'{exp_path}{os.sep}MASTER_exp_thr.csv', index=False)
+    all_exp_thr_df.to_csv(os.path.join(exp_path, 'MASTER_exp_thr.csv'), index=False)
+
     if verbose:
         print(f'\nall_exp_thr_df:\n{all_exp_thr_df}')
 
@@ -2608,8 +2292,8 @@ def e_average_exp_data(exp_path, p_names_list,
         print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
 
     # save csv with average values
-    exp_ave_thr_df.to_csv(f'{exp_path}{os.sep}MASTER_exp_ave_thr.csv')
-    error_bars_df.to_csv(f'{exp_path}{os.sep}MASTER_ave_thr_error_{error_type}.csv')
+    exp_ave_thr_df.to_csv(os.path.join(exp_path, 'MASTER_exp_ave_thr.csv'))
+    error_bars_df.to_csv(os.path.join(exp_path, f'MASTER_ave_thr_error_{error_type}.csv'))
 
     print("\n*** finished e_average_over_participants()***\n")
 
@@ -2624,7 +2308,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                        exp_ave=False,
                        split_1probe=True,
                        isi_name_list=['Concurrent', 'ISI 0', 'ISI 2', 'ISI 4',
-                                       'ISI 6', 'ISI 9', 'ISI 12', 'ISI 24'],
+                                      'ISI 6', 'ISI 9', 'ISI 12', 'ISI 24'],
                        sep_vals_list=[0, 1, 2, 3, 6, 18, 20],
                        sep_name_list=[0, 1, 2, 3, 6, 18, '1probe'],
                        heatmap_annot_fmt='{:.2f}',
@@ -2641,29 +2325,35 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     :param all_df_path: Path to df with all participant/stack data.
     :param ave_df_path: Path to df with average across all stacks/participants
     :param error_bars_path: Path to df for errors bars with SE/SD associated with averages.
+    :param thr_col: Column to extract threshold values from, expects 'probeLum' or 'newLum'.
+    :param ave_over_n: Number of values (runs or participants) to average over and get errors.
     :param n_trimmed: Whether averages data has been trimmed.
-    :param error_type: 
-    :param exp_ave: 
-    :param show_plots: 
-    :param verbose: 
+    :param error_type: 'SE', 'sd' or some other type of error (CI?)
+    :param exp_ave: If True, will add 'Exp' to fig titles so its clear these are experiment level results.
+        If False will add 'P' for participant level; or use participant_name to identify whose results it is.
+    :param split_1probe: If there is 1probe data, this should be separated
+        (e.g., line plots not joined) from other values. Also required for making div_by_1probe plots.
+    :param isi_name_list: List of ISI column names.
+    :param sep_vals_list: List of separation values (including 99 for 1probe)
+    :param sep_name_list: List of separation names (e.g., '1probe' if 99 in sep_vals_list).
+    :param heatmap_annot_fmt: Number of digits to display in heatmap values.
+    :param show_plots: Whether to display figures once they are made.
+    :param verbose: Whether to print progress to screen.
     """
     print("\n*** running make_average_plots()***\n")
 
     save_path, df_name = os.path.split(ave_df_path)
 
     # Average over experiment or participant (with or without participant name)
-    if exp_ave is True:
-        ave_over = 'Exp'
-        idx_col = 'participant'
-    elif type(exp_ave) == str:
+    if type(exp_ave) == str:
         ave_over = exp_ave
         idx_col = 'stack'
+    elif exp_ave is True:
+        ave_over = 'Exp'
+        idx_col = 'participant'
     else:
         ave_over = 'P'
         idx_col = 'stack'
-
-    # todo: look at column names for all_df.  it is best if they have no space (e.g., ISI9 or ISI_9).
-    #  Sometimes, for exp or participant data they have spaces - also where does ISI 999 come from?
 
     # if type(all_df_path) is 'pandas.core.frame.DataFrame':
     if isinstance(all_df_path, pd.DataFrame):
@@ -2690,18 +2380,12 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     print(f'\nerror_bars_df:\n{error_bars_df}')
 
     all_df_headers = list(all_df.columns)
-    # isi_name_list = all_df_headers[2:]
-    # pos_sep_list = sorted(list(all_df['separation'].unique()))
-    # isi_name_list = isi_name_list
     pos_sep_list = sep_vals_list
     if verbose:
         print(f'\nall_df_headers: {all_df_headers}')
         print(f'isi_name_list: {isi_name_list}')
         print(f'pos_sep_list: {pos_sep_list}')
 
-    # isi_name_list = ['Concurrent', 'ISI0', 'ISI2', 'ISI4',
-    #                  'ISI6', 'ISI9', 'ISI12', 'ISI24']
-    # pos_sep_list = [0, 1, 2, 3, 6, 18, 20]
 
     """part 3. main Figures (these are the ones saved in the matlab script)
     Fig1: plot average threshold for each ISI and sep.
@@ -2713,13 +2397,12 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     if len(sep_vals_list) == 1:
         print("skipping fig_1a as there is only 1 sep value")
     else:
-
         print(f"\nfig_1a\n")
         if n_trimmed is not None:
-            fig1_title = f'{ave_over} average thresholds across all runs (n={ave_over_n}, trim={n_trimmed}).'
+            fig1_title = f'{ave_over} average thresholds across all runs\n(n={ave_over_n}, trim={n_trimmed}, err="se").'
             fig1_savename = f'ave_TM{n_trimmed}_thr_all_runs.png'
         else:
-            fig1_title = f'{ave_over} average threshold across all runs (n={ave_over_n})'
+            fig1_title = f'{ave_over} average threshold across all runs\n(n={ave_over_n}, err="se")'
             fig1_savename = f'ave_thr_all_runs.png'
 
         plot_1probe_w_errors(fig_df=ave_df, error_df=error_bars_df,
@@ -2738,8 +2421,6 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         if verbose:
             print('finished fig1a')
 
-
-
     if len(isi_name_list) == 1:
         print("skipping fig_1b as there is only 1 ISI value")
     else:
@@ -2747,10 +2428,12 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         print(f"\n\nfig_1b")
         # fig 1b, ISI on x-axis, different line for each sep
         if n_trimmed is not None:
-            fig1b_title = f'{ave_over} probe luminance at each ISI value per separation (n={ave_over_n}, trim={n_trimmed}).'
+            fig1b_title = f'{ave_over} probe luminance at each ISI value per separation\n' \
+                          f'(n={ave_over_n}, trim={n_trimmed}, err="se").'
             fig1b_savename = f'ave_TM{n_trimmed}_thr_all_runs_transpose.png'
         else:
-            fig1b_title = f'{ave_over} probe luminance at each ISI value per separation (n={ave_over_n})'
+            fig1b_title = f'{ave_over} probe luminance at each ISI value per separation\n' \
+                          f'(n={ave_over_n}, err="se")'
             fig1b_savename = f'ave_thr_all_runs_transpose.png'
 
         plot_w_errors_no_1probe(wide_df=all_df, x_var='ISI', y_var=thr_col,
@@ -2769,18 +2452,15 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
             print('finished fig1b')
 
     print(f"\nfig_1c\n")
-    # check because columns names get changed somewhere.
-    # if 'ISI 999' in list(all_df.columns):
-    #     print('Columns headers changed when making plot 1b, changing back to originals')
     all_df.columns = all_df_headers
 
-    # fig 1c, eight plots - seven showing a particular sepration, eighth showing all separations.
+    # fig 1c, eight plots - seven showing a particular separation, eighth showing all separations.
     if n_trimmed is not None:
         f'{ave_over} average thresholds per separation'
-        fig1c_title = f'{ave_over} average thresholds per separation (n={ave_over_n}, trim={n_trimmed}).'
+        fig1c_title = f'{ave_over} average thresholds per separation\n(n={ave_over_n}, trim={n_trimmed}, err="se").'
         fig1c_savename = f'ave_TM{n_trimmed}_thr_per_sep.png'
     else:
-        fig1c_title = f'{ave_over} average thresholds per separation (n={ave_over_n})'
+        fig1c_title = f'{ave_over} average thresholds per separation\n(n={ave_over_n}, err="se")'
         fig1c_savename = f'ave_thr_per_sep.png'
 
     plot_n_sep_thr_w_scatter(all_thr_df=all_df, exp_ave=exp_ave, fig_title=fig1c_title,
@@ -2799,8 +2479,6 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         # # Fig 2  - divide all 2probe conditions (pos_sep) by one_probe for each data_set
         # use ave_df with all (or trimmed) data.
         # first split each data_set into 1probe and pos_sep (2probe), divide and make back into long df
-
-
         dset_list = list(all_df[idx_col].unique())
         print(f'dset_list: {dset_list}')
 
@@ -2841,10 +2519,11 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
         if n_trimmed is not None:
             fig2a_save_name = f'ave_TM{n_trimmed}_thr_div_1probe.png'
-            fig2a_title = f'{ave_over} average thresholds divided by single probe (n={ave_over_n}, trim={n_trimmed}).'
+            fig2a_title = f'{ave_over} average thresholds divided by single probe\n' \
+                          f'(n={ave_over_n}, trim={n_trimmed}, err="se").'
         else:
             fig2a_save_name = 'ave_thr_div_1probe.png'
-            fig2a_title = f'{ave_over} average threshold divided by single probe (n={ave_over_n})'
+            fig2a_title = f'{ave_over} average threshold divided by single probe\n(n={ave_over_n}, err="se")'
 
         plot_1probe_w_errors(fig_df=div_ave_psignifit_thr_df, error_df=div_error_bars_df,
                              split_1probe=False, jitter=True,
@@ -2863,33 +2542,8 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         if verbose:
             print('finished fig2a')
 
-    # if split_1probe:
-        # print(f"\nfig_2b\n")
-        # # fig 2b, ISI on x-axis, different line for each sep
-        # if n_trimmed is not None:
-        #     fig2b_save_name = f'ave_TM{n_trimmed}_thr_div_1probe_transpose.png'
-        #     fig2b_title = f'{ave_over} average thresholds divided by single probe at each ISI (n={ave_over_n}, trim={n_trimmed}).'
-        # else:
-        #     fig2b_save_name = 'ave_thr_div_1probe_transpose.png'
-        #     fig2b_title = f'{ave_over} average thresholds divided by single probe at each ISI (n={ave_over_n})'
-        #
-        # plot_w_errors_no_1probe(wide_df=divided_df, x_var='ISI', y_var=thr_col,
-        #                         lines_var='separation', long_df_idx_col=idx_col,
-        #                         legend_names=['0', '1', '2', '3', '6', '18'],
-        #                         x_tick_labels=['conc', 0, 2, 4, 6, 9, 12, 24],
-        #                         alt_colours=True, fixed_y_range=False, jitter=True,
-        #                         error_caps=True, fig1b_title=fig2b_title,
-        #                         fig1b_savename=fig2b_save_name, save_path=save_path,
-        #                         verbose=True)
-        # if show_plots:
-        #     plt.show()
-        # plt.close()
-        #
-        # if verbose:
-        #     print('finished fig2b')
-
     print(f"\nfig_3a - difference from concurrent\n")
-    run_this_plot= False
+    run_this_plot = False
     if 'Concurrent' in list(ave_df.columns):
         run_this_plot = True
     elif 'ISI_-1' in list(ave_df.columns):
@@ -2899,13 +2553,12 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
         if n_trimmed is not None:
             fig3a_save_name = f'diff_from_conc_TM{n_trimmed}.png'
-            fig3a_title = f'{ave_over} ISI different in threshold from concurrent (n={ave_over_n}, trim={n_trimmed}).'
+            fig3a_title = f'{ave_over} ISI different in threshold from concurrent\n(n={ave_over_n}, trim={n_trimmed}).'
         else:
             fig3a_save_name = 'diff_from_conc.png'
-            fig3a_title = f'{ave_over} ISI different in threshold from concurrent (n={ave_over_n})'
-        plot_diff_from_conc_lineplot(ave_df, div_by_1probe=False,
-                                  fig_title=fig3a_title, save_name=fig3a_save_name,
-                                  save_path=save_path)
+            fig3a_title = f'{ave_over} ISI different in threshold from concurrent\n(n={ave_over_n})'
+        plot_diff_from_conc_lineplot(ave_df, fig_title=fig3a_title,
+                                     save_name=fig3a_save_name, save_path=save_path)
         if show_plots:
             plt.show()
         plt.close()
@@ -2913,42 +2566,17 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         if verbose:
             print('finished fig3a')
 
-    if split_1probe:
-        print(f"\nfig_3b - difference from concurrent div1probe\n")
-        if n_trimmed is not None:
-            fig3b_save_name = f'diff_from_conc_TM{n_trimmed}_div1probe.png'
-            fig3b_title = f'{ave_over} ISI different in threshold from concurrent\n(div1probe, n={ave_over_n}, trim={n_trimmed}).'
-        else:
-            fig3b_save_name = 'diff_from_conc_div1probe.png'
-            fig3b_title = f'{ave_over} ISI different in threshold from concurrent (div1probe, n={ave_over_n})'
-        plot_diff_from_conc_lineplot(ave_df, div_by_1probe=True,
-                                  fig_title=fig3b_title, save_name=fig3b_save_name,
-                                     save_path=save_path)
-        if show_plots:
-            plt.show()
-        plt.close()
-
-        if verbose:
-            print('finished fig3b')
 
     print(f"\nHeatmap 1\n")
     if 'separation' in list(ave_df.columns):
         ave_df.set_index('separation', drop=True, inplace=True)
 
-    # get mean of each col, then mean of that
-    # sep_labels = [0, 1, 2, 3, 6, 18, '1probe']
-    # isi_labels = ['conc', 'isi 0', 'isi 2', 'isi 4', 'isi 6', 'isi 9', 'isi12', 'isi 24']
     if n_trimmed is not None:
         heatmap_title = f'{ave_over} mean Threshold\nfor each ISI and separation (n={ave_over_n}, trim={n_trimmed}).'
         heatmap_savename = f'mean_TM{n_trimmed}_thr_heatmap'
     else:
-        heatmap_title = f'{ave_over} mean Threshold for each ISI and separation (n={ave_over_n})'
+        heatmap_title = f'{ave_over} mean Threshold\nfor each ISI and separation (n={ave_over_n})'
         heatmap_savename = 'mean_thr_heatmap'
-
-    # transpose
-    # plot_thr_heatmap(heatmap_df=ave_df.T, x_tick_labels=sep_name_list,
-    #                  y_tick_labels=isi_name_list, fig_title=heatmap_title,
-    #                  save_name=heatmap_savename, save_path=save_path, verbose=True)
 
     # regular (not transpose)
     plot_thr_heatmap(heatmap_df=ave_df, x_tick_labels=isi_name_list,
@@ -2968,17 +2596,22 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
             div_ave_psignifit_thr_df.set_index('separation', drop=True, inplace=True)
 
         # get mean of each col, then mean of that
-        sep_labels = [0, 1, 2, 3, 6, 18]
-        isi_labels = ['conc', 'isi 0', 'isi 2', 'isi 4', 'isi 6', 'isi 9', 'isi12', 'isi 24']
+
         if n_trimmed is not None:
-            heatmap_title = f'{ave_over} mean Threshold/1probe for each ISI and separation (n={ave_over_n}, trim={n_trimmed}).'
+            heatmap_title = f'{ave_over} mean Threshold/1probe for each ISI and separation\n' \
+                            f'(n={ave_over_n}, trim={n_trimmed}).'
             heatmap_savename = f'mean_TM{n_trimmed}_thr_div_1probe_heatmap'
         else:
-            heatmap_title = f'{ave_over} mean Threshold/1probe for each ISI and separation (n={ave_over_n})'
+            heatmap_title = f'{ave_over} mean Threshold/1probe for each ISI and separation\n' \
+                            f'(n={ave_over_n})'
             heatmap_savename = 'mean_thr_div_1probe_heatmap'
 
+        div_1pr_sep_names_list = sep_name_list
+        if '1probe' in div_1pr_sep_names_list:
+            div_1pr_sep_names_list = div_1pr_sep_names_list.remove("1probe")
+
         plot_thr_heatmap(heatmap_df=div_ave_psignifit_thr_df.T,
-                         x_tick_labels=sep_labels, y_tick_labels=isi_labels,
+                         x_tick_labels=div_1pr_sep_names_list, y_tick_labels=isi_name_list,
                          annot_fmt=heatmap_annot_fmt,
                          fig_title=heatmap_title, save_name=heatmap_savename,
                          save_path=save_path, verbose=True)
@@ -2986,44 +2619,12 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
             plt.show()
         plt.close()
 
-    print(f"\nplot_diff_from_conc\n")
-
-    # get mean of each col, then mean of that
-    if n_trimmed is not None:
-        heatmap_dfc_title = f'{ave_over} plot_diff_from_conc (n={ave_over_n}, trim={n_trimmed}).'
-        heatmap_dfc_savename = f'mean_TM{n_trimmed}_plot_diff_from_conc'
-    else:
-        heatmap_dfc_title = f'{ave_over} plot_diff_from_conc (n={ave_over_n})'
-        heatmap_dfc_savename = 'mean_plot_diff_from_conc'
-
-    diff_from_conc_df = make_diff_from_conc_df(ave_df)
-
-    plot_thr_heatmap(heatmap_df=diff_from_conc_df, x_tick_labels=isi_name_list,
-                     y_tick_labels=sep_name_list, fig_title=heatmap_title,
-                     save_name=heatmap_savename, save_path=save_path,
-                     annot_fmt=heatmap_annot_fmt,
-                     verbose=True)
-
-    # plt_heatmap_row_col(heatmap_df=diff_from_conc_df,
-    #                     colour_by='row',
-    #                     midpoint=0,
-    #                     x_tick_labels=None,
-    #                     x_axis_label='ISI',
-    #                     y_tick_labels=None,
-    #                     y_axis_label='Separation',
-    #                     fig_title=heatmap_dfc_title,
-    #                     fontsize=10,
-    #                     annot_fmt=heatmap_annot_fmt,
-    #                     save_name=heatmap_dfc_savename,
-    #                     save_path=save_path,
-    #                     verbose=True)
     if show_plots:
         plt.show()
     plt.close()
 
 
     # only do per-row and per-col heatmaps if there is 2d data
-
     if len(isi_name_list) > 1 and len(sep_name_list) > 1:
         print('making heatmaps per-row and per-column')
 
@@ -3060,11 +2661,11 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
         # get mean of each col, then mean of that
         if n_trimmed is not None:
-            heatmap_pr_title = f'{ave_over} Heatmap per col (n={ave_over_n}, trim={n_trimmed}).'
-            heatmap_pr_savename = f'mean_TM{n_trimmed}_heatmap_per_col'
+            heatmap_pc_title = f'{ave_over} Heatmap per col (n={ave_over_n}, trim={n_trimmed}).'
+            heatmap_pc_savename = f'mean_TM{n_trimmed}_heatmap_per_col'
         else:
-            heatmap_pr_title = f'{ave_over} Heatmap per col (n={ave_over_n})'
-            heatmap_pr_savename = 'mean_heatmap_per_col'
+            heatmap_pc_title = f'{ave_over} Heatmap per col (n={ave_over_n})'
+            heatmap_pc_savename = 'mean_heatmap_per_col'
 
         plt_heatmap_row_col(heatmap_df=ave_df,
                             colour_by='col',
@@ -3073,8 +2674,8 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                             y_tick_labels=None,
                             y_axis_label='Separation',
                             annot_fmt=heatmap_annot_fmt,
-                            fig_title=heatmap_pr_title,
-                            save_name=heatmap_pr_savename,
+                            fig_title=heatmap_pc_title,
+                            save_name=heatmap_pc_savename,
                             save_path=save_path,
                             verbose=True)
         if show_plots:
@@ -3082,10 +2683,6 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         plt.close()
 
         print(f"\nplot_diff_from_conc_heatmap\n")
-        # if 'separation' in list(ave_df.columns):
-        #     ave_df.set_index('separation', drop=True, inplace=True)
-
-        # get mean of each col, then mean of that
         if n_trimmed is not None:
             heatmap_dfc_title = f'{ave_over} plot_diff_from_conc_heatmap (n={ave_over_n}, trim={n_trimmed}).'
             heatmap_dfc_savename = f'mean_TM{n_trimmed}_plot_diff_from_conc_heatmap'
@@ -3095,7 +2692,6 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
         diff_from_conc_df = make_diff_from_conc_df(ave_df)
         plot_thr_heatmap(heatmap_df=diff_from_conc_df,
-                         # x_tick_labels=isi_labels, y_tick_labels=sep_labels,
                          midpoint=0,
                          annot_fmt=heatmap_annot_fmt,
                          fig_title=heatmap_dfc_title, save_name=heatmap_dfc_savename,
@@ -3106,16 +2702,12 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         plt.close()
 
         print(f"\nplot_diff_from_conc_per_row\n")
-        # if 'separation' in list(ave_df.columns):
-        #     ave_df.set_index('separation', drop=True, inplace=True)
-
-        # get mean of each col, then mean of that
         if n_trimmed is not None:
-            heatmap_dfc_title = f'{ave_over} plot_diff_from_conc_per_row (n={ave_over_n}, trim={n_trimmed}).'
-            heatmap_dfc_savename = f'mean_TM{n_trimmed}_plot_diff_from_conc_per_row'
+            heatmap_dfc_pr_title = f'{ave_over} plot_diff_from_conc_per_row (n={ave_over_n}, trim={n_trimmed}).'
+            heatmap_dfc_pr_savename = f'mean_TM{n_trimmed}_plot_diff_from_conc_per_row'
         else:
-            heatmap_dfc_title = f'{ave_over} plot_diff_from_conc_per_row (n={ave_over_n})'
-            heatmap_dfc_savename = 'mean_plot_diff_from_conc_per_row'
+            heatmap_dfc_pr_title = f'{ave_over} plot_diff_from_conc_per_row (n={ave_over_n})'
+            heatmap_dfc_pr_savename = 'mean_plot_diff_from_conc_per_row'
 
         diff_from_conc_df = make_diff_from_conc_df(ave_df)
         plt_heatmap_row_col(heatmap_df=diff_from_conc_df,
@@ -3125,41 +2717,14 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                             x_axis_label='ISI',
                             y_tick_labels=None,
                             y_axis_label='Separation',
-                            fig_title=heatmap_dfc_title,
+                            fig_title=heatmap_dfc_pr_title,
                             fontsize=10,
                             annot_fmt=heatmap_annot_fmt,
-                            save_name=heatmap_dfc_savename,
+                            save_name=heatmap_dfc_pr_savename,
                             save_path=save_path,
                             verbose=True)
         if show_plots:
             plt.show()
         plt.close()
-
-    # print(f"\n3d surface plot\n")
-    # if 'separation' in list(ave_df.columns):
-    #     ave_df.set_index('separation', drop=True, inplace=True)
-    #
-    # if n_trimmed is not None:
-    #     surface_title = f'{ave_over} mean threshold for each ISI and separation condition.\n' \
-    #                     f'Markers show min thr per ISI (n={ave_over_n}, trim={n_trimmed}).'
-    #     surface_savename = f'mean_TM{n_trimmed}_thr_surface'
-    # else:
-    #     surface_title = f'{ave_over} mean threshold for each ISI and separation condition.\n' \
-    #                     f'Markers show min thr per ISI (n={ave_over_n})'
-    #     surface_savename = 'mean_thr_surface'
-    #
-    # plot_thr_3dsurface(plot_df=ave_df, my_rotation=True, even_spaced=False,
-    #                    transpose_df=False, rev_rows=False, rev_cols=False,
-    #                    show_min_per_sep=True, min_per_df_row=True,
-    #                    my_elev=15, my_azim=300,
-    #                    fig_title=surface_title,
-    #                    save_path=save_path,
-    #                    save_name=surface_savename,
-    #                    verbose=True)
-    #
-    # if show_plots:
-    #     plt.show()
-    # plt.close()
-
 
     print("\n*** finished make_average_plots()***\n")
