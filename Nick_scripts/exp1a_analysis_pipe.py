@@ -51,66 +51,66 @@ for p_idx, participant_name in enumerate(participant_list):
         # # '''a'''
         p_name = f'{participant_name}_output'  # use this one
 
-        # run_data_df = a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=isi_list, verbose=True)
-        #
-        # '''add newLum column
-        # in old version, the experiment script varies probeLum and converts to float(RGB255) values for screen.
-        # However, monitor can only use int(RGB255).
-        # This function will will round RGB255 values to int(RGB255), then convert to NEW_probeLum
-        # LumColor255Factor = 2.395387069
-        # 1. get probeColor255 column.
-        # 2. convert to int(RGB255) and convert to new_Lum with int(RGB255)/LumColor255Factor
-        # 3. add to run_data_df'''
-        # if 'newLum' not in run_data_df.columns.to_list():
-        #     LumColor255Factor = 2.395387069
-        #     rgb255_col = run_data_df['probeColor255'].to_list()
-        #     newLum = [int(i) / LumColor255Factor for i in rgb255_col]
-        #     run_data_df.insert(9, 'newLum', newLum)
-        #     run_data_df.to_excel(os.path.join(save_path, 'RUNDATA-sorted.xlsx'), index=False)
-        #     print(f"added newLum column\n"
-        #           f"run_data_df: {run_data_df.columns.to_list()}")
-        #
-        #
-        # run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
-        #
-        # run_data_df = pd.read_excel(run_data_path, engine='openpyxl',
-        #                             usecols=['ISI',
-        #                                      'stair',
-        #                                      'separation', 'group',
-        #                                      # 'probeLum',
-        #                                      'newLum', 'trial_response'])
-        # print(f"run_data_df:\n{run_data_df}")
-        #
-        #
-        # stair_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
-        # cols_to_add_dict = {'group': [1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2],
-        #                     'separation': [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0, 20, 20]}
-        #
-        # '''get psignifit thresholds df - use stairs as sep levels rather than using groups'''
-        # thr_df = get_psignifit_threshold_df(root_path=root_path,
-        #                                     p_run_name=run_dir,
-        #                                     csv_name=run_data_df,
-        #                                     n_bins=9, q_bins=True,
-        #                                     sep_col='stair',
-        #                                     thr_col='newLum',
-        #                                     isi_list=isi_list,
-        #                                     sep_list=stair_list,
-        #                                     conf_int=True,
-        #                                     thr_type='Bayes',
-        #                                     plot_both_curves=False,
-        #                                     save_plots=True,
-        #                                     cols_to_add_dict=cols_to_add_dict,
-        #                                     verbose=True)
-        # print(f'thr_df:\n{thr_df}')
-        #
-        # '''b3'''
-        # run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
-        # thr_path = os.path.join(save_path, 'psignifit_thresholds.csv')
-        #
-        # b3_plot_staircase(run_data_path, thr_col='newLum', show_plots=False)
-        #
-        # '''c'''
-        # c_plots(save_path=save_path, thr_col='newLum', show_plots=True)
+        run_data_df = a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=isi_list, verbose=True)
+
+        '''add newLum column
+        in old version, the experiment script varies probeLum and converts to float(RGB255) values for screen.
+        However, monitor can only use int(RGB255).
+        This function will will round RGB255 values to int(RGB255), then convert to NEW_probeLum
+        LumColor255Factor = 2.395387069
+        1. get probeColor255 column.
+        2. convert to int(RGB255) and convert to new_Lum with int(RGB255)/LumColor255Factor
+        3. add to run_data_df'''
+        if 'newLum' not in run_data_df.columns.to_list():
+            LumColor255Factor = 2.395387069
+            rgb255_col = run_data_df['probeColor255'].to_list()
+            newLum = [int(i) / LumColor255Factor for i in rgb255_col]
+            run_data_df.insert(9, 'newLum', newLum)
+            run_data_df.to_excel(os.path.join(save_path, 'RUNDATA-sorted.xlsx'), index=False)
+            print(f"added newLum column\n"
+                  f"run_data_df: {run_data_df.columns.to_list()}")
+
+
+        run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
+
+        run_data_df = pd.read_excel(run_data_path, engine='openpyxl',
+                                    usecols=['ISI',
+                                             'stair',
+                                             'separation', 'group',
+                                             # 'probeLum',
+                                             'newLum', 'trial_response'])
+        print(f"run_data_df:\n{run_data_df}")
+
+
+        stair_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+        cols_to_add_dict = {'group': [1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2],
+                            'separation': [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0, 20, 20]}
+
+        '''get psignifit thresholds df - use stairs as sep levels rather than using groups'''
+        thr_df = get_psignifit_threshold_df(root_path=root_path,
+                                            p_run_name=run_dir,
+                                            csv_name=run_data_df,
+                                            n_bins=9, q_bins=True,
+                                            sep_col='stair',
+                                            thr_col='newLum',
+                                            isi_list=isi_list,
+                                            sep_list=stair_list,
+                                            conf_int=True,
+                                            thr_type='Bayes',
+                                            plot_both_curves=False,
+                                            save_plots=True,
+                                            cols_to_add_dict=cols_to_add_dict,
+                                            verbose=True)
+        print(f'thr_df:\n{thr_df}')
+
+        '''b3'''
+        run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
+        thr_path = os.path.join(save_path, 'psignifit_thresholds.csv')
+
+        b3_plot_staircase(run_data_path, thr_col='newLum', show_plots=False)
+
+        '''c'''
+        c_plots(save_path=save_path, thr_col='newLum', show_plots=True)
 
 
     trim_n = None
@@ -128,8 +128,8 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
     '''d'''
-    # d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-    #                       trim_n=trim_n, error_type='SE')
+    d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
+                          trim_n=trim_n, error_type='SE')
 
     all_df_path = os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv')
     p_ave_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv')
@@ -152,10 +152,10 @@ for p_idx, participant_name in enumerate(participant_list):
 
 print(f'exp_path: {exp_path}')
 print('\nget exp_average_data')
-participant_list = ['aa', 'bb', 'cc', 'dd', 'ee']
+participant_list = ['aa', 'bb', 'cc', 'dd', 'ee', 'Nick']
 
-# e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
-#                    error_type='SE', n_trimmed=trim_n, verbose=True)
+e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
+                   error_type='SE', n_trimmed=trim_n, verbose=True)
 
 
 all_df_path = os.path.join(exp_path, 'MASTER_exp_thr.csv')

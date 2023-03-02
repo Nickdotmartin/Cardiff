@@ -29,7 +29,7 @@ project_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\C
 # # then run script d to get master lists and averages
 # eyetracking, jitter_rgb, EXP1_split_probes, Exp1_double_dist, EXP1_sep4_5
 # Exp4b_missing_probe\rotation, incoherent, radial, rotation, translation,
-this_exp = r"EXP1_sep4_5"
+this_exp = r"EXP1_sep4_5\OLD_NICK_ORIG"
 exp_path = os.path.join(project_path, this_exp)
 
 convert_path1 = os.path.normpath(exp_path)
@@ -39,7 +39,7 @@ if running_on_laptop():
 exp_path = convert_path1
 
 print(f"exp_path: {exp_path}")
-participant_name = 'Nick'  # 'Nick_sep0123', 'Nick_sep45', 'Nick_sep67', 'Nick_sep89' 'Simon', 'Nick'
+participant_name = ['Nick_sep0123', 'Nick_sep45', 'Nick_sep67', 'Nick_sep89', 'Nicksep_18_20']  # 'Simon', 'Nick'
 exp_list = ['radial_v4', 'sep_45']
 for idx, exp_name in enumerate(exp_list):
     if idx == 0:
@@ -102,12 +102,12 @@ for results_df_name in results_df_list:
         # results_df['participant'] = ['Nick'] * rows
 
 
-        # add probe orientation info
-        if 'EXP1_sep4_5' in exp_dir:
-            results_df['separation'] = [0] * rows
-            # results_df['ori'] = ['tangent'] * rows
-        # else:
-            # results_df['ori'] = ['exp' if i < 0 else 'cont' for i in results_df['separation'].tolist()]
+        # # add probe orientation info
+        # if 'EXP1_sep4_5' in exp_dir:
+        #     results_df['separation'] = [0] * rows
+        #     # results_df['ori'] = ['tangent'] * rows
+        # # else:
+        #     # results_df['ori'] = ['exp' if i < 0 else 'cont' for i in results_df['separation'].tolist()]
 
 
         # print(f"\nlist(results_df):\n{list(results_df)}")
@@ -246,4 +246,4 @@ make_average_plots(all_df_path=all_df_path,
 #                        show_plots=True, verbose=True)
 
 
-print('\nexp1a_analysis_pipe finished\n')
+print('\ncombine_Exp1_sep45_analysis finished\n')

@@ -13,7 +13,8 @@ project_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\C
 # eyetracking, jitter_rgb, EXP1_split_probes, Exp1_double_dist, EXP1_sep4_5
 # Exp4b_missing_probe\rotation, incoherent, radial, rotation, translation,
 # this_exp = r"EXP1_Jan23_rept_dropped"  EXP1_split_probes_Jan23
-this_exp = r"Exp4b_missing_probe_23/Exp4b_missing_probe_23/mixed_dir/incoherent/"
+# this_exp = r"Exp4b_missing_probe_23/Exp4b_missing_probe_23/mixed_dir/incoherent/"
+this_exp = r"exp1a_data"
 exp_path = os.path.join(project_path, this_exp)
 convert_path1 = os.path.normpath(exp_path)
 if running_on_laptop():
@@ -21,7 +22,7 @@ if running_on_laptop():
 exp_path = convert_path1
 
 print(f"exp_path: {exp_path}")
-participant_list = ['Kim']  #'Nick_sep0123', 'Nick_sep45', 'Nick_sep67', 'Nick_sep89' 'Simon', 'Nick'
+participant_list = ['Nick']  # 'Nick_sep0123', 'Nick_sep45', 'Nick_sep67', 'Nick_sep89', 'Nick_sep18_20']  #  'Simon', 'Nick'
 # participant_list = ['p1', 'p2']
 
 split_1probe = False
@@ -158,7 +159,7 @@ for p_idx, participant_name in enumerate(participant_list):
                 run_data_df = run_data_df[run_data_df['ISI'] != -1]
 
 
-        sep_list = list(run_data_df['separation'].unique())
+        sep_list = sorted(list(run_data_df['separation'].unique()))
         isi_list = list(run_data_df['ISI'].unique())
         print(f"sep_list: {sep_list}")
         print(f"isi_list: {isi_list}")
@@ -173,7 +174,7 @@ for p_idx, participant_name in enumerate(participant_list):
         # print(f"cols_to_add_dict:\n{cols_to_add_dict}")
 
         # does this exp use 1probe data?
-        if 99 in sep_list:
+        if (99 in sep_list) or (20 in sep_list):
             split_1probe = True
 
         '''get psignifit thresholds df - use stairs as sep levels rather than using groups'''
@@ -195,60 +196,55 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
 
-    # trim_n = None
-    # lum_col = 'probeLum'
-    print(f"\n\ntrim_list: {trim_list}, trim_n: {trim_n}\n\n")
-    # # todo: use trim 2 for Nick's sep_34 various names.
-    # trim_list = [2]
-    # trim_n = 2
-    '''d'''
-    d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-                          trim_n=trim_n, error_type='SE')
+    # print(f"\n\ntrim_list: {trim_list}, trim_n: {trim_n}\n\n")
+    # '''d'''
+    # d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
+    #                       trim_n=trim_n, error_type='SE')
+    #
+    # all_df_path = os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv')
+    # p_ave_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv')
+    # err_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thr_error_SE.csv')
+    # if trim_n is None:
+    #     all_df_path = os.path.join(root_path, 'MASTER_psignifit_thresholds.csv')
+    #     p_ave_path = os.path.join(root_path, 'MASTER_ave_thresh.csv')
+    #     err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
+    #
+    # p_ave_df = pd.read_csv(p_ave_path)
+    # print(f"p_ave_df:\n{p_ave_df}")
+    #
+    # isi_vals_list = [int(i[4:]) for i in list(p_ave_df.columns)[1:]]
+    # isi_name_list = [f"conc" if i == -1 else f"ISI_{i}" for i in isi_vals_list]
+    #
+    # sep_vals_list = list(p_ave_df['separation'])
+    # sep_name_list = [f"1probe" if i == 20 else i for i in sep_vals_list]
+    # print(f"isi_name_list:\n{isi_name_list}")
+    # print(f"isi_vals_list:\n{isi_vals_list}")
+    # print(f"sep_vals_list:\n{sep_vals_list}")
+    # print(f"sep_name_list:\n{sep_name_list}")
+    #
+    # make_average_plots(all_df_path=all_df_path,
+    #                    ave_df_path=p_ave_path,
+    #                    error_bars_path=err_path,
+    #                    error_type='SE',
+    #                    n_trimmed=trim_n,
+    #                    ave_over_n=len(run_folder_names),
+    #                    split_1probe=split_1probe,
+    #                    isi_name_list=isi_name_list,
+    #                    sep_vals_list=sep_vals_list,
+    #                    sep_name_list=sep_name_list,
+    #                    exp_ave=participant_name,  # participant ave, not exp ave
+    #                    heatmap_annot_fmt='.0f',  # use '.3g' for 3 significant figures, '.2f' for 2dp, '.0f' for int.
+    #                    show_plots=True, verbose=True)
 
-    all_df_path = os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv')
-    p_ave_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv')
-    err_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thr_error_SE.csv')
-    if trim_n is None:
-        all_df_path = os.path.join(root_path, 'MASTER_psignifit_thresholds.csv')
-        p_ave_path = os.path.join(root_path, 'MASTER_ave_thresh.csv')
-        err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
-
-    p_ave_df = pd.read_csv(p_ave_path)
-    print(f"p_ave_df:\n{p_ave_df}")
-
-    isi_vals_list = [int(i[4:]) for i in list(p_ave_df.columns)[1:]]
-    isi_name_list = [f"conc" if i == -1 else f"ISI_{i}" for i in isi_vals_list]
-
-    sep_vals_list = list(p_ave_df['separation'])
-    sep_name_list = [f"1probe" if i == 20 else i for i in sep_vals_list]
-    print(f"isi_name_list:\n{isi_name_list}")
-    print(f"isi_vals_list:\n{isi_vals_list}")
-    print(f"sep_vals_list:\n{sep_vals_list}")
-    print(f"sep_name_list:\n{sep_name_list}")
-
-    make_average_plots(all_df_path=all_df_path,
-                       ave_df_path=p_ave_path,
-                       error_bars_path=err_path,
-                       error_type='SE',
-                       n_trimmed=trim_n,
-                       ave_over_n=len(run_folder_names),
-                       split_1probe=split_1probe,
-                       isi_name_list=isi_name_list,
-                       sep_vals_list=sep_vals_list,
-                       sep_name_list=sep_name_list,
-                       exp_ave=participant_name,  # participant ave, not exp ave
-                       heatmap_annot_fmt='.0f',  # use '.3g' for 3 significant figures, '.2f' for 2dp, '.0f' for int.
-                       show_plots=True, verbose=True)
-#
 #
 # print(f'exp_path: {exp_path}')
 # print('\nget exp_average_data')
 # print(f'trim_list: {trim_list}')
-#
-# participant_list = ['Nick_sep0123', 'Nick_sep45', 'Nick_sep67', 'Nick_sep89']
-# trim_list = [2, 2, 2, 2]
-# # lum_col = 'probeLum'
-#
+
+# participant_list = ['Kim', 'Kristian']
+# trim_list = [2, 2]
+# lum_col = 'probeLum'
+
 # e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
 #                    error_type='SE', n_trimmed=trim_list, verbose=True)
 #

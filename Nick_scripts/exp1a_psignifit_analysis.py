@@ -2164,7 +2164,6 @@ def d_average_participant(root_path, run_dir_names_list,
                                        stack_col_id='stack',
                                        verbose=verbose)
         trimmed_df.to_csv(os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv'), index=False)
-        trimmed_df.to_csv(os.path.join(root_path, 'MASTER_TM{trim_n}_thresholds.csv'), index=False)
 
         get_means_df = trimmed_df
     else:
