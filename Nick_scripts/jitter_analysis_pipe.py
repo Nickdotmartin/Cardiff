@@ -182,7 +182,7 @@ if len(run_folder_names) == 12:
 #                    error_type='SE', n_trimmed=trim_n, verbose=True)
 
 
-all_df_path = os.path.join(exp_path, 'MASTER_exp_thr.csv')
+all_df_path = os.path.join(exp_path, 'MASTER_exp_all_thr.csv')
 exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
 err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
 

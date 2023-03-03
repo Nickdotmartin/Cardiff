@@ -154,6 +154,27 @@ def split_df_into_pos_sep_df_and_1probe_df(pos_sep_and_1probe_df,
     if data_df.index.name is None:
         data_df = data_df.set_index('separation')
 
+    # replace 1pr with 20 if string is given
+    index_values = data_df.index.tolist()
+    print(f'index_values:\n{index_values}')
+    for idx in index_values:
+        print(type(idx))
+
+    if '1Probe' in index_values:
+        data_df.rename(index={'1Probe': 20}, inplace=True)
+    elif '1probe' in index_values:
+        data_df.rename(index={'1probe': 20}, inplace=True)
+    elif '1pr' in index_values:
+        data_df.rename(index={'1pr': 20}, inplace=True)
+    data_df.index = data_df.index.astype(int)
+
+    # index_values = data_df.index.tolist()
+    # print(f'index_values:\n{index_values}')
+    # for idx in index_values:
+    #     print(type(idx))
+    # if verbose:
+    #     print(f'data_df:\n{data_df}')
+
     # data_df = data_df.loc[data_df['separation'] >= 0]
     data_df = data_df.loc[data_df.index >= 0]
 
@@ -973,31 +994,64 @@ def plt_heatmap_row_col(heatmap_df,
     return fig
 
 
-def make_diff_from_conc_df(thr_df_path):
+def make_diff_from_conc_df(MASTER_TM2_thr_df, root_path, error_type='SE',
+                           n_trimmed=2, exp_ave=False, verbose=True):
     """
-    Function to convert a results dataframe into a dataframe showing each ISIs difference from concurrent.
+    Load in the MASTER_TM2_thresholds.csv with trimmed thresholds for a participant.
 
-    :param thr_df_path: Either an actual DataFrame or a path to dataframe.
+    For each row (stack and separation combination), get the difference between Concurrent
+    and all other ISIs by subtracting concurrent from that ISI.
+
+    Then calculate the mean difference from concurrent across these stacks and also the error (SE).
+
+    Returns the average diff from conc and the error on the average
+    :param MASTER_TM2_thr_df: Either an actual DataFrame or a path to dataframe.
         thr_df is a ISI (columns) x separation (rows) dataframe.
+    :param error_type: Default: None. Can pass sd or se for standard deviation or error.
+    :param root_path: Path to save new csvs to.
+    :param n_trimmed: Number of datapoints trimmed from each end.  Used for naming file.
+    :param exp_ave: If True, will add 'Exp' to fig titles so its clear these are experiment level results.
+        If False will add 'P' for participant level; or use participant_name to identify whose results it is.
 
-    :return: dataframe
+    :param verbose: Default True, print progress to screen
+
+    :return: MASTER_DfC_df, MASTER_DfC_error_SE_df
     """
     print('\n*** running make_diff_from_conc_df() ***')
 
-    if isinstance(thr_df_path, str):
-        thr_df = pd.read_csv(thr_df_path)
+    # todo: chop off 1probe data?
 
-    elif isinstance(thr_df_path, pd.DataFrame):
-        thr_df = thr_df_path
+    if type(exp_ave) == str:  # e.g. participant's name
+        ave_over = exp_ave
+        idx_col = 'stack'
+    elif exp_ave is True:
+        ave_over = 'Exp'
+        idx_col = 'p_stack_sep'
     else:
-        raise TypeError(f'thr_df_path should be str (path to dataframe) or '
-                        f'DataFrame, not {type(thr_df_path)}')
+        ave_over = 'P'
+        idx_col = 'stack'
+    print(f'ave_over: {ave_over}')
+    print(f'type(exp_ave): {type(exp_ave)}')
+    print(f'exp_ave: {exp_ave}')
 
-    print(f'thr_df:\n{thr_df}')
+
+
+    if isinstance(MASTER_TM2_thr_df, str):
+        thr_df = pd.read_csv(MASTER_TM2_thr_df)
+    elif isinstance(MASTER_TM2_thr_df, pd.DataFrame):
+        thr_df = MASTER_TM2_thr_df
+    else:
+        raise TypeError(f'MASTER_TM2_thr_df should be str (path to dataframe) or '
+                        f'DataFrame, not {type(MASTER_TM2_thr_df)}')
 
     if 'separation' in list(thr_df.columns):
         thr_df.set_index('separation', inplace=True, drop=True)
     thr_df.rename(index={20: '1Probe'}, inplace=True)
+
+    if ave_over == 'Exp':
+        thr_df.drop('p_stack_sep', axis=1, inplace=True)
+        thr_df.drop('participant', axis=1, inplace=True)
+
     print(f'thr_df:\n{thr_df}')
 
     '''diff_from_conc_df is an ISI x Sep df where the concurrent column is subtracted from all columns.
@@ -1009,38 +1063,113 @@ def make_diff_from_conc_df(thr_df_path):
         diff_from_conc_df = thr_df.iloc[:, :].sub(thr_df['ISI_-1'], axis=0)
     print(f'diff_from_conc_df:\n{diff_from_conc_df}')
 
+    get_means_df = diff_from_conc_df
+
+    # # get means and errors
+    groupby_sep_df = get_means_df.drop('stack', axis=1)
+    ave_DfC_df = groupby_sep_df.groupby('separation', sort=True).mean()
+    if verbose:
+        print(f'\nave_DfC_df:\n{ave_DfC_df}')
+
+    if error_type in [False, None]:
+        error_DfC_df = None
+    elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
+        error_DfC_df = groupby_sep_df.groupby('separation', sort=True).sem()
+    elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
+        error_DfC_df = groupby_sep_df.groupby('separation', sort=True).std()
+    else:
+        raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
+                         f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standard_error']\n"
+                         f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
+                         f"'deviation', 'standard_deviation']")
+    if verbose:
+        print(f'\nerror_DfC_df: ({error_type})\n{error_DfC_df}')
+
+    # save csv with average values
+    if n_trimmed is not None:
+        ave_DfC_df.to_csv(os.path.join(root_path, f'MASTER_ave_TM{n_trimmed}_DfC.csv'))
+        error_DfC_df.to_csv(os.path.join(root_path, f'MASTER_ave_TM{n_trimmed}_DfC_error_{error_type}.csv'))
+    else:
+        ave_DfC_df.to_csv(os.path.join(root_path, 'MASTER_ave_DfC.csv'))
+        error_DfC_df.to_csv(os.path.join(root_path, f'MASTER_ave_DfC_error_{error_type}.csv'))
+
     print('\n*** finished make_diff_from_conc_df() ***')
 
-    return diff_from_conc_df
+    return ave_DfC_df, error_DfC_df
 
 
 
-def plot_diff_from_conc_lineplot(thr_df_path, fig_title=None, 
+def plot_diff_from_conc_lineplot(ave_DfC_df, error_df, fig_title=None,
                                  save_name=None, save_path=None):
     """
     Function to plot the difference in threshold from concurrent for each ISI.
 
-    :param thr_df_path: Either an actual DataFrame or a path to dataframe.
-        thr_df is a ISI (columns) x separation (rows) dataframe.
+    :param ave_DfC_df: Either an actual DataFrame or a path to dataframe.
+        ave_DfC_df is a ISI (columns) x separation (rows) dataframe.
+    :param error_df: Either an actual DataFrame or a path to dataframe showing errors on threshold averages.
+        error_df is a ISI (columns) x separation (rows) dataframe.
     :param fig_title: Title for figure.
     :param save_name: File name to save figure.
-    :param save_path: Path to save file if a thr_df_path is a dataframe.
+    :param save_path: Path to save file if a ave_DfC_df is a dataframe.
 
     :return: Fig
     """
     print('\n*** running plot_diff_from_conc_lineplot() ***')
 
+    # get data
+    if type(ave_DfC_df) is str:
+        if os.path.isfile(ave_DfC_df):
+            ave_DfC_df = pd.read_csv(ave_DfC_df)
 
-    diff_from_conc_df = make_diff_from_conc_df(thr_df_path)
+    if type(error_df) is str:
+        if os.path.isfile(error_df):
+            error_df = pd.read_csv(error_df)
 
-    fig, ax = plt.subplots(figsize=(10, 6))
+    ave_DfC_df.set_index('separation', drop=True, inplace=True)
+    error_df.set_index('separation', drop=True, inplace=True)
 
-    sns.lineplot(data=diff_from_conc_df.T, linewidth=3)
+    print(f"\nave_DfC_df:\n{ave_DfC_df}")
+    print(f"\nerror_df:\n{error_df}")
+
+
+    column_names = ave_DfC_df.columns.to_list()
+    index_names = ave_DfC_df.index.tolist()
+
+    my_colours = fig_colours(len(index_names))
+
+
+    # fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots()
+
+    legend_handles_list = []
+
+    # for idx, name in enumerate(index_names):
+    for idx, sep_row in enumerate(ave_DfC_df.index):
+
+        print(f"\ncolumn_names:\n{column_names}")
+        print(f"ave_DfC_df.iloc[idx]:\n{ave_DfC_df.iloc[idx]}")
+        print(f"error_df.iloc[idx]:\n{error_df.iloc[idx]}")
+
+        ax.errorbar(x=column_names,
+                    y=ave_DfC_df.iloc[idx],
+                    yerr=error_df.iloc[idx],
+                    marker='.', lw=2, elinewidth=.7,
+                    capsize=5,
+                    color=my_colours[idx],
+        )
+
+        leg_handle = mlines.Line2D([], [], color=my_colours[idx], label=sep_row,
+                                   marker='.', linewidth=.5, markersize=4)
+        legend_handles_list.append(leg_handle)
+
+    ax.legend(handles=legend_handles_list, fontsize=6, title='ISI', framealpha=.5)
+
+
     plt.axhline(y=0, color='lightgrey', linestyle='dashed')
     plt.ylabel('Luminance difference from concurrent')
     plt.xlabel('ISI')
     plt.title(fig_title)
-    plt.savefig(f'{save_path}/{save_name}')
+    plt.savefig(os.path.join(save_path, save_name))
 
     print('\n*** finished plot_diff_from_conc_lineplot() ***')
 
@@ -1357,7 +1486,7 @@ def plot_n_sep_thr_w_scatter(all_thr_df, thr_col='probeLum', exp_ave=False, fig_
     and an eighth plot showing all separations.
 
     :param all_thr_df: Dataframe with thresholds from multiple runs or participants
-                        (e.g., MASTER_thresholds.csv or MASTER_exp_thr.csv)
+                        (e.g., MASTER_thresholds.csv or MASTER_exp_all_thr.csv)
     :param thr_col: Column to extract threshold values from, expects 'probeLum' or 'newLum'.
     :param exp_ave: Use True for experiment thr from multiple participants or
                     False for thr from multiple runs from a single participant.
@@ -1375,7 +1504,7 @@ def plot_n_sep_thr_w_scatter(all_thr_df, thr_col='probeLum', exp_ave=False, fig_
     # Average over experiment or participant (with or without participant name)
     if exp_ave is True:
         ave_over = 'Exp'
-        long_df_idx_col = 'participant'
+        long_df_idx_col = 'p_stack_sep'
     elif type(exp_ave) == str:
         ave_over = exp_ave
         long_df_idx_col = 'stack'
@@ -1426,7 +1555,7 @@ def plot_n_sep_thr_w_scatter(all_thr_df, thr_col='probeLum', exp_ave=False, fig_
         n_rows, n_cols = get_n_rows_n_cols(n_plots)
         print(f"n_plots: {n_plots}, n_rows: {n_rows}, n_cols: {n_cols}, empty: {(n_rows * n_cols) - n_plots}")
 
-        fig, axes = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(3 * n_rows, 3 * n_cols))
+        fig, axes = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(3 * n_cols, 3 * n_rows))
 
         ax_counter = 0
 
@@ -1442,11 +1571,13 @@ def plot_n_sep_thr_w_scatter(all_thr_df, thr_col='probeLum', exp_ave=False, fig_
 
                     print(f"sep_df:\n{sep_df}")
 
+
                     # show individual data points
                     sns.stripplot(data=sep_df, x='ISI', y=thr_col,
                                   ax=axes[row_idx, col_idx],
                                   color=my_colours[ax_counter],
-                                  size=2, jitter=True)
+                                  size=2, jitter=True,
+                                  alpha=.5)
 
                     # show mean and error bars
                     sns.pointplot(ax=axes[row_idx, col_idx],
@@ -1468,7 +1599,8 @@ def plot_n_sep_thr_w_scatter(all_thr_df, thr_col='probeLum', exp_ave=False, fig_
                                   hue='separation',
                                   ax=axes[row_idx, col_idx],
                                   dodge=True, jitter=True, size=2,
-                                  palette=my_colours)
+                                  palette=my_colours,
+                                  alpha=.5)
 
                     # show means and error bars
                     sns.pointplot(ax=axes[row_idx, col_idx],
@@ -1502,7 +1634,8 @@ def plot_n_sep_thr_w_scatter(all_thr_df, thr_col='probeLum', exp_ave=False, fig_
 
         # show individual data points
         sns.stripplot(data=sep_df, x='ISI', y=thr_col,
-                      size=5, jitter=True)
+                      size=5, jitter=True,
+                      alpha=.5)
 
         # show mean and error bars
         sns.pointplot(data=sep_df, x='ISI', y=thr_col,
@@ -2087,6 +2220,8 @@ def d_average_participant(root_path, run_dir_names_list,
     :param trim_n: default None.  If int is passed, will call function trim_n_high_n_low(),
             which trims the n highest and lowest values.
     :param isi_names_list: List of ISI column names.
+    :param ave_type: default = 'thresholds', which will use experiment thresholds.
+        The other option if diff_from_conc, which will averager over difference from conconcurrent scores.
     :param verbose: Default True, print progress to screen
 
     :returns: ave_psignifit_thr_df: (trimmed?) mean threshold for each separation and ISI.
@@ -2197,6 +2332,17 @@ def d_average_participant(root_path, run_dir_names_list,
         ave_psignifit_thr_df.to_csv(os.path.join(root_path, 'MASTER_ave_thresh.csv'))
         error_bars_df.to_csv(os.path.join(root_path, f'MASTER_ave_thr_error_{error_type}.csv'))
 
+    # # get difference from concurrent plot.
+    # if any(item in ['ISI_-1', 'ISI -1', 'conc', 'Conc', 'Concurrent', 'concurrent']
+    #        for item in list(ave_psignifit_thr_df.columns)):
+    #     print("making difference from concurrent df")
+    #     ave_DfC_df = make_diff_from_conc_df(ave_psignifit_thr_df)
+    #     ave_DfC_df.to_csv(os.path.join(root_path, 'MASTER_diff_from_conc.csv'))
+
+    # else:
+    #     print("concurrent not found, so not making a difference-from-concurrent plot.")
+
+
     print("\n*** finished d_average_participant()***\n")
 
     return ave_psignifit_thr_df, error_bars_df
@@ -2208,70 +2354,85 @@ def e_average_exp_data(exp_path, p_names_list,
                        n_trimmed=None,
                        verbose=True):
     """
-    e_average_over_participants: take MASTER_ave_TM_thresh.csv (or MASTER_ave_thresh.csv)
-    in each participant folder and make master list
-    MASTER_exp_thr.csv
+    OLD VERSION took the mean of each participant's mean.
+    NEW version will take the mean of each participant's trimmed results.
+    That is all remaining datapoints after trimming.
+    e_average_over_participants: take MASTER_TM2_thresholds.csv in each
+    participant folder and make master list: MASTER_exp_all_thr.csv
 
     Get mean thresholds averaged across all participants saved as
     MASTER_exp_ave_thr.csv
 
     Save master lists to exp_path.
 
-    Plots:
-    MASTER_exp_ave_thr saved as exp_ave_thr_all_runs.png
-    MASTER_exp_ave_thr two-probe/one-probesaved as exp_ave_thr_div_1probe.png
-    these both have two versions:
-    a. x-axis is separation, ISI as different lines
-    b. x-axis is ISI, separation as different lines
-    Heatmap: with average probe lum for ISI and separation.
-
     :param exp_path: dir containing participant folders
     :param p_names_list: names of participant's folders
     :param error_type: Default: None. Can pass sd or se for standard deviation or error.
-    :param n_trimmed: default None.  If None, use MASTER_ave_thresh, Else use:
-            f'MASTER_ave_TM{n_trimmed}_thresh'.
+    :param n_trimmed: default 2.  If not equal to 2, raise error, as calculating means will be biased
+    if not all participants have the same number of datapoints.
     :param verbose: Default true, print progress to screen
 
     :returns: exp_ave_thr_df: experiment mean threshold for each separation and ISI.
     """
-    print("\n***running e_average_over_participants()***\n")
+    print("\n***running e_average_exp_data()***\n")
 
     """ part1. Munge data, save master lists and get means etc
-     - loop through participants and get each MASTER_ave_TM_thresh.csv
-    Make master sheets: MASTER_exp_thr and MASTER_exp_ave_thr."""
+     - loop through participants and get each MASTER_TM2_thresholds.csv
+    Make master sheets: MASTER_exp_all_thr and MASTER_exp_ave_thr."""
 
     all_p_ave_list = []
     for p_idx, p_name in enumerate(p_names_list):
 
-        ave_df_name = 'MASTER_ave_thresh'
-        if type(n_trimmed) == int:
-            ave_df_name = f'MASTER_ave_TM{n_trimmed}_thresh'
-        elif type(n_trimmed) == list:
-            if n_trimmed[p_idx] is not None:
-                ave_df_name = f'MASTER_ave_TM{n_trimmed[p_idx]}_thresh'
+        # ave_df_name = 'MASTER_ave_thresh'
+        # if type(n_trimmed) == int:
+        #     ave_df_name = f'MASTER_ave_TM{n_trimmed}_thresh'
+        # elif type(n_trimmed) == list:
+        #     if n_trimmed[p_idx] is not None:
+        #         ave_df_name = f'MASTER_ave_TM{n_trimmed[p_idx]}_thresh'
+        # this_p_ave_df = pd.read_csv(os.path.join(exp_path, p_name, f'{ave_df_name}.csv'))
 
-        this_p_ave_df = pd.read_csv(os.path.join(exp_path, p_name, f'{ave_df_name}.csv'))
+        p_all_df_name = 'MASTER_TM2_thresholds.csv'
+        this_p_all_df = pd.read_csv(os.path.join(exp_path, p_name, p_all_df_name))
 
         if verbose:
-            print(f'{p_idx}. {p_name} - this_p_ave_df:\n{this_p_ave_df}')
+            print(f'{p_idx}. {p_name} - this_p_all_df:\n{this_p_all_df}')
 
-        if 'Unnamed: 0' in list(this_p_ave_df):
-            this_p_ave_df.drop('Unnamed: 0', axis=1, inplace=True)
+        if 'Unnamed: 0' in list(this_p_all_df):
+            this_p_all_df.drop('Unnamed: 0', axis=1, inplace=True)
 
-        rows, cols = this_p_ave_df.shape
-        this_p_ave_df.insert(0, 'participant', [p_name] * rows)
+        this_p_all_df = this_p_all_df.rename(columns={'Concurrent': 'ISI_-1',
+                                                      'ISI0': 'ISI_0',
+                                                      'ISI2': 'ISI_2',
+                                                      'ISI4': 'ISI_4',
+                                                      'ISI6': 'ISI_6',
+                                                      'ISI9': 'ISI_9',
+                                                      'ISI12': 'ISI_12',
+                                                      'ISI24': 'ISI_24',
+                                                      'ISI-1': 'ISI_-1',
+                                                      })
 
-        all_p_ave_list.append(this_p_ave_df)
+
+        rows, cols = this_p_all_df.shape
+        this_p_all_df.insert(0, 'participant', [p_name] * rows)
+
+        p_stack_sep_list = [f"{p_name}_{a}_sep{b}" for a, b in
+                            zip(this_p_all_df['stack'].tolist(), this_p_all_df['separation'].tolist())]
+        this_p_all_df.insert(0, 'p_stack_sep', p_stack_sep_list)
+
+
+        all_p_ave_list.append(this_p_all_df)
 
     # join all participants' data and save as master csv
-    all_exp_thr_df = pd.concat(all_p_ave_list, ignore_index=True)
-    all_exp_thr_df.to_csv(os.path.join(exp_path, 'MASTER_exp_thr.csv'), index=False)
+    # all_exp_thr_df = pd.concat(all_p_ave_list, ignore_index=True)
+    # all_exp_thr_df.to_csv(os.path.join(exp_path, 'MASTER_exp_all_thr.csv'), index=False)
+    exp_all_thr_df = pd.concat(all_p_ave_list, ignore_index=True)
+    exp_all_thr_df.to_csv(os.path.join(exp_path, 'MASTER_exp_all_thr.csv'), index=False)
 
     if verbose:
-        print(f'\nall_exp_thr_df:\n{all_exp_thr_df}')
+        print(f'\nexp_all_thr_df:\n{exp_all_thr_df}')
 
     # # get means and errors
-    groupby_sep_df = all_exp_thr_df.drop('participant', axis=1)
+    groupby_sep_df = exp_all_thr_df.drop(['p_stack_sep', 'participant', 'stack'], axis=1)
     exp_ave_thr_df = groupby_sep_df.groupby('separation', sort=True).mean()
     if verbose:
         print(f'\nexp_ave_thr_df:\n{exp_ave_thr_df}')
@@ -2294,7 +2455,7 @@ def e_average_exp_data(exp_path, p_names_list,
     exp_ave_thr_df.to_csv(os.path.join(exp_path, 'MASTER_exp_ave_thr.csv'))
     error_bars_df.to_csv(os.path.join(exp_path, f'MASTER_ave_thr_error_{error_type}.csv'))
 
-    print("\n*** finished e_average_over_participants()***\n")
+    print("\n*** finished e_average_exp_data()***\n")
 
     return exp_ave_thr_df, error_bars_df
 
@@ -2344,12 +2505,12 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     save_path, df_name = os.path.split(ave_df_path)
 
     # Average over experiment or participant (with or without participant name)
-    if type(exp_ave) == str:
+    if type(exp_ave) == str:  # e.g. participant's name
         ave_over = exp_ave
         idx_col = 'stack'
     elif exp_ave is True:
         ave_over = 'Exp'
-        idx_col = 'participant'
+        idx_col = 'p_stack_sep'
     else:
         ave_over = 'P'
         idx_col = 'stack'
@@ -2393,160 +2554,317 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         a) Sep on x-axis, different line for each ISI
         b) ISI on x-axis, different line for each Sep"""
 
-    if len(sep_vals_list) == 1:
-        print("skipping fig_1a as there is only 1 sep value")
-    else:
-        print(f"\nfig_1a\n")
-        if n_trimmed is not None:
-            fig1_title = f'{ave_over} average thresholds across all runs\n(n={ave_over_n}, trim={n_trimmed}, err="se").'
-            fig1_savename = f'ave_TM{n_trimmed}_thr_all_runs.png'
-        else:
-            fig1_title = f'{ave_over} average threshold across all runs\n(n={ave_over_n}, err="se")'
-            fig1_savename = f'ave_thr_all_runs.png'
-
-        plot_1probe_w_errors(fig_df=ave_df, error_df=error_bars_df,
-                             split_1probe=split_1probe, jitter=True,
-                             error_caps=True, alt_colours=False,
-                             legend_names=isi_name_list,
-                             x_tick_vals=sep_vals_list,
-                             x_tick_labels=sep_name_list,
-                             fixed_y_range=False,
-                             fig_title=fig1_title, save_name=fig1_savename,
-                             save_path=save_path, verbose=True)
-        if show_plots:
-            plt.show()
-        plt.close()
-
-        if verbose:
-            print('finished fig1a')
-
-    if len(isi_name_list) == 1:
-        print("skipping fig_1b as there is only 1 ISI value")
-    else:
-
-        print(f"\n\nfig_1b")
-        # fig 1b, ISI on x-axis, different line for each sep
-        if n_trimmed is not None:
-            fig1b_title = f'{ave_over} probe luminance at each ISI value per separation\n' \
-                          f'(n={ave_over_n}, trim={n_trimmed}, err="se").'
-            fig1b_savename = f'ave_TM{n_trimmed}_thr_all_runs_transpose.png'
-        else:
-            fig1b_title = f'{ave_over} probe luminance at each ISI value per separation\n' \
-                          f'(n={ave_over_n}, err="se")'
-            fig1b_savename = f'ave_thr_all_runs_transpose.png'
-
-        plot_w_errors_no_1probe(wide_df=all_df, x_var='ISI', y_var=thr_col,
-                                lines_var='separation', long_df_idx_col=idx_col,
-                                legend_names=sep_name_list,
-                                x_tick_labels=isi_name_list,
-                                alt_colours=True, fixed_y_range=False, jitter=True,
-                                error_caps=True, fig1b_title=fig1b_title,
-                                fig1b_savename=fig1b_savename, save_path=save_path,
-                                verbose=True)
-        if show_plots:
-            plt.show()
-        plt.close()
-
-        if verbose:
-            print('finished fig1b')
-
-    print(f"\nfig_1c\n")
-    all_df.columns = all_df_headers
-
-    # fig 1c, eight plots - seven showing a particular separation, eighth showing all separations.
-    if n_trimmed is not None:
-        f'{ave_over} average thresholds per separation'
-        fig1c_title = f'{ave_over} average thresholds per separation\n(n={ave_over_n}, trim={n_trimmed}, err="se").'
-        fig1c_savename = f'ave_TM{n_trimmed}_thr_per_sep.png'
-    else:
-        fig1c_title = f'{ave_over} average thresholds per separation\n(n={ave_over_n}, err="se")'
-        fig1c_savename = f'ave_thr_per_sep.png'
-
-    plot_n_sep_thr_w_scatter(all_thr_df=all_df, exp_ave=exp_ave, fig_title=fig1c_title,
-                             save_name=fig1c_savename, save_path=save_path, verbose=True)
-
-    if show_plots:
-        plt.show()
-    plt.close()
-
-    if verbose:
-        print('finished fig_1c')
-
-
-    if split_1probe:
-        print(f"\nfig_2a\n")
-        # # Fig 2  - divide all 2probe conditions (pos_sep) by one_probe for each data_set
-        # use ave_df with all (or trimmed) data.
-        # first split each data_set into 1probe and pos_sep (2probe), divide and make back into long df
-        dset_list = list(all_df[idx_col].unique())
-        print(f'dset_list: {dset_list}')
-
-        divided_list = []
-        # loop through data_sets
-        for data_set in dset_list:
-            # for each data_set_df, split into pos_sep_df and one_probe_df
-            data_set_df = all_df[all_df[idx_col] == data_set]
-            data_set_df = data_set_df.drop(idx_col, axis=1)
-            pos_sep_df, one_probe_df = split_df_into_pos_sep_df_and_1probe_df(data_set_df)
-
-            # divide pos_sep by one_probe and append to list
-            pos_sep_arr = pos_sep_df.to_numpy()
-            one_probe_arr = one_probe_df[thr_col].to_numpy()
-            div_by_1probe_arr = (pos_sep_arr.T / one_probe_arr[:, None]).T
-            div_by_1probe_df = pd.DataFrame(div_by_1probe_arr, columns=isi_name_list)
-            div_by_1probe_df.insert(0, idx_col, [data_set] * len(div_by_1probe_df))
-            div_by_1probe_df.insert(1, 'separation', pos_sep_list[:-1])
-            divided_list.append(div_by_1probe_df)
-
-        # put back into long form df with data_set Sep cols
-        divided_df = pd.concat(divided_list)
-        print(f'divided_df:\n{divided_df}')
-
-        # # get means and errors
-        div_groupby_sep_df = divided_df.drop(idx_col, axis=1)
-        div_ave_psignifit_thr_df = div_groupby_sep_df.groupby('separation', sort=True).mean()
-        if verbose:
-            print(f'\ndiv_ave_psignifit_thr_df:\n{div_ave_psignifit_thr_df}')
-
-        if error_type in [False, None]:
-            div_error_bars_df = None
-        elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
-            div_error_bars_df = div_groupby_sep_df.groupby('separation', sort=True).sem()
-        elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
-            div_error_bars_df = div_groupby_sep_df.groupby('separation', sort=True).std()
-        print(f'\ndiv_error_bars_df: ({error_type})\n{div_error_bars_df}')
-
-        if n_trimmed is not None:
-            fig2a_save_name = f'ave_TM{n_trimmed}_thr_div_1probe.png'
-            fig2a_title = f'{ave_over} average thresholds divided by single probe\n' \
-                          f'(n={ave_over_n}, trim={n_trimmed}, err="se").'
-        else:
-            fig2a_save_name = 'ave_thr_div_1probe.png'
-            fig2a_title = f'{ave_over} average threshold divided by single probe\n(n={ave_over_n}, err="se")'
-
-        plot_1probe_w_errors(fig_df=div_ave_psignifit_thr_df, error_df=div_error_bars_df,
-                             split_1probe=False, jitter=True,
-                             error_caps=True, alt_colours=False,
-                             legend_names=['Concurrent', 'ISI 0', 'ISI 2', 'ISI 4',
-                                           'ISI 6', 'ISI 9', 'ISI 12', 'ISI 24'],
-                             x_tick_vals=[0, 1, 2, 3, 6, 18],
-                             x_tick_labels=[0, 1, 2, 3, 6, 18],
-                             fixed_y_range=False,
-                             fig_title=fig2a_title, save_name=fig2a_save_name,
-                             save_path=save_path, verbose=True)
-        if show_plots:
-            plt.show()
-        plt.close()
-
-        if verbose:
-            print('finished fig2a')
+    # if len(sep_vals_list) == 1:
+    #     print("skipping fig_1a as there is only 1 sep value")
+    # else:
+    #     print(f"\nfig_1a\n")
+    #     if n_trimmed is not None:
+    #         fig1_title = f'{ave_over} average thresholds across all runs\n(n={ave_over_n}, trim={n_trimmed}, err={error_type}).'
+    #         fig1_savename = f'ave_TM{n_trimmed}_thr_all_runs.png'
+    #     else:
+    #         fig1_title = f'{ave_over} average threshold across all runs\n(n={ave_over_n}, err={error_type})'
+    #         fig1_savename = f'ave_thr_all_runs.png'
+    #
+    #     plot_1probe_w_errors(fig_df=ave_df, error_df=error_bars_df,
+    #                          split_1probe=split_1probe, jitter=True,
+    #                          error_caps=True, alt_colours=False,
+    #                          legend_names=isi_name_list,
+    #                          x_tick_vals=sep_vals_list,
+    #                          x_tick_labels=sep_name_list,
+    #                          fixed_y_range=False,
+    #                          fig_title=fig1_title, save_name=fig1_savename,
+    #                          save_path=save_path, verbose=True)
+    #     if show_plots:
+    #         plt.show()
+    #     plt.close()
+    #
+    #     if verbose:
+    #         print('finished fig1a')
+    #
+    # if len(isi_name_list) == 1:
+    #     print("skipping fig_1b as there is only 1 ISI value")
+    # else:
+    #
+    #     print(f"\n\nfig_1b")
+    #     # fig 1b, ISI on x-axis, different line for each sep
+    #     if n_trimmed is not None:
+    #         fig1b_title = f'{ave_over} probe luminance at each ISI value per separation\n' \
+    #                       f'(n={ave_over_n}, trim={n_trimmed}, err={error_type}).'
+    #         fig1b_savename = f'ave_TM{n_trimmed}_thr_all_runs_transpose.png'
+    #     else:
+    #         fig1b_title = f'{ave_over} probe luminance at each ISI value per separation\n' \
+    #                       f'(n={ave_over_n}, err={error_type})'
+    #         fig1b_savename = f'ave_thr_all_runs_transpose.png'
+    #
+    #     plot_w_errors_no_1probe(wide_df=all_df, x_var='ISI', y_var=thr_col,
+    #                             lines_var='separation', long_df_idx_col=idx_col,
+    #                             legend_names=sep_name_list,
+    #                             x_tick_labels=isi_name_list,
+    #                             alt_colours=True, fixed_y_range=False, jitter=True,
+    #                             error_caps=True, fig1b_title=fig1b_title,
+    #                             fig1b_savename=fig1b_savename, save_path=save_path,
+    #                             verbose=True)
+    #     if show_plots:
+    #         plt.show()
+    #     plt.close()
+    #
+    #     if verbose:
+    #         print('finished fig1b')
+    #
+    # print(f"\nfig_1c\n")
+    # all_df.columns = all_df_headers
+    #
+    # # fig 1c, eight plots - seven showing a particular separation, eighth showing all separations.
+    # if n_trimmed is not None:
+    #     f'{ave_over} average thresholds per separation'
+    #     fig1c_title = f'{ave_over} average thresholds per separation\n(n={ave_over_n}, trim={n_trimmed}, err={error_type}).'
+    #     fig1c_savename = f'ave_TM{n_trimmed}_thr_per_sep.png'
+    # else:
+    #     fig1c_title = f'{ave_over} average thresholds per separation\n(n={ave_over_n}, err={error_type})'
+    #     fig1c_savename = f'ave_thr_per_sep.png'
+    #
+    # plot_n_sep_thr_w_scatter(all_thr_df=all_df, exp_ave=exp_ave, fig_title=fig1c_title,
+    #                          save_name=fig1c_savename, save_path=save_path, verbose=True)
+    #
+    # if show_plots:
+    #     plt.show()
+    # plt.close()
+    #
+    # if verbose:
+    #     print('finished fig_1c')
+    #
+    #
+    # # if split_1probe:
+    # #     print(f"\nfig_2a\n")
+    # #     # # Fig 2  - divide all 2probe conditions (pos_sep) by one_probe for each data_set
+    # #     # use ave_df with all (or trimmed) data.
+    # #     # first split each data_set into 1probe and pos_sep (2probe), divide and make back into long df
+    # #     dset_list = list(all_df[idx_col].unique())
+    # #     print(f'dset_list: {dset_list}')
+    # #
+    # #     divided_list = []
+    # #     # loop through data_sets
+    # #     for data_set in dset_list:
+    # #         # for each data_set_df, split into pos_sep_df and one_probe_df
+    # #         data_set_df = all_df[all_df[idx_col] == data_set]
+    # #         data_set_df = data_set_df.drop(idx_col, axis=1)
+    # #         pos_sep_df, one_probe_df = split_df_into_pos_sep_df_and_1probe_df(data_set_df)
+    # #
+    # #         # divide pos_sep by one_probe and append to list
+    # #         pos_sep_arr = pos_sep_df.to_numpy()
+    # #         one_probe_arr = one_probe_df[thr_col].to_numpy()
+    # #         div_by_1probe_arr = (pos_sep_arr.T / one_probe_arr[:, None]).T
+    # #         div_by_1probe_df = pd.DataFrame(div_by_1probe_arr, columns=isi_name_list)
+    # #         div_by_1probe_df.insert(0, idx_col, [data_set] * len(div_by_1probe_df))
+    # #         div_by_1probe_df.insert(1, 'separation', pos_sep_list[:-1])
+    # #         divided_list.append(div_by_1probe_df)
+    # #
+    # #     # put back into long form df with data_set Sep cols
+    # #     divided_df = pd.concat(divided_list)
+    # #     print(f'divided_df:\n{divided_df}')
+    # #
+    # #     # # get means and errors
+    # #     div_groupby_sep_df = divided_df.drop(idx_col, axis=1)
+    # #     div_ave_psignifit_thr_df = div_groupby_sep_df.groupby('separation', sort=True).mean()
+    # #     if verbose:
+    # #         print(f'\ndiv_ave_psignifit_thr_df:\n{div_ave_psignifit_thr_df}')
+    # #
+    # #     if error_type in [False, None]:
+    # #         div_error_bars_df = None
+    # #     elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
+    # #         div_error_bars_df = div_groupby_sep_df.groupby('separation', sort=True).sem()
+    # #     elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
+    # #         div_error_bars_df = div_groupby_sep_df.groupby('separation', sort=True).std()
+    # #     print(f'\ndiv_error_bars_df: ({error_type})\n{div_error_bars_df}')
+    # #
+    # #     if n_trimmed is not None:
+    # #         fig2a_save_name = f'ave_TM{n_trimmed}_thr_div_1probe.png'
+    # #         fig2a_title = f'{ave_over} average thresholds divided by single probe\n' \
+    # #                       f'(n={ave_over_n}, trim={n_trimmed}, err={error_type}).'
+    # #     else:
+    # #         fig2a_save_name = 'ave_thr_div_1probe.png'
+    # #         fig2a_title = f'{ave_over} average threshold divided by single probe\n(n={ave_over_n}, err={error_type})'
+    # #
+    # #     plot_1probe_w_errors(fig_df=div_ave_psignifit_thr_df, error_df=div_error_bars_df,
+    # #                          split_1probe=False, jitter=True,
+    # #                          error_caps=True, alt_colours=False,
+    # #                          legend_names=['Concurrent', 'ISI 0', 'ISI 2', 'ISI 4',
+    # #                                        'ISI 6', 'ISI 9', 'ISI 12', 'ISI 24'],
+    # #                          x_tick_vals=[0, 1, 2, 3, 6, 18],
+    # #                          x_tick_labels=[0, 1, 2, 3, 6, 18],
+    # #                          fixed_y_range=False,
+    # #                          fig_title=fig2a_title, save_name=fig2a_save_name,
+    # #                          save_path=save_path, verbose=True)
+    # #     if show_plots:
+    # #         plt.show()
+    # #     plt.close()
+    # #
+    # #     if verbose:
+    # #         print('finished fig2a')
+    #
+    #
+    #
+    #
+    # print(f"\nHeatmap 1\n")
+    # if 'separation' in list(ave_df.columns):
+    #     ave_df.set_index('separation', drop=True, inplace=True)
+    #
+    # if n_trimmed is not None:
+    #     heatmap_title = f'{ave_over} mean Threshold\nfor each ISI and separation (n={ave_over_n}, trim={n_trimmed}).'
+    #     heatmap_savename = f'mean_TM{n_trimmed}_thr_heatmap'
+    # else:
+    #     heatmap_title = f'{ave_over} mean Threshold\nfor each ISI and separation (n={ave_over_n})'
+    #     heatmap_savename = 'mean_thr_heatmap'
+    #
+    # # regular (not transpose)
+    # plot_thr_heatmap(heatmap_df=ave_df, x_tick_labels=isi_name_list,
+    #                  y_tick_labels=sep_name_list, fig_title=heatmap_title,
+    #                  save_name=heatmap_savename, save_path=save_path,
+    #                  annot_fmt=heatmap_annot_fmt,
+    #                  verbose=True)
+    #
+    # if show_plots:
+    #     plt.show()
+    # plt.close()
+    #
+    # print(f"\nHeatmap 1b - errors\n")
+    # if 'separation' in list(error_bars_df.columns):
+    #     error_bars_df.set_index('separation', drop=True, inplace=True)
+    #
+    # if n_trimmed is not None:
+    #     heatmap_title = f'{ave_over} mean Error ({error_type})\nfor each ISI and separation (n={ave_over_n}, trim={n_trimmed}).'
+    #     heatmap_savename = f'mean_TM{n_trimmed}_error_heatmap'
+    # else:
+    #     heatmap_title = f'{ave_over} mean Error ({error_type})\nfor each ISI and separation (n={ave_over_n})'
+    #     heatmap_savename = 'mean_error_heatmap'
+    #
+    # # regular (not transpose)
+    # plot_thr_heatmap(heatmap_df=error_bars_df, x_tick_labels=isi_name_list,
+    #                  y_tick_labels=sep_name_list, fig_title=heatmap_title,
+    #                  save_name=heatmap_savename, save_path=save_path,
+    #                  annot_fmt=heatmap_annot_fmt,
+    #                  verbose=True)
+    #
+    # if show_plots:
+    #     plt.show()
+    # plt.close()
+    #
+    # # if split_1probe:
+    # #     print(f"\nHeatmap 2. div 1probe\n")
+    # #     print(f'div_ave_psignifit_thr_df:\n{div_ave_psignifit_thr_df}')
+    # #     if 'separation' in list(div_ave_psignifit_thr_df.columns):
+    # #         div_ave_psignifit_thr_df.set_index('separation', drop=True, inplace=True)
+    # #
+    # #     # get mean of each col, then mean of that
+    # #
+    # #     if n_trimmed is not None:
+    # #         heatmap_title = f'{ave_over} mean Threshold/1probe for each ISI and separation\n' \
+    # #                         f'(n={ave_over_n}, trim={n_trimmed}).'
+    # #         heatmap_savename = f'mean_TM{n_trimmed}_thr_div_1probe_heatmap'
+    # #     else:
+    # #         heatmap_title = f'{ave_over} mean Threshold/1probe for each ISI and separation\n' \
+    # #                         f'(n={ave_over_n})'
+    # #         heatmap_savename = 'mean_thr_div_1probe_heatmap'
+    # #
+    # #     div_1pr_sep_names_list = sep_name_list
+    # #     if '1probe' in div_1pr_sep_names_list:
+    # #         div_1pr_sep_names_list = div_1pr_sep_names_list.remove("1probe")
+    # #
+    # #     plot_thr_heatmap(heatmap_df=div_ave_psignifit_thr_df.T,
+    # #                      x_tick_labels=div_1pr_sep_names_list, y_tick_labels=isi_name_list,
+    # #                      annot_fmt=heatmap_annot_fmt,
+    # #                      fig_title=heatmap_title, save_name=heatmap_savename,
+    # #                      save_path=save_path, verbose=True)
+    # #     if show_plots:
+    # #         plt.show()
+    # #     plt.close()
+    # #
+    # # if show_plots:
+    # #     plt.show()
+    # # plt.close()
+    #
+    #
+    # # only do per-row and per-col heatmaps if there is 2d data
+    # if len(isi_name_list) > 1 and len(sep_name_list) > 1:
+    #     print('making heatmaps per-row and per-column')
+    #
+    #     print(f"\nHeatmap per row\n")
+    #     if 'separation' in list(ave_df.columns):
+    #         ave_df.set_index('separation', drop=True, inplace=True)
+    #
+    #     # get mean of each col, then mean of that
+    #     if n_trimmed is not None:
+    #         heatmap_pr_title = f'{ave_over} Heatmap per row (n={ave_over_n}, trim={n_trimmed}).'
+    #         heatmap_pr_savename = f'mean_TM{n_trimmed}_heatmap_per_row'
+    #     else:
+    #         heatmap_pr_title = f'{ave_over} Heatmap per row (n={ave_over_n})'
+    #         heatmap_pr_savename = 'mean_heatmap_per_row'
+    #
+    #     plt_heatmap_row_col(heatmap_df=ave_df,
+    #                         colour_by='row',
+    #                         x_tick_labels=None,
+    #                         x_axis_label='ISI',
+    #                         y_tick_labels=None,
+    #                         y_axis_label='Separation',
+    #                         fig_title=heatmap_pr_title,
+    #                         annot_fmt=heatmap_annot_fmt,
+    #                         save_name=heatmap_pr_savename,
+    #                         save_path=save_path,
+    #                         verbose=True)
+    #     if show_plots:
+    #         plt.show()
+    #     plt.close()
+    #
+    #     print(f"\nHeatmap per col\n")
+    #     if 'separation' in list(ave_df.columns):
+    #         ave_df.set_index('separation', drop=True, inplace=True)
+    #
+    #     # get mean of each col, then mean of that
+    #     if n_trimmed is not None:
+    #         heatmap_pc_title = f'{ave_over} Heatmap per col (n={ave_over_n}, trim={n_trimmed}).'
+    #         heatmap_pc_savename = f'mean_TM{n_trimmed}_heatmap_per_col'
+    #     else:
+    #         heatmap_pc_title = f'{ave_over} Heatmap per col (n={ave_over_n})'
+    #         heatmap_pc_savename = 'mean_heatmap_per_col'
+    #
+    #     plt_heatmap_row_col(heatmap_df=ave_df,
+    #                         colour_by='col',
+    #                         x_tick_labels=None,
+    #                         x_axis_label='ISI',
+    #                         y_tick_labels=None,
+    #                         y_axis_label='Separation',
+    #                         annot_fmt=heatmap_annot_fmt,
+    #                         fig_title=heatmap_pc_title,
+    #                         save_name=heatmap_pc_savename,
+    #                         save_path=save_path,
+    #                         verbose=True)
+    #     if show_plots:
+    #         plt.show()
+    #     plt.close()
 
     print(f"\nfig_3a - difference from concurrent\n")
     run_this_plot = False
-    if 'Concurrent' in list(ave_df.columns):
+    # check if this dataset contains the 'concurrent' (ISI -1) condition
+    if any(item in ['ISI_-1', 'ISI -1', 'conc', 'Conc', 'Concurrent', 'concurrent']
+           for item in list(ave_df.columns)):
         run_this_plot = True
-    elif 'ISI_-1' in list(ave_df.columns):
-        run_this_plot = True
+
+        ave_DfC_name = 'MASTER_ave_DfC.csv'
+        error_DfC_name = f'MASTER_ave_DfC_error_{error_type}.csv'
+        if n_trimmed > 0:
+            ave_DfC_name = f'MASTER_ave_TM{n_trimmed}_DfC.csv'
+            error_DfC_name = f'MASTER_ave_TM{n_trimmed}_DfC_error_{error_type}.csv'
+
+        # check if the difference from concurrent files have arelady been made.
+        if os.path.isfile(os.path.join(save_path, ave_DfC_name)):
+            print("found DcF files")
+        else:
+            print("making DfC files")
+            ave_DfC_df, error_DfC_df = make_diff_from_conc_df(all_df_path, save_path, n_trimmed=n_trimmed)
+            print(f"ave_DfC_df:\n{ave_DfC_df}")
+            print(f"error_DfC_df:\n{error_DfC_df}")
+
+        # todo: add make DfC_df if it hasn't already been done?
 
     if run_this_plot:
 
@@ -2556,7 +2874,12 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         else:
             fig3a_save_name = 'diff_from_conc.png'
             fig3a_title = f'{ave_over} ISI different in threshold from concurrent\n(n={ave_over_n})'
-        plot_diff_from_conc_lineplot(ave_df, fig_title=fig3a_title,
+
+        ave_DfC_df = pd.read_csv(os.path.join(save_path, ave_DfC_name))
+        error_DfC_df = pd.read_csv(os.path.join(save_path, error_DfC_name))
+
+        plot_diff_from_conc_lineplot(ave_DfC_df, error_df=error_DfC_df,
+                                     fig_title=fig3a_title,
                                      save_name=fig3a_save_name, save_path=save_path)
         if show_plots:
             plt.show()
@@ -2564,122 +2887,6 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
         if verbose:
             print('finished fig3a')
-
-
-    print(f"\nHeatmap 1\n")
-    if 'separation' in list(ave_df.columns):
-        ave_df.set_index('separation', drop=True, inplace=True)
-
-    if n_trimmed is not None:
-        heatmap_title = f'{ave_over} mean Threshold\nfor each ISI and separation (n={ave_over_n}, trim={n_trimmed}).'
-        heatmap_savename = f'mean_TM{n_trimmed}_thr_heatmap'
-    else:
-        heatmap_title = f'{ave_over} mean Threshold\nfor each ISI and separation (n={ave_over_n})'
-        heatmap_savename = 'mean_thr_heatmap'
-
-    # regular (not transpose)
-    plot_thr_heatmap(heatmap_df=ave_df, x_tick_labels=isi_name_list,
-                     y_tick_labels=sep_name_list, fig_title=heatmap_title,
-                     save_name=heatmap_savename, save_path=save_path,
-                     annot_fmt=heatmap_annot_fmt,
-                     verbose=True)
-
-    if show_plots:
-        plt.show()
-    plt.close()
-
-    if split_1probe:
-        print(f"\nHeatmap 2. div 1probe\n")
-        print(f'div_ave_psignifit_thr_df:\n{div_ave_psignifit_thr_df}')
-        if 'separation' in list(div_ave_psignifit_thr_df.columns):
-            div_ave_psignifit_thr_df.set_index('separation', drop=True, inplace=True)
-
-        # get mean of each col, then mean of that
-
-        if n_trimmed is not None:
-            heatmap_title = f'{ave_over} mean Threshold/1probe for each ISI and separation\n' \
-                            f'(n={ave_over_n}, trim={n_trimmed}).'
-            heatmap_savename = f'mean_TM{n_trimmed}_thr_div_1probe_heatmap'
-        else:
-            heatmap_title = f'{ave_over} mean Threshold/1probe for each ISI and separation\n' \
-                            f'(n={ave_over_n})'
-            heatmap_savename = 'mean_thr_div_1probe_heatmap'
-
-        div_1pr_sep_names_list = sep_name_list
-        if '1probe' in div_1pr_sep_names_list:
-            div_1pr_sep_names_list = div_1pr_sep_names_list.remove("1probe")
-
-        plot_thr_heatmap(heatmap_df=div_ave_psignifit_thr_df.T,
-                         x_tick_labels=div_1pr_sep_names_list, y_tick_labels=isi_name_list,
-                         annot_fmt=heatmap_annot_fmt,
-                         fig_title=heatmap_title, save_name=heatmap_savename,
-                         save_path=save_path, verbose=True)
-        if show_plots:
-            plt.show()
-        plt.close()
-
-    if show_plots:
-        plt.show()
-    plt.close()
-
-
-    # only do per-row and per-col heatmaps if there is 2d data
-    if len(isi_name_list) > 1 and len(sep_name_list) > 1:
-        print('making heatmaps per-row and per-column')
-
-        print(f"\nHeatmap per row\n")
-        if 'separation' in list(ave_df.columns):
-            ave_df.set_index('separation', drop=True, inplace=True)
-
-        # get mean of each col, then mean of that
-        if n_trimmed is not None:
-            heatmap_pr_title = f'{ave_over} Heatmap per row (n={ave_over_n}, trim={n_trimmed}).'
-            heatmap_pr_savename = f'mean_TM{n_trimmed}_heatmap_per_row'
-        else:
-            heatmap_pr_title = f'{ave_over} Heatmap per row (n={ave_over_n})'
-            heatmap_pr_savename = 'mean_heatmap_per_row'
-
-        plt_heatmap_row_col(heatmap_df=ave_df,
-                            colour_by='row',
-                            x_tick_labels=None,
-                            x_axis_label='ISI',
-                            y_tick_labels=None,
-                            y_axis_label='Separation',
-                            fig_title=heatmap_pr_title,
-                            annot_fmt=heatmap_annot_fmt,
-                            save_name=heatmap_pr_savename,
-                            save_path=save_path,
-                            verbose=True)
-        if show_plots:
-            plt.show()
-        plt.close()
-
-        print(f"\nHeatmap per col\n")
-        if 'separation' in list(ave_df.columns):
-            ave_df.set_index('separation', drop=True, inplace=True)
-
-        # get mean of each col, then mean of that
-        if n_trimmed is not None:
-            heatmap_pc_title = f'{ave_over} Heatmap per col (n={ave_over_n}, trim={n_trimmed}).'
-            heatmap_pc_savename = f'mean_TM{n_trimmed}_heatmap_per_col'
-        else:
-            heatmap_pc_title = f'{ave_over} Heatmap per col (n={ave_over_n})'
-            heatmap_pc_savename = 'mean_heatmap_per_col'
-
-        plt_heatmap_row_col(heatmap_df=ave_df,
-                            colour_by='col',
-                            x_tick_labels=None,
-                            x_axis_label='ISI',
-                            y_tick_labels=None,
-                            y_axis_label='Separation',
-                            annot_fmt=heatmap_annot_fmt,
-                            fig_title=heatmap_pc_title,
-                            save_name=heatmap_pc_savename,
-                            save_path=save_path,
-                            verbose=True)
-        if show_plots:
-            plt.show()
-        plt.close()
 
         print(f"\nplot_diff_from_conc_heatmap\n")
         if n_trimmed is not None:
@@ -2689,8 +2896,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
             heatmap_dfc_title = f'{ave_over} plot_diff_from_conc_heatmap (n={ave_over_n})'
             heatmap_dfc_savename = 'mean_plot_diff_from_conc_heatmap'
 
-        diff_from_conc_df = make_diff_from_conc_df(ave_df)
-        plot_thr_heatmap(heatmap_df=diff_from_conc_df,
+        plot_thr_heatmap(heatmap_df=ave_DfC_df,
                          midpoint=0,
                          annot_fmt=heatmap_annot_fmt,
                          fig_title=heatmap_dfc_title, save_name=heatmap_dfc_savename,
@@ -2700,30 +2906,82 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
             plt.show()
         plt.close()
 
-        print(f"\nplot_diff_from_conc_per_row\n")
-        if n_trimmed is not None:
-            heatmap_dfc_pr_title = f'{ave_over} plot_diff_from_conc_per_row (n={ave_over_n}, trim={n_trimmed}).'
-            heatmap_dfc_pr_savename = f'mean_TM{n_trimmed}_plot_diff_from_conc_per_row'
-        else:
-            heatmap_dfc_pr_title = f'{ave_over} plot_diff_from_conc_per_row (n={ave_over_n})'
-            heatmap_dfc_pr_savename = 'mean_plot_diff_from_conc_per_row'
 
-        diff_from_conc_df = make_diff_from_conc_df(ave_df)
-        plt_heatmap_row_col(heatmap_df=diff_from_conc_df,
-                            colour_by='row',
-                            midpoint=0,
-                            x_tick_labels=None,
-                            x_axis_label='ISI',
-                            y_tick_labels=None,
-                            y_axis_label='Separation',
-                            fig_title=heatmap_dfc_pr_title,
-                            fontsize=10,
-                            annot_fmt=heatmap_annot_fmt,
-                            save_name=heatmap_dfc_pr_savename,
-                            save_path=save_path,
-                            verbose=True)
+        # make dfc/se
+
+        print(f"\nplot diff_from_conc/SE heatmap\n")
+        if n_trimmed is not None:
+            heatmap_dfc_title = f'{ave_over} diff_from_conc/{error_type} heatmap (n={ave_over_n}, trim={n_trimmed}).'
+            heatmap_dfc_savename = f'mean_TM{n_trimmed}_diff_from_conc_div_{error_type}_heatmap'
+        else:
+            heatmap_dfc_title = f'{ave_over} diff_from_conc/{error_type}  (n={ave_over_n})'
+            heatmap_dfc_savename = f'mean_diff_from_conc_div_{error_type}_heatmap'
+
+        dfc_div_error_df = ave_DfC_df.div(error_DfC_df).fillna(0)
+        print(f"dfc_div_error_df:\n{dfc_div_error_df}")
+        plot_thr_heatmap(heatmap_df=dfc_div_error_df,
+                         midpoint=0,
+                         annot_fmt=heatmap_annot_fmt,
+                         fig_title=heatmap_dfc_title, save_name=heatmap_dfc_savename,
+                         save_path=save_path, verbose=True)
+
+        print(f"\nt-scores plot\n")
+        if n_trimmed is not None:
+            fig1_title = f'{ave_over} average DfC / {error_type} across all runs\n(n={ave_over_n}, trim={n_trimmed}).'
+            fig1_savename = f'ave_TM{n_trimmed}_DfC_div_{error_type}.png'
+        else:
+            fig1_title = f'{ave_over} average average DfC / {error_type}  across all runs\n(n={ave_over_n})'
+            fig1_savename = f'ave_DfC_div_{error_type}.png'
+
+        plot_pos_sep_and_1probe(dfc_div_error_df,
+                                thr_col='newLum',
+                                fig_title=fig1_title,
+                                one_probe=True,
+                                save_path=save_path,
+                                save_name=fig1_savename,
+                                isi_name_list=isi_name_list,
+                                pos_set_ticks=sep_vals_list,
+                                pos_tick_labels=sep_name_list,
+                                error_bars_df=None,
+                                verbose=True)
         if show_plots:
             plt.show()
         plt.close()
+
+        if verbose:
+            print('finished fig1a')
+
+
+
+
+        if len(isi_name_list) > 1 and len(sep_name_list) > 1:
+            print('making dfc heatmaps per-row and per-column')
+
+            print(f"\nplot_diff_from_conc_per_row\n")
+            if n_trimmed is not None:
+                heatmap_dfc_pr_title = f'{ave_over} plot_diff_from_conc_per_row (n={ave_over_n}, trim={n_trimmed}).'
+                heatmap_dfc_pr_savename = f'mean_TM{n_trimmed}_plot_diff_from_conc_per_row'
+            else:
+                heatmap_dfc_pr_title = f'{ave_over} plot_diff_from_conc_per_row (n={ave_over_n})'
+                heatmap_dfc_pr_savename = 'mean_plot_diff_from_conc_per_row'
+
+            DfC_no_conc_df = ave_DfC_df.drop(['ISI_-1'], axis=1)
+
+            plt_heatmap_row_col(heatmap_df=DfC_no_conc_df,
+                                colour_by='row',
+                                midpoint=0,
+                                x_tick_labels=None,
+                                x_axis_label='ISI',
+                                y_tick_labels=None,
+                                y_axis_label='Separation',
+                                fig_title=heatmap_dfc_pr_title,
+                                fontsize=10,
+                                annot_fmt=heatmap_annot_fmt,
+                                save_name=heatmap_dfc_pr_savename,
+                                save_path=save_path,
+                                verbose=True)
+            if show_plots:
+                plt.show()
+            plt.close()
 
     print("\n*** finished make_average_plots()***\n")

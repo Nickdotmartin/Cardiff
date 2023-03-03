@@ -2063,7 +2063,7 @@ def e_average_exp_data(exp_path, p_names_list,
     """
     e_average_over_participants: take MASTER_ave_TM_thresh.csv (or MASTER_ave_thresh.csv)
     in each participant folder and make master list
-    MASTER_exp_thr.csv
+    MASTER_exp_all_thr.csv
 
     Get mean thresholds averaged across all participants saved as
     MASTER_exp_ave_thr.csv
@@ -2141,7 +2141,7 @@ def e_average_exp_data(exp_path, p_names_list,
 
     if verbose:
         print(f'\nall_exp_thr_df:{list(all_exp_thr_df.columns)}\n{all_exp_thr_df}')
-    all_exp_thr_df.to_csv(f'{exp_path}{os.sep}MASTER_exp_thr.csv', index=False)
+    all_exp_thr_df.to_csv(f'{exp_path}{os.sep}MASTER_exp_all_thr.csv', index=False)
 
     # # get means and errors
     groupby_sep_df = all_exp_thr_df.drop('participant', axis=1)

@@ -138,7 +138,7 @@ e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
                    error_type='SE', use_trimmed=use_trimmed, verbose=True)
 
 
-all_df_path = f'{exp_path}/MASTER_exp_thr.csv'
+all_df_path = f'{exp_path}/MASTER_exp_all_thr.csv'
 exp_ave_path = f'{exp_path}/MASTER_exp_ave_thr.csv'
 err_path = f'{exp_path}/MASTER_ave_thr_error_SE.csv'
 n_trimmed = None
