@@ -35,7 +35,7 @@ split_df_into_pos_sep_df_and_1probe_df():
 pd.options.display.float_format = "{:,.2f}".format
 
 
-def conc_to_first_isi_col(df):
+def conc_to_first_isi_col(df, col_to_change='ISI_-1'):
     """
     Function to sort dataframe where concurrent is given as 'ISI_-1'.
     This can appear as the last ISI column instead of first.
@@ -48,7 +48,7 @@ def conc_to_first_isi_col(df):
     :return: dataframe - which has been sorted if needed"""
 
 
-    if df.columns.tolist()[-1] == 'ISI_-1':
+    if df.columns.tolist()[-1] == col_to_change:
         col_list = df.columns.tolist()
         other_cols = [i for i in col_list if 'ISI' not in i]
         isi_cols = [i for i in col_list if 'ISI' in i]
