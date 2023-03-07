@@ -89,9 +89,14 @@ print(f'n_stairs: {n_stairs}')
 total_n_trials = int(n_trials_per_stair * n_stairs)
 print(f'total_n_trials: {total_n_trials}')
 
+# save to dir with list of sep vals
+sep_dir = 'sep'
+for sep in separations:
+    sep_dir = sep_dir + f'_{sep}'
+
 # FILENAME
 save_dir = os.path.join(_thisDir, expName, participant_name,
-                        f'{participant_name}_{run_number}')
+                        f'{participant_name}_{run_number}', sep_dir)
 
 # files are labelled as '_incomplete' unless entire script runs.
 incomplete_output_filename = f'{participant_name}_{run_number}_incomplete'

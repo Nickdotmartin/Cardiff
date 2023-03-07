@@ -29,7 +29,7 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'asus_cal'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz' 'Iiyama_2_18' 'Nick_work_laptop'
+monitor_name = 'asus_cal'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'Iiyama_2_18' 'Nick_work_laptop'
 
 # Store info about the experiment session
 expName = 'Exp1_split_probes_Jan23'  # from the Builder filename that created this script
@@ -88,9 +88,15 @@ print(f'n_stairs: {n_stairs}')
 total_n_trials = int(n_trials_per_stair * n_stairs)
 print(f'total_n_trials: {total_n_trials}')
 
+# save to dir with list of sep vals
+sep_dir = 'sep'
+for sep in separations:
+    sep_dir = sep_dir + f'_{sep}'
+
 # FILENAME
 save_dir = os.path.join(_thisDir, expName, participant_name,
-                        f'{participant_name}_{run_number}')
+                        f'{participant_name}_{run_number}', sep_dir
+                        )
 
 # files are labelled as '_incomplete' unless entire script runs.
 incomplete_output_filename = f'{participant_name}_{run_number}_incomplete'

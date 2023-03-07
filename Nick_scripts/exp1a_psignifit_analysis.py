@@ -1766,6 +1766,72 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
     return all_data_df
 
 
+
+def a_data_extraction_sep(participant_name, run_dir, sep_dirs, save_all_data=True, verbose=True):
+
+    """
+    This script is a python version of Martin's first MATLAB analysis scripts, described below.
+
+    a_data_extraction.m: Once a participant has completed a run of all ISIs,
+        this script gets all their data into one file, and sorts each isi by stair.
+
+    :param participant_name: participant's name as used to save csv files.  e.g., if the
+            file is .../aa_output.csv, participant name is 'aa'.
+    :param run_dir: path to directory containing sep_dirs.
+    :param sep_dirs: list of directory names for different separations, where output csvs are stored.
+    :param save_all_data: If True, will save all_data_df as a xlsx.
+    :param verbose: If True, will print progress to screen.
+
+    :return: RUNDATA-sorted.xlsx: A pandas DataFrame with n xlsx file of all data for one run of all separations.
+    """
+
+    print("\n***running a_data_extraction_sep()***")
+
+    # empty array to append info into
+    all_sep_data = []
+
+    # loop through list of separation folders (containg output files).
+    for sep_dir in sep_dirs:
+        filepath = os.path.join(run_dir, sep_dir)
+        print(f"sep_dir: {sep_dir}")
+
+        # there are a couple of possible output file naming conventions, so try both.
+        try:
+            p_name = f'{participant_name}_output'  # use this one
+            output_df = pd.read_csv(os.path.join(filepath, f'{p_name}.csv'))
+            print("\tfound p_name_output.csv")
+        except:
+            # try with run number. (last character(s) of run_dir, after '_'.
+            run_number = run_dir.split('_')[-1]
+            p_name = f'{participant_name}_{run_number}_output'  # use this one
+            output_df = pd.read_csv(os.path.join(filepath, f'{p_name}.csv'))
+            print("\tfound p_name_run_number_output.csv")
+
+
+        # remove any Unnamed columns
+        if any("Unnamed" in i for i in list(output_df.columns)):
+            unnamed_col = [i for i in list(output_df.columns) if "Unnamed" in i][0]
+            output_df.drop(unnamed_col, axis=1, inplace=True)
+
+        all_sep_data.append(output_df)
+
+    run_data_df = pd.concat(all_sep_data)
+    run_data_df = run_data_df.sort_values(by=['step', 'trial_number', 'ISI', 'separation'])
+    # print(f"run_data_df ({run_data_df.shape}):\n{run_data_df}")
+
+    if save_all_data:
+        save_name = 'RUNDATA-sorted.xlsx'
+        save_excel_path = os.path.join(run_dir, save_name)
+        if verbose:
+            print(f"\nsaving all_data_df to save_excel_path:\n{save_excel_path}")
+        run_data_df.to_excel(save_excel_path, index=False)
+
+
+    print("\n***finished a_data_extraction_sep()***\n")
+
+    return run_data_df
+
+
 def b3_plot_staircase(all_data_path, thr_col='newLum', resp_col='trial_response',
                       show_plots=True, save_plots=True, verbose=True):
     # todo: add variable to load thresholds csv and mark psignifit threshold on staircase plot.
