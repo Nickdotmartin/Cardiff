@@ -605,6 +605,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('step', step)
         thisExp.addData('cond_type', cond_type)
         thisExp.addData('separation', sep)
+        thisExp.addData('ISI', 0)
         thisExp.addData('probe_jump', target_jump)
         thisExp.addData('jump_dir', jump_dir)
         thisExp.addData('trial_response', resp.corr)

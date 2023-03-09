@@ -719,10 +719,14 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=9, q_bins
     # save threshold array
     if save_name is None:
         thr_filename = f'psignifit_thresholds'
+        other_name_prefix = 'psignifit'
     else:
         thr_filename = save_name
+        other_name_prefix = save_name
     if group is not None:
         thr_filename = f'g{group}_{thr_filename}'
+        other_name_prefix = f'g{group}_{other_name_prefix}'
+
     thr_filename = f'{thr_filename}.csv'
 
     thr_filepath = os.path.join(root_path, p_run_name, thr_filename)
@@ -730,17 +734,17 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=9, q_bins
     thr_df.to_csv(thr_filepath, index=False)
 
     if conf_int:
-        CI_limits_filename = f'psignifit_CI_limits.csv'
+        CI_limits_filename = f'{other_name_prefix}_CI_limits.csv'
         CI_limits_filepath = os.path.join(root_path, p_run_name, CI_limits_filename)
         print(f'saving psignifit_CI.csv to {CI_limits_filepath}')
         CI_limits_df.to_csv(CI_limits_filepath, index=False)
 
-        CI_width_filename = f'psignifit_CI_width.csv'
+        CI_width_filename = f'{other_name_prefix}_CI_width.csv'
         CI_width_filepath = os.path.join(root_path, p_run_name, CI_width_filename)
         print(f'saving psignifit_CI_width.csv to {CI_width_filepath}')
         CI_width_df.to_csv(CI_width_filepath, index=False)
 
-        eta_filename = f'psignifit_eta.csv'
+        eta_filename = f'{other_name_prefix}_eta.csv'
         eta_filepath = os.path.join(root_path, p_run_name, eta_filename)
         print(f'saving psignifit_eta.csv to {eta_filepath}')
         eta_df.to_csv(eta_filepath, index=False)

@@ -604,7 +604,8 @@ def log_log_w_markers_plot(thr_df, x_col='len_deg', y_col='delta_I',
     #     print(i, j)
     # remove first handle (blue line), but keep last one (-1 slope)
     handles = handles[1:]
-    labels = legend_names + [labels[-1]]
+    # labels = legend_names + [labels[-1]]
+    labels = ['-1 slope'] + legend_names
     ax.legend(labels=labels, handles=handles)
 
     plt.title(fig_title)
@@ -795,8 +796,12 @@ def plot_runs_ave_w_errors(fig_df, error_df,
     legend_handles_list = []
 
     for idx, name in enumerate(column_names):
+
+        if verbose:
+            print(f"{idx}. name: {name}")
         # get rand float to add to x-axis for jitter
-        jitter_list = np.random.uniform(size=n_pos_sep, low=-jit_max, high=jit_max)
+        # jitter_list = np.random.uniform(size=n_pos_sep, low=-jit_max, high=jit_max)
+        jitter_list = np.random.uniform(size=len(x_tick_vals), low=-jit_max, high=jit_max)
         x_values = x_tick_vals + jitter_list
 
         ax.errorbar(x=x_values, y=fig_df[name],
