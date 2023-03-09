@@ -4,7 +4,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from exp1a_psignifit_analysis import a_data_extraction, b3_plot_staircase, c_plots, \
-    d_average_participant, e_average_exp_data, make_average_plots, make_long_df
+    d_average_participant, e_average_exp_data, make_average_plots, make_long_df, \
+    plot_w_errors_no_1probe
 from rad_flow_psignifit_analysis import plot_runs_ave_w_errors
 from psignifit_tools import get_psignifit_threshold_df, get_psig_thr_w_hue
 from python_tools import which_path, running_on_laptop, switch_path
@@ -450,25 +451,28 @@ print(f"\nexp_mean_thr_long_df:\n{exp_mean_thr_long_df}")
 # plt.show()
 
 
-print('\nfig 2  - new plot 2')
+print('\nFig 1 - all data')
+
+fig_1_thr_df = exp_mean_thr_long_df.copy()
+fig_1_err_df = exp_mean_CI_long_df.copy()
 
 # use wide means df
 print(f"exp_mean_thr_long_df:\n{exp_mean_thr_long_df}")
-wide_mean_thr_df = exp_mean_thr_long_df.pivot(index=['cond_num', 'separation', 'cond'], columns='ISI', values='probeLum')
-wide_mean_thr_df.reset_index(inplace=True, drop=False)
-print(f"wide_mean_thr_df:\n{wide_mean_thr_df}")
+fig_1_thr_df = exp_mean_thr_long_df.pivot(index=['cond_num', 'separation', 'cond'], columns='ISI', values='probeLum')
+fig_1_thr_df.reset_index(inplace=True, drop=False)
+print(f"fig_1_thr_df:\n{fig_1_thr_df}")
 
-# wide_mean_thr_df.index.name = None
+# fig_1_thr_df.index.name = None
 isi_col_dict = {'99': 'conc', '0': 'ISI_0', '2': 'ISI_2',
                          '4': 'ISI_4', '6': 'ISI_6', '9': 'ISI_9',
                          '12': 'ISI_12', '24': 'ISI_24'}
-wide_mean_thr_df.rename(columns=isi_col_dict, inplace=True)
-print(f"wide_mean_thr_df:\n{wide_mean_thr_df}")
-wide_mean_thr_df = wide_mean_thr_df[['cond_num', 'separation', 'cond',
+fig_1_thr_df.rename(columns=isi_col_dict, inplace=True)
+print(f"fig_1_thr_df:\n{fig_1_thr_df}")
+fig_1_thr_df = fig_1_thr_df[['cond_num', 'separation', 'cond',
                                      'conc', 'ISI_0', 'ISI_2', 'ISI_4',
                                      'ISI_6', 'ISI_9', 'ISI_12', 'ISI_24']]
-wide_mean_thr_df.index.name = None
-print(f"wide_mean_thr_df:\n{wide_mean_thr_df}")
+fig_1_thr_df.index.name = None
+print(f"fig_1_thr_df:\n{fig_1_thr_df}")
 
 print(f"\nexp_mean_CI_long_df:\n{exp_mean_CI_long_df}")
 wide_mean_CI_df = exp_mean_CI_long_df.pivot(index=['cond_num', 'separation', 'cond'], columns='ISI', values='halved_CI')
@@ -484,15 +488,15 @@ print(f"wide_mean_CI_df:\n{wide_mean_CI_df}")
 
 
 # add cond number column
-if 'cond_num' not in list(wide_mean_thr_df.columns):
-    cond_vals = wide_mean_thr_df['cond'].unique()
+if 'cond_num' not in list(fig_1_thr_df.columns):
+    cond_vals = fig_1_thr_df['cond'].unique()
     neg_sep_num_dict = dict(zip(cond_vals, list(range(len(cond_vals)))))
     print(f"\nneg_sep_num_dict: {neg_sep_num_dict}")
 
-    wide_mean_thr_df.insert(4, 'cond_num', exp_mean_thr_long_df["cond"].map(neg_sep_num_dict))
+    fig_1_thr_df.insert(4, 'cond_num', exp_mean_thr_long_df["cond"].map(neg_sep_num_dict))
     wide_mean_CI_df.insert(4, 'cond_num', exp_mean_CI_long_df["cond"].map(neg_sep_num_dict))
 
-wide_mean_thr_w_cond_idx_df = wide_mean_thr_df.set_index('cond_num')
+wide_mean_thr_w_cond_idx_df = fig_1_thr_df.set_index('cond_num')
 wide_mean_thr_w_cond_idx_df.sort_index(inplace=True)
 if 'p_name' in list(wide_mean_thr_w_cond_idx_df.columns):
     wide_mean_thr_w_cond_idx_df.drop('p_name', axis=1, inplace=True)
@@ -616,7 +620,8 @@ diff_df['ISI'] = ['conc' if i == 99 else str(i) for i in diff_df['ISI'].to_list(
 fig, ax = plt.subplots(figsize=(10, 6))
 sns.pointplot(data=diff_df, x='cond_num', y='thr_diff',
               hue='ISI',
-              errorbar='se', capsize=.05,
+              estimator=np.mean, errorbar='se', dodge=True, markers='.',
+              errwidth=1, capsize=.2,
               )
 
 
@@ -641,6 +646,7 @@ plt.savefig(save_as)
 plt.show()
 
 
+
 # todo: make similar plots but per participant, ISI and sep.
 # todo: currently the thr and error dfs are collapsed across participant
 #  diff_df has with columns for sep, cond_num, ISI (long form),
@@ -653,24 +659,41 @@ plt.show()
 '''fig 3: make ISI plots'''
 # todo: add difference plots
 #
-sep_vals = exp_VF_thr_long_df['separation'].unique()
+print("\nMaking ISI plots")
+
+ISI_plots_df = exp_VF_thr_long_df.copy()
+ISI_er_plot_df = exp_VF_CI_long_df.copy()
+# ISI_plots_df = exp_mean_thr_long_df.copy()
+# ISI_er_plot_df = exp_mean_CI_long_df.copy()
+print(f"ISI_plots_df ({ISI_plots_df.shape}):\n{ISI_plots_df}")
+print(f"ISI_er_plot_df ({ISI_er_plot_df.shape}):\n{ISI_er_plot_df}")
+
+sep_vals = ISI_plots_df['separation'].unique()
 sep_num_dict = dict(zip(sep_vals, list(range(len(sep_vals)))))
 print(f"\nsep_num_dict: {sep_num_dict}")
-exp_VF_thr_long_df.insert(4, 'sep_num', exp_VF_thr_long_df["separation"].map(sep_num_dict))
+ISI_plots_df.insert(4, 'sep_num', ISI_plots_df["separation"].map(sep_num_dict))
+print(f"ISI_plots_df ({ISI_plots_df.shape}):\n{ISI_plots_df}")
+
+ISI_er_plot_df.insert(4, 'sep_num', ISI_er_plot_df["separation"].map(sep_num_dict))
+ISI_er_plot_df['halved_CI'] = ISI_er_plot_df.CI_width.div(2, fill_value=0)
+print(f"ISI_er_plot_df ({ISI_er_plot_df.shape}):\n{exp_VF_CI_long_df}")
 
 
-
-print("\nMaking ISI plots")
 ISIs_to_plot = [99, 4, 12]
 
 for this_ISI in ISIs_to_plot:
 
+
     ISI_name = this_ISI
     if this_ISI == 99:
         ISI_name = 'Concurrent'
+    print(f"ISI: {ISI_name} ({this_ISI})")
 
-    ISI_df = exp_VF_thr_long_df[exp_VF_thr_long_df['ISI'] == this_ISI]
-    print(f"ISI: {ISI_name} ({this_ISI}).  ISI_df ({ISI_df.shape}):\n{ISI_df}")
+    ISI_df = ISI_plots_df.loc[ISI_plots_df['ISI'] == this_ISI]
+    print(f"ISI_df ({ISI_df.shape}):\n{ISI_df}")
+
+    ISI_error_df = ISI_er_plot_df[ISI_er_plot_df['ISI'] == this_ISI]
+    print(f" ISI_error_df ({ISI_error_df.shape}):\n{ISI_error_df}")
 
     x_tick_vals = sorted(ISI_df['sep_num'].unique())
     print(f"\nx_tick_vals: {x_tick_vals}")
@@ -683,7 +706,18 @@ for this_ISI in ISIs_to_plot:
     sns.pointplot(data=ISI_df, x='sep_num', y='probeLum',
                   hue='vis_field',
                   errorbar='se', capsize=.05,
+                  scale=1.25,
                   )
+
+    sns.lineplot(data=ISI_df, x='sep_num', y='probeLum',
+                 hue='vis_field',
+                 style='p_name',
+                 dashes=False,
+                 alpha=.3,
+                 legend=False
+                 )
+
+
     ax.set_xticks(x_tick_vals)
     ax.set_xticklabels(x_tick_labels)
     plt.title(f'ISI {ISI_name}: compare UVF & LVF\n(Error bars: SE of Participant thresholds)')
@@ -714,8 +748,18 @@ for this_sep in sep_to_plot:
 
     sns.pointplot(data=sep_df, x='ISI_num', y='probeLum',
                   hue='vis_field',
+                  style='p_name',
+                  scale=1.25,
                   errorbar='se', capsize=.05,
                   )
+
+    sns.lineplot(data=sep_df, x='ISI_num', y='probeLum',
+                 hue='vis_field',
+                 style='p_name',
+                 dashes=False,
+                 alpha=.3,
+                 legend=False
+                 )
 
     ax = plt.gca()  # to get the axis
     ax.set_xticks(x_tick_vals)
