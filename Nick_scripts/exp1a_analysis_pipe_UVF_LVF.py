@@ -327,7 +327,12 @@ exp_CI_width = []
 # exp_CI_width_df.to_csv(save_csv_path, index=False)
 # print(f"exp_CI_width_df:\n{exp_thr_df}")
 #
-# #
+
+
+
+
+
+#
 # # # make long form df
 # exp_VF_thr_df = pd.read_csv(os.path.join(exp_path, 'MASTER_exp_VF_thr.csv'))
 # print(f"\nexp_VF_thr_df:\n{exp_VF_thr_df}")
@@ -359,7 +364,7 @@ exp_CI_width = []
 #
 #
 # # add cond number column
-# cond_vals = exp_VF_thr_long_df['cond'].unique()
+# cond_vals = sorted(exp_VF_thr_long_df['cond'].unique())
 # neg_sep_num_dict = dict(zip(cond_vals, list(range(len(cond_vals)))))
 # print(f"\nneg_sep_num_dict: {neg_sep_num_dict}")
 #
@@ -446,7 +451,6 @@ print(f"\nexp_mean_thr_long_df:\n{exp_mean_thr_long_df}")
 
 
 print('\nfig 2  - new plot 2')
-fig_1a_title = 'all data: compare UVF & LVF'
 
 # use wide means df
 print(f"exp_mean_thr_long_df:\n{exp_mean_thr_long_df}")
@@ -505,7 +509,10 @@ wide_mean_CI_w_cond_idx_df.sort_index(inplace=True)
 
 x_tick_vals = wide_mean_thr_w_cond_idx_df.index.tolist()
 x_tick_labels = sorted(list(exp_mean_thr_long_df['cond'].unique()))
-x_tick_labels = ['1pr' if i in [20.0, -20.0] else i for i in x_tick_labels]
+x_tick_labels = ['1pr' if i in [20.0, -20.0] else str(i) for i in x_tick_labels]
+x_tick_labels = ['-0' if i == '-0.01' else str(i) for i in x_tick_labels]
+x_tick_labels = [i[:-2] if i not in ['1pr', '-0'] else i for i in x_tick_labels]
+
 print(f"x_tick_vals: {x_tick_vals}")
 print(f"x_tick_labels: {x_tick_labels}")
 
@@ -522,7 +529,10 @@ print(f"exp_CI_w_cond_idx_df:\n{wide_mean_CI_w_cond_idx_df}")
 
 isi_name_list = [i for i in list(wide_mean_thr_w_cond_idx_df.columns) if 'ISI_' in i]
 
+fig_1a_title = 'all data: compare UVF & LVF\n(Errors are mean of participant CIs, per ISI)'
 
+
+# todo: add save plots
 # if I delete this messy plot, I can also delete the function that made it.
 plot_runs_ave_w_errors(fig_df=wide_mean_thr_w_cond_idx_df, error_df=wide_mean_CI_w_cond_idx_df,
                        jitter=.1, error_caps=True, alt_colours=False,
@@ -531,8 +541,8 @@ plot_runs_ave_w_errors(fig_df=wide_mean_thr_w_cond_idx_df, error_df=wide_mean_CI
                        x_tick_labels=x_tick_labels,
                        x_axis_label='Sep in diag pixels. Neg=LVF, Pos=UVF',
                        even_spaced_x=True, fixed_y_range=False,
-                       fig_title=fig_1a_title, save_name=None,
-                       save_path=None, verbose=True)
+                       fig_title=fig_1a_title, save_name='all_data_VFs.png',
+                       save_path=exp_path, verbose=True)
 ax = plt.gca() # to get the axis
 ax.axvline(x=(x_tick_vals[-1]/2), linestyle="-.", color='lightgrey')  # add dotted line at zero
 
@@ -542,6 +552,12 @@ ax.axvline(x=(x_tick_vals[-1]/2), linestyle="-.", color='lightgrey')  # add dott
 plt.show()
 plt.close()
 
+# todo: make similar plots but per participant, ISI and sep.
+# todo: currently the thr and error dfs are collapsed across participant
+#  wide_mean_thr_w_cond_idx_df has with columns for each ISI, and cond_num idx but no other columns (sep, vf etc have been removed)
+# todo: per ISI plot will consist of a single line.  Can use same data frame.
+# todo: per sep plot can use same df and just select two cond_num's (corresponding to sep in UVF and LVF), will have lots of stright lines (ISIs) but only two points for line.
+# todo: per participant plot should look similar (same number of lines, same axes), but from participant' data rather than averaged data (wide, just ISI cols, cond_num index).
 
 #
 # fig, ax = plt.subplots(figsize=(10, 6))
@@ -560,33 +576,21 @@ plt.close()
 
 '''Fig 2, difference between UVF and LVF'''
 '''Plot shoing difference in VF for each ISI'''
-print(f"plot diff between VFs for each ISI")
+print(f"\nplot diff between VFs for each ISI")
 # for each separation value, subtract LFV from UVF for difference score.
 
-# get_diff_df = exp_mean_thr_long_df.drop(['cond_num'], axis=1)
-exp_VF_thr_long_df = pd.read_csv(os.path.join(exp_path, 'MASTER_exp_VF_thr_long.csv'))
-print(f"\nexp_VF_thr_long_df:\n{exp_VF_thr_long_df}")
-
-# get means per condition
-groupby_sep_thr_df = exp_VF_thr_long_df.drop('p_name', axis=1)
-exp_mean_thr_long_df = groupby_sep_thr_df.groupby(['cond_num', 'ISI'], sort=True).mean()
-exp_mean_thr_long_df.reset_index(inplace=True)
-print(f"\nexp_mean_thr_long_df:\n{exp_mean_thr_long_df}")
-
-
-get_diff_df = exp_mean_thr_long_df.copy()
+get_diff_df = exp_VF_thr_long_df.copy()
 print(f"get_diff_df ({get_diff_df.shape}):\n{get_diff_df}")
 
 LVF_df = get_diff_df.loc[get_diff_df['cond_num'] < 7]
-# cond_num_list = LVF_df.pop('cond_num').tolist()
 cond_num_list = LVF_df['cond_num'].tolist()
 ISI_val_list = LVF_df.pop('ISI').tolist()
-LVF_df = LVF_df.drop('cond', axis=1)
+LVF_df = LVF_df.drop(['cond', 'vis_field', 'p_name'], axis=1)
 LVF_df.set_index('separation', inplace=True)
 
 
 UVF_df = get_diff_df.loc[get_diff_df['cond_num'] >= 7]
-UVF_df = UVF_df.drop(['cond', 'ISI'], axis=1)
+UVF_df = UVF_df.drop(['cond', 'ISI', 'vis_field', 'p_name'], axis=1)
 UVF_df.set_index('separation', inplace=True)
 
 
@@ -610,7 +614,11 @@ print(f"diff_df ({diff_df.shape}):\n{diff_df}")
 diff_df['ISI'] = ['conc' if i == 99 else str(i) for i in diff_df['ISI'].to_list()]
 
 fig, ax = plt.subplots(figsize=(10, 6))
-sns.lineplot(data=diff_df, x='cond_num', y='thr_diff', hue="ISI")
+sns.pointplot(data=diff_df, x='cond_num', y='thr_diff',
+              hue='ISI',
+              errorbar='se', capsize=.05,
+              )
+
 
 x_tick_vals = sorted(diff_df['cond_num'].unique())
 ax.set_xticks(x_tick_vals)
@@ -620,7 +628,7 @@ ax.set_xticklabels(x_tick_labels)
 print(f"pos_sep_vals: {pos_sep_vals}")
 print(f"x_tick_labels: {x_tick_labels}")
 
-fig_title = f'exp1a all data: diff UVF - LVF'
+fig_title = f'exp1a all data: diff UVF - LVF\n(Errors are SEs of means collapsed across participants)'
 plt.title(fig_title)
 x_axis = 'Sep in diag pixels'
 ax.set_xlabel(x_axis)
@@ -633,377 +641,90 @@ plt.savefig(save_as)
 plt.show()
 
 
+# todo: make similar plots but per participant, ISI and sep.
+# todo: currently the thr and error dfs are collapsed across participant
+#  diff_df has with columns for sep, cond_num, ISI (long form),
+# todo: per ISI plot will consist of a single line.  Can use same data frame.
+# todo: per participant plot should look similar (same number of lines, same axes), but from participant' data rather than averaged data.
+# todo: per sep plot can use same df and just select two cond_num's (corresponding to sep in UVF and LVF), will have lots of stright lines (ISIs) but only two points for line.
+# todo: should I make a new long_form diff df with all data on it to start?  That way, I can have error bars (or show all lines) when collapsing across participant, or ISI?
 
-'''fig 3: make concurrent plots'''
-conc_df = exp_VF_thr_long_df[exp_VF_thr_long_df['ISI'] == 99]
-print(f"conc_df ({conc_df.shape}):\n{conc_df}")
 
-x_tick_vals = sorted(conc_df['cond_num'].unique())
-x_tick_labels = sorted(conc_df['cond'].unique())
-x_tick_labels = ['1pr' if i in [20.0, -20.0] else i for i in x_tick_labels]
-print(f"\nx_tick_labels: {x_tick_labels}")
+'''fig 3: make ISI plots'''
+# todo: add difference plots
+#
+sep_vals = exp_VF_thr_long_df['separation'].unique()
+sep_num_dict = dict(zip(sep_vals, list(range(len(sep_vals)))))
+print(f"\nsep_num_dict: {sep_num_dict}")
+exp_VF_thr_long_df.insert(4, 'sep_num', exp_VF_thr_long_df["separation"].map(sep_num_dict))
 
-fig, ax = plt.subplots(figsize=(10, 6))
-sns.lineplot(data=conc_df, x='cond_num', y='probeLum',
-             hue='p_name',
-             )
 
-ax.set_xticks(x_tick_vals)
-ax.set_xticklabels(x_tick_labels)
-ax.axvline(x=(x_tick_vals[-1]/2), linestyle="-.", color='lightgrey')  # add dotted line at zero
-plt.title('Concurrent: compare UVF & LVF')
-ax.set_xlabel('Sep in diag pixels. Neg=LVF, Pos=UVF')
-ax.set_ylabel('Threshold')
-plt.savefig(os.path.join(exp_path, 'exp1a_conc_VFs'))
-plt.show()
+
+print("\nMaking ISI plots")
+ISIs_to_plot = [99, 4, 12]
+
+for this_ISI in ISIs_to_plot:
+
+    ISI_name = this_ISI
+    if this_ISI == 99:
+        ISI_name = 'Concurrent'
+
+    ISI_df = exp_VF_thr_long_df[exp_VF_thr_long_df['ISI'] == this_ISI]
+    print(f"ISI: {ISI_name} ({this_ISI}).  ISI_df ({ISI_df.shape}):\n{ISI_df}")
+
+    x_tick_vals = sorted(ISI_df['sep_num'].unique())
+    print(f"\nx_tick_vals: {x_tick_vals}")
+
+    x_tick_labels = ['1pr' if i == 20 else str(i) for i in sorted(ISI_df['separation'].unique())]
+    print(f"\nx_tick_labels: {x_tick_labels}")
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    sns.pointplot(data=ISI_df, x='sep_num', y='probeLum',
+                  hue='vis_field',
+                  errorbar='se', capsize=.05,
+                  )
+    ax.set_xticks(x_tick_vals)
+    ax.set_xticklabels(x_tick_labels)
+    plt.title(f'ISI {ISI_name}: compare UVF & LVF\n(Error bars: SE of Participant thresholds)')
+    ax.set_xlabel('Sep in diag pixels')
+    ax.set_ylabel('Threshold')
+    plt.savefig(os.path.join(exp_path, f'exp1a_ISI_{ISI_name}_VFs'))
+    plt.show()
+
+
 
 '''figs 4, 5, 6, 6: make sep plots for sep 0, 2, 3, 6'''
+print("\nMaking separation plots")
+ISI_vals = exp_VF_thr_long_df['ISI'].unique()
+ISI_num_dict = dict(zip(ISI_vals, list(range(len(ISI_vals)))))
+print(f"\nISI_num_dict: {ISI_num_dict}")
+exp_VF_thr_long_df.insert(4, 'ISI_num', exp_VF_thr_long_df["ISI"].map(ISI_num_dict))
 sep_to_plot = [0, 2, 3, 6]
 
 for this_sep in sep_to_plot:
     sep_df = exp_VF_thr_long_df[exp_VF_thr_long_df['separation'] == this_sep]
     print(f"sep_df:\n{sep_df}")
 
-    x_tick_vals = sorted(sep_df['ISI'].unique())
-    x_tick_labels = ['conc' if i == 99 else i for i in x_tick_vals]
+    x_tick_vals = sep_df['ISI_num'].unique()
+    x_tick_labels = ['conc' if i == 99 else str(i) for i in sep_df['ISI'].unique()]
     print(f"\nx_tick_vals: {x_tick_vals}")
     print(f"x_tick_labels: {x_tick_labels}")
 
-    fig, ax = plt.subplots(figsize=(10, 6))
-    sns.lineplot(data=sep_df, x='ISI', y='probeLum',
-                 # hue='vis_field', style='p_name'
-                 hue='p_name', style='vis_field'
-                 )
 
+    sns.pointplot(data=sep_df, x='ISI_num', y='probeLum',
+                  hue='vis_field',
+                  errorbar='se', capsize=.05,
+                  )
+
+    ax = plt.gca()  # to get the axis
     ax.set_xticks(x_tick_vals)
     ax.set_xticklabels(x_tick_labels)
-    # ax.axvline(x=(x_tick_vals[-1]/2), linestyle="-.", color='lightgrey')  # add dotted line at zero
-    plt.title(f'Sep {this_sep}: compare UVF & LVF')
+    plt.title(f'Sep {this_sep}: compare UVF & LVF\n(Error bars: SE of Participant thresholds)')
     ax.set_xlabel('ISI')
     ax.set_ylabel('Threshold')
     plt.savefig(os.path.join(exp_path, f'exp1a_sep{this_sep}_VFs'))
     plt.show()
-
-
-# '''make plots showing all ISIs with negative sep (cond) as x-axis'''
-    # neg_cond_df = psig_both_vf_df.sort_values(by='cond')
-    #
-    # cond_vals = sorted(list(neg_cond_df['cond'].unique()))
-    # print(f"cond_vals: {cond_vals}")
-    # cond_labels = ['1pr' if i == -.01 else i for i in cond_vals]
-    # print(f"cond_labels: {cond_labels}")
-    #
-    # # psig_both_vf_df.sort_values(by='cond', inplace=True)
-    # neg_cond_df.set_index('cond', drop=True, inplace=True)
-    # # print(f"\nneg_cond_df:\n{neg_cond_df}")
-    # neg_cond_df = neg_cond_df.drop(['separation', 'vis_field'], axis=1)
-    # print(f"\nneg_cond_df:\n{neg_cond_df}")
-    #
-    # fig_title = f'{participant_name} compare UVF & LVF'
-    # legend_title = 'ISI'
-    #
-    #
-    # x_tick_vals = cond_vals
-    # x_tick_labels = cond_labels
-    # x_axis = 'Sep in diag pixels. Neg=LVF, Pos=UVF'
-    # y_axis = 'Threshold'
-    # log_x = False
-    # log_y = False
-    # save_as = os.path.join(root_path, 'compare_vfs.png')
-    #
-    # fig, ax = plt.subplots(figsize=(10, 6))
-    # sns.lineplot(data=psig_both_vf_df,
-    #              markers=True, dashes=False, ax=ax)
-    # if fig_title is not None:
-    #     plt.title(fig_title)
-    # if legend_title is not None:
-    #     plt.legend(title=legend_title)
-    # if x_tick_vals is not None:
-    #     ax.set_xticks(x_tick_vals)
-    #
-    # if x_tick_labels is not None:
-    #     ax.set_xticklabels(x_tick_labels)
-    #     if -18 in x_tick_labels:
-    #         # add dotted line at zero
-    #         ax.axvline(x=0, linestyle="-.", color='lightgrey')
-    # if log_x:
-    #     ax.set(xscale="log")
-    #     x_axis = f'log {x_axis}'
-    # if log_y:
-    #     ax.set(yscale="log")
-    #     y_axis = f'log {y_axis}'
-    # if x_axis is not None:
-    #     ax.set_xlabel(x_axis)
-    # if y_axis is not None:
-    #     ax.set_ylabel(y_axis)
-    # if save_as is not None:
-    #     plt.savefig(save_as)
-    # plt.show()
-    #
-    # '''Plot shoing difference in VF for each ISI'''
-    # # for each separation value, subtract LFV from UVF for difference score.
-    #
-    # get_diff_df = psig_both_vf_df.drop(['cond'], axis=1)
-    # print(f"get_diff_df:\n{get_diff_df}")
-    #
-    # LVF_df = get_diff_df.loc[get_diff_df['vis_field'] == 'LVF']
-    # LVF_df = LVF_df.drop(['vis_field'], axis=1)
-    # LVF_df.set_index('separation', inplace=True)
-    #
-    #
-    # UVF_df = get_diff_df.loc[get_diff_df['vis_field'] == 'UVF']
-    # UVF_df = UVF_df.drop(['vis_field'], axis=1)
-    # UVF_df.set_index('separation', inplace=True)
-    # print(f"LVF_df:\n{LVF_df}")
-    # print(f"UVF_df:\n{UVF_df}")
-    #
-    # # plot difference.
-    # diff_df = UVF_df.subtract(LVF_df, fill_value=0)
-    #
-    # print(f"diff_df:\n{diff_df}")
-    #
-    # pos_sep_vals = diff_df.index.to_list()
-    #
-    #
-    # fig, ax = plt.subplots(figsize=(10, 6))
-    # sns.lineplot(data=diff_df, markers=True, dashes=False, ax=ax)
-    # fig_title = f'{participant_name} diff UVF - LVF'
-    # plt.title(fig_title)
-    # x_axis = 'Sep in diag pixels'
-    # ax.set_xlabel(x_axis)
-    # y_axis = 'Threshold different (UVF - LVF)'
-    # ax.set_ylabel(y_axis)
-    # save_as = os.path.join(root_path, 'diff_vfs.png')
-    # plt.savefig(save_as)
-    # plt.show()
-
-
-    # '''make plots per sep with UVF and LVF on same pos-sep axis'''
-    # sep_to_plot = [0, 2, 3, 6]
-    #
-    # # # todo: don't use neg sep for these
-    #
-    # # for this_sep in sep_to_plot:
-    # #     sep_df
-    #
-    # # print(f"root_path: {root_path}")
-    # # psig_both_vf_df = pd.read_csv(os.path.join(root_path, 'psignifit_both_vfs.csv'))
-    # print(f"psig_both_vf_df:\n{psig_both_vf_df}")
-
-    # # change 1probe from 99 to 20
-    # sep_list = psig_both_vf_df['separation'].to_list()
-    # sep_list = [20 if i==99 else i for i in sep_list]
-    # psig_both_vf_df['separation'] = sep_list
-    #
-    # if 'cond' not in list(psig_both_vf_df.columns):
-    #     print("\nMaking cond column")
-    #     # add condition list which is equal to sep for uVF or negative sep for LVF (with -.01 instead of -0)
-    #     sep_list = psig_both_vf_df['separation'].to_list()
-    #     vf_list = psig_both_vf_df['vis_field'].to_list()
-    #     cond_list = []
-    #     for vf, sep in zip(vf_list, sep_list):
-    #         if vf == 'LVF':
-    #             if sep == 0:
-    #                 this_cond = -.01
-    #             else:
-    #                 this_cond = -sep
-    #         else:
-    #             this_cond = sep
-    #         print(f"vf: {vf}, sep: {sep}, this_cond: {this_cond}")
-    #         cond_list.append(this_cond)
-    #     print(f"cond_list: {cond_list}")
-    #     psig_both_vf_df.insert(2, 'cond', cond_list)
-    #     # save_name = 'psignifit_both_vfs.csv'
-    #     # save_csv_path = os.path.join(root_path, save_name)
-    #     # print(f"\nsaving all_data_df to save_csv_path:\n{save_csv_path}")
-    #     # psig_both_vf_df.to_csv(save_csv_path, index=False)
-    #
-    # # change 1probe from 99 to 20
-    # cond_list = psig_both_vf_df['cond'].to_list()
-    # cond_list = [20 if i==99 else i for i in cond_list]
-    # cond_list = [-20 if i==-99 else i for i in cond_list]
-    # psig_both_vf_df['cond'] = cond_list
-    #
-
-
-#
-# exp_thr_df = pd.read_csv(os.path.join(exp_path, 'exp_conc_VFs.csv'))
-# print(f"exp_thr_df:\n{exp_thr_df}")
-#
-# just_conc_df = exp_thr_df[exp_thr_df['separation'] == 20]
-#
-# cond_vals = sorted(list(just_conc_df['cond'].unique()))
-# print(f"cond_vals: {cond_vals}")
-#
-# cond_labels = ['UVF' if i == 20 else str(i) for i in cond_vals]
-# cond_labels = ['LVF' if i == -20 else str(i) for i in cond_labels]
-# cond_labels = ['UVF' if i == '20.0' else str(i) for i in cond_labels]
-# cond_labels = ['LVF' if i == '-20.0' else str(i) for i in cond_labels]
-# print(f"cond_labels: {cond_labels}")
-#
-# neg_cond_df = just_conc_df.sort_values(by='cond')
-# # psig_both_vf_df.sort_values(by='cond', inplace=True)
-# # neg_cond_df.set_index('cond', drop=True, inplace=True)
-# print(f"neg_cond_df:\n{neg_cond_df}")
-# neg_cond_df = neg_cond_df.drop(['separation', 'vis_field'], axis=1)
-# print(f"neg_cond_df:\n{neg_cond_df}")
-#
-#
-# # make plot to show UVF and LVF on one axis
-# fig_title = f'Exp1a concurrent: compare UVF & LVF'
-# legend_title = 'ISI'
-# x_tick_vals = cond_vals
-# x_tick_labels = cond_labels
-# x_axis = 'Sep in diag pixels. Neg=LVF, Pos=UVF'
-# y_axis = 'Threshold'
-# log_x = False
-# log_y = False
-# save_as = os.path.join(exp_path, 'conc_compare_vfs.png')
-#
-# fig, ax = plt.subplots(figsize=(10, 6))
-# sns.lineplot(data=neg_cond_df, x='cond', y='ISI_-1', hue='p_name',
-#              markers=True, dashes=False, ax=ax)
-# if fig_title is not None:
-#     plt.title(fig_title)
-# if legend_title is not None:
-#     plt.legend(title=legend_title)
-# if x_tick_vals is not None:
-#     ax.set_xticks(x_tick_vals)
-#
-# if x_tick_labels is not None:
-#     ax.set_xticklabels(x_tick_labels)
-#     if -18 in x_tick_labels:
-#         # add dotted line at zero
-#         ax.axvline(x=0, linestyle="-.", color='lightgrey')
-# if log_x:
-#     ax.set(xscale="log")
-#     x_axis = f'log {x_axis}'
-# if log_y:
-#     ax.set(yscale="log")
-#     y_axis = f'log {y_axis}'
-# if x_axis is not None:
-#     ax.set_xlabel(x_axis)
-# if y_axis is not None:
-#     ax.set_ylabel(y_axis)
-# if save_as is not None:
-#     plt.savefig(save_as)
-# plt.show()
-#
-# # make difference df
-# # for each separation value, subtract LFV from UVF for difference score.
-#
-# # get_diff_df = psig_both_vf_df.drop(['cond'], axis=1)
-# get_diff_df = just_conc_df.drop(['cond'], axis=1)
-# print(f"get_diff_df:\n{get_diff_df}")
-#
-# LVF_df = get_diff_df.loc[get_diff_df['vis_field'] == 'LVF']
-# LVF_df = LVF_df.drop(['vis_field', 'separation'], axis=1)
-# LVF_df.set_index('p_name', inplace=True)
-#
-# UVF_df = get_diff_df.loc[get_diff_df['vis_field'] == 'UVF']
-# UVF_df = UVF_df.drop(['vis_field', 'separation'], axis=1)
-# UVF_df.set_index('p_name', inplace=True)
-# print(f"LVF_df:\n{LVF_df}")
-# print(f"UVF_df:\n{UVF_df}")
-#
-# # plot difference.
-# diff_df = UVF_df.subtract(LVF_df, fill_value=0)
-#
-# print(f"diff_df:\n{diff_df}")
-#
-# pos_sep_vals = diff_df.index.to_list()
-#
-# fig, ax = plt.subplots(figsize=(10, 6))
-# sns.lineplot(data=diff_df, markers=True, dashes=False, ax=ax)
-# fig_title = f'Exp1a concurrent: diff UVF - LVF'
-# plt.title(fig_title)
-# x_axis = 'Sep in diag pixels'
-# ax.set_xlabel(x_axis)
-# y_axis = 'Threshold different (UVF - LVF)'
-# ax.set_ylabel(y_axis)
-# save_as = os.path.join(exp_path, 'conc_diff_vfs.png')
-# plt.savefig(save_as)
-# plt.show()
-#
-
-
-    # # all conditions
-    # # make plot to show UVF and LVF on one axis
-    # fig_title = f'{participant_name} compare UVF & LVF'
-    # legend_title = 'ISI'
-    # x_tick_vals = cond_vals
-    # x_tick_labels = cond_labels
-    # x_axis = 'Sep in diag pixels. Neg=LVF, Pos=UVF'
-    # y_axis = 'Threshold'
-    # log_x = False
-    # log_y = False
-    # save_as = os.path.join(root_path, 'compare_vfs.png')
-    #
-    # fig, ax = plt.subplots(figsize=(10, 6))
-    # sns.lineplot(data=neg_cond_df,
-    #              markers=True, dashes=False, ax=ax)
-    # if fig_title is not None:
-    #     plt.title(fig_title)
-    # if legend_title is not None:
-    #     plt.legend(title=legend_title)
-    # if x_tick_vals is not None:
-    #     ax.set_xticks(x_tick_vals)
-    #
-    # if x_tick_labels is not None:
-    #     ax.set_xticklabels(x_tick_labels)
-    #     if -18 in x_tick_labels:
-    #         # add dotted line at zero
-    #         ax.axvline(x=0, linestyle="-.", color='lightgrey')
-    # if log_x:
-    #     ax.set(xscale="log")
-    #     x_axis = f'log {x_axis}'
-    # if log_y:
-    #     ax.set(yscale="log")
-    #     y_axis = f'log {y_axis}'
-    # if x_axis is not None:
-    #     ax.set_xlabel(x_axis)
-    # if y_axis is not None:
-    #     ax.set_ylabel(y_axis)
-    # if save_as is not None:
-    #     plt.savefig(save_as)
-    # plt.show()
-    #
-    # # make difference df
-    # # for each separation value, subtract LFV from UVF for difference score.
-    #
-    # get_diff_df = psig_both_vf_df.drop(['cond'], axis=1)
-    # print(f"get_diff_df:\n{get_diff_df}")
-    #
-    # LVF_df = get_diff_df.loc[get_diff_df['vis_field'] == 'LVF']
-    # LVF_df = LVF_df.drop(['vis_field'], axis=1)
-    # LVF_df.set_index('separation', inplace=True)
-    #
-    #
-    # UVF_df = get_diff_df.loc[get_diff_df['vis_field'] == 'UVF']
-    # UVF_df = UVF_df.drop(['vis_field'], axis=1)
-    # UVF_df.set_index('separation', inplace=True)
-    # print(f"LVF_df:\n{LVF_df}")
-    # print(f"UVF_df:\n{UVF_df}")
-    #
-    # # plot difference.
-    # diff_df = UVF_df.subtract(LVF_df, fill_value=0)
-    #
-    # print(f"diff_df:\n{diff_df}")
-    #
-    # pos_sep_vals = diff_df.index.to_list()
-    #
-    #
-    # fig, ax = plt.subplots(figsize=(10, 6))
-    # sns.lineplot(data=diff_df, markers=True, dashes=False, ax=ax)
-    # fig_title = f'{participant_name} diff UVF - LVF'
-    # plt.title(fig_title)
-    # x_axis = 'Sep in diag pixels'
-    # ax.set_xlabel(x_axis)
-    # y_axis = 'Threshold different (UVF - LVF)'
-    # ax.set_ylabel(y_axis)
-    # save_as = os.path.join(root_path, 'diff_vfs.png')
-    # plt.savefig(save_as)
-    # plt.show()
 
 
 print('\nexp1a_analysis_pipe_UVF_LVF finished\n')
