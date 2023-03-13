@@ -8,7 +8,9 @@ from exp1a_psignifit_analysis import a_data_extraction, b3_plot_staircase, c_plo
     plot_w_errors_no_1probe
 from rad_flow_psignifit_analysis import plot_runs_ave_w_errors
 from psignifit_tools import get_psignifit_threshold_df, get_psig_thr_w_hue
-from python_tools import which_path, running_on_laptop, switch_path
+from python_tools import which_path, running_on_laptop, switch_path, print_nested_round_floats
+from PsychoPy_tools import get_pixel_mm_deg_values
+
 
 '''
 This script if for checking for any differences between thr upper visual field and lower visual field.
@@ -26,21 +28,21 @@ Then run psignifit on this
 # exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/EXP1_sep4_5'
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\EXP1_sep4_5"
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp3_Ricco_NM_v4"
-exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\exp1a_data"
+exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff"
+exp_name = 'Exp3_Ricco_NM_v4'
+exp_path = os.path.join(exp_path, exp_name)
 convert_path1 = os.path.normpath(exp_path)
 if running_on_laptop():
     convert_path1 = switch_path(convert_path1, 'mac_oneDrive')
 exp_path = convert_path1
 
-participant_list = ['aa', 'bb', 'cc', 'dd', 'ee', 'Nick']  # ['Kim', 'Kris', 'Simon', 'Nick']
+participant_list = ['Kris', 'Simon', 'Nick', 'Kim']  # ['Kim', 'Kris', 'Simon', 'Nick']
 # participant_list = ['Nick']  # ['Kim', 'Kris', 'Simon', 'Nick']
 p_idx_plus = 1
 
 n_runs = 12
 analyse_from_run = 1
 trim_list = []
-
-'''Part 1, get threshold for each participant and make master list'''
 
 exp_thr = []
 exp_CI_width = []
@@ -196,11 +198,15 @@ exp_CI_width = []
 #         # thr_df['vis_field'] = vis_field_name
 #         thr_df.insert(1, 'vis_field', vis_field_name)
 #
-#         cond_list = thr_df['separation'].to_list()
+#         # change 1pr size to be 20 not -1
+#         thr_df['separation'] = [20 if i == -1 else i for i in thr_df['separation'].tolist()]
+#
+#         neg_sep_list = thr_df['separation'].to_list()
 #         if vis_field_name == 'LVF':
-#             cond_list = [-.01 if i == 0 else -i for i in cond_list]
-#         # thr_df['cond'] = cond_list
-#         thr_df.insert(2, 'cond', cond_list)
+#             neg_sep_list = [-.01 if i == 0 else -i for i in neg_sep_list]
+#             # neg_sep_list = [-i for i in neg_sep_list]
+#         # thr_df['neg_sep'] = neg_sep_list
+#         thr_df.insert(2, 'neg_sep', neg_sep_list)
 #
 #         print(f'psignifit_{vis_field_name}:\n{thr_df}')
 #         column_names = list(thr_df)
@@ -212,7 +218,7 @@ exp_CI_width = []
 #
 #         VF_CI_width_df = pd.read_csv(os.path.join(root_path, CI_width_filename))
 #         VF_CI_width_df.insert(1, 'vis_field', vis_field_name)
-#         VF_CI_width_df.insert(2, 'cond', cond_list)
+#         VF_CI_width_df.insert(2, 'neg_sep', neg_sep_list)
 #         both_vfs_CI_width.append(VF_CI_width_df)
 #
 #         # progress_df = pd.concat(both_vfs_thr)
@@ -262,37 +268,38 @@ exp_CI_width = []
 #     # change 1probe from 99 to 20
 #     both_vf_columns = list(psig_both_vf_df.columns)
 #     sep_list = psig_both_vf_df['separation'].to_list()
-#     sep_list = [20 if i == 99 else i for i in sep_list]
+#     # sep_list = [20 if i == 99 else i for i in sep_list]
 #     psig_both_vf_df['separation'] = sep_list
 #     both_vfs_CI_width_df['separation'] = sep_list
 #
-#     if 'cond' not in both_vf_columns:
-#         print("\nMaking cond column")
+#     if 'neg_sep' not in both_vf_columns:
+#         print("\nMaking neg_sep column")
 #         # add condition list which is equal to sep for uVF or negative sep for LVF (with -.01 instead of -0)
 #         sep_list = psig_both_vf_df['separation'].to_list()
 #         vf_list = psig_both_vf_df['vis_field'].to_list()
-#         cond_list = []
+#         neg_sep_list = []
 #         for vf, sep in zip(vf_list, sep_list):
 #             if vf == 'LVF':
-#                 if sep == 0:
-#                     this_cond = -.01
-#                 else:
-#                     this_cond = -sep
+#                 # if sep == 0:
+#                 #     this_cond = -.01
+#                 # else:
+#                 #     this_cond = -sep
+#                 this_cond = -sep
 #             else:
 #                 this_cond = sep
 #             print(f"vf: {vf}, sep: {sep}, this_cond: {this_cond}")
-#             cond_list.append(this_cond)
-#         print(f"cond_list: {cond_list}")
-#         psig_both_vf_df.insert(2, 'cond', cond_list)
-#         both_vfs_CI_width_df.insert(2, 'cond', cond_list)
+#             neg_sep_list.append(this_cond)
+#         print(f"neg_sep_list: {neg_sep_list}")
+#         psig_both_vf_df.insert(2, 'neg_sep', neg_sep_list)
+#         both_vfs_CI_width_df.insert(2, 'neg_sep', neg_sep_list)
 #
 #
 #     # change 1probe from 99 to 20
-#     cond_list = psig_both_vf_df['cond'].to_list()
-#     cond_list = [20 if i == 99 else i for i in cond_list]
-#     cond_list = [-20 if i == -99 else i for i in cond_list]
-#     psig_both_vf_df['cond'] = cond_list
-#     both_vfs_CI_width_df['cond'] = cond_list
+#     neg_sep_list = psig_both_vf_df['neg_sep'].to_list()
+#     neg_sep_list = [20 if i == 99 else i for i in neg_sep_list]
+#     neg_sep_list = [-20 if i == -99 else i for i in neg_sep_list]
+#     psig_both_vf_df['neg_sep'] = neg_sep_list
+#     both_vfs_CI_width_df['neg_sep'] = neg_sep_list
 #
 #
 #     save_name = 'psignifit_both_vfs.csv'
@@ -314,8 +321,6 @@ exp_CI_width = []
 #     exp_thr.append(psig_both_vf_df)
 #     exp_CI_width.append(both_vfs_CI_width_df)
 #
-#
-#
 # # save master dfs
 # exp_thr_df = pd.concat(exp_thr)
 # save_csv_path = os.path.join(exp_path, 'MASTER_exp_VF_thr.csv')
@@ -327,51 +332,114 @@ exp_CI_width = []
 # save_csv_path = os.path.join(exp_path, 'MASTER_exp_VF_CI.csv')
 # exp_CI_width_df.to_csv(save_csv_path, index=False)
 # print(f"exp_CI_width_df:\n{exp_thr_df}")
-#
-
 
 
 
 
 #
 # # # make long form df
-# exp_VF_thr_df = pd.read_csv(os.path.join(exp_path, 'MASTER_exp_VF_thr.csv'))
-# print(f"\nexp_VF_thr_df:\n{exp_VF_thr_df}")
+# exp_VF_thr_long_df = pd.read_csv(os.path.join(exp_path, 'MASTER_exp_VF_thr.csv'))
+# exp_VF_thr_long_df.rename({'ISI_0': 'probeLum'}, axis=1, inplace=True)
+# print(f"\nexp_VF_thr_long_df ({exp_VF_thr_long_df.shape}):\n{exp_VF_thr_long_df}")
 #
-# exp_VF_thr_df.rename({'ISI_-1': 'ISI_99'}, axis=1, inplace=True)
-# exp_VF_thr_long_df = pd.wide_to_long(exp_VF_thr_df, stubnames='ISI_',
-#                               i=['vis_field', 'separation', 'p_name', 'cond'],
-#                               j='ISI',
-#                               sep='')
-# # exp_VF_thr_long_df.rename({'ISI val': 'ISI', 'ISI_': 'probeLum'}, axis=1, inplace=True)
-# exp_VF_thr_long_df.rename({'ISI_': 'probeLum'}, axis=1, inplace=True)
-# exp_VF_thr_long_df.reset_index(inplace=True)
-# print(f"\nexp_VF_thr_long_df:\n{exp_VF_thr_long_df}")
+#
+# # get dva column
+# sep_vals_list = exp_VF_thr_long_df['separation'].unique()
+# print(f"sep_vals_list: {sep_vals_list}")
+#
+# # probe_vert_list = []
+# # probe_name_list = []
+# pixel_mm_deg_dict = get_pixel_mm_deg_values(monitor_name='asus_cal')
+# # print('pixel_mm_deg_dict.items()')
+# print_nested_round_floats(pixel_mm_deg_dict, 'pixel_mm_deg_dict')
+# # for k, v in pixel_mm_deg_dict.items():
+# #     print(k, v)
+# dva_dict = {}
+# for sep_cond in sep_vals_list:
+#     # probe_vertices = make_ricco_vertices(sep_cond, balanced=balanced_probes)
+#     # if sep_cond == 99:
+#     sep_cond = int(sep_cond)
+#
+#     if sep_cond in [20, 99, '1pr']:
+#         len_pix = 1.5
+#         n_pix = 5
+#     else:
+#         len_pix = 2.5 + sep_cond
+#         n_pix = sep_cond * 5 + 10
+#
+#     probe_name = f"sep_{sep_cond}"
+#     dva_dict[sep_cond] = len_pix * pixel_mm_deg_dict['diag_deg']
+#
+#     # dva_dict[sep_cond] = {}
+#     # dva_dict[sep_cond]['diag_deg'] = len_pix * pixel_mm_deg_dict['diag_deg']
+#     # dva_dict[sep_cond]['probe_name'] = probe_name
+#
+# print_nested_round_floats(dva_dict, 'dva_dict')
+#
+# # for k, v in dva_dict.items():
+# #     print(k, v)
+# # print(f"probe_name_list:\n{probe_name_list}")
+# # # print(f"probe_vert_list:\n{probe_vert_list}")
 #
 # # make long form CIs
-# exp_VF_CI_df = pd.read_csv(os.path.join(exp_path, 'MASTER_exp_VF_CI.csv'))
-# print(f"\nexp_VF_CI_df:\n{exp_VF_CI_df}")
-#
-#
-# exp_VF_CI_df.rename({'ISI_-1': 'ISI_99'}, axis=1, inplace=True)
-# exp_VF_CI_long_df = pd.wide_to_long(exp_VF_CI_df, stubnames='ISI_',
-#                               i=['vis_field', 'separation', 'p_name', 'cond'],
-#                               j='ISI',
-#                               sep='')
-# # exp_VF_CI_long_df.rename({'ISI val': 'ISI', 'ISI_': 'probeLum'}, axis=1, inplace=True)
-# exp_VF_CI_long_df.rename({'ISI_': 'CI_width'}, axis=1, inplace=True)
-# exp_VF_CI_long_df.reset_index(inplace=True)
+# exp_VF_CI_long_df = pd.read_csv(os.path.join(exp_path, 'MASTER_exp_VF_CI.csv'))
+# exp_VF_CI_long_df.rename({'ISI_0': 'CI_width'}, axis=1, inplace=True)
 # print(f"\nexp_VF_CI_long_df:\n{exp_VF_CI_long_df}")
 #
+# # add sep num column with 1pr (20) first
+# sep_vals_list = sorted(exp_VF_thr_long_df['separation'].unique())
+# if sep_vals_list[-1] in [20, 99, '1pr']:
+#     sep_vals_list = sep_vals_list[-1:] + sep_vals_list[:-1]
+# print(f"sep_vals_list: {sep_vals_list}")
+# sep_num_dict = dict(zip(sep_vals_list, list(range(len(sep_vals_list)))))
+# print(f"\nsep_num_dict: {sep_num_dict}")
+# exp_VF_thr_long_df.insert(2, 'sep_num', exp_VF_thr_long_df["separation"].map(sep_num_dict))
+# exp_VF_CI_long_df.insert(2, 'sep_num', exp_VF_CI_long_df["separation"].map(sep_num_dict))
 #
-# # add cond number column
-# cond_vals = sorted(exp_VF_thr_long_df['cond'].unique())
-# neg_sep_num_dict = dict(zip(cond_vals, list(range(len(cond_vals)))))
+# # add neg_sep_num column
+# neg_sep_list = exp_VF_thr_long_df['neg_sep'].unique()
+#
+# srtd_below_zero = sorted([i for i in neg_sep_list if i < 0])
+# srtd_above_zero = sorted([i for i in neg_sep_list if i >= 0])
+# print(f"srtd_below_zero: {srtd_below_zero}")
+# print(f"srtd_above_zero: {srtd_above_zero}")
+#
+# if 20 in srtd_above_zero:
+#     srtd_above_zero.remove(20)
+#     srtd_above_zero = [20] + srtd_above_zero
+# print(f"srtd_above_zero: {srtd_above_zero}")
+#
+#
+# if -20 in srtd_below_zero:
+#     srtd_below_zero.remove(-20)
+#     srtd_below_zero = srtd_below_zero + [-20]
+# print(f"srtd_below_zero: {srtd_below_zero}")
+#
+# neg_sep_list = srtd_below_zero + srtd_above_zero
+# print(f"neg_sep_list: {neg_sep_list}")
+#
+#
+# neg_sep_num_dict = dict(zip(neg_sep_list, list(range(len(neg_sep_list)))))
 # print(f"\nneg_sep_num_dict: {neg_sep_num_dict}")
+# exp_VF_thr_long_df.insert(4, 'neg_sep_num', exp_VF_thr_long_df["neg_sep"].map(neg_sep_num_dict))
+# exp_VF_CI_long_df.insert(4, 'neg_sep_num', exp_VF_CI_long_df["neg_sep"].map(neg_sep_num_dict))
+# # print(f"\nexp_VF_thr_long_df:\n{exp_VF_thr_long_df}")
 #
-# exp_VF_thr_long_df.insert(4, 'cond_num', exp_VF_thr_long_df["cond"].map(neg_sep_num_dict))
-# exp_VF_CI_long_df.insert(4, 'cond_num', exp_VF_CI_long_df["cond"].map(neg_sep_num_dict))
+# # add dva column
+# exp_VF_thr_long_df.insert(5, 'dva', exp_VF_thr_long_df["separation"].map(dva_dict))
+# exp_VF_CI_long_df.insert(5, 'dva', exp_VF_CI_long_df["separation"].map(dva_dict))
+# print(f"\nexp_VF_thr_long_df ({list(exp_VF_thr_long_df.columns)}):\n{exp_VF_thr_long_df}")
+# print(f"\nexp_VF_thr_long_df['dva'].tolist(): {exp_VF_thr_long_df['dva'].tolist()}")
+#
+# # add dva_num column
+# dva_vals = sorted(exp_VF_thr_long_df['dva'].unique())
+# dva_num_dict = dict(zip(dva_vals, list(range(len(dva_vals)))))
+# print(f"\ndva_num_dict: {dva_num_dict}")
+# exp_VF_thr_long_df.insert(6, 'dva_num', exp_VF_thr_long_df["dva"].map(dva_num_dict))
+# exp_VF_CI_long_df.insert(6, 'dva_num', exp_VF_CI_long_df["dva"].map(dva_num_dict))
 # print(f"\nexp_VF_thr_long_df:\n{exp_VF_thr_long_df}")
+# print(f"\nexp_VF_CI_long_df:\n{exp_VF_CI_long_df}")
+#
 # save_csv_path = os.path.join(exp_path, 'MASTER_exp_VF_thr_long.csv')
 # exp_VF_thr_long_df.to_csv(save_csv_path, index=False)
 #
@@ -398,149 +466,138 @@ difference,
 Just concurrent (ISI_-1)
 Just sep (0, 2, 3, 6)
 '''
+print('\nmaking plots')
+
 exp_VF_thr_long_df = pd.read_csv(os.path.join(exp_path, 'MASTER_exp_VF_thr_long.csv'))
 print(f"\nexp_VF_thr_long_df:\n{exp_VF_thr_long_df}")
 
+
 # get means per condition
-groupby_sep_thr_df = exp_VF_thr_long_df.drop('p_name', axis=1)
-exp_mean_thr_long_df = groupby_sep_thr_df.groupby(['cond_num', 'ISI'], sort=True).mean()
+groupby_sep_thr_df = exp_VF_thr_long_df.copy()
+groupby_sep_thr_df = groupby_sep_thr_df.drop('p_name', axis=1)
+exp_mean_thr_long_df = groupby_sep_thr_df.groupby('neg_sep_num', sort=True).mean()
+vis_field_list = ['LVF' if i < 0 else 'UVF' for i in exp_mean_thr_long_df['neg_sep'].tolist()]
+exp_mean_thr_long_df.insert(3, 'vis_field', vis_field_list)
+
 exp_mean_thr_long_df.reset_index(inplace=True)
 print(f"\nexp_mean_thr_long_df:\n{exp_mean_thr_long_df}")
 
 
+# get mean errors per condition
 exp_VF_CI_long_df = pd.read_csv(os.path.join(exp_path, 'MASTER_exp_VF_CI_long.csv'))
 print(f"\nexp_VF_CI_long_df:\n{exp_VF_CI_long_df}")
-groupby_sep_CI_df = exp_VF_CI_long_df.drop('p_name', axis=1)
-exp_mean_CI_long_df = groupby_sep_CI_df.groupby(['cond_num', 'ISI'], sort=True).mean()
+
+# add in halved CI (rather than total width)
+exp_VF_CI_long_df['halved_CI'] = exp_VF_CI_long_df.CI_width.div(2, fill_value=0)
+exp_VF_CI_long_df = exp_VF_CI_long_df.drop('CI_width', axis=1)
+
+groupby_sep_CI_df = exp_VF_CI_long_df.copy()
+groupby_sep_CI_df = groupby_sep_CI_df.drop('p_name', axis=1)
+exp_mean_CI_long_df = groupby_sep_CI_df.groupby('neg_sep_num', sort=True).mean()
+exp_mean_CI_long_df.insert(3, 'vis_field', vis_field_list)
 exp_mean_CI_long_df.reset_index(inplace=True)
-# exp_mean_CI_long_df = exp_mean_CI_long_df.CI_width.div(2, fill_value=0),
-exp_mean_CI_long_df['halved_CI'] = exp_mean_CI_long_df.CI_width.div(2, fill_value=0)
+
 print(f"\nexp_mean_CI_long_df:\n{exp_mean_CI_long_df}")
 
-
-exp_mean_thr_long_df['ISI'] = [str(i) for i in exp_mean_thr_long_df['ISI'].to_list()]
-exp_mean_CI_long_df['ISI'] = [str(i) for i in exp_mean_CI_long_df['ISI'].to_list()]
 print(f"\nexp_mean_thr_long_df:\n{exp_mean_thr_long_df}")
 
 '''Fig 1 - all data'''
-# x_tick_vals = sorted(exp_mean_thr_long_df['cond_num'].unique())
-# x_tick_labels = sorted(exp_mean_thr_long_df['cond'].unique())
-# x_tick_labels = ['1pr' if i in [20.0, -20.0] else i for i in x_tick_labels]
-# print(f"\nx_tick_labels: {x_tick_labels}")
-#
-# # # todo: add colours and legend, x_ticks
-# # # todo: half error width size, as at the moment it is adding this about above and below (e.g. double)
-# cap_size = 5
-# fig, ax = plt.subplots(figsize=(10, 6))
-# for ISI in list(exp_mean_thr_long_df['ISI'].unique()):
-#     ISI_thr_df = exp_mean_thr_long_df[exp_mean_thr_long_df['ISI'] == ISI]
-#     ISI_CI_df = exp_mean_CI_long_df[exp_mean_CI_long_df['ISI'] == ISI]
-#     print(f"\n\nISI_thr_df (ISI={ISI}):\n{ISI_thr_df}")
-#     print(f"\nISI_CI_df:\n{ISI_CI_df}")
-#
-#     ax.errorbar(data=ISI_thr_df,
-#                 x='cond_num',
-#                 y='probeLum',
-#                 # yerr=ISI_CI_df.CI_width.div(2, fill_value=0),  # already halved
-#                 yerr=ISI_CI_df['halved_CI'],
-#                 marker='.', lw=2, elinewidth=1,
-#                 capsize=cap_size
-#                 # color=my_colours[idx]
-#                 )
-# plt.title('NEW PLOT 1')
-# plt.show()
-
 
 print('\nFig 1 - all data')
 
-fig_1_thr_df = exp_mean_thr_long_df.copy()
-fig_1_err_df = exp_mean_CI_long_df.copy()
+fig_1_thr_df = exp_VF_thr_long_df.copy()
+print(f"fig_1_thr_df:\n{fig_1_thr_df}")
+fig_1_err_df = exp_VF_CI_long_df.copy()
+print(f"fig_1_err_df:\n{fig_1_err_df}")
+
+p_name_list = fig_1_thr_df['p_name'].unique().tolist()
+print(f"p_name_list: {p_name_list}")
 
 # use wide means df
-print(f"exp_mean_thr_long_df:\n{exp_mean_thr_long_df}")
-fig_1_thr_df = exp_mean_thr_long_df.pivot(index=['cond_num', 'separation', 'cond'], columns='ISI', values='probeLum')
-fig_1_thr_df.reset_index(inplace=True, drop=False)
+# fig_1_thr_df = exp_mean_thr_long_df.pivot(index=['neg_sep_num', 'separation', 'neg_sep'], columns='dur', values='probeLum')
+fig_1_thr_df = fig_1_thr_df.pivot(index='p_name',
+                                  columns=['neg_sep_num', 'neg_sep', 'separation', 'sep_num', 'vis_field', 'dva', 'dva_num'],
+                                  values='probeLum')
+
+
+
+print(f"\nfig_1_thr_df:\n{fig_1_thr_df}")
+
+# get variables for labels, ticks etc
+multi_idx_cols = fig_1_thr_df.columns.to_list()
+neg_sep_num_list = [x[0] for x in multi_idx_cols]
+neg_sep_list = [x[1] for x in multi_idx_cols]
+sep_list = [x[2] for x in multi_idx_cols]
+sep_num_list = [x[3] for x in multi_idx_cols]
+vis_field_list = [x[4] for x in multi_idx_cols]
+dva_list = [x[5] for x in multi_idx_cols]
+dva_num_list = [x[6] for x in multi_idx_cols]
+print(f"neg_sep_num_list: {neg_sep_num_list}")
+print(f"neg_sep_list: {neg_sep_list}")
+print(f"sep_list: {sep_list}")
+print(f"sep_num_list: {sep_num_list}")
+print(f"vis_field_list: {vis_field_list}")
+print(f"dva_list: {dva_list}")
+print(f"dva_num_list: {dva_num_list}")
+
+
+# sort variables by sorted(neg_sep_num_list) order
+neg_sep_num_array = np.array(neg_sep_num_list)
+print(f"\nneg_sep_num_array: {neg_sep_num_array}")
+sort_index = np.argsort(neg_sep_num_list)
+print(f"sort_index: {sort_index}")
+
+
+neg_sep_num_list = [neg_sep_num_list[i] for i in sort_index]
+neg_sep_list = [neg_sep_list[i] for i in sort_index]
+half_list_len = int(len(sep_list)/2)
+sep_list = [sep_list[i] for i in sort_index][half_list_len:]
+sep_num_list = [sep_num_list[i] for i in sort_index][half_list_len:]
+vis_field_list = [vis_field_list[i] for i in sort_index]
+dva_list = [dva_list[i] for i in sort_index][half_list_len:]
+dva_num_list = [dva_num_list[i] for i in sort_index][half_list_len:]
+print(f"\nneg_sep_num_list: {neg_sep_num_list}")
+print(f"neg_sep_list: {neg_sep_list}")
+print(f"sep_list: {sep_list}")
+print(f"sep_num_list: {sep_num_list}")
+print(f"vis_field_list: {vis_field_list}")
+print(f"dva_list: {dva_list}")
+print(f"dva_num_list: {dva_num_list}")
+
+
+# sort column order then reduce index to just be the top row.
+fig_1_thr_df.reset_index(inplace=True)
+fig_1_thr_df = fig_1_thr_df.set_index('p_name')
+column_order = sorted(neg_sep_num_list)
+print(f"column_order: {column_order}")
+# re-order
+fig_1_thr_df = fig_1_thr_df[column_order]
+# drop multi-index
+fig_1_thr_df.columns = column_order
 print(f"fig_1_thr_df:\n{fig_1_thr_df}")
 
-# fig_1_thr_df.index.name = None
-isi_col_dict = {'99': 'conc', '0': 'ISI_0', '2': 'ISI_2',
-                         '4': 'ISI_4', '6': 'ISI_6', '9': 'ISI_9',
-                         '12': 'ISI_12', '24': 'ISI_24'}
-fig_1_thr_df.rename(columns=isi_col_dict, inplace=True)
-print(f"fig_1_thr_df:\n{fig_1_thr_df}")
-fig_1_thr_df = fig_1_thr_df[['cond_num', 'separation', 'cond',
-                                     'conc', 'ISI_0', 'ISI_2', 'ISI_4',
-                                     'ISI_6', 'ISI_9', 'ISI_12', 'ISI_24']]
-fig_1_thr_df.index.name = None
-print(f"fig_1_thr_df:\n{fig_1_thr_df}")
 
-print(f"\nexp_mean_CI_long_df:\n{exp_mean_CI_long_df}")
-wide_mean_CI_df = exp_mean_CI_long_df.pivot(index=['cond_num', 'separation', 'cond'], columns='ISI', values='halved_CI')
-wide_mean_CI_df.reset_index(inplace=True, drop=False)
-wide_mean_CI_df.index.name = None
-wide_mean_CI_df.rename(columns=isi_col_dict, inplace=True)
+fig_1_err_df = fig_1_err_df.pivot(index='p_name',
+                                  columns='neg_sep_num', values='halved_CI')
+fig_1_err_df.reset_index(inplace=True, drop=False)
+fig_1_err_df = fig_1_err_df.set_index('p_name')
 
-wide_mean_CI_df = wide_mean_CI_df[['cond_num', 'separation', 'cond',
-                                   'conc', 'ISI_0', 'ISI_2', 'ISI_4',
-                                   'ISI_6', 'ISI_9', 'ISI_12', 'ISI_24']]
-wide_mean_CI_df.index.name = None
-print(f"wide_mean_CI_df:\n{wide_mean_CI_df}")
+fig_1_err_df = fig_1_err_df[column_order]
+print(f"fig_1_err_df:\n{fig_1_err_df}")
 
-
-# add cond number column
-if 'cond_num' not in list(fig_1_thr_df.columns):
-    cond_vals = fig_1_thr_df['cond'].unique()
-    neg_sep_num_dict = dict(zip(cond_vals, list(range(len(cond_vals)))))
-    print(f"\nneg_sep_num_dict: {neg_sep_num_dict}")
-
-    fig_1_thr_df.insert(4, 'cond_num', exp_mean_thr_long_df["cond"].map(neg_sep_num_dict))
-    wide_mean_CI_df.insert(4, 'cond_num', exp_mean_CI_long_df["cond"].map(neg_sep_num_dict))
-
-wide_mean_thr_w_cond_idx_df = fig_1_thr_df.set_index('cond_num')
-wide_mean_thr_w_cond_idx_df.sort_index(inplace=True)
-if 'p_name' in list(wide_mean_thr_w_cond_idx_df.columns):
-    wide_mean_thr_w_cond_idx_df.drop('p_name', axis=1, inplace=True)
-if 'vis_field' in list(wide_mean_thr_w_cond_idx_df.columns):
-    wide_mean_thr_w_cond_idx_df.drop('vis_field', axis=1, inplace=True)
-if 'cond' in list(wide_mean_thr_w_cond_idx_df.columns):
-    wide_mean_thr_w_cond_idx_df.drop('cond', axis=1, inplace=True)
-if 'separation' in list(wide_mean_thr_w_cond_idx_df.columns):
-    wide_mean_thr_w_cond_idx_df.drop('separation', axis=1, inplace=True)
-print(f"exp_thr_w_cond_idx_df:\n{wide_mean_thr_w_cond_idx_df}")
-
-wide_mean_CI_w_cond_idx_df = wide_mean_CI_df.set_index('cond_num')
-wide_mean_CI_w_cond_idx_df.sort_index(inplace=True)
-
-x_tick_vals = wide_mean_thr_w_cond_idx_df.index.tolist()
-x_tick_labels = sorted(list(exp_mean_thr_long_df['cond'].unique()))
+# get values for x tick locations and labels
+x_tick_vals = neg_sep_num_list
+x_tick_labels = neg_sep_list
 x_tick_labels = ['1pr' if i in [20.0, -20.0] else str(i) for i in x_tick_labels]
 x_tick_labels = ['-0' if i == '-0.01' else str(i) for i in x_tick_labels]
 x_tick_labels = [i[:-2] if i not in ['1pr', '-0'] else i for i in x_tick_labels]
 
 print(f"x_tick_vals: {x_tick_vals}")
 print(f"x_tick_labels: {x_tick_labels}")
+fig_1a_title = f'{exp_name}: compare UVF & LVF\n(Errors are mean of participant CIs, per ISI)'
 
-if 'p_name' in list(wide_mean_CI_w_cond_idx_df.columns):
-    wide_mean_CI_w_cond_idx_df.drop('p_name', axis=1, inplace=True)
-if 'vis_field' in list(wide_mean_CI_w_cond_idx_df.columns):
-    wide_mean_CI_w_cond_idx_df.drop('vis_field', axis=1, inplace=True)
-if 'cond' in list(wide_mean_CI_w_cond_idx_df.columns):
-    wide_mean_CI_w_cond_idx_df.drop('cond', axis=1, inplace=True)
-if 'separation' in list(wide_mean_CI_w_cond_idx_df.columns):
-    wide_mean_CI_w_cond_idx_df.drop('separation', axis=1, inplace=True)
-print(f"exp_CI_w_cond_idx_df:\n{wide_mean_CI_w_cond_idx_df}")
-
-
-isi_name_list = [i for i in list(wide_mean_thr_w_cond_idx_df.columns) if 'ISI_' in i]
-
-fig_1a_title = 'all data: compare UVF & LVF\n(Errors are mean of participant CIs, per ISI)'
-
-
-# todo: add save plots
-# if I delete this messy plot, I can also delete the function that made it.
-plot_runs_ave_w_errors(fig_df=wide_mean_thr_w_cond_idx_df, error_df=wide_mean_CI_w_cond_idx_df,
+plot_runs_ave_w_errors(fig_df=fig_1_thr_df.T, error_df=fig_1_err_df.T,
                        jitter=.1, error_caps=True, alt_colours=False,
-                       legend_names=isi_name_list,
                        x_tick_vals=x_tick_vals,
                        x_tick_labels=x_tick_labels,
                        x_axis_label='Sep in diag pixels. Neg=LVF, Pos=UVF',
@@ -550,33 +607,76 @@ plot_runs_ave_w_errors(fig_df=wide_mean_thr_w_cond_idx_df, error_df=wide_mean_CI
 ax = plt.gca() # to get the axis
 ax.axvline(x=(x_tick_vals[-1]/2), linestyle="-.", color='lightgrey')  # add dotted line at zero
 
-
-
-# if show_plots:
 plt.show()
 plt.close()
 
-# todo: make similar plots but per participant, ISI and sep.
-# todo: currently the thr and error dfs are collapsed across participant
-#  wide_mean_thr_w_cond_idx_df has with columns for each ISI, and cond_num idx but no other columns (sep, vf etc have been removed)
-# todo: per ISI plot will consist of a single line.  Can use same data frame.
-# todo: per sep plot can use same df and just select two cond_num's (corresponding to sep in UVF and LVF), will have lots of stright lines (ISIs) but only two points for line.
-# todo: per participant plot should look similar (same number of lines, same axes), but from participant' data rather than averaged data (wide, just ISI cols, cond_num index).
 
+# make participant plots
+# get dfs
+print(f"exp_VF_thr_long_df:\n{exp_VF_thr_long_df}")
+print(f"exp_VF_CI_long_df:\n{exp_VF_CI_long_df}")
+
+# # add dur column
+# exp_VF_thr_long_df.insert(4, 'dur', exp_VF_thr_long_df["ISI"].map(isi_to_dur_val_dict))
+# exp_VF_CI_long_df.insert(4, 'dur', exp_VF_CI_long_df["ISI"].map(isi_to_dur_val_dict))
 #
-# fig, ax = plt.subplots(figsize=(10, 6))
-# sns.lineplot(data=exp_mean_thr_long_df, x='cond_num', y='probeLum',
-#              hue='ISI',
-#              )
-#
-# ax.set_xticks(x_tick_vals)
-# ax.set_xticklabels(x_tick_labels)
-# ax.axvline(x=(x_tick_vals[-1]/2), linestyle="-.", color='lightgrey')  # add dotted line at zero
-# plt.title('all data: compare UVF & LVF')
-# ax.set_xlabel('Sep in diag pixels. Neg=LVF, Pos=UVF')
-# ax.set_ylabel('Threshold')
-# plt.savefig(os.path.join(exp_path, 'exp1a_all_data_VFs'))
-# plt.show()
+# # add dur num for evenly spaced x axis
+# dur_val_to_dur_num_dict = {'8': 0, '16': 1, '25': 2,
+#                            '33': 3, '41': 4, '54': 5,
+#                            '66': 6, '116': 7,
+#                            }
+# exp_VF_thr_long_df.insert(4, 'dur_num', exp_VF_thr_long_df["dur"].map(dur_val_to_dur_num_dict))
+# print(f"exp_VF_thr_long_df:\n{exp_VF_thr_long_df}")
+# exp_VF_CI_long_df.insert(4, 'dur_num', exp_VF_CI_long_df["dur"].map(dur_val_to_dur_num_dict))
+# print(f"exp_VF_CI_long_df:\n{exp_VF_CI_long_df}")
+
+# add halved CI column to err_df
+if 'halved_CI' not in list(exp_VF_CI_long_df.columns):
+    exp_VF_CI_long_df['halved_CI'] = exp_VF_CI_long_df.CI_width.div(2, fill_value=0)
+print(f"exp_VF_CI_long_df ({exp_VF_CI_long_df.shape}):\n{exp_VF_CI_long_df}")
+
+# get participant and vis_field conditions to loop through
+p_name_list = exp_VF_thr_long_df['p_name'].unique()
+print(f"p_name_list: {p_name_list}")
+vf_list = exp_VF_thr_long_df['vis_field'].unique()
+print(f"vf_list: {vf_list}")
+
+cap_size = 7
+for p_name in p_name_list:
+
+    # get participant data
+    p_long_thr_df = exp_VF_thr_long_df[exp_VF_thr_long_df['p_name'] == p_name]
+    print(f"p_long_thr_df ({p_name}):\n{p_long_thr_df}")
+    p_long_err_df = exp_VF_CI_long_df[exp_VF_CI_long_df['p_name'] == p_name]
+    print(f"p_long_err_df ({p_name}):\n{p_long_err_df}")
+
+    # get x tick values and labels
+    x_tick_vals = p_long_thr_df['neg_sep_num'].unique()
+    x_tick_labels = p_long_thr_df['separation'].unique()
+    print(f"\nx_tick_vals: {x_tick_vals}")
+    print(f"x_tick_labels: {x_tick_labels}")
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    for vis_field in vf_list:
+        # dfs just for this vis field
+        VF_thr_df = p_long_thr_df[p_long_thr_df['vis_field'] == vis_field]
+        VF_err_df = p_long_err_df[p_long_err_df['vis_field'] == vis_field]
+
+        ax.errorbar(data=VF_thr_df, x='neg_sep_num', y='probeLum',
+                    yerr=VF_err_df['halved_CI'],
+                    marker='o', lw=3, elinewidth=2,
+                    capsize=cap_size)
+
+    ax = plt.gca()  # to get the axis
+    ax.set_xticks(x_tick_vals)
+    ax.set_xticklabels(x_tick_labels)
+    plt.title(f'{exp_name}. {p_name}: compare UVF & LVF')
+    ax.set_xlabel('Separation (diag pixels)')
+    ax.set_ylabel('Threshold')
+    plt.savefig(os.path.join(exp_path, f'{exp_name}_{p_name}_VFs'))
+    plt.show()
+
+
 
 '''Fig 2, difference between UVF and LVF'''
 '''Plot shoing difference in VF for each ISI'''
@@ -584,20 +684,21 @@ print(f"\nplot diff between VFs for each ISI")
 # for each separation value, subtract LFV from UVF for difference score.
 
 get_diff_df = exp_VF_thr_long_df.copy()
+# if 'dur' not in get_diff_df.columns.tolist():
+#     get_diff_df.insert(6, 'dur', get_diff_df["ISI"].map(isi_to_dur_val_dict))
+# get_diff_df = get_diff_df.drop('ISI', axis=1)
 print(f"get_diff_df ({get_diff_df.shape}):\n{get_diff_df}")
 
-LVF_df = get_diff_df.loc[get_diff_df['cond_num'] < 7]
-cond_num_list = LVF_df['cond_num'].tolist()
-ISI_val_list = LVF_df.pop('ISI').tolist()
-LVF_df = LVF_df.drop(['cond', 'vis_field', 'p_name'], axis=1)
+# made different dfs for upper and lower vf
+LVF_df = get_diff_df.loc[get_diff_df['neg_sep_num'] < 1]
+neg_sep_num_list = LVF_df['neg_sep_num'].tolist()
+dur_val_list = LVF_df.pop('dur').tolist()
+LVF_df = LVF_df.drop(['neg_sep', 'vis_field', 'p_name'], axis=1)
 LVF_df.set_index('separation', inplace=True)
 
-
-UVF_df = get_diff_df.loc[get_diff_df['cond_num'] >= 7]
-UVF_df = UVF_df.drop(['cond', 'ISI', 'vis_field', 'p_name'], axis=1)
+UVF_df = get_diff_df.loc[get_diff_df['neg_sep_num'] >= 1]
+UVF_df = UVF_df.drop(['neg_sep', 'dur', 'vis_field', 'p_name'], axis=1)
 UVF_df.set_index('separation', inplace=True)
-
-
 print(f"LVF_df ({LVF_df.shape}):\n{LVF_df}")
 print(f"UVF_df ({UVF_df.shape}):\n{UVF_df}")
 
@@ -605,37 +706,25 @@ print(f"UVF_df ({UVF_df.shape}):\n{UVF_df}")
 diff_df = UVF_df.subtract(LVF_df, fill_value=0)
 print(f"diff_df ({diff_df.shape}):\n{diff_df}")
 
-diff_df['cond_num'] = cond_num_list
-if 'ISI' not in list(diff_df.columns):
-    diff_df.insert(1, 'ISI', ISI_val_list)
+diff_df['neg_sep_num'] = neg_sep_num_list
+if 'dur' not in list(diff_df.columns):
+    diff_df.insert(1, 'dur', dur_val_list)
 diff_df = diff_df.rename(columns={'probeLum': 'thr_diff'})
 
 pos_sep_vals = sorted(diff_df.index.unique())
 diff_df.reset_index(inplace=True)
 print(f"diff_df ({diff_df.shape}):\n{diff_df}")
 
-# convert ISI column to string, to make it work as Hue
-diff_df['ISI'] = ['conc' if i == 99 else str(i) for i in diff_df['ISI'].to_list()]
 
 fig, ax = plt.subplots(figsize=(10, 6))
-sns.pointplot(data=diff_df, x='cond_num', y='thr_diff',
-              hue='ISI',
+sns.pointplot(data=diff_df, x='dur', y='thr_diff',
               estimator=np.mean, errorbar='se', dodge=True, markers='.',
-              errwidth=1, capsize=.2,
-              )
+              errwidth=1, capsize=.2)
 
-
-x_tick_vals = sorted(diff_df['cond_num'].unique())
-ax.set_xticks(x_tick_vals)
-cond_sep_dict = {0: '0', 1: '1', 2: '2', 3: '3', 4: '6', 5: '18', 6: '1pr'}
-x_tick_labels = [cond_sep_dict[k] for k in x_tick_vals]
-ax.set_xticklabels(x_tick_labels)
-print(f"pos_sep_vals: {pos_sep_vals}")
-print(f"x_tick_labels: {x_tick_labels}")
-
-fig_title = f'exp1a all data: diff UVF - LVF\n(Errors are SEs of means collapsed across participants)'
+fig_title = f'{exp_name}: diff UVF - LVF\n' \
+            f'(Errors are SEs of means collapsed across participants)'
 plt.title(fig_title)
-x_axis = 'Sep in diag pixels'
+x_axis = 'Probe duration in ms'
 ax.set_xlabel(x_axis)
 y_axis = 'Threshold different (UVF - LVF)'
 ax.set_ylabel(y_axis)
@@ -644,131 +733,4 @@ ax.axhline(y=0, linestyle="-.", color='lightgrey')  # add dotted line at zero
 save_as = os.path.join(exp_path, 'diff_vfs.png')
 plt.savefig(save_as)
 plt.show()
-
-
-
-# todo: make similar plots but per participant, ISI and sep.
-# todo: currently the thr and error dfs are collapsed across participant
-#  diff_df has with columns for sep, cond_num, ISI (long form),
-# todo: per ISI plot will consist of a single line.  Can use same data frame.
-# todo: per participant plot should look similar (same number of lines, same axes), but from participant' data rather than averaged data.
-# todo: per sep plot can use same df and just select two cond_num's (corresponding to sep in UVF and LVF), will have lots of stright lines (ISIs) but only two points for line.
-# todo: should I make a new long_form diff df with all data on it to start?  That way, I can have error bars (or show all lines) when collapsing across participant, or ISI?
-
-
-'''fig 3: make ISI plots'''
-# todo: add difference plots
-#
-print("\nMaking ISI plots")
-
-ISI_plots_df = exp_VF_thr_long_df.copy()
-ISI_er_plot_df = exp_VF_CI_long_df.copy()
-# ISI_plots_df = exp_mean_thr_long_df.copy()
-# ISI_er_plot_df = exp_mean_CI_long_df.copy()
-print(f"ISI_plots_df ({ISI_plots_df.shape}):\n{ISI_plots_df}")
-print(f"ISI_er_plot_df ({ISI_er_plot_df.shape}):\n{ISI_er_plot_df}")
-
-sep_vals = ISI_plots_df['separation'].unique()
-sep_num_dict = dict(zip(sep_vals, list(range(len(sep_vals)))))
-print(f"\nsep_num_dict: {sep_num_dict}")
-ISI_plots_df.insert(4, 'sep_num', ISI_plots_df["separation"].map(sep_num_dict))
-print(f"ISI_plots_df ({ISI_plots_df.shape}):\n{ISI_plots_df}")
-
-ISI_er_plot_df.insert(4, 'sep_num', ISI_er_plot_df["separation"].map(sep_num_dict))
-ISI_er_plot_df['halved_CI'] = ISI_er_plot_df.CI_width.div(2, fill_value=0)
-print(f"ISI_er_plot_df ({ISI_er_plot_df.shape}):\n{exp_VF_CI_long_df}")
-
-
-ISIs_to_plot = [99, 4, 12]
-
-for this_ISI in ISIs_to_plot:
-
-
-    ISI_name = this_ISI
-    if this_ISI == 99:
-        ISI_name = 'Concurrent'
-    print(f"ISI: {ISI_name} ({this_ISI})")
-
-    ISI_df = ISI_plots_df.loc[ISI_plots_df['ISI'] == this_ISI]
-    print(f"ISI_df ({ISI_df.shape}):\n{ISI_df}")
-
-    ISI_error_df = ISI_er_plot_df[ISI_er_plot_df['ISI'] == this_ISI]
-    print(f" ISI_error_df ({ISI_error_df.shape}):\n{ISI_error_df}")
-
-    x_tick_vals = sorted(ISI_df['sep_num'].unique())
-    print(f"\nx_tick_vals: {x_tick_vals}")
-
-    x_tick_labels = ['1pr' if i == 20 else str(i) for i in sorted(ISI_df['separation'].unique())]
-    print(f"\nx_tick_labels: {x_tick_labels}")
-
-    fig, ax = plt.subplots(figsize=(10, 6))
-
-    sns.pointplot(data=ISI_df, x='sep_num', y='probeLum',
-                  hue='vis_field',
-                  errorbar='se', capsize=.05,
-                  scale=1.25,
-                  )
-
-    sns.lineplot(data=ISI_df, x='sep_num', y='probeLum',
-                 hue='vis_field',
-                 style='p_name',
-                 dashes=False,
-                 alpha=.3,
-                 legend=False
-                 )
-
-
-    ax.set_xticks(x_tick_vals)
-    ax.set_xticklabels(x_tick_labels)
-    plt.title(f'ISI {ISI_name}: compare UVF & LVF\n(Error bars: SE of Participant thresholds)')
-    ax.set_xlabel('Sep in diag pixels')
-    ax.set_ylabel('Threshold')
-    plt.savefig(os.path.join(exp_path, f'exp1a_ISI_{ISI_name}_VFs'))
-    plt.show()
-
-
-
-'''figs 4, 5, 6, 6: make sep plots for sep 0, 2, 3, 6'''
-print("\nMaking separation plots")
-ISI_vals = exp_VF_thr_long_df['ISI'].unique()
-ISI_num_dict = dict(zip(ISI_vals, list(range(len(ISI_vals)))))
-print(f"\nISI_num_dict: {ISI_num_dict}")
-exp_VF_thr_long_df.insert(4, 'ISI_num', exp_VF_thr_long_df["ISI"].map(ISI_num_dict))
-sep_to_plot = [0, 2, 3, 6]
-
-for this_sep in sep_to_plot:
-    sep_df = exp_VF_thr_long_df[exp_VF_thr_long_df['separation'] == this_sep]
-    print(f"sep_df:\n{sep_df}")
-
-    x_tick_vals = sep_df['ISI_num'].unique()
-    x_tick_labels = ['conc' if i == 99 else str(i) for i in sep_df['ISI'].unique()]
-    print(f"\nx_tick_vals: {x_tick_vals}")
-    print(f"x_tick_labels: {x_tick_labels}")
-
-
-    sns.pointplot(data=sep_df, x='ISI_num', y='probeLum',
-                  hue='vis_field',
-                  style='p_name',
-                  scale=1.25,
-                  errorbar='se', capsize=.05,
-                  )
-
-    sns.lineplot(data=sep_df, x='ISI_num', y='probeLum',
-                 hue='vis_field',
-                 style='p_name',
-                 dashes=False,
-                 alpha=.3,
-                 legend=False
-                 )
-
-    ax = plt.gca()  # to get the axis
-    ax.set_xticks(x_tick_vals)
-    ax.set_xticklabels(x_tick_labels)
-    plt.title(f'Sep {this_sep}: compare UVF & LVF\n(Error bars: SE of Participant thresholds)')
-    ax.set_xlabel('ISI')
-    ax.set_ylabel('Threshold')
-    plt.savefig(os.path.join(exp_path, f'exp1a_sep{this_sep}_VFs'))
-    plt.show()
-
-
-print('\nexp1a_analysis_pipe_UVF_LVF finished\n')
+print('\nRicco_Bloch_analysis_pipe_UVF_LVF finished\n')

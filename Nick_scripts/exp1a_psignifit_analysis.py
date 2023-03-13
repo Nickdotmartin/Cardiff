@@ -1162,7 +1162,7 @@ def plot_diff_from_conc_lineplot(ave_DfC_df, error_df, fig_title=None,
                                    marker='.', linewidth=.5, markersize=4)
         legend_handles_list.append(leg_handle)
 
-    ax.legend(handles=legend_handles_list, fontsize=6, title='ISI', framealpha=.5)
+    ax.legend(handles=legend_handles_list, fontsize=6, title='separation', framealpha=.5)
 
 
     plt.axhline(y=0, color='lightgrey', linestyle='dashed')
@@ -1519,8 +1519,12 @@ def plot_n_sep_thr_w_scatter(all_thr_df, thr_col='probeLum', exp_ave=False, fig_
         print(f'input: all_thr_df: \n{all_thr_df}')
 
     # just_thr_df = all_thr_df.loc[:, 'ISI 999':]
-    if 'Concurrent' in list(all_thr_df.columns):
+    all_thr_cols_list = list(all_thr_df.columns)
+    if 'Concurrent' in all_thr_cols_list:
         just_thr_df = all_thr_df.loc[:, 'Concurrent':]
+    elif 'ISI_-1' in all_thr_cols_list:
+        cond_idx = all_thr_cols_list.index('ISI_-1')
+        just_thr_df = all_thr_df.iloc[:, cond_idx:]
     else:
         just_thr_df = all_thr_df.iloc[:, 2:]
 
@@ -2936,10 +2940,10 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
         if n_trimmed is not None:
             fig3a_save_name = f'diff_from_conc_TM{n_trimmed}.png'
-            fig3a_title = f'{ave_over} ISI different in threshold from concurrent\n(n={ave_over_n}, trim={n_trimmed}).'
+            fig3a_title = f'{ave_over} ISI difference in threshold from concurrent\n(n={ave_over_n}, trim={n_trimmed}).'
         else:
             fig3a_save_name = 'diff_from_conc.png'
-            fig3a_title = f'{ave_over} ISI different in threshold from concurrent\n(n={ave_over_n})'
+            fig3a_title = f'{ave_over} ISI difference in threshold from concurrent\n(n={ave_over_n})'
 
         ave_DfC_df = pd.read_csv(os.path.join(save_path, ave_DfC_name))
         error_DfC_df = pd.read_csv(os.path.join(save_path, error_DfC_name))
