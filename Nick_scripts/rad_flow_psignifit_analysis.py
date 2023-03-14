@@ -3033,7 +3033,10 @@ def e_average_exp_data(exp_path, p_names_list,
     if exp_type == 'Ricco':
         groupby_col = 'stair_names'
         sort_rows = False
-    if exp_type == 'Ricco_v5':
+    elif exp_type == 'Ricco_v5':
+        groupby_col = 'separation'
+        sort_rows = False
+    elif exp_type == 'Ricco_v6':
         groupby_col = 'separation'
         sort_rows = False
     elif exp_type == 'Bloch':
@@ -3069,6 +3072,8 @@ def e_average_exp_data(exp_path, p_names_list,
         sort_rows = True
 
     exp_ave_thr_df = groupby_sep_df.groupby(groupby_col, sort=sort_rows).mean()
+    exp_ave_thr_df = exp_ave_thr_df.sort_values(by=groupby_col)
+
     if verbose:
         print(f'\nexp_ave_thr_df:\n{exp_ave_thr_df}')
 
