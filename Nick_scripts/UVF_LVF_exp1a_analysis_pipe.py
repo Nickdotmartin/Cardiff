@@ -664,6 +664,55 @@ plt.savefig(save_as)
 plt.show()
 
 
+'''just concurrent differences - mean and per participant'''
+conc_diff_df = diff_df[diff_df['ISI'] == 'conc']
+print(f"conc_diff_df ({conc_diff_df.shape}):\n{conc_diff_df}")
+
+x_tick_vals = conc_diff_df['cond_num'].unique()
+# sort variables by sorted(neg_sep_num_list) order
+neg_sep_num_array = np.array(x_tick_vals)
+print(f"\nneg_sep_num_array: {neg_sep_num_array}")
+sort_index = np.argsort(x_tick_vals)
+print(f"sort_index: {sort_index}")
+
+x_tick_vals = [x_tick_vals[i] for i in sort_index]
+print(f"x_tick_vals: {x_tick_vals}")
+
+x_tick_labels = conc_diff_df['cond_num'].unique()
+x_tick_labels = [x_tick_labels[i] for i in sort_index]
+x_tick_labels = ['1pr' if i == 20 else i for i in x_tick_labels]
+print(f"x_tick_labels: {x_tick_labels}")
+
+# plot participant and mean differences.
+fig, ax = plt.subplots(figsize=(10, 6))
+
+sns.lineplot(data=conc_diff_df, x='cond_num', y='thr_diff', hue='p_name',
+             alpha=.7)
+
+sns.pointplot(data=conc_diff_df, x='cond_num', y='thr_diff',
+              estimator=np.mean, errorbar='se',
+              markers='.',
+              errwidth=1, capsize=.2, color='black')
+
+
+fig_title = f'Concurrent: diff UVF - LVF\n' \
+            f'(Errors are SEs of means collapsed across participants)'
+plt.title(fig_title)
+x_axis = 'Probe separation (diag pixels)'
+ax.set_xlabel(x_axis)
+y_axis = 'Threshold different (UVF - LVF)'
+ax.set_ylabel(y_axis)
+ax.set_xticks(x_tick_vals)
+ax.set_xticklabels(x_tick_labels)
+ax.axhline(y=0, linestyle="-.", color='lightgrey')  # add dotted line at zero
+
+save_as = os.path.join(exp_path, 'conc_diff_vfs.png')
+plt.savefig(save_as)
+plt.show()
+
+
+
+
 '''fig 3: make ISI plots'''
 print("\nMaking ISI plots")
 

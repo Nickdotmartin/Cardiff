@@ -1,12 +1,13 @@
 import os
 import numpy as np
 import pandas as pd
+import matplotlib.lines as mlines
 import matplotlib.pyplot as plt
 import seaborn as sns
 from exp1a_psignifit_analysis import a_data_extraction, b3_plot_staircase, c_plots, \
     d_average_participant, e_average_exp_data, make_average_plots, make_long_df, \
     plot_w_errors_no_1probe
-from rad_flow_psignifit_analysis import plot_runs_ave_w_errors
+from rad_flow_psignifit_analysis import plot_runs_ave_w_errors, fig_colours
 from psignifit_tools import get_psignifit_threshold_df, get_psig_thr_w_hue
 from python_tools import which_path, running_on_laptop, switch_path
 
@@ -45,357 +46,357 @@ trim_list = []
 exp_thr = []
 exp_CI_width = []
 
-for p_idx, participant_name in enumerate(participant_list):
-
-    root_path = os.path.join(exp_path, participant_name)
-
-    # search to automatically get run_folder_names
-    dir_list = os.listdir(root_path)
-    run_folder_names = []
-    for i in range(n_runs):  # numbers 0 to 11
-        check_dir = f'{participant_name}_{i + analyse_from_run}'  # numbers 1 to 12
-        if check_dir in dir_list:
-            run_folder_names.append(check_dir)
-
-    if len(run_folder_names) > 0:
-        print("running analysis for:")
-        for i in run_folder_names:
-            print(i)
-    else:
-        print("no run folders found")
-
-
-    # add RUNDATA-sorted to all_data
-    all_data = []
-
-    for run_idx, run_dir in enumerate(run_folder_names):
-
-        print(f'\ncompiling analysis for {participant_name}, {run_dir}, {participant_name}_{run_idx+1}\n')
-        save_path = f'{root_path}{os.sep}{run_dir}'
-
-        # don't delete this (participant_name = participant_name),
-        # needed to ensure names go name1, name2, name3 not name1, name12, name123
-        p_name = participant_name
-
-        # '''a'''
-        p_name = f'{participant_name}_{run_idx+1}_output.csv'
-        # p_name = f'{participant_name}{run_idx+1}'
-        # isi_list = [-1, 0, 2, 4, 6, 9, 12, 24]
-
-        if os.path.isfile(os.path.join(save_path, 'RUNDATA-sorted.xlsx')):
-            run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
-        elif os.path.isfile(os.path.join(save_path, p_name)):
-            run_data_path = os.path.join(save_path, p_name)
-        elif os.path.isfile(os.path.join(save_path, f'{run_dir}_output.csv')):
-            run_data_path = os.path.join(save_path, f'{run_dir}_output.csv')
-        elif os.path.isfile(os.path.join(save_path, f'{participant_name}_output.csv')):
-            run_data_path = os.path.join(save_path, f'{participant_name}_output.csv')
-        else:
-            raise FileNotFoundError(f'{participant_name}, run_dir {run_dir}')
-
-        # run_data_path = f'{save_path}{os.sep}RUNDATA-sorted.xlsx'
-
-        # run_data_path = os.path.join(save_path, )
-
-        if run_data_path[-4:] == 'xlsx':
-            run_data_df = pd.read_excel(run_data_path, engine='openpyxl',
-                                        # usecols=['ISI',
-                                        #          'stair',
-                                        #          'separation',
-                                        #          # 'group',
-                                        #          'probeLum', 'trial_response', 'corner']
-                                        )
-        else:
-            run_data_df = pd.read_csv(run_data_path)
-        print(f"run_data_df:\n{run_data_df}")
-
-        # add isi column for multi-indexing
-        if 'run' not in list(run_data_df.columns):
-            run_data_df.insert(0, 'run', int(run_idx+1))
-        # if verbose:
-        print(f'run_data_df:\n{run_data_df.head()}')
-
-        # get column names to use on all_data_df
-        column_names = list(run_data_df)
-
-        # add to all_data
-        all_data.append(run_data_df)
-
-    # create all_data_df - reshape to 2d
-    all_data_shape = np.shape(all_data)
-    print(f'all_data_shape:\n{all_data_shape}')
-
-    if len(np.shape(all_data)) == 2:
-        sheets, rows, columns = np.shape(all_data)
-        all_data = np.reshape(all_data, newshape=(sheets * rows, columns))
-        # if verbose:
-        print(f'all_data reshaped from {all_data_shape} to {np.shape(all_data)}')
-        all_data_df = pd.DataFrame(all_data, columns=column_names)
-    else:
-        all_data_df = pd.concat(all_data, ignore_index=True)
-
-    visual_field_list = ['UVF' if i < 200 else 'LVF' for i in all_data_df['corner'].to_list()]
-    all_data_df['vis_field'] = visual_field_list
-    # if verbose:
-    print(f"all_data_df:\n{all_data_df}")
-
-    sep_list = sorted(list(all_data_df['separation'].unique()))
-    print(f"sep_list: {sep_list}")
-
-
-    # # if save_all_data:
-    save_name = 'P_all_runs_master_output.csv'
-    save_csv_path = os.path.join(root_path, save_name)
-    # # if verbose:
-    print(f"\nsaving all_data_df to save_csv_path: {save_csv_path}")
-    all_data_df.to_csv(save_csv_path, index=False)
-
-
-
-    all_data_df = pd.read_csv(os.path.join(root_path, 'P_all_runs_master_output.csv'))
-
-    vis_field_names = ['UVF', 'LVF']
-
-
-    both_vfs_thr = []
-    both_vfs_CI_width = []
-
-    for idx, vis_field_name in enumerate(vis_field_names):
-
-
-        print(f'Running psignifit for {vis_field_name}')
-
-        vis_field_df = all_data_df[all_data_df['vis_field'] == vis_field_name]
-        print(vis_field_df)
-
-        isi_list = sorted(list(vis_field_df['ISI'].unique()))
-        print(f"isi_list: {isi_list}")
-
-        sep_list = sorted(list(vis_field_df['separation'].unique()))
-        print(f"sep_list: {sep_list}")
-
-
-
-
-        '''get psignifit thresholds df - use stairs as sep levels rather than using groups'''
-
-        thr_df = get_psignifit_threshold_df(root_path=exp_path,
-                                            p_run_name=participant_name,
-                                            csv_name=vis_field_df,
-                                            n_bins=9, q_bins=True,
-                                            thr_col='probeLum',
-                                            sep_col='separation', sep_list=sep_list,
-                                            isi_col='ISI', isi_list=isi_list,
-                                            conf_int=True, thr_type='Bayes',
-                                            plot_both_curves=False,
-                                            # cols_to_add_dict=None, save_name=f'psignifit_{vis_field_name}_ISI{ISI}_sep{separation}',
-                                            cols_to_add_dict=None, save_name=f'psignifit_{vis_field_name}',
-                                            show_plots=False, save_plots=False,
-                                            verbose=True)
-
-        # thr_df['vis_field'] = vis_field_name
-        thr_df.insert(1, 'vis_field', vis_field_name)
-
-        cond_list = thr_df['separation'].to_list()
-        if vis_field_name == 'LVF':
-            cond_list = [-.01 if i == 0 else -i for i in cond_list]
-            cond_list = [-.01 if i == 0 else -i for i in cond_list]
-        # thr_df['cond'] = cond_list
-        thr_df.insert(2, 'cond', cond_list)
-
-        print(f'psignifit_{vis_field_name}:\n{thr_df}')
-        column_names = list(thr_df)
-
-        # add this VFs thr and CI width to list to concat with other VF
-        both_vfs_thr.append(thr_df)
-
-        CI_width_filename = f'psignifit_{vis_field_name}_CI_width.csv'
-
-        VF_CI_width_df = pd.read_csv(os.path.join(root_path, CI_width_filename))
-        VF_CI_width_df.insert(1, 'vis_field', vis_field_name)
-        VF_CI_width_df.insert(2, 'cond', cond_list)
-        both_vfs_CI_width.append(VF_CI_width_df)
-
-
-    # create both_vfs_df - reshape to 2d
-    both_vfs_shape = np.shape(both_vfs_thr)
-    sheets, rows, columns = np.shape(both_vfs_thr)
-    both_vfs_thr = np.reshape(both_vfs_thr, newshape=(sheets * rows, columns))
-    print(f'both_vfs_thr reshaped from {both_vfs_shape} to {np.shape(both_vfs_thr)}')
-    both_vfs_df = pd.DataFrame(both_vfs_thr, columns=column_names)
-    print(f"both_vfs_df:\n{both_vfs_df}")
-
-    save_name = 'psignifit_both_vfs.csv'
-    save_csv_path = os.path.join(root_path, save_name)
-    print(f"\nsaving all_data_df to save_csv_path:\n{save_csv_path}")
-    both_vfs_df.to_csv(save_csv_path, index=False)
-
-    # create both_vfs_CI_width_df - reshape to 2d
-    both_vfs_CI_width_shape = np.shape(both_vfs_CI_width)
-    sheets, rows, columns = np.shape(both_vfs_CI_width)
-    both_vfs_CI_width = np.reshape(both_vfs_CI_width, newshape=(sheets * rows, columns))
-    print(f'both_vfs_thr reshaped from {both_vfs_CI_width_shape} to {np.shape(both_vfs_CI_width)}')
-    both_vfs_CI_width_df = pd.DataFrame(both_vfs_CI_width, columns=column_names)
-    print(f"both_vfs_CI_width_df:\n{both_vfs_CI_width_df}")
-
-    save_name = 'both_vfs_CI_width.csv'
-    save_csv_path = os.path.join(root_path, save_name)
-    print(f"\nsaving both_vfs_CI_width to save_csv_path:\n{save_csv_path}")
-    both_vfs_CI_width_df.to_csv(save_csv_path, index=False)
-
-
-    '''Load psignifit_both_vfs and check columns'''
-    # make plot to show UVF and LVF on one axis
-    psig_both_vf_df = pd.read_csv(os.path.join(root_path, 'psignifit_both_vfs.csv'))
-    print(f"\npsig_both_vf_df:\n{psig_both_vf_df}")
-
-    '''Load both_vfs_CI_width_df and check columns'''
-    # make plot to show UVF and LVF on one axis
-    both_vfs_CI_width_df = pd.read_csv(os.path.join(root_path, 'both_vfs_CI_width.csv'))
-    print(f"\nboth_vfs_CI_width_df:\n{both_vfs_CI_width_df}")
-
-    # change 1probe from 99 to 20
-    both_vf_columns = list(psig_both_vf_df.columns)
-    sep_list = psig_both_vf_df['separation'].to_list()
-    sep_list = [20 if i == 99 else i for i in sep_list]
-    psig_both_vf_df['separation'] = sep_list
-    both_vfs_CI_width_df['separation'] = sep_list
-
-    if 'cond' not in both_vf_columns:
-        print("\nMaking cond column")
-        # add condition list which is equal to sep for uVF or negative sep for LVF (with -.01 instead of -0)
-        sep_list = psig_both_vf_df['separation'].to_list()
-        vf_list = psig_both_vf_df['vis_field'].to_list()
-        cond_list = []
-        for vf, sep in zip(vf_list, sep_list):
-            if vf == 'LVF':
-                if sep == 0:
-                    this_cond = -.01
-                else:
-                    this_cond = -sep
-            else:
-                this_cond = sep
-            print(f"vf: {vf}, sep: {sep}, this_cond: {this_cond}")
-            cond_list.append(this_cond)
-        print(f"cond_list: {cond_list}")
-        psig_both_vf_df.insert(2, 'cond', cond_list)
-        both_vfs_CI_width_df.insert(2, 'cond', cond_list)
-
-
-    # change 1probe from 99 to 20
-    cond_list = psig_both_vf_df['cond'].to_list()
-    cond_list = [20 if i == 99 else i for i in cond_list]
-    cond_list = [-20 if i == -99 else i for i in cond_list]
-    psig_both_vf_df['cond'] = cond_list
-    both_vfs_CI_width_df['cond'] = cond_list
-
-
-    save_name = 'psignifit_both_vfs.csv'
-    save_csv_path = os.path.join(root_path, save_name)
-    print(f"\nsaving all_data_df to save_csv_path:\n{save_csv_path}")
-    psig_both_vf_df.to_csv(save_csv_path, index=False)
-
-    save_name = 'both_vfs_CI_width.csv'
-    save_csv_path = os.path.join(root_path, save_name)
-    print(f"\nsaving both_vfs_CI_width to save_csv_path:\n{save_csv_path}")
-    both_vfs_CI_width_df.to_csv(save_csv_path, index=False)
-
-    # add participant name
-    if 'p_name' not in both_vf_columns:
-        psig_both_vf_df.insert(0, 'p_name', participant_name)
-        both_vfs_CI_width_df.insert(0, 'p_name', participant_name)
-
-    print(f"psig_both_vf_df:\n{psig_both_vf_df}")
-    exp_thr.append(psig_both_vf_df)
-    exp_CI_width.append(both_vfs_CI_width_df)
-
-
-# save master dfs
-exp_thr_df = pd.concat(exp_thr)
-save_csv_path = os.path.join(exp_path, 'MASTER_exp_VF_thr.csv')
-exp_thr_df.to_csv(save_csv_path, index=False)
-print(f"exp_thr_df:\n{exp_thr_df}")
-
-# save master dfs
-exp_CI_width_df = pd.concat(exp_CI_width)
-save_csv_path = os.path.join(exp_path, 'MASTER_exp_VF_CI.csv')
-exp_CI_width_df.to_csv(save_csv_path, index=False)
-print(f"exp_CI_width_df:\n{exp_thr_df}")
-
-
-
-
-
-
-
-# # make long form df
-exp_VF_thr_df = pd.read_csv(os.path.join(exp_path, 'MASTER_exp_VF_thr.csv'))
-
-# exp_VF_thr_df.rename({'ISI_-1': 'ISI_99'}, axis=1, inplace=True)
-exp_VF_thr_df.rename({'ISI_-1': 'ISI_999',
-                      'ISI_-2.0': 'ISI_999',
-                      'ISI_0.0': 'ISI_0',
-                      'ISI_8.3333334': 'ISI_8',
-                      'ISI_16.6666667': 'ISI_16',
-                      'ISI_25.0': 'ISI_25',
-                      'ISI_37.5': 'ISI_37',
-                      'ISI_50.0': 'ISI_50',
-                      'ISI_100.0': 'ISI_100',
-                      }, axis=1, inplace=True)
-print(f"\nexp_VF_thr_df:\n{exp_VF_thr_df}")
-
-
-
-exp_VF_thr_long_df = pd.wide_to_long(exp_VF_thr_df, stubnames='ISI_',
-                              i=['vis_field', 'separation', 'p_name', 'cond'],
-                              j='ISI',
-                              sep='')
-# exp_VF_thr_long_df.rename({'ISI val': 'ISI', 'ISI_': 'probeLum'}, axis=1, inplace=True)
-exp_VF_thr_long_df.rename({'ISI_': 'probeLum'}, axis=1, inplace=True)
-exp_VF_thr_long_df.reset_index(inplace=True)
-print(f"\nexp_VF_thr_long_df:\n{exp_VF_thr_long_df}")
-
-# make long form CIs
-exp_VF_CI_df = pd.read_csv(os.path.join(exp_path, 'MASTER_exp_VF_CI.csv'))
-print(f"\nexp_VF_CI_df:\n{exp_VF_CI_df}")
-
-
-# exp_VF_CI_df.rename({'ISI_-1': 'ISI_99'}, axis=1, inplace=True)
-exp_VF_CI_df.rename({'ISI_-1': 'ISI_999',
-                      'ISI_-2.0': 'ISI_999',
-                      'ISI_0.0': 'ISI_0',
-                      'ISI_8.3333334': 'ISI_8',
-                      'ISI_16.6666667': 'ISI_16',
-                      'ISI_25.0': 'ISI_25',
-                      'ISI_37.5': 'ISI_37',
-                      'ISI_50.0': 'ISI_50',
-                      'ISI_100.0': 'ISI_100',
-                      }, axis=1, inplace=True)
-exp_VF_CI_long_df = pd.wide_to_long(exp_VF_CI_df, stubnames='ISI_',
-                              i=['vis_field', 'separation', 'p_name', 'cond'],
-                              j='ISI',
-                              sep='')
-# exp_VF_CI_long_df.rename({'ISI val': 'ISI', 'ISI_': 'probeLum'}, axis=1, inplace=True)
-exp_VF_CI_long_df.rename({'ISI_': 'CI_width'}, axis=1, inplace=True)
-exp_VF_CI_long_df.reset_index(inplace=True)
-print(f"\nexp_VF_CI_long_df:\n{exp_VF_CI_long_df}")
-
-
-# add cond number column
-cond_vals = sorted(exp_VF_thr_long_df['cond'].unique())
-neg_sep_num_dict = dict(zip(cond_vals, list(range(len(cond_vals)))))
-print(f"\nneg_sep_num_dict: {neg_sep_num_dict}")
-
-exp_VF_thr_long_df.insert(4, 'cond_num', exp_VF_thr_long_df["cond"].map(neg_sep_num_dict))
-exp_VF_CI_long_df.insert(4, 'cond_num', exp_VF_CI_long_df["cond"].map(neg_sep_num_dict))
-print(f"\nexp_VF_thr_long_df:\n{exp_VF_thr_long_df}")
-save_csv_path = os.path.join(exp_path, 'MASTER_exp_VF_thr_long.csv')
-exp_VF_thr_long_df.to_csv(save_csv_path, index=False)
-
-save_csv_path = os.path.join(exp_path, 'MASTER_exp_VF_CI_long.csv')
-exp_VF_CI_long_df.to_csv(save_csv_path, index=False)
-
-print('\nPart 1, get threshold for each participant and make master list: finished\n')
+# for p_idx, participant_name in enumerate(participant_list):
+#
+#     root_path = os.path.join(exp_path, participant_name)
+#
+#     # search to automatically get run_folder_names
+#     dir_list = os.listdir(root_path)
+#     run_folder_names = []
+#     for i in range(n_runs):  # numbers 0 to 11
+#         check_dir = f'{participant_name}_{i + analyse_from_run}'  # numbers 1 to 12
+#         if check_dir in dir_list:
+#             run_folder_names.append(check_dir)
+#
+#     if len(run_folder_names) > 0:
+#         print("running analysis for:")
+#         for i in run_folder_names:
+#             print(i)
+#     else:
+#         print("no run folders found")
+#
+#
+#     # add RUNDATA-sorted to all_data
+#     all_data = []
+#
+#     for run_idx, run_dir in enumerate(run_folder_names):
+#
+#         print(f'\ncompiling analysis for {participant_name}, {run_dir}, {participant_name}_{run_idx+1}\n')
+#         save_path = f'{root_path}{os.sep}{run_dir}'
+#
+#         # don't delete this (participant_name = participant_name),
+#         # needed to ensure names go name1, name2, name3 not name1, name12, name123
+#         p_name = participant_name
+#
+#         # '''a'''
+#         p_name = f'{participant_name}_{run_idx+1}_output.csv'
+#         # p_name = f'{participant_name}{run_idx+1}'
+#         # isi_list = [-1, 0, 2, 4, 6, 9, 12, 24]
+#
+#         if os.path.isfile(os.path.join(save_path, 'RUNDATA-sorted.xlsx')):
+#             run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
+#         elif os.path.isfile(os.path.join(save_path, p_name)):
+#             run_data_path = os.path.join(save_path, p_name)
+#         elif os.path.isfile(os.path.join(save_path, f'{run_dir}_output.csv')):
+#             run_data_path = os.path.join(save_path, f'{run_dir}_output.csv')
+#         elif os.path.isfile(os.path.join(save_path, f'{participant_name}_output.csv')):
+#             run_data_path = os.path.join(save_path, f'{participant_name}_output.csv')
+#         else:
+#             raise FileNotFoundError(f'{participant_name}, run_dir {run_dir}')
+#
+#         # run_data_path = f'{save_path}{os.sep}RUNDATA-sorted.xlsx'
+#
+#         # run_data_path = os.path.join(save_path, )
+#
+#         if run_data_path[-4:] == 'xlsx':
+#             run_data_df = pd.read_excel(run_data_path, engine='openpyxl',
+#                                         # usecols=['ISI',
+#                                         #          'stair',
+#                                         #          'separation',
+#                                         #          # 'group',
+#                                         #          'probeLum', 'trial_response', 'corner']
+#                                         )
+#         else:
+#             run_data_df = pd.read_csv(run_data_path)
+#         print(f"run_data_df:\n{run_data_df}")
+#
+#         # add isi column for multi-indexing
+#         if 'run' not in list(run_data_df.columns):
+#             run_data_df.insert(0, 'run', int(run_idx+1))
+#         # if verbose:
+#         print(f'run_data_df:\n{run_data_df.head()}')
+#
+#         # get column names to use on all_data_df
+#         column_names = list(run_data_df)
+#
+#         # add to all_data
+#         all_data.append(run_data_df)
+#
+#     # create all_data_df - reshape to 2d
+#     all_data_shape = np.shape(all_data)
+#     print(f'all_data_shape:\n{all_data_shape}')
+#
+#     if len(np.shape(all_data)) == 2:
+#         sheets, rows, columns = np.shape(all_data)
+#         all_data = np.reshape(all_data, newshape=(sheets * rows, columns))
+#         # if verbose:
+#         print(f'all_data reshaped from {all_data_shape} to {np.shape(all_data)}')
+#         all_data_df = pd.DataFrame(all_data, columns=column_names)
+#     else:
+#         all_data_df = pd.concat(all_data, ignore_index=True)
+#
+#     visual_field_list = ['UVF' if i < 200 else 'LVF' for i in all_data_df['corner'].to_list()]
+#     all_data_df['vis_field'] = visual_field_list
+#     # if verbose:
+#     print(f"all_data_df:\n{all_data_df}")
+#
+#     sep_list = sorted(list(all_data_df['separation'].unique()))
+#     print(f"sep_list: {sep_list}")
+#
+#
+#     # # if save_all_data:
+#     save_name = 'P_all_runs_master_output.csv'
+#     save_csv_path = os.path.join(root_path, save_name)
+#     # # if verbose:
+#     print(f"\nsaving all_data_df to save_csv_path: {save_csv_path}")
+#     all_data_df.to_csv(save_csv_path, index=False)
+#
+#
+#
+#     all_data_df = pd.read_csv(os.path.join(root_path, 'P_all_runs_master_output.csv'))
+#
+#     vis_field_names = ['UVF', 'LVF']
+#
+#
+#     both_vfs_thr = []
+#     both_vfs_CI_width = []
+#
+#     for idx, vis_field_name in enumerate(vis_field_names):
+#
+#
+#         print(f'Running psignifit for {vis_field_name}')
+#
+#         vis_field_df = all_data_df[all_data_df['vis_field'] == vis_field_name]
+#         print(vis_field_df)
+#
+#         isi_list = sorted(list(vis_field_df['ISI'].unique()))
+#         print(f"isi_list: {isi_list}")
+#
+#         sep_list = sorted(list(vis_field_df['separation'].unique()))
+#         print(f"sep_list: {sep_list}")
+#
+#
+#
+#
+#         '''get psignifit thresholds df - use stairs as sep levels rather than using groups'''
+#
+#         thr_df = get_psignifit_threshold_df(root_path=exp_path,
+#                                             p_run_name=participant_name,
+#                                             csv_name=vis_field_df,
+#                                             n_bins=9, q_bins=True,
+#                                             thr_col='probeLum',
+#                                             sep_col='separation', sep_list=sep_list,
+#                                             isi_col='ISI', isi_list=isi_list,
+#                                             conf_int=True, thr_type='Bayes',
+#                                             plot_both_curves=False,
+#                                             # cols_to_add_dict=None, save_name=f'psignifit_{vis_field_name}_ISI{ISI}_sep{separation}',
+#                                             cols_to_add_dict=None, save_name=f'psignifit_{vis_field_name}',
+#                                             show_plots=False, save_plots=False,
+#                                             verbose=True)
+#
+#         # thr_df['vis_field'] = vis_field_name
+#         thr_df.insert(1, 'vis_field', vis_field_name)
+#
+#         cond_list = thr_df['separation'].to_list()
+#         if vis_field_name == 'LVF':
+#             cond_list = [-.01 if i == 0 else -i for i in cond_list]
+#             cond_list = [-.01 if i == 0 else -i for i in cond_list]
+#         # thr_df['cond'] = cond_list
+#         thr_df.insert(2, 'cond', cond_list)
+#
+#         print(f'psignifit_{vis_field_name}:\n{thr_df}')
+#         column_names = list(thr_df)
+#
+#         # add this VFs thr and CI width to list to concat with other VF
+#         both_vfs_thr.append(thr_df)
+#
+#         CI_width_filename = f'psignifit_{vis_field_name}_CI_width.csv'
+#
+#         VF_CI_width_df = pd.read_csv(os.path.join(root_path, CI_width_filename))
+#         VF_CI_width_df.insert(1, 'vis_field', vis_field_name)
+#         VF_CI_width_df.insert(2, 'cond', cond_list)
+#         both_vfs_CI_width.append(VF_CI_width_df)
+#
+#
+#     # create both_vfs_df - reshape to 2d
+#     both_vfs_shape = np.shape(both_vfs_thr)
+#     sheets, rows, columns = np.shape(both_vfs_thr)
+#     both_vfs_thr = np.reshape(both_vfs_thr, newshape=(sheets * rows, columns))
+#     print(f'both_vfs_thr reshaped from {both_vfs_shape} to {np.shape(both_vfs_thr)}')
+#     both_vfs_df = pd.DataFrame(both_vfs_thr, columns=column_names)
+#     print(f"both_vfs_df:\n{both_vfs_df}")
+#
+#     save_name = 'psignifit_both_vfs.csv'
+#     save_csv_path = os.path.join(root_path, save_name)
+#     print(f"\nsaving all_data_df to save_csv_path:\n{save_csv_path}")
+#     both_vfs_df.to_csv(save_csv_path, index=False)
+#
+#     # create both_vfs_CI_width_df - reshape to 2d
+#     both_vfs_CI_width_shape = np.shape(both_vfs_CI_width)
+#     sheets, rows, columns = np.shape(both_vfs_CI_width)
+#     both_vfs_CI_width = np.reshape(both_vfs_CI_width, newshape=(sheets * rows, columns))
+#     print(f'both_vfs_thr reshaped from {both_vfs_CI_width_shape} to {np.shape(both_vfs_CI_width)}')
+#     both_vfs_CI_width_df = pd.DataFrame(both_vfs_CI_width, columns=column_names)
+#     print(f"both_vfs_CI_width_df:\n{both_vfs_CI_width_df}")
+#
+#     save_name = 'both_vfs_CI_width.csv'
+#     save_csv_path = os.path.join(root_path, save_name)
+#     print(f"\nsaving both_vfs_CI_width to save_csv_path:\n{save_csv_path}")
+#     both_vfs_CI_width_df.to_csv(save_csv_path, index=False)
+#
+#
+#     '''Load psignifit_both_vfs and check columns'''
+#     # make plot to show UVF and LVF on one axis
+#     psig_both_vf_df = pd.read_csv(os.path.join(root_path, 'psignifit_both_vfs.csv'))
+#     print(f"\npsig_both_vf_df:\n{psig_both_vf_df}")
+#
+#     '''Load both_vfs_CI_width_df and check columns'''
+#     # make plot to show UVF and LVF on one axis
+#     both_vfs_CI_width_df = pd.read_csv(os.path.join(root_path, 'both_vfs_CI_width.csv'))
+#     print(f"\nboth_vfs_CI_width_df:\n{both_vfs_CI_width_df}")
+#
+#     # change 1probe from 99 to 20
+#     both_vf_columns = list(psig_both_vf_df.columns)
+#     sep_list = psig_both_vf_df['separation'].to_list()
+#     sep_list = [20 if i == 99 else i for i in sep_list]
+#     psig_both_vf_df['separation'] = sep_list
+#     both_vfs_CI_width_df['separation'] = sep_list
+#
+#     if 'cond' not in both_vf_columns:
+#         print("\nMaking cond column")
+#         # add condition list which is equal to sep for uVF or negative sep for LVF (with -.01 instead of -0)
+#         sep_list = psig_both_vf_df['separation'].to_list()
+#         vf_list = psig_both_vf_df['vis_field'].to_list()
+#         cond_list = []
+#         for vf, sep in zip(vf_list, sep_list):
+#             if vf == 'LVF':
+#                 if sep == 0:
+#                     this_cond = -.01
+#                 else:
+#                     this_cond = -sep
+#             else:
+#                 this_cond = sep
+#             print(f"vf: {vf}, sep: {sep}, this_cond: {this_cond}")
+#             cond_list.append(this_cond)
+#         print(f"cond_list: {cond_list}")
+#         psig_both_vf_df.insert(2, 'cond', cond_list)
+#         both_vfs_CI_width_df.insert(2, 'cond', cond_list)
+#
+#
+#     # change 1probe from 99 to 20
+#     cond_list = psig_both_vf_df['cond'].to_list()
+#     cond_list = [20 if i == 99 else i for i in cond_list]
+#     cond_list = [-20 if i == -99 else i for i in cond_list]
+#     psig_both_vf_df['cond'] = cond_list
+#     both_vfs_CI_width_df['cond'] = cond_list
+#
+#
+#     save_name = 'psignifit_both_vfs.csv'
+#     save_csv_path = os.path.join(root_path, save_name)
+#     print(f"\nsaving all_data_df to save_csv_path:\n{save_csv_path}")
+#     psig_both_vf_df.to_csv(save_csv_path, index=False)
+#
+#     save_name = 'both_vfs_CI_width.csv'
+#     save_csv_path = os.path.join(root_path, save_name)
+#     print(f"\nsaving both_vfs_CI_width to save_csv_path:\n{save_csv_path}")
+#     both_vfs_CI_width_df.to_csv(save_csv_path, index=False)
+#
+#     # add participant name
+#     if 'p_name' not in both_vf_columns:
+#         psig_both_vf_df.insert(0, 'p_name', participant_name)
+#         both_vfs_CI_width_df.insert(0, 'p_name', participant_name)
+#
+#     print(f"psig_both_vf_df:\n{psig_both_vf_df}")
+#     exp_thr.append(psig_both_vf_df)
+#     exp_CI_width.append(both_vfs_CI_width_df)
+#
+#
+# # save master dfs
+# exp_thr_df = pd.concat(exp_thr)
+# save_csv_path = os.path.join(exp_path, 'MASTER_exp_VF_thr.csv')
+# exp_thr_df.to_csv(save_csv_path, index=False)
+# print(f"exp_thr_df:\n{exp_thr_df}")
+#
+# # save master dfs
+# exp_CI_width_df = pd.concat(exp_CI_width)
+# save_csv_path = os.path.join(exp_path, 'MASTER_exp_VF_CI.csv')
+# exp_CI_width_df.to_csv(save_csv_path, index=False)
+# print(f"exp_CI_width_df:\n{exp_thr_df}")
+#
+#
+#
+#
+#
+#
+#
+# # # make long form df
+# exp_VF_thr_df = pd.read_csv(os.path.join(exp_path, 'MASTER_exp_VF_thr.csv'))
+#
+# # exp_VF_thr_df.rename({'ISI_-1': 'ISI_99'}, axis=1, inplace=True)
+# exp_VF_thr_df.rename({'ISI_-1': 'ISI_999',
+#                       'ISI_-2.0': 'ISI_999',
+#                       'ISI_0.0': 'ISI_0',
+#                       'ISI_8.3333334': 'ISI_8',
+#                       'ISI_16.6666667': 'ISI_16',
+#                       'ISI_25.0': 'ISI_25',
+#                       'ISI_37.5': 'ISI_37',
+#                       'ISI_50.0': 'ISI_50',
+#                       'ISI_100.0': 'ISI_100',
+#                       }, axis=1, inplace=True)
+# print(f"\nexp_VF_thr_df:\n{exp_VF_thr_df}")
+#
+#
+#
+# exp_VF_thr_long_df = pd.wide_to_long(exp_VF_thr_df, stubnames='ISI_',
+#                               i=['vis_field', 'separation', 'p_name', 'cond'],
+#                               j='ISI',
+#                               sep='')
+# # exp_VF_thr_long_df.rename({'ISI val': 'ISI', 'ISI_': 'probeLum'}, axis=1, inplace=True)
+# exp_VF_thr_long_df.rename({'ISI_': 'probeLum'}, axis=1, inplace=True)
+# exp_VF_thr_long_df.reset_index(inplace=True)
+# print(f"\nexp_VF_thr_long_df:\n{exp_VF_thr_long_df}")
+#
+# # make long form CIs
+# exp_VF_CI_df = pd.read_csv(os.path.join(exp_path, 'MASTER_exp_VF_CI.csv'))
+# print(f"\nexp_VF_CI_df:\n{exp_VF_CI_df}")
+#
+#
+# # exp_VF_CI_df.rename({'ISI_-1': 'ISI_99'}, axis=1, inplace=True)
+# exp_VF_CI_df.rename({'ISI_-1': 'ISI_999',
+#                       'ISI_-2.0': 'ISI_999',
+#                       'ISI_0.0': 'ISI_0',
+#                       'ISI_8.3333334': 'ISI_8',
+#                       'ISI_16.6666667': 'ISI_16',
+#                       'ISI_25.0': 'ISI_25',
+#                       'ISI_37.5': 'ISI_37',
+#                       'ISI_50.0': 'ISI_50',
+#                       'ISI_100.0': 'ISI_100',
+#                       }, axis=1, inplace=True)
+# exp_VF_CI_long_df = pd.wide_to_long(exp_VF_CI_df, stubnames='ISI_',
+#                               i=['vis_field', 'separation', 'p_name', 'cond'],
+#                               j='ISI',
+#                               sep='')
+# # exp_VF_CI_long_df.rename({'ISI val': 'ISI', 'ISI_': 'probeLum'}, axis=1, inplace=True)
+# exp_VF_CI_long_df.rename({'ISI_': 'CI_width'}, axis=1, inplace=True)
+# exp_VF_CI_long_df.reset_index(inplace=True)
+# print(f"\nexp_VF_CI_long_df:\n{exp_VF_CI_long_df}")
+#
+#
+# # add cond number column
+# cond_vals = sorted(exp_VF_thr_long_df['cond'].unique())
+# neg_sep_num_dict = dict(zip(cond_vals, list(range(len(cond_vals)))))
+# print(f"\nneg_sep_num_dict: {neg_sep_num_dict}")
+#
+# exp_VF_thr_long_df.insert(4, 'cond_num', exp_VF_thr_long_df["cond"].map(neg_sep_num_dict))
+# exp_VF_CI_long_df.insert(4, 'cond_num', exp_VF_CI_long_df["cond"].map(neg_sep_num_dict))
+# print(f"\nexp_VF_thr_long_df:\n{exp_VF_thr_long_df}")
+# save_csv_path = os.path.join(exp_path, 'MASTER_exp_VF_thr_long.csv')
+# exp_VF_thr_long_df.to_csv(save_csv_path, index=False)
+#
+# save_csv_path = os.path.join(exp_path, 'MASTER_exp_VF_CI_long.csv')
+# exp_VF_CI_long_df.to_csv(save_csv_path, index=False)
+#
+# print('\nPart 1, get threshold for each participant and make master list: finished\n')
 
 
 
@@ -601,7 +602,10 @@ for p_name in p_name_list:
     print(f"x_tick_labels: {x_tick_labels}")
 
     fig, ax = plt.subplots(figsize=(10, 6))
-    for vis_field in vf_list:
+    my_colours = fig_colours(len(vf_list))
+    legend_handles_list = []
+
+    for idx, vis_field in enumerate(vf_list):
         # dfs just for this vis field
         VF_thr_df = p_long_thr_df[p_long_thr_df['vis_field'] == vis_field]
         VF_err_df = p_long_err_df[p_long_err_df['vis_field'] == vis_field]
@@ -610,6 +614,13 @@ for p_name in p_name_list:
                     yerr=VF_err_df['halved_CI'],
                     marker='o', lw=3, elinewidth=2,
                     capsize=cap_size)
+
+        # add legend for visual field colours
+        leg_handle = mlines.Line2D([], [], color=my_colours[idx], label=vis_field,
+                                   marker='.', linewidth=.5, markersize=4)
+        legend_handles_list.append(leg_handle)
+
+    ax.legend(handles=legend_handles_list, fontsize=10, title='Vis field', framealpha=.5)
 
     ax = plt.gca()  # to get the axis
     ax.set_xticks(x_tick_vals)
@@ -621,9 +632,8 @@ for p_name in p_name_list:
     plt.show()
 
 
-
-'''Fig 2, difference between UVF and LVF'''
-'''Plot shoing difference in VF for each ISI'''
+'''Fig 2, difference between UVF and LVF, per participant and mean'''
+# todo: can use these dfs for participant thr plots.  Might be more efficient
 print(f"\nplot diff between VFs for each ISI")
 # for each separation value, subtract LFV from UVF for difference score.
 
@@ -633,37 +643,39 @@ if 'dur' not in get_diff_df.columns.tolist():
 get_diff_df = get_diff_df.drop('ISI', axis=1)
 print(f"get_diff_df ({get_diff_df.shape}):\n{get_diff_df}")
 
-# made different dfs for upper and lower vf
+# Lower VF df
 LVF_df = get_diff_df.loc[get_diff_df['cond_num'] < 1]
-cond_num_list = LVF_df['cond_num'].tolist()
-dur_val_list = LVF_df.pop('dur').tolist()
-LVF_df = LVF_df.drop(['cond', 'vis_field', 'p_name'], axis=1)
-LVF_df.set_index('separation', inplace=True)
-
-UVF_df = get_diff_df.loc[get_diff_df['cond_num'] >= 1]
-UVF_df = UVF_df.drop(['cond', 'dur', 'vis_field', 'p_name'], axis=1)
-UVF_df.set_index('separation', inplace=True)
+LVF_df.sort_values(by=['dur_num', 'p_name'])
+LVF_df = LVF_df.drop(['vis_field', 'cond_num', 'cond'], axis=1)
+LVF_df.rename({'probeLum': 'LVF_thr'}, axis=1, inplace=True)
+LVF_df.reset_index(inplace=True, drop=True)
 print(f"LVF_df ({LVF_df.shape}):\n{LVF_df}")
+
+# upper visual field df
+UVF_df = get_diff_df.loc[get_diff_df['cond_num'] >= 1]
+UVF_df.sort_values(by=['dur_num', 'p_name'])
+UVF_df = UVF_df.drop(['vis_field', 'cond_num', 'cond'], axis=1)
+UVF_df.rename({'probeLum': 'UVF_thr'}, axis=1, inplace=True)
+UVF_df.reset_index(inplace=True, drop=True)
 print(f"UVF_df ({UVF_df.shape}):\n{UVF_df}")
 
-# plot difference.
-diff_df = UVF_df.subtract(LVF_df, fill_value=0)
+# diff_df has difference and raw scores for upper and lower.
+diff_df = pd.merge(LVF_df, UVF_df, on=['separation', 'p_name', 'dur_num', 'dur'])
+diff_df['thr_diff'] = diff_df['UVF_thr'] - diff_df['LVF_thr']
+diff_df.to_csv(os.path.join(exp_path, 'diff_df_test.csv'))
 print(f"diff_df ({diff_df.shape}):\n{diff_df}")
 
-diff_df['cond_num'] = cond_num_list
-if 'dur' not in list(diff_df.columns):
-    diff_df.insert(1, 'dur', dur_val_list)
-diff_df = diff_df.rename(columns={'probeLum': 'thr_diff'})
-
-pos_sep_vals = sorted(diff_df.index.unique())
-diff_df.reset_index(inplace=True)
-print(f"diff_df ({diff_df.shape}):\n{diff_df}")
-
-
+# plot participant and mean differences.
 fig, ax = plt.subplots(figsize=(10, 6))
+
+sns.lineplot(data=diff_df, x='dur', y='thr_diff', hue='p_name',
+             alpha=.7)
+
 sns.pointplot(data=diff_df, x='dur', y='thr_diff',
-              estimator=np.mean, errorbar='se', dodge=True, markers='.',
-              errwidth=1, capsize=.2)
+              estimator=np.mean, errorbar='se',
+              markers='.',
+              errwidth=1, capsize=.2, color='black')
+
 
 fig_title = f'{exp_name}: diff UVF - LVF\n' \
             f'(Errors are SEs of means collapsed across participants)'
