@@ -704,6 +704,7 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=9, q_bins
 
     if cols_to_add_dict is not None:
         for idx, (header, col_vals) in enumerate(cols_to_add_dict.items()):
+            print(f"idx: {idx}, header: {header}, col_vals: {col_vals}")
             thr_df.insert(idx+1, header, col_vals)
             if conf_int:
                 CI_limits_df.insert(idx+1, header, col_vals)

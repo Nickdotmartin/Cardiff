@@ -3039,6 +3039,9 @@ def e_average_exp_data(exp_path, p_names_list,
     elif exp_type == 'Ricco_v6':
         groupby_col = 'separation'
         sort_rows = False
+    elif exp_type in ['Ricco_vall', 'Ricco_all']:
+        groupby_col = 'separation'
+        sort_rows = False
     elif exp_type == 'Bloch':
         groupby_sep_df['stair_names'] = groupby_sep_df['cond_type'] + "_" + groupby_sep_df["ISI"].map(str)
         groupby_sep_df = groupby_sep_df.drop('cond_type', axis=1)

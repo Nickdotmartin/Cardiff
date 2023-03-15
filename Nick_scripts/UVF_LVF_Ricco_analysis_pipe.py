@@ -24,15 +24,11 @@ Then run psignifit on this
 
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
-# exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data'
-# participant_list = ['aa', 'bb', 'cc', 'dd', 'ee']
-# exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/EXP1_sep4_5'
-# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\EXP1_sep4_5"
-# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp3_Ricco_NM_v4"
 exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff"
 # exp_name = 'Exp3_Ricco_NM_v4'
 # exp_name = 'Exp3_Ricco_NM_v5'
-exp_name = 'Exp3_Ricco_v6'
+# exp_name = 'Exp3_Ricco_v6'
+exp_name = 'Exp3_Ricco_all'
 exp_path = os.path.join(exp_path, exp_name)
 convert_path1 = os.path.normpath(exp_path)
 if running_on_laptop():
@@ -40,7 +36,8 @@ if running_on_laptop():
 exp_path = convert_path1
 
 # participant_list = ['Kris', 'Simon', 'Nick', 'Kim']  # ['Kim', 'Kris', 'Simon', 'Nick']
-participant_list = ['Simon']  # ['Kim', 'Kris', 'Simon', 'Nick']
+participant_list = ['Kristian', 'Nick', 'Simon', 'Kim']  # , 'bb', 'cc', 'dd', 'ee']
+
 p_idx_plus = 1
 
 n_runs = 12
@@ -226,12 +223,6 @@ for p_idx, participant_name in enumerate(participant_list):
         VF_CI_width_df.insert(2, 'neg_sep', neg_sep_list)
         both_vfs_CI_width.append(VF_CI_width_df)
 
-        # progress_df = pd.concat(both_vfs_thr)
-        # save_name = 'psignifit_progress.csv'
-        # save_csv_path = os.path.join(root_path, save_name)
-        # print(f"\nsaving progress_df to save_csv_path:\n{save_csv_path}")
-        # progress_df.to_csv(save_csv_path, index=False)
-
 
     # create both_vfs_df - reshape to 2d
     both_vfs_shape = np.shape(both_vfs_thr)
@@ -352,17 +343,11 @@ print(f"\nexp_VF_thr_long_df ({exp_VF_thr_long_df.shape}):\n{exp_VF_thr_long_df}
 sep_vals_list = exp_VF_thr_long_df['separation'].unique()
 print(f"sep_vals_list: {sep_vals_list}")
 
-# probe_vert_list = []
-# probe_name_list = []
+
 pixel_mm_deg_dict = get_pixel_mm_deg_values(monitor_name='asus_cal')
-# print('pixel_mm_deg_dict.items()')
 print_nested_round_floats(pixel_mm_deg_dict, 'pixel_mm_deg_dict')
-# for k, v in pixel_mm_deg_dict.items():
-#     print(k, v)
 dva_dict = {}
 for sep_cond in sep_vals_list:
-    # probe_vertices = make_ricco_vertices(sep_cond, balanced=balanced_probes)
-    # if sep_cond == 99:
     sep_cond = int(sep_cond)
 
     if sep_cond in [20, 99, '1pr']:
@@ -375,16 +360,9 @@ for sep_cond in sep_vals_list:
     probe_name = f"sep_{sep_cond}"
     dva_dict[sep_cond] = len_pix * pixel_mm_deg_dict['diag_deg']
 
-    # dva_dict[sep_cond] = {}
-    # dva_dict[sep_cond]['diag_deg'] = len_pix * pixel_mm_deg_dict['diag_deg']
-    # dva_dict[sep_cond]['probe_name'] = probe_name
 
 print_nested_round_floats(dva_dict, 'dva_dict')
 
-# for k, v in dva_dict.items():
-#     print(k, v)
-# print(f"probe_name_list:\n{probe_name_list}")
-# # print(f"probe_vert_list:\n{probe_vert_list}")
 
 # make long form CIs
 exp_VF_CI_long_df = pd.read_csv(os.path.join(exp_path, 'MASTER_exp_VF_CI.csv'))
@@ -519,7 +497,6 @@ p_name_list = fig_1_thr_df['p_name'].unique().tolist()
 print(f"p_name_list: {p_name_list}")
 
 # use wide means df
-# fig_1_thr_df = exp_mean_thr_long_df.pivot(index=['neg_sep_num', 'separation', 'neg_sep'], columns='dur', values='probeLum')
 fig_1_thr_df = fig_1_thr_df.pivot(index='p_name',
                                   columns=['neg_sep_num', 'neg_sep', 'separation', 'sep_num', 'vis_field', 'dva', 'dva_num'],
                                   values='probeLum')
