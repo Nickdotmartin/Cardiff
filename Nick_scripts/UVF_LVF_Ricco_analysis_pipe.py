@@ -711,206 +711,207 @@ print(f"\nexp_mean_thr_long_df:\n{exp_mean_thr_long_df}")
 #
 #
 #
-# '''Fig 2, difference between UVF and LVF, per participant and mean'''
-# # todo: can use these dfs for participant thr plots.  Might be more efficient
-# print(f"\nplot diff between VFs for each ISI")
-# # for each separation value, subtract LFV from UVF for difference score.
-# get_diff_df = exp_VF_thr_long_df.copy()
-# print(f"get_diff_df ({get_diff_df.shape}):\n{list(get_diff_df.columns)}\n{get_diff_df}")
+'''Fig 2, difference between UVF and LVF, per participant and mean'''
+# todo: can use these dfs for participant thr plots.  Might be more efficient
+print(f"\nplot diff between VFs for each ISI")
+# for each separation value, subtract LFV from UVF for difference score.
+get_diff_df = exp_VF_thr_long_df.copy()
+print(f"get_diff_df ({get_diff_df.shape}):\n{list(get_diff_df.columns)}\n{get_diff_df}")
+
+# Lower VF df
+LVF_df = get_diff_df.loc[get_diff_df['neg_sep'] < 0]
+LVF_df.sort_values(by=['sep_num', 'p_name'])
+LVF_df = LVF_df.drop(['vis_field', 'neg_sep_num', 'neg_sep'], axis=1)
+LVF_df.rename({'probeLum': 'LVF_thr'}, axis=1, inplace=True)
+LVF_df.reset_index(inplace=True, drop=True)
+print(f"LVF_df ({LVF_df.shape}):\n{LVF_df}")
+
+# upper visual field df
+UVF_df = get_diff_df.loc[get_diff_df['neg_sep'] >= 0]
+UVF_df.sort_values(by=['sep_num', 'p_name'])
+UVF_df = UVF_df.drop(['vis_field', 'neg_sep_num', 'neg_sep'], axis=1)
+UVF_df.rename({'probeLum': 'UVF_thr'}, axis=1, inplace=True)
+UVF_df.reset_index(inplace=True, drop=True)
+print(f"UVF_df ({UVF_df.shape}):\n{UVF_df}")
+
+# diff_df has difference and raw scores for upper and lower.
+diff_df = pd.merge(LVF_df, UVF_df, on=['p_name', 'sep_num', 'separation', 'dva_num', 'dva'])
+diff_df['thr_diff'] = diff_df['UVF_thr'] - diff_df['LVF_thr']
+diff_df.to_csv(os.path.join(exp_path, 'diff_df_test.csv'))
+print(f"diff_df ({diff_df.shape}):\n{diff_df}")
+
+# plot participant and mean differences.
+fig, ax = plt.subplots(figsize=(10, 6))
+
+sns.pointplot(data=diff_df, x='sep_num', y='thr_diff',
+              estimator=np.mean, errorbar='se',
+              markers='.',
+              errwidth=.5, capsize=.1, color='dimgrey')
+
+sns.lineplot(data=diff_df, x='sep_num', y='thr_diff', hue='p_name',
+             alpha=.7)
+
+
+
+fig_title = f'{exp_name}: diff UVF - LVF\n' \
+            f'(Errors are SEs of means collapsed across participants)'
+plt.title(fig_title)
+x_axis = 'Probe size (equivallent to separation from Exp 1)'
+ax.set_xlabel(x_axis)
+y_axis = 'Threshold different (UVF - LVF)'
+ax.set_ylabel(y_axis)
+ax.set_xticks(list(diff_df['sep_num']))
+ax.set_xticklabels(['1pr' if i == 20 else i for i in list(diff_df['separation'])])
+ax.axhline(y=0, linestyle="-.", color='lightgrey')  # add dotted line at zero
+
+save_as = os.path.join(exp_path, 'diff_vfs.png')
+plt.savefig(save_as)
+plt.show()
+
+# # make ricco plots
+# # exp_VF_thr_long_df = pd.read_csv(os.path.join(exp_path, 'MASTER_exp_VF_thr_long.csv'))
+# print(f"\nexp_VF_thr_long_df:\n{exp_VF_thr_long_df}")
+# print(f"\nexp_VF_CI_long_df:\n{exp_VF_CI_long_df}")
 #
-# # Lower VF df
-# LVF_df = get_diff_df.loc[get_diff_df['neg_sep'] < 0]
-# LVF_df.sort_values(by=['sep_num', 'p_name'])
-# LVF_df = LVF_df.drop(['vis_field', 'neg_sep_num', 'neg_sep'], axis=1)
-# LVF_df.rename({'probeLum': 'LVF_thr'}, axis=1, inplace=True)
-# LVF_df.reset_index(inplace=True, drop=True)
-# print(f"LVF_df ({LVF_df.shape}):\n{LVF_df}")
+# ricco_thr_df = exp_VF_thr_long_df.copy(deep=True)
+# ricco_CI_df = exp_VF_CI_long_df.copy(deep=True)
 #
-# # upper visual field df
-# UVF_df = get_diff_df.loc[get_diff_df['neg_sep'] >= 0]
-# UVF_df.sort_values(by=['sep_num', 'p_name'])
-# UVF_df = UVF_df.drop(['vis_field', 'neg_sep_num', 'neg_sep'], axis=1)
-# UVF_df.rename({'probeLum': 'UVF_thr'}, axis=1, inplace=True)
-# UVF_df.reset_index(inplace=True, drop=True)
-# print(f"UVF_df ({UVF_df.shape}):\n{UVF_df}")
+# ricco_thr_df.rename({'probeLum': 'thr',
+#                      'dva': 'diag_deg'}, axis=1, inplace=True)
+# ricco_CI_df.rename({'halved_CI': 'thr',
+#                      'dva': 'diag_deg'}, axis=1, inplace=True)
 #
-# # diff_df has difference and raw scores for upper and lower.
-# diff_df = pd.merge(LVF_df, UVF_df, on=['p_name', 'sep_num', 'separation', 'dva_num', 'dva'])
-# diff_df['thr_diff'] = diff_df['UVF_thr'] - diff_df['LVF_thr']
-# diff_df.to_csv(os.path.join(exp_path, 'diff_df_test.csv'))
-# print(f"diff_df ({diff_df.shape}):\n{diff_df}")
+# if 'delta_I' not in ricco_thr_df.columns.tolist():
+#     thr_col = ricco_thr_df['thr'].to_list()
+#     bgLum = 21.2
+#     delta_I_col = [i - bgLum for i in thr_col]
+#     ricco_thr_df.insert(8, 'delta_I', delta_I_col)
 #
-# # plot participant and mean differences.
-# fig, ax = plt.subplots(figsize=(10, 6))
+# # just add in CIs to dela I column
+# if 'delta_I' not in ricco_CI_df.columns.tolist():
+#     thr_col = ricco_CI_df['thr'].to_list()
+#     # bgLum = 21.2
+#     # delta_I_col = [i - bgLum for i in thr_col]
+#     # ricco_CI_df.insert(8, 'delta_I', delta_I_col)
+#     ricco_CI_df.insert(8, 'delta_I', thr_col)
 #
-# sns.lineplot(data=diff_df, x='sep_num', y='thr_diff', hue='p_name',
-#              alpha=.7)
+# p_name_list = ricco_thr_df['p_name'].unique().tolist()
+# print(f"p_name_list: {p_name_list}")
 #
-# sns.pointplot(data=diff_df, x='sep_num', y='thr_diff',
-#               estimator=np.mean, errorbar='se',
-#               markers='.',
-#               errwidth=1, capsize=.2, color='black')
+# vf_list = ricco_thr_df['vis_field'].unique().tolist()
+# print(f"vf_list: {vf_list}")
 #
 #
-# fig_title = f'{exp_name}: diff UVF - LVF\n' \
-#             f'(Errors are SEs of means collapsed across participants)'
-# plt.title(fig_title)
-# x_axis = 'Probe size (equivallent to separation from Exp 1)'
-# ax.set_xlabel(x_axis)
-# y_axis = 'Threshold different (UVF - LVF)'
-# ax.set_ylabel(y_axis)
-# ax.set_xticks(list(diff_df['sep_num']))
-# ax.set_xticklabels(['1pr' if i == 20 else i for i in list(diff_df['separation'])])
-# ax.axhline(y=0, linestyle="-.", color='lightgrey')  # add dotted line at zero
+# for p_name in p_name_list:
+#     print(f"p_name: {p_name}")
+#     p_name_thr_df = ricco_thr_df[ricco_thr_df['p_name'] == p_name]
+#     p_name_CI_df = ricco_CI_df[ricco_CI_df['p_name'] == p_name]
+#     print(f"\np_name_thr_df:\n{p_name_thr_df}")
 #
-# save_as = os.path.join(exp_path, 'diff_vfs.png')
-# plt.savefig(save_as)
-# plt.show()
-
-# make ricco plots
-# exp_VF_thr_long_df = pd.read_csv(os.path.join(exp_path, 'MASTER_exp_VF_thr_long.csv'))
-print(f"\nexp_VF_thr_long_df:\n{exp_VF_thr_long_df}")
-print(f"\nexp_VF_CI_long_df:\n{exp_VF_CI_long_df}")
-
-ricco_thr_df = exp_VF_thr_long_df.copy(deep=True)
-ricco_CI_df = exp_VF_CI_long_df.copy(deep=True)
-
-ricco_thr_df.rename({'probeLum': 'thr',
-                     'dva': 'diag_deg'}, axis=1, inplace=True)
-ricco_CI_df.rename({'halved_CI': 'thr',
-                     'dva': 'diag_deg'}, axis=1, inplace=True)
-
-if 'delta_I' not in ricco_thr_df.columns.tolist():
-    thr_col = ricco_thr_df['thr'].to_list()
-    bgLum = 21.2
-    delta_I_col = [i - bgLum for i in thr_col]
-    ricco_thr_df.insert(8, 'delta_I', delta_I_col)
-
-# just add in CIs to dela I column
-if 'delta_I' not in ricco_CI_df.columns.tolist():
-    thr_col = ricco_CI_df['thr'].to_list()
-    # bgLum = 21.2
-    # delta_I_col = [i - bgLum for i in thr_col]
-    # ricco_CI_df.insert(8, 'delta_I', delta_I_col)
-    ricco_CI_df.insert(8, 'delta_I', thr_col)
-
-p_name_list = ricco_thr_df['p_name'].unique().tolist()
-print(f"p_name_list: {p_name_list}")
-
-vf_list = ricco_thr_df['vis_field'].unique().tolist()
-print(f"vf_list: {vf_list}")
-
-
-for p_name in p_name_list:
-    print(f"p_name: {p_name}")
-    p_name_thr_df = ricco_thr_df[ricco_thr_df['p_name'] == p_name]
-    p_name_CI_df = ricco_CI_df[ricco_CI_df['p_name'] == p_name]
-    print(f"\np_name_thr_df:\n{p_name_thr_df}")
-
-    for vis_field in vf_list:
-        print(f"vis_field: {vis_field}")
-        vis_field_thr_df = p_name_thr_df[p_name_thr_df['vis_field'] == vis_field]
-        vis_field_CI_df = p_name_CI_df[p_name_CI_df['vis_field'] == vis_field]
-        print(f"\nvis_field_thr_df:\n{vis_field_thr_df}")
-
-        exp_ave = False
-
-        # load data and change order to put 1pr last
-        print('*** making participant average plots ***')
-        print(f'exp_path: {exp_path}')
-
-        # fig_df = pd.read_csv(p_ave_path)
-        fig_df = vis_field_thr_df
-        print(f'fig_df:\n{fig_df}')
-
-        # if 'separation' not in fig_df.columns:
-        #     if 'stair_names' in fig_df.columns:
-        #         sep_list = [int(i[:-6]) for i in fig_df['stair_names'].to_list()]
-        #         fig_df.insert(1, 'separation', sep_list)
-
-        # get sep cond values for legend
-        sep_list = fig_df['separation'].to_list()
-        sep_vals_list = [i for i in sep_list]
-        sep_name_list = ['1pr' if i == 20 else f'sep{i}' for i in sep_list]
-        print(f'sep_vals_list: {sep_vals_list}')
-        print(f'sep_name_list: {sep_name_list}\n')
-
-        if 'diag_deg' not in fig_df.columns:
-            if 'len_pix' in fig_df.columns:
-                pixel_mm_deg_dict = get_pixel_mm_deg_values(monitor_name='asus_cal')
-                len_degrees_list = [i * pixel_mm_deg_dict['diag_deg'] for i in fig_df['len_pix'].to_list()]
-                fig_df.insert(2, 'diag_deg', len_degrees_list)
-        print(f'fig_df:\n{fig_df}')
-
-        # error_df = pd.read_csv(err_path)
-        error_df = vis_field_CI_df
-        print(f'error_df:\n{error_df}')
-
-        len_degrees_list = fig_df['diag_deg'].to_list()
-        print(f'len_degrees_list: {len_degrees_list}')
-        if 'diag_deg' not in error_df.columns:
-            error_df.insert(4, 'diag_deg', len_degrees_list)
-        else:
-            error_df['diag_deg'] = len_degrees_list
-
-        if 'cond' not in error_df.columns:
-            cond_list = ['lines'] * len(len_degrees_list)
-            error_df.insert(1, 'cond', cond_list)
-            fig_df.insert(1, 'cond', cond_list)
-        print(f'error_df:\n{error_df}')
-
-        print(f'fig_df:\n{fig_df}')
-
-        # # # fig 1 - len degrees v thr
-        # wide_df = fig_df.pivot(index=['diag_deg'], columns='cond', values='thr')
-        # print(f'wide_df:\n{wide_df}')
-        # wide_err_df = error_df.pivot(index=['diag_deg'], columns='cond', values='thr')
-        #
-        # len_degrees_list = fig_df['diag_deg'].to_list()
-        # print(f'len_degrees_list: {len_degrees_list}')
-        #
-        # fig_title = f'{p_name} {vis_field} average thresholds\nRicco_v{ricco_version} (bars are 95% CIs)'
-        # save_name = f'{p_name}_{vis_field}_ricco_v{ricco_version}_len_deg_v_thr.png'
-        # plot_ave_w_errors_markers(fig_df=wide_df, error_df=wide_err_df,
-        #                           jitter=False, error_caps=True, alt_colours=False,
-        #                           legend_names=sep_name_list,
-        #                           even_spaced_x=False,
-        #                           fixed_y_range=False,
-        #                           x_tick_vals=len_degrees_list,
-        #                           x_tick_labels=[round(i, 2) for i in len_degrees_list],
-        #                           x_axis_label='Length (degrees)',
-        #                           y_axis_label='Threshold',
-        #                           log_log_axes=False,
-        #                           neg1_slope=False,
-        #                           fig_title=fig_title, save_name=save_name,
-        #                           save_path=os.path.join(exp_path, p_name), verbose=True)
-        # plt.show()
-
-        # fig 2 - log(len len_deg), log(contrast)
-        wide_df = fig_df.pivot(index=['diag_deg'], columns='cond', values='delta_I')
-        print(f'wide_df:\n{wide_df}')
-
-        wide_err_df = error_df.pivot(index=['diag_deg'], columns='cond', values='delta_I')
-        print(f'wide_err_df:\n{wide_err_df}')
-
-
-        fig_title = f'{p_name} {vis_field} average log(degrees), log(∆I) thresholds\nRicco_v{ricco_version} (bars are 95% CIs)'
-        save_name = f'{p_name}_{vis_field}_ricco_v{ricco_version}_log_deg_log_contrast.png'
-        plot_ave_w_errors_markers(fig_df=wide_df, error_df=wide_err_df,
-                                  jitter=False, error_caps=True, alt_colours=False,
-                                  legend_names=sep_name_list,
-                                  even_spaced_x=False,
-                                  fixed_y_range=False,
-                                  x_tick_vals=None,
-                                  x_tick_labels=None,
-                                  x_axis_label='log(length, degrees)',
-                                  y_axis_label='Contrast: log(∆I)',
-                                  log_log_axes=True,
-                                  neg1_slope=True,
-                                  slope_ycol_name='lines',
-                                  slope_xcol_idx_depth=1,
-                                  fig_title=fig_title, save_name=save_name,
-                                  save_path=os.path.join(exp_path, p_name), verbose=True)
-        plt.show()
+#     for vis_field in vf_list:
+#         print(f"vis_field: {vis_field}")
+#         vis_field_thr_df = p_name_thr_df[p_name_thr_df['vis_field'] == vis_field]
+#         vis_field_CI_df = p_name_CI_df[p_name_CI_df['vis_field'] == vis_field]
+#         print(f"\nvis_field_thr_df:\n{vis_field_thr_df}")
+#
+#         exp_ave = False
+#
+#         # load data and change order to put 1pr last
+#         print('*** making participant average plots ***')
+#         print(f'exp_path: {exp_path}')
+#
+#         # fig_df = pd.read_csv(p_ave_path)
+#         fig_df = vis_field_thr_df
+#         print(f'fig_df:\n{fig_df}')
+#
+#         # if 'separation' not in fig_df.columns:
+#         #     if 'stair_names' in fig_df.columns:
+#         #         sep_list = [int(i[:-6]) for i in fig_df['stair_names'].to_list()]
+#         #         fig_df.insert(1, 'separation', sep_list)
+#
+#         # get sep cond values for legend
+#         sep_list = fig_df['separation'].to_list()
+#         sep_vals_list = [i for i in sep_list]
+#         sep_name_list = ['1pr' if i == 20 else f'sep{i}' for i in sep_list]
+#         print(f'sep_vals_list: {sep_vals_list}')
+#         print(f'sep_name_list: {sep_name_list}\n')
+#
+#         if 'diag_deg' not in fig_df.columns:
+#             if 'len_pix' in fig_df.columns:
+#                 pixel_mm_deg_dict = get_pixel_mm_deg_values(monitor_name='asus_cal')
+#                 len_degrees_list = [i * pixel_mm_deg_dict['diag_deg'] for i in fig_df['len_pix'].to_list()]
+#                 fig_df.insert(2, 'diag_deg', len_degrees_list)
+#         print(f'fig_df:\n{fig_df}')
+#
+#         # error_df = pd.read_csv(err_path)
+#         error_df = vis_field_CI_df
+#         print(f'error_df:\n{error_df}')
+#
+#         len_degrees_list = fig_df['diag_deg'].to_list()
+#         print(f'len_degrees_list: {len_degrees_list}')
+#         if 'diag_deg' not in error_df.columns:
+#             error_df.insert(4, 'diag_deg', len_degrees_list)
+#         else:
+#             error_df['diag_deg'] = len_degrees_list
+#
+#         if 'cond' not in error_df.columns:
+#             cond_list = ['lines'] * len(len_degrees_list)
+#             error_df.insert(1, 'cond', cond_list)
+#             fig_df.insert(1, 'cond', cond_list)
+#         print(f'error_df:\n{error_df}')
+#
+#         print(f'fig_df:\n{fig_df}')
+#
+#         # # fig 1 - len degrees v thr
+#         wide_df = fig_df.pivot(index=['diag_deg'], columns='cond', values='thr')
+#         print(f'wide_df:\n{wide_df}')
+#         wide_err_df = error_df.pivot(index=['diag_deg'], columns='cond', values='thr')
+#
+#         len_degrees_list = fig_df['diag_deg'].to_list()
+#         print(f'len_degrees_list: {len_degrees_list}')
+#
+#         fig_title = f'{p_name} {vis_field} average thresholds\nRicco_v{ricco_version} (bars are 95% CIs)'
+#         save_name = f'{p_name}_{vis_field}_ricco_v{ricco_version}_len_deg_v_thr.png'
+#         plot_ave_w_errors_markers(fig_df=wide_df, error_df=wide_err_df,
+#                                   jitter=False, error_caps=True, alt_colours=False,
+#                                   legend_names=sep_name_list,
+#                                   even_spaced_x=False,
+#                                   fixed_y_range=False,
+#                                   x_tick_vals=len_degrees_list,
+#                                   x_tick_labels=[round(i, 2) for i in len_degrees_list],
+#                                   x_axis_label='Length (degrees)',
+#                                   y_axis_label='Threshold',
+#                                   log_log_axes=False,
+#                                   neg1_slope=False,
+#                                   fig_title=fig_title, save_name=save_name,
+#                                   save_path=os.path.join(exp_path, p_name), verbose=True)
+#         plt.show()
+#
+#         # fig 2 - log(len len_deg), log(contrast)
+#         wide_df = fig_df.pivot(index=['diag_deg'], columns='cond', values='delta_I')
+#         print(f'wide_df:\n{wide_df}')
+#
+#         wide_err_df = error_df.pivot(index=['diag_deg'], columns='cond', values='delta_I')
+#         print(f'wide_err_df:\n{wide_err_df}')
+#
+#
+#         fig_title = f'{p_name} {vis_field} average log(degrees), log(∆I) thresholds\nRicco_v{ricco_version} (bars are 95% CIs)'
+#         save_name = f'{p_name}_{vis_field}_ricco_v{ricco_version}_log_deg_log_contrast.png'
+#         plot_ave_w_errors_markers(fig_df=wide_df, error_df=wide_err_df,
+#                                   jitter=False, error_caps=True, alt_colours=False,
+#                                   legend_names=sep_name_list,
+#                                   even_spaced_x=False,
+#                                   fixed_y_range=False,
+#                                   x_tick_vals=None,
+#                                   x_tick_labels=None,
+#                                   x_axis_label='log(length, degrees)',
+#                                   y_axis_label='Contrast: log(∆I)',
+#                                   log_log_axes=True,
+#                                   neg1_slope=True,
+#                                   slope_ycol_name='lines',
+#                                   slope_xcol_idx_depth=1,
+#                                   fig_title=fig_title, save_name=save_name,
+#                                   save_path=os.path.join(exp_path, p_name), verbose=True)
+#         plt.show()
 
 print('\nRicco_Bloch_analysis_pipe_UVF_LVF finished\n')

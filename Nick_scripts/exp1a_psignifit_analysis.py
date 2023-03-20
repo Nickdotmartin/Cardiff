@@ -1169,7 +1169,9 @@ def plot_diff_from_conc_lineplot(ave_DfC_df, error_df, fig_title=None,
     plt.ylabel('Luminance difference from concurrent')
     plt.xlabel('ISI')
     plt.title(fig_title)
-    plt.savefig(os.path.join(save_path, save_name))
+    if save_path is not None:
+        if save_name is not None:
+            plt.savefig(os.path.join(save_path, save_name))
 
     print('\n*** finished plot_diff_from_conc_lineplot() ***')
 
@@ -1653,6 +1655,7 @@ def plot_n_sep_thr_w_scatter(all_thr_df, thr_col='probeLum', exp_ave=False, fig_
         ax.set_title(f'Separation = {this_sep}')
         ax.set_xticklabels(isi_vals_list)
         ax.set_ylim([min_thr - 2, max_thr + 2])
+        print(f"y_lim: {min_thr - 2} : {max_thr + 2}")
  
     if save_path:
         if save_name:
@@ -2933,8 +2936,6 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
             ave_DfC_df, error_DfC_df = make_diff_from_conc_df(all_df_path, save_path, n_trimmed=n_trimmed)
             print(f"ave_DfC_df:\n{ave_DfC_df}")
             print(f"error_DfC_df:\n{error_DfC_df}")
-
-        # todo: add make DfC_df if it hasn't already been done?
 
     if run_this_plot:
 
