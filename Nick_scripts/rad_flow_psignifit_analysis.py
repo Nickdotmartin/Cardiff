@@ -3048,10 +3048,12 @@ def e_average_exp_data(exp_path, p_names_list,
         groupby_col = 'stair_names'
         sort_rows = False
     elif exp_type == 'Bloch_v5':
-        groupby_sep_df['stair_names'] = groupby_sep_df['cond_type'] + "_" + groupby_sep_df["isi_fr"].map(str)
-        groupby_sep_df = groupby_sep_df.drop('cond_type', axis=1)
+        # groupby_sep_df['stair_names'] = groupby_sep_df['cond_type'] + "_" + groupby_sep_df["isi_fr"].map(str)
+        if 'cond_type' in list(groupby_sep_df.columns):
+            groupby_sep_df = groupby_sep_df.drop('cond_type', axis=1)
         # groupby_col = 'stair_names'
-        groupby_col = ['stair_names', 'isi_fr', 'dur_ms']
+        # groupby_col = ['stair_names', 'isi_fr', 'dur_ms']
+        groupby_col = ['isi_fr', 'dur_ms']
         sort_rows = False
     elif exp_type == 'radial':
         groupby_col = 'participant'

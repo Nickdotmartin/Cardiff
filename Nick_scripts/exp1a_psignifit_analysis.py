@@ -143,7 +143,7 @@ def split_df_into_pos_sep_df_and_1probe_df(pos_sep_and_1probe_df,
         print("\n*** running split_df_into_pos_sep_df_and_1probe_df() ***")
 
     if isi_name_list is None:
-        isi_name_list = ['Concurrent', 'ISI0', 'ISI2', 'ISI4',
+        isi_name_list = ['Conc', 'ISI0', 'ISI2', 'ISI4',
                          'ISI6', 'ISI9', 'ISI12', 'ISI24']
 
     # check that the df only contains positive separation values
@@ -438,8 +438,11 @@ def make_long_df(wide_df, wide_stubnames='ISI', thr_col='newLum',
     print(f'new_col_names:\n{new_col_names}')
 
     # change 'concurrent' to 999 not -1 as wide_to_long won't take negative numbers
-    new_col_names = [f"ISI 999" if i == 'Concurrent' else i for i in new_col_names]
-    new_col_names = [f"ISI 999" if i == 'ISI -1' else i for i in new_col_names]
+    # new_col_names = [f"ISI 999" if i == 'Concurrent' else i for i in new_col_names]
+    # new_col_names = [f"ISI 999" if i == 'Conc' else i for i in new_col_names]
+    # new_col_names = [f"ISI 999" if i == 'ISI -1' else i for i in new_col_names]
+    new_col_names = [f"ISI 999" if i in ['Concurrent', 'Conc', 'ISI_-1'] else i for i in new_col_names]
+
     print(f'new_col_names:\n{new_col_names}')
 
     wide_df.columns = new_col_names
@@ -507,7 +510,7 @@ def plot_pos_sep_and_1probe(pos_sep_and_1probe_df,
         # print(f'pos_sep_and_1probe_df:\n{pos_sep_and_1probe_df}')
 
     if isi_name_list is None:
-        isi_name_list = ['Concurrent', 'ISI0', 'ISI2', 'ISI4',
+        isi_name_list = ['Conc', 'ISI0', 'ISI2', 'ISI4',
                          'ISI6', 'ISI9', 'ISI12', 'ISI24']
         if verbose:
             print(f'isi_name_list: {isi_name_list}')
@@ -759,7 +762,7 @@ def plot_w_errors_no_1probe(wide_df, x_var, y_var, lines_var,
     if legend_names is None:
         legend_names = ['0', '1', '2', '3', '6', '18', '1probe']
     if x_tick_labels is None:
-        x_tick_labels = ['conc', 0, 2, 4, 6, 9, 12, 24]
+        x_tick_labels = ['Conc', 0, 2, 4, 6, 9, 12, 24]
 
     # get names for legend (e.g., different lines_var)
     n_colours = len(wide_df[lines_var].unique())
@@ -794,6 +797,9 @@ def plot_w_errors_no_1probe(wide_df, x_var, y_var, lines_var,
 
     # decorate plot
     if x_tick_labels is not None:
+        x_ticks = list(range(len(x_tick_labels)))
+        print(f"x_ticks: {x_ticks}, x_tick_labels: {x_tick_labels}")
+        ax.set_xticks(x_ticks)
         ax.set_xticklabels(x_tick_labels)
     ax.set_xlabel(x_var)
 
@@ -1059,6 +1065,8 @@ def make_diff_from_conc_df(MASTER_TM2_thr_df, root_path, error_type='SE',
     and all other columns show the difference between an ISI and concurrent.'''
     if 'Concurrent' in list(thr_df.columns):
         diff_from_conc_df = thr_df.iloc[:, :].sub(thr_df.Concurrent, axis=0)
+    elif 'Conc' in list(thr_df.columns):
+        diff_from_conc_df = thr_df.iloc[:, :].sub(thr_df.Concurrent, axis=0)
     elif 'ISI_-1' in list(thr_df.columns):
         diff_from_conc_df = thr_df.iloc[:, :].sub(thr_df['ISI_-1'], axis=0)
     print(f'diff_from_conc_df:\n{diff_from_conc_df}')
@@ -1253,9 +1261,9 @@ def plot_thr_3dsurface(plot_df, my_rotation=True, even_spaced=False,
 
         # change labels for 1probe and concurrent so it is clear
         if -1 in row_labels:
-            row_labels = ['conc' if i == -1 else i for i in row_labels]
+            row_labels = ['Conc' if i == -1 else i for i in row_labels]
         if -1 in col_labels:
-            col_labels = ['conc' if i == -1 else i for i in col_labels]
+            col_labels = ['Conc' if i == -1 else i for i in col_labels]
         if 20 in row_labels:
             row_labels = ['1pr' if i == 20 else i for i in row_labels]
         if 20 in col_labels:
@@ -1389,7 +1397,7 @@ def eight_batman_plots(mean_df, thr1_df, thr2_df,
         print("\n*** running eight_batman_plots() ***")
 
     if isi_name_list is None:
-        isi_name_list = ['Concurrent', 'ISI0', 'ISI2', 'ISI4',
+        isi_name_list = ['Conc', 'ISI0', 'ISI2', 'ISI4',
                          'ISI6', 'ISI9', 'ISI12', 'ISI24']
 
     if x_tick_vals is None:
@@ -1524,6 +1532,8 @@ def plot_n_sep_thr_w_scatter(all_thr_df, thr_col='probeLum', exp_ave=False, fig_
     all_thr_cols_list = list(all_thr_df.columns)
     if 'Concurrent' in all_thr_cols_list:
         just_thr_df = all_thr_df.loc[:, 'Concurrent':]
+    elif 'Conc' in all_thr_cols_list:
+        just_thr_df = all_thr_df.loc[:, 'Conc':]
     elif 'ISI_-1' in all_thr_cols_list:
         cond_idx = all_thr_cols_list.index('ISI_-1')
         just_thr_df = all_thr_df.iloc[:, cond_idx:]
@@ -1550,7 +1560,7 @@ def plot_n_sep_thr_w_scatter(all_thr_df, thr_col='probeLum', exp_ave=False, fig_
         elif 'ISI_' in isi_names_list[0]:
             isi_vals_list = [int(i.strip('ISI_')) for i in isi_names_list]
     isi_vals_list = sorted(isi_vals_list)
-    isi_vals_list = ['conc' if i == -1 else i for i in isi_vals_list]
+    isi_vals_list = ['Conc' if i == -1 else i for i in isi_vals_list]
 
     if len(sep_list) > 1:
 
@@ -1879,7 +1889,7 @@ def b3_plot_staircase(all_data_path, thr_col='newLum', resp_col='trial_response'
     isi_list = all_data_df['ISI'].unique()
     sep_list = all_data_df['separation'].unique()
     # get isi string for column names
-    isi_name_list = ['Concurrent' if i == -1 else f'isi{i}' for i in isi_list]
+    isi_name_list = ['Conc' if i == -1 else f'isi{i}' for i in isi_list]
     sep_name_list = ['1pr' if i == 99 else f'sep{i}' for i in sep_list]
 
     trials, columns = np.shape(all_data_df)
@@ -2122,7 +2132,7 @@ def c_plots(save_path, thr_col='newLum', show_plots=True, verbose=True):
 
     print("\n*** running c_plots() ***\n")
 
-    isi_name_list = ['Concurrent', 'ISI0', 'ISI2', 'ISI4', 'ISI6', 'ISI9', 'ISI12', 'ISI24']
+    isi_name_list = ['Conc', 'ISI0', 'ISI2', 'ISI4', 'ISI6', 'ISI9', 'ISI12', 'ISI24']
     sym_sep_list = [-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18, 20]
     sym_sep_tick_labels = [-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18, '1\nprobe']
     pos_sep_list = [0, 1, 2, 3, 6, 18, 20]
@@ -2309,7 +2319,7 @@ def d_average_participant(root_path, run_dir_names_list,
     although the figures imply Martin used last3 reversals."""
 
     if isi_names_list is None:
-        isi_names_list = ['Concurrent', 'ISI0', 'ISI2', 'ISI4',
+        isi_names_list = ['Conc', 'ISI0', 'ISI2', 'ISI4',
                           'ISI6', 'ISI9', 'ISI12', 'ISI24']
 
     all_psignifit_list = []
@@ -2473,7 +2483,7 @@ def e_average_exp_data(exp_path, p_names_list,
         if 'Unnamed: 0' in list(this_p_all_df):
             this_p_all_df.drop('Unnamed: 0', axis=1, inplace=True)
 
-        this_p_all_df = this_p_all_df.rename(columns={'Concurrent': 'ISI_-1',
+        this_p_all_df = this_p_all_df.rename(columns={'Conc': 'ISI_-1',
                                                       'ISI0': 'ISI_0',
                                                       'ISI2': 'ISI_2',
                                                       'ISI4': 'ISI_4',
@@ -2540,7 +2550,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                        error_type='SE',
                        exp_ave=False,
                        split_1probe=True,
-                       isi_name_list=['Concurrent', 'ISI 0', 'ISI 2', 'ISI 4',
+                       isi_name_list=['Conc', 'ISI 0', 'ISI 2', 'ISI 4',
                                       'ISI 6', 'ISI 9', 'ISI 12', 'ISI 24'],
                        sep_vals_list=[0, 1, 2, 3, 6, 18, 20],
                        sep_name_list=[0, 1, 2, 3, 6, 18, '1probe'],
@@ -2761,7 +2771,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     #     plot_1probe_w_errors(fig_df=div_ave_psignifit_thr_df, error_df=div_error_bars_df,
     #                          split_1probe=False, jitter=True,
     #                          error_caps=True, alt_colours=False,
-    #                          legend_names=['Concurrent', 'ISI 0', 'ISI 2', 'ISI 4',
+    #                          legend_names=['Conc', 'ISI 0', 'ISI 2', 'ISI 4',
     #                                        'ISI 6', 'ISI 9', 'ISI 12', 'ISI 24'],
     #                          x_tick_vals=[0, 1, 2, 3, 6, 18],
     #                          x_tick_labels=[0, 1, 2, 3, 6, 18],
@@ -3036,7 +3046,14 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                 heatmap_dfc_pr_title = f'{ave_over} plot_diff_from_conc_per_row (n={ave_over_n})'
                 heatmap_dfc_pr_savename = 'mean_plot_diff_from_conc_per_row'
 
-            DfC_no_conc_df = ave_DfC_df.drop(['ISI_-1'], axis=1)
+            if 'ISI_-1' in list(ave_DfC_df.columns):
+                DfC_no_conc_df = ave_DfC_df.drop(['ISI_-1'], axis=1)
+            elif 'Conc' in list(ave_DfC_df.columns):
+                DfC_no_conc_df = ave_DfC_df.drop(['Conc'], axis=1)
+            elif 'Concurrent' in list(ave_DfC_df.columns):
+                DfC_no_conc_df = ave_DfC_df.drop(['Concurrent'], axis=1)
+            print(f"ave_DfC_df:\n{ave_DfC_df}")
+            print(f"DfC_no_conc_df:\n{DfC_no_conc_df}")
 
             plt_heatmap_row_col(heatmap_df=DfC_no_conc_df,
                                 colour_by='row',
