@@ -156,9 +156,9 @@ def split_df_into_pos_sep_df_and_1probe_df(pos_sep_and_1probe_df,
 
     # replace 1pr with 20 if string is given
     index_values = data_df.index.tolist()
-    print(f'index_values:\n{index_values}')
-    for idx in index_values:
-        print(type(idx))
+    print(f'index_values: {index_values}')
+    # for idx in index_values:
+    #     print(type(idx))
 
     if '1Probe' in index_values:
         data_df.rename(index={'1Probe': 20}, inplace=True)
@@ -852,13 +852,23 @@ def plot_thr_heatmap(heatmap_df,
 
     print('\n*** running plot_thr_heatmap() ***\n')
 
+    # rename columns and index so plots have right axis labels
+    heatmap_df.rename(columns={'ISI_-1': 'Conc', 'Concurrent': 'Conc'},
+                      index={20: '1pr', '20': '1pr'}, inplace=True)
+
     if verbose:
         print(f'heatmap_df:\n{heatmap_df}')
 
-    if x_tick_labels is None:
-        x_tick_labels = list(heatmap_df.columns)
-    if y_tick_labels is None:
-        y_tick_labels = list(heatmap_df.index)
+    if verbose:
+        print(f'heatmap_df:\n{heatmap_df}')
+
+    # if x_tick_labels is None:
+    #     x_tick_labels = list(heatmap_df.columns)
+    #     x_tick_labels = ['Conc' if i in ['ISI_-1', 'Concurrent'] else i for i in x_tick_labels]
+    # if y_tick_labels is None:
+    #     y_tick_labels = list(heatmap_df.index)
+    #     y_tick_labels = ['1pr' if i in [20, '20', '1probe'] else i for i in y_tick_labels]
+    #     y_tick_labels = ['1pr' if i == 20 else i for i in y_tick_labels]
 
     # get mean of each column, then mean of those
     if midpoint is None:
@@ -873,15 +883,19 @@ def plot_thr_heatmap(heatmap_df,
                           # fmt=annot_fmt,
                           center=midpoint,
                           cmap=my_colourmap,
-                          xticklabels=x_tick_labels, yticklabels=y_tick_labels,
+                          # xticklabels=x_tick_labels, yticklabels=y_tick_labels,
                           square=False)
 
-    if 'ISI' in str(x_tick_labels[-1]).upper():
+    # if 'ISI' in str(x_tick_labels[-1]).upper():
+    if 'ISI' in str(list(heatmap_df.columns)[-1]).upper():
         heatmap.set_xlabel('ISI')
         heatmap.set_ylabel('Separation')
     else:
         heatmap.set_xlabel('Separation')
         heatmap.set_ylabel('ISI')
+
+    # This sets the yticks "upright" with 0, as opposed to sideways with 90.
+    plt.yticks(rotation=0)
 
     if fig_title is not None:
         plt.title(fig_title)
@@ -897,9 +911,7 @@ def plot_thr_heatmap(heatmap_df,
 
 def plt_heatmap_row_col(heatmap_df,
                         colour_by='row',
-                        x_tick_labels=None,
                         x_axis_label=None,
-                        y_tick_labels=None,
                         y_axis_label=None,
                         fig_title=None,
                         midpoint=None,
@@ -913,9 +925,7 @@ def plt_heatmap_row_col(heatmap_df,
     Function for making a heatmap
     :param heatmap_df: Expects dataframe with separation as index and ISIs as columns.
     :param colour_by: colour plots by 'rows' or 'cols.  That is, each row or column is coloured individually.
-    :param x_tick_labels: Labels for columns
     :param x_axis_label: Name for x_axis
-    :param y_tick_labels: Labels for rows
     :param y_axis_label: name for y_axis
     :param fig_title: Title for figure.
     :param midpoint: Value to use a midpoint for colours (e.g., mean or zero).
@@ -929,13 +939,15 @@ def plt_heatmap_row_col(heatmap_df,
 
     print(f'\n*** running plt_heatmap_row_col(colour_by={colour_by}) ***\n')
 
+    # rename columns and index so plots have right axis labels
+    heatmap_df.rename(columns={'ISI_-1': 'Conc', 'Concurrent': 'Conc'},
+                      index={20: '1pr', '20': '1pr'}, inplace=True)
+
     if verbose:
         print(f'heatmap_df:\n{heatmap_df}')
 
-    if x_tick_labels is None:
-        x_tick_labels = list(heatmap_df.columns)
-    if y_tick_labels is None:
-        y_tick_labels = list(heatmap_df.index)
+    x_tick_labels = list(heatmap_df.columns)
+    y_tick_labels = list(heatmap_df.index)
 
     if str.lower(colour_by) in ['col', 'columns', 'horizontal']:
         fig, axs = plt.subplots(ncols=len(x_tick_labels), sharey=True)
@@ -963,11 +975,13 @@ def plt_heatmap_row_col(heatmap_df,
                     cbar=False,
                     square=True)
 
+
         # # arrange labels and ticks per ax
         if str.lower(colour_by) in ['col', 'columns', 'horizontal']:
             ax.set_xlabel(None)
             if ax == axs[0]:
                 ax.set_ylabel(y_axis_label, fontsize=fontsize)
+                ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
             else:
                 ax.tick_params(left=False)
                 ax.set_ylabel(None)
@@ -977,9 +991,11 @@ def plt_heatmap_row_col(heatmap_df,
             ax.set_ylabel(None)
             if ax == axs[-1]:
                 ax.set_xlabel(x_axis_label, fontsize=fontsize)
+                ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
             else:
                 ax.tick_params(bottom=False)
             plt.subplots_adjust(hspace=0.1)
+
 
     # # make colourbar: numbers are (1) the horizontal and (2) vertical position
     # # of the bottom left corner, then (3) width and (4) height of colourbar.
@@ -996,6 +1012,8 @@ def plt_heatmap_row_col(heatmap_df,
     if save_path is not None:
         if save_name is not None:
             plt.savefig(os.path.join(save_path, save_name))
+
+    print(f'\n*** finished plt_heatmap_row_col(colour_by={colour_by}) ***\n')
 
     return fig
 
@@ -1141,6 +1159,8 @@ def plot_diff_from_conc_lineplot(ave_DfC_df, error_df, fig_title=None,
 
 
     column_names = ave_DfC_df.columns.to_list()
+    x_tick_labels = ['Conc' if i in ['ISI_-1', 'Concurrent'] else i for i in column_names]
+
     index_names = ave_DfC_df.index.tolist()
 
     my_colours = fig_colours(len(index_names))
@@ -1172,6 +1192,8 @@ def plot_diff_from_conc_lineplot(ave_DfC_df, error_df, fig_title=None,
 
     ax.legend(handles=legend_handles_list, fontsize=6, title='separation', framealpha=.5)
 
+    ax.set_xticks(list(range(len(x_tick_labels))))
+    ax.set_xticklabels(x_tick_labels)
 
     plt.axhline(y=0, color='lightgrey', linestyle='dashed')
     plt.ylabel('Luminance difference from concurrent')
@@ -2550,10 +2572,10 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                        error_type='SE',
                        exp_ave=False,
                        split_1probe=True,
-                       isi_name_list=['Conc', 'ISI 0', 'ISI 2', 'ISI 4',
-                                      'ISI 6', 'ISI 9', 'ISI 12', 'ISI 24'],
-                       sep_vals_list=[0, 1, 2, 3, 6, 18, 20],
-                       sep_name_list=[0, 1, 2, 3, 6, 18, '1probe'],
+                       # isi_name_list=['Conc', 'ISI 0', 'ISI 2', 'ISI 4',
+                       #                'ISI 6', 'ISI 9', 'ISI 12', 'ISI 24'],
+                       # sep_vals_list=[0, 1, 2, 3, 6, 18, 20],
+                       # sep_name_list=[0, 1, 2, 3, 6, 18, '1probe'],
                        heatmap_annot_fmt='{:.2f}',
                        show_plots=True, verbose=True):
     """
@@ -2623,11 +2645,18 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     print(f'\nerror_bars_df:\n{error_bars_df}')
 
     all_df_headers = list(all_df.columns)
-    pos_sep_list = sep_vals_list
+    isi_cols_list = all_df_headers[2:]
+    isi_name_list = ['conc' if i in ['ISI_-1', 'Concurrent'] else f'ISI {i[3:]}' for i in isi_cols_list]
+    # pos_sep_list = sep_vals_list
+    sep_vals_list = ave_df.index.tolist()
+    sep_name_list = ['1probe' if i == 20 else i for i in sep_vals_list]
+
     if verbose:
         print(f'\nall_df_headers: {all_df_headers}')
+        print(f'isi_cols_list: {isi_cols_list}')
         print(f'isi_name_list: {isi_name_list}')
-        print(f'pos_sep_list: {pos_sep_list}')
+        # print(f'pos_sep_list: {pos_sep_list}')
+        print(f'sep_name_list: {sep_name_list}')
 
 
     """part 3. main Figures (these are the ones saved in the matlab script)
@@ -2700,10 +2729,10 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     # fig 1c, eight plots - seven showing a particular separation, eighth showing all separations.
     if n_trimmed is not None:
         f'{ave_over} average thresholds per separation'
-        fig1c_title = f'{ave_over} average thresholds per separation\n(n={ave_over_n}, trim={n_trimmed}, err={error_type}).'
+        fig1c_title = f'{ave_over} average thresholds per separation.  (n={ave_over_n}, trim={n_trimmed}, err={error_type}).'
         fig1c_savename = f'ave_TM{n_trimmed}_thr_per_sep.png'
     else:
-        fig1c_title = f'{ave_over} average thresholds per separation\n(n={ave_over_n}, err={error_type})'
+        fig1c_title = f'{ave_over} average thresholds per separation.  (n={ave_over_n}, err={error_type})'
         fig1c_savename = f'ave_thr_per_sep.png'
 
     plot_n_sep_thr_w_scatter(all_thr_df=all_df, exp_ave=exp_ave, fig_title=fig1c_title,
@@ -2885,9 +2914,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
         plt_heatmap_row_col(heatmap_df=ave_df,
                             colour_by='row',
-                            x_tick_labels=None,
                             x_axis_label='ISI',
-                            y_tick_labels=None,
                             y_axis_label='Separation',
                             fig_title=heatmap_pr_title,
                             annot_fmt=heatmap_annot_fmt,
@@ -2912,9 +2939,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
         plt_heatmap_row_col(heatmap_df=ave_df,
                             colour_by='col',
-                            x_tick_labels=None,
                             x_axis_label='ISI',
-                            y_tick_labels=None,
                             y_axis_label='Separation',
                             annot_fmt=heatmap_annot_fmt,
                             fig_title=heatmap_pc_title,
@@ -2941,11 +2966,16 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         # check if the difference from concurrent files have arelady been made.
         if os.path.isfile(os.path.join(save_path, ave_DfC_name)):
             print("found DcF files")
+            ave_DfC_df = pd.read_csv(os.path.join(save_path, ave_DfC_name))
+            error_DfC_df = pd.read_csv(os.path.join(save_path, error_DfC_name))
         else:
             print("making DfC files")
             ave_DfC_df, error_DfC_df = make_diff_from_conc_df(all_df_path, save_path, n_trimmed=n_trimmed)
-            print(f"ave_DfC_df:\n{ave_DfC_df}")
-            print(f"error_DfC_df:\n{error_DfC_df}")
+
+        error_DfC_df.rename(columns={'Concurrent': 'Conc', 'ISI_-1': 'Conc'},
+                                     inplace=True)
+        print(f"ave_DfC_df:\n{ave_DfC_df}")
+        print(f"error_DfC_df:\n{error_DfC_df}")
 
     if run_this_plot:
 
@@ -2955,9 +2985,6 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         else:
             fig3a_save_name = 'diff_from_conc.png'
             fig3a_title = f'{ave_over} ISI difference in threshold from concurrent\n(n={ave_over_n})'
-
-        ave_DfC_df = pd.read_csv(os.path.join(save_path, ave_DfC_name))
-        error_DfC_df = pd.read_csv(os.path.join(save_path, error_DfC_name))
 
         plot_diff_from_conc_lineplot(ave_DfC_df, error_df=error_DfC_df,
                                      fig_title=fig3a_title,
@@ -2998,6 +3025,10 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
             heatmap_dfc_title = f'{ave_over} diff_from_conc/{error_type}  (n={ave_over_n})'
             heatmap_dfc_savename = f'mean_diff_from_conc_div_{error_type}_heatmap'
 
+        print(f"ave_DfC_df:\n{ave_DfC_df}")
+        print(f"error_DfC_df:\n{error_DfC_df}")
+
+
         dfc_div_error_df = ave_DfC_df.div(error_DfC_df).fillna(0)
         print(f"dfc_div_error_df:\n{dfc_div_error_df}")
         plot_thr_heatmap(heatmap_df=dfc_div_error_df,
@@ -3032,9 +3063,6 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         if verbose:
             print('finished fig1a')
 
-
-
-
         if len(isi_name_list) > 1 and len(sep_name_list) > 1:
             print('making dfc heatmaps per-row and per-column')
 
@@ -3058,9 +3086,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
             plt_heatmap_row_col(heatmap_df=DfC_no_conc_df,
                                 colour_by='row',
                                 midpoint=0,
-                                x_tick_labels=None,
                                 x_axis_label='ISI',
-                                y_tick_labels=None,
                                 y_axis_label='Separation',
                                 fig_title=heatmap_dfc_pr_title,
                                 fontsize=10,
