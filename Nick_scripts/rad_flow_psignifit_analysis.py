@@ -875,6 +875,7 @@ def plot_runs_ave_w_errors(fig_df, error_df,
     if save_path is not None:
         if save_name is not None:
             plt.savefig(os.path.join(save_path, save_name))
+            print(f'plt saved to: {os.path.join(save_path, save_name)}')
 
     return fig
 
@@ -1051,6 +1052,8 @@ def plot_ave_w_errors_markers(fig_df, error_df,
     if save_path is not None:
         if save_name is not None:
             plt.savefig(os.path.join(save_path, save_name))
+            print(f'plt saved to: {os.path.join(save_path, save_name)}')
+
     print('\n*** finished plot_ave_w_errors_markers() ***\n')
 
     return fig
@@ -1209,9 +1212,8 @@ def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'
                 labels=legend_names
         ax.legend(handles=handles, labels=labels)
 
-
-    print(f'test save path:\n{save_path}\n{fig_savename}')
     plt.savefig(os.path.join(save_path, fig_savename))
+    print(f'plt saved to: {os.path.join(save_path, fig_savename)}')
 
     print('\n*** finished plot_w_errors_either_x_axis() ***\n')
 
@@ -1339,6 +1341,7 @@ def plot_diff(ave_thr_df, stair_names_col='stair_names', fig_title=None,
 
     if save_name:
         plt.savefig(os.path.join(save_path, save_name))
+        print(f'plt saved to: {os.path.join(save_path, save_name)}')
 
     print('*** finished plot_diff() ***')
 
@@ -1391,9 +1394,10 @@ def multi_batman_plots(mean_df, thr1_df, thr2_df,
     my_colours = fig_colours(len(isi_name_list))
     # n_rows, n_cols = multi_plot_shape(len(isi_name_list), min_rows=2)
     n_rows, n_cols = get_n_rows_n_cols((len(isi_name_list)))
+    print(f'\nplotting {n_rows} rows and {n_cols} cols')
 
     fig, axes = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(12, 6))
-    print(f'\nplotting {n_rows} rows and {n_cols} cols for {len(axes)} plots')
+    print(f'\nplotting {n_rows} rows and {n_cols} cols (axes: {axes})')
 
     if fig_title is not None:
         fig.suptitle(fig_title)
@@ -1532,6 +1536,7 @@ def multi_batman_plots(mean_df, thr1_df, thr2_df,
     if save_path is not None:
         if save_name is not None:
             plt.savefig(os.path.join(save_path, save_name))
+            print(f'plt saved to: {os.path.join(save_path, save_name)}')
 
     print("\n*** finished multi_batman_plots() ***")
 
@@ -1639,26 +1644,40 @@ def multi_pos_sep_per_isi(ave_thr_df, error_df,
 
     # make plots
     my_colours = fig_colours(len(isi_names_list))
-    # n_rows, n_cols = multi_plot_shape(len(isi_names_list), min_rows=2)
-    n_rows, n_cols = get_n_rows_n_cols((len(isi_names_list)))
 
-    fig, axes = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(n_rows * 3, n_cols * 3))
+    # # n_rows, n_cols = multi_plot_shape(len(isi_names_list), min_rows=2)
+    # n_rows, n_cols = get_n_rows_n_cols((len(isi_names_list)))
+    # fig, axes = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(n_rows * 3, n_cols * 3))
+
+    # get configuration of subplots
+    n_plots = len(isi_names_list)  #  + 1
+    n_rows, n_cols = get_n_rows_n_cols(n_plots)
+    print(f"n_plots: {n_plots}, n_rows: {n_rows}, n_cols: {n_cols}, empty: {(n_rows * n_cols) - n_plots}")
+
+    fig, axes = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(3 * n_cols, 3 * n_rows))
+
     print(f'\nplotting {n_rows} rows and {n_cols} cols for {len(axes)} plots')
+    print(f'type(axes): {type(axes)}; axes: {axes}')
 
     if fig_title is not None:
         fig.suptitle(fig_title)
 
+
     ax_counter = 0
     # loop through the different axes
     for row_idx, row in enumerate(axes):
+
         print(f'row_idx: {row_idx}, type(row): {type(row)}, row: {row}')
         # if there are multiple ISIs
         if isinstance(row, np.ndarray):
-            print(f'type is {type(row)}')
+            print(f'type (AxesSubplot): {type(row)}')
             for col_idx, ax in enumerate(row):
+                print(f'col_idx: {col_idx}; ax: {ax}')
+
                 if ax_counter < len(isi_names_list):
 
                     this_isi = isi_names_list[ax_counter]
+                    print(f'this_isi: {this_isi}')
 
                     # plot each datapoint for congruent
 
@@ -1718,21 +1737,46 @@ def multi_pos_sep_per_isi(ave_thr_df, error_df,
 
         # if there is only one isi in this row
         else:
+            print(f'type (NOT AxesSubplot):{type(row)}')
+
             ax = row
             this_isi = isi_names_list[row_idx]
+            print(f'\nax: {ax}; this_isi: {this_isi}')
+            print(f'x_values: {x_values}')
+            print(f'cong_df[this_isi].top_list(): {cong_df[this_isi].to_list()}')
+            print(f'cong_err_df[this_isi].top_list(): {cong_err_df[this_isi].to_list()}')
+            check_nan = cong_err_df[this_isi].isnull().values.any()
+            print(f'check_nan: {check_nan}')
+            if check_nan:
 
-            ax.errorbar(x=x_values, y=cong_df[this_isi],
-                        yerr=cong_err_df[this_isi],
-                        marker=None, lw=2, elinewidth=.7,
-                        capsize=cap_size,
-                        color=my_colours[row_idx])
+                ax.errorbar(x=x_values, y=cong_df[this_isi],
+                            # yerr=cong_err_df[this_isi],
+                            linestyle='dashed',
+                            marker=None, lw=2,
+                            # elinewidth=.7, capsize=cap_size,
+                            color=my_colours[row_idx])
 
-            ax.errorbar(x=x_values, y=incong_df[this_isi],
-                        yerr=incong_err_df[this_isi],
-                        linestyle='dashed',
-                        marker=None, lw=2, elinewidth=.7,
-                        capsize=cap_size,
-                        color=my_colours[row_idx])
+                ax.errorbar(x=x_values, y=incong_df[this_isi],
+                            # yerr=incong_err_df[this_isi],
+                            marker=None, lw=2,
+                            # elinewidth=.7, capsize=cap_size,
+                            color=my_colours[row_idx])
+
+            else:
+                # if NOT nan
+
+                ax.errorbar(x=x_values, y=cong_df[this_isi],
+                            yerr=cong_err_df[this_isi],
+                            linestyle='dashed',
+                            marker=None, lw=2,
+                            elinewidth=.7, capsize=cap_size,
+                            color=my_colours[row_idx])
+
+                ax.errorbar(x=x_values, y=incong_df[this_isi],
+                            yerr=incong_err_df[this_isi],
+                            marker=None, lw=2,
+                            elinewidth=.7, capsize=cap_size,
+                            color=my_colours[row_idx])
 
             ax.set_title(isi_names_list[row_idx])
             if even_spaced_x:
@@ -1775,6 +1819,8 @@ def multi_pos_sep_per_isi(ave_thr_df, error_df,
     if save_path is not None:
         if save_name is not None:
             plt.savefig(os.path.join(save_path, save_name))
+            print(f'plt saved to: {os.path.join(save_path, save_name)}')
+
 
     print("\n*** finished multi_pos_sep_per_isi() ***")
 
@@ -1854,6 +1900,9 @@ def plot_thr_heatmap(heatmap_df,
     if save_path is not None:
         if save_name is not None:
             plt.savefig(os.path.join(save_path, save_name))
+            print(f'plt saved to: {os.path.join(save_path, save_name)}')
+    print('\n*** finished plot_thr_heatmap() ***\n')
+
 
     return heatmap
 
@@ -1952,15 +2001,21 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
 
     # all_data = np.ndarray(all_data_df, dtype=object)
 
-    all_data = all_data_list
-    if verbose:
-        print(f'all_data: {type(all_data)}\n{all_data}')
-    all_data_shape = np.shape(all_data)
-    sheets, rows, columns = np.shape(all_data)
-    all_data = np.reshape(all_data, newshape=(sheets * rows, columns))
-    if verbose:
-        print(f'all_data reshaped from {all_data_shape} to {np.shape(all_data)}')
-    all_data_df = pd.DataFrame(all_data, columns=column_names)
+    all_data_df = pd.concat(all_data_list)
+    print(f"all_data_df:\n{all_data_df}")
+
+    # all_data = all_data_list
+    # if verbose:
+    #     print(f'all_data: {type(all_data)}\n{all_data}')
+    # all_data_shape = np.shape(all_data)
+    # print(f'all_data_shape:  {all_data_shape}')
+    #
+    # sheets, rows, columns = np.shape(all_data)
+    #
+    # all_data = np.reshape(all_data, newshape=(sheets * rows, columns))
+    # if verbose:
+    #     print(f'all_data reshaped from {all_data_shape} to {np.shape(all_data)}')
+    # all_data_df = pd.DataFrame(all_data, columns=column_names)
 
     if verbose:
         print(f"all_data_df:\n{all_data_df}")
@@ -2535,20 +2590,30 @@ def c_plots(save_path, thr_col='newLum', isi_name_list=None, show_plots=True, ve
                 f'(mean diff: {round(mean_diff_val, 2)})'
     fig1_savename = f'MIRRORED_runs.png'
 
-    multi_batman_plots(mean_df=psig_sym_thr_mean_df,
-                       thr1_df=psig_cong_sym_df,
-                       thr2_df=psig_incong_sym_df,
-                       fig_title=fig_title,
-                       isi_name_list=isi_name_list,
-                       x_tick_vals=sym_sep_list,
-                       x_tick_labels=sym_sep_list,
-                       sym_sep_diff_list=diff_val,
-                       save_path=save_path,
-                       save_name=fig1_savename,
-                       verbose=verbose)
-    if show_plots:
-        plt.show()
-    plt.close()
+    make_multi_batman_plot = False
+    if len(sep_col_s) > 1:
+        if len(isi_name_list) > 1:
+            make_multi_batman_plot = True
+
+    if make_multi_batman_plot:
+        print("running multi_batman_plots ")
+
+        multi_batman_plots(mean_df=psig_sym_thr_mean_df,
+                           thr1_df=psig_cong_sym_df,
+                           thr2_df=psig_incong_sym_df,
+                           fig_title=fig_title,
+                           isi_name_list=isi_name_list,
+                           x_tick_vals=sym_sep_list,
+                           x_tick_labels=sym_sep_list,
+                           sym_sep_diff_list=diff_val,
+                           save_path=save_path,
+                           save_name=fig1_savename,
+                           verbose=verbose)
+        if show_plots:
+            plt.show()
+        plt.close()
+    else:
+        print("NOT running multi_batman_plots - not enough sep or ISI values")
 
     #  (figure2 doesn't exist in Martin's script - but I'll keep their numbers)
 
@@ -2730,7 +2795,7 @@ def d_average_participant(root_path, run_dir_names_list,
     print(f'groupby_col: {groupby_col}')
 
     if all(v is not None for v in [cols_to_drop, groupby_col]):
-        print('yes running with grouby_col and cols_to_drop')
+        print('yes running with groupby_col and cols_to_drop')
 
         groupby_sep_df = get_means_df.drop(cols_to_drop, axis=1)
 
@@ -2774,6 +2839,8 @@ def d_average_participant(root_path, run_dir_names_list,
 
 
     else:  # if there are no group_col by or cols_to_drop
+        print('No groupby_col or cols_to_drop')
+
         if 'stair_names' in get_means_df.columns:
             groupby_sep_df = get_means_df.drop('stack', axis=1)
             if 'congruent' in groupby_sep_df.columns:
@@ -2801,6 +2868,7 @@ def d_average_participant(root_path, run_dir_names_list,
                 if 'cond' in groupby_sep_df.columns:
                     groupby_sep_df = groupby_sep_df.drop('cond', axis=1)
                 ave_psignifit_thr_df = groupby_sep_df.groupby('stair_names', sort=False).mean()
+            ave_psignifit_thr_df = groupby_sep_df.groupby('stair_names', sort=False).mean()
 
             if verbose:
                 print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
@@ -3139,6 +3207,8 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     # todo: check why plots have changed order - since I added extra ISI conditions.
 
     save_path, df_name = os.path.split(ave_df_path)
+    print(f'save_path (ave_df_path): {save_path}')
+    print(f'df_name (ave_df_path): {df_name}')
 
     if exp_ave:
         ave_over = 'Exp'
@@ -3378,9 +3448,9 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     plt_heatmap_row_col(heatmap_df=ave_w_sep_idx_df,
                         colour_by='row',
-                        x_tick_labels=None,
+                        # x_tick_labels=None,
                         x_axis_label='ISI',
-                        y_tick_labels=None,
+                        # y_tick_labels=None,
                         y_axis_label='Separation',
                         fig_title=heatmap_pr_title,
                         save_name=heatmap_pr_savename,
@@ -3397,16 +3467,16 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     # get mean of each col, then mean of that
     if n_trimmed is not None:
         heatmap_pr_title = f'{ave_over} Heatmap per col (n={ave_over_n}, trim={n_trimmed}).'
-        heatmap_pr_savename = f'mean_TM{n_trimmed}_heatmap_per_col'
+        heatmap_pr_savename = f'AAA_mean_TM{n_trimmed}_heatmap_per_col.png'
     else:
         heatmap_pr_title = f'{ave_over} Heatmap per col (n={ave_over_n})'
-        heatmap_pr_savename = 'mean_heatmap_per_col'
+        heatmap_pr_savename = 'AAA_mean_heatmap_per_col.png'
 
     plt_heatmap_row_col(heatmap_df=ave_w_sep_idx_df,
                         colour_by='col',
-                        x_tick_labels=None,
+                        # x_tick_labels=None,
                         x_axis_label='ISI',
-                        y_tick_labels=None,
+                        # y_tick_labels=None,
                         y_axis_label='Separation',
                         fig_title=heatmap_pr_title,
                         save_name=heatmap_pr_savename,
