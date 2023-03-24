@@ -17,8 +17,8 @@ from exp1a_psignifit_analysis import plt_heatmap_row_col
 # participant_list = ['Nick_half']  # , 'Nick']  # , 'Nick_half_speed']
 
 # todo: why does a_extract data work for my data but not Simon's???
-# exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2'
-# participant_list = ['Nick', 'Simon']  # , 'Nick_half_speed']
+exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2'
+participant_list = ['Nick', 'Simon']  # , 'Nick_half_speed']
 
 # exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2_half'
 # participant_list = ['Nick_half_speed', 'Simon_half']  # , 'Nick_half_speed']

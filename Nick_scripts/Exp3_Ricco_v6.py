@@ -155,7 +155,9 @@ probe_ecc = 4
 For 1probe condition, use separation==-1.
 For concurrent probes, use ISI==-1.
 '''
-separation_values = [0, 2, 4, 6, 8, 10, 12, 18]
+# separation_values = [0, 2, 4, 6, 8, 10, 12, 18]
+separation_values = [2, 4, 5, 6, 7, 8, 10, 12]
+
 print(f'separation_values: {separation_values}')
 cond_types = ['lines']
 print(f'cond_types: {cond_types}')
