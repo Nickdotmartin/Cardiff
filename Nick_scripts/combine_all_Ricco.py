@@ -26,7 +26,7 @@ v5_exp = 'Exp3_Ricco_NM_v5'
 v5_participants = ['Nick']
 
 v6_exp = 'Exp3_Ricco_v6'
-v6_participants = ['Kristian', 'Simon']
+v6_participants = ['Kristian', 'Simon', 'Tony']
 
 same_name_dict = {'Kristian': 'Kris'}
 

@@ -564,7 +564,7 @@ def log_log_w_markers_plot(thr_df, x_col='len_deg', y_col='delta_I',
     :param save_as: path and filename to save to
     :return: figure
     """
-    print(f'\n*** running simple_log_log_plot (x=log({x_col}), y=log(∆{y_col})) ***')
+    print(f'\n*** running log_log_w_markers_plot (x=log({x_col}), y=log(∆{y_col})) ***')
     print(f'thr_df:\n{thr_df}')
     fig, ax = plt.subplots(figsize=(6, 6))
     sns.lineplot(data=thr_df, x=x_col, y=y_col, hue=hue_col, marker=None, ax=ax,

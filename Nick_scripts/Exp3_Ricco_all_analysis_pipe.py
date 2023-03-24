@@ -10,6 +10,8 @@ from rad_flow_psignifit_analysis import make_average_plots, e_average_exp_data, 
 from psignifit_tools import get_psignifit_threshold_df
 from python_tools import which_path, running_on_laptop, switch_path
 from PsychoPy_tools import get_pixel_mm_deg_values
+from ricco_bloch_fit import ricco_bloch_fit
+
 
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
 # # then run script d to get master lists and averages
@@ -24,7 +26,7 @@ exp_path = convert_path1
 print(f"exp_path: {exp_path}")
 
 # participant_list = ['Kim']  # , 'bb', 'cc', 'dd', 'ee']
-participant_list = ['Kristian', 'Nick', 'Simon', 'Kim']  # , 'bb', 'cc', 'dd', 'ee']
+participant_list = ['Kristian', 'Nick', 'Simon', 'Kim', 'Tony']  # , 'bb', 'cc', 'dd', 'ee']
 # participant_list = ['Kristian']
 
 
@@ -348,7 +350,7 @@ for p_idx, participant_name in enumerate(participant_list):
             str_i = str(round(i, 2))
             len_deg_name_list.append(str_i[1:])
     print(f'len_deg_name_list: {len_deg_name_list}')
-    
+
     if 'diag_deg' not in error_df.columns:
         error_df.insert(4, 'diag_deg', len_degrees_list)
     else:
@@ -363,281 +365,315 @@ for p_idx, participant_name in enumerate(participant_list):
     print(f'fig_df:\n{fig_df}')
 
 
-    # # fig 1 - len degrees v thr
-    wide_df = fig_df.pivot(index=['diag_deg'], columns='cond', values='thr')
-    print(f'wide_df:\n{wide_df}')
-    wide_err_df = error_df.pivot(index=['diag_deg'], columns='cond', values='thr')
+    # # # fig 1 - len degrees v thr
+    # wide_df = fig_df.pivot(index=['diag_deg'], columns='cond', values='thr')
+    # print(f'wide_df:\n{wide_df}')
+    # wide_err_df = error_df.pivot(index=['diag_deg'], columns='cond', values='thr')
+    #
+    # len_degrees_list = fig_df['diag_deg'].to_list()
+    # print(f'len_degrees_list: {len_degrees_list}')
+    #
+    # fig_title = f'{participant_name} average thresholds - Ricco_v{ricco_version} (n={len(run_folder_names)})'
+    # save_name = f'ricco_v{ricco_version}_len_deg_v_thr.png'
+    # plot_ave_w_errors_markers(fig_df=wide_df, error_df=wide_err_df,
+    #                           jitter=False, error_caps=True, alt_colours=False,
+    #                           legend_names=sep_name_list,
+    #                           even_spaced_x=False,
+    #                           fixed_y_range=False,
+    #                           x_tick_vals=len_degrees_list,
+    #                           x_tick_labels=len_deg_name_list,
+    #                           x_axis_label='Length (degrees)',
+    #                           y_axis_label='Threshold',
+    #                           log_log_axes=False,
+    #                           neg1_slope=False,
+    #                           fig_title=fig_title, save_name=save_name,
+    #                           save_path=root_path, verbose=True)
+    # plt.show()
+    #
+    # # fig 2 - log(len len_deg), log(contrast)
+    # wide_df = fig_df.pivot(index=['diag_deg'], columns='cond', values='delta_I')
+    # print(f'wide_df:\n{wide_df}')
+    #
+    # wide_err_df = error_df.pivot(index=['diag_deg'], columns='cond', values='delta_I')
+    # print(f'wide_err_df:\n{wide_err_df}')
+    #
+    # fig_title = f'{participant_name} average log(degrees), log(∆I) thresholds - Ricco_v{ricco_version} (n={len(run_folder_names)})'
+    # save_name = f'ricco_v{ricco_version}_log_deg_log_contrast.png'
+    # plot_ave_w_errors_markers(fig_df=wide_df, error_df=wide_err_df,
+    #                           jitter=False, error_caps=True, alt_colours=False,
+    #                           legend_names=sep_name_list,
+    #                           even_spaced_x=False,
+    #                           fixed_y_range=False,
+    #                           x_tick_vals=None,
+    #                           x_tick_labels=None,
+    #                           x_axis_label='log(length, degrees)',
+    #                           y_axis_label='Contrast: log(∆I)',
+    #                           log_log_axes=True,
+    #                           neg1_slope=True,
+    #                           slope_ycol_name='lines',
+    #                           slope_xcol_idx_depth=1,
+    #                           fig_title=fig_title, save_name=save_name,
+    #                           save_path=root_path, verbose=True)
+    # plt.show()
 
-    len_degrees_list = fig_df['diag_deg'].to_list()
-    print(f'len_degrees_list: {len_degrees_list}')
 
-    fig_title = f'{participant_name} average thresholds - Ricco_v{ricco_version} (n={len(run_folder_names)})'
-    save_name = f'ricco_v{ricco_version}_len_deg_v_thr.png'
-    plot_ave_w_errors_markers(fig_df=wide_df, error_df=wide_err_df,
-                              jitter=False, error_caps=True, alt_colours=False,
-                              legend_names=sep_name_list,
-                              even_spaced_x=False,
-                              fixed_y_range=False,
-                              x_tick_vals=len_degrees_list,
-                              x_tick_labels=len_deg_name_list,
-                              x_axis_label='Length (degrees)',
-                              y_axis_label='Threshold',
-                              log_log_axes=False,
-                              neg1_slope=False,
-                              fig_title=fig_title, save_name=save_name,
-                              save_path=root_path, verbose=True)
+    #########################
+    '''try new ricco bloch fit function'''
+    fig_df = pd.read_csv(p_ave_path)
+    print(f'fig_df:\n{fig_df}')
+
+    # print(f'len_degrees_list: {len_degrees_list}')
+    len_deg_array = np.array(len_degrees_list)
+    # print(f'len_deg_array: {len_deg_array}')
+    diag_min = len_deg_array * 60
+    print(f'len_deg_array: {len_deg_array}')
+
+    deltaI_array = fig_df['delta_I'].to_numpy()
+    print(f'deltaI_array: {deltaI_array}')
+
+    log_x = np.log(diag_min)
+    print(f"log_x: {log_x}")
+    log_y = np.log(deltaI_array)
+    print(f"log_y: {log_y}")
+
+    print(f'sep_name_list: {sep_name_list}\n')
+
+
+    print(f'sep_name_list: {sep_name_list}\n')
+    # fig_title = f'{participant_name} average log(degrees), log(∆I) thresholds - Ricco_v{ricco_version} (n={len(run_folder_names)})'
+    save_name = f'NEW_ricco_v{ricco_version}_log_deg_log_contrast.png'
+
+    fig, slope2, breakpoint, r2 = ricco_bloch_fit(log_x_array=log_x, log_y_array=log_y,
+                                                  est_intercept1=None, est_breakpoint=None,
+                                                  point_labels=sep_name_list,
+                                                  x_axis_label='log(min)', y_axis_label=None,
+                                                  exp_version='Ricco (all)', p_name=participant_name,
+                                                  save_path=root_path, save_name=save_name)
     plt.show()
-
-    # fig 2 - log(len len_deg), log(contrast)
-    wide_df = fig_df.pivot(index=['diag_deg'], columns='cond', values='delta_I')
-    print(f'wide_df:\n{wide_df}')
-
-    wide_err_df = error_df.pivot(index=['diag_deg'], columns='cond', values='delta_I')
-    print(f'wide_err_df:\n{wide_err_df}')
-
-    fig_title = f'{participant_name} average log(degrees), log(∆I) thresholds - Ricco_v{ricco_version} (n={len(run_folder_names)})'
-    save_name = f'ricco_v{ricco_version}_log_deg_log_contrast.png'
-    plot_ave_w_errors_markers(fig_df=wide_df, error_df=wide_err_df,
-                              jitter=False, error_caps=True, alt_colours=False,
-                              legend_names=sep_name_list,
-                              even_spaced_x=False,
-                              fixed_y_range=False,
-                              x_tick_vals=None,
-                              x_tick_labels=None,
-                              x_axis_label='log(length, degrees)',
-                              y_axis_label='Contrast: log(∆I)',
-                              log_log_axes=True,
-                              neg1_slope=True,
-                              slope_ycol_name='lines',
-                              slope_xcol_idx_depth=1,
-                              fig_title=fig_title, save_name=save_name,
-                              save_path=root_path, verbose=True)
-    plt.show()
-
-
+    ###############################
     print('*** finished participant average plots ***')
-
-
-participant_list = ['Kristian', 'Simon', 'Kim', 'Nick']
-trim_n = 2
-print(f'exp_path: {exp_path}')
-print('\nget exp_average_data')
-# e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
-#                    # exp_type='Ricco',
-#                    exp_type=f'Ricco_v{ricco_version}',
-#                    error_type='SE', n_trimmed=trim_n, verbose=True)
-
-
-all_df_path = os.path.join(exp_path, 'MASTER_exp_all_thr.csv')
-exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
-err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
-exp_ave = True
-
-# making Experiment average plot
-print('*** making average plot (number of pixels)***')
-fig_df = pd.read_csv(exp_ave_path)
-print(f'fig_df:\n{fig_df}')
-
-len_pix_list = fig_df['len_pix'].to_list()
-print(f'len_pix_list: {len_pix_list}')
-
-error_df = pd.read_csv(err_path)
-print(f'error_df:\n{error_df}')
-
-
-# # fig 1 - ave thr by sep
-# ave_thr_by_n_pix_df = fig_df[['n_pix', 'thr']]
-# ave_thr_by_n_pix_df.set_index('n_pix', inplace=True)
-# err_thr_by_n_pix_df = error_df[['n_pix', 'thr']]
-# err_thr_by_n_pix_df.set_index('n_pix', inplace=True)
-# print(f'ave_thr_by_n_pix_df:\n{ave_thr_by_n_pix_df}')
-# 
-# fig_title = f'Experiment average thresholds - Ricco_v{ricco_version} (n={len(participant_list)})'
-# save_name = f'ricco_v{ricco_version}_n_pix_v_thr.png'
-# plot_runs_ave_w_errors(fig_df=ave_thr_by_n_pix_df, error_df=err_thr_by_n_pix_df,
-#                        jitter=False, error_caps=True, alt_colours=False,
-#                        legend_names=None,
-#                        even_spaced_x=False,
-#                        fixed_y_range=False,
-#                        x_tick_vals=len_pix_list,
-#                        x_tick_labels=len_pix_list,
-#                        x_axis_label='Number of pixels',
-#                        y_axis_label='Threshold',
-#                        log_log_axes=False,
-#                        neg1_slope=False,
-#                        fig_title=fig_title, save_name=save_name,
-#                        save_path=exp_path, verbose=True)
-# plt.show()
-# 
-# 
-# # # fig 2: log n_pix, log thr
-# log_n_pix_log_contrast_df = fig_df[['n_pix', 'delta_I']]
-# log_n_pix_log_contrast_df.set_index('n_pix', inplace=True)
-# err_log_n_pix_log_contrast_df = error_df[['n_pix', 'delta_I']]
-# err_log_n_pix_log_contrast_df.set_index('n_pix', inplace=True)
-# fig_title = f'Experiment average log(n_pix), log(∆I) thresholds - Ricco_v{ricco_version} (n={len(participant_list)})'
-# save_name = f'ricco_v{ricco_version}_log_n_pix_log_contrast.png'
-# plot_runs_ave_w_errors(fig_df=log_n_pix_log_contrast_df, error_df=err_log_n_pix_log_contrast_df,
-#                        jitter=False, error_caps=True, alt_colours=False,
-#                        legend_names=None,
-#                        even_spaced_x=False,
-#                        fixed_y_range=False,
-#                        x_tick_vals=None,
-#                        x_tick_labels=None,
-#                        x_axis_label='log(number of pixels)',
-#                        y_axis_label='Contrast: log(∆I)',
-#                        log_log_axes=True,
-#                        neg1_slope=True,
-#                        slope_ycol_name='delta_I',
-#                        slope_xcol_idx_depth=1,
-#                        fig_title=fig_title, save_name=save_name,
-#                        save_path=exp_path, verbose=True)
-# plt.show()
-# 
-# 
-# print('*** making average plot (length, mm) ***')
+#
+#
+# participant_list = ['Kristian', 'Simon', 'Kim', 'Nick', 'Tony']
+# trim_n = 2
+# print(f'exp_path: {exp_path}')
+# print('\nget exp_average_data')
+# # e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
+# #                    # exp_type='Ricco',
+# #                    exp_type=f'Ricco_v{ricco_version}',
+# #                    error_type='SE', n_trimmed=trim_n, verbose=True)
+#
+#
+# all_df_path = os.path.join(exp_path, 'MASTER_exp_all_thr.csv')
+# exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
+# err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
+# exp_ave = True
+#
+# # making Experiment average plot
+# print('*** making average plot (number of pixels)***')
 # fig_df = pd.read_csv(exp_ave_path)
 # print(f'fig_df:\n{fig_df}')
-# 
+#
 # len_pix_list = fig_df['len_pix'].to_list()
 # print(f'len_pix_list: {len_pix_list}')
-# 
+#
 # error_df = pd.read_csv(err_path)
 # print(f'error_df:\n{error_df}')
-# 
-# # # fig 3 - ave thr by sep
-# ave_thr_by_len_df = fig_df[['len_pix', 'thr']]
-# ave_thr_by_len_df.set_index('len_pix', inplace=True)
-# err_thr_by_len_df = error_df[['len_pix', 'thr']]
-# err_thr_by_len_df.set_index('len_pix', inplace=True)
-# print(f'ave_thr_by_len_df:\n{ave_thr_by_len_df}')
-# 
+#
+#
+# # # fig 1 - ave thr by sep
+# # ave_thr_by_n_pix_df = fig_df[['n_pix', 'thr']]
+# # ave_thr_by_n_pix_df.set_index('n_pix', inplace=True)
+# # err_thr_by_n_pix_df = error_df[['n_pix', 'thr']]
+# # err_thr_by_n_pix_df.set_index('n_pix', inplace=True)
+# # print(f'ave_thr_by_n_pix_df:\n{ave_thr_by_n_pix_df}')
+# #
+# # fig_title = f'Experiment average thresholds - Ricco_v{ricco_version} (n={len(participant_list)})'
+# # save_name = f'ricco_v{ricco_version}_n_pix_v_thr.png'
+# # plot_runs_ave_w_errors(fig_df=ave_thr_by_n_pix_df, error_df=err_thr_by_n_pix_df,
+# #                        jitter=False, error_caps=True, alt_colours=False,
+# #                        legend_names=None,
+# #                        even_spaced_x=False,
+# #                        fixed_y_range=False,
+# #                        x_tick_vals=len_pix_list,
+# #                        x_tick_labels=len_pix_list,
+# #                        x_axis_label='Number of pixels',
+# #                        y_axis_label='Threshold',
+# #                        log_log_axes=False,
+# #                        neg1_slope=False,
+# #                        fig_title=fig_title, save_name=save_name,
+# #                        save_path=exp_path, verbose=True)
+# # plt.show()
+# #
+# #
+# # # # fig 2: log n_pix, log thr
+# # log_n_pix_log_contrast_df = fig_df[['n_pix', 'delta_I']]
+# # log_n_pix_log_contrast_df.set_index('n_pix', inplace=True)
+# # err_log_n_pix_log_contrast_df = error_df[['n_pix', 'delta_I']]
+# # err_log_n_pix_log_contrast_df.set_index('n_pix', inplace=True)
+# # fig_title = f'Experiment average log(n_pix), log(∆I) thresholds - Ricco_v{ricco_version} (n={len(participant_list)})'
+# # save_name = f'ricco_v{ricco_version}_log_n_pix_log_contrast.png'
+# # plot_runs_ave_w_errors(fig_df=log_n_pix_log_contrast_df, error_df=err_log_n_pix_log_contrast_df,
+# #                        jitter=False, error_caps=True, alt_colours=False,
+# #                        legend_names=None,
+# #                        even_spaced_x=False,
+# #                        fixed_y_range=False,
+# #                        x_tick_vals=None,
+# #                        x_tick_labels=None,
+# #                        x_axis_label='log(number of pixels)',
+# #                        y_axis_label='Contrast: log(∆I)',
+# #                        log_log_axes=True,
+# #                        neg1_slope=True,
+# #                        slope_ycol_name='delta_I',
+# #                        slope_xcol_idx_depth=1,
+# #                        fig_title=fig_title, save_name=save_name,
+# #                        save_path=exp_path, verbose=True)
+# # plt.show()
+# #
+# #
+# # print('*** making average plot (length, mm) ***')
+# # fig_df = pd.read_csv(exp_ave_path)
+# # print(f'fig_df:\n{fig_df}')
+# #
+# # len_pix_list = fig_df['len_pix'].to_list()
+# # print(f'len_pix_list: {len_pix_list}')
+# #
+# # error_df = pd.read_csv(err_path)
+# # print(f'error_df:\n{error_df}')
+# #
+# # # # fig 3 - ave thr by sep
+# # ave_thr_by_len_df = fig_df[['len_pix', 'thr']]
+# # ave_thr_by_len_df.set_index('len_pix', inplace=True)
+# # err_thr_by_len_df = error_df[['len_pix', 'thr']]
+# # err_thr_by_len_df.set_index('len_pix', inplace=True)
+# # print(f'ave_thr_by_len_df:\n{ave_thr_by_len_df}')
+# #
+# # fig_title = f'Experiment average thresholds - Ricco_v{ricco_version} (n={len(participant_list)})'
+# # save_name = f'ricco_v{ricco_version}_len_v_thr.png'
+# # plot_runs_ave_w_errors(fig_df=ave_thr_by_len_df, error_df=err_thr_by_len_df,
+# #                        jitter=False, error_caps=True, alt_colours=False,
+# #                        legend_names=None,
+# #                        even_spaced_x=False,
+# #                        fixed_y_range=False,
+# #                        x_tick_vals=len_pix_list,
+# #                        x_tick_labels=len_pix_list,
+# #                        x_axis_label='Length: (diagonal pixels)',
+# #                        y_axis_label='Threshold',
+# #                        log_log_axes=False,
+# #                        neg1_slope=False,
+# #                        fig_title=fig_title, save_name=save_name,
+# #                        save_path=exp_path, verbose=True)
+# # plt.show()
+# #
+# #
+# # # # fig 4: log len, log thr
+# # log_len_log_contrast_df = fig_df[['len_pix', 'delta_I']]
+# # log_len_log_contrast_df.set_index('len_pix', inplace=True)
+# # err_log_len_log_contrast_df = error_df[['len_pix', 'delta_I']]
+# # err_log_len_log_contrast_df.set_index('len_pix', inplace=True)
+# # fig_title = f'Experiment average log(len), log(∆I) thresholds - Ricco_v{ricco_version} (n={len(participant_list)})'
+# # save_name = f'ricco_v{ricco_version}_log_len_log_contrast.png'
+# # plot_runs_ave_w_errors(fig_df=log_len_log_contrast_df, error_df=err_log_len_log_contrast_df,
+# #                        jitter=False, error_caps=True, alt_colours=False,
+# #                        legend_names=None,
+# #                        even_spaced_x=False,
+# #                        fixed_y_range=False,
+# #                        x_tick_vals=None,
+# #                        x_tick_labels=None,
+# #                        x_axis_label='log(length, diagonal pixels)',
+# #                        y_axis_label='Contrast: log(∆I)',
+# #                        log_log_axes=True,
+# #                        neg1_slope=True,
+# #                        slope_ycol_name='delta_I',
+# #                        slope_xcol_idx_depth=1,
+# #                        fig_title=fig_title, save_name=save_name,
+# #                        save_path=exp_path, verbose=True)
+# # plt.show()
+#
+#
+# print('*** making average plot (length degrees)***')
+# fig_df = pd.read_csv(exp_ave_path)
+# print(f'fig_df:\n{fig_df}')
+#
+# # get sep cond values for legend
+# sep_list = fig_df['separation'].to_list()
+# sep_vals_list = [i for i in sep_list]
+# sep_name_list = ['1pr' if i == -1 else f'sep{i}' for i in sep_list]
+# print(f'sep_vals_list: {sep_vals_list}')
+# print(f'sep_name_list: {sep_name_list}\n')
+#
+# len_degrees_list = fig_df['diag_deg'].to_list()
+# print(f'len_degrees_list: {len_degrees_list}')
+#
+# len_deg_name_list = []
+# for i in len_degrees_list:
+#     if i > 1:
+#         len_deg_name_list.append(str(round(i, 2)))
+#     elif i < -1:
+#         len_deg_name_list.append(str(round(i, 2)))
+#     else:
+#         str_i = str(round(i, 2))
+#         len_deg_name_list.append(str_i[1:])
+# print(f'len_deg_name_list: {len_deg_name_list}')
+#
+# error_df = pd.read_csv(err_path)
+# print(f'error_df:{error_df.columns}\n{error_df}')
+# print(sum(error_df['thr'].to_list()))
+# # if sum(error_df['thr'].to_list()):
+# #     raise ValueError
+# # print()
+#
+#
+# # # fig 5 - ave thr by sep
+# ave_thr_by_deg_df = fig_df[['diag_deg', 'thr']]
+# ave_thr_by_deg_df.set_index('diag_deg', inplace=True)
+# err_thr_by_deg_df = error_df[['diag_deg', 'thr']]
+# err_thr_by_deg_df.set_index('diag_deg', inplace=True)
+# print(f'ave_thr_by_deg_df:\n{ave_thr_by_deg_df}')
+#
 # fig_title = f'Experiment average thresholds - Ricco_v{ricco_version} (n={len(participant_list)})'
-# save_name = f'ricco_v{ricco_version}_len_v_thr.png'
-# plot_runs_ave_w_errors(fig_df=ave_thr_by_len_df, error_df=err_thr_by_len_df,
-#                        jitter=False, error_caps=True, alt_colours=False,
-#                        legend_names=None,
-#                        even_spaced_x=False,
-#                        fixed_y_range=False,
-#                        x_tick_vals=len_pix_list,
-#                        x_tick_labels=len_pix_list,
-#                        x_axis_label='Length: (diagonal pixels)',
-#                        y_axis_label='Threshold',
-#                        log_log_axes=False,
-#                        neg1_slope=False,
-#                        fig_title=fig_title, save_name=save_name,
-#                        save_path=exp_path, verbose=True)
+# save_name = f'ricco_v{ricco_version}_deg_v_thr.png'
+# plot_ave_w_errors_markers(fig_df=ave_thr_by_deg_df, error_df=err_thr_by_deg_df,
+#                           jitter=False, error_caps=True, alt_colours=False,
+#                           legend_names=sep_name_list,
+#                           even_spaced_x=False,
+#                           fixed_y_range=False,
+#                           x_tick_vals=len_degrees_list,
+#                           x_tick_labels=len_deg_name_list,
+#                           x_axis_label='Length: (degrees)',
+#                           y_axis_label='Threshold',
+#                           log_log_axes=False,
+#                           neg1_slope=False,
+#                           fig_title=fig_title, save_name=save_name,
+#                           save_path=exp_path, verbose=True)
 # plt.show()
-# 
-# 
-# # # fig 4: log len, log thr
-# log_len_log_contrast_df = fig_df[['len_pix', 'delta_I']]
-# log_len_log_contrast_df.set_index('len_pix', inplace=True)
-# err_log_len_log_contrast_df = error_df[['len_pix', 'delta_I']]
-# err_log_len_log_contrast_df.set_index('len_pix', inplace=True)
-# fig_title = f'Experiment average log(len), log(∆I) thresholds - Ricco_v{ricco_version} (n={len(participant_list)})'
-# save_name = f'ricco_v{ricco_version}_log_len_log_contrast.png'
-# plot_runs_ave_w_errors(fig_df=log_len_log_contrast_df, error_df=err_log_len_log_contrast_df,
-#                        jitter=False, error_caps=True, alt_colours=False,
-#                        legend_names=None,
-#                        even_spaced_x=False,
-#                        fixed_y_range=False,
-#                        x_tick_vals=None,
-#                        x_tick_labels=None,
-#                        x_axis_label='log(length, diagonal pixels)',
-#                        y_axis_label='Contrast: log(∆I)',
-#                        log_log_axes=True,
-#                        neg1_slope=True,
-#                        slope_ycol_name='delta_I',
-#                        slope_xcol_idx_depth=1,
-#                        fig_title=fig_title, save_name=save_name,
-#                        save_path=exp_path, verbose=True)
+#
+#
+# # # fig 6: log len, log thr
+# log_deg_log_contrast_df = fig_df[['diag_deg', 'delta_I']]
+# log_deg_log_contrast_df.set_index('diag_deg', inplace=True)
+# err_log_deg_log_contrast_df = error_df[['diag_deg', 'delta_I']]
+# err_log_deg_log_contrast_df.set_index('diag_deg', inplace=True)
+# fig_title = f'Experiment average log(degrees), log(∆I) thresholds - Ricco_v{ricco_version} (n={len(participant_list)})'
+# save_name = f'ricco_v{ricco_version}_log_deg_log_contrast.png'
+# plot_ave_w_errors_markers(fig_df=log_deg_log_contrast_df, error_df=err_log_deg_log_contrast_df,
+#                           jitter=False, error_caps=True, alt_colours=False,
+#                           legend_names=sep_name_list,
+#                           even_spaced_x=False,
+#                           fixed_y_range=False,
+#                           x_tick_vals=None,
+#                           x_tick_labels=None,
+#                           x_axis_label='log(degrees)',
+#                           y_axis_label='Contrast: log(∆I)',
+#                           log_log_axes=True,
+#                           neg1_slope=True,
+#                           slope_ycol_name='delta_I',
+#                           slope_xcol_idx_depth=1,
+#                           fig_title=fig_title, save_name=save_name,
+#                           save_path=exp_path, verbose=True)
 # plt.show()
-
-
-print('*** making average plot (length degrees)***')
-fig_df = pd.read_csv(exp_ave_path)
-print(f'fig_df:\n{fig_df}')
-
-# get sep cond values for legend
-sep_list = fig_df['separation'].to_list()
-sep_vals_list = [i for i in sep_list]
-sep_name_list = ['1pr' if i == -1 else f'sep{i}' for i in sep_list]
-print(f'sep_vals_list: {sep_vals_list}')
-print(f'sep_name_list: {sep_name_list}\n')
-
-len_degrees_list = fig_df['diag_deg'].to_list()
-print(f'len_degrees_list: {len_degrees_list}')
-
-len_deg_name_list = []
-for i in len_degrees_list:
-    if i > 1:
-        len_deg_name_list.append(str(round(i, 2)))
-    elif i < -1:
-        len_deg_name_list.append(str(round(i, 2)))
-    else:
-        str_i = str(round(i, 2))
-        len_deg_name_list.append(str_i[1:])
-print(f'len_deg_name_list: {len_deg_name_list}')
-
-error_df = pd.read_csv(err_path)
-print(f'error_df:{error_df.columns}\n{error_df}')
-print(sum(error_df['thr'].to_list()))
-# if sum(error_df['thr'].to_list()):
-#     raise ValueError
-# print()
-
-
-# # fig 5 - ave thr by sep
-ave_thr_by_deg_df = fig_df[['diag_deg', 'thr']]
-ave_thr_by_deg_df.set_index('diag_deg', inplace=True)
-err_thr_by_deg_df = error_df[['diag_deg', 'thr']]
-err_thr_by_deg_df.set_index('diag_deg', inplace=True)
-print(f'ave_thr_by_deg_df:\n{ave_thr_by_deg_df}')
-
-fig_title = f'Experiment average thresholds - Ricco_v{ricco_version} (n={len(participant_list)})'
-save_name = f'ricco_v{ricco_version}_deg_v_thr.png'
-plot_ave_w_errors_markers(fig_df=ave_thr_by_deg_df, error_df=err_thr_by_deg_df,
-                          jitter=False, error_caps=True, alt_colours=False,
-                          legend_names=sep_name_list,
-                          even_spaced_x=False,
-                          fixed_y_range=False,
-                          x_tick_vals=len_degrees_list,
-                          x_tick_labels=len_deg_name_list,
-                          x_axis_label='Length: (degrees)',
-                          y_axis_label='Threshold',
-                          log_log_axes=False,
-                          neg1_slope=False,
-                          fig_title=fig_title, save_name=save_name,
-                          save_path=exp_path, verbose=True)
-plt.show()
-
-
-# # fig 6: log len, log thr
-log_deg_log_contrast_df = fig_df[['diag_deg', 'delta_I']]
-log_deg_log_contrast_df.set_index('diag_deg', inplace=True)
-err_log_deg_log_contrast_df = error_df[['diag_deg', 'delta_I']]
-err_log_deg_log_contrast_df.set_index('diag_deg', inplace=True)
-fig_title = f'Experiment average log(degrees), log(∆I) thresholds - Ricco_v{ricco_version} (n={len(participant_list)})'
-save_name = f'ricco_v{ricco_version}_log_deg_log_contrast.png'
-plot_ave_w_errors_markers(fig_df=log_deg_log_contrast_df, error_df=err_log_deg_log_contrast_df,
-                          jitter=False, error_caps=True, alt_colours=False,
-                          legend_names=sep_name_list,
-                          even_spaced_x=False,
-                          fixed_y_range=False,
-                          x_tick_vals=None,
-                          x_tick_labels=None,
-                          x_axis_label='log(degrees)',
-                          y_axis_label='Contrast: log(∆I)',
-                          log_log_axes=True,
-                          neg1_slope=True,
-                          slope_ycol_name='delta_I',
-                          slope_xcol_idx_depth=1,
-                          fig_title=fig_title, save_name=save_name,
-                          save_path=exp_path, verbose=True)
-plt.show()
-
-print('*** finished experiment average plots ***')
+#
+# print('*** finished experiment average plots ***')
 
 
 print(f'\nExp3_Ricco_v{ricco_version}_analysis_pipe finished\n')
