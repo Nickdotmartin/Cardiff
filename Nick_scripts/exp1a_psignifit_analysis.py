@@ -35,6 +35,25 @@ split_df_into_pos_sep_df_and_1probe_df():
 pd.options.display.float_format = "{:,.2f}".format
 
 
+def lookup_p_name(p_name):
+    """lookup participant name in old_p_list and return new_p_list name or vice versa"""
+    old_p_list = ['Tony', 'Simon', 'Maria', 'Kristian', 'Kim']
+    new_p_list = ['aa', 'bb', 'cc', 'dd', 'ee']
+
+    if p_name in old_p_list:
+        p_idx = old_p_list.index(p_name)
+        return_name = new_p_list[p_idx]
+    elif p_name in new_p_list:
+        p_idx = new_p_list.index(p_name)
+        return_name = old_p_list[p_idx]
+    else:
+        raise ValueError(f'{p_name} not found in either old_p_list or new_p_list'
+                         f'\nold_p_list: {old_p_list}'
+                         f'\nnew_p_list: {new_p_list}')
+
+    return return_name
+
+
 def conc_to_first_isi_col(df, col_to_change='ISI_-1'):
     """
     Function to sort dataframe where concurrent is given as 'ISI_-1'.
@@ -2576,6 +2595,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                        #                'ISI 6', 'ISI 9', 'ISI 12', 'ISI 24'],
                        # sep_vals_list=[0, 1, 2, 3, 6, 18, 20],
                        # sep_name_list=[0, 1, 2, 3, 6, 18, '1probe'],
+                       ra_cd_size_dict=None,
                        heatmap_annot_fmt='{:.2f}',
                        show_plots=True, verbose=True):
     """
@@ -2601,6 +2621,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     :param isi_name_list: List of ISI column names.
     :param sep_vals_list: List of separation values (including 99 for 1probe)
     :param sep_name_list: List of separation names (e.g., '1probe' if 99 in sep_vals_list).
+    :param ra_cd_size_dict: dictionary containing participant Ricco area and Bloch critical duration info.
     :param heatmap_annot_fmt: Number of digits to display in heatmap values.
     :param show_plots: Whether to display figures once they are made.
     :param verbose: Whether to print progress to screen.

@@ -25,15 +25,16 @@ if running_on_laptop():
 exp_path = convert_path1
 print(f"exp_path: {exp_path}")
 
-# participant_list = ['Kim']  # , 'bb', 'cc', 'dd', 'ee']
 participant_list = ['Kristian', 'Nick', 'Simon', 'Kim', 'Tony']  # , 'bb', 'cc', 'dd', 'ee']
-# participant_list = ['Kristian']
+# participant_list = ['Tony']
 
 
 ricco_version = 'all'
 n_runs = 12
 analyse_from_run = 1
 trim_list = []
+
+RA_size_list = []
 
 for p_idx, participant_name in enumerate(participant_list):
     root_path = os.path.join(exp_path, participant_name)
@@ -217,72 +218,105 @@ for p_idx, participant_name in enumerate(participant_list):
     #                                         verbose=True)
     #     print(f'thr_df: {type(thr_df)}\n{thr_df}')
     #
-    #     # todo: save updated run_data_df?
-    #
-    #     run_data_path = os.path.join(save_path, f"{p_name}_output.csv")
-    #     run_data_df = pd.read_csv(run_data_path)
-    #     print(f'run_data_df:\n{run_data_df}')
-    #
-    #
-    #     '''Run figs from here'''
-    #     thr_df_path = f'{save_path}{os.sep}psignifit_thresholds.csv'
-    #     # thr_df_path = f'{save_path}{os.sep}{thr_save_name}.csv'
-    #     thr_df = pd.read_csv(thr_df_path)
-    #     print(f'thr_df:\n{thr_df}\n')
-    #
-    #     print(f'thr_df ({thr_df.columns.to_list()}):\n{thr_df}')
-    #
-    #     # check for 'area' and 'weber_thr' col
-    #     sep_list = thr_df['separation'].to_list()
-    #     sep_vals_list = [i for i in sep_list]
-    #     sep_name_list = ['1pr' if i == -1 else f'sep{i}' for i in sep_list]
-    #     print(f'sep_vals_list: {sep_vals_list}')
-    #     print(f'sep_name_list: {sep_name_list}\n')
-    #
-    #     # n_pix_list = thr_df['n_pix'].unique().tolist()
-    #     # len_pix_list = thr_df['len_pix'].unique().tolist()
-    #     # print(f'n_pix_list: {n_pix_list}')
-    #     # print(f'len_pix_list: {len_pix_list}')
-    #     len_degrees_list = thr_df['diag_deg'].unique().tolist()
-    #     print(f'len_degrees_list: {len_degrees_list}')
-    #
-    #     col_names = thr_df.columns.to_list()
-    #     print(f'col_names:\n{col_names}\n')
-    #
-    #     if 'ISI_0' in col_names:
-    #         thr_df.rename(columns={'ISI_0': 'thr'}, inplace=True)
-    #
-    #     if 'delta_I' not in col_names:
-    #         thr_col = thr_df['thr'].to_list()
-    #         bgLum = 21.2
-    #         delta_I_col = [i - bgLum for i in thr_col]
-    #         thr_df.insert(5, 'delta_I', delta_I_col)
-    #
-    #     if 'stair_name' in col_names:
-    #         thr_df.drop('stair_name', axis=1, inplace=True)
-    #
-    #     print(f'thr_df:\n{thr_df}')
-    #     thr_df.to_csv(thr_df_path, index=False)
-    #
-    #     # fig 1. basic plot with exp1 axes - len_degrees vs thr
-    #     run_thr_plot_w_markers(thr_df, x_col='diag_deg', y_col='thr', hue_col='cond',
-    #                            x_ticks_vals=len_degrees_list, x_tick_names=[round(i, 2) for i in len_degrees_list],
-    #                            x_axis_label='length (degrees)',
-    #                            y_axis_label='Probe Luminance',
-    #                            legend_names=sep_name_list,
-    #                            fig_title=f'{participant_name} run{run_idx+analyse_from_run}. Ricco_v{ricco_version}: length vs thresholds',
-    #                            save_as=f'{save_path}{os.sep}ricco_v{ricco_version}_len_deg_v_thr.png')
-    #     plt.show()
-    #
-    #     # fig 2. plot with log-log axes - length len_degrees v delta_I
-    #     log_log_w_markers_plot(thr_df, x_col='diag_deg', y_col='delta_I', hue_col='cond',
-    #                            legend_names=sep_name_list,
-    #                            x_axis_label='log(length, degrees)',
-    #                            y_axis_label='Contrast: log(∆I)',
-    #                            fig_title=f'{participant_name} run{run_idx+analyse_from_run}. Ricco_v{ricco_version}: log(degrees) v log(∆I)',
-    #                            save_as=f'{save_path}{os.sep}ricco_v{ricco_version}_log_degrees_log_contrast.png')
-    #     plt.show()
-    #
+        # # todo: save updated run_data_df?
+        #
+        # run_data_path = os.path.join(save_path, f"{p_name}_output.csv")
+        # run_data_df = pd.read_csv(run_data_path)
+        # print(f'run_data_df:\n{run_data_df}')
+        #
+        #
+        # '''Run figs from here'''
+        # thr_df_path = f'{save_path}{os.sep}psignifit_thresholds.csv'
+        # # thr_df_path = f'{save_path}{os.sep}{thr_save_name}.csv'
+        # thr_df = pd.read_csv(thr_df_path)
+        # print(f'thr_df:\n{thr_df}\n')
+        #
+        # print(f'thr_df ({thr_df.columns.to_list()}):\n{thr_df}')
+        #
+        # # check for 'area' and 'weber_thr' col
+        # sep_list = thr_df['separation'].to_list()
+        # sep_vals_list = [i for i in sep_list]
+        # sep_name_list = ['1pr' if i == -1 else f'sep{i}' for i in sep_list]
+        # print(f'sep_vals_list: {sep_vals_list}')
+        # print(f'sep_name_list: {sep_name_list}\n')
+        #
+        # # n_pix_list = thr_df['n_pix'].unique().tolist()
+        # # len_pix_list = thr_df['len_pix'].unique().tolist()
+        # # print(f'n_pix_list: {n_pix_list}')
+        # # print(f'len_pix_list: {len_pix_list}')
+        # len_degrees_list = thr_df['diag_deg'].unique().tolist()
+        # print(f'len_degrees_list: {len_degrees_list}')
+        #
+        # col_names = thr_df.columns.to_list()
+        # print(f'col_names:\n{col_names}\n')
+        #
+        # if 'ISI_0' in col_names:
+        #     thr_df.rename(columns={'ISI_0': 'thr'}, inplace=True)
+        #
+        # if 'delta_I' not in col_names:
+        #     thr_col = thr_df['thr'].to_list()
+        #     bgLum = 21.2
+        #     delta_I_col = [i - bgLum for i in thr_col]
+        #     thr_df.insert(5, 'delta_I', delta_I_col)
+        #
+        # if 'stair_name' in col_names:
+        #     thr_df.drop('stair_name', axis=1, inplace=True)
+        #
+        # print(f'thr_df:\n{thr_df}')
+        # thr_df.to_csv(thr_df_path, index=False)
+        #
+        # # # fig 1. basic plot with exp1 axes - len_degrees vs thr
+        # # run_thr_plot_w_markers(thr_df, x_col='diag_deg', y_col='thr', hue_col='cond',
+        # #                        x_ticks_vals=len_degrees_list, x_tick_names=[round(i, 2) for i in len_degrees_list],
+        # #                        x_axis_label='length (degrees)',
+        # #                        y_axis_label='Probe Luminance',
+        # #                        legend_names=sep_name_list,
+        # #                        fig_title=f'{participant_name} run{run_idx+analyse_from_run}. Ricco_v{ricco_version}: length vs thresholds',
+        # #                        save_as=f'{save_path}{os.sep}ricco_v{ricco_version}_len_deg_v_thr.png')
+        # # plt.show()
+        #
+        # # # OLD-dont use.  fig 2. plot with log-log axes - length len_degrees v delta_I
+        # # log_log_w_markers_plot(thr_df, x_col='diag_deg', y_col='delta_I', hue_col='cond',
+        # #                        legend_names=sep_name_list,
+        # #                        x_axis_label='log(length, degrees)',
+        # #                        y_axis_label='Contrast: log(∆I)',
+        # #                        fig_title=f'{participant_name} run{run_idx+analyse_from_run}. Ricco_v{ricco_version}: log(degrees) v log(∆I)',
+        # #                        save_as=f'{save_path}{os.sep}ricco_v{ricco_version}_log_degrees_log_contrast.png')
+        # # plt.show()
+        #
+        # '''try new ricco bloch fit function'''
+        # thr_df = pd.read_csv(thr_df_path)
+        # print(f'thr_df:\n{thr_df}')
+        #
+        # # print(f'len_degrees_list: {len_degrees_list}')
+        # len_deg_array = thr_df['diag_deg'].to_numpy()
+        # # print(f'len_deg_array: {len_deg_array}')
+        # diag_min = len_deg_array * 60
+        # print(f'len_deg_array: {len_deg_array}')
+        #
+        # deltaI_array = thr_df['delta_I'].to_numpy()
+        # print(f'deltaI_array: {deltaI_array}')
+        #
+        # log_x = np.log(diag_min)
+        # print(f"log_x: {log_x}")
+        # log_y = np.log(deltaI_array)
+        # print(f"log_y: {log_y}")
+        #
+        # print(f'sep_name_list: {sep_name_list}\n')
+        #
+        # print(f'sep_name_list: {sep_name_list}\n')
+        # # fig_title = f'{participant_name} average log(degrees), log(∆I) thresholds - Ricco_v{ricco_version} (n={len(run_folder_names)})'
+        # save_name = f'NEW_ricco_v{ricco_version}_log_deg_log_contrast.png'
+        #
+        # fig, breakpoint_dict = ricco_bloch_fit(log_x_array=log_x, log_y_array=log_y,
+        #                                        est_intercept1=None, est_breakpoint=None,
+        #                                        point_labels=sep_name_list,
+        #                                        x_axis_label='log(min)', y_axis_label=None,
+        #                                        exp_version='Ricco (all)', p_name=f"{participant_name}_{run_idx+analyse_from_run}",
+        #                                        save_path=root_path, save_name=save_name)
+        # plt.show()
+
+
     #
     #
     #
@@ -365,32 +399,32 @@ for p_idx, participant_name in enumerate(participant_list):
     print(f'fig_df:\n{fig_df}')
 
 
-    # # # fig 1 - len degrees v thr
-    # wide_df = fig_df.pivot(index=['diag_deg'], columns='cond', values='thr')
-    # print(f'wide_df:\n{wide_df}')
-    # wide_err_df = error_df.pivot(index=['diag_deg'], columns='cond', values='thr')
-    #
-    # len_degrees_list = fig_df['diag_deg'].to_list()
-    # print(f'len_degrees_list: {len_degrees_list}')
-    #
-    # fig_title = f'{participant_name} average thresholds - Ricco_v{ricco_version} (n={len(run_folder_names)})'
-    # save_name = f'ricco_v{ricco_version}_len_deg_v_thr.png'
-    # plot_ave_w_errors_markers(fig_df=wide_df, error_df=wide_err_df,
-    #                           jitter=False, error_caps=True, alt_colours=False,
-    #                           legend_names=sep_name_list,
-    #                           even_spaced_x=False,
-    #                           fixed_y_range=False,
-    #                           x_tick_vals=len_degrees_list,
-    #                           x_tick_labels=len_deg_name_list,
-    #                           x_axis_label='Length (degrees)',
-    #                           y_axis_label='Threshold',
-    #                           log_log_axes=False,
-    #                           neg1_slope=False,
-    #                           fig_title=fig_title, save_name=save_name,
-    #                           save_path=root_path, verbose=True)
-    # plt.show()
-    #
-    # # fig 2 - log(len len_deg), log(contrast)
+    # # fig 1 - len degrees v thr
+    wide_df = fig_df.pivot(index=['diag_deg'], columns='cond', values='thr')
+    print(f'wide_df:\n{wide_df}')
+    wide_err_df = error_df.pivot(index=['diag_deg'], columns='cond', values='thr')
+
+    len_degrees_list = fig_df['diag_deg'].to_list()
+    print(f'len_degrees_list: {len_degrees_list}')
+
+    fig_title = f'{participant_name} average thresholds - Ricco_v{ricco_version} (n={len(run_folder_names)})'
+    save_name = f'ricco_v{ricco_version}_len_deg_v_thr.png'
+    plot_ave_w_errors_markers(fig_df=wide_df, error_df=wide_err_df,
+                              jitter=False, error_caps=True, alt_colours=False,
+                              legend_names=sep_name_list,
+                              even_spaced_x=False,
+                              fixed_y_range=False,
+                              x_tick_vals=len_degrees_list,
+                              x_tick_labels=len_deg_name_list,
+                              x_axis_label='Length (degrees)',
+                              y_axis_label='Threshold',
+                              log_log_axes=False,
+                              neg1_slope=False,
+                              fig_title=fig_title, save_name=save_name,
+                              save_path=root_path, verbose=True)
+    plt.show()
+
+    # # OLD - don't use fig 2 - log(len len_deg), log(contrast)
     # wide_df = fig_df.pivot(index=['diag_deg'], columns='cond', values='delta_I')
     # print(f'wide_df:\n{wide_df}')
     #
@@ -417,7 +451,9 @@ for p_idx, participant_name in enumerate(participant_list):
     # plt.show()
 
 
-    #########################
+    ########################
+    # NEW fig 2 - log(len len_deg), log(contrast) with fit RA size function
+
     '''try new ricco bloch fit function'''
     fig_df = pd.read_csv(p_ave_path)
     print(f'fig_df:\n{fig_df}')
@@ -443,15 +479,32 @@ for p_idx, participant_name in enumerate(participant_list):
     # fig_title = f'{participant_name} average log(degrees), log(∆I) thresholds - Ricco_v{ricco_version} (n={len(run_folder_names)})'
     save_name = f'NEW_ricco_v{ricco_version}_log_deg_log_contrast.png'
 
-    fig, slope2, breakpoint, r2 = ricco_bloch_fit(log_x_array=log_x, log_y_array=log_y,
+    fig, breakpoint_dict = ricco_bloch_fit(log_x_array=log_x, log_y_array=log_y,
                                                   est_intercept1=None, est_breakpoint=None,
                                                   point_labels=sep_name_list,
                                                   x_axis_label='log(min)', y_axis_label=None,
                                                   exp_version='Ricco (all)', p_name=participant_name,
                                                   save_path=root_path, save_name=save_name)
     plt.show()
+
+    breakpoint = breakpoint_dict['breakpoint']
+    slope2 = breakpoint_dict['slope2']
+    r2 = breakpoint_dict['r2']
+    breakpoint_min = breakpoint_dict['min']
+    breakpoint_deg = breakpoint_dict['deg']
+    breakpoint_pix = breakpoint_dict['pix']
+    breakpoint_sep = breakpoint_dict['sep']
+
+    RA_size_list.append([participant_name, len(run_folder_names), slope2, breakpoint, r2,
+                         breakpoint_min, breakpoint_deg, breakpoint_pix, breakpoint_sep])
     ###############################
     print('*** finished participant average plots ***')
+
+RA_size_df = pd.DataFrame(RA_size_list, columns=['participant', 'n_runs', 'slope2', 'breakpoint', 'r2',
+                                                 'arc_min', 'degrees', 'n_pix', 'separation'])
+print(f'RA_size_df:\n{RA_size_df}')
+RA_size_df.to_csv(os.path.join(exp_path, 'RA_size_df.csv'), index=False)
+
 #
 #
 # participant_list = ['Kristian', 'Simon', 'Kim', 'Nick', 'Tony']

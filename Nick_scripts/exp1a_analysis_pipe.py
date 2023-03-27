@@ -1,10 +1,9 @@
 import os
 import pandas as pd
 from exp1a_psignifit_analysis import a_data_extraction, b3_plot_staircase, c_plots, \
-    d_average_participant, e_average_exp_data, make_average_plots, make_diff_from_conc_df
+    d_average_participant, e_average_exp_data, make_average_plots, make_diff_from_conc_df, lookup_p_name
 from psignifit_tools import get_psignifit_threshold_df
 from python_tools import which_path, running_on_laptop, switch_path
-
 import matplotlib.pyplot as plt
 
 # # loop through run folders with first 4 scripts (a, get_psignifit_threshold_df, b3, c)
@@ -145,6 +144,38 @@ for p_idx, participant_name in enumerate(participant_list):
     print(f"ave_DfC_df:\n{ave_DfC_df}")
     print(f"error_DfC_df:\n{error_DfC_df}")
 
+    '''look for RA and CD size'''
+    ra_size_sep = ra_size_deg = cd_size_isi = cd_size_ms = None
+    # get participant name to check
+    if participant_name in ['aa', 'bb', 'cc', 'dd', 'ee']:
+        check_name = lookup_p_name(participant_name)
+    else:
+        check_name = participant_name
+    if check_name == 'Kris':
+        check_name = 'Kristian'
+
+    # get RA size
+    ra_size_df = pd.read_csv(r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp3_Ricco_all\RA_size_df.csv")
+    ra_names_list = ra_size_df['participant'].to_list()
+    if check_name in ra_names_list:
+        ra_size_sep = ra_size_df.loc[ra_size_df['participant'] == participant_name, 'separation'].values
+        ra_size_deg = ra_size_df.loc[ra_size_df['participant'] == participant_name, 'degrees'].values
+
+    # get cd size
+    cd_size_df = pd.read_csv(r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp2_Bloch_NM_v5\CD_size_df.csv")
+    print(f"cd_size_df:\n{cd_size_df}")
+    cd_names_list = cd_size_df['participant'].to_list()
+    if check_name in ra_names_list:
+        cd_size_isi = ra_size_df.loc[ra_size_df['participant'] == participant_name, 'isi'].values
+        cd_size_ms = ra_size_df.loc[ra_size_df['participant'] == participant_name, 'ms'].values
+
+    ra_cd_size_dict = {'ra_size_sep': ra_size_sep, 'ra_size_deg': ra_size_deg,
+                       'cd_size_isi': cd_size_isi, 'cd_size_ms': cd_size_ms}
+
+    for k, v in ra_cd_size_dict.items():
+        print(f"{k}: {v}")
+
+
     make_average_plots(all_df_path=all_df_path,
                        ave_df_path=p_ave_path,
                        error_bars_path=err_path,
@@ -153,41 +184,42 @@ for p_idx, participant_name in enumerate(participant_list):
                        ave_over_n=len(run_folder_names),
                        n_trimmed=trim_n,
                        exp_ave=participant_name,  # participant ave, not exp ave
+                       ra_cd_size_dict=ra_cd_size_dict,
                        show_plots=True, verbose=True)
 
-
-print(f'exp_path: {exp_path}')
-print('\nget exp_average_data')
-participant_list = ['aa', 'bb', 'cc', 'dd', 'ee', 'Nick']
-trim_list = [2, 2, 2, 2, 2, 2]
-
-# e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
-#                    error_type='SE', n_trimmed=trim_list, verbose=True)
-
-
-all_df_path = os.path.join(exp_path, 'MASTER_exp_all_thr.csv')
-exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
-err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
-
-ave_DfC_df, error_DfC_df = make_diff_from_conc_df(all_df_path, exp_path, n_trimmed=2, exp_ave=True)
-print(f"ave_DfC_df:\n{ave_DfC_df}")
-print(f"error_DfC_df:\n{error_DfC_df}")
-
-exp_all_df = pd.read_csv(all_df_path)
-print(f"exp_all_df:\n{exp_all_df}")
-
-
-
-# make experiment average plots -
-make_average_plots(all_df_path=all_df_path,
-                   ave_df_path=exp_ave_path,
-                   error_bars_path=err_path,
-                   thr_col='newLum',
-                   ave_over_n=len(participant_list),
-                   n_trimmed=2,
-                   error_type='SE',
-                   exp_ave=True,
-                   show_plots=True, verbose=True)
+#
+# print(f'exp_path: {exp_path}')
+# print('\nget exp_average_data')
+# participant_list = ['aa', 'bb', 'cc', 'dd', 'ee', 'Nick']
+# trim_list = [2, 2, 2, 2, 2, 2]
+#
+# # e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
+# #                    error_type='SE', n_trimmed=trim_list, verbose=True)
+#
+#
+# all_df_path = os.path.join(exp_path, 'MASTER_exp_all_thr.csv')
+# exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
+# err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
+#
+# ave_DfC_df, error_DfC_df = make_diff_from_conc_df(all_df_path, exp_path, n_trimmed=2, exp_ave=True)
+# print(f"ave_DfC_df:\n{ave_DfC_df}")
+# print(f"error_DfC_df:\n{error_DfC_df}")
+#
+# exp_all_df = pd.read_csv(all_df_path)
+# print(f"exp_all_df:\n{exp_all_df}")
+#
+#
+#
+# # make experiment average plots -
+# make_average_plots(all_df_path=all_df_path,
+#                    ave_df_path=exp_ave_path,
+#                    error_bars_path=err_path,
+#                    thr_col='newLum',
+#                    ave_over_n=len(participant_list),
+#                    n_trimmed=2,
+#                    error_type='SE',
+#                    exp_ave=True,
+#                    show_plots=True, verbose=True)
 
 
 print('\nexp1a_analysis_pipe finished\n')

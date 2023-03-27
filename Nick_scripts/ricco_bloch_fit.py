@@ -4,6 +4,7 @@ from scipy.stats import linregress
 from sklearn.metrics import r2_score
 import matplotlib.pyplot as plt
 from rad_flow_psignifit_analysis import fig_colours
+from PsychoPy_tools import get_pixel_mm_deg_values
 
 
 
@@ -40,30 +41,54 @@ def ricco_bloch_fit(log_x_array, log_y_array, est_intercept1=None, est_breakpoin
         est_intercept1 = log_y_array[0] - log_x_array[0]
     intercept1 = est_intercept1
 
-    # get estimate of breakpoint, if None, start at mid-point
+    # get estimate of breakpoint, if None, start at mid-point, second to last point
     if not est_breakpoint:
-        est_breakpoint = log_x_array[int(len(log_x_array) / 2)]
+        # est_breakpoint = log_x_array[int(len(log_x_array) / 2)]
+        est_breakpoint = log_x_array[int(len(log_x_array) - 3)]
 
     # second line is fitted
     x2 = log_x_array[log_x_array > est_breakpoint]
     y2 = log_y_array[log_x_array > est_breakpoint]
     slope2, intercept2, r_value, p_value, std_err = linregress(x2, y2)
 
-    # breakpoint is fitted with max 1000 iterations
+    # breakpoint is fitted with max 1000 iterations, slope1 is fixed at -1
+    print("\nfitting breakpoint")
     breakpoint = est_breakpoint
     breakpoint_old = 0
     i = 0
     while abs(breakpoint - breakpoint_old) > 0.0001 and i < 1000:
+
+        # check breakpoint has two datapoint either side to allow 2 lines to be fitted
+        if breakpoint < log_x_array[1]:
+            print(f"breakpoint < log_x_array[1]: {breakpoint} < {log_x_array[1]}.  "
+                  f"NEW breakpoint: {log_x_array[1] + .001}")
+            breakpoint = log_x_array[1] + .001
+        elif breakpoint > log_x_array[-2]:
+            print(f"breakpoint > log_x_array[-2]: {breakpoint} > {log_x_array[-2]}.  "
+                  f"NEW breakpoint: {log_x_array[-2] - .001}")
+            breakpoint = log_x_array[-2] - .001
+
         breakpoint_old = breakpoint
         x1 = log_x_array[log_x_array < breakpoint]
         y1 = log_y_array[log_x_array < breakpoint]
         x2 = log_x_array[log_x_array > breakpoint]
         y2 = log_y_array[log_x_array > breakpoint]
+        print(f"{i}. breakpoint_old: {breakpoint_old}")
+        print(f"x1 (len: {len(x1)}): {x1}, y1 (len: {len(y1)}): {y1}, "
+              f"x2 (len: {len(x2)}): {x2}, y2 (len: {len(y2)}): {y2}")
 
-        slope1, intercept1, r_value, p_value, std_err = linregress(x1, y1)
+        # calculate the y intercept of the first line
+        intercept1 = np.mean([y1[i] - slope1 * x1[i] for i in range(len(x1))])
+        print(f"intercept1: {intercept1}")
+
+        # calculate the slope and intercept of the second line
         slope2, intercept2, r_value, p_value, std_err = linregress(x2, y2)
+
+        # calculate breakpoint of two lines
         breakpoint = (intercept2 - intercept1) / (slope1 - slope2)
+
         i += 1
+
 
     # r2
     x1 = log_x_array[log_x_array < breakpoint]
@@ -94,7 +119,7 @@ def ricco_bloch_fit(log_x_array, log_y_array, est_intercept1=None, est_breakpoin
     plt.axis('square')
 
     # plot the fit
-    plt.plot(x1, y1_fit, 'lightgrey', linestyle='--', label="-1 slope")
+    plt.plot(x1, y1_fit, 'lightgrey', linestyle='-.', label="-1 slope")
     plt.plot(x2, y2_fit, 'silver', linestyle='--', label=f"{round(slope2, 2)} slope")
 
     # add vertical line for breakpoint from breakpoint co-odinates to mix y-axis value
@@ -128,18 +153,65 @@ def ricco_bloch_fit(log_x_array, log_y_array, est_intercept1=None, est_breakpoin
         if save_name is not None:
             plt.savefig(os.path.join(save_path, save_name))
 
-    # print all new values
-    print(f"breakpoint: {breakpoint}")
-    print(f"slope1: {slope1}")
-    print(f"intercept1: {intercept1}")
-    print(f"slope2: {slope2}")
-    print(f"intercept2: {intercept2}")
-    print(f"r2: {r2}")
 
+
+    pixel_mm_deg_dict = get_pixel_mm_deg_values(monitor_name='asus_cal')
+    print('pixel_mm_deg_dict.items()')
+    for k, v in pixel_mm_deg_dict.items():
+        print(k, ': ', v)
+
+    # # get breakpoint converted back to original scale and translate to exp units
+    print(f"\nconvert breakpoint value: ({breakpoint})")
+    exp_breakpoint = np.exp(breakpoint)
+    print(f"exp_breakpoint: {exp_breakpoint}")
+
+    breakpoint_dict = {'breakpoint': breakpoint,
+                       'slope1': slope1,
+                       'intercept1': intercept1,
+                       'slope2': slope2,
+                       'intercept2': intercept2,
+                       'r2': r2,
+                       }
+
+
+    # get original units for breakpoint
+    if 'min' in x_axis_label:
+        # exponent of breakpoint converts back to size in minutes
+        breakpoint_min = exp_breakpoint
+        breakpoint_dict['min'] = breakpoint_min
+
+        breakpoint_deg = breakpoint_min / 60  # size in degrees
+        breakpoint_dict['deg'] = breakpoint_deg
+
+        breakpoint_pix = breakpoint_deg / pixel_mm_deg_dict['diag_deg']  # length in diag pixels
+        breakpoint_dict['pix'] = breakpoint_pix
+
+        breakpoint_sep = breakpoint_pix - 2.5  # exp1 separation values
+        breakpoint_dict['sep'] = breakpoint_sep
+
+    elif 'dur' in x_axis_label:
+        # exponent of breakpoint converts back to duration in ms
+        breakpoint_ms = exp_breakpoint
+        breakpoint_dict['ms'] = breakpoint_ms
+
+        one_frame = 1000 / 240
+        breakpoint_fr = breakpoint_ms / one_frame  # duration in frames
+        breakpoint_dict['fr'] = breakpoint_fr
+
+        breakpoint_isi = breakpoint_fr - 4  # duration in ISI values
+        breakpoint_dict['isi'] = breakpoint_isi
+
+    else:
+        print("x axis units not recognised.")
+        breakpoint_dict['np.exp(breakpoint)'] = exp_breakpoint
+
+    print('\n\nbreakpoint_dict.items()')
+    for k, v in breakpoint_dict.items():
+        print(k, v)
 
     print("\n***Finished ricco_bloch_fit ***")
 
-    return fig, slope2, breakpoint, r2
+    return fig, breakpoint_dict
 
 ##################
 #
