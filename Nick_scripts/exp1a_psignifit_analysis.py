@@ -140,6 +140,7 @@ def split_df_into_pos_sep_df_and_1probe_df(pos_sep_and_1probe_df,
                                            thr_col='newLum',
                                            isi_name_list=None,
                                            one_probe_pos=None,
+                                           even_spaced_x=False,
                                            verbose=True):
     """
     For plots where positive separations are shown as line plots and 
@@ -150,6 +151,7 @@ def split_df_into_pos_sep_df_and_1probe_df(pos_sep_and_1probe_df,
     :param thr_col: Column to extract threshold values from - expects either probeLum or newLum.
     :param isi_name_list: List of isi names.  If None, will use default values.
     :param one_probe_pos: Default=None, use value from df.  Where to set location of 1probes on x-axis.
+    :param even_spaced_x: Default=False, use value from df.  if True use numbered values for x.
     :param verbose: whether to print progress info to screen
 
     :return: Pos_sel_df: same as input df but with last row removed
@@ -218,6 +220,19 @@ def split_df_into_pos_sep_df_and_1probe_df(pos_sep_and_1probe_df,
     one_probe_df = pd.DataFrame.from_dict(one_probe_dict)
     if verbose:
         print(f'one_probe_df:\n{one_probe_df}')
+
+    if even_spaced_x:
+        pos_sep_df.reset_index(inplace=True)
+        # print(f'list(range(len(index_values)))[:-1]: {list(range(len(index_values)))[:-1]}')
+        pos_sep_df['separation'] = list(range(len(index_values)))[:-1]
+        pos_sep_df = pos_sep_df.set_index('separation')
+
+        # pos_sep_df.index = list(range(len(index_values)))[:-1]
+        one_probe_df['x_vals'] = list(range(len(index_values)))[-1]
+        print(f'pos_sep_df:\n{pos_sep_df}')
+        print(f'one_probe_df:\n{one_probe_df}')
+
+    print("\n*** finished split_df_into_pos_sep_df_and_1probe_df() ***")
 
     return pos_sep_df, one_probe_df
 
@@ -457,10 +472,7 @@ def make_long_df(wide_df, wide_stubnames='ISI', thr_col='newLum',
     print(f'new_col_names:\n{new_col_names}')
 
     # change 'concurrent' to 999 not -1 as wide_to_long won't take negative numbers
-    # new_col_names = [f"ISI 999" if i == 'Concurrent' else i for i in new_col_names]
-    # new_col_names = [f"ISI 999" if i == 'Conc' else i for i in new_col_names]
-    # new_col_names = [f"ISI 999" if i == 'ISI -1' else i for i in new_col_names]
-    new_col_names = [f"ISI 999" if i in ['Concurrent', 'Conc', 'ISI_-1'] else i for i in new_col_names]
+    new_col_names = [f"ISI 999" if i in ['Concurrent', 'Conc', 'ISI_-1', 'ISI -1'] else i for i in new_col_names]
 
     print(f'new_col_names:\n{new_col_names}')
 
@@ -503,6 +515,8 @@ def plot_pos_sep_and_1probe(pos_sep_and_1probe_df,
                             pos_set_ticks=None,
                             pos_tick_labels=None,
                             error_bars_df=None,
+                            ra_cd_v_line=None,
+                            y_axis_label=None,
                             verbose=True):
     """
     This plots a figure with one axis, x has separation values [-2, -1, 0, 1, 2, 3, 6, 18],
@@ -566,6 +580,11 @@ def plot_pos_sep_and_1probe(pos_sep_and_1probe_df,
         sns.scatterplot(data=one_probe_df, x="x_vals", y=thr_col,
                         hue="ISIs", style='ISIs', ax=ax)
 
+
+    # add vertical grey dashed line for Ricco's area or Bloch critical duration.
+    if ra_cd_v_line:
+        plt.axvline(x=ra_cd_v_line, linestyle='--', color='lightgrey')
+
     # decorate plot
     ax.legend(labels=isi_name_list, title='ISI',
               shadow=True,
@@ -581,7 +600,10 @@ def plot_pos_sep_and_1probe(pos_sep_and_1probe_df,
 
     # ax.set_ylim([0, 110])
     ax.set_xlabel('Probe separation in diagonal pixels')
-    ax.set_ylabel('Probe Luminance')
+
+    if not y_axis_label:
+        y_axis_label = 'Probe Luminance'
+    ax.set_ylabel(y_axis_label)
 
     if fig_title is not None:
         plt.title(fig_title)
@@ -601,6 +623,8 @@ def plot_1probe_w_errors(fig_df, error_df,
                          x_tick_vals=None,
                          x_tick_labels=None,
                          fixed_y_range=False,
+                         even_spaced_x=False,
+                         ra_cd_v_line=None,
                          fig_title=None, save_name=None, save_path=None,
                          verbose=True):
     """
@@ -637,9 +661,11 @@ def plot_1probe_w_errors(fig_df, error_df,
 
     # split 1probe from bottom of fig_df and error_df
     if split_1probe:
-        two_probe_df, one_probe_df = split_df_into_pos_sep_df_and_1probe_df(fig_df)
-        two_probe_er_df, one_probe_er_df = split_df_into_pos_sep_df_and_1probe_df(error_df)
+        two_probe_df, one_probe_df = split_df_into_pos_sep_df_and_1probe_df(fig_df, even_spaced_x=even_spaced_x)
+        two_probe_er_df, one_probe_er_df = split_df_into_pos_sep_df_and_1probe_df(error_df, even_spaced_x=even_spaced_x)
         if verbose:
+            print(f'two_probe_df:\n{two_probe_df}')
+            print(f'two_probe_er_df:\n{two_probe_er_df}')
             print(f'one_probe_df:\n{one_probe_df}')
             print(f'one_probe_er_df:\n{one_probe_er_df}')
     else:
@@ -708,7 +734,6 @@ def plot_1probe_w_errors(fig_df, error_df,
                                    marker='.', linewidth=.5, markersize=4)
         legend_handles_list.append(leg_handle)
 
-    ax.legend(handles=legend_handles_list, fontsize=6, title='ISI', framealpha=.5)
 
     if x_tick_vals is not None:
         ax.set_xticks(x_tick_vals)
@@ -722,6 +747,16 @@ def plot_1probe_w_errors(fig_df, error_df,
         ax.set_ylim([0, 110])
         if type(fixed_y_range) in [tuple, list]:
             ax.set_ylim([fixed_y_range[0], fixed_y_range[1]])
+
+    # add vertical grey dashed line for Ricco's area or Bloch critical duration.
+    if ra_cd_v_line:
+        plt.axvline(x=ra_cd_v_line, linestyle='--', color='lightgrey')
+        leg_handle = mlines.Line2D([], [], label=f"Ricco's Area",
+                                   color='lightgrey', linestyle='--')
+        legend_handles_list.append(leg_handle)
+
+
+    ax.legend(handles=legend_handles_list, fontsize=6, title='ISI', framealpha=.5)
 
     if fig_title is not None:
         plt.title(fig_title)
@@ -743,6 +778,7 @@ def plot_w_errors_no_1probe(wide_df, x_var, y_var, lines_var,
                             fixed_y_range=False,
                             jitter=True,
                             error_caps=True,
+                            ra_cd_v_line=None,
                             fig1b_title=None,
                             fig1b_savename=None,
                             save_path=None,
@@ -832,6 +868,10 @@ def plot_w_errors_no_1probe(wide_df, x_var, y_var, lines_var,
         if type(fixed_y_range) in [tuple, list]:
             ax.set_ylim([fixed_y_range[0], fixed_y_range[1]])
 
+    # add vertical grey dashed line for Ricco's area or Bloch critical duration.
+    if ra_cd_v_line:
+        plt.axvline(x=ra_cd_v_line, linestyle='--', color='lightgrey')
+
     if fig1b_title is not None:
         plt.title(fig1b_title)
 
@@ -849,6 +889,8 @@ def plot_thr_heatmap(heatmap_df,
                      x_tick_labels=None,
                      y_tick_labels=None,
                      midpoint=None,
+                     ra_cd_v_line=None,
+                     ra_cd_h_line=None,
                      fig_title=None,
                      save_name=None,
                      save_path=None,
@@ -915,6 +957,16 @@ def plot_thr_heatmap(heatmap_df,
 
     # This sets the yticks "upright" with 0, as opposed to sideways with 90.
     plt.yticks(rotation=0)
+    
+    # add vertical grey dashed line for Ricco's area or Bloch critical duration.
+    if ra_cd_v_line:
+        plt.axvline(x=int(str(ra_cd_v_line).split('.')[0]),
+                    linestyle='--', color='dimgrey')
+        
+    # add horizontal grey dashed line for Ricco's area or Bloch critical duration.
+    if ra_cd_h_line:
+        plt.axhline(y=int(str(ra_cd_h_line).split('.')[0]),
+                    linestyle='--', color='dimgrey')
 
     if fig_title is not None:
         plt.title(fig_title)
@@ -932,6 +984,8 @@ def plt_heatmap_row_col(heatmap_df,
                         colour_by='row',
                         x_axis_label=None,
                         y_axis_label=None,
+                        ra_cd_v_line=None,
+                        ra_cd_h_line=None,
                         fig_title=None,
                         midpoint=None,
                         fontsize=16,
@@ -961,10 +1015,10 @@ def plt_heatmap_row_col(heatmap_df,
     # rename columns and index so plots have right axis labels
     heatmap_df.rename(columns={'ISI_-1': 'Conc', 'Concurrent': 'Conc'},
                       index={20: '1pr', '20': '1pr'}, inplace=True)
-
     if verbose:
         print(f'heatmap_df:\n{heatmap_df}')
 
+    # get labels to loop over rows or columns
     x_tick_labels = list(heatmap_df.columns)
     y_tick_labels = list(heatmap_df.index)
 
@@ -975,9 +1029,9 @@ def plt_heatmap_row_col(heatmap_df,
         fig, axs = plt.subplots(nrows=len(y_tick_labels), sharex=True)
         loop_over = y_tick_labels
 
-    print(f"loop over ({colour_by}): {loop_over}")
-
-    for ax, tick_label in zip(axs, loop_over):
+    # loop over rows or columns making heatmaps
+    print(f"loop over {colour_by}s: ({loop_over})")
+    for idx, (ax, tick_label) in enumerate(zip(axs, loop_over)):
         if str.lower(colour_by) in ['col', 'columns', 'horizontal']:
             use_this_data = heatmap_df[[tick_label]]
         else:
@@ -994,9 +1048,9 @@ def plt_heatmap_row_col(heatmap_df,
                     cbar=False,
                     square=True)
 
-
-        # # arrange labels and ticks per ax
-        if str.lower(colour_by) in ['col', 'columns', 'horizontal']:
+        # if heatmap is by column
+        if str.lower(colour_by) in ['col', 'columns']:
+            # # arrange labels and ticks per ax
             ax.set_xlabel(None)
             if ax == axs[0]:
                 ax.set_ylabel(y_axis_label, fontsize=fontsize)
@@ -1006,7 +1060,20 @@ def plt_heatmap_row_col(heatmap_df,
                 ax.set_ylabel(None)
             plt.subplots_adjust(wspace=-0.5, hspace=-.5)
 
-        else:
+            # add horizontal grey dashed line to each vertical ax (for RA or CD)
+            if ra_cd_h_line:
+                ax.axhline(y=int(str(ra_cd_h_line).split('.')[0]),
+                           linestyle='--', color='black', linewidth=2)
+
+            # add vertical grey dashed line BETWEEN vertical axes (for RA or CD).
+            if ra_cd_v_line:
+                if idx == int(str(ra_cd_v_line).split('.')[0]):
+                    # e.g., if threshold would be drawn at 3.6 on lineplot, put divider is after ax idx 3
+                    ax.axvline(x=1, linestyle='--', color='black', linewidth=5)
+
+        # if heatmap is by row
+        else:  # str.lower(colour_by) in ['row', 'rows']:
+            # # arrange labels and ticks per ax
             ax.set_ylabel(None)
             if ax == axs[-1]:
                 ax.set_xlabel(x_axis_label, fontsize=fontsize)
@@ -1015,12 +1082,22 @@ def plt_heatmap_row_col(heatmap_df,
                 ax.tick_params(bottom=False)
             plt.subplots_adjust(hspace=0.1)
 
+            # add horizontal grey dashed line BETWEEN horizontal axes (for RA or CD).
+            if ra_cd_h_line:
+                if idx == int(str(ra_cd_h_line).split('.')[0]):
+                    # e.g., if threshold would be drawn at 3.6 on lineplot, put divider is after ax idx 3
+                    ax.axhline(y=1.0, linestyle='--', color='black', linewidth=5)
+
+            # add vertical grey dashed line to each horizontal ax (for RA or CD)
+            if ra_cd_v_line:
+                ax.axvline(x=int(str(ra_cd_v_line).split('.')[0]),
+                           linestyle='--', color='black', linewidth=2)
+
 
     # # make colourbar: numbers are (1) the horizontal and (2) vertical position
     # # of the bottom left corner, then (3) width and (4) height of colourbar.
     cb_ax = fig.add_axes([0.85, 0.11, 0.02, 0.77])
     cbar = plt.colorbar(cm.ScalarMappable(cmap=my_colourmap), cax=cb_ax)
-    # set the colourbar ticks and tick labels
     cbar.set_ticks(np.arange(0, 1.1, 0.5))
     cbar.set_ticklabels(['Lowest', 'Med', 'Highest'])
     cbar.set_label(f'Luminance threshold per {colour_by}')
@@ -1074,10 +1151,7 @@ def make_diff_from_conc_df(MASTER_TM2_thr_df, root_path, error_type='SE',
         ave_over = 'P'
         idx_col = 'stack'
     print(f'ave_over: {ave_over}')
-    print(f'type(exp_ave): {type(exp_ave)}')
     print(f'exp_ave: {exp_ave}')
-
-
 
     if isinstance(MASTER_TM2_thr_df, str):
         thr_df = pd.read_csv(MASTER_TM2_thr_df)
@@ -1095,7 +1169,8 @@ def make_diff_from_conc_df(MASTER_TM2_thr_df, root_path, error_type='SE',
         thr_df.drop('p_stack_sep', axis=1, inplace=True)
         thr_df.drop('participant', axis=1, inplace=True)
 
-    print(f'thr_df:\n{thr_df}')
+    if verbose:
+        print(f'thr_df:\n{thr_df}')
 
     '''diff_from_conc_df is an ISI x Sep df where the concurrent column is subtracted from all columns.
     therefore, the first column has zero for all values,
@@ -1106,7 +1181,8 @@ def make_diff_from_conc_df(MASTER_TM2_thr_df, root_path, error_type='SE',
         diff_from_conc_df = thr_df.iloc[:, :].sub(thr_df.Concurrent, axis=0)
     elif 'ISI_-1' in list(thr_df.columns):
         diff_from_conc_df = thr_df.iloc[:, :].sub(thr_df['ISI_-1'], axis=0)
-    print(f'diff_from_conc_df:\n{diff_from_conc_df}')
+    if verbose:
+        print(f'diff_from_conc_df:\n{diff_from_conc_df}')
 
     get_means_df = diff_from_conc_df
 
@@ -1145,6 +1221,7 @@ def make_diff_from_conc_df(MASTER_TM2_thr_df, root_path, error_type='SE',
 
 
 def plot_diff_from_conc_lineplot(ave_DfC_df, error_df, fig_title=None,
+                                 ra_cd_v_line=None,
                                  save_name=None, save_path=None):
     """
     Function to plot the difference in threshold from concurrent for each ISI.
@@ -1209,15 +1286,22 @@ def plot_diff_from_conc_lineplot(ave_DfC_df, error_df, fig_title=None,
                                    marker='.', linewidth=.5, markersize=4)
         legend_handles_list.append(leg_handle)
 
-    ax.legend(handles=legend_handles_list, fontsize=6, title='separation', framealpha=.5)
-
     ax.set_xticks(list(range(len(x_tick_labels))))
     ax.set_xticklabels(x_tick_labels)
-
     plt.axhline(y=0, color='lightgrey', linestyle='dashed')
     plt.ylabel('Luminance difference from concurrent')
     plt.xlabel('ISI')
     plt.title(fig_title)
+
+    # add vertical grey dashed line for Ricco's area or Bloch critical duration.
+    if ra_cd_v_line:
+        plt.axvline(x=ra_cd_v_line, linestyle='--', color='grey', label='Critical Duration')
+        leg_handle = mlines.Line2D([], [], color='grey', label='Critical Duration',
+                                   linestyle='--')
+        legend_handles_list.append(leg_handle)
+
+    ax.legend(handles=legend_handles_list, fontsize=6, title='separation', framealpha=.5)
+
     if save_path is not None:
         if save_name is not None:
             plt.savefig(os.path.join(save_path, save_name))
@@ -1530,7 +1614,9 @@ def eight_batman_plots(mean_df, thr1_df, thr2_df,
 
 
 
-def plot_n_sep_thr_w_scatter(all_thr_df, thr_col='probeLum', exp_ave=False, fig_title=None,
+def plot_n_sep_thr_w_scatter(all_thr_df, thr_col='probeLum', exp_ave=False,
+                             ra_cd_v_line=None,
+                             fig_title=None,
                              save_name=None, save_path=None, verbose=True):
     """
     Function to make a page with seven axes showing the threshold for each separation,
@@ -1649,6 +1735,11 @@ def plot_n_sep_thr_w_scatter(all_thr_df, thr_col='probeLum', exp_ave=False, fig_
                     ax.set_title(f'Separation = {this_sep}')
                     ax.set_xticklabels(isi_vals_list)
                     ax.set_ylim([min_thr - 2, max_thr + 2])
+
+                    # add vertical grey dashed line for Ricco's area or Bloch critical duration.
+                    if ra_cd_v_line:
+                        ax.axvline(ra_cd_v_line, linestyle='--', color='lightgrey')
+
                 elif ax_counter == len(sep_list):
 
                     # show individual data points
@@ -1671,6 +1762,10 @@ def plot_n_sep_thr_w_scatter(all_thr_df, thr_col='probeLum', exp_ave=False, fig_
                     ax.set_ylim([min_thr - 2, max_thr + 2])
                     ax.set_xticklabels(isi_vals_list)
                     ax.set_title(f'All Separation conditions')
+
+                    # add vertical grey dashed line for Ricco's area or Bloch critical duration.
+                    if ra_cd_v_line:
+                        ax.axvline(ra_cd_v_line, linestyle='--', color='lightgrey')
 
                     # no legend (I struggled to find this command for a while)
                     ax.legend([], [], frameon=False)
@@ -1707,6 +1802,10 @@ def plot_n_sep_thr_w_scatter(all_thr_df, thr_col='probeLum', exp_ave=False, fig_
         ax.set_xticklabels(isi_vals_list)
         ax.set_ylim([min_thr - 2, max_thr + 2])
         print(f"y_lim: {min_thr - 2} : {max_thr + 2}")
+
+        # add vertical grey dashed line for Ricco's area or Bloch critical duration.
+        if ra_cd_v_line:
+            ax.axvline(ra_cd_v_line, linestyle='--', color='lightgrey')
  
     if save_path:
         if save_name:
@@ -2591,10 +2690,6 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                        error_type='SE',
                        exp_ave=False,
                        split_1probe=True,
-                       # isi_name_list=['Conc', 'ISI 0', 'ISI 2', 'ISI 4',
-                       #                'ISI 6', 'ISI 9', 'ISI 12', 'ISI 24'],
-                       # sep_vals_list=[0, 1, 2, 3, 6, 18, 20],
-                       # sep_name_list=[0, 1, 2, 3, 6, 18, '1probe'],
                        ra_cd_size_dict=None,
                        heatmap_annot_fmt='{:.2f}',
                        show_plots=True, verbose=True):
@@ -2667,17 +2762,102 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     all_df_headers = list(all_df.columns)
     isi_cols_list = all_df_headers[2:]
-    isi_name_list = ['conc' if i in ['ISI_-1', 'Concurrent'] else f'ISI {i[3:]}' for i in isi_cols_list]
-    # pos_sep_list = sep_vals_list
-    sep_vals_list = ave_df.index.tolist()
+    if 'ISI_' in isi_cols_list[-1]:
+        print(f"found 'ISI_X'")
+        isi_vals_list = [-1 if 'conc' in str.lower(i) else int(i[4:]) for i in isi_cols_list]
+    elif 'ISI ' in isi_cols_list[-1]:
+        print(f"found 'ISI X'")
+        isi_vals_list = [-1 if 'conc' in str.lower(i) else int(i[4:]) for i in isi_cols_list]
+    else:
+        print(f"using 'ISIX'")
+        isi_vals_list = [-1 if 'conc' in str.lower(i) else int(i[3:]) for i in isi_cols_list]
+    # isi_vals_list = [-1 if 'conc' in str.lower(i) else int(i[4:]) for i in isi_cols_list]
+    # print(f'isi_vals_list: {isi_vals_list}')
+    # isi_name_list = ['conc' if i in ['ISI_-1', 'Concurrent'] else f'ISI {i[3:]}' for i in isi_cols_list]
+    isi_name_list = ['conc' if i in ['ISI_-1', 'Concurrent'] else f'ISI {i}' for i in isi_vals_list]
+    sep_vals_list = ave_df['separation'].tolist()
     sep_name_list = ['1probe' if i == 20 else i for i in sep_vals_list]
+    sep_idx_list = list(range(len(sep_vals_list)))
 
     if verbose:
         print(f'\nall_df_headers: {all_df_headers}')
         print(f'isi_cols_list: {isi_cols_list}')
+        print(f'isi_vals_list: {isi_vals_list}')
         print(f'isi_name_list: {isi_name_list}')
-        # print(f'pos_sep_list: {pos_sep_list}')
+        print(f'sep_vals_list: {sep_vals_list}')
         print(f'sep_name_list: {sep_name_list}')
+        print(f'sep_idx_list: {sep_idx_list}')
+
+    if ra_cd_size_dict:
+        # associate RA_size_sep with sep_idx_list number to draw line at correct point of axis.
+        ra_size_sep = ra_cd_size_dict['ra_size_sep']
+        print(f"\nra_size_sep: {ra_size_sep}")
+
+        if ra_size_sep in sep_vals_list:
+            ra_sep_idx = sep_vals_list.index(ra_size_sep)
+        else:
+            # find idx of sep val below ra_size_sep
+            ra_sep_idx_minus1 = len([i for i in sep_vals_list if i < ra_size_sep]) - 1
+            print(f"ra_sep_idx_minus1: {ra_sep_idx_minus1}")
+
+            # get size between values either size of ra_size_sep
+            sep_vals_gap = sep_vals_list[ra_sep_idx_minus1 + 1] - sep_vals_list[ra_sep_idx_minus1]
+            print(f"sep_vals_gap: {sep_vals_gap}")
+
+            # take decimal from end of ra_size_sep
+            # decimal_to_add = ra_size_sep % 1
+            decimal_to_add = ra_size_sep - sep_vals_list[ra_sep_idx_minus1]
+            print(f"decimal_to_add: {decimal_to_add}")
+
+            # scale decimal to size of gap, e.g., if ra_size_sep is 3.5, and it is between values of 3 and 6,
+            # then on plots the line should be 1/6th of the way between 3 and 6.
+            scaled_dec_to_add = decimal_to_add / sep_vals_gap
+            print(f"scaled_dec_to_add: {scaled_dec_to_add}")
+
+            ra_sep_idx = ra_sep_idx_minus1 + scaled_dec_to_add
+
+        print(f"ra_sep_idx: {ra_sep_idx}\n")
+
+        ra_cd_size_dict['ra_sep_idx'] = ra_sep_idx
+
+
+        cd_size_isi = ra_cd_size_dict['cd_size_isi']
+        print(f"\ncd_size_isi: {cd_size_isi}")
+
+        if cd_size_isi in isi_vals_list:
+            cd_isi_idx = isi_vals_list.index(cd_size_isi)
+        else:
+            # find idx of sep val below cd_size_isi
+            cd_isi_idx_minus1 = len([i for i in isi_vals_list if i < cd_size_isi]) - 1
+            print(f"cd_isi_idx_minus1: {cd_isi_idx_minus1}")
+
+            # get size between values either size of cd_size_isi
+            isi_vals_gap = isi_vals_list[cd_isi_idx_minus1 + 1] - isi_vals_list[cd_isi_idx_minus1]
+            print(f"isi_vals_gap: {isi_vals_gap}")
+
+            # take decimal from end of cd_size_isi
+            # decimal_to_add = cd_size_isi % 1
+            decimal_to_add = cd_size_isi - isi_vals_list[cd_isi_idx_minus1]
+
+            print(f"decimal_to_add: {decimal_to_add}")
+
+            # scale decimal to size of gap, e.g., if cd_size_isi is 3.5, and it is between values of 3 and 6,
+            # then on plots the line should be 1/6th of the way between 3 and 6.
+            scaled_dec_to_add = decimal_to_add / isi_vals_gap
+            print(f"scaled_dec_to_add: {scaled_dec_to_add}")
+
+            cd_isi_idx = cd_isi_idx_minus1 + scaled_dec_to_add
+
+        print(f"cd_isi_idx: {cd_isi_idx}\n")
+
+        ra_cd_size_dict['cd_isi_idx'] = cd_isi_idx
+
+    else:
+        ra_cd_size_dict = {'ra_size_sep': None, 'ra_size_deg': None, 'ra_sep_idx': None,
+                           'cd_size_isi': None, 'cd_size_ms': None, 'cd_isi_idx': None}
+
+    for k, v in ra_cd_size_dict.items():
+        print(f"{k}: {v}")
 
 
     """part 3. main Figures (these are the ones saved in the matlab script)
@@ -2702,9 +2882,11 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                              split_1probe=split_1probe, jitter=True,
                              error_caps=True, alt_colours=False,
                              legend_names=isi_name_list,
-                             x_tick_vals=sep_vals_list,
+                             x_tick_vals=sep_idx_list,
                              x_tick_labels=sep_name_list,
                              fixed_y_range=False,
+                             even_spaced_x=True,
+                             ra_cd_v_line=ra_cd_size_dict['ra_sep_idx'],
                              fig_title=fig1_title, save_name=fig1_savename,
                              save_path=save_path, verbose=True)
         if show_plots:
@@ -2734,7 +2916,9 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                                 legend_names=sep_name_list,
                                 x_tick_labels=isi_name_list,
                                 alt_colours=True, fixed_y_range=False, jitter=True,
-                                error_caps=True, fig1b_title=fig1b_title,
+                                error_caps=True,
+                                ra_cd_v_line=ra_cd_size_dict['cd_isi_idx'],
+                                fig1b_title=fig1b_title,
                                 fig1b_savename=fig1b_savename, save_path=save_path,
                                 verbose=True)
         if show_plots:
@@ -2756,9 +2940,10 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         fig1c_title = f'{ave_over} average thresholds per separation.  (n={ave_over_n}, err={error_type})'
         fig1c_savename = f'ave_thr_per_sep.png'
 
-    plot_n_sep_thr_w_scatter(all_thr_df=all_df, exp_ave=exp_ave, fig_title=fig1c_title,
+    plot_n_sep_thr_w_scatter(all_thr_df=all_df, exp_ave=exp_ave,
+                             ra_cd_v_line=ra_cd_size_dict['cd_isi_idx'],
+                             fig_title=fig1c_title,
                              save_name=fig1c_savename, save_path=save_path, verbose=True)
-
     if show_plots:
         plt.show()
     plt.close()
@@ -2849,9 +3034,22 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         heatmap_title = f'{ave_over} mean Threshold\nfor each ISI and separation (n={ave_over_n})'
         heatmap_savename = 'mean_thr_heatmap'
 
+    if ra_cd_size_dict['cd_isi_idx']:
+        adjusted_v_line = ra_cd_size_dict['cd_isi_idx'] + 1
+    else:
+        adjusted_v_line = None
+
+    if ra_cd_size_dict['ra_sep_idx']:
+        adjusted_h_line = ra_cd_size_dict['ra_sep_idx'] + 1
+    else:
+        adjusted_h_line = None
+
     # regular (not transpose)
     plot_thr_heatmap(heatmap_df=ave_df, x_tick_labels=isi_name_list,
-                     y_tick_labels=sep_name_list, fig_title=heatmap_title,
+                     y_tick_labels=sep_name_list,
+                     ra_cd_v_line=adjusted_v_line,
+                     ra_cd_h_line=adjusted_h_line,
+                     fig_title=heatmap_title,
                      save_name=heatmap_savename, save_path=save_path,
                      annot_fmt=heatmap_annot_fmt,
                      verbose=True)
@@ -2871,9 +3069,22 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         heatmap_title = f'{ave_over} mean Error ({error_type})\nfor each ISI and separation (n={ave_over_n})'
         heatmap_savename = 'mean_error_heatmap'
 
+    if ra_cd_size_dict['cd_isi_idx']:
+        adjusted_v_line = ra_cd_size_dict['cd_isi_idx'] + 1
+    else:
+        adjusted_v_line = None
+
+    if ra_cd_size_dict['ra_sep_idx']:
+        adjusted_h_line = ra_cd_size_dict['ra_sep_idx'] + 1
+    else:
+        adjusted_h_line = None
+
     # regular (not transpose)
     plot_thr_heatmap(heatmap_df=error_bars_df, x_tick_labels=isi_name_list,
-                     y_tick_labels=sep_name_list, fig_title=heatmap_title,
+                     y_tick_labels=sep_name_list,
+                     ra_cd_v_line=adjusted_v_line,
+                     ra_cd_h_line=adjusted_h_line,
+                     fig_title=heatmap_title,
                      save_name=heatmap_savename, save_path=save_path,
                      annot_fmt=heatmap_annot_fmt,
                      verbose=True)
@@ -2933,10 +3144,17 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
             heatmap_pr_title = f'{ave_over} Heatmap per row (n={ave_over_n})'
             heatmap_pr_savename = 'mean_heatmap_per_row'
 
+        if ra_cd_size_dict['cd_isi_idx']:
+            adjusted_v_line = ra_cd_size_dict['cd_isi_idx'] + 1
+        else:
+            adjusted_v_line = None
+
         plt_heatmap_row_col(heatmap_df=ave_df,
                             colour_by='row',
                             x_axis_label='ISI',
                             y_axis_label='Separation',
+                            ra_cd_v_line=adjusted_v_line,
+                            ra_cd_h_line=ra_cd_size_dict['ra_sep_idx'],
                             fig_title=heatmap_pr_title,
                             annot_fmt=heatmap_annot_fmt,
                             save_name=heatmap_pr_savename,
@@ -2958,10 +3176,17 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
             heatmap_pc_title = f'{ave_over} Heatmap per col (n={ave_over_n})'
             heatmap_pc_savename = 'mean_heatmap_per_col'
 
+        if ra_cd_size_dict['ra_sep_idx']:
+            adjusted_h_line = ra_cd_size_dict['ra_sep_idx'] + 1
+        else:
+            adjusted_h_line = None
+
         plt_heatmap_row_col(heatmap_df=ave_df,
                             colour_by='col',
                             x_axis_label='ISI',
                             y_axis_label='Separation',
+                            ra_cd_v_line=ra_cd_size_dict['cd_isi_idx'],
+                            ra_cd_h_line=adjusted_h_line,
                             annot_fmt=heatmap_annot_fmt,
                             fig_title=heatmap_pc_title,
                             save_name=heatmap_pc_savename,
@@ -3008,6 +3233,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
             fig3a_title = f'{ave_over} ISI difference in threshold from concurrent\n(n={ave_over_n})'
 
         plot_diff_from_conc_lineplot(ave_DfC_df, error_df=error_DfC_df,
+                                     ra_cd_v_line=ra_cd_size_dict['cd_isi_idx'],
                                      fig_title=fig3a_title,
                                      save_name=fig3a_save_name, save_path=save_path)
         if show_plots:
@@ -3025,8 +3251,20 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
             heatmap_dfc_title = f'{ave_over} plot_diff_from_conc_heatmap (n={ave_over_n})'
             heatmap_dfc_savename = 'mean_plot_diff_from_conc_heatmap'
 
+        if ra_cd_size_dict['cd_isi_idx']:
+            adjusted_v_line = ra_cd_size_dict['cd_isi_idx'] + 1
+        else:
+            adjusted_v_line = None
+
+        if ra_cd_size_dict['ra_sep_idx']:
+            adjusted_h_line = ra_cd_size_dict['ra_sep_idx'] + 1
+        else:
+            adjusted_h_line = None
+
         plot_thr_heatmap(heatmap_df=ave_DfC_df,
                          midpoint=0,
+                         ra_cd_v_line=adjusted_v_line,
+                         ra_cd_h_line=adjusted_h_line,
                          annot_fmt=heatmap_annot_fmt,
                          fig_title=heatmap_dfc_title, save_name=heatmap_dfc_savename,
                          save_path=save_path, verbose=True)
@@ -3035,8 +3273,6 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
             plt.show()
         plt.close()
 
-
-        # make dfc/se
 
         print(f"\nplot diff_from_conc/SE heatmap\n")
         if n_trimmed is not None:
@@ -3049,11 +3285,23 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         print(f"ave_DfC_df:\n{ave_DfC_df}")
         print(f"error_DfC_df:\n{error_DfC_df}")
 
-
         dfc_div_error_df = ave_DfC_df.div(error_DfC_df).fillna(0)
         print(f"dfc_div_error_df:\n{dfc_div_error_df}")
+
+        if ra_cd_size_dict['cd_isi_idx']:
+            adjusted_v_line = ra_cd_size_dict['cd_isi_idx'] + 1
+        else:
+            adjusted_v_line = None
+
+        if ra_cd_size_dict['ra_sep_idx']:
+            adjusted_h_line = ra_cd_size_dict['ra_sep_idx'] + 1
+        else:
+            adjusted_h_line = None
+
         plot_thr_heatmap(heatmap_df=dfc_div_error_df,
                          midpoint=0,
+                         ra_cd_v_line=adjusted_v_line,
+                         ra_cd_h_line=adjusted_h_line,
                          annot_fmt=heatmap_annot_fmt,
                          fig_title=heatmap_dfc_title, save_name=heatmap_dfc_savename,
                          save_path=save_path, verbose=True)
@@ -3075,6 +3323,8 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                                 isi_name_list=isi_name_list,
                                 pos_set_ticks=sep_vals_list,
                                 pos_tick_labels=sep_name_list,
+                                ra_cd_v_line=ra_cd_size_dict['ra_size_sep'],
+                                y_axis_label=f't-value (diff from conc / {error_type})',
                                 error_bars_df=None,
                                 verbose=True)
         if show_plots:
@@ -3109,6 +3359,8 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                                 midpoint=0,
                                 x_axis_label='ISI',
                                 y_axis_label='Separation',
+                                ra_cd_v_line=ra_cd_size_dict['cd_isi_idx'],
+                                ra_cd_h_line=ra_cd_size_dict['ra_sep_idx'],
                                 fig_title=heatmap_dfc_pr_title,
                                 fontsize=10,
                                 annot_fmt=heatmap_annot_fmt,

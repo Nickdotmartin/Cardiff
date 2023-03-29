@@ -22,9 +22,9 @@ exp_path = convert_path1
 
 # exp_path = switch_path(old_exp_path, 'wind_oneDrive')
 print(f"exp_path: {exp_path}")
-participant_list = ['aa', 'bb', 'cc', 'dd', 'ee', 'Nick']
+participant_list = ['dd', 'aa', 'bb', 'ee', 'Nick', 'cc']
 # participant_list = ['bb', 'cc', 'dd', 'ee']
-# participant_list = ['Simon_w_sep45']
+# participant_list = ['cc']
 
 isi_list = [-1, 0, 2, 4, 6, 9, 12, 24]
 
@@ -141,8 +141,9 @@ for p_idx, participant_name in enumerate(participant_list):
         err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
 
     ave_DfC_df, error_DfC_df = make_diff_from_conc_df(all_df_path, root_path, n_trimmed=trim_n)
-    print(f"ave_DfC_df:\n{ave_DfC_df}")
-    print(f"error_DfC_df:\n{error_DfC_df}")
+    # print(f"\nave_DfC_df:\n{ave_DfC_df}")
+    # print(f"error_DfC_df:\n{error_DfC_df}")
+
 
     '''look for RA and CD size'''
     ra_size_sep = ra_size_deg = cd_size_isi = cd_size_ms = None
@@ -153,28 +154,36 @@ for p_idx, participant_name in enumerate(participant_list):
         check_name = participant_name
     if check_name == 'Kris':
         check_name = 'Kristian'
+    print(f"\nparticipant_name: {participant_name}, check_name (): {check_name}")
 
     # get RA size
     ra_size_df = pd.read_csv(r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp3_Ricco_all\RA_size_df.csv")
+    print(f"ra_size_df:\n{ra_size_df}")
     ra_names_list = ra_size_df['participant'].to_list()
+    # print(f"ra_names_list:\n{ra_names_list}")
     if check_name in ra_names_list:
-        ra_size_sep = ra_size_df.loc[ra_size_df['participant'] == participant_name, 'separation'].values
-        ra_size_deg = ra_size_df.loc[ra_size_df['participant'] == participant_name, 'degrees'].values
+        ra_size_sep = ra_size_df.loc[ra_size_df['participant'] == check_name, 'separation'].values[0]
+        ra_size_deg = ra_size_df.loc[ra_size_df['participant'] == check_name, 'degrees'].values[0]
 
     # get cd size
     cd_size_df = pd.read_csv(r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp2_Bloch_NM_v5\CD_size_df.csv")
     print(f"cd_size_df:\n{cd_size_df}")
     cd_names_list = cd_size_df['participant'].to_list()
-    if check_name in ra_names_list:
-        cd_size_isi = ra_size_df.loc[ra_size_df['participant'] == participant_name, 'isi'].values
-        cd_size_ms = ra_size_df.loc[ra_size_df['participant'] == participant_name, 'ms'].values
+    if check_name == 'Kristian':
+        check_name = 'Kris'
+
+    if check_name in cd_names_list:
+        cd_size_isi = cd_size_df.loc[cd_size_df['participant'] == check_name, 'isi'].values[0]
+        cd_size_ms = cd_size_df.loc[cd_size_df['participant'] == check_name, 'ms'].values[0]
 
     ra_cd_size_dict = {'ra_size_sep': ra_size_sep, 'ra_size_deg': ra_size_deg,
                        'cd_size_isi': cd_size_isi, 'cd_size_ms': cd_size_ms}
-
+    print("\nra_cd_size_dict:")
     for k, v in ra_cd_size_dict.items():
         print(f"{k}: {v}")
 
+    if participant_name == 'cc':
+        ra_cd_size_dict = None
 
     make_average_plots(all_df_path=all_df_path,
                        ave_df_path=p_ave_path,
