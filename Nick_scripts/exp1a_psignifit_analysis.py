@@ -2761,20 +2761,27 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     print(f'\nerror_bars_df:\n{error_bars_df}')
 
     all_df_headers = list(all_df.columns)
-    isi_cols_list = all_df_headers[2:]
+    print(f'all_df_headers: {all_df_headers}')
+
+    if 'p_stack_sep' in all_df_headers:
+        isi_cols_list = all_df_headers[4:]
+    else:
+        isi_cols_list = all_df_headers[2:]
+    print(f'isi_cols_list: {isi_cols_list}')
+
     if 'ISI_' in isi_cols_list[-1]:
-        print(f"found 'ISI_X'")
+        print(f"found 'ISI_X' (e.g., '{isi_cols_list[-1][:4]}' joined with '{isi_cols_list[-1][4:]}')")
         isi_vals_list = [-1 if 'conc' in str.lower(i) else int(i[4:]) for i in isi_cols_list]
     elif 'ISI ' in isi_cols_list[-1]:
-        print(f"found 'ISI X'")
+        print(f"found 'ISI X' (e.g., '{isi_cols_list[-1][:4]}' joined with '{isi_cols_list[-1][4:]}')")
         isi_vals_list = [-1 if 'conc' in str.lower(i) else int(i[4:]) for i in isi_cols_list]
     else:
-        print(f"using 'ISIX'")
+        print(f"using 'ISIX' (e.g., '{isi_cols_list[-1][:3]}' joined with '{isi_cols_list[-1][3:]}')")
         isi_vals_list = [-1 if 'conc' in str.lower(i) else int(i[3:]) for i in isi_cols_list]
-    # isi_vals_list = [-1 if 'conc' in str.lower(i) else int(i[4:]) for i in isi_cols_list]
-    # print(f'isi_vals_list: {isi_vals_list}')
-    # isi_name_list = ['conc' if i in ['ISI_-1', 'Concurrent'] else f'ISI {i[3:]}' for i in isi_cols_list]
-    isi_name_list = ['conc' if i in ['ISI_-1', 'Concurrent'] else f'ISI {i}' for i in isi_vals_list]
+
+    isi_name_list = ['Conc' if i in ['ISI_-1', 'Concurrent', 'ISI -1', 'ISI-1', -1] else
+                     f'ISI {i}' for i in isi_vals_list]
+
     sep_vals_list = ave_df['separation'].tolist()
     sep_name_list = ['1probe' if i == 20 else i for i in sep_vals_list]
     sep_idx_list = list(range(len(sep_vals_list)))
@@ -2820,6 +2827,16 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
         ra_cd_size_dict['ra_sep_idx'] = ra_sep_idx
 
+        if 'ra_CI95_sep' in ra_cd_size_dict.keys():
+            ra_CI95_sep = ra_cd_size_dict['ra_CI95_sep']
+            print(f"\nra_CI95_sep: {ra_CI95_sep}")
+
+            # convert into appropriate sep_idx units for plotting
+            print(f"sep_vals_gap: {sep_vals_gap}")
+            ra_sep_idx_CI95 = ra_CI95_sep / sep_vals_gap
+            print(f"ra_sep_idx_CI95: {ra_sep_idx_CI95}")
+
+            ra_cd_size_dict['ra_sep_idx_CI95'] = ra_sep_idx_CI95
 
         cd_size_isi = ra_cd_size_dict['cd_size_isi']
         print(f"\ncd_size_isi: {cd_size_isi}")
@@ -2851,6 +2868,17 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         print(f"cd_isi_idx: {cd_isi_idx}\n")
 
         ra_cd_size_dict['cd_isi_idx'] = cd_isi_idx
+
+        if 'cd_CI95_isi' in ra_cd_size_dict.keys():
+            cd_CI95_isi = ra_cd_size_dict['cd_CI95_isi']
+            print(f"\ncd_CI95_isi: {cd_CI95_isi}")
+
+            # convert into appropriate isi_idx units for plotting
+            print(f"isi_vals_gap: {isi_vals_gap}")
+            cd_isi_idx_CI95 = ra_CI95_sep / isi_vals_gap
+            print(f"cd_isi_idx_CI95: {cd_isi_idx_CI95}")
+
+            ra_cd_size_dict['cd_isi_idx_CI95'] = cd_isi_idx_CI95
 
     else:
         ra_cd_size_dict = {'ra_size_sep': None, 'ra_size_deg': None, 'ra_sep_idx': None,

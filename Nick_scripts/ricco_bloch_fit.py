@@ -41,9 +41,8 @@ def ricco_bloch_fit(log_x_array, log_y_array, est_intercept1=None, est_breakpoin
         est_intercept1 = log_y_array[0] - log_x_array[0]
     intercept1 = est_intercept1
 
-    # get estimate of breakpoint, if None, start at mid-point, second to last point
+    # get estimate of breakpoint, if None, third to last point
     if not est_breakpoint:
-        # est_breakpoint = log_x_array[int(len(log_x_array) / 2)]
         est_breakpoint = log_x_array[int(len(log_x_array) - 3)]
 
     # second line is fitted

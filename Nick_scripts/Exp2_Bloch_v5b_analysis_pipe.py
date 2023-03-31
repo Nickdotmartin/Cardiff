@@ -210,15 +210,15 @@ for p_idx, participant_name in enumerate(participant_list):
 #
 #
 #
-    '''d'''
+#     '''d'''
     thr_df_name = 'long_thr_df'
-    #
-    # print(f"\ntrim_n: {trim_n}")
-    # d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-    #                       thr_df_name=thr_df_name, trim_n=trim_n, error_type='SE',
-    #                       groupby_col=['isi_fr'],
-    #                       cols_to_drop=['stair_name', 'stack', 'cond_type'])
-
+#     #
+#     # print(f"\ntrim_n: {trim_n}")
+#     # d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
+#     #                       thr_df_name=thr_df_name, trim_n=trim_n, error_type='SE',
+#     #                       groupby_col=['isi_fr'],
+#     #                       cols_to_drop=['stair_name', 'stack', 'cond_type'])
+# 
     # making average plot
     all_df_path = os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv')
     p_ave_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv')
@@ -363,8 +363,10 @@ for p_idx, participant_name in enumerate(participant_list):
     breakpoint_fr = breakpoint_dict['fr']
     breakpoint_isi = breakpoint_dict['isi']
 
-
-    CD_size_list.append([participant_name, len(run_folder_names), slope2, breakpoint, r2,
+    save_p_name = participant_name
+    if participant_name == 'Kris':
+        save_p_name = 'Kristian'
+    CD_size_list.append([save_p_name, len(run_folder_names), slope2, breakpoint, r2,
                          breakpoint_ms, breakpoint_fr, breakpoint_isi])
     ###############################
     print('*** finished participant average plots ***')
@@ -375,13 +377,75 @@ print(f'CD_size_df:\n{CD_size_df}')
 CD_size_df.to_csv(os.path.join(exp_path, 'CD_size_df.csv'), index=False)
 
 
-# print(f'exp_path: {exp_path}')
-# print('\nget exp_average_data')
-# trim_n = 2
-# participant_list = ['Kim', 'Nick', 'Tony', 'Simon', 'Kris']
+print(f'exp_path: {exp_path}')
+print('\nget exp_average_data')
+trim_n = 2
+participant_list = ['Kim', 'Nick', 'Tony', 'Simon', 'Kris']
 
 # e_average_exp_data(exp_path=exp_path, p_names_list=participant_list, exp_type=f'Bloch_v{bloch_version}',
 #                    error_type='SE', n_trimmed=trim_n, verbose=True)
+
+'''get means and standard errors of values in CD_size_df.csv for participants in participant_list'''
+print(f"\nget exp_ave and exp_SE for participants in {participant_list}")
+master_ave_done = False  # do I already have averages and SE for all participants
+fresh_analysis = False  # do I already have averages and SE for this set of participants
+# get CD_size_df.csv from exp_path
+CD_size_df = pd.read_csv(os.path.join(exp_path, 'CD_size_df.csv'))
+
+CD_p_names_list = CD_size_df['participant'].to_list()
+print(f'CD_p_names_list: {CD_p_names_list}')
+
+# check for exp_ave and exp_SE in CD_p_names_list
+if ('exp_ave' in CD_p_names_list) and ('exp_SE' in CD_p_names_list):
+    print('exp_ave and exp_SE already done')
+    master_ave_done = True
+
+    # check whether all participants are in this analysis
+    # remove exp_ave and exp_SE from CD_p_names_list
+    CD_p_names_list.remove('exp_ave')
+    CD_p_names_list.remove('exp_SE')
+    print(f'CD_p_names_list: {CD_p_names_list}')
+
+    if len(CD_p_names_list) == len(participant_list):
+        print("this analysis with all participants had already been done")
+    else:
+        print("analysis with this set of participants had not been done")
+        fresh_analysis = True
+else:
+    print('exp_ave and exp_SE not done')
+    fresh_analysis = True
+
+
+if fresh_analysis:
+    print('fresh_analysis')
+
+    # get means and standard errors of values in CD_size_df.csv for participants in participant_list
+    # set participant column as index
+    CD_size_df = CD_size_df.set_index('participant')
+
+    check_p_names_list = CD_size_df.index.to_list()
+    print(f'check_p_names_list: {check_p_names_list}')
+
+    # new row for means called 'exp_ave'
+    CD_size_df.loc['exp_ave'] = CD_size_df.mean()
+
+    # new row for standard errors called 'exp_SE'
+    CD_size_df.loc['exp_SE'] = CD_size_df.sem()
+
+    # new row for CI95 (SE * 19.6)
+    CD_size_df.loc['CI95'] = CD_size_df.loc['exp_SE'] * 1.96
+
+    # only save if the length of check_p_names_list is equal to length of CD_p_names_list
+    if len(check_p_names_list) == len(CD_p_names_list):
+        print("lengths are equal")
+
+        CD_size_df.reset_index(inplace=True, drop=False)
+
+        # save CD_size_df
+        CD_size_df.to_csv(os.path.join(exp_path, 'CD_size_df.csv'), index=False)
+    print(f'CD_size_df:\n{CD_size_df}')
+
+
 
 #
 # all_df_path = os.path.join(exp_path, 'MASTER_exp_all_thr.csv')

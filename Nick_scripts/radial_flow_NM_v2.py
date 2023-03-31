@@ -39,7 +39,7 @@ display_number = 1  # 0 indexed, 1 for external display
 # Store info about the experiment session
 expName = 'rad_flow_2'  # from the Builder filename that created this script
 
-expInfo = {'1_Participant': 'Nick_60hz_test_1',
+expInfo = {'1_Participant': 'Nick_test_1',
            '2_Probe_dur_in_frames_at_240hz': [2, 50, 100],
            '3_fps': [240, 144, 60],
            '4_ISI_dur_in_ms': [100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0],

@@ -37,7 +37,7 @@ if running_on_laptop():
 exp_path = convert_path1
 
 # participant_list = ['Kris', 'Simon', 'Nick', 'Kim']  # ['Kim', 'Kris', 'Simon', 'Nick']
-participant_list = ['Kristian', 'Nick', 'Simon', 'Kim']  # , 'bb', 'cc', 'dd', 'ee']
+participant_list = ['Kristian', 'Nick', 'Simon', 'Kim', 'Tony']  # , 'bb', 'cc', 'dd', 'ee']
 
 p_idx_plus = 1
 

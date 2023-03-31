@@ -25,7 +25,7 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'NickMac'  # 'asus_cal', 'Nick_work_laptop', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18', 'OLED' 'OLED'
+monitor_name = 'Nick_work_laptop'  # 'asus_cal', 'Nick_work_laptop', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18', 'OLED'
 
 # Store info about the experiment session (numbers keep the order)
 expName = 'Exp1_Jan23_rept_dropped'  # from the Builder filename that created this script
@@ -120,14 +120,15 @@ maxLum = 106  # 255 RGB
 bgLumProp = .2
 bgLum = maxLum * bgLumProp
 bgColor255 = bgLum * LumColor255Factor
-bgColor1 = bgLum / maxLum
+bgColor_rgb1 = bgLum / maxLum
+print(f'bgLum: {bgLum}, bgColor255: {bgColor255}, bgColor_rgb1: {bgColor_rgb1}')
 
 # colour space
 this_colourSpace = 'rgb255'
 this_bgColour = bgColor255
 if monitor_name == 'OLED':
     this_colourSpace = 'rgb1'
-    this_bgColour = bgColor1
+    this_bgColour = bgColor_rgb1
 print(f"\nthis_colourSpace: {this_colourSpace}, this_bgColour: {this_bgColour}")
 
 # don't use full screen on external monitor
@@ -244,7 +245,8 @@ myMouse = event.Mouse(visible=False)
 resp = event.BuilderKeyResponse()
 
 # INSTRUCTION
-instructions = visual.TextStim(win=win, name='instructions',
+instructions = visual.TextStim(win=win, name='instructions', font='Arial', height=20, 
+                               color='white', colorSpace=this_colourSpace,
                                text="\n\n\n\n\n\nFocus on the fixation circle at the centre of the screen.\n\n"
                                     "A small white target will briefly appear on screen,\n"
                                     "press the key related to the location of the probe:\n\n"
@@ -253,17 +255,13 @@ instructions = visual.TextStim(win=win, name='instructions',
                                     "Some targets will be easier to see than others,\n"
                                     "Some will be so dim that you won't see them, so just guess!\n\n"
                                     "You don't need to think for long, respond quickly, but try to push press the correct key!\n\n"
-                                    "Don't let your eyes wander, keep focussed on the circle in the middle throughout.",
-                               font='Arial', height=20, color='white', colorSpace=this_colourSpace,)
+                                    "Don't let your eyes wander, keep focussed on the circle in the middle throughout.")
 
 
 # BREAKS
-# expected trials plus repeats
-max_trials = total_n_trials + max_droped_fr_trials
-# limit on number of trials without a break
-max_without_break = 120
-# number of breaks
-n_breaks = max_trials // max_without_break
+max_trials = total_n_trials + max_droped_fr_trials  # expected trials plus repeats
+max_without_break = 120  # limit on number of trials without a break
+n_breaks = max_trials // max_without_break  # number of breaks
 if n_breaks > 0:
     take_break = int(max_trials / (n_breaks + 1))
 else:
@@ -273,8 +271,9 @@ print(f"\ntake a {break_dur} second break every {take_break} trials ({n_breaks} 
 break_text = f"Break\nTurn on the light and take at least {break_dur} seconds break.\n" \
              "Keep focussed on the fixation circle in the middle of the screen.\n" \
              "Remember, if you don't see the target, just guess!"
-breaks = visual.TextStim(win=win, name='breaks', text=break_text, font='Arial', 
-                         pos=[0, 0], height=20, ori=0, color='white', colorSpace=this_colourSpace,)
+breaks = visual.TextStim(win=win, name='breaks', text=break_text, font='Arial',
+                         pos=[0, 0], height=20, ori=0, color='white', 
+                         colorSpace=this_colourSpace)
 
 end_of_exp_text = "You have completed this experiment.\nThank you for your time.\n\n"
 end_of_exp = visual.TextStim(win=win, name='end_of_exp',
@@ -314,6 +313,10 @@ stairStart = maxLum
 miniVal = bgLum
 maxiVal = maxLum
 
+print('\nexpInfo (dict)')
+for k, v in expInfo.items():
+    print(f"{k}: {v}")
+
 stairs = []
 for stair_idx in expInfo['stair_list']:
 
@@ -338,6 +341,7 @@ trial_number = 0
 actual_trials_inc_rpt = 0
 
 # EXPERIMENT
+print('\n*** exp loop*** \n\n')
 for step in range(n_trials_per_stair):
     np.random.shuffle(stairs)
     for thisStair in stairs:
@@ -568,11 +572,6 @@ for step in range(n_trials_per_stair):
             print(f"t_fixation: {t_fixation}, t_probe_1: {t_probe_1}, "
                   f"t_ISI: {t_ISI}, t_probe_2: {t_probe_2}, t_response: {t_response}\n")
 
-            # I've moved the repeat option to the top so repetitions don't appear in same corner
-            # repeat the trial if [r] has been pressed
-            # repeat = True
-            # while repeat:
-            #     frameN = -1
 
             # continue_routine refers to flipping the screen to show next frame
 
@@ -679,7 +678,7 @@ for step in range(n_trials_per_stair):
                     fixation.draw()
                     # loc_marker.draw()
 
-                # PROBE 2
+                # PROBE 2 - after ISI but before end of probe2 interval
                 elif t_probe_2 >= frameN > t_ISI:
                     if fusion_lock_rings:
                         fusion_lock_circle.draw()
@@ -693,7 +692,7 @@ for step in range(n_trials_per_stair):
                     fixation.draw()
                     # loc_marker.draw()
 
-                # ANSWER
+                # ANSWER - after probe 2 interval
                 elif frameN > t_probe_2:
                     if fusion_lock_rings:
                         fusion_lock_circle.draw()
@@ -829,7 +828,7 @@ for step in range(n_trials_per_stair):
                 if continueRoutine:
                     win.flip()
 
-        # add info to output csv
+        # add to thisExp for output csv
         thisExp.addData('trial_number', trial_number)
         thisExp.addData('trial_n_inc_rpt', actual_trials_inc_rpt)
         thisExp.addData('stair', stair_idx)

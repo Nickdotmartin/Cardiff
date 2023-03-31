@@ -505,18 +505,77 @@ RA_size_df = pd.DataFrame(RA_size_list, columns=['participant', 'n_runs', 'slope
 print(f'RA_size_df:\n{RA_size_df}')
 RA_size_df.to_csv(os.path.join(exp_path, 'RA_size_df.csv'), index=False)
 
-#
-#
-# participant_list = ['Kristian', 'Simon', 'Kim', 'Nick', 'Tony']
-# trim_n = 2
-# print(f'exp_path: {exp_path}')
-# print('\nget exp_average_data')
-# # e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
-# #                    # exp_type='Ricco',
-# #                    exp_type=f'Ricco_v{ricco_version}',
-# #                    error_type='SE', n_trimmed=trim_n, verbose=True)
-#
-#
+
+participant_list = ['Kristian', 'Simon', 'Kim', 'Nick', 'Tony']
+trim_n = 2
+
+# print('\nget exp_average_data (exp_path: {exp_path})')
+# e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
+#                    # exp_type='Ricco',
+#                    exp_type=f'Ricco_v{ricco_version}',
+#                    error_type='SE', n_trimmed=trim_n, verbose=True)
+
+'''get means and standard errors of values in RA_size_df.csv for participants in participant_list'''
+print(f"\nget exp_ave and exp_SE for participants in {participant_list}")
+master_ave_done = False  # do I already have averages and SE for all participants
+fresh_analysis = False  # do I already have averages and SE for this set of participants
+# get RA_size_df.csv from exp_path
+RA_size_df = pd.read_csv(os.path.join(exp_path, 'RA_size_df.csv'))
+
+RA_p_names_list = RA_size_df['participant'].to_list()
+print(f'RA_p_names_list: {RA_p_names_list}')
+
+# check for exp_ave and exp_SE in RA_p_names_list
+if ('exp_ave' in RA_p_names_list) and ('exp_SE' in RA_p_names_list):
+    print('exp_ave and exp_SE already done')
+    master_ave_done = True
+
+    # check whether all participants are in this analysis
+    # remove exp_ave and exp_SE from RA_p_names_list
+    RA_p_names_list.remove('exp_ave')
+    RA_p_names_list.remove('exp_SE')
+    print(f'RA_p_names_list: {RA_p_names_list}')
+
+    if len(RA_p_names_list) == len(participant_list):
+        print("this analysis with all participants had already been done")
+    else:
+        print("analysis with this set of participants had not been done")
+        fresh_analysis = True
+else:
+    print('exp_ave and exp_SE not done')
+    fresh_analysis = True
+
+
+if fresh_analysis:
+    print('fresh_analysis')
+
+    # get means and standard errors of values in RA_size_df.csv for participants in participant_list
+    # set participant column as index
+    RA_size_df = RA_size_df.set_index('participant')
+
+    check_p_names_list = RA_size_df.index.to_list()
+    print(f'check_p_names_list: {check_p_names_list}')
+
+    # new row for means called 'exp_ave'
+    RA_size_df.loc['exp_ave'] = RA_size_df.mean()
+
+    # new row for standard errors called 'exp_SE'
+    RA_size_df.loc['exp_SE'] = RA_size_df.sem()
+
+    # new row for CI95 (SE * 19.6)
+    RA_size_df.loc['CI95'] = RA_size_df.loc['exp_SE'] * 1.96
+
+    # only save if the length of check_p_names_list is equal to length of RA_p_names_list
+    if len(check_p_names_list) == len(RA_p_names_list):
+        print("lengths are equal")
+
+        RA_size_df.reset_index(inplace=True, drop=False)
+
+        # save RA_size_df
+        RA_size_df.to_csv(os.path.join(exp_path, 'RA_size_df.csv'), index=False)
+    print(f'RA_size_df:\n{RA_size_df}')
+
+
 # all_df_path = os.path.join(exp_path, 'MASTER_exp_all_thr.csv')
 # exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
 # err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
@@ -526,7 +585,7 @@ RA_size_df.to_csv(os.path.join(exp_path, 'RA_size_df.csv'), index=False)
 # print('*** making average plot (number of pixels)***')
 # fig_df = pd.read_csv(exp_ave_path)
 # print(f'fig_df:\n{fig_df}')
-#
+
 # len_pix_list = fig_df['len_pix'].to_list()
 # print(f'len_pix_list: {len_pix_list}')
 #

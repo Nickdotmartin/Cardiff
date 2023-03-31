@@ -1138,6 +1138,10 @@ def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'
             x_space_dict = dict(zip(found_x_vals, new_x_vals))
 
         # add column with new evenly spaced x-values, relating to original x_values
+
+        # sort long df by x axis so tick labels are in ascending order
+        long_df.sort_values(by=x_axis, inplace=True)
+
         spaced_x = [x_space_dict[i] for i in list(long_df[x_axis])]
         long_df.insert(0, 'spaced_x', spaced_x)
         data_for_x = 'spaced_x'
@@ -3210,10 +3214,20 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     print(f'save_path (ave_df_path): {save_path}')
     print(f'df_name (ave_df_path): {df_name}')
 
-    if exp_ave:
+    # if exp_ave:
+    #     ave_over = 'Exp'
+    # else:
+    #     ave_over = 'P'
+    # Average over experiment or participant (with or without participant name)
+    if type(exp_ave) == str:  # e.g. participant's name
+        ave_over = exp_ave
+        # idx_col = 'stack'
+    elif exp_ave is True:
         ave_over = 'Exp'
+        # idx_col = 'p_stack_sep'
     else:
         ave_over = 'P'
+        # idx_col = 'stack'
 
     # if type(all_df_path) is 'pandas.core.frame.DataFrame':
     if isinstance(all_df_path, pd.DataFrame):
@@ -3253,11 +3267,14 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         print(f"stair_names_list: {stair_names_list}")
         print(f"stair_names_labels: {stair_names_labels}")
 
+    # get positive separation values, in ascending order
     if 'separation' in list(ave_df.columns):
         pos_sep_vals_list = ave_df['separation'].unique().tolist()
     else:
         pos_sep_vals_list = ave_df[stair_names_col].unique().tolist()
         pos_sep_vals_list = list(set([int(0) if i == -.1 else abs(int(i)) for i in pos_sep_vals_list]))
+    if pos_sep_vals_list[0] > pos_sep_vals_list[-1]:
+        pos_sep_vals_list.reverse()
     if verbose:
         print(f'pos_sep_vals_list: {pos_sep_vals_list}')
 
@@ -3301,30 +3318,33 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         plt.show()
     plt.close()
 
-    print(f"\nfig_1b")
-    if n_trimmed is not None:
-        fig_1b_title = f'{ave_over} average thresholds per separation across all runs (n={ave_over_n}, trim={n_trimmed}).\n' \
-                       f'Bars=.68 CI'
-        fig_1b_savename = f'ave_TM{n_trimmed}_thr_all_runs_sep.png'
+    if len(isi_vals_list) == 1:
+        print("skipping fig_1b as there is only 1 ISI value")
     else:
-        fig_1b_title = f'{ave_over} average threshold per separation across all runs\n' \
-                       f'Bars=.68 CI, n={ave_over_n}'
-        fig_1b_savename = f'ave_thr_all_runs_sep.png'
+        print(f"\nfig_1b")
+        if n_trimmed is not None:
+            fig_1b_title = f'{ave_over} average thresholds per separation across all runs (n={ave_over_n}, trim={n_trimmed}).\n' \
+                           f'Bars=.68 CI'
+            fig_1b_savename = f'ave_TM{n_trimmed}_thr_all_runs_sep.png'
+        else:
+            fig_1b_title = f'{ave_over} average threshold per separation across all runs\n' \
+                           f'Bars=.68 CI, n={ave_over_n}'
+            fig_1b_savename = f'ave_thr_all_runs_sep.png'
 
-        # tod: It also seems that using evenly_spaced_x is messing it up.  Not sure why.
+            # tod: It also seems that using evenly_spaced_x is messing it up.  Not sure why.
 
-    plot_w_errors_either_x_axis(wide_df=all_df, cols_to_keep=[cond_type_col, 'separation'],
-                                cols_to_change=isi_name_list,
-                                cols_to_change_show=thr_col, new_col_name='ISI',
-                                strip_from_cols='ISI_', x_axis='ISI', y_axis=thr_col,
-                                hue_var='separation', style_var=cond_type_col, style_order=cond_type_order,
-                                legend_names=isi_name_list,
-                                error_bars=True, even_spaced_x=True, jitter=.05,
-                                fig_title=fig_1b_title, fig_savename=fig_1b_savename,
-                                save_path=save_path, x_tick_vals=isi_vals_list, verbose=verbose)
-    if show_plots:
-        plt.show()
-    plt.close()
+        plot_w_errors_either_x_axis(wide_df=all_df, cols_to_keep=[cond_type_col, 'separation'],
+                                    cols_to_change=isi_name_list,
+                                    cols_to_change_show=thr_col, new_col_name='ISI',
+                                    strip_from_cols='ISI_', x_axis='ISI', y_axis=thr_col,
+                                    hue_var='separation', style_var=cond_type_col, style_order=cond_type_order,
+                                    legend_names=isi_name_list,
+                                    error_bars=True, even_spaced_x=True, jitter=.05,
+                                    fig_title=fig_1b_title, fig_savename=fig_1b_savename,
+                                    save_path=save_path, x_tick_vals=isi_vals_list, verbose=verbose)
+        if show_plots:
+            plt.show()
+        plt.close()
 
     print(f"\nfig_1c")
     if n_trimmed is not None:
@@ -3335,6 +3355,8 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         fig_1c_title = f'{ave_over} average threshold per ISI across all runs\n' \
                        f'Bars=.68 CI, n={ave_over_n}'
         fig_1c_savename = f'ave_thr_all_runs_isi.png'
+
+    print(f'pos_sep_vals_list: {pos_sep_vals_list}')
 
     plot_w_errors_either_x_axis(wide_df=all_df, cols_to_keep=[cond_type_col, 'separation'],
                                 cols_to_change=isi_name_list,
@@ -3352,63 +3374,74 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     plt.close()
 
     #################
-    # figure 1d multiple plots with single line.
-    print("\n\nfig_1d: one ax per ISI, pos_sep, compare congruent and incongruent.")
-    if n_trimmed is not None:
-        fig_1d_title = f'{ave_over} Congruent and Incongruent thresholds for each ISI (trim={n_trimmed}).\n' \
-                       f'Bars=SE, n={ave_over_n}'
-        fig_1d_savename = f'ave_TM{n_trimmed}_pos_sep_per_isi.png'
+    if len(isi_vals_list) == 1:
+        print("skipping fig_1d as there is only 1 ISI value")
     else:
-        fig_1d_title = f'{ave_over} Congruent and Incongruent thresholds for each ISI\n' \
-                       f'Bars=SE, n={ave_over_n}'
-        fig_1d_savename = f'ave_thr_pos_sep_per_isi.png'
+        # figure 1d multiple plots with single line.
+        print("\n\nfig_1d: one ax per ISI, pos_sep, compare congruent and incongruent.")
+        if n_trimmed is not None:
+            fig_1d_title = f'{ave_over} Congruent and Incongruent thresholds for each ISI (trim={n_trimmed}).\n' \
+                           f'Bars=SE, n={ave_over_n}'
+            fig_1d_savename = f'ave_TM{n_trimmed}_pos_sep_per_isi.png'
+        else:
+            fig_1d_title = f'{ave_over} Congruent and Incongruent thresholds for each ISI\n' \
+                           f'Bars=SE, n={ave_over_n}'
+            fig_1d_savename = f'ave_thr_pos_sep_per_isi.png'
 
-    use_these_cols = [stair_names_col] + isi_name_list
+        use_these_cols = [stair_names_col] + isi_name_list
 
-    multi_pos_sep_per_isi(ave_thr_df=ave_df[use_these_cols], error_df=error_bars_df[use_these_cols],
-                          stair_names_col=stair_names_col,
-                          even_spaced_x=True, error_caps=True,
-                          fig_title=fig_1d_title,
-                          save_path=save_path, save_name=fig_1d_savename,
-                          verbose=verbose)
-    if show_plots:
-        plt.show()
-    plt.close()
+        multi_pos_sep_per_isi(ave_thr_df=ave_df[use_these_cols], error_df=error_bars_df[use_these_cols],
+                              stair_names_col=stair_names_col,
+                              even_spaced_x=True, error_caps=True,
+                              fig_title=fig_1d_title,
+                              save_path=save_path, save_name=fig_1d_savename,
+                              verbose=verbose)
+        if show_plots:
+            plt.show()
+        plt.close()
 
-    print('\nfig2a: Mean participant difference between congruent and incongruent conditions (x-axis=Sep)')
-    if n_trimmed is not None:
-        fig_2a_title = f'{ave_over} Mean Difference (Congruent - Incongruent Conditions).\n' \
-                       f'(x-axis=Sep)  trim={n_trimmed}, n={ave_over_n}.'
-        fig_2a_savename = f'ave_TM{n_trimmed}_diff_x_sep.png'
+
+    if len(isi_vals_list) == 1:
+        print("skipping fig2a and fig2b as there is only 1 ISI value")
     else:
-        fig_2a_title = f'{ave_over} Mean Difference (Congruent - Incongruent Conditions).\n' \
-                       f'(x-axis=Sep), n={ave_over_n}'
-        fig_2a_savename = f'ave_diff_x_sep.png'
+        print('\nfig2a: Mean participant difference between congruent and incongruent conditions (x-axis=Sep)')
+        if n_trimmed is not None:
+            fig_2a_title = f'{ave_over} Mean Difference (Congruent - Incongruent Conditions).\n' \
+                           f'(x-axis=Sep)  trim={n_trimmed}, n={ave_over_n}.'
+            fig_2a_savename = f'ave_TM{n_trimmed}_diff_x_sep.png'
+        else:
+            fig_2a_title = f'{ave_over} Mean Difference (Congruent - Incongruent Conditions).\n' \
+                           f'(x-axis=Sep), n={ave_over_n}'
+            fig_2a_savename = f'ave_diff_x_sep.png'
 
-    plot_diff(ave_df[use_these_cols], stair_names_col=stair_names_col,
-              fig_title=fig_2a_title, save_path=save_path, save_name=fig_2a_savename,
-              x_axis_isi=False, verbose=verbose)
-    if show_plots:
-        plt.show()
-    plt.close()
+        use_these_cols = [stair_names_col] + isi_name_list
 
-    print('\nfig2b: Mean participant difference between congruent and incongruent conditions (x-axis=ISI)')
+        plot_diff(ave_df[use_these_cols], stair_names_col=stair_names_col,
+                  fig_title=fig_2a_title, save_path=save_path, save_name=fig_2a_savename,
+                  x_axis_isi=False, verbose=verbose)
+        if show_plots:
+            plt.show()
+        plt.close()
 
-    if n_trimmed is not None:
-        fig_2b_title = f'{ave_over} Mean Difference Between Congruent and Incongruent Conditions (x-axis=ISI).\n' \
-                       f'(Positive=congruent has higher threshold, n={ave_over_n}, trim={n_trimmed}).'
-        fig_2b_savename = f'ave_TM{n_trimmed}_diff_x_isi.png'
-    else:
-        fig_2b_title = f'{ave_over} Mean Difference Between Congruent and Incongruent Conditions (x-axis=ISI).\n' \
-                       f'(Positive=congruent has higher threshold, n={ave_over_n}).'
-        fig_2b_savename = f'ave_diff_x_isi.png'
+        print('\nfig2b: Mean participant difference between congruent and incongruent conditions (x-axis=ISI)')
 
-    plot_diff(ave_df[use_these_cols], stair_names_col=stair_names_col,
-              fig_title=fig_2b_title, save_path=save_path, save_name=fig_2b_savename,
-              x_axis_isi=True, verbose=verbose)
-    if show_plots:
-        plt.show()
-    plt.close()
+        if n_trimmed is not None:
+            fig_2b_title = f'{ave_over} Mean Difference Between Congruent and Incongruent Conditions (x-axis=ISI).\n' \
+                           f'(Positive=congruent has higher threshold, n={ave_over_n}, trim={n_trimmed}).'
+            fig_2b_savename = f'ave_TM{n_trimmed}_diff_x_isi.png'
+        else:
+            fig_2b_title = f'{ave_over} Mean Difference Between Congruent and Incongruent Conditions (x-axis=ISI).\n' \
+                           f'(Positive=congruent has higher threshold, n={ave_over_n}).'
+            fig_2b_savename = f'ave_diff_x_isi.png'
+
+
+        plot_diff(ave_df[use_these_cols], stair_names_col=stair_names_col,
+                  fig_title=fig_2b_title, save_path=save_path, save_name=fig_2b_savename,
+                  x_axis_isi=True, verbose=verbose)
+        if show_plots:
+            plt.show()
+        plt.close()
+
 
     print(f"\nHeatmap")
     if n_trimmed is not None:
@@ -3434,56 +3467,59 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         plt.show()
     plt.close()
 
-    print(f"\nHeatmap per row\n")
-    if 'separation' in list(ave_df.columns):
-        ave_df.set_index('separation', drop=True, inplace=True)
-
-    # get mean of each col, then mean of that
-    if n_trimmed is not None:
-        heatmap_pr_title = f'{ave_over} Heatmap per row (n={ave_over_n}, trim={n_trimmed}).'
-        heatmap_pr_savename = f'mean_TM{n_trimmed}_heatmap_per_row'
+    if len(isi_vals_list) == 1:
+        print("skipping Heatmap per row and per column as there is only 1 ISI value")
     else:
-        heatmap_pr_title = f'{ave_over} Heatmap per row (n={ave_over_n})'
-        heatmap_pr_savename = 'mean_heatmap_per_row'
+        print(f"\nHeatmap per row\n")
+        if 'separation' in list(ave_df.columns):
+            ave_df.set_index('separation', drop=True, inplace=True)
 
-    plt_heatmap_row_col(heatmap_df=ave_w_sep_idx_df,
-                        colour_by='row',
-                        # x_tick_labels=None,
-                        x_axis_label='ISI',
-                        # y_tick_labels=None,
-                        y_axis_label='Separation',
-                        fig_title=heatmap_pr_title,
-                        save_name=heatmap_pr_savename,
-                        save_path=save_path,
-                        verbose=True)
-    if show_plots:
-        plt.show()
-    plt.close()
+        # get mean of each col, then mean of that
+        if n_trimmed is not None:
+            heatmap_pr_title = f'{ave_over} Heatmap per row (n={ave_over_n}, trim={n_trimmed}).'
+            heatmap_pr_savename = f'mean_TM{n_trimmed}_heatmap_per_row'
+        else:
+            heatmap_pr_title = f'{ave_over} Heatmap per row (n={ave_over_n})'
+            heatmap_pr_savename = 'mean_heatmap_per_row'
 
-    print(f"\nHeatmap per col\n")
-    if 'separation' in list(ave_df.columns):
-        ave_df.set_index('separation', drop=True, inplace=True)
+        plt_heatmap_row_col(heatmap_df=ave_w_sep_idx_df,
+                            colour_by='row',
+                            # x_tick_labels=None,
+                            x_axis_label='ISI',
+                            # y_tick_labels=None,
+                            y_axis_label='Separation',
+                            fig_title=heatmap_pr_title,
+                            save_name=heatmap_pr_savename,
+                            save_path=save_path,
+                            verbose=True)
+        if show_plots:
+            plt.show()
+        plt.close()
 
-    # get mean of each col, then mean of that
-    if n_trimmed is not None:
-        heatmap_pr_title = f'{ave_over} Heatmap per col (n={ave_over_n}, trim={n_trimmed}).'
-        heatmap_pr_savename = f'AAA_mean_TM{n_trimmed}_heatmap_per_col.png'
-    else:
-        heatmap_pr_title = f'{ave_over} Heatmap per col (n={ave_over_n})'
-        heatmap_pr_savename = 'AAA_mean_heatmap_per_col.png'
+        print(f"\nHeatmap per col\n")
+        if 'separation' in list(ave_df.columns):
+            ave_df.set_index('separation', drop=True, inplace=True)
 
-    plt_heatmap_row_col(heatmap_df=ave_w_sep_idx_df,
-                        colour_by='col',
-                        # x_tick_labels=None,
-                        x_axis_label='ISI',
-                        # y_tick_labels=None,
-                        y_axis_label='Separation',
-                        fig_title=heatmap_pr_title,
-                        save_name=heatmap_pr_savename,
-                        save_path=save_path,
-                        verbose=True)
-    if show_plots:
-        plt.show()
-    plt.close()
+        # get mean of each col, then mean of that
+        if n_trimmed is not None:
+            heatmap_pr_title = f'{ave_over} Heatmap per col (n={ave_over_n}, trim={n_trimmed}).'
+            heatmap_pr_savename = f'AAA_mean_TM{n_trimmed}_heatmap_per_col.png'
+        else:
+            heatmap_pr_title = f'{ave_over} Heatmap per col (n={ave_over_n})'
+            heatmap_pr_savename = 'AAA_mean_heatmap_per_col.png'
+
+        plt_heatmap_row_col(heatmap_df=ave_w_sep_idx_df,
+                            colour_by='col',
+                            # x_tick_labels=None,
+                            x_axis_label='ISI',
+                            # y_tick_labels=None,
+                            y_axis_label='Separation',
+                            fig_title=heatmap_pr_title,
+                            save_name=heatmap_pr_savename,
+                            save_path=save_path,
+                            verbose=True)
+        if show_plots:
+            plt.show()
+        plt.close()
 
     print("\n*** finished make_average_plots()***\n")
