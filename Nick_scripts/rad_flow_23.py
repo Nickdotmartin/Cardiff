@@ -17,20 +17,22 @@ from exp1a_psignifit_analysis import fig_colours
 '''
 Updated version of radial flow experiment.
 Has variable fixation time, records frame rate, 
-Can have radial or tangental probes.
+Can have radial or tangential probes.
 Can vary the preliminary motion duration.
 Has same colour space and background colour as exp1.
 Updated wrap_depth_vals (WrapPoints) function.  
 '''
 
+
 def wrap_depth_vals(depth_arr, min_depth, max_depth):
-    '''
-    function to take an array (depth_arr) and adjust any values below min_depth or above max_depth with +/- (max_depth-min_depth)
+    """
+    function to take an array (depth_arr) and adjust any values below min_depth
+    or above max_depth with +/- (max_depth-min_depth)
     :param depth_arr: np.random.rand(nDots) array giving depth values for radial_flow dots.
-    :param min_depth: value to set as minimum depth
-    :param max_depth: value to set as maximum depth
-    :return: updated depth array
-    '''
+    :param min_depth: value to set as minimum depth.
+    :param max_depth: value to set as maximum depth.
+    :return: updated depth array.
+    """
     depth_adj = max_depth - min_depth
     # adjust depth_arr values less than min_depth by adding depth_adj
     lessthanmin = (depth_arr < min_depth)
@@ -182,7 +184,7 @@ bgLumProp = .2  # .45  # .2
 bgLum = maxLum * bgLumProp
 bgColor255 = int(bgLum * LumColor255Factor)
 bgColor_rgb1 = bgLum / maxLum
-bg_color_rgb = (bgColor_rgb1 * 2) -1
+bg_color_rgb = (bgColor_rgb1 * 2) - 1
 print(f'bgLum: {bgLum}, bgColor255: {bgColor255}, bgColor_rgb1: {bgColor_rgb1}, bg_color_rgb: {bg_color_rgb}')
 
 # colour space
@@ -231,7 +233,7 @@ print(f"diagonal pixel size: {pixel_mm_deg_dict['diag_mm']} mm, or {pixel_mm_deg
 # expected frame duration
 expected_fr_sec = 1/fps
 expected_fr_ms = expected_fr_sec * 1000
-print(f"\nexpected frame duraction: {expected_fr_ms} ms (or {round(expected_fr_sec, 5)} seconds).")
+print(f"\nexpected frame duration: {expected_fr_ms} ms (or {round(expected_fr_sec, 5)} seconds).")
 actualFrameRate = int(win.getActualFrameRate())
 print(f"actual fps: {win.getActualFrameRate()}")
 if abs(fps-actualFrameRate) > 5:
@@ -318,7 +320,7 @@ else:
 nDots = 10000
 taille = 5000  # french for 'size', 'cut', 'trim', 'clip' etc
 minDist = 0.5  # depth values
-maxDist = 5  #  depth values
+maxDist = 5  # depth values
 flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
                                     units='pix', nElements=nDots, sizes=10, colorSpace=this_colourSpace,
                                     colors=[this_bgColour[0]-adj_dots_col,
@@ -357,7 +359,8 @@ instructions = visual.TextStim(win=win, name='instructions', font='Arial', heigh
                                     "[1]/[A] bottom-left\t\t\t[2]/[S] bottom-right.\n\n\n"
                                     "Some targets will be easier to see than others,\n"
                                     "Some will be so dim that you won't see them, so just guess!\n\n"
-                                    "You don't need to think for long, respond quickly, but try to push press the correct key!\n\n"
+                                    "You don't need to think for long, respond quickly, "
+                                    "but try to push press the correct key!\n\n"
                                     "Don't let your eyes wander, keep focussed on the circle in the middle throughout.")
 
 
@@ -510,7 +513,8 @@ for step in range(n_trials_per_stair):
                 this_probeColor = probeColor1
             probe1.setFillColor([this_probeColor, this_probeColor, this_probeColor])
             probe2.setFillColor([this_probeColor, this_probeColor, this_probeColor])
-            print(f"probeLum: {probeLum}, this_probeColor: {this_probeColor}, probeColor255: {probeColor255}, probeColor1: {probeColor1}")
+            print(f"probeLum: {probeLum}, this_probeColor: {this_probeColor}, "
+                  f"probeColor255: {probeColor255}, probeColor1: {probeColor1}")
 
 
             # PROBE LOCATION
@@ -995,7 +999,7 @@ for step in range(n_trials_per_stair):
                     thisExp.close()
                     core.quit()
 
-                # If too many trials have had droppped frames, quit experiment
+                # If too many trials have had dropped frames, quit experiment
                 if dropped_fr_trial_counter > max_droped_fr_trials:
                     while not event.getKeys():
                         # display end of experiment screen
