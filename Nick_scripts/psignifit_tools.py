@@ -614,70 +614,87 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=9, q_bins
 
                 print(f'n correct = {sep_df["trial_response"].sum()}')
 
+
+
+            if sep_df["trial_response"].sum() > 0:
+                # if there is at least one correct response, run psignifit
+
                 print("\n\nidiot check")
                 sep_val = int(sep_df['separation'].iloc[0])
                 isi_val = int(sep_df['ISI'].iloc[0])
                 print(f"sep_val: {sep_val}")
                 print(f"isi_val: {isi_val}")
 
-            # # # test with csv to numpy
-            # yes script now works directly with df, don't need to load csv.
-            # now move on to doing full thing
+                # # # test with csv to numpy
+                # yes script now works directly with df, don't need to load csv.
+                # now move on to doing full thing
 
-            # sep = sep_list[sep_idx]
-            # stair_levels = [stair]
-            print(f'\nsep: {sep_col}, stair_levels: {[sep]}')
+                # sep = sep_list[sep_idx]
+                # stair_levels = [stair]
+                print(f'\nsep: {sep_col}, stair_levels: {[sep]}')
 
-            # # for all in one function
-            # # # # #
-            print(f'root_path: {root_path}')
-            save_path = os.path.join(root_path, p_run_name)
-            # save_path = f'{root_path}{os.sep}{p_run_name}'
-            print(f'save_path: {save_path}')
+                # # for all in one function
+                # # # # #
+                print(f'root_path: {root_path}')
+                save_path = os.path.join(root_path, p_run_name)
+                # save_path = f'{root_path}{os.sep}{p_run_name}'
+                print(f'save_path: {save_path}')
 
-            fit_curve_plot, psignifit_dict = results_to_psignifit(csv_path=sep_df,
-                                                                  save_path=save_path,
-                                                                  isi=isi, sep=sep, p_run_name=p_run_name,
-                                                                  sep_col=sep_col, stair_levels=[sep],
-                                                                  thr_col=thr_col, resp_col='trial_response',
-                                                                  quartile_bins=q_bins, n_bins=n_bins,
-                                                                  save_np=False, target_threshold=.75,
-                                                                  sig_name='norm', est_type='MAP',
-                                                                  conf_int=conf_int,
-                                                                  thr_type=thr_type,
-                                                                  plot_both_curves=plot_both_curves,
-                                                                  save_plots=save_plots, show_plots=show_plots,
-                                                                  verbose=verbose
-                                                                  )
+                fit_curve_plot, psignifit_dict = results_to_psignifit(csv_path=sep_df,
+                                                                      save_path=save_path,
+                                                                      isi=isi, sep=sep, p_run_name=p_run_name,
+                                                                      sep_col=sep_col, stair_levels=[sep],
+                                                                      thr_col=thr_col, resp_col='trial_response',
+                                                                      quartile_bins=q_bins, n_bins=n_bins,
+                                                                      save_np=False, target_threshold=.75,
+                                                                      sig_name='norm', est_type='MAP',
+                                                                      conf_int=conf_int,
+                                                                      thr_type=thr_type,
+                                                                      plot_both_curves=plot_both_curves,
+                                                                      save_plots=save_plots, show_plots=show_plots,
+                                                                      verbose=verbose
+                                                                      )
 
-            # append result to zeros_df
-            threshold = psignifit_dict['Threshold']
-            thr_array[sep_idx, isi_idx] = threshold
+                # append result to zeros_df
+                threshold = psignifit_dict['Threshold']
+                thr_array[sep_idx, isi_idx] = threshold
 
-            if conf_int:
-                CI_limits = psignifit_dict['CI_limits']
-                CI_limits_array[sep_idx, isi_idx*2] = CI_limits[0]
-                CI_limits_array[sep_idx, (isi_idx*2)+1] = CI_limits[1]
+                if conf_int:
+                    CI_limits = psignifit_dict['CI_limits']
+                    CI_limits_array[sep_idx, isi_idx*2] = CI_limits[0]
+                    CI_limits_array[sep_idx, (isi_idx*2)+1] = CI_limits[1]
 
-                if not np.isnan(CI_limits).any():
-                    CI_width_array[sep_idx, isi_idx] = CI_limits[1] - CI_limits[0]
-                else:
-                    print(f'found a NAN in CI_limits: {CI_limits}')
-                    print(f"using psignifit_dict['stimulus_range']: {psignifit_dict['stimulus_range']}")
-                    if CI_limits[0] != np.nan:
-                        CI_width = psignifit_dict['stimulus_range'][1] - CI_limits[0]
-                    elif CI_limits[1] != np.nan:
-                        CI_width = CI_limits[1] - psignifit_dict['stimulus_range'][0]
+                    if not np.isnan(CI_limits).any():
+                        CI_width_array[sep_idx, isi_idx] = CI_limits[1] - CI_limits[0]
                     else:
-                        CI_width = psignifit_dict['stimulus_range'][1] - psignifit_dict['stimulus_range'][0]
-                    print(f'CI_width: {CI_width}')
-                    CI_width_array[sep_idx, isi_idx] = CI_width
+                        print(f'found a NAN in CI_limits: {CI_limits}')
+                        print(f"using psignifit_dict['stimulus_range']: {psignifit_dict['stimulus_range']}")
+                        if CI_limits[0] != np.nan:
+                            CI_width = psignifit_dict['stimulus_range'][1] - CI_limits[0]
+                        elif CI_limits[1] != np.nan:
+                            CI_width = CI_limits[1] - psignifit_dict['stimulus_range'][0]
+                        else:
+                            CI_width = psignifit_dict['stimulus_range'][1] - psignifit_dict['stimulus_range'][0]
+                        print(f'CI_width: {CI_width}')
+                        CI_width_array[sep_idx, isi_idx] = CI_width
 
-                # scaling the extra variance introduced
-                # (a value near zero indicates your data to be basically binomially distributed,
-                # whereas values near one indicate severely overdispersed data)
-                eta = psignifit_dict['eta']
-                eta_array[sep_idx, isi_idx] = eta
+                    # scaling the extra variance introduced
+                    # (a value near zero indicates your data to be basically binomially distributed,
+                    # whereas values near one indicate severely overdispersed data)
+                    eta = psignifit_dict['eta']
+                    eta_array[sep_idx, isi_idx] = eta
+
+            else:
+                # if there are no correct responses, set threshold to nan
+                print(f'no correct responses for {sep_col}={sep}, ISI={isi}.\n')
+                thr_array[sep_idx, isi_idx] = np.nan
+                if conf_int:
+                    CI_limits_array[sep_idx, isi_idx*2] = np.nan
+                    CI_limits_array[sep_idx, (isi_idx*2)+1] = np.nan
+                    CI_width_array[sep_idx, isi_idx] = np.nan
+                    eta_array[sep_idx, isi_idx] = np.nan
+
+
 
     # save zeros df - run and q_bin in name.
     print(f'thr_array:\n{thr_array}')
