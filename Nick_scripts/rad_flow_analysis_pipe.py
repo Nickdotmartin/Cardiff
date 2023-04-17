@@ -25,8 +25,8 @@ from exp1a_psignifit_analysis import plt_heatmap_row_col
 #
 # exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2_350'
 # participant_list = ['Simon']
-exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_23'
-participant_list = ['Nick_350_OLED_2.13A', 'Nick_70_OLED_2.13A']  # 'Nick_OLED_70', Nick_OLED_350
+exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_23_OLED'
+participant_list = ['Simon_OLED_2.13A_black']  # 'Nick_OLED_70', Nick_OLED_350 'Nick_70_OLED_2.13A'
 
 exp_path = os.path.normpath(exp_path)
 convert_path1 = os.path.normpath(exp_path)

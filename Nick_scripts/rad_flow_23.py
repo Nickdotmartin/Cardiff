@@ -48,7 +48,7 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Monitor config from monitor centre
-monitor_name = 'Nick_work_laptop'  # 'asus_cal', 'Nick_work_laptop', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18', 'OLED'
+# monitor_name = 'Nick_work_laptop'  # 'asus_cal', 'Nick_work_laptop', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18', 'OLED'
 
 # Store info about the experiment session (numbers keep the order)
 expName = 'rad_flow_23'  # from the Builder filename that created this script
@@ -62,7 +62,9 @@ expInfo = {'1. Participant': 'Nick_test',
            '8. Record_frame_durs': [True, False],
            '9. Background': ['flow_rad', 'None'],
            '10. bg_speed_cond': ['Normal', 'Half-speed'],
-           '11. prelim_bg_flow_ms': [350, 70]
+           '11. prelim_bg_flow_ms': [350, 70],
+           '12. monitor_name': ['OLED', 'asus_cal', 'Nick_work_laptop', 'Samsung', 'Asus_VG24', 'HP_24uh', 'NickMac',
+                                'Iiyama_2_18'],
            }
 
 # dialogue box
@@ -82,6 +84,7 @@ record_fr_durs = eval(expInfo['8. Record_frame_durs'])
 background = expInfo['9. Background']
 bg_speed_cond = expInfo['10. bg_speed_cond']
 prelim_bg_flow_ms = int(expInfo['11. prelim_bg_flow_ms'])
+monitor_name = expInfo['12. monitor_name']
 
 # add prelim_bg_flow_ms to participant name so that different prelim values don't get overwritten or confused.
 participant_name = participant_name + f'_bg{prelim_bg_flow_ms}'
@@ -184,6 +187,8 @@ for future ref, to match exp1 it should be flow_bgcolor = [-0.6, -0.6, -0.6]  # 
 LumColor255Factor = 2.39538706913372
 maxLum = 106  # 255 RGB
 bgLumProp = .2  # .45  # .2
+if monitor_name == 'OLED':
+    bgLumProp = .0
 bgLum = maxLum * bgLumProp
 bgColor255 = int(bgLum * LumColor255Factor)
 bgColor_rgb1 = bgLum / maxLum
@@ -208,6 +213,7 @@ if monitor_name in ['asus_cal', 'Nick_work_laptop', 'NickMac', 'OLED', 'ASUS_2_1
 use_full_screen = True
 if display_number > 0:
     use_full_screen = False
+print(f"display_number: {display_number}, use_full_screen: {use_full_screen}")
 
 widthPix = thisMon.getSizePix()[0]
 heightPix = thisMon.getSizePix()[1]
@@ -266,7 +272,7 @@ max_droped_fr_trials = 10
 # fixation bull eye
 if background == 'flow_rad':
     fixation = visual.Circle(win, radius=2, units='pix',
-                             lineColor='black', fillColor='white', colorSpace=this_colourSpace)
+                             lineColor='black', fillColor='grey', colorSpace=this_colourSpace)
 else:
     fixation = visual.Circle(win, radius=2, units='pix',
                              lineColor='white', fillColor='black', colorSpace=this_colourSpace)
@@ -321,23 +327,33 @@ elif bg_speed_cond == 'Half-speed':
 else:
     raise ValueError(f'background speed should be selected from drop down menu: Normal or Half-speed')
 nDots = 10000
-taille = 5000  # french for 'size', 'cut', 'trim', 'clip' etc
+dot_array_width = 10000  # original script used 5000
 minDist = 0.5  # depth values
 maxDist = 5  # depth values
+
+# pale green
+flow_dots_colour = [this_bgColour[0]-adj_dots_col, this_bgColour[1], this_bgColour[2]-adj_dots_col]
+if monitor_name == 'OLED':
+    # darker green for low contrast against black background
+    flow_dots_colour = [this_bgColour[0], this_bgColour[1] + adj_dots_col / 2, this_bgColour[2]]
+
 flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
                                     units='pix', nElements=nDots, sizes=10, colorSpace=this_colourSpace,
-                                    colors=[this_bgColour[0]-adj_dots_col,
-                                            this_bgColour[1],
-                                            this_bgColour[2]-adj_dots_col])
+                                    colors=flow_dots_colour)
 print(f"flow_dot colours: {[this_bgColour[0]-adj_dots_col, this_bgColour[1], this_bgColour[2]-adj_dots_col]}")
 
 
 # full screen mask to blend off edges and fade to black
 # Create a raisedCosine mask array and assign it to a Grating stimulus (grey outside, transparent inside)
 # this was useful http://www.cogsci.nl/blog/tutorials/211-a-bit-about-patches-textures-and-masks-in-psychopy
-raisedCosTexture2 = visual.filters.makeMask(1080, shape='raisedCosine', fringeWidth=0.6, radius=[1.0, 1.0])
+# raisedCosTexture2 = visual.filters.makeMask(1080, shape='raisedCosine', fringeWidth=0.6, radius=[1.0, 1.0])
+raisedCosTexture2 = visual.filters.makeMask(heightPix, shape='raisedCosine', fringeWidth=0.6, radius=[1.0, 1.0])
 invRaisedCosTexture = -raisedCosTexture2  # inverts mask to blur edges instead of center
-blankslab = np.ones((1080, 420))  # create blank slabs to put to left and right of image
+slab_width = 420
+if monitor_name == 'OLED':
+    slab_width = 20
+
+blankslab = np.ones((heightPix, slab_width))  # create blank slabs to put to left and right of image
 mmask = np.append(blankslab, invRaisedCosTexture, axis=1)  # append blank slab to left
 mmask = np.append(mmask, blankslab, axis=1)  # and right
 dotsMask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
@@ -419,6 +435,9 @@ expInfo['stair_list'] = list(range(n_stairs))
 expInfo['n_trials_per_stair'] = n_trials_per_stair
 
 stairStart = maxLum
+if monitor_name == 'OLED':
+    stairStart = maxLum * 0.3
+
 miniVal = bgLum
 maxiVal = maxLum
 
@@ -506,13 +525,13 @@ for step in range(n_trials_per_stair):
             print(f"flow_dir: {flow_dir}, jump dir: {target_jump} {jump_dir} ({cong_name})")
 
             # vary fixation polarity to reduce risk of screen burn.
-            # if monitor_name == 'OLED':
-            if trial_number % 2 == 0:
-                fixation.lineColor = 'white'
-                fixation.fillColor = 'black'
-            else:
-                fixation.lineColor = 'black'
-                fixation.fillColor = 'white'
+            if monitor_name == 'OLED':
+                if trial_number % 2 == 0:
+                    fixation.lineColor = 'grey'
+                    fixation.fillColor = 'black'
+                else:
+                    fixation.lineColor = 'black'
+                    fixation.fillColor = 'grey'
 
             # Luminance (staircase varies probeLum)
             probeLum = thisStair.next()
@@ -542,8 +561,8 @@ for step in range(n_trials_per_stair):
 
 
             # flow_dots
-            x = np.random.rand(nDots) * taille - taille / 2
-            y = np.random.rand(nDots) * taille - taille / 2
+            x = np.random.rand(nDots) * dot_array_width - dot_array_width / 2
+            y = np.random.rand(nDots) * dot_array_width - dot_array_width / 2
             z = np.random.rand(nDots) * (maxDist - minDist) + minDist
             # z was called z_flow but is actually z position like x and y
             x_flow = x / z
