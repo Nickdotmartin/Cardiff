@@ -1950,9 +1950,17 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
             print(f"filepath: {filepath}")
 
         if not os.path.isfile(filepath):
-            raise FileNotFoundError(filepath)
-            # print(f'\n\nFileNotFound: {filepath}.\n'
-            #       f'Continue looping through other files.\n')
+            filepath = f'{run_dir}{os.path.sep}ISI_{isi}{os.path.sep}' \
+                       f'{p_name}.csv'
+
+            if not os.path.isfile(filepath):
+                filepath = f'{run_dir}{os.path.sep}ISI_{isi}{os.path.sep}' \
+                           f'{p_name}_output.csv'
+
+                if not os.path.isfile(filepath):
+                    # raise FileNotFoundError(filepath)
+                    print(f"File not found: {filepath}")
+                    continue
 
         # load data
         this_isi_df = pd.read_csv(filepath)
@@ -1969,7 +1977,8 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
         this_isi_df = this_isi_df.sort_values(by=['stair', 'trial_number'])
 
         # add isi column for multi-indexing
-        this_isi_df.insert(0, 'ISI', isi)
+        if 'ISI' not in list(this_isi_df):
+            this_isi_df.insert(0, 'ISI', isi)
         this_isi_df.insert(1, 'srtd_trial_idx', trial_numbers)
         if verbose:
             print(f'df sorted by stair: {type(this_isi_df)}\n{this_isi_df}')

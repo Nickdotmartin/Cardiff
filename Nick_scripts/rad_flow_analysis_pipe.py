@@ -22,9 +22,11 @@ from exp1a_psignifit_analysis import plt_heatmap_row_col
 
 # exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2_half'
 # participant_list = ['Nick_half_speed', 'Simon_half']  # , 'Nick_half_speed']
-
-exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2_350'
-participant_list = ['Simon']
+#
+# exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2_350'
+# participant_list = ['Simon']
+exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_23'
+participant_list = ['Nick_350_OLED_2.13A', 'Nick_70_OLED_2.13A']  # 'Nick_OLED_70', Nick_OLED_350
 
 exp_path = os.path.normpath(exp_path)
 convert_path1 = os.path.normpath(exp_path)
@@ -76,7 +78,8 @@ for p_idx, participant_name in enumerate(participant_list):
         run_isi_list = []
         # for isi in isi_vals_list:
         for isi in list(range(-2, 18, 1)):
-            check_dir = f'ISI_{isi}_probeDur2'
+            # check_dir = f'ISI_{isi}_probeDur2'
+            check_dir = f'ISI_{isi}'
             if check_dir in dir_list:
                 run_isi_list.append(isi)
         run_isi_names_list = [f'ISI_{i}' for i in run_isi_list]
@@ -86,80 +89,83 @@ for p_idx, participant_name in enumerate(participant_list):
         # don't delete this (p_name = participant_name),
         # needed to ensure names go name1, name2, name3 not name1, name12, name123
         p_name = participant_name
-#
-#         '''a'''
-#         p_name = f'{participant_name}_{r_idx_plus}'
-#
-#         a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=run_isi_list, verbose=verbose)
-#
-#         run_data_path = f'{save_path}{os.sep}ALL_ISIs_sorted.xlsx'
-#         run_data_df = pd.read_excel(run_data_path, engine='openpyxl',
-#                                     # usecols=["ISI", "stair", "stair_name",
-#                                     #          "step", "separation", "congruent",
-#                                     #          "flow_dir", "probe_jump", "corner",
-#                                     #          "newLum", "trial_response"]
-#                                     )
-#         print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
-#
-#         print(f"\nsort order of stair_names, separations(double) and cong_list (tiled)")
-#
-#         stair_names_list = sorted(run_data_df['stair_name'].unique(), reverse=True)
-#         # print(f'stair_names_list: {stair_names_list}')
-#
-#         # sort stairnames in same order as sorted(abs(stairnames))
-#         get_order_array = [i + .5 if i > 0 else i for i in stair_names_list]
-#         get_order_array = [abs(i) for i in get_order_array]
-#         get_order_array = np.array(get_order_array)
-#         print(f"\nget_order_array: {get_order_array}")
-#         sort_index = np.argsort(get_order_array)
-#         reversed_sort_index = sort_index[::-1]
-#         print(f"reversed_sort_index: {reversed_sort_index}")
-#
-#         stair_names_list = [stair_names_list[i] for i in reversed_sort_index]
-#         print(f'\nstair_names_list: {stair_names_list}')
-#
-#         stair_list = list(range(len(stair_names_list)))
-#
-#
-#         # pos_sep_list = sorted(run_data_df['separation'].unique(), reverse=True)
-#         pos_sep_list = run_data_df['separation'].unique()
-#         # print(f'pos_sep_list: {pos_sep_list}')
-#         # second_sep_list = pos_sep_list
-#         # print(f'second_sep_list: {second_sep_list}')
-#         # sort sep_list in same order as sorted(abs(stairnames))
-#         double_sep_list = sorted([item for sublist in zip(pos_sep_list, pos_sep_list) for item in sublist],
-#                                  reverse=True)
-#         print(f'double_sep_list: {double_sep_list}')
-#
-#         cong_list = sorted(run_data_df['congruent'].unique(), reverse=True)
-#         # print(f'cong_list: {cong_list}')
-#         cong_list = list(np.tile(cong_list, len(pos_sep_list)))
-#         print(f'cong_list: {cong_list}')
-#
-#
-#
-#         '''get psignifit thresholds df'''
-#         # cols_to_add_dict = {'stair_names': [18, -18, 6, -6, 3, -3, 2, -2, 1, -1, 0, -0.1],
-#         #                     'congruent':  [1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1],
-#         #                     'separation': [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]}
-#         cols_to_add_dict = {'stair_names': stair_names_list,
-#                             'congruent':  cong_list,
-#                             'separation': double_sep_list}
-#         thr_df = get_psignifit_threshold_df(root_path=root_path,
-#                                             p_run_name=run_dir,
-#                                             csv_name=run_data_df,
-#                                             n_bins=9, q_bins=True,
-#                                             sep_col='stair',
-#                                             thr_col='probeLum',
-#                                             isi_list=run_isi_list,
-#                                             sep_list=stair_list,
-#                                             conf_int=True,
-#                                             thr_type='Bayes',
-#                                             plot_both_curves=False,
-#                                             cols_to_add_dict=cols_to_add_dict,
-#                                             show_plots=False,
-#                                             verbose=verbose)
-#         print(f'thr_df:\n{thr_df}')
+
+        '''a'''
+        p_name = f'{participant_name}_{r_idx_plus}'
+
+        a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=run_isi_list, verbose=verbose)
+
+        run_data_path = f'{save_path}{os.sep}ALL_ISIs_sorted.xlsx'
+        run_data_df = pd.read_excel(run_data_path, engine='openpyxl',
+                                    # usecols=["ISI", "stair", "stair_name",
+                                    #          "step", "separation", "congruent",
+                                    #          "flow_dir", "probe_jump", "corner",
+                                    #          "newLum", "trial_response"]
+                                    )
+        print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
+
+        print(f"\nsort order of stair_names, separations(double) and cong_list (tiled)")
+
+        # stair_names_list = sorted(run_data_df['stair_name'].unique(), reverse=True)
+        # print(f'stair_names_list: {stair_names_list}')
+
+        stair_names_list = sorted(run_data_df['neg_sep'].unique(), reverse=True)
+        print(f'stair_names_list: {stair_names_list}')
+
+        # sort stairnames in same order as sorted(abs(stairnames))
+        get_order_array = [i + .5 if i > 0 else i for i in stair_names_list]
+        get_order_array = [abs(i) for i in get_order_array]
+        get_order_array = np.array(get_order_array)
+        print(f"\nget_order_array: {get_order_array}")
+        sort_index = np.argsort(get_order_array)
+        reversed_sort_index = sort_index[::-1]
+        print(f"reversed_sort_index: {reversed_sort_index}")
+
+        stair_names_list = [stair_names_list[i] for i in reversed_sort_index]
+        print(f'\nstair_names_list: {stair_names_list}')
+
+        stair_list = list(range(len(stair_names_list)))
+
+
+        # pos_sep_list = sorted(run_data_df['separation'].unique(), reverse=True)
+        pos_sep_list = run_data_df['separation'].unique()
+        # print(f'pos_sep_list: {pos_sep_list}')
+        # second_sep_list = pos_sep_list
+        # print(f'second_sep_list: {second_sep_list}')
+        # sort sep_list in same order as sorted(abs(stairnames))
+        double_sep_list = sorted([item for sublist in zip(pos_sep_list, pos_sep_list) for item in sublist],
+                                 reverse=True)
+        print(f'double_sep_list: {double_sep_list}')
+
+        cong_list = sorted(run_data_df['congruent'].unique(), reverse=True)
+        # print(f'cong_list: {cong_list}')
+        cong_list = list(np.tile(cong_list, len(pos_sep_list)))
+        print(f'cong_list: {cong_list}')
+
+
+
+        '''get psignifit thresholds df'''
+        # cols_to_add_dict = {'stair_names': [18, -18, 6, -6, 3, -3, 2, -2, 1, -1, 0, -0.1],
+        #                     'congruent':  [1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1],
+        #                     'separation': [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]}
+        cols_to_add_dict = {'stair_names': stair_names_list,
+                            'congruent':  cong_list,
+                            'separation': double_sep_list}
+        thr_df = get_psignifit_threshold_df(root_path=root_path,
+                                            p_run_name=run_dir,
+                                            csv_name=run_data_df,
+                                            n_bins=9, q_bins=True,
+                                            sep_col='stair',
+                                            thr_col='probeLum',
+                                            isi_list=run_isi_list,
+                                            sep_list=stair_list,
+                                            conf_int=True,
+                                            thr_type='Bayes',
+                                            plot_both_curves=False,
+                                            cols_to_add_dict=cols_to_add_dict,
+                                            show_plots=False,
+                                            verbose=verbose)
+        print(f'thr_df:\n{thr_df}')
 #
 #
 #         '''b3'''
@@ -197,6 +203,7 @@ for p_idx, participant_name in enumerate(participant_list):
                        ave_df_path=p_ave_path,
                        error_bars_path=err_path,
                        thr_col='probeLum',
+                       stair_names_col='stair_names',
                        n_trimmed=trim_n,
                        ave_over_n=len(run_folder_names),
                        # exp_ave=False,

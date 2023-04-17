@@ -83,6 +83,9 @@ background = expInfo['9. Background']
 bg_speed_cond = expInfo['10. bg_speed_cond']
 prelim_bg_flow_ms = int(expInfo['11. prelim_bg_flow_ms'])
 
+# add prelim_bg_flow_ms to participant name so that different prelim values don't get overwritten or confused.
+participant_name = participant_name + f'_bg{prelim_bg_flow_ms}'
+
 n_trials_per_stair = 25
 probe_ecc = 4
 expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
@@ -502,6 +505,14 @@ for step in range(n_trials_per_stair):
                     jump_dir = 'exp'
             print(f"flow_dir: {flow_dir}, jump dir: {target_jump} {jump_dir} ({cong_name})")
 
+            # vary fixation polarity to reduce risk of screen burn.
+            # if monitor_name == 'OLED':
+            if trial_number % 2 == 0:
+                fixation.lineColor = 'white'
+                fixation.fillColor = 'black'
+            else:
+                fixation.lineColor = 'black'
+                fixation.fillColor = 'white'
 
             # Luminance (staircase varies probeLum)
             probeLum = thisStair.next()

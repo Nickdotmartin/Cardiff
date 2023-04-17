@@ -3233,7 +3233,8 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
         ave_DfC_name = 'MASTER_ave_DfC.csv'
         error_DfC_name = f'MASTER_ave_DfC_error_{error_type}.csv'
-        if n_trimmed > 0:
+        # if n_trimmed > 0:
+        if n_trimmed is not None:
             ave_DfC_name = f'MASTER_ave_TM{n_trimmed}_DfC.csv'
             error_DfC_name = f'MASTER_ave_TM{n_trimmed}_DfC_error_{error_type}.csv'
 
