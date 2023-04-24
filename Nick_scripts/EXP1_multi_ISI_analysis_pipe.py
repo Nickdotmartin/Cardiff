@@ -12,8 +12,8 @@ project_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\C
 # # then run script d to get master lists and averages
 # eyetracking, jitter_rgb, EXP1_split_probes, Exp1_double_dist, EXP1_sep4_5
 # Exp4b_missing_probe\rotation, incoherent, radial, rotation, translation,
-this_exp = r"EXP1_Jan23_rept_dropped"  # EXP1_split_probes_Jan23
-# this_exp = r"Exp4b_missing_probe_23/Exp4b_missing_probe_23/mixed_dir/incoherent/"
+# this_exp = r"EXP1_Jan23_rept_dropped"  # EXP1_split_probes_Jan23
+this_exp = r"Exp4b_missing_probe_23/Exp4b_missing_probe_23/mixed_dir/incoherent/"
 # this_exp = r"EXP1_split_probes_Jan23"
 exp_path = os.path.join(project_path, this_exp)
 convert_path1 = os.path.normpath(exp_path)
@@ -22,7 +22,7 @@ if running_on_laptop():
 exp_path = convert_path1
 
 print(f"exp_path: {exp_path}")
-participant_list = ['Nick_OLED_2.13A']  # 'Nick_sep0123', 'Nick_sep45', 'Nick_sep67', 'Nick_sep89', 'Nick_sep18_20']  #  'Simon', 'Nick'
+participant_list = ['Simon']  # 'Nick_sep0123', 'Nick_sep45', 'Nick_sep67', 'Nick_sep89', 'Nick_sep18_20']  #  'Simon', 'Nick'
 # participant_list = ['Nick', 'Kristian', 'Kim']
 
 split_1probe = False

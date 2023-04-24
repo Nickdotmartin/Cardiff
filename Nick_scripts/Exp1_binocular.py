@@ -1,9 +1,5 @@
 from __future__ import division  # do I need this?
-
-import logging
-
-from psychopy import gui, visual, core, data, event, monitors, hardware
-from psychopy.hardware import keyboard
+from psychopy import gui, visual, core, data, event, monitors
 from psychopy import __version__ as psychopy_version
 import os
 import numpy as np
@@ -32,7 +28,7 @@ os.chdir(_thisDir)
 # monitor_name = 'Nick_work_laptop'  # 'asus_cal', 'Nick_work_laptop', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18', 'OLED'
 
 # Store info about the experiment session (numbers keep the order)
-expName = 'Exp1_Jan23_rept_dropped'  # from the Builder filename that created this script
+expName = 'Exp1_binocular'  # from the Builder filename that created this script
 expInfo = {'1. Participant': 'Nick_test',
            '2. Run_number': '1',
            '3. Probe duration in frames': [2, 1, 50, 100],
@@ -68,11 +64,6 @@ probe_ecc = 4
 expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
 expInfo['time'] = datetime.now().strftime("%H:%M:%S")
 
-
-
-
-
-
 # VARIABLES
 '''Distances between probes (spatially and temporally)
 For 1probe condition, use separation==99.
@@ -83,6 +74,7 @@ separations = [5, 12]  # select from [0, 1, 2, 3, 6, 18, 99]
 # separations = [0, 1, 2, 3, 6, 18, 99]  # select from [0, 1, 2, 3, 6, 18, 99]
 print(f'separations: {separations}')
 ISI_values = [-1]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+# ISI_values = [-1, 0, 2]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 # ISI_values = [-1, 0, 2, 4, 6, 9, 12, 24]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 print(f'ISI_values: {ISI_values}')
 # repeat separation values for each ISI e.g., [0, 0, 6, 6]
@@ -99,9 +91,6 @@ n_stairs = len(sep_vals_list)
 print(f'n_stairs: {n_stairs}')
 total_n_trials = int(n_trials_per_stair * n_stairs)
 print(f'total_n_trials: {total_n_trials}')
-
-
-
 
 # save to dir with list of sep vals
 sep_dir = 'sep'
@@ -122,13 +111,6 @@ thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
                                  extraInfo=expInfo, runtimeInfo=None,
                                  savePickle=None, saveWideText=True,
                                  dataFileName=save_output_as)
-
-
-
-
-
-
-
 
 # Monitor details: colour, luminance, pixel size and frame rate
 print(f"monitor_name: {monitor_name}")
@@ -179,11 +161,6 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     fullscr=use_full_screen)
 
 
-
-
-
-
-
 # pixel size
 pixel_mm_deg_dict = get_pixel_mm_deg_values(monitor_name=monitor_name)
 print(f"diagonal pixel size: {pixel_mm_deg_dict['diag_mm']} mm, or {pixel_mm_deg_dict['diag_deg']} dva")
@@ -219,17 +196,25 @@ print(f"min_fr_dur_sec ({100 - (100 * frame_tolerance_prop)}%): {min_fr_dur_sec}
 max_droped_fr_trials = 10
 
 
-
-
-
-
-
 # ELEMENTS
 # fixation bull eye
 fixation = visual.Circle(win, radius=2, units='pix', 
                          lineColor='white', fillColor='black', colorSpace=this_colourSpace)
 # loc_marker = visual.Circle(win, radius=2, units='pix', 
 #                            lineColor='green', fillColor='red', colorSpace=this_colourSpace)
+
+# nonius lines
+nonius_start = 20
+nonius_end = 50
+nonius_line_right = visual.Line(win, start=(nonius_start, 0), end=(nonius_end, 0), units='pix',
+                                lineWidth=1, lineColor='white', colorSpace=this_colourSpace)
+nonius_line_up = visual.Line(win, start=(0, nonius_start), end=(0, nonius_end), units='pix',
+                             lineWidth=1, lineColor='red', colorSpace=this_colourSpace)
+nonius_line_left = visual.Line(win, start=(-nonius_start, 0), end=(-nonius_end, 0), units='pix',
+                               lineWidth=1, lineColor='green', colorSpace=this_colourSpace)
+nonius_line_down = visual.Line(win, start=(0, -nonius_start), end=(0, -nonius_end), units='pix',
+                               lineWidth=1, lineColor='blue', colorSpace=this_colourSpace)
+
 
 # PROBEs
 probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
@@ -269,19 +254,11 @@ if monitor_name == 'OLED':
     fusion_lock_rings = True
 
 
-
-
-
-
-
-
 # MOUSE - hide cursor
 myMouse = event.Mouse(visible=False)
 
 # # KEYBOARD
 resp = event.BuilderKeyResponse()
-# todo: use the next keyboard version
-# resp = keyboard.Keyboard()
 
 # INSTRUCTION
 instructions = visual.TextStim(win=win, name='instructions', font='Arial', height=20, 
@@ -295,15 +272,6 @@ instructions = visual.TextStim(win=win, name='instructions', font='Arial', heigh
                                     "Some will be so dim that you won't see them, so just guess!\n\n"
                                     "You don't need to think for long, respond quickly, but try to push press the correct key!\n\n"
                                     "Don't let your eyes wander, keep focussed on the circle in the middle throughout.")
-
-
-
-
-
-
-
-
-
 
 
 # BREAKS
@@ -334,16 +302,6 @@ too_many_dropped_fr = visual.TextStim(win=win, name='too_many_dropped_fr',
                                            "Please contact the experimenter.\n\n"
                                            "Press any key to return to the desktop.",
                                       font='Arial', height=20, colorSpace=this_colourSpace,)
-
-
-
-
-
-
-
-
-
-
 
 while not event.getKeys():
     fixation.setRadius(3)
@@ -398,15 +356,6 @@ trial_number = 0
 # the actual number of trials including repeated trials (trial_number stays the same for these)
 actual_trials_inc_rpt = 0
 
-
-
-
-
-
-
-
-
-
 # EXPERIMENT
 print('\n*** exp loop*** \n\n')
 for step in range(n_trials_per_stair):
@@ -423,13 +372,6 @@ for step in range(n_trials_per_stair):
             stair_idx = thisStair.extraInfo['stair_idx']
             print(f"\n({actual_trials_inc_rpt}) trial_number: {trial_number}, "
                   f"stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
-
-
-
-
-
-
-
 
             # condition (Separation, ISI)
             sep = sep_vals_list[stair_idx]
@@ -452,13 +394,6 @@ for step in range(n_trials_per_stair):
             probe1.setFillColor([this_probeColor, this_probeColor, this_probeColor])
             probe2.setFillColor([this_probeColor, this_probeColor, this_probeColor])
             print(f"probeLum: {probeLum}, this_probeColor: {this_probeColor}, probeColor255: {probeColor255}, probeColor1: {probeColor1}")
-
-
-
-
-
-
-
 
             # PROBE LOCATION
             # # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
@@ -498,16 +433,6 @@ for step in range(n_trials_per_stair):
                 np.random.shuffle(extra_shifted_pixel)
                 p1_shift = sep // 2 + extra_shifted_pixel[0]
                 p2_shift = (sep // 2) + extra_shifted_pixel[1]
-
-
-
-
-
-
-
-
-
-
 
             # set position and orientation of probes
             '''NEW - set orientations to p1=zero and p2=180 (not zero), 
@@ -639,13 +564,6 @@ for step in range(n_trials_per_stair):
                   f"probe2_pos: {probe2_pos}. dff: {dist_from_fix}")
 
 
-
-
-
-
-
-
-
             # VARIABLE FIXATION TIME
             '''to reduce anticipatory effects that might arise from fixation always being same length.
             if False, vary_fix == .5 seconds, so t_fixation is 1 second.
@@ -669,13 +587,6 @@ for step in range(n_trials_per_stair):
             t_response = t_probe_2 + 10000 * fps  # ~40 seconds to respond
             print(f"t_fixation: {t_fixation}, t_probe_1: {t_probe_1}, "
                   f"t_ISI: {t_ISI}, t_probe_2: {t_probe_2}, t_response: {t_response}\n")
-
-
-
-
-
-
-
 
 
             # continue_routine refers to flipping the screen to show next frame
@@ -702,13 +613,6 @@ for step in range(n_trials_per_stair):
                 continueRoutine = True
 
 
-
-
-
-
-
-
-
             # initialise frame number
             frameN = -1
             while continueRoutine:
@@ -732,10 +636,9 @@ for step in range(n_trials_per_stair):
                     # start recording frame intervals
                     if record_fr_durs:
                         win.recordFrameIntervals = True
-                        # print(f"{frameN}: win.recordFrameIntervals : {win.recordFrameIntervals}")
+                        print(f"{frameN}: win.recordFrameIntervals : {win.recordFrameIntervals}")
 
                     # reset timer to start with probe1 presentation.
-                    # todo: should I reset the clock here or down below?
                     resp.clock.reset()
 
                     # clear any previous key presses
@@ -748,15 +651,7 @@ for step in range(n_trials_per_stair):
 
                     if record_fr_durs:
                         win.recordFrameIntervals = False
-                        # print(f"{frameN}: win.recordFrameIntervals : {win.recordFrameIntervals}")
-
-
-
-
-
-
-
-
+                        print(f"{frameN}: win.recordFrameIntervals : {win.recordFrameIntervals}")
 
 
                 '''Experiment timings'''
@@ -770,6 +665,13 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(3)
                     fixation.draw()
                     # loc_marker.draw()
+
+                    nonius_line_right.draw()
+                    nonius_line_up.draw()
+                    nonius_line_left.draw()
+                    nonius_line_down.draw()
+
+
 
 
 
@@ -850,11 +752,6 @@ for step in range(n_trials_per_stair):
                                 resp.corr = 1
 
 
-
-
-
-
-
                         '''Get frame intervals for this trial, add to experiment and empty cache'''
                         if record_fr_durs:
                             # get trial frameIntervals details
@@ -896,11 +793,9 @@ for step in range(n_trials_per_stair):
                             # if timings are bad, repeat trial
                             if max(trial_fr_intervals) > max_fr_dur_sec or min(trial_fr_intervals) < min_fr_dur_sec:
                                 if max(trial_fr_intervals) > max_fr_dur_sec:
-                                    # print(f"\n\toh no! Frame too long! {max(trial_fr_intervals)} > {max_fr_dur_sec}")
-                                    logging.warning(f"\n\toh no! Frame too long! {max(trial_fr_intervals)} > {max_fr_dur_sec}")
+                                    print(f"\n\toh no! Frame too long! {max(trial_fr_intervals)} > {max_fr_dur_sec}")
                                 elif min(trial_fr_intervals) < min_fr_dur_sec:
-                                    # print(f"\n\toh no! Frame too short! {min(trial_fr_intervals)} < {min_fr_dur_sec}")
-                                    logging.warning(f"Frame too short! {min(trial_fr_intervals)} < {min_fr_dur_sec}")
+                                    print(f"\n\toh no! Frame too short! {min(trial_fr_intervals)} < {min_fr_dur_sec}")
                                 repeat = True
                                 dropped_fr_trial_counter += 1
                                 trial_number -= 1
@@ -921,11 +816,6 @@ for step in range(n_trials_per_stair):
                         continueRoutine = False
 
 
-
-
-
-
-
                 # regardless of frameN, check for quit
                 if event.getKeys(keyList=["escape"]):
                     thisExp.close()
@@ -944,13 +834,6 @@ for step in range(n_trials_per_stair):
                         win.close()
                         core.quit()
 
-
-
-
-
-
-
-
                 # # User can repeat previous trial.
                 # # Note, if they respond incorrectly on trial n, then press 'r',
                 # # it is probably too late, as it will be repeating n+1, not n.
@@ -966,15 +849,7 @@ for step in range(n_trials_per_stair):
 
                 # refresh the screen
                 if continueRoutine:
-                    # todo: reset clock times here?
                     win.flip()
-
-
-
-
-
-
-
 
         # add to thisExp for output csv
         thisExp.addData('trial_number', trial_number)
@@ -1019,14 +894,6 @@ for step in range(n_trials_per_stair):
 
         # update staircase based on whether response was correct or incorrect
         thisStair.newValue(resp.corr)
-
-
-
-
-
-
-
-
 
 
 print("\nend of experiment loop, saving data\n")
@@ -1095,13 +962,6 @@ if record_fr_durs:
     plt.savefig(os.path.join(save_dir, fig_name))
     # plt.show()
     plt.close()
-
-
-
-
-
-
-
 
 
 while not event.getKeys():

@@ -17,16 +17,16 @@ from exp1a_psignifit_analysis import plt_heatmap_row_col
 # participant_list = ['Nick_half']  # , 'Nick']  # , 'Nick_half_speed']
 
 # # todo: why does a_extract data work for my data but not Simon's???
-# exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2'
-# participant_list = ['Nick', 'Simon']  # , 'Nick_half_speed']
+exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2'
+participant_list = ['Nick_350']  # , 'Simon']  # , 'Nick_half_speed']
 
 # exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2_half'
 # participant_list = ['Nick_half_speed', 'Simon_half']  # , 'Nick_half_speed']
 #
 # exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2_350'
 # participant_list = ['Simon']
-exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_23_OLED'
-participant_list = ['Simon_OLED_2.13A_black']  # 'Nick_OLED_70', Nick_OLED_350 'Nick_70_OLED_2.13A'
+# exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_23_OLED'
+# participant_list = ['Simon_OLED_2.13A_black']  # 'Nick_OLED_70', Nick_OLED_350 'Nick_70_OLED_2.13A'
 
 exp_path = os.path.normpath(exp_path)
 convert_path1 = os.path.normpath(exp_path)
@@ -78,8 +78,8 @@ for p_idx, participant_name in enumerate(participant_list):
         run_isi_list = []
         # for isi in isi_vals_list:
         for isi in list(range(-2, 18, 1)):
-            # check_dir = f'ISI_{isi}_probeDur2'
-            check_dir = f'ISI_{isi}'
+            check_dir = f'ISI_{isi}_probeDur2'
+            # check_dir = f'ISI_{isi}'
             if check_dir in dir_list:
                 run_isi_list.append(isi)
         run_isi_names_list = [f'ISI_{i}' for i in run_isi_list]
@@ -108,6 +108,19 @@ for p_idx, participant_name in enumerate(participant_list):
 
         # stair_names_list = sorted(run_data_df['stair_name'].unique(), reverse=True)
         # print(f'stair_names_list: {stair_names_list}')
+
+        # add neg sep column to make batman plots
+        if 'neg_sep' not in list(run_data_df.columns):
+            def make_neg_sep(df):
+                if (df.congruent == -1) and (df.separation == 0.0):
+                    return -.1
+                elif df.congruent == -1:
+                    return 0 - df.separation
+                else:
+                    return df.separation
+            run_data_df.insert(7, 'neg_sep', run_data_df.apply(make_neg_sep, axis=1))
+            print('\nadded neg_sep col')
+            print(run_data_df['neg_sep'].to_list())
 
         stair_names_list = sorted(run_data_df['neg_sep'].unique(), reverse=True)
         print(f'stair_names_list: {stair_names_list}')

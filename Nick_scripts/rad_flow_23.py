@@ -1,6 +1,15 @@
 from __future__ import division
+
+import logging
+import psychopy
 from psychopy import __version__ as psychopy_version
+print(f"PsychoPy_version: {psychopy_version}")
+psychopy.useVersion('2021.2.3')
+print(f"PsychoPy_version: {psychopy_version}")
 from psychopy import gui, visual, core, data, event, monitors
+
+
+print([method for method in dir(visual) if callable(getattr(visual, method))])
 import os
 import copy
 import random
@@ -47,13 +56,14 @@ def wrap_depth_vals(depth_arr, min_depth, max_depth):
 _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
+
 # Monitor config from monitor centre
 # monitor_name = 'Nick_work_laptop'  # 'asus_cal', 'Nick_work_laptop',
 # 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18', 'OLED'
 
 # Store info about the experiment session (numbers keep the order)
 expName = 'rad_flow_23'  # from the Builder filename that created this script
-expInfo = {'1. Participant': 'Nick_test',
+expInfo = {'1. Participant': 'Nick_test_24042023',
            '2. Run_number': '1',
            '3. Probe duration in frames': [2, 1, 50, 100],
            '4. fps': [60, 240, 120, 60],
@@ -87,9 +97,6 @@ bg_speed_cond = expInfo['10. bg_speed_cond']
 prelim_bg_flow_ms = int(expInfo['11. prelim_bg_flow_ms'])
 monitor_name = expInfo['12. monitor_name']
 
-# add prelim_bg_flow_ms to participant name so that different prelim values don't get overwritten or confused.
-participant_name = participant_name + f'_bg{prelim_bg_flow_ms}'
-
 n_trials_per_stair = 25
 probe_ecc = 4
 expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
@@ -113,7 +120,7 @@ print(f'ISI_list: {ISI_list}')
 
 
 # Distances between probes & flow direction
-separations = [18, 6, 3, 2, 1, 0]
+separations = [0, 1, 2, 3, 6, 18]
 print(f'separations: {separations}')
 
 '''each separation value appears in 2 stairs, e.g.,
@@ -157,6 +164,9 @@ print(f'actual_prelim_bg_flow_ms: {actual_prelim_bg_flow_ms}')
 
 
 # FILENAME
+# join participant_name with prelim_bg_flow_ms so that different prelim values don't get overwritten or confused.
+participant_name = participant_name + f'_bg{prelim_bg_flow_ms}'
+
 isi_dir = f'ISI_{ISI}'
 save_dir = os.path.join(_thisDir, expName, participant_name,
                         f'{participant_name}_{run_number}', isi_dir)
@@ -216,13 +226,15 @@ if display_number > 0:
     use_full_screen = False
 print(f"display_number: {display_number}, use_full_screen: {use_full_screen}")
 
-widthPix = thisMon.getSizePix()[0]
-heightPix = thisMon.getSizePix()[1]
+widthPix = int(thisMon.getSizePix()[0])
+heightPix = int(thisMon.getSizePix()[1])
 monitorwidth = thisMon.getWidth()  # monitor width in cm
 viewdist = thisMon.getDistance()  # viewing distance in cm
 viewdistPix = widthPix / monitorwidth*viewdist
 mon = monitors.Monitor(monitor_name, width=monitorwidth, distance=viewdist)
 mon.setSizePix((widthPix, heightPix))
+print(f"widthPix: {widthPix}, heightPix: {heightPix}, monitorwidth: {monitorwidth}, "
+      f"viewdist: {viewdist}, viewdistPix: {viewdistPix}")
 
 # WINDOW SPEC
 win = visual.Window(monitor=mon, size=(widthPix, heightPix),
@@ -253,14 +265,12 @@ if abs(fps-actualFrameRate) > 5:
 # frame error tolerance - default is approx 20% but seems to vary between runs(!), so set it manually.
 frame_tolerance_prop = .2
 max_fr_dur_sec = expected_fr_sec + (expected_fr_sec * frame_tolerance_prop)
-# max_fr_dur_sec = win.refreshThreshold
 max_fr_dur_ms = max_fr_dur_sec * 1000
 win.refreshThreshold = max_fr_dur_sec
 frame_tolerance_sec = max_fr_dur_sec - expected_fr_sec
 frame_tolerance_ms = frame_tolerance_sec * 1000
 frame_tolerance_prop = frame_tolerance_sec / expected_fr_sec
 min_fr_dur_sec = expected_fr_sec - (expected_fr_sec * frame_tolerance_prop)
-# min_fr_dur_sec = expected_fr_sec - frame_tolerance_sec
 print(f"\nframe_tolerance_sec: {frame_tolerance_sec} ({frame_tolerance_prop}% of {expected_fr_sec} sec)")
 print(f"max_fr_dur_sec ({100 + (100 * frame_tolerance_prop)}%): {max_fr_dur_sec} (or {max_fr_dur_ms}ms)")
 print(f"min_fr_dur_sec ({100 - (100 * frame_tolerance_prop)}%): {min_fr_dur_sec} (or {min_fr_dur_sec * 1000}ms)")
@@ -306,18 +316,23 @@ raisedCosTexture1 = visual.filters.makeMask(256, shape='raisedCosine',
                                             fringeWidth=0.3, radius=[1.0, 1.0])
 mask_size = 150
 probeMask1 = visual.GratingStim(win, mask=raisedCosTexture1, size=(mask_size, mask_size),
-                                colorSpace=this_colourSpace, color=this_bgColour,
-                                tex=None, units='pix', pos=[dist_from_fix + 1, dist_from_fix + 1])
+                                 colorSpace=this_colourSpace, color=this_bgColour,
+                                 tex=None, units='pix', pos=[dist_from_fix + 1, dist_from_fix + 1])
 probeMask2 = visual.GratingStim(win, mask=raisedCosTexture1, size=(mask_size, mask_size),
-                                colorSpace=this_colourSpace, color=this_bgColour,
-                                units='pix', tex=None, pos=[-dist_from_fix - 1, dist_from_fix + 1])
+                                 colorSpace=this_colourSpace, color=this_bgColour,
+                                 units='pix', tex=None, pos=[-dist_from_fix - 1, dist_from_fix + 1])
 probeMask3 = visual.GratingStim(win, mask=raisedCosTexture1, size=(mask_size, mask_size),
-                                colorSpace=this_colourSpace, color=this_bgColour,
-                                units='pix', tex=None, pos=[-dist_from_fix - 1, -dist_from_fix - 1])
+                                 colorSpace=this_colourSpace, color=this_bgColour,
+                                 units='pix', tex=None, pos=[-dist_from_fix - 1, -dist_from_fix - 1])
 probeMask4 = visual.GratingStim(win, mask=raisedCosTexture1, size=(mask_size, mask_size),
-                                colorSpace=this_colourSpace, color=this_bgColour,
-                                units='pix', tex=None, pos=[dist_from_fix + 1, -dist_from_fix - 1])
+                                 colorSpace=this_colourSpace, color=this_bgColour,
+                                 units='pix', tex=None, pos=[dist_from_fix + 1, -dist_from_fix - 1])
 
+
+#probeMask1 = visual.GratingStim()
+#probeMask2 = visual.GratingStim()
+#probeMask3 = visual.GratingStim()
+#probeMask4 = visual.GratingStim()
 
 # BACKGROUND
 # flow_dots
@@ -339,8 +354,8 @@ if monitor_name == 'OLED':
     flow_dots_colour = [this_bgColour[0], this_bgColour[1] + adj_dots_col / 2, this_bgColour[2]]
 
 flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
-                                    units='pix', nElements=nDots, sizes=10, colorSpace=this_colourSpace,
-                                    colors=flow_dots_colour)
+                                    units='pix', nElements=nDots, sizes=10,
+                                    colorSpace=this_colourSpace, colors=flow_dots_colour)
 print(f"flow_dot colours: {[this_bgColour[0]-adj_dots_col, this_bgColour[1], this_bgColour[2]-adj_dots_col]}")
 
 
@@ -357,11 +372,10 @@ if monitor_name == 'OLED':
 blankslab = np.ones((heightPix, slab_width))  # create blank slabs to put to left and right of image
 mmask = np.append(blankslab, invRaisedCosTexture, axis=1)  # append blank slab to left
 mmask = np.append(mmask, blankslab, axis=1)  # and right
+# changed dotsmask color from grey, fades to black round edges which makes screen edges less visible
 dotsMask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
                               size=(widthPix, heightPix), units='pix', color='black')
-# changed dotsmask color from grey
-# above fades to black round edges which makes screen edges less visible
-
+#dotsMask = visual.GratingStim()
 
 # MOUSE - hide cursor
 myMouse = event.Mouse(visible=False)
@@ -792,7 +806,7 @@ for step in range(n_trials_per_stair):
                     # start recording frame intervals
                     if record_fr_durs:
                         win.recordFrameIntervals = True
-                        print(f"{frameN}: win.recordFrameIntervals : {win.recordFrameIntervals}")
+                        # print(f"{frameN}: win.recordFrameIntervals : {win.recordFrameIntervals}")
 
                     # reset timer to start with probe1 presentation.
                     resp.clock.reset()
@@ -807,7 +821,7 @@ for step in range(n_trials_per_stair):
 
                     if record_fr_durs:
                         win.recordFrameIntervals = False
-                        print(f"{frameN}: win.recordFrameIntervals : {win.recordFrameIntervals}")
+                        # print(f"{frameN}: win.recordFrameIntervals : {win.recordFrameIntervals}")
 
 
                 '''Experiment timings'''
@@ -966,7 +980,7 @@ for step in range(n_trials_per_stair):
                             # get trial frameIntervals details
                             trial_fr_intervals = win.frameIntervals
                             n_fr_recorded = len(trial_fr_intervals)
-                            print(f"n_fr_recorded: {n_fr_recorded}")
+                            # print(f"n_fr_recorded: {n_fr_recorded}")
 
                             # add to empty lists etc.
                             fr_int_per_trial.append(trial_fr_intervals)
@@ -978,7 +992,7 @@ for step in range(n_trials_per_stair):
 
                             # get timings for each segment (probe1, ISI, probe2).
                             fr_diff_ms = [(expected_fr_sec - i) * 1000 for i in trial_fr_intervals]
-                            print(f"sum(fr_diff_ms): {sum(fr_diff_ms)}")
+                            # print(f"sum(fr_diff_ms): {sum(fr_diff_ms)}")
 
                             p1_durs = fr_diff_ms[:2]
                             p1_diff = sum(p1_durs)
@@ -994,17 +1008,19 @@ for step in range(n_trials_per_stair):
                                 p2_durs = []
                             p2_diff = sum(p2_durs)
 
-                            print(f"\np1_durs: {p1_durs}, p1_diff: {p1_diff}\n"
-                                  f"isi_durs: {isi_durs}, isi_diff: {isi_diff}\n"
-                                  f"p2_durs: {p2_durs}, p2_diff: {p2_diff}\n")
+                            # print(f"\np1_durs: {p1_durs}, p1_diff: {p1_diff}\n"
+                            #       f"isi_durs: {isi_durs}, isi_diff: {isi_diff}\n"
+                            #       f"p2_durs: {p2_durs}, p2_diff: {p2_diff}\n")
 
                             # check for dropped frames (or frames that are too short)
                             # if timings are bad, repeat trial
                             if max(trial_fr_intervals) > max_fr_dur_sec or min(trial_fr_intervals) < min_fr_dur_sec:
                                 if max(trial_fr_intervals) > max_fr_dur_sec:
-                                    print(f"\n\toh no! Frame too long! {max(trial_fr_intervals)} > {max_fr_dur_sec}")
+                                    # print(f"\n\toh no! Frame too long! {max(trial_fr_intervals)} > {max_fr_dur_sec}")
+                                    logging.WARN(f"\n\toh no! Frame too long! {max(trial_fr_intervals)} > {max_fr_dur_sec}")
                                 elif min(trial_fr_intervals) < min_fr_dur_sec:
-                                    print(f"\n\toh no! Frame too short! {min(trial_fr_intervals)} < {min_fr_dur_sec}")
+                                    # print(f"\n\toh no! Frame too short! {min(trial_fr_intervals)} < {min_fr_dur_sec}")
+                                    logging.WARN(f"\n\toh no! Frame too short! {min(trial_fr_intervals)} < {min_fr_dur_sec}")
                                 repeat = True
                                 dropped_fr_trial_counter += 1
                                 trial_number -= 1
@@ -1014,8 +1030,8 @@ for step in range(n_trials_per_stair):
                                 trial_x_locs = [exp_n_fr_recorded_list[-2], exp_n_fr_recorded_list[-1]]
                                 dropped_fr_trial_x_locs.append(trial_x_locs)
                                 continue
-                            else:
-                                print('Timing good')
+                            # else:
+                            #     print('Timing good')
 
                             # empty frameIntervals cache
                             win.frameIntervals = []
