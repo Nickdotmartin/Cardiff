@@ -17,14 +17,14 @@ from exp1a_psignifit_analysis import plt_heatmap_row_col
 # participant_list = ['Nick_half']  # , 'Nick']  # , 'Nick_half_speed']
 
 # # todo: why does a_extract data work for my data but not Simon's???
-exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2'
-participant_list = ['Nick_350']  # , 'Simon']  # , 'Nick_half_speed']
+# exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2'
+# participant_list = ['Nick_350']  # , 'Simon']  # , 'Nick_half_speed']
 
 # exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2_half'
 # participant_list = ['Nick_half_speed', 'Simon_half']  # , 'Nick_half_speed']
 #
-# exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2_350'
-# participant_list = ['Simon']
+exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2_350'
+participant_list = ['Simon']
 # exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_23_OLED'
 # participant_list = ['Simon_OLED_2.13A_black']  # 'Nick_OLED_70', Nick_OLED_350 'Nick_70_OLED_2.13A'
 

@@ -1,10 +1,14 @@
 from __future__ import division  # do I need this?
 
-import logging
+import psychopy
+from psychopy import __version__ as psychopy_version
+print(f"PsychoPy_version: {psychopy_version}")
+psychopy.useVersion('2021.2.3')
+print(f"PsychoPy_version: {psychopy_version}")
 
 from psychopy import gui, visual, core, data, event, monitors, hardware
 from psychopy.hardware import keyboard
-from psychopy import __version__ as psychopy_version
+import logging
 import os
 import numpy as np
 import random
@@ -42,7 +46,7 @@ expInfo = {'1. Participant': 'Nick_test',
            '7. Record_frame_durs': [True, False],
            '8. probe_n_pixels': [5, 7],
            '9. Fusion lock rings': [False, True],
-           '10. monitor_name': ['OLED', 'asus_cal', 'Nick_work_laptop', 'Samsung', 'Asus_VG24', 'HP_24uh', 'NickMac',
+           '10. monitor_name': ['asus_cal', 'Nick_work_laptop', 'Samsung', 'OLED','Asus_VG24', 'HP_24uh', 'NickMac',
                                 'Iiyama_2_18'],
            }
 

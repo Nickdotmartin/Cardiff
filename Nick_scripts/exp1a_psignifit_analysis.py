@@ -717,18 +717,35 @@ def plot_1probe_w_errors(fig_df, error_df,
         jitter_list = np.random.uniform(size=n_pos_sep, low=-jit_max, high=jit_max)
 
         if split_1probe:
-            ax.errorbar(x=one_probe_df['x_vals'][idx] + np.random.uniform(low=-jit_max, high=jit_max),
-                        y=one_probe_df[thr_col][idx],
-                        yerr=one_probe_er_df[thr_col][idx],
+            if x_tick_vals is not None:
+                ax.errorbar(x=x_tick_vals + np.random.uniform(low=-jit_max, high=jit_max),
+                            y=one_probe_df[thr_col][idx],
+                            yerr=one_probe_er_df[thr_col][idx],
+                            marker='.', lw=2, elinewidth=.7,
+                            capsize=cap_size,
+                            color=my_colours[idx])
+            else:
+                ax.errorbar(x=one_probe_df['x_vals'][idx] + np.random.uniform(low=-jit_max, high=jit_max),
+                            y=one_probe_df[thr_col][idx],
+                            yerr=one_probe_er_df[thr_col][idx],
+                            marker='.', lw=2, elinewidth=.7,
+                            capsize=cap_size,
+                            color=my_colours[idx])
+
+
+        # force it to use sep index
+        if x_tick_vals is not None:
+            ax.errorbar(x=x_tick_vals + jitter_list,
+                        y=two_probe_df[name], yerr=two_probe_er_df[name],
                         marker='.', lw=2, elinewidth=.7,
                         capsize=cap_size,
                         color=my_colours[idx])
-
-        ax.errorbar(x=two_probe_df.index + jitter_list,
-                    y=two_probe_df[name], yerr=two_probe_er_df[name],
-                    marker='.', lw=2, elinewidth=.7,
-                    capsize=cap_size,
-                    color=my_colours[idx])
+        else:
+            ax.errorbar(x=two_probe_df.index + jitter_list,
+                        y=two_probe_df[name], yerr=two_probe_er_df[name],
+                        marker='.', lw=2, elinewidth=.7,
+                        capsize=cap_size,
+                        color=my_colours[idx])
 
         leg_handle = mlines.Line2D([], [], color=my_colours[idx], label=name,
                                    marker='.', linewidth=.5, markersize=4)
@@ -2614,11 +2631,22 @@ def e_average_exp_data(exp_path, p_names_list,
         #         ave_df_name = f'MASTER_ave_TM{n_trimmed[p_idx]}_thresh'
         # this_p_ave_df = pd.read_csv(os.path.join(exp_path, p_name, f'{ave_df_name}.csv'))
 
-        p_all_df_name = 'MASTER_TM2_thresholds.csv'
+        # p_all_df_name = 'MASTER_TM2_thresholds.csv'
+
+        p_all_df_name = 'MASTER_psignifit_thresholds.csv'
+        # if type(n_trimmed) == int:
+        #     if n_trimmed > 0:
+        if type(n_trimmed) == int and n_trimmed > 0:
+            p_all_df_name = f'MASTER_TM{n_trimmed}_thresholds.csv'
+        elif type(n_trimmed) == list:
+            # if n_trimmed[p_idx] is not None:
+            if type(n_trimmed[p_idx]) == int and n_trimmed[p_idx] > 0:
+                p_all_df_name = f'MASTER_TM{n_trimmed[p_idx]}_thresholds.csv'
+        # this_p_ave_df = pd.read_csv(os.path.join(exp_path, p_name, f'{ave_df_name}.csv'))
         this_p_all_df = pd.read_csv(os.path.join(exp_path, p_name, p_all_df_name))
 
         if verbose:
-            print(f'{p_idx}. {p_name} - this_p_all_df:\n{this_p_all_df}')
+            print(f'{p_idx}. {p_name} - {p_all_df_name}:\n{this_p_all_df}')
 
         if 'Unnamed: 0' in list(this_p_all_df):
             this_p_all_df.drop('Unnamed: 0', axis=1, inplace=True)

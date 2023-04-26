@@ -1,15 +1,13 @@
 from __future__ import division
 
-import logging
 import psychopy
 from psychopy import __version__ as psychopy_version
 print(f"PsychoPy_version: {psychopy_version}")
 psychopy.useVersion('2021.2.3')
 print(f"PsychoPy_version: {psychopy_version}")
 from psychopy import gui, visual, core, data, event, monitors
-
-
 print([method for method in dir(visual) if callable(getattr(visual, method))])
+import logging
 import os
 import copy
 import random
