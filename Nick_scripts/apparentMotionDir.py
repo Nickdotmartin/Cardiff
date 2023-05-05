@@ -23,9 +23,9 @@ from exp1a_psignifit_analysis import fig_colours
 
 
 '''
-Jan23 version of experiment 1.  Now has code to measure frame duration and repeat any trials with bad frame timings.
-Also has an enforced break, with core.wait() to do cpu housekeeping.
-Also has core.wait() when closing to hopefully reduce hanging.
+Same as exp1, but instead of two probes, there are three, which either: 
+follow a smooth trajectory, or deviate (90 or 180 degrees).
+Probes are also smaller - 4 pixels (2x2)
 '''
 
 # Ensure that relative paths start from the same directory as this script
@@ -36,7 +36,7 @@ os.chdir(_thisDir)
 # monitor_name = 'Nick_work_laptop'  # 'asus_cal', 'Nick_work_laptop', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18', 'OLED'
 
 # Store info about the experiment session (numbers keep the order)
-expName = 'Exp1_Jan23_rept_dropped'  # from the Builder filename that created this script
+expName = 'apparentMotionDir'  # from the Builder filename that created this script
 expInfo = {'1. Participant': 'Nick_test',
            '2. Run_number': '1',
            '3. Probe duration in frames': [2, 1, 50, 100],
@@ -44,7 +44,7 @@ expInfo = {'1. Participant': 'Nick_test',
            '5. Probe_orientation': ['tangent', 'radial'],
            '6. Vary_fixation': [True, False],
            '7. Record_frame_durs': [True, False],
-           '8. probe_n_pixels': [5, 7],
+           # '8. probe_n_pixels': [5, 7],
            '9. Fusion lock rings': [False, True],
            '10. monitor_name': ['asus_cal', 'Nick_work_laptop', 'Samsung', 'OLED','Asus_VG24', 'HP_24uh', 'NickMac',
                                 'Iiyama_2_18'],
@@ -63,7 +63,7 @@ fps = int(expInfo['4. fps'])
 orientation = expInfo['5. Probe_orientation']
 vary_fixation = eval(expInfo['6. Vary_fixation'])
 record_fr_durs = eval(expInfo['7. Record_frame_durs'])
-probe_n_pixels = int(expInfo['8. probe_n_pixels'])
+# probe_n_pixels = int(expInfo['8. probe_n_pixels'])
 fusion_lock_rings = eval(expInfo['9. Fusion lock rings'])
 monitor_name = expInfo['10. monitor_name']
 
@@ -83,28 +83,42 @@ For 1probe condition, use separation==99.
 For concurrent probes, use ISI==-1.
 '''
 print(f'\nTrial condition details:')
-separations = [5, 12]  # select from [0, 1, 2, 3, 6, 18, 99]
+'''
+Cond types if 5 on the keypad is (0, 0)
+1 2 3 (-1, 1),  (0, 1),  (1, 1)
+4 5 6 (-1, 0),  (0, 0),  (1, 0)
+7 8 9 (-1, -1), (0, -1), (1, -1)
+
+straight: 1, 5, 9 = (-1, 1), (0, 0), (1, -1)
+corner:   1, 5, 7 = (-1, 1), (0, 0), (-1, -1)
+short_back: 1, 5, 1 = (-1, 1), (0, 0), (-1, 1)
+jump_back: 5, 9, 1 = (0, 0), (1, -1), (-1, 1)
+split: 5, 1&9 (together) (0, 0), [(-1, 1), (1, -1)]
+'''
+cond_type_values = ['straight', 'corner', 'short_back', 'jump_back', 'split']
+
+separations = [12]  # select from [0, 1, 2, 3, 6, 18, 99]
 # separations = [0, 1, 2, 3, 6, 18, 99]  # select from [0, 1, 2, 3, 6, 18, 99]
 print(f'separations: {separations}')
-ISI_values = [-1]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+ISI_values = [-1, 24]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 # ISI_values = [-1, 0, 2, 4, 6, 9, 12, 24]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 print(f'ISI_values: {ISI_values}')
-# repeat separation values for each ISI e.g., [0, 0, 6, 6]
-sep_vals_list = list(np.repeat(separations, len(ISI_values)))
-print(f'sep_vals_list: {sep_vals_list}')
-# ISI_vals_list cycles through ISIs e.g., [-1, 6, -1, 6]
-ISI_vals_list = list(np.tile(ISI_values, len(separations)))
+
+ISI_vals_list = list(np.repeat(ISI_values, len(separations))) * len(cond_type_values)
 print(f'ISI_vals_list: {ISI_vals_list}')
-# stair_names_list joins sep_vals_list and ISI_vals_list
-# e.g., ['sep0_ISI-1', 'sep0_ISI6', 'sep6_ISI-1', 'sep6_ISI6']
-stair_names_list = [f'sep{s}_ISI{c}' for s, c in zip(sep_vals_list, ISI_vals_list)]
+sep_vals_list = list(np.tile(separations, len(ISI_values) * len(cond_type_values)))
+print(f'sep_vals_list: {sep_vals_list}')
+cond_vals_list = list(np.repeat(cond_type_values, len(sep_vals_list) / len(cond_type_values)))
+print(f'cond_vals_list: {cond_vals_list}')
+
+stair_names_list = [f'{t}_sep{s}_ISI{i}' for t, s, i in zip(cond_vals_list, sep_vals_list, ISI_vals_list)]
 print(f'stair_names_list: {stair_names_list}')
-n_stairs = len(sep_vals_list)
+n_stairs = len(stair_names_list)
 print(f'n_stairs: {n_stairs}')
 total_n_trials = int(n_trials_per_stair * n_stairs)
 print(f'total_n_trials: {total_n_trials}')
 
-
+# todo: check stair_name_list work as expected.
 
 
 # save to dir with list of sep vals
@@ -123,7 +137,6 @@ save_output_as = os.path.join(save_dir, incomplete_output_filename)
 
 # Experiment Handler
 # todo: save pydat file or log file to have ALL info I need
-
 thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
                                  extraInfo=expInfo,
                                  # runtimeInfo=None, savePickle=None,
@@ -233,26 +246,29 @@ max_droped_fr_trials = 10
 
 # ELEMENTS
 # fixation bull eye
-fixation = visual.Circle(win, radius=2, units='pix', 
+fixation = visual.Circle(win, radius=2, units='pix',
                          lineColor='white', fillColor='black', colorSpace=this_colourSpace)
-# loc_marker = visual.Circle(win, radius=2, units='pix', 
+# loc_marker = visual.Circle(win, radius=2, units='pix',
 #                            lineColor='green', fillColor='red', colorSpace=this_colourSpace)
 
 # PROBEs
-probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
-             (1, -2), (-1, -2), (-1, -1), (0, -1)]
-if probe_n_pixels == 7:
-    # this one looks back-to-front as the extra bits have turned the 'm's into 'w's,
-    # so probes are rotated 180 degrees compared to regular probes.
-    probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, 2), (0, 2), (0, 1),
-                 (-1, 1), (-1, 0), (-2, 0), (-2, -2), (-1, -2), (-1, -1), (0, -1)]
+# probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
+#              (1, -2), (-1, -2), (-1, -1), (0, -1)]
+# if probe_n_pixels == 7:
+#     # this one looks back-to-front as the extra bits have turned the 'm's into 'w's,
+#     # so probes are rotated 180 degrees compared to regular probes.
+#     probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, 2), (0, 2), (0, 1),
+#                  (-1, 1), (-1, 0), (-2, 0), (-2, -2), (-1, -2), (-1, -1), (0, -1)]
+
+probeVert = [(1, 1), (1, -1), (-1, -1), (-1, 1)]
 
 probe_size = 1
 probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor='white', colorSpace=this_colourSpace,
                           lineWidth=0, opacity=1, size=probe_size, interpolate=False)
 probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor='white', colorSpace=this_colourSpace,
                           lineWidth=0, opacity=1, size=probe_size, interpolate=False)
-
+probe3 = visual.ShapeStim(win, vertices=probeVert, fillColor='white', colorSpace=this_colourSpace,
+                          lineWidth=0, opacity=1, size=probe_size, interpolate=False)
 
 # dist_from_fix is a constant to get 4dva distance from fixation,
 dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
@@ -286,12 +302,12 @@ if monitor_name == 'OLED':
 myMouse = event.Mouse(visible=False)
 
 # # KEYBOARD
-resp = event.BuilderKeyResponse()
-# todo: use the next keyboard version
-# resp = keyboard.Keyboard()
+# resp = event.BuilderKeyResponse()
+# todo: use the next keyboard version for timing etc
+resp = keyboard.Keyboard()
 
 # INSTRUCTION
-instructions = visual.TextStim(win=win, name='instructions', font='Arial', height=20, 
+instructions = visual.TextStim(win=win, name='instructions', font='Arial', height=20,
                                color='white', colorSpace=this_colourSpace,
                                text="\n\n\n\n\n\nFocus on the fixation circle at the centre of the screen.\n\n"
                                     "A small white target will briefly appear on screen,\n"
@@ -327,7 +343,7 @@ break_text = f"Break\nTurn on the light and take at least {break_dur} seconds br
              "Keep focussed on the fixation circle in the middle of the screen.\n" \
              "Remember, if you don't see the target, just guess!"
 breaks = visual.TextStim(win=win, name='breaks', text=break_text, font='Arial',
-                         pos=[0, 0], height=20, ori=0, color='white', 
+                         pos=[0, 0], height=20, ori=0, color='white',
                          colorSpace=this_colourSpace)
 
 end_of_exp_text = "You have completed this experiment.\nThank you for your time.\n\n"
@@ -441,6 +457,7 @@ for step in range(n_trials_per_stair):
             # condition (Separation, ISI)
             sep = sep_vals_list[stair_idx]
             # separation expressed as degrees.
+            # todo: add values for total length or area of three stim
             if -1 < sep < 99:
                 sep_deg = sep * pixel_mm_deg_dict['diag_deg']
             else:
@@ -448,7 +465,10 @@ for step in range(n_trials_per_stair):
             ISI = ISI_vals_list[stair_idx]
             print(f"ISI: {ISI}, sep: {sep}")
 
-            # Luminance (staircase varies probeLum)
+            cond_type = cond_vals_list[stair_idx]
+            print(f"cond_type: {cond_type}")
+
+            # Luminance (staircase varies probeLum for third probe)
             probeLum = thisStair.next()
             probeColor255 = int(probeLum * LumColor255Factor)  # rgb255 are ints.
             probeColor1 = probeLum / maxLum
@@ -456,8 +476,10 @@ for step in range(n_trials_per_stair):
             this_probeColor = probeColor255
             if this_colourSpace == 'rgb1':
                 this_probeColor = probeColor1
-            probe1.setFillColor([this_probeColor, this_probeColor, this_probeColor])
-            probe2.setFillColor([this_probeColor, this_probeColor, this_probeColor])
+            # todo: get fixed values for probes 1 and 2
+            # probe1.setFillColor([this_probeColor, this_probeColor, this_probeColor])
+            # probe2.setFillColor([this_probeColor, this_probeColor, this_probeColor])
+            probe3.setFillColor([this_probeColor, this_probeColor, this_probeColor])
             print(f"probeLum: {probeLum}, this_probeColor: {this_probeColor}, probeColor255: {probeColor255}, probeColor1: {probeColor1}")
 
 
@@ -492,19 +514,20 @@ for step in range(n_trials_per_stair):
 
             # shift probes by separation
             '''Both probes should be equally spaced around the meridian point.
-            E.g., if sep = 4, probe 1 will be shifted 2 pixels in one direction and 
-            probe 2 will be shifted 2 pixels in opposite direction. 
+            E.g., if sep = 4, probe 1 will be shifted 2 pixels in one direction and
+            probe 2 will be shifted 2 pixels in opposite direction.
             Where separation is an odd number (e.g., 5), they will be shifted by 2 and 3 pixels; allocated randomly.
             To check probe locations, uncomment loc_marker'''
-            if sep == 99:
-                p1_shift = p2_shift = 0
-            elif sep % 2 == 0:  # even number
-                p1_shift = p2_shift = sep // 2
-            else:  # odd number
-                extra_shifted_pixel = [0, 1]
-                np.random.shuffle(extra_shifted_pixel)
-                p1_shift = sep // 2 + extra_shifted_pixel[0]
-                p2_shift = (sep // 2) + extra_shifted_pixel[1]
+            # todo: adapt this for three probes. so that the middle point is at meridian point
+            # if sep == 99:
+            #     p1_shift = p2_shift = 0
+            # elif sep % 2 == 0:  # even number
+            #     p1_shift = p2_shift = sep // 2
+            # else:  # odd number
+            #     extra_shifted_pixel = [0, 1]
+            #     np.random.shuffle(extra_shifted_pixel)
+            #     p1_shift = sep // 2 + extra_shifted_pixel[0]
+            #     p2_shift = (sep // 2) + extra_shifted_pixel[1]
 
 
 
@@ -517,133 +540,489 @@ for step in range(n_trials_per_stair):
 
 
             # set position and orientation of probes
-            '''NEW - set orientations to p1=zero and p2=180 (not zero), 
+            '''NEW - set orientations to p1=zero and p2=180 (not zero),
             then add the same orientation change to both'''
-            probe1_ori = 0
-            probe2_ori = 180
-            if probe_n_pixels == 7:
-                probe1_ori = 180
-                probe2_ori = 0
+
             if corner == 45:
                 '''in top-right corner, both x and y increase (right and up)'''
                 loc_x = dist_from_fix * 1
                 loc_y = dist_from_fix * 1
-                '''orientation' here refers to the relationship between probes, 
+                '''orientation' here refers to the relationship between probes,
                 whereas probe1_ori refers to rotational angle of probe stimulus'''
                 if orientation == 'tangent':
                     if target_jump == 1:  # CW
-                        probe1_ori += 180
-                        probe2_ori += 180
-                        probe1_pos = [loc_x - p1_shift, loc_y + p1_shift]
-                        probe2_pos = [loc_x + p2_shift - probe_size, loc_y - p2_shift]
+                        # probe1_pos = [loc_x - p1_shift, loc_y + p1_shift]
+                        # probe2_pos = [loc_x + p2_shift - probe_size, loc_y - p2_shift]
+                        '''straight: 1, 5, 9 = (-1, 1), (0, 0), (1, -1)
+                        corner: 1, 5, 7 = (-1, 1), (0, 0), (-1, -1)
+                        short_back: 1, 5, 1 = (-1, 1), (0, 0), (-1, 1)
+                        jump_back: 5, 9, 1 = (0, 0), (1, -1), (-1, 1)
+                        split: 5, 1 & 9(together)(0, 0), [(-1, 1), (1, -1)]'''
+                        if cond_type == 'straight':
+                                probe1_pos = [loc_x - sep, loc_y + sep]
+                                probe2_pos = [loc_x, loc_y]
+                                probe3_pos = [loc_x + sep, loc_y - sep]
+                        elif cond_type == 'corner':
+                                probe1_pos = [loc_x - sep, loc_y + sep]
+                                probe2_pos = [loc_x, loc_y]
+                                probe3_pos = [loc_x - sep, loc_y - sep]
+                        elif cond_type == 'short_back':
+                                probe1_pos = [loc_x - sep, loc_y + sep]
+                                probe2_pos = [loc_x, loc_y]
+                                probe3_pos = [loc_x - sep, loc_y + sep]
+                        elif cond_type == 'jump_back':
+                                probe1_pos = [loc_x, loc_y]
+                                probe2_pos = [loc_x + sep, loc_y - sep]
+                                probe3_pos = [loc_x - sep, loc_y + sep]
+                        elif cond_type == 'split':
+                                probe1_pos = [loc_x, loc_y]
+                                probe2_pos = [loc_x - sep, loc_y + sep]
+                                probe3_pos = [loc_x + sep, loc_y - sep]
+
                     elif target_jump == -1:  # ACW
-                        probe1_ori += 0
-                        probe2_ori += 0
-                        probe1_pos = [loc_x + p1_shift, loc_y - p1_shift]
-                        probe2_pos = [loc_x - p2_shift + probe_size, loc_y + p2_shift]
+                        # probe1_pos = [loc_x + sep, loc_y - sep]
+                        # probe2_pos = [loc_x - sep + probe_size, loc_y + sep]
+                        '''straight: 9, 5, 1 =  (1, -1), (0, 0), (-1, 1)
+                        corner: 9, 5, 9 = (1, -1), (0, 0), (1, 1)
+                        short_back: 9, 5, 9 = (1, -1), (0, 0), (1, -1)
+                        jump_back: 5, 1, 9 = (0, 0), (-1, 1), (1, -1)
+                        split: 5, 1 & 9(together)(0, 0), [(1, -1), (-1, 1)]'''
+                        if cond_type == 'straight':
+                                probe1_pos = [loc_x + sep, loc_y - sep]
+                                probe2_pos = [loc_x, loc_y]
+                                probe3_pos = [loc_x - sep, loc_y + sep]
+                        elif cond_type == 'corner':
+                                probe1_pos = [loc_x + sep, loc_y - sep]
+                                probe2_pos = [loc_x, loc_y]
+                                probe3_pos = [loc_x + sep, loc_y + sep]
+                        elif cond_type == 'short_back':
+                                probe1_pos = [loc_x + sep, loc_y - sep]
+                                probe2_pos = [loc_x, loc_y]
+                                probe3_pos = [loc_x + sep, loc_y - sep]
+                        elif cond_type == 'jump_back':
+                                probe1_pos = [loc_x, loc_y]
+                                probe2_pos = [loc_x - sep, loc_y + sep]
+                                probe3_pos = [loc_x + sep, loc_y - sep]
+                        elif cond_type == 'split':
+                                probe1_pos = [loc_x, loc_y]
+                                probe2_pos = [loc_x - sep, loc_y + sep]
+                                probe3_pos = [loc_x + sep, loc_y - sep]
+
+
+
                 elif orientation == 'radial':
                     if target_jump == 1:  # inward
-                        probe1_ori += 270
-                        probe2_ori += 270
                         # probe2 is left and down from probe1
-                        probe1_pos = [loc_x + p1_shift, loc_y + p1_shift]
-                        probe2_pos = [loc_x - p2_shift + probe_size, loc_y - p2_shift]
+                        # probe1_pos = [loc_x + sep, loc_y + sep]
+                        # probe2_pos = [loc_x - sep + probe_size, loc_y - sep]
+                        '''straight: 3, 5, 7 = (1, 1), (0, 0), (-1, -1)
+                        corner: 3, 5, 1 = (1, 1), (0, 0), (-1, 1)
+                        short_back: 3, 5, 3 = (1, 1), (0, 0), (1, 1)
+                        jump_back: 5, 7, 3 = (0, 0), (-1, -1), (1, 1)
+                        split: 5, 3 & 7(together)(0, 0), [(1, 1), (-1, -1)]'''
+                        if cond_type == 'straight':
+                                probe1_pos = [loc_x + sep, loc_y + sep]
+                                probe2_pos = [loc_x, loc_y]
+                                probe3_pos = [loc_x - sep, loc_y - sep]
+                        elif cond_type == 'corner':
+                                probe1_pos = [loc_x + sep, loc_y + sep]
+                                probe2_pos = [loc_x, loc_y]
+                                probe3_pos = [loc_x - sep, loc_y + sep]
+                        elif cond_type == 'short_back':
+                                probe1_pos = [loc_x + sep, loc_y + sep]
+                                probe2_pos = [loc_x, loc_y]
+                                probe3_pos = [loc_x + sep, loc_y + sep]
+                        elif cond_type == 'jump_back':
+                                probe1_pos = [loc_x, loc_y]
+                                probe2_pos = [loc_x - sep, loc_y - sep]
+                                probe3_pos = [loc_x + sep, loc_y + sep]
+                        elif cond_type == 'split':
+                                probe1_pos = [loc_x, loc_y]
+                                probe2_pos = [loc_x + sep, loc_y + sep]
+                                probe3_pos = [loc_x - sep, loc_y - sep]
+
                     elif target_jump == -1:  # outward
-                        probe1_ori += 90
-                        probe2_ori += 90
                         # probe2 is right and up from probe1
-                        probe1_pos = [loc_x - p1_shift, loc_y - p1_shift]
-                        probe2_pos = [loc_x + p2_shift - probe_size, loc_y + p2_shift]
-            elif corner == 135:
+                        # probe1_pos = [loc_x - sep, loc_y - sep]
+                        # probe2_pos = [loc_x + sep - probe_size, loc_y + sep]
+                        '''straight: 7, 5, 3 = (-1, -1), (0, 0), (1, 1)
+                        corner: 7, 5, 9 = (-1, -1), (0, 0), (1, -1)
+                        short_back: 7, 5, 7 = (-1, -1), (0, 0), (-1, -1)
+                        jump_back: 5, 3, 7 = (0, 0), (1, 1), (-1, -1)
+                        split: 5, 7 & 3 (together)(0, 0), [(-1, -1), (1, 1)]'''
+                        if cond_type == 'straight':
+                            probe1_pos = [loc_x - sep, loc_y - sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x + sep, loc_y + sep]
+                        elif cond_type == 'corner':
+                            probe1_pos = [loc_x - sep, loc_y - sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x + sep, loc_y - sep]
+                        elif cond_type == 'short_back':
+                            probe1_pos = [loc_x - sep, loc_y - sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x - sep, loc_y - sep]
+                        elif cond_type == 'jump_back':
+                            probe1_pos = [loc_x, loc_y]
+                            probe2_pos = [loc_x + sep, loc_y + sep]
+                            probe3_pos = [loc_x - sep, loc_y - sep]
+                        elif cond_type == 'split':
+                            probe1_pos = [loc_x, loc_y]
+                            probe2_pos = [loc_x - sep, loc_y - sep]
+                            probe3_pos = [loc_x + sep, loc_y + sep]
+            elif corner == 135:  # top-left
                 loc_x = dist_from_fix * -1
                 loc_y = dist_from_fix * 1
                 if orientation == 'tangent':
                     if target_jump == 1:  # ACW
-                        probe1_ori += 90
-                        probe2_ori += 90
-                        probe1_pos = [loc_x - p1_shift, loc_y - p1_shift]
-                        probe2_pos = [loc_x + p2_shift - probe_size, loc_y + p2_shift]
+                        # probe1_pos = [loc_x - sep, loc_y - sep]
+                        # probe2_pos = [loc_x + sep - probe_size, loc_y + sep]
+                        if cond_type == 'straight':
+                            probe1_pos = [loc_x + sep, loc_y + sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x - sep, loc_y - sep]
+                        elif cond_type == 'corner':
+                            probe1_pos = [loc_x + sep, loc_y + sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x - sep, loc_y + sep]
+                        elif cond_type == 'short_back':
+                            probe1_pos = [loc_x + sep, loc_y + sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x + sep, loc_y + sep]
+                        elif cond_type == 'jump_back':
+                            probe1_pos = [loc_x, loc_y]
+                            probe2_pos = [loc_x - sep, loc_y - sep]
+                            probe3_pos = [loc_x + sep, loc_y + sep]
+                        elif cond_type == 'split':
+                            probe1_pos = [loc_x, loc_y]
+                            probe2_pos = [loc_x + sep, loc_y + sep]
+                            probe3_pos = [loc_x - sep, loc_y - sep]
+                            '''straight: 3, 5, 7 = (1, 1), (0, 0), (-1, -1)
+                            corner: 3, 5, 1 = (1, 1), (0, 0), (-1, 1)
+                            short_back: 3, 5, 3 = (1, 1), (0, 0), (1, 1)
+                            jump_back: 5, 7, 3 = (0, 0), (-1, -1), (1, 1)
+                            split: 5, 3 & 7(together)(0, 0), [(1, 1), (-1, -1)]'''
                     elif target_jump == -1:  # CW
-                        probe1_ori += 270
-                        probe2_ori += 270
-                        probe1_pos = [loc_x + p1_shift, loc_y + p1_shift]
-                        probe2_pos = [loc_x - p2_shift + probe_size, loc_y - p2_shift]
+                        # probe1_pos = [loc_x + sep, loc_y + sep]
+                        # probe2_pos = [loc_x - sep + probe_size, loc_y - sep]
+                        '''straight: 7, 5, 3 = (-1, -1), (0, 0), (1, 1)
+                        corner: 7, 5, 9 = (-1, -1), (0, 0), (1, -1)
+                        short_back: 7, 5, 7 = (-1, -1), (0, 0), (-1, -1)
+                        jump_back: 5, 3, 7 = (0, 0), (1, 1), (-1, -1)
+                        split: 5, 7 & 3 (together)(0, 0), [(-1, -1), (1, 1)]'''
+                        if cond_type == 'straight':
+                            probe1_pos = [loc_x - sep, loc_y - sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x + sep, loc_y + sep]
+                        elif cond_type == 'corner':
+                            probe1_pos = [loc_x - sep, loc_y - sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x + sep, loc_y - sep]
+                        elif cond_type == 'short_back':
+                            probe1_pos = [loc_x - sep, loc_y - sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x - sep, loc_y - sep]
+                        elif cond_type == 'jump_back':
+                            probe1_pos = [loc_x, loc_y]
+                            probe2_pos = [loc_x + sep, loc_y + sep]
+                            probe3_pos = [loc_x - sep, loc_y - sep]
+                        elif cond_type == 'split':
+                            probe1_pos = [loc_x, loc_y]
+                            probe2_pos = [loc_x - sep, loc_y - sep]
+                            probe3_pos = [loc_x + sep, loc_y + sep]
                 elif orientation == 'radial':
                     if target_jump == 1:  # inward
-                        probe1_ori += 180
-                        probe2_ori += 180
                         # probe2 is right and down from probe1
-                        probe1_pos = [loc_x - p1_shift, loc_y + p1_shift]
-                        probe2_pos = [loc_x + p2_shift - probe_size, loc_y - p2_shift]
+                        # probe1_pos = [loc_x - sep, loc_y + sep]
+                        # probe2_pos = [loc_x + sep - probe_size, loc_y - sep]
+                        if cond_type == 'straight':
+                            probe1_pos = [loc_x - sep, loc_y + sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x + sep, loc_y - sep]
+                        elif cond_type == 'corner':
+                            probe1_pos = [loc_x - sep, loc_y + sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x - sep, loc_y - sep]
+                        elif cond_type == 'short_back':
+                            probe1_pos = [loc_x - sep, loc_y + sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x - sep, loc_y + sep]
+                        elif cond_type == 'jump_back':
+                            probe1_pos = [loc_x, loc_y]
+                            probe2_pos = [loc_x + sep, loc_y - sep]
+                            probe3_pos = [loc_x - sep, loc_y + sep]
+                        elif cond_type == 'split':
+                            probe1_pos = [loc_x, loc_y]
+                            probe2_pos = [loc_x - sep, loc_y + sep]
+                            probe3_pos = [loc_x + sep, loc_y - sep]
                     elif target_jump == -1:  # outward
-                        probe1_ori += 0
-                        probe2_ori += 0
                         # probe2 is left and up from probe1
-                        probe1_pos = [loc_x + p1_shift, loc_y - p1_shift]
-                        probe2_pos = [loc_x - p2_shift + probe_size, loc_y + p2_shift]
-            elif corner == 225:
+                        # probe1_pos = [loc_x + sep, loc_y - sep]
+                        # probe2_pos = [loc_x - sep + probe_size, loc_y + sep]
+                        '''straight: 9, 5, 1 =  (1, -1), (0, 0), (-1, 1)
+                        corner: 9, 5, 9 = (1, -1), (0, 0), (1, 1)
+                        short_back: 9, 5, 9 = (1, -1), (0, 0), (1, -1)
+                        jump_back: 5, 1, 9 = (0, 0), (-1, 1), (1, -1)
+                        split: 5, 1 & 9(together)(0, 0), [(1, -1), (-1, 1)]'''
+                        if cond_type == 'straight':
+                            probe1_pos = [loc_x + sep, loc_y - sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x - sep, loc_y + sep]
+                        elif cond_type == 'corner':
+                            probe1_pos = [loc_x + sep, loc_y - sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x + sep, loc_y + sep]
+                        elif cond_type == 'short_back':
+                            probe1_pos = [loc_x + sep, loc_y - sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x + sep, loc_y - sep]
+                        elif cond_type == 'jump_back':
+                            probe1_pos = [loc_x, loc_y]
+                            probe2_pos = [loc_x - sep, loc_y + sep]
+                            probe3_pos = [loc_x + sep, loc_y - sep]
+                        elif cond_type == 'split':
+                            probe1_pos = [loc_x, loc_y]
+                            probe2_pos = [loc_x - sep, loc_y + sep]
+                            probe3_pos = [loc_x + sep, loc_y - sep]
+
+            elif corner == 225:  # bottom left
                 loc_x = dist_from_fix * -1
                 loc_y = dist_from_fix * -1
                 if orientation == 'tangent':
                     if target_jump == 1:  # CW
-                        probe1_ori += 0
-                        probe2_ori += 0
-                        probe1_pos = [loc_x + p1_shift, loc_y - p1_shift]
-                        probe2_pos = [loc_x - p2_shift + probe_size, loc_y + p2_shift]
+                        # probe1_pos = [loc_x + sep, loc_y - sep]
+                        # probe2_pos = [loc_x - sep + probe_size, loc_y + sep]
+                        '''straight: 9, 5, 1 =  (1, -1), (0, 0), (-1, 1)
+                        corner: 9, 5, 9 = (1, -1), (0, 0), (1, 1)
+                        short_back: 9, 5, 9 = (1, -1), (0, 0), (1, -1)
+                        jump_back: 5, 1, 9 = (0, 0), (-1, 1), (1, -1)
+                        split: 5, 1 & 9(together)(0, 0), [(1, -1), (-1, 1)]'''
+                        if cond_type == 'straight':
+                            probe1_pos = [loc_x + sep, loc_y - sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x - sep, loc_y + sep]
+                        elif cond_type == 'corner':
+                            probe1_pos = [loc_x + sep, loc_y - sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x + sep, loc_y + sep]
+                        elif cond_type == 'short_back':
+                            probe1_pos = [loc_x + sep, loc_y - sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x + sep, loc_y - sep]
+                        elif cond_type == 'jump_back':
+                            probe1_pos = [loc_x, loc_y]
+                            probe2_pos = [loc_x - sep, loc_y + sep]
+                            probe3_pos = [loc_x + sep, loc_y - sep]
+                        elif cond_type == 'split':
+                            probe1_pos = [loc_x, loc_y]
+                            probe2_pos = [loc_x - sep, loc_y + sep]
+                            probe3_pos = [loc_x + sep, loc_y - sep]
+
                     elif target_jump == -1:  # ACW
-                        probe1_ori += 180
-                        probe2_ori += 180
-                        probe1_pos = [loc_x - p1_shift, loc_y + p1_shift]
-                        probe2_pos = [loc_x + p2_shift - probe_size, loc_y - p2_shift]
+                        # probe1_pos = [loc_x - sep, loc_y + sep]
+                        # probe2_pos = [loc_x + sep - probe_size, loc_y - sep]
+                        if cond_type == 'straight':
+                            probe1_pos = [loc_x - sep, loc_y + sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x + sep, loc_y - sep]
+                        elif cond_type == 'corner':
+                            probe1_pos = [loc_x - sep, loc_y + sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x - sep, loc_y - sep]
+                        elif cond_type == 'short_back':
+                            probe1_pos = [loc_x - sep, loc_y + sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x - sep, loc_y + sep]
+                        elif cond_type == 'jump_back':
+                            probe1_pos = [loc_x, loc_y]
+                            probe2_pos = [loc_x + sep, loc_y - sep]
+                            probe3_pos = [loc_x - sep, loc_y + sep]
+                        elif cond_type == 'split':
+                            probe1_pos = [loc_x, loc_y]
+                            probe2_pos = [loc_x - sep, loc_y + sep]
+                            probe3_pos = [loc_x + sep, loc_y - sep]
                 elif orientation == 'radial':
                     if target_jump == 1:  # inward
-                        probe1_ori += 90
-                        probe2_ori += 90
                         # probe2 is right and up from probe1
-                        probe1_pos = [loc_x - p1_shift, loc_y - p1_shift]
-                        probe2_pos = [loc_x + p2_shift - probe_size, loc_y + p2_shift]
+                        # probe1_pos = [loc_x - sep, loc_y - sep]
+                        # probe2_pos = [loc_x + sep - probe_size, loc_y + sep]
+                        '''straight: 7, 5, 3 = (-1, -1), (0, 0), (1, 1)
+                        corner: 7, 5, 9 = (-1, -1), (0, 0), (1, -1)
+                        short_back: 7, 5, 7 = (-1, -1), (0, 0), (-1, -1)
+                        jump_back: 5, 3, 7 = (0, 0), (1, 1), (-1, -1)
+                        split: 5, 7 & 3 (together)(0, 0), [(-1, -1), (1, 1)]'''
+                        if cond_type == 'straight':
+                            probe1_pos = [loc_x - sep, loc_y - sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x + sep, loc_y + sep]
+                        elif cond_type == 'corner':
+                            probe1_pos = [loc_x - sep, loc_y - sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x + sep, loc_y - sep]
+                        elif cond_type == 'short_back':
+                            probe1_pos = [loc_x - sep, loc_y - sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x - sep, loc_y - sep]
+                        elif cond_type == 'jump_back':
+                            probe1_pos = [loc_x, loc_y]
+                            probe2_pos = [loc_x + sep, loc_y + sep]
+                            probe3_pos = [loc_x - sep, loc_y - sep]
+                        elif cond_type == 'split':
+                            probe1_pos = [loc_x, loc_y]
+                            probe2_pos = [loc_x - sep, loc_y - sep]
+                            probe3_pos = [loc_x + sep, loc_y + sep]
                     elif target_jump == -1:  # outward
-                        probe1_ori += 270
-                        probe2_ori += 270
                         # probe2 is left and down from probe1
-                        probe1_pos = [loc_x + p1_shift, loc_y + p1_shift]
-                        probe2_pos = [loc_x - p2_shift + probe_size, loc_y - p2_shift]
+                        # probe1_pos = [loc_x + sep, loc_y + sep]
+                        # probe2_pos = [loc_x - sep + probe_size, loc_y - sep]
+                        if cond_type == 'straight':
+                            probe1_pos = [loc_x + sep, loc_y + sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x - sep, loc_y - sep]
+                        elif cond_type == 'corner':
+                            probe1_pos = [loc_x + sep, loc_y + sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x - sep, loc_y + sep]
+                        elif cond_type == 'short_back':
+                            probe1_pos = [loc_x + sep, loc_y + sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x + sep, loc_y + sep]
+                        elif cond_type == 'jump_back':
+                            probe1_pos = [loc_x, loc_y]
+                            probe2_pos = [loc_x - sep, loc_y - sep]
+                            probe3_pos = [loc_x + sep, loc_y + sep]
+                        elif cond_type == 'split':
+                            probe1_pos = [loc_x, loc_y]
+                            probe2_pos = [loc_x + sep, loc_y + sep]
+                            probe3_pos = [loc_x - sep, loc_y - sep]
+                            '''straight: 3, 5, 7 = (1, 1), (0, 0), (-1, -1)
+                            corner: 3, 5, 1 = (1, 1), (0, 0), (-1, 1)
+                            short_back: 3, 5, 3 = (1, 1), (0, 0), (1, 1)
+                            jump_back: 5, 7, 3 = (0, 0), (-1, -1), (1, 1)
+                            split: 5, 3 & 7(together)(0, 0), [(1, 1), (-1, -1)]'''
             else:
-                corner = 315
+                corner = 315  # bottom -right
                 loc_x = dist_from_fix * 1
                 loc_y = dist_from_fix * -1
                 if orientation == 'tangent':
                     if target_jump == 1:  # ACW
-                        probe1_ori += 270
-                        probe2_ori += 270
-                        probe1_pos = [loc_x + p1_shift, loc_y + p1_shift]
-                        probe2_pos = [loc_x - p2_shift + probe_size, loc_y - p2_shift]
+                        # probe1_pos = [loc_x + sep, loc_y + sep]
+                        # probe2_pos = [loc_x - sep + probe_size, loc_y - sep]
+                        '''straight: 7, 5, 3 = (-1, -1), (0, 0), (1, 1)
+                        corner: 7, 5, 9 = (-1, -1), (0, 0), (1, -1)
+                        short_back: 7, 5, 7 = (-1, -1), (0, 0), (-1, -1)
+                        jump_back: 5, 3, 7 = (0, 0), (1, 1), (-1, -1)
+                        split: 5, 7 & 3 (together)(0, 0), [(-1, -1), (1, 1)]'''
+                        if cond_type == 'straight':
+                            probe1_pos = [loc_x - sep, loc_y - sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x + sep, loc_y + sep]
+                        elif cond_type == 'corner':
+                            probe1_pos = [loc_x - sep, loc_y - sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x + sep, loc_y - sep]
+                        elif cond_type == 'short_back':
+                            probe1_pos = [loc_x - sep, loc_y - sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x - sep, loc_y - sep]
+                        elif cond_type == 'jump_back':
+                            probe1_pos = [loc_x, loc_y]
+                            probe2_pos = [loc_x + sep, loc_y + sep]
+                            probe3_pos = [loc_x - sep, loc_y - sep]
+                        elif cond_type == 'split':
+                            probe1_pos = [loc_x, loc_y]
+                            probe2_pos = [loc_x - sep, loc_y - sep]
+                            probe3_pos = [loc_x + sep, loc_y + sep]
                     elif target_jump == -1:  # CW
-                        probe1_ori += 90
-                        probe2_ori += 90
-                        probe1_pos = [loc_x - p1_shift, loc_y - p1_shift]
-                        probe2_pos = [loc_x + p2_shift - probe_size, loc_y + p2_shift]
+                        # probe1_pos = [loc_x - sep, loc_y - sep]
+                        # probe2_pos = [loc_x + sep - probe_size, loc_y + sep]
+                        if cond_type == 'straight':
+                            probe1_pos = [loc_x + sep, loc_y + sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x - sep, loc_y - sep]
+                        elif cond_type == 'corner':
+                            probe1_pos = [loc_x + sep, loc_y + sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x - sep, loc_y + sep]
+                        elif cond_type == 'short_back':
+                            probe1_pos = [loc_x + sep, loc_y + sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x + sep, loc_y + sep]
+                        elif cond_type == 'jump_back':
+                            probe1_pos = [loc_x, loc_y]
+                            probe2_pos = [loc_x - sep, loc_y - sep]
+                            probe3_pos = [loc_x + sep, loc_y + sep]
+                        elif cond_type == 'split':
+                            probe1_pos = [loc_x, loc_y]
+                            probe2_pos = [loc_x + sep, loc_y + sep]
+                            probe3_pos = [loc_x - sep, loc_y - sep]
+                            '''straight: 3, 5, 7 = (1, 1), (0, 0), (-1, -1)
+                            corner: 3, 5, 1 = (1, 1), (0, 0), (-1, 1)
+                            short_back: 3, 5, 3 = (1, 1), (0, 0), (1, 1)
+                            jump_back: 5, 7, 3 = (0, 0), (-1, -1), (1, 1)
+                            split: 5, 3 & 7(together)(0, 0), [(1, 1), (-1, -1)]'''
                 elif orientation == 'radial':
                     if target_jump == 1:  # inward
-                        probe1_ori += 0
-                        probe2_ori += 0
                         # probe2 is left and up from probe1
-                        probe1_pos = [loc_x + p1_shift, loc_y - p1_shift]
-                        probe2_pos = [loc_x - p2_shift + probe_size, loc_y + p2_shift]
-                    elif target_jump == -1:  # outward
-                        probe1_ori += 180
-                        probe2_ori += 180
-                        # probe2 is right and down from probe1
-                        probe1_pos = [loc_x - p1_shift, loc_y + p1_shift]
-                        probe2_pos = [loc_x + p2_shift - probe_size, loc_y - p2_shift]
+                        # probe1_pos = [loc_x + sep, loc_y - sep]
+                        # probe2_pos = [loc_x - sep + probe_size, loc_y + sep]
+                        '''straight: 9, 5, 1 =  (1, -1), (0, 0), (-1, 1)
+                        corner: 9, 5, 9 = (1, -1), (0, 0), (1, 1)
+                        short_back: 9, 5, 9 = (1, -1), (0, 0), (1, -1)
+                        jump_back: 5, 1, 9 = (0, 0), (-1, 1), (1, -1)
+                        split: 5, 1 & 9(together)(0, 0), [(1, -1), (-1, 1)]'''
+                        if cond_type == 'straight':
+                            probe1_pos = [loc_x + sep, loc_y - sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x - sep, loc_y + sep]
+                        elif cond_type == 'corner':
+                            probe1_pos = [loc_x + sep, loc_y - sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x + sep, loc_y + sep]
+                        elif cond_type == 'short_back':
+                            probe1_pos = [loc_x + sep, loc_y - sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x + sep, loc_y - sep]
+                        elif cond_type == 'jump_back':
+                            probe1_pos = [loc_x, loc_y]
+                            probe2_pos = [loc_x - sep, loc_y + sep]
+                            probe3_pos = [loc_x + sep, loc_y - sep]
+                        elif cond_type == 'split':
+                            probe1_pos = [loc_x, loc_y]
+                            probe2_pos = [loc_x - sep, loc_y + sep]
+                            probe3_pos = [loc_x + sep, loc_y - sep]
 
+                    elif target_jump == -1:  # outward
+                        # probe2 is right and down from probe1
+                        # probe1_pos = [loc_x - sep, loc_y + sep]
+                        # probe2_pos = [loc_x + sep - probe_size, loc_y - sep]
+                        if cond_type == 'straight':
+                            probe1_pos = [loc_x - sep, loc_y + sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x + sep, loc_y - sep]
+                        elif cond_type == 'corner':
+                            probe1_pos = [loc_x - sep, loc_y + sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x - sep, loc_y - sep]
+                        elif cond_type == 'short_back':
+                            probe1_pos = [loc_x - sep, loc_y + sep]
+                            probe2_pos = [loc_x, loc_y]
+                            probe3_pos = [loc_x - sep, loc_y + sep]
+                        elif cond_type == 'jump_back':
+                            probe1_pos = [loc_x, loc_y]
+                            probe2_pos = [loc_x + sep, loc_y - sep]
+                            probe3_pos = [loc_x - sep, loc_y + sep]
+                        elif cond_type == 'split':
+                            probe1_pos = [loc_x, loc_y]
+                            probe2_pos = [loc_x - sep, loc_y + sep]
+                            probe3_pos = [loc_x + sep, loc_y - sep]
             # loc_marker.setPos([loc_x, loc_y])
             probe1.setPos(probe1_pos)
-            probe1.setOri(probe1_ori)
             probe2.setPos(probe2_pos)
-            probe2.setOri(probe2_ori)
-            print(f"loc_marker: {[loc_x, loc_y]}, probe1_pos: {probe1_pos}, "
-                  f"probe2_pos: {probe2_pos}. dff: {dist_from_fix}")
+            probe3.setPos(probe3_pos)
+
+            print(f" dff: {dist_from_fix}, loc_marker: {[loc_x, loc_y]}\n"
+                  f"probe1_pos: {probe1_pos}, probe2_pos: {probe2_pos}, probe3_pos: {probe3_pos}.")
 
 
 
@@ -665,17 +1044,22 @@ for step in range(n_trials_per_stair):
             # If probes are presented concurrently, set ISI and probe2 to last for 0 frames.
             isi_dur_fr = ISI
             p2_fr = probe_duration
+            p3_fr = probe_duration
             if ISI < 0:
-                isi_dur_fr = p2_fr = 0
+                isi_dur_fr = p2_fr = p3_fr = 0
 
             # cumulative timing in frames for each part of a trial
             fr_end_fixation = int(fps / 2) + vary_fix
             fr_end_probe_1 = fr_end_fixation + probe_duration
-            fr_end_ISI = fr_end_probe_1 + isi_dur_fr
-            fr_end_probe_2 = fr_end_ISI + p2_fr
-            fr_end_response = fr_end_probe_2 + 10000 * fps  # ~40 seconds to respond
-            # print(f"fr_end_fixation: {fr_end_fixation}, fr_end_probe_1: {fr_end_probe_1}, "
-            #       f"fr_end_ISI: {fr_end_ISI}, fr_end_probe_2: {fr_end_probe_2}, fr_end_response: {fr_end_response}\n")
+            fr_end_ISI_1 = fr_end_probe_1 + isi_dur_fr
+            fr_end_probe_2 = fr_end_ISI_1 + p2_fr
+            fr_end_ISI_2 = fr_end_probe_2 + isi_dur_fr
+            fr_end_probe_3 = fr_end_ISI_2 + p3_fr
+            fr_end_response = fr_end_probe_3 + 10000 * fps  # ~40 seconds to respond
+            print(f"fr_end_fixation: {fr_end_fixation}, fr_end_probe_1: {fr_end_probe_1}, "
+                  f"fr_end_ISI_1: {fr_end_ISI_1}, fr_end_probe_2: {fr_end_probe_2}, "
+                  f"fr_end_ISI_2: {fr_end_ISI_2}, fr_end_probe_3: {fr_end_probe_3}, "
+                  f"fr_end_response: {fr_end_response}\n")
 
 
 
@@ -746,10 +1130,11 @@ for step in range(n_trials_per_stair):
                     resp.clock.reset()
 
                     # clear any previous key presses
+                    # todo: update to kb
                     event.clearEvents(eventType='keyboard')
                     theseKeys = []
 
-                if frameN == fr_end_probe_2 + 1:
+                if frameN == fr_end_probe_3 + 1:
                     # relax psychopy prioritization
                     # core.rush(False)
 
@@ -791,12 +1176,13 @@ for step in range(n_trials_per_stair):
                     if ISI == -1:  # SIMULTANEOUS CONDITION (concurrent)
                         if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
                             probe2.draw()
+                            probe3.draw()
                     fixation.setRadius(3)
                     fixation.draw()
                     # loc_marker.draw()
 
-                # ISI
-                elif fr_end_ISI >= frameN > fr_end_probe_1:
+                # ISI_1
+                elif fr_end_ISI_1 >= frameN > fr_end_probe_1:
                     if fusion_lock_rings:
                         fusion_lock_circle.draw()
                         fusion_lock_circle2.draw()
@@ -807,21 +1193,50 @@ for step in range(n_trials_per_stair):
                     # loc_marker.draw()
 
                 # PROBE 2 - after ISI but before end of probe2 interval
-                elif fr_end_probe_2 >= frameN > fr_end_ISI:
+                elif fr_end_probe_2 >= frameN > fr_end_ISI_1:
                     if fusion_lock_rings:
                         fusion_lock_circle.draw()
                         fusion_lock_circle2.draw()
                         fusion_lock_circle3.draw()
 
-                    if ISI >= 0:
-                        if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
-                            probe2.draw()
+                    # todo: get rid of this, there is no one probe condition.
+                    # if ISI >= 0:
+                    #     if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
+                    probe2.draw()
+                    # todo: if split cond, draw probe 3 too.
                     fixation.setRadius(3)
                     fixation.draw()
                     # loc_marker.draw()
 
-                # ANSWER - after probe 2 interval
-                elif frameN > fr_end_probe_2:
+                # ISI_2 (after probe 2, before probe 3)
+                elif fr_end_ISI_2 >= frameN > fr_end_probe_2:
+                    if fusion_lock_rings:
+                        fusion_lock_circle.draw()
+                        fusion_lock_circle2.draw()
+                        fusion_lock_circle3.draw()
+
+                    fixation.setRadius(3)
+                    fixation.draw()
+                    # loc_marker.draw()
+
+                # PROBE 3 - after ISI_2 but before end of probe3 interval
+                elif fr_end_probe_3 >= frameN > fr_end_ISI_2:
+                    if fusion_lock_rings:
+                        fusion_lock_circle.draw()
+                        fusion_lock_circle2.draw()
+                        fusion_lock_circle3.draw()
+
+                    # todo: get rid of this, there is no one probe condition.
+                    # if ISI >= 0:
+                    #     if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
+                    # todo: if split cond, don't draw probe 3
+                    probe3.draw()
+                    fixation.setRadius(3)
+                    fixation.draw()
+                    # loc_marker.draw()
+
+                # ANSWER - after probe 3 interval
+                elif frameN > fr_end_probe_3:
                     if fusion_lock_rings:
                         fusion_lock_circle.draw()
                         fusion_lock_circle2.draw()
@@ -879,26 +1294,33 @@ for step in range(n_trials_per_stair):
 
                             # get timings for each segment (probe1, ISI, probe2).
                             fr_diff_ms = [(expected_fr_sec - i) * 1000 for i in trial_fr_intervals]
-                            # print(f"sum(fr_diff_ms): {sum(fr_diff_ms)}")
+                            print(f"sum(fr_diff_ms): {sum(fr_diff_ms)}")
 
-                            p1_durs = fr_diff_ms[:probe_duration]
+                            p1_durs = fr_diff_ms[fr_end_fixation:fr_end_probe_1]
                             p1_diff = sum(p1_durs)
                             if ISI > 0:
-                                isi_durs = fr_diff_ms[probe_duration:-probe_duration]
+                                isi_1_durs = fr_diff_ms[fr_end_probe_1:fr_end_ISI_1]
+                                isi_2_durs = fr_diff_ms[fr_end_probe_2:fr_end_ISI_2]
                             else:
-                                isi_durs = []
-                            isi_diff = sum(isi_durs)
+                                isi_1_durs = []
+                                isi_2_durs = []
+                            isi_1_diff = sum(isi_1_durs)
+                            isi_2_diff = sum(isi_2_durs)
 
                             if ISI > -1:
-                                p2_durs = fr_diff_ms[-probe_duration:]
+                                p2_durs = fr_diff_ms[fr_end_ISI_1:fr_end_probe_2]
+                                p3_durs = fr_diff_ms[fr_end_ISI_2:fr_end_probe_3]
                             else:
                                 p2_durs = []
+                                p3_durs = []
                             p2_diff = sum(p2_durs)
-                            # todo: get probe 3 frame durs?
+                            p3_diff = sum(p2_durs)
 
-                            # print(f"\np1_durs: {p1_durs}, p1_diff: {p1_diff}\n"
-                            #       f"isi_durs: {isi_durs}, isi_diff: {isi_diff}\n"
-                            #       f"p2_durs: {p2_durs}, p2_diff: {p2_diff}\n")
+                            print(f"\np1_durs: {p1_durs}, p1_diff: {p1_diff}\n"
+                                  f"isi_1_durs: {isi_1_durs}, isi_1_diff: {isi_1_diff}\n"
+                                  f"p2_durs: {p2_durs}, p2_diff: {p2_diff}\n"
+                                  f"isi_2_durs: {isi_1_durs}, isi_2_diff: {isi_2_diff}\n"
+                                  f"p3_durs: {p2_durs}, p3_diff: {p2_diff}\n")
 
                             # check for dropped frames (or frames that are too short)
                             # if timings are bad, repeat trial
@@ -954,24 +1376,6 @@ for step in range(n_trials_per_stair):
 
 
 
-
-
-
-
-
-                # # User can repeat previous trial.
-                # # Note, if they respond incorrectly on trial n, then press 'r',
-                # # it is probably too late, as it will be repeating n+1, not n.
-                # if event.getKeys(keyList=["r"]) or event.getKeys(keyList=['num_9']):
-                #     print("\n\tparticipant pressed repeat.")
-                #     trial_x_locs = [exp_n_fr_recorded_list[-1], exp_n_fr_recorded_list[-1] + n_fr_recorded]
-                #     user_rpt_trial_x_locs.append(trial_x_locs)
-                #     repeat = True
-                #     trial_number -= 1
-                #     continueRoutine = False
-                #     continue
-
-
                 # refresh the screen
                 if continueRoutine:
                     win.flip()
@@ -1008,8 +1412,10 @@ for step in range(n_trials_per_stair):
         thisExp.addData('vary_fixation', vary_fixation)
         thisExp.addData('fr_end_fixation', fr_end_fixation)
         thisExp.addData('p1_diff', p1_diff)
-        thisExp.addData('isi_diff', isi_diff)
+        thisExp.addData('isi_1_diff', isi_1_diff)
         thisExp.addData('p2_diff', p2_diff)
+        thisExp.addData('isi_2_diff', isi_2_diff)
+        thisExp.addData('p3_diff', p3_diff)
         thisExp.addData('monitor_name', monitor_name)
         thisExp.addData('this_colourSpace', this_colourSpace)
         thisExp.addData('this_bgColour', this_bgColour)

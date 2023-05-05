@@ -1187,7 +1187,7 @@ def make_diff_from_conc_df(MASTER_TM2_thr_df, root_path, error_type='SE',
         thr_df.drop('participant', axis=1, inplace=True)
 
     if verbose:
-        print(f'thr_df:\n{thr_df}')
+        print(f'thr_df ({list(thr_df.columns)}):\n{thr_df}')
 
     '''diff_from_conc_df is an ISI x Sep df where the concurrent column is subtracted from all columns.
     therefore, the first column has zero for all values,
@@ -1195,7 +1195,7 @@ def make_diff_from_conc_df(MASTER_TM2_thr_df, root_path, error_type='SE',
     if 'Concurrent' in list(thr_df.columns):
         diff_from_conc_df = thr_df.iloc[:, :].sub(thr_df.Concurrent, axis=0)
     elif 'Conc' in list(thr_df.columns):
-        diff_from_conc_df = thr_df.iloc[:, :].sub(thr_df.Concurrent, axis=0)
+        diff_from_conc_df = thr_df.iloc[:, :].sub(thr_df.Conc, axis=0)
     elif 'ISI_-1' in list(thr_df.columns):
         diff_from_conc_df = thr_df.iloc[:, :].sub(thr_df['ISI_-1'], axis=0)
     if verbose:
@@ -1264,6 +1264,7 @@ def plot_diff_from_conc_lineplot(ave_DfC_df, error_df, fig_title=None,
         if os.path.isfile(error_df):
             error_df = pd.read_csv(error_df)
 
+    print(ave_DfC_df.index.name)
     ave_DfC_df.set_index('separation', drop=True, inplace=True)
     error_df.set_index('separation', drop=True, inplace=True)
 
@@ -3273,7 +3274,8 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
             error_DfC_df = pd.read_csv(os.path.join(save_path, error_DfC_name))
         else:
             print("making DfC files")
-            ave_DfC_df, error_DfC_df = make_diff_from_conc_df(all_df_path, save_path, n_trimmed=n_trimmed)
+            ave_DfC_df, error_DfC_df = make_diff_from_conc_df(all_df_path, save_path,
+                                                              n_trimmed=n_trimmed, exp_ave=exp_ave)
 
         error_DfC_df.rename(columns={'Concurrent': 'Conc', 'ISI_-1': 'Conc'},
                                      inplace=True)

@@ -18,13 +18,13 @@ from exp1a_psignifit_analysis import plt_heatmap_row_col
 
 # # todo: why does a_extract data work for my data but not Simon's???
 # exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2'
-# participant_list = ['Nick_350']  # , 'Simon']  # , 'Nick_half_speed']
+# participant_list = ['Simon_delete']  # , 'Simon']  # , 'Nick_half_speed']
 
 # exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2_half'
 # participant_list = ['Nick_half_speed', 'Simon_half']  # , 'Nick_half_speed']
 #
 exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2_350'
-participant_list = ['Simon']
+participant_list = ['Nick_350']
 # exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_23_OLED'
 # participant_list = ['Simon_OLED_2.13A_black']  # 'Nick_OLED_70', Nick_OLED_350 'Nick_70_OLED_2.13A'
 
@@ -197,7 +197,6 @@ for p_idx, participant_name in enumerate(participant_list):
     d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
                           trim_n=trim_n, error_type='SE', verbose=verbose)
     # groupby_col = None, cols_to_drop = None, cols_to_replace = None,
-
 
 
 
