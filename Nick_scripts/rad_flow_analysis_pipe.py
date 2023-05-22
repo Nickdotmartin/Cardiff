@@ -24,7 +24,7 @@ from exp1a_psignifit_analysis import plt_heatmap_row_col
 # participant_list = ['Nick_half_speed', 'Simon_half']  # , 'Nick_half_speed']
 #
 exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2_350'
-participant_list = ['Nick_350']
+participant_list = ['Simon']  # 'Nick_350']
 # exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_23_OLED'
 # participant_list = ['Simon_OLED_2.13A_black']  # 'Nick_OLED_70', Nick_OLED_350 'Nick_70_OLED_2.13A'
 
@@ -57,8 +57,9 @@ for p_idx, participant_name in enumerate(participant_list):
     # # search to automatically get run_folder_names
     dir_list = os.listdir(root_path)
     run_folder_names = []
-    for i in range(12):  # numbers 0 to 11
+    for i in range(n_runs):  # numbers 0 to 11
         check_dir = f'{participant_name}_{i+p_idx_plus}'   # numbers 1 to 12
+        print(check_dir)
         if check_dir in dir_list:
             run_folder_names.append(check_dir)
 
@@ -93,94 +94,94 @@ for p_idx, participant_name in enumerate(participant_list):
         '''a'''
         p_name = f'{participant_name}_{r_idx_plus}'
 
-        a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=run_isi_list, verbose=verbose)
-
-        run_data_path = f'{save_path}{os.sep}ALL_ISIs_sorted.xlsx'
-        run_data_df = pd.read_excel(run_data_path, engine='openpyxl',
-                                    # usecols=["ISI", "stair", "stair_name",
-                                    #          "step", "separation", "congruent",
-                                    #          "flow_dir", "probe_jump", "corner",
-                                    #          "newLum", "trial_response"]
-                                    )
-        print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
-
-        print(f"\nsort order of stair_names, separations(double) and cong_list (tiled)")
-
-        # stair_names_list = sorted(run_data_df['stair_name'].unique(), reverse=True)
+        # a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=run_isi_list, verbose=verbose)
+        #
+        # run_data_path = f'{save_path}{os.sep}ALL_ISIs_sorted.xlsx'
+        # run_data_df = pd.read_excel(run_data_path, engine='openpyxl',
+        #                             # usecols=["ISI", "stair", "stair_name",
+        #                             #          "step", "separation", "congruent",
+        #                             #          "flow_dir", "probe_jump", "corner",
+        #                             #          "newLum", "trial_response"]
+        #                             )
+        # print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
+        #
+        # print(f"\nsort order of stair_names, separations(double) and cong_list (tiled)")
+        #
+        # # stair_names_list = sorted(run_data_df['stair_name'].unique(), reverse=True)
+        # # print(f'stair_names_list: {stair_names_list}')
+        #
+        # # add neg sep column to make batman plots
+        # if 'neg_sep' not in list(run_data_df.columns):
+        #     def make_neg_sep(df):
+        #         if (df.congruent == -1) and (df.separation == 0.0):
+        #             return -.1
+        #         elif df.congruent == -1:
+        #             return 0 - df.separation
+        #         else:
+        #             return df.separation
+        #     run_data_df.insert(7, 'neg_sep', run_data_df.apply(make_neg_sep, axis=1))
+        #     print('\nadded neg_sep col')
+        #     print(run_data_df['neg_sep'].to_list())
+        #
+        # stair_names_list = sorted(run_data_df['neg_sep'].unique(), reverse=True)
         # print(f'stair_names_list: {stair_names_list}')
-
-        # add neg sep column to make batman plots
-        if 'neg_sep' not in list(run_data_df.columns):
-            def make_neg_sep(df):
-                if (df.congruent == -1) and (df.separation == 0.0):
-                    return -.1
-                elif df.congruent == -1:
-                    return 0 - df.separation
-                else:
-                    return df.separation
-            run_data_df.insert(7, 'neg_sep', run_data_df.apply(make_neg_sep, axis=1))
-            print('\nadded neg_sep col')
-            print(run_data_df['neg_sep'].to_list())
-
-        stair_names_list = sorted(run_data_df['neg_sep'].unique(), reverse=True)
-        print(f'stair_names_list: {stair_names_list}')
-
-        # sort stairnames in same order as sorted(abs(stairnames))
-        get_order_array = [i + .5 if i > 0 else i for i in stair_names_list]
-        get_order_array = [abs(i) for i in get_order_array]
-        get_order_array = np.array(get_order_array)
-        print(f"\nget_order_array: {get_order_array}")
-        sort_index = np.argsort(get_order_array)
-        reversed_sort_index = sort_index[::-1]
-        print(f"reversed_sort_index: {reversed_sort_index}")
-
-        stair_names_list = [stair_names_list[i] for i in reversed_sort_index]
-        print(f'\nstair_names_list: {stair_names_list}')
-
-        stair_list = list(range(len(stair_names_list)))
-
-
-        # pos_sep_list = sorted(run_data_df['separation'].unique(), reverse=True)
-        pos_sep_list = run_data_df['separation'].unique()
-        # print(f'pos_sep_list: {pos_sep_list}')
-        # second_sep_list = pos_sep_list
-        # print(f'second_sep_list: {second_sep_list}')
-        # sort sep_list in same order as sorted(abs(stairnames))
-        double_sep_list = sorted([item for sublist in zip(pos_sep_list, pos_sep_list) for item in sublist],
-                                 reverse=True)
-        print(f'double_sep_list: {double_sep_list}')
-
-        cong_list = sorted(run_data_df['congruent'].unique(), reverse=True)
+        #
+        # # sort stairnames in same order as sorted(abs(stairnames))
+        # get_order_array = [i + .5 if i > 0 else i for i in stair_names_list]
+        # get_order_array = [abs(i) for i in get_order_array]
+        # get_order_array = np.array(get_order_array)
+        # print(f"\nget_order_array: {get_order_array}")
+        # sort_index = np.argsort(get_order_array)
+        # reversed_sort_index = sort_index[::-1]
+        # print(f"reversed_sort_index: {reversed_sort_index}")
+        #
+        # stair_names_list = [stair_names_list[i] for i in reversed_sort_index]
+        # print(f'\nstair_names_list: {stair_names_list}')
+        #
+        # stair_list = list(range(len(stair_names_list)))
+        #
+        #
+        # # pos_sep_list = sorted(run_data_df['separation'].unique(), reverse=True)
+        # pos_sep_list = run_data_df['separation'].unique()
+        # # print(f'pos_sep_list: {pos_sep_list}')
+        # # second_sep_list = pos_sep_list
+        # # print(f'second_sep_list: {second_sep_list}')
+        # # sort sep_list in same order as sorted(abs(stairnames))
+        # double_sep_list = sorted([item for sublist in zip(pos_sep_list, pos_sep_list) for item in sublist],
+        #                          reverse=True)
+        # print(f'double_sep_list: {double_sep_list}')
+        #
+        # cong_list = sorted(run_data_df['congruent'].unique(), reverse=True)
+        # # print(f'cong_list: {cong_list}')
+        # cong_list = list(np.tile(cong_list, len(pos_sep_list)))
         # print(f'cong_list: {cong_list}')
-        cong_list = list(np.tile(cong_list, len(pos_sep_list)))
-        print(f'cong_list: {cong_list}')
+        #
+        #
+        #
+        # '''get psignifit thresholds df'''
+        # # cols_to_add_dict = {'stair_names': [18, -18, 6, -6, 3, -3, 2, -2, 1, -1, 0, -0.1],
+        # #                     'congruent':  [1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1],
+        # #                     'separation': [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]}
+        # cols_to_add_dict = {'stair_names': stair_names_list,
+        #                     'congruent':  cong_list,
+        #                     'separation': double_sep_list}
+        # thr_df = get_psignifit_threshold_df(root_path=root_path,
+        #                                     p_run_name=run_dir,
+        #                                     csv_name=run_data_df,
+        #                                     n_bins=9, q_bins=True,
+        #                                     sep_col='stair',
+        #                                     thr_col='probeLum',
+        #                                     isi_list=run_isi_list,
+        #                                     sep_list=stair_list,
+        #                                     conf_int=True,
+        #                                     thr_type='Bayes',
+        #                                     plot_both_curves=False,
+        #                                     cols_to_add_dict=cols_to_add_dict,
+        #                                     show_plots=False,
+        #                                     verbose=verbose)
+        # print(f'thr_df:\n{thr_df}')
 
 
-
-        '''get psignifit thresholds df'''
-        # cols_to_add_dict = {'stair_names': [18, -18, 6, -6, 3, -3, 2, -2, 1, -1, 0, -0.1],
-        #                     'congruent':  [1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1],
-        #                     'separation': [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]}
-        cols_to_add_dict = {'stair_names': stair_names_list,
-                            'congruent':  cong_list,
-                            'separation': double_sep_list}
-        thr_df = get_psignifit_threshold_df(root_path=root_path,
-                                            p_run_name=run_dir,
-                                            csv_name=run_data_df,
-                                            n_bins=9, q_bins=True,
-                                            sep_col='stair',
-                                            thr_col='probeLum',
-                                            isi_list=run_isi_list,
-                                            sep_list=stair_list,
-                                            conf_int=True,
-                                            thr_type='Bayes',
-                                            plot_both_curves=False,
-                                            cols_to_add_dict=cols_to_add_dict,
-                                            show_plots=False,
-                                            verbose=verbose)
-        print(f'thr_df:\n{thr_df}')
-#
-#
 #         '''b3'''
 #         b3_plot_staircase(run_data_path, thr_col='probeLum', show_plots=show_plots, verbose=verbose)
 #
