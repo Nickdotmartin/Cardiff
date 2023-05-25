@@ -24,7 +24,7 @@ exp_path = convert_path1
 
 '''run from here for participant level analysis.  '''
 # print(f"exp_path: {exp_path}")
-participant_list = ['Simon']  # 'Nick_sep0123', 'Nick_sep45', 'Nick_sep67', 'Nick_sep89', 'Nick_sep18_20']  #  'Simon', 'Nick'
+participant_list = ['Kristian']  # 'Nick_sep0123', 'Nick_sep45', 'Nick_sep67', 'Nick_sep89', 'Nick_sep18_20']  #  'Simon', 'Nick'
 # participant_list = ['Tony', 'Nick', 'Kristian', 'Kim', 'Simon']
 #
 split_1probe = False
@@ -276,55 +276,55 @@ for p_idx, participant_name in enumerate(participant_list):
     #                    show_plots=True, verbose=True)
     # '''end of participant analysis'''
 
-# '''experiment level analysis.  If the participant data has already been analysed, just comment out all the stuff above and run from here.'''
-# print(f'exp_path: {exp_path}')
-# print('\nget exp_average_data')
-# print(f'trim_list: {trim_list}')
-#
-# # participant_list = ['aa', 'bb', 'cc', 'dd', 'ee', 'Nick']
-# # trim_list = [2, 2, 2, 2, 2, 2]
-# # participant_list = ['Kim', 'Kristian', 'Nick', 'Simon_sep2']
-# trim_list = [2, 2, 2, 2, None]
-# # lum_col = 'probeLum'
-#
-# e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
-#                    error_type='SE', n_trimmed=trim_list, verbose=True)
-#
-# all_df_path = os.path.join(exp_path, 'MASTER_exp_all_thr.csv')
-# exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
-# err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
-#
-# ave_DfC_df, error_DfC_df = make_diff_from_conc_df(all_df_path, exp_path, n_trimmed=2, exp_ave=True)
-# print(f"ave_DfC_df:\n{ave_DfC_df}")
-# print(f"error_DfC_df:\n{error_DfC_df}")
-# # get ISI and sep values for whole experiment (not just last participant)
-# exp_ave_df = pd.read_csv(exp_ave_path)
-# print(f"exp_ave_df:\n{exp_ave_df}")
-#
-# isi_vals_list = sorted([int(i[4:]) for i in list(exp_ave_df.columns)[1:]])
-# # isi_vals_list = [-1, 0, 2, 4, 6, 9, 12, 24]
-# isi_name_list = [f"conc" if i == -1 else f"ISI_{i}" for i in isi_vals_list]
-#
-# sep_vals_list = list(exp_ave_df['separation'])
-# sep_name_list = [f"1probe" if i == 20 else i for i in sep_vals_list]
-# print(f"isi_name_list:\n{isi_name_list}")
-# print(f"isi_vals_list:\n{isi_vals_list}")
-# print(f"sep_vals_list:\n{sep_vals_list}")
-# print(f"sep_name_list:\n{sep_name_list}")
-#
-# make_average_plots(all_df_path=all_df_path,
-#                    ave_df_path=exp_ave_path,
-#                    error_bars_path=err_path,
-#                    error_type='SE',
-#                    ave_over_n=len(participant_list),
-#                    # n_trimmed=2,
-#                    n_trimmed=trim_list,
-#                    split_1probe=split_1probe,
-#                    # isi_name_list=isi_name_list,
-#                    # sep_vals_list=sep_vals_list,
-#                    # sep_name_list=sep_name_list,
-#                    exp_ave=True,  # participant ave, not exp ave
-#                    heatmap_annot_fmt='.0f',  # use '.3g' for 3 significant figures, '.2f' for 2dp, '.0f' for int.
-#                    show_plots=True, verbose=True)
+'''experiment level analysis.  If the participant data has already been analysed, just comment out all the stuff above and run from here.'''
+print(f'exp_path: {exp_path}')
+print('\nget exp_average_data')
+print(f'trim_list: {trim_list}')
+
+# participant_list = ['aa', 'bb', 'cc', 'dd', 'ee', 'Nick']
+# trim_list = [2, 2, 2, 2, 2, 2]
+participant_list = ['Kristian', 'Nick', 'Simon']
+trim_list = [2, 2, 2]  # , 2, None]
+# lum_col = 'probeLum'
+
+e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
+                   error_type='SE', n_trimmed=trim_list, verbose=True)
+
+all_df_path = os.path.join(exp_path, 'MASTER_exp_all_thr.csv')
+exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
+err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
+
+ave_DfC_df, error_DfC_df = make_diff_from_conc_df(all_df_path, exp_path, n_trimmed=2, exp_ave=True)
+print(f"ave_DfC_df:\n{ave_DfC_df}")
+print(f"error_DfC_df:\n{error_DfC_df}")
+# get ISI and sep values for whole experiment (not just last participant)
+exp_ave_df = pd.read_csv(exp_ave_path)
+print(f"exp_ave_df:\n{exp_ave_df}")
+
+isi_vals_list = sorted([int(i[4:]) for i in list(exp_ave_df.columns)[1:]])
+# isi_vals_list = [-1, 0, 2, 4, 6, 9, 12, 24]
+isi_name_list = [f"conc" if i == -1 else f"ISI_{i}" for i in isi_vals_list]
+
+sep_vals_list = list(exp_ave_df['separation'])
+sep_name_list = [f"1probe" if i == 20 else i for i in sep_vals_list]
+print(f"isi_name_list:\n{isi_name_list}")
+print(f"isi_vals_list:\n{isi_vals_list}")
+print(f"sep_vals_list:\n{sep_vals_list}")
+print(f"sep_name_list:\n{sep_name_list}")
+
+make_average_plots(all_df_path=all_df_path,
+                   ave_df_path=exp_ave_path,
+                   error_bars_path=err_path,
+                   error_type='SE',
+                   ave_over_n=len(participant_list),
+                   # n_trimmed=2,
+                   n_trimmed=trim_list,
+                   split_1probe=split_1probe,
+                   # isi_name_list=isi_name_list,
+                   # sep_vals_list=sep_vals_list,
+                   # sep_name_list=sep_name_list,
+                   exp_ave=True,  # participant ave, not exp ave
+                   heatmap_annot_fmt='.0f',  # use '.3g' for 3 significant figures, '.2f' for 2dp, '.0f' for int.
+                   show_plots=True, verbose=True)
 
 print('\nexp1a_analysis_pipe finished\n')

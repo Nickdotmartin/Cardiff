@@ -1293,9 +1293,9 @@ def plot_diff_from_conc_lineplot(ave_DfC_df, error_df, fig_title=None,
             error_df = pd.read_csv(error_df)
 
     print(ave_DfC_df.index.name)
-    ave_DfC_df.set_index('separation', drop=True, inplace=True)
-    error_df.set_index('separation', drop=True, inplace=True)
-
+    if ave_DfC_df.index.name != 'separation':
+        ave_DfC_df.set_index('separation', drop=True, inplace=True)
+        error_df.set_index('separation', drop=True, inplace=True)
     print(f"\nave_DfC_df:\n{ave_DfC_df}")
     print(f"\nerror_df:\n{error_df}")
 
@@ -1325,8 +1325,7 @@ def plot_diff_from_conc_lineplot(ave_DfC_df, error_df, fig_title=None,
                     yerr=error_df.iloc[idx],
                     marker='.', lw=2, elinewidth=.7,
                     capsize=5,
-                    color=my_colours[idx],
-        )
+                    color=my_colours[idx])
 
         leg_handle = mlines.Line2D([], [], color=my_colours[idx], label=sep_row,
                                    marker='.', linewidth=.5, markersize=4)
