@@ -51,7 +51,7 @@ os.chdir(_thisDir)
 # monitor_name = 'OLED'  # 'asus_cal', 'Nick_work_laptop', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18', 'OLED'
 
 # Store info about the experiment session (numbers keep the order)
-expName = 'rad_flow_23'  # from the Builder filename that created this script
+expName = 'rad_flow_23_OLED'  # from the Builder filename that created this script
 expInfo = {'1. Participant': 'nick_test',
            '2. Run_number': '5',
            '3. Probe duration in frames': [1, 2, 1, 50, 100],
@@ -167,7 +167,7 @@ save_output_as = os.path.join(save_dir, incomplete_output_filename)
 # Experiment Handler
 thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
                                  extraInfo=expInfo, runtimeInfo=None,
-                                 savePickle=None, saveWideText=True,
+                                 savePickle=True, saveWideText=True,
                                  dataFileName=save_output_as)
 
 # Monitor details: colour, luminance, pixel size and frame rate

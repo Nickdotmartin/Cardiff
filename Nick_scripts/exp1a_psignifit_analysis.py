@@ -37,8 +37,8 @@ pd.options.display.float_format = "{:,.2f}".format
 
 def lookup_p_name(p_name):
     """lookup participant name in old_p_list and return new_p_list name or vice versa"""
-    old_p_list = ['Tony', 'Simon', 'Maria', 'Kristian', 'Kim']
-    new_p_list = ['aa', 'bb', 'cc', 'dd', 'ee']
+    old_p_list = ['Tony', 'Simon', 'Maria', 'Kristian', 'Kim', 'Nick']
+    new_p_list = ['aa', 'bb', 'cc', 'dd', 'ee', 'ff']
 
     if p_name in old_p_list:
         p_idx = old_p_list.index(p_name)
@@ -80,8 +80,34 @@ def conc_to_first_isi_col(df, col_to_change='ISI_-1'):
     return out_df
 
 
+# def split_df_alternate_rows(df):
+#     """
+#     my original version of this function
+#     Split a dataframe into alternate rows.  Dataframes are organized by
+#     stair conditions relating to separations
+#     (e.g., in order 18, -18, 6, -6, 3, -3, 2, -2, 1, -1, 0, 0, 99, -99).
+#     For some plots this needs to be split into two dfs, e.g., :
+#     pos_sep_df: [18, 6, 3, 2, 1, 0, 99]
+#     neg_sep_df: [-18, -6, -3, -2, -1, 0, -99]
+#
+#     :param df: Dataframe to be split in two
+#     :return: two dataframes: pos_sep_df, neg_sep_df
+#     """
+#     print("\n*** running split_df_alternate_rows() ***")
+#
+#     n_rows, n_cols = df.shape
+#     pos_nums = list(range(0, n_rows, 2))
+#     neg_nums = list(range(1, n_rows, 2))
+#     pos_sep_df = df.iloc[pos_nums, :]
+#     neg_sep_df = df.iloc[neg_nums, :]
+#     pos_sep_df.reset_index(drop=True, inplace=True)
+#     neg_sep_df.reset_index(drop=True, inplace=True)
+#
+#     return pos_sep_df, neg_sep_df
+# refactor this code to be shorter and more efficient
 def split_df_alternate_rows(df):
     """
+    Co-pilot version of this function
     Split a dataframe into alternate rows.  Dataframes are organized by
     stair conditions relating to separations
     (e.g., in order 18, -18, 6, -6, 3, -3, 2, -2, 1, -1, 0, 0, 99, -99).
@@ -95,15 +121,17 @@ def split_df_alternate_rows(df):
     print("\n*** running split_df_alternate_rows() ***")
 
     n_rows, n_cols = df.shape
-    pos_nums = list(range(0, n_rows, 2))
-    neg_nums = list(range(1, n_rows, 2))
-    pos_sep_df = df.iloc[pos_nums, :]
-    neg_sep_df = df.iloc[neg_nums, :]
+    pos_sep_df = pd.DataFrame(columns=df.columns)
+    neg_sep_df = pd.DataFrame(columns=df.columns)
+    for i in range(n_rows):
+        if i % 2 == 0:
+            pos_sep_df = pos_sep_df.append(df.iloc[i, :])
+        else:
+            neg_sep_df = neg_sep_df.append(df.iloc[i, :])
     pos_sep_df.reset_index(drop=True, inplace=True)
     neg_sep_df.reset_index(drop=True, inplace=True)
 
     return pos_sep_df, neg_sep_df
-
 
 def merge_pos_and_neg_sep_dfs(pos_sep_df, neg_sep_df):
     """

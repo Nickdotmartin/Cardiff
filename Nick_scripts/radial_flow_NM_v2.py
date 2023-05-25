@@ -8,6 +8,7 @@ from math import *
 import numpy as np
 from psychopy import __version__ as psychopy_version
 from psychopy import gui, visual, core, data, event, monitors
+from psychopy.visual import Window
 
 from PsychoPy_tools import check_correct_monitor, get_pixel_mm_deg_values
 from kestenSTmaxVal import Staircase

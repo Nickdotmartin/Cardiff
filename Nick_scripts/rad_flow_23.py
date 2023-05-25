@@ -1,12 +1,16 @@
 from __future__ import division
 
 import psychopy
-from psychopy import __version__ as psychopy_version
-print(f"PsychoPy_version: {psychopy_version}")
-psychopy.useVersion('2021.2.3')
-print(f"PsychoPy_version: {psychopy_version}")
+
+'''
+The lab machine uses 2021.2.3, but this doesn't work on my laptop.
+ImportError: cannot import name '_vmTesting' from 'psychopy.tests' (unknown location)
+ However, I can test on an older version (e.g., 2021.2.2) which does work.
+psychopy.useVersion('2021.2.3')'''
+psychopy.useVersion('2021.2.2')  # works
+
 from psychopy import gui, visual, core, data, event, monitors
-print([method for method in dir(visual) if callable(getattr(visual, method))])
+
 import logging
 import os
 import copy
@@ -19,6 +23,10 @@ from math import tan, sqrt
 from PsychoPy_tools import get_pixel_mm_deg_values
 from kestenSTmaxVal import Staircase
 from exp1a_psignifit_analysis import fig_colours
+
+from psychopy import __version__ as psychopy_version
+print(f"PsychoPy_version: {psychopy_version}")
+
 
 
 '''
@@ -61,7 +69,7 @@ os.chdir(_thisDir)
 
 # Store info about the experiment session (numbers keep the order)
 expName = 'rad_flow_23'  # from the Builder filename that created this script
-expInfo = {'1. Participant': 'Nick_test_24042023',
+expInfo = {'1. Participant': 'Nick_test_23052023',
            '2. Run_number': '1',
            '3. Probe duration in frames': [2, 1, 50, 100],
            '4. fps': [60, 240, 120, 60],
@@ -72,8 +80,9 @@ expInfo = {'1. Participant': 'Nick_test_24042023',
            '9. Background': ['flow_rad', 'None'],
            '10. bg_speed_cond': ['Normal', 'Half-speed'],
            '11. prelim_bg_flow_ms': [350, 70],
-           '12. monitor_name': ['OLED', 'asus_cal', 'Nick_work_laptop', 'Samsung', 'Asus_VG24', 'HP_24uh', 'NickMac',
-                                'Iiyama_2_18'],
+           '12. monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'Samsung',
+                                'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
+           '13. mask_type': ['4_circles', '2_spokes']
            }
 
 # dialogue box
@@ -94,6 +103,7 @@ background = expInfo['9. Background']
 bg_speed_cond = expInfo['10. bg_speed_cond']
 prelim_bg_flow_ms = int(expInfo['11. prelim_bg_flow_ms'])
 monitor_name = expInfo['12. monitor_name']
+mask_type = expInfo['13. mask_type']
 
 n_trials_per_stair = 25
 probe_ecc = 4
@@ -177,7 +187,7 @@ save_output_as = os.path.join(save_dir, incomplete_output_filename)
 # Experiment Handler
 thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
                                  extraInfo=expInfo, runtimeInfo=None,
-                                 savePickle=None, saveWideText=True,
+                                 savePickle=True, saveWideText=True,
                                  dataFileName=save_output_as)
 
 # Monitor details: colour, luminance, pixel size and frame rate
@@ -234,16 +244,18 @@ mon.setSizePix((widthPix, heightPix))
 print(f"widthPix: {widthPix}, heightPix: {heightPix}, monitorwidth: {monitorwidth}, "
       f"viewdist: {viewdist}, viewdistPix: {viewdistPix}")
 
-# WINDOW SPEC
+# WINDOW
+'''if running on pycharm/mac it might need pyglet'''
+# todo: note change of winType 23/05/2023
 win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     colorSpace=this_colourSpace, color=this_bgColour,
-                    winType='pyglet',  # I've added this to make it work on pycharm/mac
+                    # winType='GLFW',  # I've added this to make it work on pycharm/mac
                     pos=[1, -1],  # pos gives position of top-left of screen
                     units='pix',
                     screen=display_number,
                     allowGUI=False,
                     fullscr=use_full_screen)
-
+print(f'winType: {win.winType}')
 
 # pixel size
 pixel_mm_deg_dict = get_pixel_mm_deg_values(monitor_name=monitor_name)
@@ -310,27 +322,59 @@ dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
 
 
 # MASK BEHIND PROBES
-raisedCosTexture1 = visual.filters.makeMask(256, shape='raisedCosine',
-                                            fringeWidth=0.3, radius=[1.0, 1.0])
+'''This is either circles in the four locations where probes can appear, or
+two diagoal lines that cross at the fixation point.'''
 mask_size = 150
-probeMask1 = visual.GratingStim(win, mask=raisedCosTexture1, size=(mask_size, mask_size),
-                                 colorSpace=this_colourSpace, color=this_bgColour,
-                                 tex=None, units='pix', pos=[dist_from_fix + 1, dist_from_fix + 1])
-probeMask2 = visual.GratingStim(win, mask=raisedCosTexture1, size=(mask_size, mask_size),
-                                 colorSpace=this_colourSpace, color=this_bgColour,
-                                 units='pix', tex=None, pos=[-dist_from_fix - 1, dist_from_fix + 1])
-probeMask3 = visual.GratingStim(win, mask=raisedCosTexture1, size=(mask_size, mask_size),
-                                 colorSpace=this_colourSpace, color=this_bgColour,
-                                 units='pix', tex=None, pos=[-dist_from_fix - 1, -dist_from_fix - 1])
-probeMask4 = visual.GratingStim(win, mask=raisedCosTexture1, size=(mask_size, mask_size),
-                                 colorSpace=this_colourSpace, color=this_bgColour,
-                                 units='pix', tex=None, pos=[dist_from_fix + 1, -dist_from_fix - 1])
 
+if mask_type == '4_circles':
+    raisedCosTexture1 = visual.filters.makeMask(256, shape='raisedCosine',
+                                                fringeWidth=0.3, radius=[1.0, 1.0])
+    probeMask1 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size, mask_size),
+                                    colorSpace=this_colourSpace, color=this_bgColour,
+                                    tex=None, units='pix', pos=[dist_from_fix + 1, dist_from_fix + 1]
+                                    )
+    probeMask2 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size, mask_size),
+                                    colorSpace=this_colourSpace, color=this_bgColour,
+                                    units='pix', tex=None, pos=[-dist_from_fix - 1, dist_from_fix + 1])
+    probeMask3 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size, mask_size),
+                                    colorSpace=this_colourSpace, color=this_bgColour,
+                                    units='pix', tex=None, pos=[-dist_from_fix - 1, -dist_from_fix - 1])
+    probeMask4 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size, mask_size),
+                                    colorSpace=this_colourSpace, color=this_bgColour,
+                                    units='pix', tex=None, pos=[dist_from_fix + 1, -dist_from_fix - 1])
+    # probe_mask_list = [probeMask1, probeMask2, probeMask3, probeMask4]
+    probes_mask = visual.BufferImageStim(win, stim=[probeMask1, probeMask2, probeMask3, probeMask4])
 
-#probeMask1 = visual.GratingStim()
-#probeMask2 = visual.GratingStim()
-#probeMask3 = visual.GratingStim()
-#probeMask4 = visual.GratingStim()
+elif mask_type == '2_spokes':
+    # since the middle of the screen is 0, 0; the corners are defined by half the width or height of the screen.
+    half_hi_pix = int(heightPix / 2)
+
+    # the thickness of the cross will change the vertices of the cross.
+    cross_thickness_pix = 150
+    horiz_offset_pix = int(cross_thickness_pix / 2)
+    scr_ratio = widthPix / heightPix
+    vert_offset_pix = int(horiz_offset_pix / scr_ratio)
+    print(f'vert_offset_pix = {vert_offset_pix}')
+    # draw a large cross with vertices which reaches the corners of the window
+    '''vertices start at the bottom left corner and go clockwise.  
+    the first row of four values in are: 1. the bl corner, 2. small distance up left side of screen, 
+    3. in toward the middle of the screen, 4. small distance down the left side of the screen from tl corner.  
+    '''
+
+    vertices = np.array([[-half_hi_pix - vert_offset_pix, -half_hi_pix], [-vert_offset_pix, 0],
+                         [-half_hi_pix - vert_offset_pix, half_hi_pix],
+                         [-half_hi_pix + vert_offset_pix, half_hi_pix], [0, vert_offset_pix],
+                         [half_hi_pix - vert_offset_pix, half_hi_pix],
+                         [half_hi_pix + vert_offset_pix, half_hi_pix], [vert_offset_pix, 0],
+                         [half_hi_pix + vert_offset_pix, -half_hi_pix],
+                         [half_hi_pix - vert_offset_pix, -half_hi_pix], [0, -vert_offset_pix],
+                         [-half_hi_pix + vert_offset_pix, -half_hi_pix]
+                         ])
+
+    probes_mask = visual.ShapeStim(win, vertices=vertices, fillColor=this_bgColour, lineColor=this_bgColour)
+# use this variable for the probe masks (either circles or spokes)
+# probes_mask = visual.BufferImageStim(win, stim=probe_mask_list)
+
 
 # BACKGROUND
 # flow_dots
@@ -373,7 +417,7 @@ mmask = np.append(mmask, blankslab, axis=1)  # and right
 # changed dotsmask color from grey, fades to black round edges which makes screen edges less visible
 dotsMask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
                               size=(widthPix, heightPix), units='pix', color='black')
-#dotsMask = visual.GratingStim()
+
 
 # MOUSE - hide cursor
 myMouse = event.Mouse(visible=False)
@@ -829,10 +873,11 @@ for step in range(n_trials_per_stair):
                         # draw flow_dots but with no motion
                         flow_dots.xys = np.array([x_flow, y_flow]).transpose()
                         flow_dots.draw()
-                        probeMask1.draw()
-                        probeMask2.draw()
-                        probeMask3.draw()
-                        probeMask4.draw()
+                        # probeMask1.draw()
+                        # probeMask2.draw()
+                        # probeMask3.draw()
+                        # probeMask4.draw()
+                        probes_mask.draw()
                         dotsMask.draw()
 
                     fixation.setRadius(3)
@@ -850,10 +895,11 @@ for step in range(n_trials_per_stair):
                         flow_dots.xys = np.array([x_flow, y_flow]).transpose()
                         flow_dots.draw()
 
-                        probeMask1.draw()
-                        probeMask2.draw()
-                        probeMask3.draw()
-                        probeMask4.draw()
+                        # probeMask1.draw()
+                        # probeMask2.draw()
+                        # probeMask3.draw()
+                        # probeMask4.draw()
+                        probes_mask.draw()
                         dotsMask.draw()
 
                     fixation.setRadius(3)
@@ -871,10 +917,11 @@ for step in range(n_trials_per_stair):
                         flow_dots.xys = np.array([x_flow, y_flow]).transpose()
                         flow_dots.draw()
 
-                        probeMask1.draw()
-                        probeMask2.draw()
-                        probeMask3.draw()
-                        probeMask4.draw()
+                        # probeMask1.draw()
+                        # probeMask2.draw()
+                        # probeMask3.draw()
+                        # probeMask4.draw()
+                        probes_mask.draw()
                         dotsMask.draw()
 
                     fixation.setRadius(3)
@@ -899,10 +946,11 @@ for step in range(n_trials_per_stair):
                         flow_dots.xys = np.array([x_flow, y_flow]).transpose()
                         flow_dots.draw()
 
-                        probeMask1.draw()
-                        probeMask2.draw()
-                        probeMask3.draw()
-                        probeMask4.draw()
+                        # probeMask1.draw()
+                        # probeMask2.draw()
+                        # probeMask3.draw()
+                        # probeMask4.draw()
+                        probes_mask.draw()
                         dotsMask.draw()
 
                     fixation.setRadius(3)
@@ -920,10 +968,11 @@ for step in range(n_trials_per_stair):
                         flow_dots.xys = np.array([x_flow, y_flow]).transpose()
                         flow_dots.draw()
 
-                        probeMask1.draw()
-                        probeMask2.draw()
-                        probeMask3.draw()
-                        probeMask4.draw()
+                        # probeMask1.draw()
+                        # probeMask2.draw()
+                        # probeMask3.draw()
+                        # probeMask4.draw()
+                        probes_mask.draw()
                         dotsMask.draw()
 
                     fixation.setRadius(3)
@@ -938,10 +987,11 @@ for step in range(n_trials_per_stair):
                     if background == 'flow_rad':
                         # draw flow_dots but with no motion
                         flow_dots.draw()
-                        probeMask1.draw()
-                        probeMask2.draw()
-                        probeMask3.draw()
-                        probeMask4.draw()
+                        # probeMask1.draw()
+                        # probeMask2.draw()
+                        # probeMask3.draw()
+                        # probeMask4.draw()
+                        probes_mask.draw()
                         dotsMask.draw()
 
                     fixation.setRadius(2)
