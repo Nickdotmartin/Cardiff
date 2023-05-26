@@ -28,12 +28,8 @@ from psychopy import __version__ as psychopy_version
 print(f"PsychoPy_version: {psychopy_version}")
 
 '''
-Updated version of radial flow experiment.
-Has variable fixation time, records frame rate, 
-Can have radial or tangential probes.
-Can vary the preliminary motion duration.
-Has same colour space and background colour as exp1.
-Updated wrap_depth_vals (WrapPoints) function.  
+May 23: check OLED monitor with moving background.
+Combines rad_flow_23.py with Mon_resp_time_stim_Oct23.py
 '''
 
 
@@ -62,8 +58,8 @@ os.chdir(_thisDir)
 
 
 # Store info about the experiment session (numbers keep the order)
-expName = 'rad_flow_23'  # from the Builder filename that created this script
-expInfo = {'1. Participant': 'Nick_test_23052023',
+expName = 'Mon_resp_time_stim_rad_flow_23'  # from the Builder filename that created this script
+expInfo = {'1. Participant': 'stim_test_26052023',
            '2. Run_number': '1',
            '3. Probe duration in frames': [2, 1, 50, 100],
            '4. fps': [60, 240, 120, 60],
@@ -101,7 +97,8 @@ mask_type = expInfo['13. mask_type']
 
 
 # misc settings
-n_trials_per_stair = 25
+# todo: note - four runs per stimulus
+n_trials_per_stair = 4 # 25
 probe_ecc = 4
 expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
 expInfo['time'] = datetime.now().strftime("%H:%M:%S")
@@ -115,17 +112,19 @@ This means that the experiment should have similar ms timings on monitors with d
 milliseconds: [100, 50, 41.66, 37.5, 33.34, 25, 16.67, 8.33, 0]
 frames@240hz: [24,  12,  10,    9,    8,     6,  4,    2,    0]
 '''
-ISI_frames = int(ISI_selected_ms * fps / 1000)
-ISI_actual_ms = (1/fps) * ISI_frames * 1000
-ISI = ISI_frames
-print(f"\nSelected {ISI_selected_ms}ms ISI.\n"
-      f"At {fps}Hz this is {ISI_frames} frames which each take {round(1000/fps, 2)} ms.\n")
-ISI_list = [ISI_frames]
+# ISI_frames = int(ISI_selected_ms * fps / 1000)
+# ISI_actual_ms = (1/fps) * ISI_frames * 1000
+# ISI = ISI_frames
+# print(f"\nSelected {ISI_selected_ms}ms ISI.\n"
+#       f"At {fps}Hz this is {ISI_frames} frames which each take {round(1000/fps, 2)} ms.\n")
+# ISI_list = [ISI_frames]
+ISI_list = [2, 4, 6, 9]
 print(f'ISI_list: {ISI_list}')
 
 
 # Separation values in pixels
-separations = [0, 1, 2, 3, 6, 18]
+# separations = [0, 1, 2, 3, 6, 18]
+separations = [2, 3, 6]
 print(f'separations: {separations}')
 
 
@@ -167,7 +166,8 @@ print(f'total_n_trials: {total_n_trials}')
 participant_name = participant_name + f'_bg{prelim_bg_flow_ms}'
 
 # save each participant's files into separate dir for each ISI
-isi_dir = f'ISI_{ISI}'
+# isi_dir = f'ISI_{ISI}'
+isi_dir = f'multi_ISI'
 save_dir = os.path.join(_thisDir, expName, participant_name,
                         f'{participant_name}_{run_number}', isi_dir)
 
@@ -485,6 +485,26 @@ recorded_fr_counter = 0
 fr_counter_per_trial = []
 cond_list = []
 
+# Trial counter
+trial_counter = True
+trials_counter = visual.TextStim(win=win, name='trials_counter', text="???",
+                                 font='Arial', height=20,
+                                 # default set to black (e.g., invisible)
+                                 color='white',
+                                 pos=[-widthPix*.20, -heightPix*.20])
+if trials_counter:
+    # if trials counter yes, change colour to white.
+    trials_counter.color = 'white'
+
+frame_counter = visual.TextStim(win=win, name='frame_counter', text="???",
+                                 font='Arial', height=20,
+                                 # default set to black (e.g., invisible)
+                                 color='white',
+                                 pos=[-widthPix*.20, -heightPix*.22])
+
+
+
+
 
 # STAIRCASE
 expInfo['stair_list'] = list(range(n_stairs))
@@ -529,7 +549,7 @@ actual_trials_inc_rpt = 0
 # EXPERIMENT
 print('\n*** exp loop*** \n\n')
 for step in range(n_trials_per_stair):
-    np.random.shuffle(stairs)
+    # np.random.shuffle(stairs)
     for thisStair in stairs:
 
         # repeat the trial if [r] has been pressed or frames were dropped
@@ -542,6 +562,7 @@ for step in range(n_trials_per_stair):
             stair_idx = thisStair.extraInfo['stair_idx']
             print(f"\n({actual_trials_inc_rpt}) trial_number: {trial_number}, "
                   f"stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
+            trials_counter.text = f"{stair_idx}. {thisStair}.  {step+1}/{n_trials_per_stair}"
 
             # conditions (ISI, congruence)
             ISI = ISI_vals_list[stair_idx]
@@ -568,8 +589,11 @@ for step in range(n_trials_per_stair):
 
             # use congruence to determine the flow direction and target jump direction
             # 1 is contracting/inward/backwards, -1 is expanding/outward/forwards
-            flow_dir = np.random.choice([1, -1])
-            target_jump = congruent * flow_dir
+            # flow_dir = np.random.choice([1, -1])
+            # target_jump = congruent * flow_dir
+            # todo: note - target jump is always the same (1), so, flow dir == congruence?
+            flow_dir = congruent  # np.random.choice([1, -1])
+            target_jump = 1  # congruent * flow_dir
 
             # # direction in which the probe jumps : CW or CCW (tangent) or expand vs contract (radial)
             if orientation == 'tangent':
@@ -592,7 +616,8 @@ for step in range(n_trials_per_stair):
                     fixation.fillColor = 'grey'
 
             # Luminance (staircase varies probeLum)
-            probeLum = thisStair.next()
+            # probeLum = thisStair.next()
+            probeLum = maxLum  # this_cond.next()
             probeColor255 = int(probeLum * LumColor255Factor)  # rgb255 are ints.
             probeColor1 = probeLum / maxLum
 
@@ -607,7 +632,8 @@ for step in range(n_trials_per_stair):
 
             # PROBE LOCATION
             # # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
-            corner = random.choice([45, 135, 225, 315])
+            # corner = random.choice([45, 135, 225, 315])
+            corner = 225  # random.choice([45, 135, 225, 315])
             corner_name_dict = {45: 'top_right', 135: 'top_left', 225: 'bottom_left', 315: 'bottom_right'}
             corner_name = corner_name_dict[corner]
             print(f"corner: {corner} {corner_name}")
@@ -626,11 +652,11 @@ for step in range(n_trials_per_stair):
             '''Both probes should be equally spaced around the meridian point.
             The original script had probe 1 on meridian and probe 2 shifted by separation.
             So now they both should be shifted by half the separation away from meridian in opposite directions.
-            E.g., if sep = 4, probe 1 will be shifted 2 pixels away from meridian in one direction 
-            probe 2 will be shifted 2 pixels away from the meridian in the other direction. 
-            Where separation is an odd number, both probes are shift by half sep, 
-            then the extra pixel is added onto either probe 1 r probe 2.  
-            E.g., if sep = 5, either probe1 shifts by 2 and probe 2 by 3, or vice versa. 
+            E.g., if sep = 4, probe 1 will be shifted 2 pixels away from meridian in one direction
+            probe 2 will be shifted 2 pixels away from the meridian in the other direction.
+            Where separation is an odd number, both probes are shift by half sep,
+            then the extra pixel is added onto either probe 1 r probe 2.
+            E.g., if sep = 5, either probe1 shifts by 2 and probe 2 by 3, or vice versa.
             To check probe locations, uncomment loc_marker'''
             if sep == 99:
                 p1_shift = p2_shift = 0
@@ -645,7 +671,7 @@ for step in range(n_trials_per_stair):
 
 
             # set position and orientation of probes
-            '''NEW - set orientations to p1=zero and p2=180 (not zero), 
+            '''NEW - set orientations to p1=zero and p2=180 (not zero),
             then add the same orientation change to both'''
             probe1_ori = 0
             probe2_ori = 180
@@ -656,7 +682,7 @@ for step in range(n_trials_per_stair):
                 '''in top-right corner, both x and y increase (right and up)'''
                 loc_x = dist_from_fix * 1
                 loc_y = dist_from_fix * 1
-                '''orientation' here refers to the relationship between probes, 
+                '''orientation' here refers to the relationship between probes,
                 whereas probe1_ori refers to rotational angle of probe stimulus'''
                 if orientation == 'tangent':
                     if target_jump == 1:  # CW
@@ -875,6 +901,10 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(3)
                     fixation.draw()
 
+                    trials_counter.draw()
+                    frame_counter.text = frameN
+                    frame_counter.draw()
+
                 # Background motion prior to probe1 - after fixation, but before probe 1
                 elif t_bg_motion >= frameN > t_fixation:
                     if background == 'flow_rad':
@@ -891,6 +921,10 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(3)
                     fixation.draw()
 
+                    trials_counter.draw()
+                    frame_counter.text = frameN
+                    frame_counter.draw()
+
                 # PROBE 1 - after background motion, before end of probe1 interval
                 elif t_probe_1 >= frameN > t_bg_motion:
                     if background == 'flow_rad':
@@ -906,6 +940,10 @@ for step in range(n_trials_per_stair):
                         dotsMask.draw()
                     fixation.setRadius(3)
                     fixation.draw()
+
+                    trials_counter.draw()
+                    frame_counter.text = frameN
+                    frame_counter.draw()
 
                     probe1.draw()
                     if ISI == -1:  # SIMULTANEOUS CONDITION (concurrent)
@@ -929,6 +967,10 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(3)
                     fixation.draw()
 
+                    trials_counter.draw()
+                    frame_counter.text = frameN
+                    frame_counter.draw()
+
                 # PROBE 2 - after ISI but before end of probe2 interval
                 elif t_probe_2 >= frameN > t_ISI:
                     if background == 'flow_rad':
@@ -945,6 +987,10 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(3)
                     fixation.draw()
 
+                    trials_counter.draw()
+                    frame_counter.text = frameN
+                    frame_counter.draw()
+
                     if ISI >= 0:
                         if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
                             probe2.draw()
@@ -959,6 +1005,10 @@ for step in range(n_trials_per_stair):
                         dotsMask.draw()
                     fixation.setRadius(2)
                     fixation.draw()
+
+                    trials_counter.draw()
+                    frame_counter.text = frameN
+                    frame_counter.draw()
 
 
                     # ANSWER
@@ -1077,8 +1127,8 @@ for step in range(n_trials_per_stair):
         thisExp.addData('sep_deg', sep_deg)
         thisExp.addData('neg_sep', neg_sep)
         thisExp.addData('ISI', ISI)
-        thisExp.addData('ISI_selected_ms', ISI_selected_ms)
-        thisExp.addData('ISI_actual_ms', ISI_actual_ms)
+        # thisExp.addData('ISI_selected_ms', ISI_selected_ms)
+        # thisExp.addData('ISI_actual_ms', ISI_actual_ms)
         thisExp.addData('isi_dur_fr', isi_dur_fr)
         thisExp.addData('congruent', congruent)
         thisExp.addData('flow_dir', flow_dir)
