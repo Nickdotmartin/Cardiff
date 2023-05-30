@@ -22,6 +22,10 @@ from datetime import datetime
 from math import tan, sqrt
 from PsychoPy_tools import get_pixel_mm_deg_values
 from kestenSTmaxVal import Staircase
+
+# todo: OLED ps curently doesn't have seaborn installed, so can't use the colour palette.
+#  Either configure one without seaborn, remove that code or install seaborn.
+
 from exp1a_psignifit_analysis import fig_colours
 
 from psychopy import __version__ as psychopy_version

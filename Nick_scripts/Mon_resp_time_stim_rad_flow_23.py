@@ -7,7 +7,7 @@ The lab machine uses 2021.2.3, but this doesn't work on my laptop.
 ImportError: cannot import name '_vmTesting' from 'psychopy.tests' (unknown location)
  However, I can test on an older version (e.g., 2021.2.2) which does work.
 psychopy.useVersion('2021.2.3')'''
-psychopy.useVersion('2021.2.2')  # works
+#psychopy.useVersion('2021.2.2')  # works
 
 from psychopy import gui, visual, core, data, event, monitors
 
@@ -22,7 +22,7 @@ from datetime import datetime
 from math import tan, sqrt
 from PsychoPy_tools import get_pixel_mm_deg_values
 from kestenSTmaxVal import Staircase
-from exp1a_psignifit_analysis import fig_colours
+#from exp1a_psignifit_analysis import fig_colours
 
 from psychopy import __version__ as psychopy_version
 print(f"PsychoPy_version: {psychopy_version}")
@@ -59,18 +59,18 @@ os.chdir(_thisDir)
 
 # Store info about the experiment session (numbers keep the order)
 expName = 'Mon_resp_time_stim_rad_flow_23'  # from the Builder filename that created this script
-expInfo = {'1. Participant': 'stim_test_26052023',
+expInfo = {'1. Participant': 'OLED_stim_test_26052023',
            '2. Run_number': '1',
-           '3. Probe duration in frames': [2, 1, 50, 100],
-           '4. fps': [60, 240, 120, 60],
+           '3. Probe duration in frames': [1, 2, 50, 100],
+           '4. fps': [120, 60, 240, 120, 60],
            '5. ISI_dur_in_ms': [100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0],
            '6. Probe_orientation': ['radial', 'tangent'],
-           '7. Vary_fixation': [True, False],
+           '7. Vary_fixation': [False, True, False],
            '8. Record_frame_durs': [True, False],
            '9. Background': ['flow_rad', 'None'],
            '10. bg_speed_cond': ['Normal', 'Half-speed'],
            '11. prelim_bg_flow_ms': [350, 70],
-           '12. monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'Samsung',
+           '12. monitor_name': ['OLED', 'Nick_work_laptop', 'OLED', 'asus_cal', 'Samsung',
                                 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
            '13. mask_type': ['4_circles', '2_spokes']
            }
@@ -490,17 +490,17 @@ trial_counter = True
 trials_counter = visual.TextStim(win=win, name='trials_counter', text="???",
                                  font='Arial', height=20,
                                  # default set to black (e.g., invisible)
-                                 color='white',
-                                 pos=[-widthPix*.20, -heightPix*.20])
+                                 color='grey',
+                                 pos=[-widthPix*.05, -heightPix*.20]) # was .2
 if trials_counter:
     # if trials counter yes, change colour to white.
-    trials_counter.color = 'white'
+    trials_counter.color = 'grey'
 
 frame_counter = visual.TextStim(win=win, name='frame_counter', text="???",
                                  font='Arial', height=20,
                                  # default set to black (e.g., invisible)
-                                 color='white',
-                                 pos=[-widthPix*.20, -heightPix*.22])
+                                 color='grey',
+                                 pos=[-widthPix*.05, -heightPix*.22])
 
 
 
@@ -562,7 +562,7 @@ for step in range(n_trials_per_stair):
             stair_idx = thisStair.extraInfo['stair_idx']
             print(f"\n({actual_trials_inc_rpt}) trial_number: {trial_number}, "
                   f"stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
-            trials_counter.text = f"{stair_idx}. {thisStair}.  {step+1}/{n_trials_per_stair}"
+            trials_counter.text = f"{prelim_bg_flow_ms}: {stair_idx}. {thisStair}.  {step+1}/{n_trials_per_stair}"
 
             # conditions (ISI, congruence)
             ISI = ISI_vals_list[stair_idx]
@@ -807,7 +807,7 @@ for step in range(n_trials_per_stair):
             '''to reduce anticipatory effects that might arise from fixation always being same length.
             if False, vary_fix == .5 seconds, so t_fixation is 1 second.
             if Ture, vary_fix is between 0 and 1 second, so t_fixation is between .5 and 1.5 seconds.'''
-            vary_fix = int(fps / 2)
+            vary_fix = 0  # int(fps / 2)
             if vary_fixation:
                 vary_fix = np.random.randint(0, fps)
 
@@ -827,7 +827,7 @@ for step in range(n_trials_per_stair):
             t_ISI = t_probe_1 + isi_dur_fr
             t_probe_2 = t_ISI + p2_fr
             t_response = t_probe_2 + 10000 * fps  # ~40 seconds to respond
-            print(f"t_fixation: {t_fixation}, t_probe_1: {t_probe_1}, "
+            print(f"t_fixation: {t_fixation}, t_bg_motion: {t_bg_motion}, t_probe_1: {t_probe_1}, "
                   f"t_ISI: {t_ISI}, t_probe_2: {t_probe_2}, t_response: {t_response}\n")
 
 
@@ -944,6 +944,8 @@ for step in range(n_trials_per_stair):
                     trials_counter.draw()
                     frame_counter.text = frameN
                     frame_counter.draw()
+                    
+                    print(frameN)
 
                     probe1.draw()
                     if ISI == -1:  # SIMULTANEOUS CONDITION (concurrent)
@@ -1186,21 +1188,24 @@ if record_fr_durs:
           f"frame_tolerance_ms: +/- {round(frame_tolerance_ms, 2)})")
 
     '''set colours for lines on plot.'''
-    # get set of colours
-    my_colours = fig_colours(n_stairs, alternative_colours=False)
-    # associate colours with conditions
-    colour_dict = {k: v for (k, v) in zip(stair_names_list, my_colours)}
-    # make list of colours based on order of conditions
-    cond_colour_list = [colour_dict[i] for i in cond_list]
+#    # get set of colours
+#    my_colours = fig_colours(n_stairs, alternative_colours=False)
+#    # associate colours with conditions
+#    colour_dict = {k: v for (k, v) in zip(stair_names_list, my_colours)}
+#    # make list of colours based on order of conditions
+#    cond_colour_list = [colour_dict[i] for i in cond_list]
 
     # plot frame intervals across the experiment with discontinuous line, coloured for each cond
-    for trial_x_vals, trial_fr_durs, colour in zip(fr_counter_per_trial, fr_int_per_trial, cond_colour_list):
-        plt.plot(trial_x_vals, trial_fr_durs, color=colour)
+#    for trial_x_vals, trial_fr_durs, colour in zip(fr_counter_per_trial, fr_int_per_trial, cond_colour_list):
+    for trial_x_vals, trial_fr_durs in zip(fr_counter_per_trial, fr_int_per_trial):
+        plt.plot(trial_x_vals, trial_fr_durs)
 
     # add legend with colours per condition
     legend_handles_list = []
     for cond in stair_names_list:
-        leg_handle = mlines.Line2D([], [], color=colour_dict[cond], label=cond,
+#        leg_handle = mlines.Line2D([], [], color=colour_dict[cond], label=cond,
+#                                   marker='.', linewidth=.5, markersize=4)
+        leg_handle = mlines.Line2D([], [], label=cond,
                                    marker='.', linewidth=.5, markersize=4)
         legend_handles_list.append(leg_handle)
 
