@@ -23,10 +23,10 @@ from math import tan, sqrt
 from PsychoPy_tools import get_pixel_mm_deg_values
 from kestenSTmaxVal import Staircase
 
-# todo: OLED ps curently doesn't have seaborn installed, so can't use the colour palette.
-#  Either configure one without seaborn, remove that code or install seaborn.
 
-from exp1a_psignifit_analysis import fig_colours
+
+
+
 
 from psychopy import __version__ as psychopy_version
 print(f"PsychoPy_version: {psychopy_version}")
@@ -67,7 +67,7 @@ os.chdir(_thisDir)
 
 # Store info about the experiment session (numbers keep the order)
 expName = 'rad_flow_23'  # from the Builder filename that created this script
-expInfo = {'1. Participant': 'Nick_test_23052023',
+expInfo = {'1. Participant': 'Nick_test_01062023',
            '2. Run_number': '1',
            '3. Probe duration in frames': [2, 1, 50, 100],
            '4. fps': [60, 240, 120, 60],
@@ -1140,8 +1140,16 @@ if record_fr_durs:
           f"frame_tolerance_ms: +/- {round(frame_tolerance_ms, 2)})")
 
     '''set colours for lines on plot.'''
-    # get set of colours
-    my_colours = fig_colours(n_stairs, alternative_colours=False)
+    if monitor_name == 'OLED':
+        # list of 20 colours from matplotlib
+        col_list = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple',
+                    'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive', 'tab:cyan',
+                    'xkcd:lightblue', 'xkcd:lightgreen', 'xkcd:lightred', 'xkcd:lightpurple',
+                    'xkcd:lightbrown', 'xkcd:lightpink', 'xkcd:lightgray', 'xkcd:lightolive', 'xkcd:lightcyan']
+        my_colours = col_list[:n_stairs]
+    else:
+        from exp1a_psignifit_analysis import fig_colours
+        my_colours = fig_colours(n_stairs, alternative_colours=False)
     # associate colours with conditions
     colour_dict = {k: v for (k, v) in zip(stair_names_list, my_colours)}
     # make list of colours based on order of conditions

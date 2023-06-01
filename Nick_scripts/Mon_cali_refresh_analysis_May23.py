@@ -519,138 +519,309 @@ print(f'\nx_tick_locs: {x_tick_locs}')
 x_tick_labels = np.arange(x_tick_label_start, 26 + x_tick_label_start, 2)
 print(f'x_tick_labels: {x_tick_labels}')
 
-# for cond_ver_name in conds_to_use:
-for cond_ver_name in cond_ver_list:
+# # for cond_ver_name in conds_to_use:
+# for cond_ver_name in cond_ver_list:
+#
+#     print(f'\ncond_ver_name: {cond_ver_name}')
+#
+#     split_txt = cond_ver_name.split("_")
+#     print(f'split_txt: {split_txt}')
+#
+#     congruence=split_txt[0]
+#     isi_val = int(split_txt[2])
+#     isi_name = f"ISI{isi_val}"
+#     sep_val = int(split_txt[4])
+#     # probes_dir = split_txt[4]
+#     sep_name = f"sep{sep_val}"
+#     # ver_name = split_txt[4][:2]
+#     ver_name = split_txt[5][:2]
+#     print(f'split_txt: {split_txt}')
+#     print(f'congruence: {congruence}')
+#     print(f'isi_val: {isi_val}')
+#     print(f'isi_name: {isi_name}')
+#     print(f'sep_val: {sep_val}')
+#     print(f'sep_name: {sep_name}')
+#     # print(f'probes_dir: {probes_dir}')
+#     print(f'ver_name: {ver_name}')
+#
+#
+#     '''insert vertical lines marking start and finish of each probe.
+#     First probe should appear at frame 8 (@960)'''
+#     vline_pr1_on = 8
+#     vline_pr1_off = vline_pr1_on + 8
+#
+#     if sep_val == 400:
+#         vline_pr1_off = vline_pr1_on + 16
+#     if sep_val == 800:
+#         vline_pr1_off = vline_pr1_on + 32
+#     if sep_val == 2400:
+#         vline_pr1_off = vline_pr1_on + 96
+#
+#     vline_pr2_on = 8 + probe2_dict[isi_val]
+#     vline_pr2_off = vline_pr2_on + 8
+#
+#     cond_df = results_df[results_df['filename'] == cond_ver_name]
+#     print(f'cond_df:\n{cond_df}')
+#
+#     # 1. p1, p2, joint mean on same plot
+#     long_df = make_long_df(wide_df=cond_df,
+#                            cols_to_keep=['filename', 'idx'],
+#                            cols_to_change=['p1_mean', 'p2_mean', 'joint_mean'],
+#                            cols_to_change_show='mean_lum',
+#                            new_col_name='loc', strip_from_cols='_mean', verbose=True)
+#     print(f'long_df:\n{long_df}')
+#
+#     fig, ax = plt.subplots(figsize=(6, 6))
+#     sns.lineplot(data=long_df, x='idx', y='mean_lum', hue='loc', ax=ax)
+#     ax.set_xlabel(f'frames @ {fps}Hz')
+#     ax.set_ylabel('pixel values (0:255')
+#
+#     # probe on/off markers
+#     plt.axvline(x=vline_pr1_on, color='grey', linestyle='--')
+#     plt.axvline(x=vline_pr1_off, color='grey', linestyle='--')
+#     if sep_val not in [99, 400, 800, 2400]:
+#         plt.axvline(x=vline_pr2_on, color='grey', linestyle='-.')
+#         plt.axvline(x=vline_pr2_off, color='grey', linestyle='-.')
+#
+#     ax.set_xticks(x_tick_locs)
+#     ax.set_xticklabels(x_tick_labels)
+#     # add shaded background for frames at 240
+#     x_bg = np.arange(0, 100, 4)
+#     for x0, x1 in zip(x_bg[::2], x_bg[1::2]):
+#         plt.axvspan(x0, x1, color='black', alpha=0.05, zorder=0, linewidth=None)
+#
+#     plt.title(f'{cond_ver_name}: mean luminance')
+#     # fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\mon_cali_images_Oct22\cond_figs\mean_lum"
+#     fig_dir = os.path.join(images_dir, 'aaa_cond_figs', 'mean_lum')
+#     if not os.path.isdir(fig_dir):
+#         os.makedirs(fig_dir)
+#     fig_savename = f'{cond_ver_name}_mean_lum.png'
+#     fig_path = os.path.join(fig_dir, fig_savename)
+#     plt.savefig(fig_path)
+#     plt.show()
+#     plt.close()
+#
+#     # 2. p1, p2, joint max on same plot
+#     long_df = make_long_df(wide_df=cond_df,
+#                            cols_to_keep=['filename', 'idx'],
+#                            cols_to_change=['p1_max', 'p2_max', 'joint_max'],
+#                            cols_to_change_show='max_lum',
+#                            new_col_name='loc', strip_from_cols='_max', verbose=True)
+#     print(f'long_df:\n{long_df}')
+#
+#     fig, ax = plt.subplots(figsize=(6, 6))
+#     sns.lineplot(data=long_df, x='idx', y='max_lum', hue='loc', ax=ax)
+#     ax.set_xlabel(f'frames @ {fps}Hz')
+#     ax.set_ylabel('pixel values (0:255')
+#
+#     # probe on/off markers
+#     plt.axvline(x=vline_pr1_on, color='grey', linestyle='--')
+#     plt.axvline(x=vline_pr1_off, color='grey', linestyle='--')
+#     if sep_val not in [99, 400, 800, 2400]:
+#         plt.axvline(x=vline_pr2_on, color='grey', linestyle='-.')
+#         plt.axvline(x=vline_pr2_off, color='grey', linestyle='-.')
+#
+#     ax.set_xticks(x_tick_locs)
+#     ax.set_xticklabels(x_tick_labels)
+#     # add shaded background for frames at 240
+#     x_bg = np.arange(0, 100, 4)
+#     for x0, x1 in zip(x_bg[::2], x_bg[1::2]):
+#         plt.axvspan(x0, x1, color='black', alpha=0.05, zorder=0, linewidth=None)
+#
+#     plt.title(f'{cond_ver_name}: max luminance')
+#     # fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\mon_cali_images_Oct22\cond_figs\max_lum"
+#     fig_dir = os.path.join(images_dir, 'aaa_cond_figs', 'max_lum')
+#     if not os.path.isdir(fig_dir):
+#         os.makedirs(fig_dir)
+#     fig_savename = f'{cond_ver_name}_max_lum.png'
+#     fig_path = os.path.join(fig_dir, fig_savename)
+#     plt.savefig(fig_path)
+#     plt.show()
+#     plt.close()
 
-    print(f'\ncond_ver_name: {cond_ver_name}')
-
-    split_txt = cond_ver_name.split("_")
-    print(f'split_txt: {split_txt}')
-
-    congruence=split_txt[0]
-    isi_val = int(split_txt[2])
-    isi_name = f"ISI{isi_val}"
-    sep_val = int(split_txt[4])
-    # probes_dir = split_txt[4]
-    sep_name = f"sep{sep_val}"
-    # ver_name = split_txt[4][:2]
-    ver_name = split_txt[5][:2]
-    print(f'split_txt: {split_txt}')
-    print(f'congruence: {congruence}')
-    print(f'isi_val: {isi_val}')
-    print(f'isi_name: {isi_name}')
-    print(f'sep_val: {sep_val}')
-    print(f'sep_name: {sep_name}')
-    # print(f'probes_dir: {probes_dir}')
-    print(f'ver_name: {ver_name}')
 
 
-    '''insert vertical lines marking start and finish of each probe.
-    First probe should appear at frame 8 (@960)'''
-    vline_pr1_on = 8
-    vline_pr1_off = vline_pr1_on + 8
+# print('congruence figs')
+# '''
+# I will make a plot for each ISI comparing all exp plots (blue) with cont plots (orange).
+# 1. loop through ISIs, and make df for each ISI.
+# 2. loop through congruence (incong vs cong).
+# 3. plot all exp conditions onto plots in one colour.
+# 4. plot all cont cont conditions onto plots in another colour.'''
+#
+# # congruence_palette = {'exp': 'tab:red', 'cont': 'tab:green'}
+# congruence_palette = {'incong': 'tab:red', 'cong': 'tab:green'}
+#
+#
+# for isi in ISI_vals:
+#
+#     isi_df = results_df[results_df['isi'] == isi]
+#     print(f"\n\nisi: {isi}\n{isi_df}\n")
+#
+#     '''insert vertical lines marking start and finish of each probe.
+#     First probe should appear at frame 8 (@960)'''
+#     vline_pr1_on = 8
+#     vline_pr1_off = vline_pr1_on + 8
+#
+#     vline_pr2_on = 8 + probe2_dict[isi]
+#     vline_pr2_off = vline_pr2_on + 8
+#
+#     '''mean lum plots'''
+#     # 1. plots by isi - joint means, compare exp and cont - all lines
+#     fig, ax = plt.subplots(figsize=(6, 6))
+#
+#     sns.lineplot(data=isi_df, x='idx', y='joint_mean', hue='congruence',
+#                  units='filename', estimator=None, palette=congruence_palette,
+#                  alpha=.5, ax=ax)
+#     ax.set_xlabel(f'frames @ {fps}Hz')
+#     ax.set_ylabel('pixel values (0:255')
+#
+#
+#     # probe on/off markers
+#     plt.axvline(x=vline_pr1_on, color='grey', linestyle='--')
+#     plt.axvline(x=vline_pr1_off, color='grey', linestyle='--')
+#     plt.axvline(x=vline_pr2_on, color='grey', linestyle='-.')
+#     plt.axvline(x=vline_pr2_off, color='grey', linestyle='-.')
+#
+#     ax.set_xticks(x_tick_locs)
+#     ax.set_xticklabels(x_tick_labels)
+#
+#     # add shaded background for frames at 240
+#     x_bg = np.arange(0, 108, 4)
+#     for x0, x1 in zip(x_bg[::2], x_bg[1::2]):
+#         plt.axvspan(x0, x1, color='black', alpha=0.05, zorder=0, linewidth=None)
+#
+#     plt.title(f'ISI_{isi}: mean luminance, all files')
+#     # fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\mon_cali_images_Oct22\isi_figs\mean_lum"
+#     fig_dir = os.path.join(images_dir, 'aaa_congruence_figs_all', 'mean_lum')
+#     if not os.path.isdir(fig_dir):
+#         os.makedirs(fig_dir)
+#     fig_savename = f'ISI_{isi}_compare_all_mean_lum.png'
+#     fig_path = os.path.join(fig_dir, fig_savename)
+#     plt.savefig(fig_path)
+#     plt.show()
+#     plt.close()
+#
+#
+#
+#     # 2. plots by isi - joint_mean, compare exp and cont - mean and errors
+#     fig, ax = plt.subplots(figsize=(6, 6))
+#
+#     sns.lineplot(data=isi_df, x='idx', y='joint_mean', hue='congruence',
+#                  palette=congruence_palette, alpha=.5,
+#                  # units='filename', estimator=None,
+#                  ax=ax)
+#     ax.set_xlabel(f'frames @ {fps}Hz')
+#     ax.set_ylabel('pixel values (0:255')
+#
+#     # probe on/off markers
+#     plt.axvline(x=vline_pr1_on, color='grey', linestyle='--')
+#     plt.axvline(x=vline_pr1_off, color='grey', linestyle='--')
+#     plt.axvline(x=vline_pr2_on, color='grey', linestyle='-.')
+#     plt.axvline(x=vline_pr2_off, color='grey', linestyle='-.')
+#
+#     ax.set_xticks(x_tick_locs)
+#     ax.set_xticklabels(x_tick_labels)
+#
+#     # add shaded background for frames at 240
+#     x_bg = np.arange(0, 108, 4)
+#     for x0, x1 in zip(x_bg[::2], x_bg[1::2]):
+#         plt.axvspan(x0, x1, color='black', alpha=0.05, zorder=0, linewidth=None)
+#
+#     plt.title(f'ISI_{isi}: mean luminance, mean and error of conditions')
+#     # fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\mon_cali_images_Oct22\isi_figs\mean_lum"
+#     fig_dir = os.path.join(images_dir, 'aaa_congruence_figs_ave', 'mean_lum')
+#     if not os.path.isdir(fig_dir):
+#         os.makedirs(fig_dir)
+#     fig_savename = f'ISI_{isi}_compare_ave_mean_lum.png'
+#     fig_path = os.path.join(fig_dir, fig_savename)
+#     plt.savefig(fig_path)
+#     plt.show()
+#     plt.close()
+#
+#
+#
+#     '''max lum'''
+#     # 3. plots by isi - joint means, compare exp and cont - all lines
+#     fig, ax = plt.subplots(figsize=(6, 6))
+#
+#     sns.lineplot(data=isi_df, x='idx', y='joint_max', hue='congruence',
+#                  palette=congruence_palette, alpha=.5,
+#                  units='filename', estimator=None,
+#                  ax=ax)
+#     ax.set_xlabel(f'frames @ {fps}Hz')
+#     ax.set_ylabel('pixel values (0:255')
+#
+#     # probe on/off markers
+#     plt.axvline(x=vline_pr1_on, color='grey', linestyle='--')
+#     plt.axvline(x=vline_pr1_off, color='grey', linestyle='--')
+#     plt.axvline(x=vline_pr2_on, color='grey', linestyle='-.')
+#     plt.axvline(x=vline_pr2_off, color='grey', linestyle='-.')
+#
+#     ax.set_xticks(x_tick_locs)
+#     ax.set_xticklabels(x_tick_labels)
+#
+#     # add shaded background for frames at 240
+#     x_bg = np.arange(0, 108, 4)
+#     for x0, x1 in zip(x_bg[::2], x_bg[1::2]):
+#         plt.axvspan(x0, x1, color='black', alpha=0.05, zorder=0, linewidth=None)
+#
+#     plt.title(f'ISI_{isi}: max luminance, all files')
+#     # fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\mon_cali_images_Oct22\isi_figs\mean_lum"
+#     fig_dir = os.path.join(images_dir, 'aaa_congruence_figs_all', 'max_lum')
+#     if not os.path.isdir(fig_dir):
+#         os.makedirs(fig_dir)
+#     fig_savename = f'ISI_{isi}_compare_all_max_lum.png'
+#     fig_path = os.path.join(fig_dir, fig_savename)
+#     plt.savefig(fig_path)
+#     plt.show()
+#     plt.close()
+#
+#
+#     # 4. plots by isi - joint_mean, compare exp and cont - mean and errors
+#     fig, ax = plt.subplots(figsize=(6, 6))
+#
+#     sns.lineplot(data=isi_df, x='idx', y='joint_max', hue='congruence',
+#                  palette=congruence_palette, alpha=.5,
+#                  # units='filename', estimator=None,
+#                  ax=ax)
+#     ax.set_xlabel(f'frames @ {fps}Hz')
+#     ax.set_ylabel('pixel values (0:255')
+#
+#     # probe on/off markers
+#     plt.axvline(x=vline_pr1_on, color='grey', linestyle='--')
+#     plt.axvline(x=vline_pr1_off, color='grey', linestyle='--')
+#     plt.axvline(x=vline_pr2_on, color='grey', linestyle='-.')
+#     plt.axvline(x=vline_pr2_off, color='grey', linestyle='-.')
+#
+#     ax.set_xticks(x_tick_locs)
+#     ax.set_xticklabels(x_tick_labels)
+#
+#     # add shaded background for frames at 240
+#     x_bg = np.arange(0, 108, 4)
+#     for x0, x1 in zip(x_bg[::2], x_bg[1::2]):
+#         plt.axvspan(x0, x1, color='black', alpha=0.05, zorder=0, linewidth=None)
+#
+#     plt.title(f'ISI_{isi}: max luminance, mean and error of conditions')
+#     # fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\mon_cali_images_Oct22\isi_figs\mean_lum"
+#     fig_dir = os.path.join(images_dir, 'aaa_congruence_figs_ave', 'max_lum')
+#     if not os.path.isdir(fig_dir):
+#         os.makedirs(fig_dir)
+#     fig_savename = f'ISI_{isi}_compare_ave_max_lum.png'
+#     fig_path = os.path.join(fig_dir, fig_savename)
+#     plt.savefig(fig_path)
+#     plt.show()
+#     plt.close()
 
-    if sep_val == 400:
-        vline_pr1_off = vline_pr1_on + 16
-    if sep_val == 800:
-        vline_pr1_off = vline_pr1_on + 32
-    if sep_val == 2400:
-        vline_pr1_off = vline_pr1_on + 96
 
-    vline_pr2_on = 8 + probe2_dict[isi_val]
-    vline_pr2_off = vline_pr2_on + 8
-
-    cond_df = results_df[results_df['filename'] == cond_ver_name]
-    print(f'cond_df:\n{cond_df}')
-
-    # 1. p1, p2, joint mean on same plot
-    long_df = make_long_df(wide_df=cond_df,
-                           cols_to_keep=['filename', 'idx'],
-                           cols_to_change=['p1_mean', 'p2_mean', 'joint_mean'],
-                           cols_to_change_show='mean_lum',
-                           new_col_name='loc', strip_from_cols='_mean', verbose=True)
-    print(f'long_df:\n{long_df}')
-
-    fig, ax = plt.subplots(figsize=(6, 6))
-    sns.lineplot(data=long_df, x='idx', y='mean_lum', hue='loc', ax=ax)
-    ax.set_xlabel(f'frames @ {fps}Hz')
-    ax.set_ylabel('pixel values (0:255')
-
-    # probe on/off markers
-    plt.axvline(x=vline_pr1_on, color='grey', linestyle='--')
-    plt.axvline(x=vline_pr1_off, color='grey', linestyle='--')
-    if sep_val not in [99, 400, 800, 2400]:
-        plt.axvline(x=vline_pr2_on, color='grey', linestyle='-.')
-        plt.axvline(x=vline_pr2_off, color='grey', linestyle='-.')
-
-    ax.set_xticks(x_tick_locs)
-    ax.set_xticklabels(x_tick_labels)
-    # add shaded background for frames at 240
-    x_bg = np.arange(0, 100, 4)
-    for x0, x1 in zip(x_bg[::2], x_bg[1::2]):
-        plt.axvspan(x0, x1, color='black', alpha=0.05, zorder=0, linewidth=None)
-
-    plt.title(f'{cond_ver_name}: mean luminance')
-    # fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\mon_cali_images_Oct22\cond_figs\mean_lum"
-    fig_dir = os.path.join(images_dir, 'cond_figs', 'mean_lum')
-    if not os.path.isdir(fig_dir):
-        os.makedirs(fig_dir)
-    fig_savename = f'{cond_ver_name}_mean_lum.png'
-    fig_path = os.path.join(fig_dir, fig_savename)
-    plt.savefig(fig_path)
-    plt.show()
-    plt.close()
-
-    # 2. p1, p2, joint max on same plot
-    long_df = make_long_df(wide_df=cond_df,
-                           cols_to_keep=['filename', 'idx'],
-                           cols_to_change=['p1_max', 'p2_max', 'joint_max'],
-                           cols_to_change_show='max_lum',
-                           new_col_name='loc', strip_from_cols='_max', verbose=True)
-    print(f'long_df:\n{long_df}')
-
-    fig, ax = plt.subplots(figsize=(6, 6))
-    sns.lineplot(data=long_df, x='idx', y='max_lum', hue='loc', ax=ax)
-    ax.set_xlabel(f'frames @ {fps}Hz')
-    ax.set_ylabel('pixel values (0:255')
-
-    # probe on/off markers
-    plt.axvline(x=vline_pr1_on, color='grey', linestyle='--')
-    plt.axvline(x=vline_pr1_off, color='grey', linestyle='--')
-    if sep_val not in [99, 400, 800, 2400]:
-        plt.axvline(x=vline_pr2_on, color='grey', linestyle='-.')
-        plt.axvline(x=vline_pr2_off, color='grey', linestyle='-.')
-
-    ax.set_xticks(x_tick_locs)
-    ax.set_xticklabels(x_tick_labels)
-    # add shaded background for frames at 240
-    x_bg = np.arange(0, 100, 4)
-    for x0, x1 in zip(x_bg[::2], x_bg[1::2]):
-        plt.axvspan(x0, x1, color='black', alpha=0.05, zorder=0, linewidth=None)
-
-    plt.title(f'{cond_ver_name}: max luminance')
-    # fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\mon_cali_images_Oct22\cond_figs\max_lum"
-    fig_dir = os.path.join(images_dir, 'cond_figs', 'max_lum')
-    if not os.path.isdir(fig_dir):
-        os.makedirs(fig_dir)
-    fig_savename = f'{cond_ver_name}_max_lum.png'
-    fig_path = os.path.join(fig_dir, fig_savename)
-    plt.savefig(fig_path)
-    plt.show()
-    plt.close()
-
-
-
-print('congruence figs')
+print('separation figs')
 '''
-I will make a plot for each ISI comparing all exp plots (blue) with cont plots (orange).
+I will make a plot for each ISI comparing all separations
 1. loop through ISIs, and make df for each ISI.
-2. loop through congruence (incong vs cong).
-3. plot all exp conditions onto plots in one colour.
-4. plot all cont cont conditions onto plots in another colour.'''
+2. loop through separations and plot with different colours.'''
 
 # congruence_palette = {'exp': 'tab:red', 'cont': 'tab:green'}
-congruence_palette = {'incong': 'tab:red', 'cong': 'tab:green'}
+separation_palette = {2: 'tab:red', 3: 'tab:green', 6: 'tab:blue'}
 
 
 for isi in ISI_vals:
@@ -670,8 +841,8 @@ for isi in ISI_vals:
     # 1. plots by isi - joint means, compare exp and cont - all lines
     fig, ax = plt.subplots(figsize=(6, 6))
 
-    sns.lineplot(data=isi_df, x='idx', y='joint_mean', hue='congruence',
-                 units='filename', estimator=None, palette=congruence_palette,
+    sns.lineplot(data=isi_df, x='idx', y='joint_mean', hue='sep',
+                 units='filename', estimator=None, palette=separation_palette,
                  alpha=.5, ax=ax)
     ax.set_xlabel(f'frames @ {fps}Hz')
     ax.set_ylabel('pixel values (0:255')
@@ -693,7 +864,7 @@ for isi in ISI_vals:
 
     plt.title(f'ISI_{isi}: mean luminance, all files')
     # fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\mon_cali_images_Oct22\isi_figs\mean_lum"
-    fig_dir = os.path.join(images_dir, 'congruence_figs_all', 'mean_lum')
+    fig_dir = os.path.join(images_dir, 'aaa_sep_figs_all', 'mean_lum')
     if not os.path.isdir(fig_dir):
         os.makedirs(fig_dir)
     fig_savename = f'ISI_{isi}_compare_all_mean_lum.png'
@@ -707,8 +878,8 @@ for isi in ISI_vals:
     # 2. plots by isi - joint_mean, compare exp and cont - mean and errors
     fig, ax = plt.subplots(figsize=(6, 6))
 
-    sns.lineplot(data=isi_df, x='idx', y='joint_mean', hue='congruence',
-                 palette=congruence_palette, alpha=.5,
+    sns.lineplot(data=isi_df, x='idx', y='joint_mean', hue='sep',
+                 palette=separation_palette, alpha=.5,
                  # units='filename', estimator=None,
                  ax=ax)
     ax.set_xlabel(f'frames @ {fps}Hz')
@@ -730,7 +901,7 @@ for isi in ISI_vals:
 
     plt.title(f'ISI_{isi}: mean luminance, mean and error of conditions')
     # fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\mon_cali_images_Oct22\isi_figs\mean_lum"
-    fig_dir = os.path.join(images_dir, 'congruence_figs_ave', 'mean_lum')
+    fig_dir = os.path.join(images_dir, 'aaa_sep_figs_ave', 'mean_lum')
     if not os.path.isdir(fig_dir):
         os.makedirs(fig_dir)
     fig_savename = f'ISI_{isi}_compare_ave_mean_lum.png'
@@ -745,8 +916,8 @@ for isi in ISI_vals:
     # 3. plots by isi - joint means, compare exp and cont - all lines
     fig, ax = plt.subplots(figsize=(6, 6))
 
-    sns.lineplot(data=isi_df, x='idx', y='joint_max', hue='congruence',
-                 palette=congruence_palette, alpha=.5,
+    sns.lineplot(data=isi_df, x='idx', y='joint_max', hue='sep',
+                 palette=separation_palette, alpha=.5,
                  units='filename', estimator=None,
                  ax=ax)
     ax.set_xlabel(f'frames @ {fps}Hz')
@@ -768,7 +939,7 @@ for isi in ISI_vals:
 
     plt.title(f'ISI_{isi}: max luminance, all files')
     # fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\mon_cali_images_Oct22\isi_figs\mean_lum"
-    fig_dir = os.path.join(images_dir, 'congruence_figs_all', 'max_lum')
+    fig_dir = os.path.join(images_dir, 'aaa_sep_figs_all', 'max_lum')
     if not os.path.isdir(fig_dir):
         os.makedirs(fig_dir)
     fig_savename = f'ISI_{isi}_compare_all_max_lum.png'
@@ -781,8 +952,8 @@ for isi in ISI_vals:
     # 4. plots by isi - joint_mean, compare exp and cont - mean and errors
     fig, ax = plt.subplots(figsize=(6, 6))
 
-    sns.lineplot(data=isi_df, x='idx', y='joint_max', hue='congruence',
-                 palette=congruence_palette, alpha=.5,
+    sns.lineplot(data=isi_df, x='idx', y='joint_max', hue='sep',
+                 palette=separation_palette, alpha=.5,
                  # units='filename', estimator=None,
                  ax=ax)
     ax.set_xlabel(f'frames @ {fps}Hz')
@@ -804,7 +975,7 @@ for isi in ISI_vals:
 
     plt.title(f'ISI_{isi}: max luminance, mean and error of conditions')
     # fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\mon_cali_images_Oct22\isi_figs\mean_lum"
-    fig_dir = os.path.join(images_dir, 'congruence_figs_ave', 'max_lum')
+    fig_dir = os.path.join(images_dir, 'aaa_sep_figs_ave', 'max_lum')
     if not os.path.isdir(fig_dir):
         os.makedirs(fig_dir)
     fig_savename = f'ISI_{isi}_compare_ave_max_lum.png'
@@ -812,8 +983,6 @@ for isi in ISI_vals:
     plt.savefig(fig_path)
     plt.show()
     plt.close()
-
-
 
 '''
 these plots just do one per ISI
@@ -914,7 +1083,7 @@ not using these anymore as there is just one per cond
 #
 #         plt.title(f'{probes_dir}, {isi}: mean luminance')
 #         # fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\mon_cali_images_Oct22\isi_figs\mean_lum"
-#         fig_dir = os.path.join(images_dir, 'isi_figs', 'mean_lum')
+#         fig_dir = os.path.join(images_dir, 'aaa_isi_figs', 'mean_lum')
 #
 #         if not os.path.isdir(fig_dir):
 #             os.makedirs(fig_dir)
@@ -952,7 +1121,7 @@ not using these anymore as there is just one per cond
 #             plt.axvspan(x0, x1, color='black', alpha=0.05, zorder=0, linewidth=None)
 #
 #         # fig_dir = rf"C:\Users\sapnm4\OneDrive - Cardiff University\Pictures\mon_cali_images_Oct22\isi_figs\max_lum"
-#         fig_dir = os.path.join(images_dir, 'isi_figs', 'max_lum')
+#         fig_dir = os.path.join(images_dir, 'aaa_isi_figs', 'max_lum')
 #         if not os.path.isdir(fig_dir):
 #             os.makedirs(fig_dir)
 #         fig_savename = f'{probes_dir}_ISI_{isi}_max_lum.png'
