@@ -7,7 +7,7 @@ The lab machine uses 2021.2.3, but this doesn't work on my laptop.
 ImportError: cannot import name '_vmTesting' from 'psychopy.tests' (unknown location)
  However, I can test on an older version (e.g., 2021.2.2) which does work.
 psychopy.useVersion('2021.2.3')'''
-#psychopy.useVersion('2021.2.2')  # works
+psychopy.useVersion('2021.2.2')  # works
 
 from psychopy import gui, visual, core, data, event, monitors
 
@@ -59,10 +59,10 @@ os.chdir(_thisDir)
 
 # Store info about the experiment session (numbers keep the order)
 expName = 'Mon_resp_time_stim_rad_flow_23'  # from the Builder filename that created this script
-expInfo = {'1. Participant': 'OLED_stim_test_26052023',
+expInfo = {'1. Participant': 'home_stim_test_05062023',
            '2. Run_number': '1',
-           '3. Probe duration in frames': [1, 2, 50, 100],
-           '4. fps': [120, 60, 240, 120, 60],
+           '3. Probe duration in frames': [100, 2, 50, 100],
+           '4. fps': [60, 240, 120, 60],
            '5. ISI_dur_in_ms': [100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0],
            '6. Probe_orientation': ['radial', 'tangent'],
            '7. Vary_fixation': [False, True, False],
@@ -70,7 +70,7 @@ expInfo = {'1. Participant': 'OLED_stim_test_26052023',
            '9. Background': ['flow_rad', 'None'],
            '10. bg_speed_cond': ['Normal', 'Half-speed'],
            '11. prelim_bg_flow_ms': [350, 70],
-           '12. monitor_name': ['OLED', 'Nick_work_laptop', 'OLED', 'asus_cal', 'Samsung',
+           '12. monitor_name': ['HP_24uh', 'Nick_work_laptop', 'OLED', 'asus_cal', 'Samsung',
                                 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
            '13. mask_type': ['4_circles', '2_spokes']
            }
@@ -118,21 +118,24 @@ frames@240hz: [24,  12,  10,    9,    8,     6,  4,    2,    0]
 # print(f"\nSelected {ISI_selected_ms}ms ISI.\n"
 #       f"At {fps}Hz this is {ISI_frames} frames which each take {round(1000/fps, 2)} ms.\n")
 # ISI_list = [ISI_frames]
-ISI_list = [2, 4, 6, 9]
+# ISI_list = [2, 4, 6, 9]
+ISI_list = [-1]
 print(f'ISI_list: {ISI_list}')
 
 
 # Separation values in pixels
-# separations = [0, 1, 2, 3, 6, 18]
-separations = [2, 3, 6]
+separations = [0, 1, 2, 3, 6, 18]
+# separations = [2, 3, 6]
 print(f'separations: {separations}')
 
 
 # # main contrast is whether the background and target motion is in same or opposite direction.
 # congruence_vals: 1=congruent/same, -1=incongruent/different
-congruence_vals = [1, -1]
+# congruence_vals = [1, -1]
+congruence_vals = [1]
 print(f'congruence_vals: {congruence_vals}')
-congruence_names = ['cong', 'incong']
+# congruence_names = ['cong', 'incong']
+congruence_names = ['cong']
 print(f'congruence_names: {congruence_names}')
 
 # lists of values for each condition (all list are same length = n_stairs)
@@ -266,7 +269,9 @@ if abs(fps-actualFrameRate) > 5:
 
 '''set the max and min frame duration to accept, trials with critical frames beyond these bound will be repeated.'''
 # frame error tolerance - default is approx 20% but seems to vary between runs(!), so set it manually.
-frame_tolerance_prop = .2
+#todo: set frame tolelreance back to .2
+frame_tolerance_prop = .9
+# frame_tolerance_prop = .2
 max_fr_dur_sec = expected_fr_sec + (expected_fr_sec * frame_tolerance_prop)
 max_fr_dur_ms = max_fr_dur_sec * 1000
 win.refreshThreshold = max_fr_dur_sec
@@ -800,7 +805,7 @@ for step in range(n_trials_per_stair):
             probe2.setPos(probe2_pos)
             probe2.setOri(probe2_ori)
             print(f"loc_marker: {[loc_x, loc_y]}, probe1_pos: {probe1_pos}, "
-                  f"probe2_pos: {probe2_pos}. dff: {dist_from_fix}")
+                  f"probe2_pos: {probe2_pos}. probes_difference: {np.subtract(np.array(probe1_pos), np.array(probe2_pos))}, dff: {dist_from_fix}")
 
 
             # VARIABLE FIXATION TIME
@@ -860,6 +865,9 @@ for step in range(n_trials_per_stair):
             while continueRoutine:
                 frameN = frameN + 1
 
+                # frame_counter.text = frameN
+
+
                 # blank screen for n frames if on OLED to stop it adapting to bgColor
                 if monitor_name == 'OLED':
                     if frameN == 1:
@@ -902,8 +910,7 @@ for step in range(n_trials_per_stair):
                     fixation.draw()
 
                     trials_counter.draw()
-                    frame_counter.text = frameN
-                    frame_counter.draw()
+                    # frame_counter.draw()
 
                 # Background motion prior to probe1 - after fixation, but before probe 1
                 elif t_bg_motion >= frameN > t_fixation:
@@ -922,8 +929,7 @@ for step in range(n_trials_per_stair):
                     fixation.draw()
 
                     trials_counter.draw()
-                    frame_counter.text = frameN
-                    frame_counter.draw()
+                    # frame_counter.draw()
 
                 # PROBE 1 - after background motion, before end of probe1 interval
                 elif t_probe_1 >= frameN > t_bg_motion:
@@ -942,10 +948,7 @@ for step in range(n_trials_per_stair):
                     fixation.draw()
 
                     trials_counter.draw()
-                    frame_counter.text = frameN
-                    frame_counter.draw()
-                    
-                    print(frameN)
+                    # frame_counter.draw()
 
                     probe1.draw()
                     if ISI == -1:  # SIMULTANEOUS CONDITION (concurrent)
@@ -970,8 +973,7 @@ for step in range(n_trials_per_stair):
                     fixation.draw()
 
                     trials_counter.draw()
-                    frame_counter.text = frameN
-                    frame_counter.draw()
+                    # frame_counter.draw()
 
                 # PROBE 2 - after ISI but before end of probe2 interval
                 elif t_probe_2 >= frameN > t_ISI:
@@ -990,8 +992,7 @@ for step in range(n_trials_per_stair):
                     fixation.draw()
 
                     trials_counter.draw()
-                    frame_counter.text = frameN
-                    frame_counter.draw()
+                    # frame_counter.draw()
 
                     if ISI >= 0:
                         if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
@@ -1009,8 +1010,7 @@ for step in range(n_trials_per_stair):
                     fixation.draw()
 
                     trials_counter.draw()
-                    frame_counter.text = frameN
-                    frame_counter.draw()
+                    # frame_counter.draw()
 
 
                     # ANSWER
@@ -1149,9 +1149,10 @@ for step in range(n_trials_per_stair):
         thisExp.addData('orientation', orientation)
         thisExp.addData('vary_fixation', vary_fixation)
         thisExp.addData('t_fixation', t_fixation)
-        thisExp.addData('p1_diff', p1_diff)
-        thisExp.addData('isi_diff', isi_diff)
-        thisExp.addData('p2_diff', p2_diff)
+        if record_fr_durs:
+            thisExp.addData('p1_diff', p1_diff)
+            thisExp.addData('isi_diff', isi_diff)
+            thisExp.addData('p2_diff', p2_diff)
         thisExp.addData('monitor_name', monitor_name)
         thisExp.addData('this_colourSpace', this_colourSpace)
         thisExp.addData('this_bgColour', this_bgColour)

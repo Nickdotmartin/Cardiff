@@ -64,6 +64,7 @@ def wrap_depth_vals(depth_arr, min_depth, max_depth):
 _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
+# todo: uses ASUS_2_13_240Hz for replicating old results, but then use asus_cal for testing.
 
 # Store info about the experiment session (numbers keep the order)
 expName = 'rad_flow_23'  # from the Builder filename that created this script
@@ -71,7 +72,7 @@ expInfo = {'1. Participant': 'Nick_test_01062023',
            '2. Run_number': '1',
            '3. Probe duration in frames': [2, 1, 50, 100],
            '4. fps': [60, 240, 120, 60],
-           '5. ISI_dur_in_ms': [100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0],
+           '5. ISI_dur_in_ms': [25, 16.67, 100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0, -1],
            '6. Probe_orientation': ['radial', 'tangent'],
            '7. Vary_fixation': [True, False],
            '8. Record_frame_durs': [True, False],
@@ -79,7 +80,7 @@ expInfo = {'1. Participant': 'Nick_test_01062023',
            '10. bg_speed_cond': ['Normal', 'Half-speed'],
            '11. prelim_bg_flow_ms': [350, 70],
            '12. monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'Samsung',
-                                'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
+                                'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18', 'ASUS_2_13_240Hz'],
            '13. mask_type': ['4_circles', '2_spokes']
            }
 
@@ -119,8 +120,12 @@ This means that the experiment should have similar ms timings on monitors with d
 milliseconds: [100, 50, 41.66, 37.5, 33.34, 25, 16.67, 8.33, 0]
 frames@240hz: [24,  12,  10,    9,    8,     6,  4,    2,    0]
 '''
-ISI_frames = int(ISI_selected_ms * fps / 1000)
-ISI_actual_ms = (1/fps) * ISI_frames * 1000
+if ISI_selected_ms == -1:
+    ISI_frames = -1
+    ISI_actual_ms = -1
+else:
+    ISI_frames = int(ISI_selected_ms * fps / 1000)
+    ISI_actual_ms = (1/fps) * ISI_frames * 1000
 ISI = ISI_frames
 print(f"\nSelected {ISI_selected_ms}ms ISI.\n"
       f"At {fps}Hz this is {ISI_frames} frames which each take {round(1000/fps, 2)} ms.\n")
@@ -311,9 +316,9 @@ probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
 #                  (-1, 1), (-1, 0), (-2, 0), (-2, -2), (-1, -2), (-1, -1), (0, -1)]
 
 probe_size = 1
-probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor='white', colorSpace=this_colourSpace,
+probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor='red', colorSpace=this_colourSpace,
                           lineWidth=0, opacity=1, size=probe_size, interpolate=False)
-probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor='white', colorSpace=this_colourSpace,
+probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor='green', colorSpace=this_colourSpace,
                           lineWidth=0, opacity=1, size=probe_size, interpolate=False)
 
 
@@ -639,12 +644,12 @@ for step in range(n_trials_per_stair):
             if sep == 99:
                 p1_shift = p2_shift = 0
             elif sep % 2 == 0:  # even number
-                p1_shift = p2_shift = sep // 2
+                p1_shift = p2_shift = (sep*probe_size) // 2
             else:  # odd number: shift by half sep, then either add 1 or 0 extra pixel to the shift.
                 extra_shifted_pixel = [0, 1]
                 np.random.shuffle(extra_shifted_pixel)
-                p1_shift = sep // 2 + extra_shifted_pixel[0]
-                p2_shift = sep // 2 + extra_shifted_pixel[1]
+                p1_shift = (sep*probe_size) // 2 + extra_shifted_pixel[0]
+                p2_shift = (sep*probe_size) // 2 + extra_shifted_pixel[1]
             print(f"p1_shift: {p1_shift}, p2_shift: {p2_shift}")
 
 
@@ -1140,6 +1145,7 @@ if record_fr_durs:
           f"frame_tolerance_ms: +/- {round(frame_tolerance_ms, 2)})")
 
     '''set colours for lines on plot.'''
+    # todo: remove this once seaborn is installed on OLED pc.
     if monitor_name == 'OLED':
         # list of 20 colours from matplotlib
         col_list = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple',
