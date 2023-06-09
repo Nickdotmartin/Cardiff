@@ -22,22 +22,14 @@ from datetime import datetime
 from math import tan, sqrt
 from PsychoPy_tools import get_pixel_mm_deg_values
 from kestenSTmaxVal import Staircase
-
-
-
-
-
+#from exp1a_psignifit_analysis import fig_colours
 
 from psychopy import __version__ as psychopy_version
 print(f"PsychoPy_version: {psychopy_version}")
 
 '''
-Updated version of radial flow experiment.
-Has variable fixation time, records frame rate, 
-Can have radial or tangential probes.
-Can vary the preliminary motion duration.
-Has same colour space and background colour as exp1.
-Updated wrap_depth_vals (WrapPoints) function.  
+May 23: check OLED monitor with moving background.
+Combines rad_flow_23.py with Mon_resp_time_stim_Oct23.py
 '''
 
 
@@ -64,23 +56,22 @@ def wrap_depth_vals(depth_arr, min_depth, max_depth):
 _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
-# todo: uses ASUS_2_13_240Hz for replicating old results, but then use asus_cal for testing.
 
 # Store info about the experiment session (numbers keep the order)
-expName = 'rad_flow_23'  # from the Builder filename that created this script
-expInfo = {'1. Participant': 'Nick_test_01062023',
+expName = 'Mon_resp_time_stim_rad_flow_23'  # from the Builder filename that created this script
+expInfo = {'1. Participant': 'home_stim_test_05062023',
            '2. Run_number': '1',
-           '3. Probe duration in frames': [2, 1, 50, 100],
+           '3. Probe duration in frames': [100, 2, 50, 100],
            '4. fps': [60, 240, 120, 60],
-           '5. ISI_dur_in_ms': [25, 16.67, 100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0, -1],
+           '5. ISI_dur_in_ms': [100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0],
            '6. Probe_orientation': ['radial', 'tangent'],
-           '7. Vary_fixation': [True, False],
+           '7. Vary_fixation': [False, True, False],
            '8. Record_frame_durs': [True, False],
-           '9. Background': ['flow_rad', 'None'],
+           '9. Background': ['None', 'flow_rad', 'None'],
            '10. bg_speed_cond': ['Normal', 'Half-speed'],
            '11. prelim_bg_flow_ms': [350, 70],
-           '12. monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'Samsung',
-                                'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18', 'ASUS_2_13_240Hz'],
+           '12. monitor_name': ['HP_24uh', 'Nick_work_laptop', 'OLED', 'asus_cal', 'Samsung',
+                                'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
            '13. mask_type': ['4_circles', '2_spokes']
            }
 
@@ -106,7 +97,8 @@ mask_type = expInfo['13. mask_type']
 
 
 # misc settings
-n_trials_per_stair = 25
+# todo: note - four runs per stimulus
+n_trials_per_stair = 4 # 25
 probe_ecc = 4
 expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
 expInfo['time'] = datetime.now().strftime("%H:%M:%S")
@@ -120,32 +112,30 @@ This means that the experiment should have similar ms timings on monitors with d
 milliseconds: [100, 50, 41.66, 37.5, 33.34, 25, 16.67, 8.33, 0]
 frames@240hz: [24,  12,  10,    9,    8,     6,  4,    2,    0]
 '''
-if ISI_selected_ms == -1:
-    ISI_frames = -1
-    ISI_actual_ms = -1
-else:
-    ISI_frames = int(ISI_selected_ms * fps / 1000)
-    ISI_actual_ms = (1/fps) * ISI_frames * 1000
-ISI = ISI_frames
-print(f"\nSelected {ISI_selected_ms}ms ISI.\n"
-      f"At {fps}Hz this is {ISI_frames} frames which each take {round(1000/fps, 2)} ms.\n")
-ISI_list = [ISI_frames]
+# ISI_frames = int(ISI_selected_ms * fps / 1000)
+# ISI_actual_ms = (1/fps) * ISI_frames * 1000
+# ISI = ISI_frames
+# print(f"\nSelected {ISI_selected_ms}ms ISI.\n"
+#       f"At {fps}Hz this is {ISI_frames} frames which each take {round(1000/fps, 2)} ms.\n")
+# ISI_list = [ISI_frames]
+# ISI_list = [2, 4, 6, 9]
+ISI_list = [-1]
 print(f'ISI_list: {ISI_list}')
 
 
 # Separation values in pixels
 separations = [0, 1, 2, 3, 6, 18]
-# todo: sorted separations into descending order
-separations.sort(reverse=True)
+# separations = [6, 18]
 print(f'separations: {separations}')
 
 
 # # main contrast is whether the background and target motion is in same or opposite direction.
 # congruence_vals: 1=congruent/same, -1=incongruent/different
-# todo: DO i need to sort congruence to make sure that the staircases are in the same order?
-congruence_vals = [1, -1]
+# congruence_vals = [1, -1]
+congruence_vals = [1]
 print(f'congruence_vals: {congruence_vals}')
-congruence_names = ['cong', 'incong']
+# congruence_names = ['cong', 'incong']
+congruence_names = ['cong']
 print(f'congruence_names: {congruence_names}')
 
 # lists of values for each condition (all list are same length = n_stairs)
@@ -179,7 +169,8 @@ print(f'total_n_trials: {total_n_trials}')
 participant_name = participant_name + f'_bg{prelim_bg_flow_ms}'
 
 # save each participant's files into separate dir for each ISI
-isi_dir = f'ISI_{ISI}'
+# isi_dir = f'ISI_{ISI}'
+isi_dir = f'multi_ISI'
 save_dir = os.path.join(_thisDir, expName, participant_name,
                         f'{participant_name}_{run_number}', isi_dir)
 
@@ -209,7 +200,8 @@ for future ref, to match exp1 it should be flow_bgcolor = [-0.6, -0.6, -0.6]  # 
 # # Lum to Color255 (maxLum = 253)
 LumColor255Factor = 2.39538706913372
 maxLum = 106  # 255 RGB
-bgLumProp = .2  # .45  # .2  # todo: use .45 to match radial_flow_NM_v2.py
+# todo: adjust bg lum prop
+bgLumProp = .2  # .45  # .2
 if monitor_name == 'OLED':
     bgLumProp = .0
 bgLum = maxLum * bgLumProp
@@ -278,7 +270,9 @@ if abs(fps-actualFrameRate) > 5:
 
 '''set the max and min frame duration to accept, trials with critical frames beyond these bound will be repeated.'''
 # frame error tolerance - default is approx 20% but seems to vary between runs(!), so set it manually.
-frame_tolerance_prop = .2
+#todo: set frame tolelreance back to .2
+frame_tolerance_prop = .9
+# frame_tolerance_prop = .2
 max_fr_dur_sec = expected_fr_sec + (expected_fr_sec * frame_tolerance_prop)
 max_fr_dur_ms = max_fr_dur_sec * 1000
 win.refreshThreshold = max_fr_dur_sec
@@ -304,6 +298,28 @@ else:
     fixation = visual.Circle(win, radius=2, units='pix',
                              lineColor='white', fillColor='black', colorSpace=this_colourSpace)
 
+
+# todo: use chequerboard grating to make separation easier to see
+# grating = visual.GratingStim(
+#     win=win, name='grating', units='pix',
+#     tex='sqrXsqr', mask='circle',
+#     ori=0, pos=[-100.0, -100], size=[150.0, 150.0], sf=[20, 20], phase=[0.25, 0.25],
+#     color=[50, 199, 199], colorSpace='rgb255', opacity=1, blendmode='avg',
+#     texRes=256, interpolate=False,
+#     depth=-1.0
+#     )
+# grating = visual.GratingStim(
+#     win=win, name='grating',
+#     tex='sqrXsqr', mask='circle',
+#     ori=0, pos=[0, 0],
+#     # units='deg', sf=[2, 2], phase=[0.25, 0.25], size=[15.0, 15.0],
+#     # units='deg', sf=[5, 5], phase=[0.25, 0.25], size=[15.0, 15.0],
+#     # units='pix', sf=[.2, .2], phase=[50, 50], size=[150.0, 150.0],
+#     units='pix', sf=[.3, .3], phase=[50, 50], size=[150.0, 150.0],
+#     color=[1, 1, 1], colorSpace='rgb', opacity=1, blendmode='avg',
+#     texRes=256, interpolate=True, depth=-1.0)
+
+
 # PROBEs
 # default is to use 5 pixel probes,but can use 7 on OLED if needed
 probe_n_pixels = 5  # 7
@@ -319,9 +335,9 @@ probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
 #                  (-1, 1), (-1, 0), (-2, 0), (-2, -2), (-1, -2), (-1, -1), (0, -1)]
 
 probe_size = 1
-probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor='red', colorSpace=this_colourSpace,
+probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor='white', colorSpace=this_colourSpace,
                           lineWidth=0, opacity=1, size=probe_size, interpolate=False)
-probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor='green', colorSpace=this_colourSpace,
+probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor='white', colorSpace=this_colourSpace,
                           lineWidth=0, opacity=1, size=probe_size, interpolate=False)
 
 
@@ -341,10 +357,20 @@ if mask_type == '4_circles':
                                     tex=None, units='pix', pos=[dist_from_fix + 1, dist_from_fix + 1])
     probeMask2 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size, mask_size),
                                     colorSpace=this_colourSpace, color=this_bgColour,
-                                    units='pix', tex=None, pos=[-dist_from_fix - 1, dist_from_fix + 1])
+                                    tex=None, units='pix', pos=[dist_from_fix + 1, dist_from_fix + 1])
     probeMask3 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size, mask_size),
                                     colorSpace=this_colourSpace, color=this_bgColour,
                                     units='pix', tex=None, pos=[-dist_from_fix - 1, -dist_from_fix - 1])
+    # todo: trying to add chequerbaodr to this this mask to make it easier to see separation
+    # probeMask3 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size, mask_size),
+    #                                 colorSpace=this_colourSpace, color=this_bgColour,
+    #                                 units='pix', tex='sqrXsqr', sf=[2, 2], phase=[0.25, 0.25], texRes=256,
+    #                                 pos=[-dist_from_fix - 1, -dist_from_fix - 1])
+    # probeMask3 = visual.GratingStim(win=win, units='pix', tex='sqrXsqr', mask=raisedCosTexture1,
+    #                                 size=(mask_size, mask_size),
+    #                                 sf=[2, 4], phase=[4, 2], color=[255, 255, 255],
+    #                                 colorSpace=this_colourSpace, pos=[-dist_from_fix - 1, -dist_from_fix - 1],
+    #                                 opacity=1, blendmode='avg', texRes=256, interpolate=True)
     probeMask4 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size, mask_size),
                                     colorSpace=this_colourSpace, color=this_bgColour,
                                     units='pix', tex=None, pos=[dist_from_fix + 1, -dist_from_fix - 1])
@@ -497,6 +523,26 @@ recorded_fr_counter = 0
 fr_counter_per_trial = []
 cond_list = []
 
+# Trial counter
+trial_counter = True
+trials_counter = visual.TextStim(win=win, name='trials_counter', text="???",
+                                 font='Arial', height=20,
+                                 # default set to black (e.g., invisible)
+                                 color='grey',
+                                 pos=[-widthPix*.05, -heightPix*.20]) # was .2
+if trials_counter:
+    # if trials counter yes, change colour to white.
+    trials_counter.color = 'grey'
+
+frame_counter = visual.TextStim(win=win, name='frame_counter', text="???",
+                                 font='Arial', height=20,
+                                 # default set to black (e.g., invisible)
+                                 color='grey',
+                                 pos=[-widthPix*.05, -heightPix*.22])
+
+
+
+
 
 # STAIRCASE
 expInfo['stair_list'] = list(range(n_stairs))
@@ -541,7 +587,7 @@ actual_trials_inc_rpt = 0
 # EXPERIMENT
 print('\n*** exp loop*** \n\n')
 for step in range(n_trials_per_stair):
-    np.random.shuffle(stairs)
+    # np.random.shuffle(stairs)
     for thisStair in stairs:
 
         # repeat the trial if [r] has been pressed or frames were dropped
@@ -554,6 +600,7 @@ for step in range(n_trials_per_stair):
             stair_idx = thisStair.extraInfo['stair_idx']
             print(f"\n({actual_trials_inc_rpt}) trial_number: {trial_number}, "
                   f"stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
+            trials_counter.text = f"{prelim_bg_flow_ms}: {stair_idx}. {thisStair}.  {step+1}/{n_trials_per_stair}"
 
             # conditions (ISI, congruence)
             ISI = ISI_vals_list[stair_idx]
@@ -580,8 +627,11 @@ for step in range(n_trials_per_stair):
 
             # use congruence to determine the flow direction and target jump direction
             # 1 is contracting/inward/backwards, -1 is expanding/outward/forwards
-            flow_dir = np.random.choice([1, -1])
-            target_jump = congruent * flow_dir
+            # flow_dir = np.random.choice([1, -1])
+            # target_jump = congruent * flow_dir
+            # todo: note - target jump is always the same (1), so, flow dir == congruence?
+            flow_dir = congruent  # np.random.choice([1, -1])
+            target_jump = -1  # congruent * flow_dir
 
             # # direction in which the probe jumps : CW or CCW (tangent) or expand vs contract (radial)
             if orientation == 'tangent':
@@ -604,13 +654,18 @@ for step in range(n_trials_per_stair):
                     fixation.fillColor = 'grey'
 
             # Luminance (staircase varies probeLum)
-            probeLum = thisStair.next()
+            # probeLum = thisStair.next()
+            probeLum = maxLum  # this_cond.next()
             probeColor255 = int(probeLum * LumColor255Factor)  # rgb255 are ints.
             probeColor1 = probeLum / maxLum
 
+            # todo: set probe colour here
             this_probeColor = probeColor255
+            # this_probeColor = 50
             if this_colourSpace == 'rgb1':
                 this_probeColor = probeColor1
+            # probe1.setFillColor([this_probeColor, this_probeColor, this_probeColor])
+            # probe2.setFillColor([this_probeColor, this_probeColor, this_probeColor])
             probe1.setFillColor([this_probeColor, this_probeColor, this_probeColor])
             probe2.setFillColor([this_probeColor, this_probeColor, this_probeColor])
             print(f"probeLum: {probeLum}, this_probeColor: {this_probeColor}, "
@@ -619,7 +674,9 @@ for step in range(n_trials_per_stair):
 
             # PROBE LOCATION
             # # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
-            corner = random.choice([45, 135, 225, 315])
+            # corner = random.choice([45, 135, 225, 315])
+            # todo: set location here
+            corner = 135  # random.choice([45, 135, 225, 315])
             corner_name_dict = {45: 'top_right', 135: 'top_left', 225: 'bottom_left', 315: 'bottom_right'}
             corner_name = corner_name_dict[corner]
             print(f"corner: {corner} {corner_name}")
@@ -638,26 +695,26 @@ for step in range(n_trials_per_stair):
             '''Both probes should be equally spaced around the meridian point.
             The original script had probe 1 on meridian and probe 2 shifted by separation.
             So now they both should be shifted by half the separation away from meridian in opposite directions.
-            E.g., if sep = 4, probe 1 will be shifted 2 pixels away from meridian in one direction 
-            probe 2 will be shifted 2 pixels away from the meridian in the other direction. 
-            Where separation is an odd number, both probes are shift by half sep, 
-            then the extra pixel is added onto either probe 1 r probe 2.  
-            E.g., if sep = 5, either probe1 shifts by 2 and probe 2 by 3, or vice versa. 
+            E.g., if sep = 4, probe 1 will be shifted 2 pixels away from meridian in one direction
+            probe 2 will be shifted 2 pixels away from the meridian in the other direction.
+            Where separation is an odd number, both probes are shift by half sep,
+            then the extra pixel is added onto either probe 1 r probe 2.
+            E.g., if sep = 5, either probe1 shifts by 2 and probe 2 by 3, or vice versa.
             To check probe locations, uncomment loc_marker'''
             if sep == 99:
                 p1_shift = p2_shift = 0
             elif sep % 2 == 0:  # even number
-                p1_shift = p2_shift = (sep*probe_size) // 2
+                p1_shift = p2_shift = sep // 2
             else:  # odd number: shift by half sep, then either add 1 or 0 extra pixel to the shift.
                 extra_shifted_pixel = [0, 1]
                 np.random.shuffle(extra_shifted_pixel)
-                p1_shift = (sep*probe_size) // 2 + extra_shifted_pixel[0]
-                p2_shift = (sep*probe_size) // 2 + extra_shifted_pixel[1]
+                p1_shift = sep // 2 + extra_shifted_pixel[0]
+                p2_shift = sep // 2 + extra_shifted_pixel[1]
             print(f"p1_shift: {p1_shift}, p2_shift: {p2_shift}")
 
 
             # set position and orientation of probes
-            '''NEW - set orientations to p1=zero and p2=180 (not zero), 
+            '''NEW - set orientations to p1=zero and p2=180 (not zero),
             then add the same orientation change to both'''
             probe1_ori = 0
             probe2_ori = 180
@@ -668,7 +725,7 @@ for step in range(n_trials_per_stair):
                 '''in top-right corner, both x and y increase (right and up)'''
                 loc_x = dist_from_fix * 1
                 loc_y = dist_from_fix * 1
-                '''orientation' here refers to the relationship between probes, 
+                '''orientation' here refers to the relationship between probes,
                 whereas probe1_ori refers to rotational angle of probe stimulus'''
                 if orientation == 'tangent':
                     if target_jump == 1:  # CW
@@ -786,14 +843,14 @@ for step in range(n_trials_per_stair):
             probe2.setPos(probe2_pos)
             probe2.setOri(probe2_ori)
             print(f"loc_marker: {[loc_x, loc_y]}, probe1_pos: {probe1_pos}, "
-                  f"probe2_pos: {probe2_pos}. dff: {dist_from_fix}")
+                  f"probe2_pos: {probe2_pos}. probes_difference: {np.subtract(np.array(probe1_pos), np.array(probe2_pos))}, dff: {dist_from_fix}")
 
 
             # VARIABLE FIXATION TIME
             '''to reduce anticipatory effects that might arise from fixation always being same length.
             if False, vary_fix == .5 seconds, so t_fixation is 1 second.
             if Ture, vary_fix is between 0 and 1 second, so t_fixation is between .5 and 1.5 seconds.'''
-            vary_fix = int(fps / 2)
+            vary_fix = 0  # int(fps / 2)
             if vary_fixation:
                 vary_fix = np.random.randint(0, fps)
 
@@ -813,7 +870,7 @@ for step in range(n_trials_per_stair):
             t_ISI = t_probe_1 + isi_dur_fr
             t_probe_2 = t_ISI + p2_fr
             t_response = t_probe_2 + 10000 * fps  # ~40 seconds to respond
-            print(f"t_fixation: {t_fixation}, t_probe_1: {t_probe_1}, "
+            print(f"t_fixation: {t_fixation}, t_bg_motion: {t_bg_motion}, t_probe_1: {t_probe_1}, "
                   f"t_ISI: {t_ISI}, t_probe_2: {t_probe_2}, t_response: {t_response}\n")
 
 
@@ -845,6 +902,9 @@ for step in range(n_trials_per_stair):
             frameN = -1
             while continueRoutine:
                 frameN = frameN + 1
+
+                # frame_counter.text = frameN
+
 
                 # blank screen for n frames if on OLED to stop it adapting to bgColor
                 if monitor_name == 'OLED':
@@ -887,6 +947,11 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(3)
                     fixation.draw()
 
+                    # grating.draw()
+
+                    trials_counter.draw()
+                    # frame_counter.draw()
+
                 # Background motion prior to probe1 - after fixation, but before probe 1
                 elif t_bg_motion >= frameN > t_fixation:
                     if background == 'flow_rad':
@@ -903,6 +968,12 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(3)
                     fixation.draw()
 
+                    # grating.draw()
+
+
+                    trials_counter.draw()
+                    # frame_counter.draw()
+
                 # PROBE 1 - after background motion, before end of probe1 interval
                 elif t_probe_1 >= frameN > t_bg_motion:
                     if background == 'flow_rad':
@@ -918,6 +989,12 @@ for step in range(n_trials_per_stair):
                         dotsMask.draw()
                     fixation.setRadius(3)
                     fixation.draw()
+
+                    # grating.draw()
+
+
+                    trials_counter.draw()
+                    # frame_counter.draw()
 
                     probe1.draw()
                     if ISI == -1:  # SIMULTANEOUS CONDITION (concurrent)
@@ -941,6 +1018,12 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(3)
                     fixation.draw()
 
+                    # grating.draw()
+
+
+                    trials_counter.draw()
+                    # frame_counter.draw()
+
                 # PROBE 2 - after ISI but before end of probe2 interval
                 elif t_probe_2 >= frameN > t_ISI:
                     if background == 'flow_rad':
@@ -957,6 +1040,12 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(3)
                     fixation.draw()
 
+                    # grating.draw()
+
+
+                    trials_counter.draw()
+                    # frame_counter.draw()
+
                     if ISI >= 0:
                         if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
                             probe2.draw()
@@ -971,6 +1060,12 @@ for step in range(n_trials_per_stair):
                         dotsMask.draw()
                     fixation.setRadius(2)
                     fixation.draw()
+
+                    # grating.draw()
+
+
+                    trials_counter.draw()
+                    # frame_counter.draw()
 
 
                     # ANSWER
@@ -1089,8 +1184,8 @@ for step in range(n_trials_per_stair):
         thisExp.addData('sep_deg', sep_deg)
         thisExp.addData('neg_sep', neg_sep)
         thisExp.addData('ISI', ISI)
-        thisExp.addData('ISI_selected_ms', ISI_selected_ms)
-        thisExp.addData('ISI_actual_ms', ISI_actual_ms)
+        # thisExp.addData('ISI_selected_ms', ISI_selected_ms)
+        # thisExp.addData('ISI_actual_ms', ISI_actual_ms)
         thisExp.addData('isi_dur_fr', isi_dur_fr)
         thisExp.addData('congruent', congruent)
         thisExp.addData('flow_dir', flow_dir)
@@ -1109,9 +1204,10 @@ for step in range(n_trials_per_stair):
         thisExp.addData('orientation', orientation)
         thisExp.addData('vary_fixation', vary_fixation)
         thisExp.addData('t_fixation', t_fixation)
-        thisExp.addData('p1_diff', p1_diff)
-        thisExp.addData('isi_diff', isi_diff)
-        thisExp.addData('p2_diff', p2_diff)
+        if record_fr_durs:
+            thisExp.addData('p1_diff', p1_diff)
+            thisExp.addData('isi_diff', isi_diff)
+            thisExp.addData('p2_diff', p2_diff)
         thisExp.addData('monitor_name', monitor_name)
         thisExp.addData('this_colourSpace', this_colourSpace)
         thisExp.addData('this_bgColour', this_bgColour)
@@ -1148,30 +1244,24 @@ if record_fr_durs:
           f"frame_tolerance_ms: +/- {round(frame_tolerance_ms, 2)})")
 
     '''set colours for lines on plot.'''
-    # todo: remove this once seaborn is installed on OLED pc.
-    if monitor_name == 'OLED':
-        # list of 20 colours from matplotlib
-        col_list = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple',
-                    'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive', 'tab:cyan',
-                    'xkcd:lightblue', 'xkcd:lightgreen', 'xkcd:lightred', 'xkcd:lightpurple',
-                    'xkcd:lightbrown', 'xkcd:lightpink', 'xkcd:lightgray', 'xkcd:lightolive', 'xkcd:lightcyan']
-        my_colours = col_list[:n_stairs]
-    else:
-        from exp1a_psignifit_analysis import fig_colours
-        my_colours = fig_colours(n_stairs, alternative_colours=False)
-    # associate colours with conditions
-    colour_dict = {k: v for (k, v) in zip(stair_names_list, my_colours)}
-    # make list of colours based on order of conditions
-    cond_colour_list = [colour_dict[i] for i in cond_list]
+#    # get set of colours
+#    my_colours = fig_colours(n_stairs, alternative_colours=False)
+#    # associate colours with conditions
+#    colour_dict = {k: v for (k, v) in zip(stair_names_list, my_colours)}
+#    # make list of colours based on order of conditions
+#    cond_colour_list = [colour_dict[i] for i in cond_list]
 
     # plot frame intervals across the experiment with discontinuous line, coloured for each cond
-    for trial_x_vals, trial_fr_durs, colour in zip(fr_counter_per_trial, fr_int_per_trial, cond_colour_list):
-        plt.plot(trial_x_vals, trial_fr_durs, color=colour)
+#    for trial_x_vals, trial_fr_durs, colour in zip(fr_counter_per_trial, fr_int_per_trial, cond_colour_list):
+    for trial_x_vals, trial_fr_durs in zip(fr_counter_per_trial, fr_int_per_trial):
+        plt.plot(trial_x_vals, trial_fr_durs)
 
     # add legend with colours per condition
     legend_handles_list = []
     for cond in stair_names_list:
-        leg_handle = mlines.Line2D([], [], color=colour_dict[cond], label=cond,
+#        leg_handle = mlines.Line2D([], [], color=colour_dict[cond], label=cond,
+#                                   marker='.', linewidth=.5, markersize=4)
+        leg_handle = mlines.Line2D([], [], label=cond,
                                    marker='.', linewidth=.5, markersize=4)
         legend_handles_list.append(leg_handle)
 

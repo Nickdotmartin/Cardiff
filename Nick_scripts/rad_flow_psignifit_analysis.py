@@ -72,6 +72,52 @@ def split_df_alternate_rows(df):
     return pos_sep_df, neg_sep_df
 
 
+def get_sorted_neg_sep_indices(neg_sep_to_sort):
+    """
+    Function to take neg_sep_vals_list in order of stairs and return indices to
+    sort neg_sep_vals_list in order [18, -18, 6, -6, 3, -3, 2, -2, 1, -1, 0, -.01].
+    This is sorted(abs(list_to_sort), reverse=True) APART from the last two values.
+
+    :param neg_sep_to_sort: list of negative separations to sort
+    :return: indices used to sort into correct order
+    """
+
+    # first sort list into order sorted(abs(neg_sep_to_sort), reverse=True)
+    neg_sep_to_sort_sorted = sorted(neg_sep_to_sort, key=abs, reverse=True)
+
+    # then swap last two elements so that 0.0 is before -0.1
+    neg_sep_to_sort_sorted[-1], neg_sep_to_sort_sorted[-2] = neg_sep_to_sort_sorted[-2], neg_sep_to_sort_sorted[-1]
+    print(f"neg_sep_to_sort_sorted: {neg_sep_to_sort_sorted}")
+
+    # get indices to sort neg_sep_to_sort into neg_sep_to_sort_sorted
+    sorted_neg_sep_indices = [neg_sep_to_sort.index(x) for x in neg_sep_to_sort_sorted]
+    print(f"sorted_neg_sep_indices: {sorted_neg_sep_indices}")
+
+    return sorted_neg_sep_indices
+
+
+def sort_with_neg_sep_indices(list_to_sort, sorted_neg_sep_indices):
+    """
+    Function to sort list_to_sort using sorted_neg_sep_indices.
+
+    :param list_to_sort: list that needs sorting
+    :param sorted_neg_sep_indices: indices used to sort into correct order
+    :return: sorted_list
+    """
+
+    # check list_to_sort and sorted_neg_sep_indices are same length, if not, raise error
+    if len(list_to_sort) != len(sorted_neg_sep_indices):
+        raise ValueError("list_to_sort and sorted_neg_sep_indices are not the same length")
+
+    # sort list_to_sort into order of sorted_neg_sep_indices
+    sorted_list = [list_to_sort[i] for i in sorted_neg_sep_indices]
+    print(f"sorted_list: {sorted_list}")
+
+    return sorted_list
+
+
+
+
 def trim_n_high_n_low(all_data_df, trim_from_ends=None, reference_col='separation',
                       stack_col_id='stack', verbose=True):
     """
@@ -1096,7 +1142,7 @@ def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'
     :param hue_var: Variable to be shown with different lines (e.g., isi or separation).
     :param style_var: Addition variable to show with solid or dashed lines (e.g., congruent or incongruent).
     :param style_order: Order of style var as displayed in df (e.g., [1, -1]).
-    :param error_bars: True or false, whether to display error bars.
+    :param error_bars: True or false, whether to display error bars (SE).
     :param jitter: Whether to jitter items on x-axis to make easier to read.
         Can be True, False or float for amount of jitter in relation to x-axis values.
     :param log_scale: Put axes onto log scale.
@@ -1192,7 +1238,7 @@ def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'
     sns.lineplot(data=long_df, x=data_for_x, y=y_axis, hue=hue_var,
                  style=style_var, style_order=style_order,
                  estimator='mean',
-                 ci=conf_interval, err_style='bars', err_kws={'elinewidth': .7, 'capsize': 5},
+                 errorbar='se', err_style='bars', err_kws={'elinewidth': 1, 'capsize': 5},
                  palette=my_colours, ax=ax)
 
     if log_scale:
@@ -3048,11 +3094,15 @@ def e_average_exp_data(exp_path, p_names_list,
     all_p_ave_list = []
     for p_idx, p_name in enumerate(p_names_list):
 
-        ave_df_name = 'MASTER_ave_thresh'
-        if n_trimmed is not None:
-            ave_df_name = f'MASTER_ave_TM{n_trimmed}_thresh'
+        # ave_df_name = 'MASTER_ave_thresh'
+        # if n_trimmed is not None:
+        #     ave_df_name = f'MASTER_ave_TM{n_trimmed}_thresh'
 
+        # check for trimmed means
+        # ave_df_name = f'MASTER_ave_TM{n_trimmed}_thresh'
+        ave_df_name = f'MASTER_ave_TM2_thresh'
         this_ave_df_path = os.path.join(exp_path, p_name, f'{ave_df_name}.csv')
+
         # # if trimmed mean doesn't exists (e.g., because participant hasn't done 12 runs)
         if not os.path.isfile(this_ave_df_path):
             print(f"Couldn't find trimmed mean data for {p_name}\nUsing untrimmed instead.")
@@ -3174,6 +3224,11 @@ def e_average_exp_data(exp_path, p_names_list,
                          f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standrad_error']\n"
                          f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
                          f"'deviation', 'standard_deviation']")
+
+    # replace NaNs with zero in error_bars_df
+    if error_bars_df is not None:
+        error_bars_df = error_bars_df.fillna(0)
+
     if verbose:
         print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
 
@@ -3256,15 +3311,20 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     else:
         error_bars_df = pd.read_csv(error_bars_path)
 
-    if isi_name_list is None:
-        isi_name_list = list(all_df.columns[4:])
-    if isi_vals_list is None:
-        isi_vals_list = [int(i[4:]) for i in isi_name_list]
-
     if verbose:
         print(f'\nall_df:\n{all_df}')
         print(f'\nave_df:\n{ave_df}')
         print(f'\nerror_bars_df:\n{error_bars_df}')
+
+    if isi_name_list is None:
+        # isi_name_list = list(all_df.columns[4:])
+        # get a list of all column names containing 'isi' or 'ISI'
+        isi_name_list = [i for i in list(all_df.columns) if 'isi' in i.lower()]
+    if isi_vals_list is None:
+        isi_vals_list = [int(i[4:]) for i in isi_name_list]
+
+
+    if verbose:
         print(f'\nisi_name_list: {isi_name_list}')
         print(f'isi_vals_list: {isi_vals_list}')
 
@@ -3281,7 +3341,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         pos_sep_vals_list = ave_df['separation'].unique().tolist()
     else:
         pos_sep_vals_list = ave_df[stair_names_col].unique().tolist()
-        pos_sep_vals_list = list(set([int(0) if i == -.1 else abs(int(i)) for i in pos_sep_vals_list]))
+    pos_sep_vals_list = list(set([int(0) if i == -.1 else abs(int(i)) for i in pos_sep_vals_list]))
     if pos_sep_vals_list[0] > pos_sep_vals_list[-1]:
         pos_sep_vals_list.reverse()
     if verbose:
@@ -3297,11 +3357,11 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     print(f"\nfig_1a")
     if n_trimmed is not None:
-        fig_1a_title = f'{ave_over} average thresholds per ISI across all runs (n={ave_over_n}, trim={n_trimmed}).\n' \
+        fig_1a_title = f'{ave_over} ave thresholds per ISI. (n={ave_over_n}, trim={n_trimmed}).\n' \
                        f'positive=congruent probe/flow motion, negative=incongruent. Bars=SE.'
         fig_1a_savename = f'ave_TM{n_trimmed}_thr_pos_and_neg.png'
     else:
-        fig_1a_title = f'{ave_over} average threshold per ISI across all runs. (n={ave_over_n})\n' \
+        fig_1a_title = f'{ave_over} ave threshold per ISI. (n={ave_over_n})\n' \
                        f'positive=congruent probe/flow motion, negative=incongruent. Bars=SE.'
         fig_1a_savename = f'ave_thr_pos_and_neg.png'
 
@@ -3312,6 +3372,8 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         ave_w_sep_idx_df.drop('cond_type', axis=1, inplace=True)
     if 'separation' in list(ave_w_sep_idx_df.columns):
         ave_w_sep_idx_df.drop('separation', axis=1, inplace=True)
+    if 'neg_sep' in list(ave_w_sep_idx_df.columns):
+        ave_w_sep_idx_df.drop('neg_sep', axis=1, inplace=True)
     print(f"ave_w_sep_idx_df:\n{ave_w_sep_idx_df}")
 
     # if I delete this messy plot, I can also delete the function that made it.
@@ -3332,15 +3394,16 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     else:
         print(f"\nfig_1b")
         if n_trimmed is not None:
-            fig_1b_title = f'{ave_over} average thresholds per separation across all runs (n={ave_over_n}, trim={n_trimmed}).\n' \
+            fig_1b_title = f'{ave_over} average thresholds per separation (n={ave_over_n}, trim={n_trimmed}).\n' \
                            f'Bars=.68 CI'
             fig_1b_savename = f'ave_TM{n_trimmed}_thr_all_runs_sep.png'
         else:
-            fig_1b_title = f'{ave_over} average threshold per separation across all runs\n' \
+            fig_1b_title = f'{ave_over} average threshold per separation\n' \
                            f'Bars=.68 CI, n={ave_over_n}'
             fig_1b_savename = f'ave_thr_all_runs_sep.png'
 
             # tod: It also seems that using evenly_spaced_x is messing it up.  Not sure why.
+
 
         plot_w_errors_either_x_axis(wide_df=all_df, cols_to_keep=[cond_type_col, 'separation'],
                                     cols_to_change=isi_name_list,
