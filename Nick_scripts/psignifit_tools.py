@@ -236,6 +236,9 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
         print(f'options (dict): {options}')
 
     # results
+    # todo: note, I've editted the psignifit code around line 390 as it sometimes fails.
+    #  Especially with Simon's rad_flow_2, run 2 data, it sometimes has the wrong shaped array,
+    #  so I've added lines to catch this.
     res = ps.psignifit(data_np, options)
 
     if verbose:
@@ -337,11 +340,11 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
                     CI_res['conf_Intervals'][0][1] = CI_limits[1]
 
                     fit_curve_plot = ps.psigniplot.plotPsych(CI_res, plotData=False, CIthresh=True,
-                                                             showImediate=False)
+                                                             showImediate=False, fontName='sans-serif')
 
                 elif thr_type == 'Bayes':
 
-                    fit_curve_plot = ps.psigniplot.plotPsych(res, plotAsymptote=True,
+                    fit_curve_plot = ps.psigniplot.plotPsych(res, plotAsymptote=True, fontName='sans-serif',
                                                              CIthresh=True, showImediate=False)
 
             else:
@@ -354,7 +357,7 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
                           f"threshPC: {target_threshold}, Bayes thr: {round(res['Fit'][0], 2)}, "
                           f"CI95 thr: {round(threshold, 2)}")
                 fit_curve_plot = ps.psigniplot.plotPsych(res, lineColor=[1, 0, 0], plotAsymptote=False,
-                                                         CIthresh=True, showImediate=False)
+                                                         CIthresh=True, showImediate=False, fontName='sans-serif')
 
                 fit_patch = mpatches.Patch(color=[1, 0, 0], label='Bayesian Fit')
                 CI_patch = mpatches.Patch(color='black', label='CI=95% Fit')
@@ -369,7 +372,7 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
                 #                                           showImediate=False)
 
         else:
-            fit_curve_plot = ps.psigniplot.plotPsych(res, showImediate=False)
+            fit_curve_plot = ps.psigniplot.plotPsych(res, showImediate=False, fontName='sans-serif')
 
         if save_plots:
             plot_path = os.path.join(save_path, f'{dset_name}_psig.png')

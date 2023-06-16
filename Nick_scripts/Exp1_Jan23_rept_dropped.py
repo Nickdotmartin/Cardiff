@@ -144,7 +144,7 @@ thisMon = monitors.Monitor(monitor_name)
 # COLORS AND LUMINANCE
 # # Lum to Color255 (maxLum = 253)
 LumColor255Factor = 2.39538706913372
-maxLum = 106  # 255 RGB
+maxLum = 106  # 255 RGB  # todo: the actual maxLum is ~150 (as measured with spyder on 12062023), not 106
 bgLumProp = .2
 bgLum = maxLum * bgLumProp
 bgColor255 = bgLum * LumColor255Factor

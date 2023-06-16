@@ -208,7 +208,7 @@ for future ref, to match exp1 it should be flow_bgcolor = [-0.6, -0.6, -0.6]  # 
 '''
 # # Lum to Color255 (maxLum = 253)
 LumColor255Factor = 2.39538706913372
-maxLum = 106  # 255 RGB
+maxLum = 106  # 255 RGB  # todo: the actual maxLum is ~150 (as measured with spyder on 12062023), not 106
 bgLumProp = .2  # .45  # .2  # todo: use .45 to match radial_flow_NM_v2.py
 if monitor_name == 'OLED':
     bgLumProp = .0

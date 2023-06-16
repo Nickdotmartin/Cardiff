@@ -68,17 +68,40 @@ def return_target_or_above_below(array_of_values, target_value):
     ValueError: zero-size array to reduction operation minimum which has no identity
     This error occurs when the array is empty, 
     e.g., the target value is less than the minimum value, or more than the maximum value in the array.
+    Because this is technically possible for RGB255 values of 0 or 255 (which differ between uncalibraed and asus_cal, 
+    the script will correct this if it occurs and return the minimum or maximum value in the array.
     '''
 
     # Check if the target value is in the array.
     if target_value in array_of_values:
-        return target_value
+        # return target_value
+        # rather than returning the target, I return the array value that matches the target,
+        # this might deal with any issues arrising from int/float comparisons.
+        matching_array_val = array_of_values[array_of_values == target_value]
+        if len(set(matching_array_val)) == 1:
+            matching_array_val = matching_array_val[0]
+        else:
+            raise ValueError(
+                f"More than one matching value found in array_of_values: {array_of_values} for target_value: {target_value}")
+
+        return matching_array_val
 
     else:
 
-        # if target not in array, return the value below and above.
-        item_below = np.amax(array_of_values[array_of_values < target_value])
-        item_above = np.amin(array_of_values[array_of_values > target_value])
+        # it is technically possible for the value to be outside the range of the array,
+        # as the min and max lum for uncalibrated are .13 and 151.05, and for calibrated are .14 and 150.63.
+        # in these cases, return the minimum or maximum value in the array.
+        if .13 <= target_value < .14:
+            if np.amin(array_of_values) == .14:
+                return .14
+        elif 150.63 < target_value <= 151.05:
+            if np.amax(array_of_values) == 150.63:
+                return 150.63
+        else:
+
+            # if target not in array, return the value below and above.
+            item_below = np.amax(array_of_values[array_of_values < target_value])
+            item_above = np.amin(array_of_values[array_of_values > target_value])
 
         # Return a tuple of the array values above and below the target.
         return item_below, item_above
@@ -96,7 +119,9 @@ def rad_flow_mon_conversion(uncalibrated_rgb255_val, verbose=False):
     :return: The equivalent rgb255 value for the calibrated monitor (asus_cal).
     """
 
-    if verbose: print(f'\nuncalibrated_rgb255_val: {uncalibrated_rgb255_val}')
+    if verbose:
+        print("\n*** running rad_flow_mon_conversion() ***")
+        print(f'uncalibrated_rgb255_val: {uncalibrated_rgb255_val}')
 
     spyder_values_dicts = {'uncalibrated': {0: 0.13, 15: 0.46, 30: 1.52, 45: 3.59, 60: 6.69, 75: 10.91, 90: 16.18,
                                             105: 22.66, 120: 30.29, 135: 39.22, 150: 49.27, 165: 60.44, 180: 72.73,
@@ -116,20 +141,45 @@ def rad_flow_mon_conversion(uncalibrated_rgb255_val, verbose=False):
 
     # check if the target value is in the array, otherwise, return the array values above and below the target.
     vals_for_uncali_interp = return_target_or_above_below(array_of_rgb255_vals, uncalibrated_rgb255_val)
+    if verbose:
+        print(f"vals_for_uncali_interp: {vals_for_uncali_interp}")
 
-    if isinstance(vals_for_uncali_interp, int):
-        # if the uncalibrated_rgb255_val is in the array, use that for conversion
-        uncalibrated_lum_val = spyder_values_dicts['uncalibrated'][vals_for_uncali_interp]
-    else:
+    # if (isinstance(vals_for_uncali_interp, int)) or (isinstance(vals_for_uncali_interp, float)):
+    #     if verbose:
+    #         print(f"vals_for_uncali_interp is an int, so use {vals_for_uncali_interp} for conversion")
+    #     # if the uncalibrated_rgb255_val is in the array, use that for conversion
+    #     uncalibrated_lum_val = spyder_values_dicts['uncalibrated'][vals_for_uncali_interp]
+    #
+    # # elif len(vals_for_uncali_interp) == 1:
+    # else:
+    #     # interpolate between the array values below and above the uncalibrated_rgb255_val to find the
+    #     # luminance value for the uncalibrated monitor that corresponds to the uncalibrated rgb255 value
+    #
+    #     if verbose:
+    #         print(f"use {uncalibrated_rgb255_val} to interpolate between {vals_for_uncali_interp} to get corresponding "
+    #               f"interpolation between {[spyder_values_dicts['uncalibrated'][vals_for_uncali_interp[0]], spyder_values_dicts['uncalibrated'][vals_for_uncali_interp[1]]]}")
+    #     uncalibrated_lum_val = np.interp(uncalibrated_rgb255_val, vals_for_uncali_interp,
+    #                                      [spyder_values_dicts['uncalibrated'][vals_for_uncali_interp[0]],
+    #                                       spyder_values_dicts['uncalibrated'][vals_for_uncali_interp[1]]])
+
+    if isinstance(vals_for_uncali_interp, tuple):
         # interpolate between the array values below and above the uncalibrated_rgb255_val to find the
         # luminance value for the uncalibrated monitor that corresponds to the uncalibrated rgb255 value
-
         if verbose:
             print(f"use {uncalibrated_rgb255_val} to interpolate between {vals_for_uncali_interp} to get corresponding "
                   f"interpolation between {[spyder_values_dicts['uncalibrated'][vals_for_uncali_interp[0]], spyder_values_dicts['uncalibrated'][vals_for_uncali_interp[1]]]}")
         uncalibrated_lum_val = np.interp(uncalibrated_rgb255_val, vals_for_uncali_interp,
                                          [spyder_values_dicts['uncalibrated'][vals_for_uncali_interp[0]],
                                           spyder_values_dicts['uncalibrated'][vals_for_uncali_interp[1]]])
+
+    else:
+        if verbose:
+            print(f"vals_for_uncali_interp is an {type(vals_for_uncali_interp)}, so use {vals_for_uncali_interp} for conversion")
+        # if the uncalibrated_rgb255_val is in the array, use that for conversion
+        uncalibrated_lum_val = spyder_values_dicts['uncalibrated'][vals_for_uncali_interp]
+
+
+
     if verbose:
         print(f'uncalibrated_lum_val: {uncalibrated_lum_val}')
 
@@ -142,28 +192,59 @@ def rad_flow_mon_conversion(uncalibrated_rgb255_val, verbose=False):
         print(f'\narray_of_cal_lum_vals: {array_of_cal_lum_vals}')
 
     vals_for_asus_cal_interp = return_target_or_above_below(array_of_cal_lum_vals, uncalibrated_lum_val)
+    if verbose:
+        print(f"vals_for_asus_cal_interp: {vals_for_asus_cal_interp}")
 
-    if isinstance(vals_for_asus_cal_interp, int):
-        # if the uncalibrated_rgb255_val is in the array, use that for conversion
-        calibrated_rgb255_val = list(spyder_values_dicts['asus_cal'].keys())[
-            list(spyder_values_dicts['asus_cal'].values()).index(vals_for_asus_cal_interp)][0]
-    else:
+    # if isinstance(vals_for_asus_cal_interp, int):
+    #     # if the uncalibrated_rgb255_val is in the array, use that for conversion
+    #     calibrated_rgb255_val = list(spyder_values_dicts['asus_cal'].keys())[
+    #         list(spyder_values_dicts['asus_cal'].values()).index(vals_for_asus_cal_interp)][0]
+    # else:
+    #     # interpolate between the array values below and above the uncalibrated_rgb255_val to find the
+    #     # luminance value for the uncalibrated monitor that corresponds to the uncalibrated rgb255 value
+    #
+    #     asus_cal_key_below = list(spyder_values_dicts['asus_cal'].keys())[
+    #         list(spyder_values_dicts['asus_cal'].values()).index(vals_for_asus_cal_interp[0])]
+    #     asus_cal_key_above = list(spyder_values_dicts['asus_cal'].keys())[
+    #         list(spyder_values_dicts['asus_cal'].values()).index(vals_for_asus_cal_interp[1])]
+    #
+    #     if verbose:
+    #         print(f"use {uncalibrated_lum_val} to interpolate between {vals_for_asus_cal_interp} to get corresponding "
+    #               f"interpolation between {asus_cal_key_below, asus_cal_key_above}")
+    #
+    #     calibrated_rgb255_val = int(
+    #         np.interp(uncalibrated_lum_val, vals_for_asus_cal_interp, [asus_cal_key_below, asus_cal_key_above]))
+    #     if verbose:
+    #         print(f'calibrated_rgb255_val: {calibrated_rgb255_val}\n')
+
+    if isinstance(vals_for_asus_cal_interp, tuple):
         # interpolate between the array values below and above the uncalibrated_rgb255_val to find the
         # luminance value for the uncalibrated monitor that corresponds to the uncalibrated rgb255 value
-
         asus_cal_key_below = list(spyder_values_dicts['asus_cal'].keys())[
             list(spyder_values_dicts['asus_cal'].values()).index(vals_for_asus_cal_interp[0])]
         asus_cal_key_above = list(spyder_values_dicts['asus_cal'].keys())[
             list(spyder_values_dicts['asus_cal'].values()).index(vals_for_asus_cal_interp[1])]
-
         if verbose:
             print(f"use {uncalibrated_lum_val} to interpolate between {vals_for_asus_cal_interp} to get corresponding "
                   f"interpolation between {asus_cal_key_below, asus_cal_key_above}")
-
         calibrated_rgb255_val = int(
             np.interp(uncalibrated_lum_val, vals_for_asus_cal_interp, [asus_cal_key_below, asus_cal_key_above]))
         if verbose:
             print(f'calibrated_rgb255_val: {calibrated_rgb255_val}\n')
+
+    else:
+        # if the uncalibrated_rgb255_val is in the array, use that for conversion
+        calibrated_rgb255_val = list(spyder_values_dicts['asus_cal'].keys())[
+            list(spyder_values_dicts['asus_cal'].values()).index(vals_for_asus_cal_interp)]
+        if isinstance(calibrated_rgb255_val, tuple):
+            if len(set(calibrated_rgb255_val)) == 1:
+                calibrated_rgb255_val = calibrated_rgb255_val[0]
+            else:
+                raise ValueError(f"calibrated_rgb255_val: {calibrated_rgb255_val} is not a single value")
+
+    if verbose:
+        print(f"calibrated_rgb255_val: {calibrated_rgb255_val}")
+        print("*** finished get_calibrated_rgb255_val() ***\n")
 
     return calibrated_rgb255_val
 
@@ -1356,7 +1437,7 @@ def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'
 
     fig, ax = plt.subplots(figsize=(10, 6))
 
-    # with error bards for d_averages example
+    # with error bars for d_averages example
     sns.lineplot(data=long_df, x=data_for_x, y=y_axis, hue=hue_var,
                  style=style_var, style_order=style_order,
                  estimator='mean',
