@@ -746,6 +746,11 @@ def plot_1probe_w_errors(fig_df, error_df,
 
         if split_1probe:
             if x_tick_vals is not None:
+
+                print(f'x_tick_vals: {x_tick_vals}')
+                print(f'one_probe_df[thr_col][idx]: {one_probe_df[thr_col][idx]}')
+                print(f'one_probe_er_df[thr_col][idx]: {one_probe_er_df[thr_col][idx]}')
+
                 ax.errorbar(x=x_tick_vals + np.random.uniform(size=len(x_tick_vals), low=-jit_max, high=jit_max),
                             y=one_probe_df[thr_col][idx],
                             yerr=one_probe_er_df[thr_col][idx],

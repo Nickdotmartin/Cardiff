@@ -15,7 +15,8 @@ project_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\C
 # this_exp = r"EXP1_Jan23_rept_dropped"  # EXP1_split_probes_Jan23 Exp1_Jan23_sep45
 # this_exp = r"Exp4b_missing_probe_23/Exp4b_missing_probe_23/mixed_dir/incoherent/"
 # this_exp = r"Exp1_Jan23_sep45"
-this_exp = r"Exp4b_missing_probe_23\Exp4b_missing_probe_23\mixed_dir\incoherent\exp1a_data_copied"
+# this_exp = r"Exp4b_missing_probe_23\Exp4b_missing_probe_23\mixed_dir\incoherent\exp1a_data_copied"
+this_exp = 'combined_exp1_sep45'
 exp_path = os.path.join(project_path, this_exp)
 convert_path1 = os.path.normpath(exp_path)
 if running_on_laptop():
@@ -26,8 +27,8 @@ exp_path = convert_path1
 '''run from here for participant level analysis.  '''
 # print(f"exp_path: {exp_path}")
 # participant_list = ['Kim']  # 'Nick_sep0123', 'Nick_sep45', 'Nick_sep67', 'Nick_sep89', 'Nick_sep18_20']  #  'Simon', 'Nick'
-# participant_list = ['Tony', 'Nick', 'Kristian', 'Kim', 'Simon']
-participant_list = ['aa', 'bb', 'dd', 'ee', 'Nick']
+# participant_list = ['aa', 'bb', 'dd', 'ee', 'Nick']
+participant_list = ['Simon', 'Kim', 'Nick']  # , 'Tony', 'Kristian']
 
 
 split_1probe = False
@@ -221,87 +222,101 @@ for p_idx, participant_name in enumerate(participant_list):
         #                                     verbose=True)
         # print(f'thr_df:\n{thr_df}')
 
-    # print(f'root_path: {root_path}')
-    # trim_list = [2, 2, 2, 2, 2]
-    # trim_n = 2
-    print(f"\n\ntrim_list: {trim_list}, trim_n: {trim_n}\n\n")
-
-
-    '''d'''
-    d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-                          trim_n=trim_n, error_type='SE')
-
-    all_df_path = os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv')
-    p_ave_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv')
-    err_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thr_error_SE.csv')
-    if trim_n is None:
-        all_df_path = os.path.join(root_path, 'MASTER_psignifit_thresholds.csv')
-        p_ave_path = os.path.join(root_path, 'MASTER_ave_thresh.csv')
-        err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
-
-
-
-    p_ave_df = pd.read_csv(p_ave_path)
-    print(f"p_ave_df:\n{p_ave_df}")
-
-    ave_DfC_df, error_DfC_df = make_diff_from_conc_df(all_df_path, root_path, n_trimmed=trim_n)
-    print(f"ave_DfC_df:\n{ave_DfC_df}")
-    print(f"error_DfC_df:\n{error_DfC_df}")
-
-
-    print(f'list(p_ave_df.columns): {list(p_ave_df.columns)}')
-    isi_vals_list = [int(i[4:]) for i in list(p_ave_df.columns)[1:]]
-    if -1 in isi_vals_list:
-        if isi_vals_list[0] != -1:
-            isi_vals_list.remove(-1)
-            isi_vals_list = [-1] + isi_vals_list
-    print(isi_vals_list)
-
-    isi_name_list = [f"conc" if i == -1 else f"ISI_{i}" for i in isi_vals_list]
-
-    sep_vals_list = list(p_ave_df['separation'])
-    sep_name_list = [f"1probe" if i == 20 else i for i in sep_vals_list]
-    if '1probe' in sep_name_list:
-        split_1probe = True
-    print(f"isi_name_list:\n{isi_name_list}")
-    print(f"isi_vals_list:\n{isi_vals_list}")
-    print(f"sep_vals_list:\n{sep_vals_list}")
-    print(f"sep_name_list:\n{sep_name_list}")
-
-    make_average_plots(all_df_path=all_df_path,
-                       ave_df_path=p_ave_path,
-                       error_bars_path=err_path,
-                       thr_col='newLum',
-                       error_type='SE',
-                       n_trimmed=trim_n,
-                       ave_over_n=len(run_folder_names),
-                       split_1probe=split_1probe,
-                       # isi_name_list=isi_name_list,
-                       # sep_vals_list=sep_vals_list,
-                       # sep_name_list=sep_name_list,
-                       exp_ave=participant_name,  # participant ave, not exp ave
-                       heatmap_annot_fmt='.0f',  # use '.3g' for 3 significant figures, '.2f' for 2dp, '.0f' for int.
-                       show_plots=True, verbose=True)
-    '''end of participant analysis'''
-
-'''experiment level analysis.  If the participant data has already been analysed, just comment out all the stuff above and run from here.'''
-print(f'exp_path: {exp_path}')
-print('\nget exp_average_data')
-print(f'trim_list: {trim_list}')
-
-# participant_list = ['aa', 'bb', 'cc', 'dd', 'ee', 'Nick']
-# trim_list = [2, 2, 2, 2, 2, 2]
-# participant_list = ['Kristian', 'Nick', 'Simon', 'Tony', 'Kim']
-# trim_list = [2, 2, 2, 2, 2]  # , 2, None]
-# lum_col = 'probeLum'
-
-e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
-                   error_type='SE', n_trimmed=trim_list, verbose=True)
+#     # print(f'root_path: {root_path}')
+#     # todo: comment this out
+#     # trim_list = [2, 2, 2]
+#     # trim_n = 2
+#     # print(f"\n\ntrim_list: {trim_list}, trim_n: {trim_n}\n\n")
+#
+#
+#     '''d'''
+#     # d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
+#     #                       trim_n=trim_n, error_type='SE')
+#
+#     all_df_path = os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv')
+#     p_ave_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv')
+#     err_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thr_error_SE.csv')
+#     if trim_n is None:
+#         all_df_path = os.path.join(root_path, 'MASTER_psignifit_thresholds.csv')
+#         p_ave_path = os.path.join(root_path, 'MASTER_ave_thresh.csv')
+#         err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
+#
+#
+#
+#     p_ave_df = pd.read_csv(p_ave_path)
+#     print(f"p_ave_df:\n{p_ave_df}")
+#
+#     ave_DfC_df, error_DfC_df = make_diff_from_conc_df(all_df_path, root_path, n_trimmed=trim_n)
+#     print(f"ave_DfC_df:\n{ave_DfC_df}")
+#     print(f"error_DfC_df:\n{error_DfC_df}")
+#
+#
+#     print(f'list(p_ave_df.columns): {list(p_ave_df.columns)}')
+#     isi_vals_list = [int(i[4:]) for i in list(p_ave_df.columns)[1:]]
+#     if -1 in isi_vals_list:
+#         if isi_vals_list[0] != -1:
+#             isi_vals_list.remove(-1)
+#             isi_vals_list = [-1] + isi_vals_list
+#     print(isi_vals_list)
+#
+#     isi_name_list = [f"conc" if i == -1 else f"ISI_{i}" for i in isi_vals_list]
+#
+#     sep_vals_list = list(p_ave_df['separation'])
+#     sep_name_list = [f"1probe" if i == 20 else i for i in sep_vals_list]
+#     if '1probe' in sep_name_list:
+#         split_1probe = True
+#     print(f"isi_name_list:\n{isi_name_list}")
+#     print(f"isi_vals_list:\n{isi_vals_list}")
+#     print(f"sep_vals_list:\n{sep_vals_list}")
+#     print(f"sep_name_list:\n{sep_name_list}")
+#
+#     make_average_plots(all_df_path=all_df_path,
+#                        ave_df_path=p_ave_path,
+#                        error_bars_path=err_path,
+#                        thr_col='newLum',
+#                        error_type='SE',
+#                        n_trimmed=trim_n,
+#                        ave_over_n=len(run_folder_names),
+#                        split_1probe=split_1probe,
+#                        # isi_name_list=isi_name_list,
+#                        # sep_vals_list=sep_vals_list,
+#                        # sep_name_list=sep_name_list,
+#                        exp_ave=participant_name,  # participant ave, not exp ave
+#                        heatmap_annot_fmt='.0f',  # use '.3g' for 3 significant figures, '.2f' for 2dp, '.0f' for int.
+#                        show_plots=True, verbose=True)
+#     '''end of participant analysis'''
+#
+# '''experiment level analysis.  If the participant data has already been analysed, just comment out all the stuff above and run from here.'''
+# print(f'exp_path: {exp_path}')
+# print('\nget exp_average_data')
+# print(f'trim_list: {trim_list}')
+#
+# # participant_list = ['aa', 'bb', 'cc', 'dd', 'ee', 'Nick']
+# # trim_list = [2, 2, 2, 2, 2, 2]
+# # participant_list = ['Kristian', 'Nick', 'Simon', 'Tony', 'Kim']
+# # trim_list = [2, 2, 2, 2, 2]  # , 2, None]
+# # lum_col = 'probeLum'
+#
+# e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
+#                    error_type='SE', n_trimmed=trim_list, verbose=True)
 
 
 all_df_path = os.path.join(exp_path, 'MASTER_exp_all_thr.csv')
 exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
 err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
+
+# # todo: delete this
+# keep_sep = [0, 1, 2, 3, 4, 5, 6, 18, 20]
+# all_df = pd.read_csv(all_df_path)
+# all_df = all_df[all_df['separation'].isin(keep_sep)]
+# all_df.to_csv(all_df_path, index=False)
+# ave_df = pd.read_csv(exp_ave_path)
+# ave_df = ave_df[ave_df['separation'].isin(keep_sep)]
+# ave_df.to_csv(exp_ave_path, index=False)
+# err_df = pd.read_csv(err_path)
+# err_df = err_df[err_df['separation'].isin(keep_sep)]
+# err_df.to_csv(err_path, index=False)
+
 
 ave_DfC_df, error_DfC_df = make_diff_from_conc_df(all_df_path, exp_path, n_trimmed=2, exp_ave=True)
 print(f"ave_DfC_df:\n{ave_DfC_df}")
