@@ -77,7 +77,7 @@ expInfo = {'1. Participant': 'Nick_test_01062023',
            '7. Vary_fixation': [True, False],
            '8. Record_frame_durs': [True, False],
            '9. Background': ['flow_rad', 'None'],
-           '10. bg_speed_cond': ['Normal', 'Half-speed'],
+           # '10. bg_speed_cond': ['Normal', 'Half-speed'],
            '11. prelim_bg_flow_ms': [350, 70],
            '12. monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'Samsung',
                                 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18', 'ASUS_2_13_240Hz'],
@@ -99,7 +99,7 @@ orientation = expInfo['6. Probe_orientation']
 vary_fixation = eval(expInfo['7. Vary_fixation'])
 record_fr_durs = eval(expInfo['8. Record_frame_durs'])
 background = expInfo['9. Background']
-bg_speed_cond = expInfo['10. bg_speed_cond']
+# bg_speed_cond = expInfo['10. bg_speed_cond']
 prelim_bg_flow_ms = int(expInfo['11. prelim_bg_flow_ms'])
 monitor_name = expInfo['12. monitor_name']
 mask_type = expInfo['13. mask_type']
@@ -390,12 +390,18 @@ print(f'actual_prelim_bg_flow_ms: {actual_prelim_bg_flow_ms}')
 
 
 # flow_dots
-if bg_speed_cond == 'Normal':
-    flow_speed = 0.2
-elif bg_speed_cond == 'Half-speed':
-    flow_speed = 0.1
-else:
-    raise ValueError(f'background speed should be selected from drop down menu: Normal or Half-speed')
+# if bg_speed_cond == 'Normal':
+#     flow_speed = 0.2
+# elif bg_speed_cond == 'Half-speed':
+#     flow_speed = 0.1
+# else:
+#     raise ValueError(f'background speed should be selected from drop down menu: Normal or Half-speed')
+
+# the flow speed on the OLED appears half the speed of the 240Hz monitor because the monitor is 120Hz.
+# doubling it on the OLED should rectify this
+flow_speed = 0.2
+if monitor_name == 'OLED':
+    flow_speed = 0.4
 # todo: do we need to increase the number of dots for OLED?
 nDots = 10000
 dot_array_width = 10000  # original script used 5000

@@ -9,10 +9,10 @@ from rad_flow_psignifit_analysis import b3_plot_staircase, c_plots
 from rad_flow_psignifit_analysis import d_average_participant, make_average_plots, e_average_exp_data, rad_flow_mon_conversion
 from exp1a_psignifit_analysis import plt_heatmap_row_col
 
-# # loop through run folders with first 5 scripts (a, b1, b2, b3, c)
+# # loop through run folders with first 5 scripts (a, b1, b2, b3, c) 
 # # then run script d to get master lists and averages
-# exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\radial_flow_exp'
-# participant_list = ['Kim', 'Nick', 'Simon']  # , 'Nick_half_speed']
+exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\radial_flow_exp'
+participant_list = ['Kim', 'Nick', 'Simon']  # , 'Nick_half_speed']
 
 # exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_half'
 # participant_list = ['Nick_half', 'Simon_half']
@@ -112,58 +112,59 @@ for p_idx, participant_name in enumerate(participant_list):
         '''a'''
         p_name = f'{participant_name}_{r_idx_plus}'
 
-        # todo: put a_data_extraction back in
-        # a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=run_isi_list, verbose=verbose)
+        a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=run_isi_list, verbose=verbose)
 
-        run_data_path = f'{save_path}{os.sep}ALL_ISIs_sorted.xlsx'
+        # run_data_path = f'{save_path}{os.sep}ALL_ISIs_sorted.xlsx'  # delete this, using RUNDATA-sorted.xlsx
+        run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
+
         run_data_df = pd.read_excel(run_data_path, engine='openpyxl')
         print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
 
-        # code to make sure luminance is int, not float.
-        if run_data_df['probeColor255'].dtypes == 'int64':
-            lum_col = 'probeLum'
-            print(f"probeColor255 is {run_data_df['probeColor255'].dtypes}, lum_col is {lum_col}")
-        else:
-            '''add newLum column
-                    in old version, the experiment script varies probeLum and converts to float(RGB255) values for screen.
-                    However, monitor can only use int(RGB255).
-                    This function will will round RGB255 values to int(RGB255), then convert to NEW_probeLum
-                    LumColor255Factor = 2.395387069
-                    1. get probeColor255 column.
-                    2. convert to int(RGB255) and convert to new_Lum with int(RGB255)/LumColor255Factor
-                    3. add to run_data_df'''
-            lum_col = 'newLum'
-            print(f"probeColor255 is {run_data_df['probeColor255'].dtypes}, lum_col is {lum_col}")
-            if 'newLum' not in run_data_df.columns.to_list():
-                LumColor255Factor = 2.395387069
-                rgb255_col = run_data_df['probeColor255'].to_list()
-                newLum = [int(i) / LumColor255Factor for i in rgb255_col]
-                run_data_df.insert(11, 'newLum', newLum)
-                print(f"added newLum column\n"
-                      f"run_data_df: {run_data_df.columns.to_list()}")
+        # # code to make sure luminance is int, not float.
+        # # todo: don't use this, as it just gives new LUM values that do not reflect spyder output from 12062023
+        # if run_data_df['probeColor255'].dtypes == 'int64':
+        #     lum_col = 'probeLum'
+        #     print(f"probeColor255 is {run_data_df['probeColor255'].dtypes}, lum_col is {lum_col}")
+        # else:
+        #     '''add newLum column
+        #             in old version, the experiment script varies probeLum and converts to float(RGB255) values for screen.
+        #             However, monitor can only use int(RGB255).
+        #             This function will will round RGB255 values to int(RGB255), then convert to NEW_probeLum
+        #             LumColor255Factor = 2.395387069
+        #             1. get probeColor255 column.
+        #             2. convert to int(RGB255) and convert to new_Lum with int(RGB255)/LumColor255Factor
+        #             3. add to run_data_df'''
+        #     lum_col = 'newLum'
+        #     print(f"probeColor255 is {run_data_df['probeColor255'].dtypes}, lum_col is {lum_col}")
+        #     if 'newLum' not in run_data_df.columns.to_list():
+        #         LumColor255Factor = 2.395387069
+        #         rgb255_col = run_data_df['probeColor255'].to_list()
+        #         newLum = [int(i) / LumColor255Factor for i in rgb255_col]
+        #         run_data_df.insert(11, 'newLum', newLum)
+        #         print(f"added newLum column\n"
+        #               f"run_data_df: {run_data_df.columns.to_list()}")
 
 
 
         # add converted_lum as a new column using the function rad_flow_mon_conversion
         _, exp_name = os.path.split(exp_path)
-        print(f'exp_name: {exp_name}')
+        print(f'\nexp_name: {exp_name}')
         print(f'used_uncalibrated_mon: {used_uncalibrated_mon}')
         if exp_name in used_uncalibrated_mon:
             print('This experiment used the uncalibrated monitor - converting luminance values to equivalent from asus_cal as lum_col: converted_lum')
             if 'converted_lum' not in list(run_data_df.columns):
                 '''Thi8s converts rgb255 values from the uncalibrated monitor to their equivalents on the
                 calibrated monitor (ASUS_CAL) using the luminance lookup tables measured with spyder.
-                
-                The max lum with these measurements reflects the max lum, as measured on on 12/06/2023, (e.g., around 150), 
-                rather than the max lum given in the script (which was set by Martin as 106)'''
-                # run_data_df['converted_lum'] = run_data_df.apply(rad_flow_mon_conversion, axis=1)
 
-                probeLum_list = run_data_df[lum_col].to_list()
-                print(f'\nprobeLum_list: {probeLum_list}')
+                The max lum with these measurements reflects the max lum, as measured on on 12/06/2023, (e.g., around 150),
+                rather than the max lum given in the script (which was set by Martin as 106)'''
+
+                probeRGB255_list = run_data_df['probeColor255'].to_list()  # probeColor255 is the uncalibrated RGB255
+                print(f'\nprobeRGB255_list: {probeRGB255_list}')
 
                 conv_lum_list = []
-                for probeLum in probeLum_list:
-                    conv_lum_list.append(rad_flow_mon_conversion(probeLum, verbose=True))
+                for probeRGB255 in probeRGB255_list:
+                    conv_lum_list.append(rad_flow_mon_conversion(uncalibrated_rgb255_val=probeRGB255, verbose=True))
                 print(f'\nconv_lum_list: {conv_lum_list}')
                 run_data_df.insert(11, 'converted_lum', conv_lum_list)
                 lum_col = 'converted_lum'
@@ -195,7 +196,7 @@ for p_idx, participant_name in enumerate(participant_list):
             run_data_df.drop(col_name, axis=1, inplace=True)
 
         # save run_data_df
-        # run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')  # delete this, using ALL_ISIs_sorted.xlsx
+        run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
         run_data_df.to_excel(run_data_path, index=False)
         print(f"run_data_df:\n{run_data_df}")
 
@@ -322,7 +323,6 @@ for p_idx, participant_name in enumerate(participant_list):
 # # print('\nget exp_average_data')
 # todo: check trim_n is correct
 # trim_n = 2
-# # todo: sort script to automatically use trim=2 if its there, and not just use untrimmed#
 # # todo: make sure ISI cols are in the correct order
 e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
                    error_type='SE',

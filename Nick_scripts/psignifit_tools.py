@@ -159,8 +159,11 @@ def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='sta
                      'save_np_path': save_np_path}
 
     if save_np_path is not None:
-        np.savetxt(f"{save_np_path}{os.sep}{dataset_name}.csv", data_np, delimiter=",")
-        with open(f"{save_np_path}{os.sep}{dataset_name}.pickle", 'wb') as handle:
+        # np.savetxt(f"{save_np_path}{os.sep}{dataset_name}.csv", data_np, delimiter=",")
+        np.savetxt(os.path.join(save_np_path, f"{dataset_name}.csv"), data_np, delimiter=",")
+
+        # with open(f"{save_np_path}{os.sep}{dataset_name}.pickle", 'wb') as handle:
+        with open(os.path.join(save_np_path, f"{dataset_name}.pickle", 'wb')) as handle:
             pickle.dump(bin_data_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     print('\n*** finished results_csv_to_np_for_psignifit() ***\n')
@@ -589,8 +592,9 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=9, q_bins
 
         # get df for this isi only
         if load_csv:
-            isi_df = pd.read_csv(f'{root_path}{os.sep}{p_run_name}'
-                                 f'{os.sep}ISI_{isi}_probeDur2/{csv_name}.csv')
+            # isi_df = pd.read_csv(f'{root_path}{os.sep}{p_run_name}'
+            #                      f'{os.sep}ISI_{isi}_probeDur2/{csv_name}.csv')
+            isi_df = pd.read_csv(os.path.join(root_path, p_run_name, f'ISI_{isi}_probeDur2', f'{csv_name}.csv'))
             if 'Unnamed: 0' in list(isi_df):
                 isi_df.drop('Unnamed: 0', axis=1, inplace=True)
         else:

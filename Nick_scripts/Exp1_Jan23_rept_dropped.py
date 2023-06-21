@@ -3,8 +3,13 @@ from __future__ import division  # do I need this?
 import psychopy
 from psychopy import __version__ as psychopy_version
 print(f"PsychoPy_version: {psychopy_version}")
-psychopy.useVersion('2021.2.3')
-print(f"PsychoPy_version: {psychopy_version}")
+'''
+The lab machine uses 2021.2.3, but this doesn't work on my laptop.
+ImportError: cannot import name '_vmTesting' from 'psychopy.tests' (unknown location)
+ However, I can test on an older version (e.g., 2021.2.2) which does work.
+psychopy.useVersion('2021.2.3')'''
+psychopy.useVersion('2021.2.2')  # works
+# print(f"PsychoPy_version: {psychopy_version}")
 
 from psychopy import gui, visual, core, data, event, monitors, hardware
 from psychopy.hardware import keyboard
@@ -37,7 +42,7 @@ os.chdir(_thisDir)
 
 # Store info about the experiment session (numbers keep the order)
 expName = 'Exp1_Jan23_rept_dropped'  # from the Builder filename that created this script
-expInfo = {'1. Participant': 'Nick_test',
+expInfo = {'1. Participant': 'Nick_test_16062023',
            '2. Run_number': '1',
            '3. Probe duration in frames': [2, 1, 50, 100],
            '4. fps': [60, 240, 120, 60],
@@ -83,7 +88,7 @@ For 1probe condition, use separation==99.
 For concurrent probes, use ISI==-1.
 '''
 print(f'\nTrial condition details:')
-separations = [5, 12]  # select from [0, 1, 2, 3, 6, 18, 99]
+separations = [5]  # , 12]  # select from [0, 1, 2, 3, 6, 18, 99]
 # separations = [0, 1, 2, 3, 6, 18, 99]  # select from [0, 1, 2, 3, 6, 18, 99]
 print(f'separations: {separations}')
 ISI_values = [-1]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]

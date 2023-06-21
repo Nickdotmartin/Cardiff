@@ -91,12 +91,10 @@ def return_target_or_above_below(array_of_values, target_value):
         # it is technically possible for the value to be outside the range of the array,
         # as the min and max lum for uncalibrated are .13 and 151.05, and for calibrated are .14 and 150.63.
         # in these cases, return the minimum or maximum value in the array.
-        if .13 <= target_value < .14:
-            if np.amin(array_of_values) == .14:
-                return .14
-        elif 150.63 < target_value <= 151.05:
-            if np.amax(array_of_values) == 150.63:
-                return 150.63
+        if (.13 <= target_value < .14) and np.amin(array_of_values) == .14:
+            return .14
+        elif (150.63 < target_value <= 151.05) and (np.amax(array_of_values) == 150.63):
+            return 150.63
         else:
 
             # if target not in array, return the value below and above.
@@ -2126,7 +2124,9 @@ def plot_thr_heatmap(heatmap_df,
     print(f"heatmap_midpoint: {heatmap_midpoint}")
 
     heatmap = sns.heatmap(data=heatmap_df,
-                          annot=True, center=heatmap_midpoint,
+                          annot=True,
+                          fmt='.3g', # format to 3 significant figures
+                          center=heatmap_midpoint,
                           cmap=colourmap,
                           xticklabels=x_tick_labels, yticklabels=y_tick_labels)
 
@@ -2283,7 +2283,7 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
         print(f"all_data_df:\n{all_data_df}")
 
     if save_all_data:
-        save_name = 'ALL_ISIs_sorted.xlsx'
+        save_name = 'RUNDATA-sorted.xlsx'
 
         save_excel_path = os.path.join(run_dir, save_name)
         if verbose:
@@ -3550,6 +3550,11 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     if verbose:
         print(f'pos_sep_vals_list: {pos_sep_vals_list}')
 
+    # if n_trimmed is a list of identical values, replace with int (e.g., [2, 2, 2] becomes 2)
+    if isinstance(n_trimmed, list) and len(set(n_trimmed)) == 1:
+        n_trimmed = n_trimmed[0]
+    print(f'n_trimmed: {n_trimmed}')
+
 
     """part 3. main Figures (these are the ones saved in the matlab script)
     Fig1: plot average threshold for each ISI and sep.
@@ -3735,9 +3740,9 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         x_tick_labels=isi_name_list,
         y_tick_labels=stair_names_labels,
         fig_title=heatmap_title,
-                     save_name=heatmap_savename,
-                     save_path=save_path,
-                     verbose=verbose)
+        save_name=heatmap_savename,
+        save_path=save_path,
+        verbose=verbose)
     if show_plots:
         plt.show()
     plt.close()
@@ -3762,6 +3767,8 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                             # x_tick_labels=None,
                             x_axis_label='ISI',
                             # y_tick_labels=None,
+                            fontsize=12,
+                            annot_fmt='.3g',
                             y_axis_label='Separation',
                             fig_title=heatmap_pr_title,
                             save_name=heatmap_pr_savename,
@@ -3788,6 +3795,8 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                             # x_tick_labels=None,
                             x_axis_label='ISI',
                             # y_tick_labels=None,
+                            fontsize=12,
+                            annot_fmt='.3g',
                             y_axis_label='Separation',
                             fig_title=heatmap_pr_title,
                             save_name=heatmap_pr_savename,

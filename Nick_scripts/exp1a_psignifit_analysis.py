@@ -746,7 +746,7 @@ def plot_1probe_w_errors(fig_df, error_df,
 
         if split_1probe:
             if x_tick_vals is not None:
-                ax.errorbar(x=x_tick_vals + np.random.uniform(low=-jit_max, high=jit_max),
+                ax.errorbar(x=x_tick_vals + np.random.uniform(size=len(x_tick_vals), low=-jit_max, high=jit_max),
                             y=one_probe_df[thr_col][idx],
                             yerr=one_probe_er_df[thr_col][idx],
                             marker='.', lw=2, elinewidth=.7,
@@ -1089,7 +1089,7 @@ def plt_heatmap_row_col(heatmap_df,
                     center=midpoint,
                     annot=True,
                     annot_kws={'fontsize': fontsize},
-                    # fmt=annot_fmt,
+                    fmt=annot_fmt,
                     cbar=False,
                     square=True)
 
@@ -1213,6 +1213,17 @@ def make_diff_from_conc_df(MASTER_TM2_thr_df, root_path, error_type='SE',
     if ave_over == 'Exp':
         thr_df.drop('p_stack_sep', axis=1, inplace=True)
         thr_df.drop('participant', axis=1, inplace=True)
+
+    # check column order
+    if 'Concurrent' in list(thr_df.columns):
+        conc_col = 'Concurrent'
+    elif 'Conc' in list(thr_df.columns):
+        conc_col = 'Conc'
+    else:
+        conc_col = 'ISI_-1'
+
+    thr_df = conc_to_first_isi_col(thr_df, col_to_change=conc_col)
+
 
     if verbose:
         print(f'thr_df ({list(thr_df.columns)}):\n{thr_df}')
@@ -2748,6 +2759,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                        split_1probe=True,
                        ra_cd_size_dict=None,
                        heatmap_annot_fmt='{:.2f}',
+                       plt_suffix='',
                        show_plots=True, verbose=True):
     """
     Plots:
@@ -2774,6 +2786,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     :param sep_name_list: List of separation names (e.g., '1probe' if 99 in sep_vals_list).
     :param ra_cd_size_dict: dictionary containing participant Ricco area and Bloch critical duration info.
     :param heatmap_annot_fmt: Number of digits to display in heatmap values.
+    :param plt_suffix: Suffix to add to end of plot file names.
     :param show_plots: Whether to display figures once they are made.
     :param verbose: Whether to print progress to screen.
     """
@@ -2842,6 +2855,10 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     sep_name_list = ['1probe' if i == 20 else i for i in sep_vals_list]
     sep_idx_list = list(range(len(sep_vals_list)))
 
+    # if n_trimmed is a list of identical values, replace with int (e.g., [2, 2, 2] becomes 2)
+    if isinstance(n_trimmed, list) and len(set(n_trimmed)) == 1:
+        n_trimmed = n_trimmed[0]
+
     if verbose:
         print(f'\nall_df_headers: {all_df_headers}')
         print(f'isi_cols_list: {isi_cols_list}')
@@ -2850,6 +2867,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         print(f'sep_vals_list: {sep_vals_list}')
         print(f'sep_name_list: {sep_name_list}')
         print(f'sep_idx_list: {sep_idx_list}')
+        print(f'n_trimmed: {n_trimmed}')
 
     if ra_cd_size_dict:
         # associate RA_size_sep with sep_idx_list number to draw line at correct point of axis.
@@ -2960,7 +2978,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
             fig1_savename = f'ave_TM{n_trimmed}_thr_all_runs.png'
         else:
             fig1_title = f'{ave_over} average threshold across all runs\n(n={ave_over_n}, err={error_type})'
-            fig1_savename = f'ave_thr_all_runs.png'
+            fig1_savename = f'ave_thr_all_runs{plt_suffix}.png'
 
         plot_1probe_w_errors(fig_df=ave_df, error_df=error_bars_df,
                              split_1probe=split_1probe, jitter=True,
@@ -2989,11 +3007,11 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         if n_trimmed is not None:
             fig1b_title = f'{ave_over} probe luminance at each ISI value per separation\n' \
                           f'(n={ave_over_n}, trim={n_trimmed}, err={error_type}).'
-            fig1b_savename = f'ave_TM{n_trimmed}_thr_all_runs_transpose.png'
+            fig1b_savename = f'ave_TM{n_trimmed}_thr_all_runs_transpose{plt_suffix}.png'
         else:
             fig1b_title = f'{ave_over} probe luminance at each ISI value per separation\n' \
                           f'(n={ave_over_n}, err={error_type})'
-            fig1b_savename = f'ave_thr_all_runs_transpose.png'
+            fig1b_savename = f'ave_thr_all_runs_transpose{plt_suffix}.png'
 
         plot_w_errors_no_1probe(wide_df=all_df, x_var='ISI', y_var=thr_col,
                                 lines_var='separation', long_df_idx_col=idx_col,
@@ -3019,10 +3037,10 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     if n_trimmed is not None:
         f'{ave_over} average thresholds per separation'
         fig1c_title = f'{ave_over} average thresholds per separation.  (n={ave_over_n}, trim={n_trimmed}, err={error_type}).'
-        fig1c_savename = f'ave_TM{n_trimmed}_thr_per_sep.png'
+        fig1c_savename = f'ave_TM{n_trimmed}_thr_per_sep{plt_suffix}.png'
     else:
         fig1c_title = f'{ave_over} average thresholds per separation.  (n={ave_over_n}, err={error_type})'
-        fig1c_savename = f'ave_thr_per_sep.png'
+        fig1c_savename = f'ave_thr_per_sep{plt_suffix}.png'
 
     plot_n_sep_thr_w_scatter(all_thr_df=all_df, exp_ave=exp_ave,
                              ra_cd_v_line=ra_cd_size_dict['cd_isi_idx'],
@@ -3113,10 +3131,10 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     if n_trimmed is not None:
         heatmap_title = f'{ave_over} mean Threshold\nfor each ISI and separation (n={ave_over_n}, trim={n_trimmed}).'
-        heatmap_savename = f'mean_TM{n_trimmed}_thr_heatmap'
+        heatmap_savename = f'mean_TM{n_trimmed}_thr_heatmap{plt_suffix}'
     else:
         heatmap_title = f'{ave_over} mean Threshold\nfor each ISI and separation (n={ave_over_n})'
-        heatmap_savename = 'mean_thr_heatmap'
+        heatmap_savename = f'mean_thr_heatmap{plt_suffix}'
 
     if ra_cd_size_dict['cd_isi_idx']:
         adjusted_v_line = ra_cd_size_dict['cd_isi_idx'] + 1
@@ -3148,10 +3166,10 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     if n_trimmed is not None:
         heatmap_title = f'{ave_over} mean Error ({error_type})\nfor each ISI and separation (n={ave_over_n}, trim={n_trimmed}).'
-        heatmap_savename = f'mean_TM{n_trimmed}_error_heatmap'
+        heatmap_savename = f'mean_TM{n_trimmed}_error_heatmap{plt_suffix}'
     else:
         heatmap_title = f'{ave_over} mean Error ({error_type})\nfor each ISI and separation (n={ave_over_n})'
-        heatmap_savename = 'mean_error_heatmap'
+        heatmap_savename = f'mean_error_heatmap{plt_suffix}'
 
     if ra_cd_size_dict['cd_isi_idx']:
         adjusted_v_line = ra_cd_size_dict['cd_isi_idx'] + 1
@@ -3223,10 +3241,10 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         # get mean of each col, then mean of that
         if n_trimmed is not None:
             heatmap_pr_title = f'{ave_over} Heatmap per row (n={ave_over_n}, trim={n_trimmed}).'
-            heatmap_pr_savename = f'mean_TM{n_trimmed}_heatmap_per_row'
+            heatmap_pr_savename = f'mean_TM{n_trimmed}_heatmap_per_row{plt_suffix}'
         else:
             heatmap_pr_title = f'{ave_over} Heatmap per row (n={ave_over_n})'
-            heatmap_pr_savename = 'mean_heatmap_per_row'
+            heatmap_pr_savename = f'mean_heatmap_per_row{plt_suffix}'
 
         if ra_cd_size_dict['cd_isi_idx']:
             adjusted_v_line = ra_cd_size_dict['cd_isi_idx'] + 1
@@ -3255,10 +3273,10 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         # get mean of each col, then mean of that
         if n_trimmed is not None:
             heatmap_pc_title = f'{ave_over} Heatmap per col (n={ave_over_n}, trim={n_trimmed}).'
-            heatmap_pc_savename = f'mean_TM{n_trimmed}_heatmap_per_col'
+            heatmap_pc_savename = f'mean_TM{n_trimmed}_heatmap_per_col{plt_suffix}'
         else:
             heatmap_pc_title = f'{ave_over} Heatmap per col (n={ave_over_n})'
-            heatmap_pc_savename = 'mean_heatmap_per_col'
+            heatmap_pc_savename = f'mean_heatmap_per_col{plt_suffix}'
 
         if ra_cd_size_dict['ra_sep_idx']:
             adjusted_h_line = ra_cd_size_dict['ra_sep_idx'] + 1
@@ -3332,10 +3350,10 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         print(f"\nplot_diff_from_conc_heatmap\n")
         if n_trimmed is not None:
             heatmap_dfc_title = f'{ave_over} plot_diff_from_conc_heatmap (n={ave_over_n}, trim={n_trimmed}).'
-            heatmap_dfc_savename = f'mean_TM{n_trimmed}_plot_diff_from_conc_heatmap'
+            heatmap_dfc_savename = f'mean_TM{n_trimmed}_plot_diff_from_conc_heatmap{plt_suffix}'
         else:
             heatmap_dfc_title = f'{ave_over} plot_diff_from_conc_heatmap (n={ave_over_n})'
-            heatmap_dfc_savename = 'mean_plot_diff_from_conc_heatmap'
+            heatmap_dfc_savename = f'mean_plot_diff_from_conc_heatmap{plt_suffix}'
 
         if ra_cd_size_dict['cd_isi_idx']:
             adjusted_v_line = ra_cd_size_dict['cd_isi_idx'] + 1
@@ -3363,10 +3381,10 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         print(f"\nplot diff_from_conc/SE heatmap\n")
         if n_trimmed is not None:
             heatmap_dfc_title = f'{ave_over} diff_from_conc/{error_type} heatmap (n={ave_over_n}, trim={n_trimmed}).'
-            heatmap_dfc_savename = f'mean_TM{n_trimmed}_diff_from_conc_div_{error_type}_heatmap'
+            heatmap_dfc_savename = f'mean_TM{n_trimmed}_diff_from_conc_div_{error_type}_heatmap{plt_suffix}'
         else:
             heatmap_dfc_title = f'{ave_over} diff_from_conc/{error_type}  (n={ave_over_n})'
-            heatmap_dfc_savename = f'mean_diff_from_conc_div_{error_type}_heatmap'
+            heatmap_dfc_savename = f'mean_diff_from_conc_div_{error_type}_heatmap{plt_suffix}'
 
         print(f"ave_DfC_df:\n{ave_DfC_df}")
         print(f"error_DfC_df:\n{error_DfC_df}")
@@ -3395,10 +3413,10 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         print(f"\nt-scores plot\n")
         if n_trimmed is not None:
             fig1_title = f'{ave_over} average DfC / {error_type} across all runs\n(n={ave_over_n}, trim={n_trimmed}).'
-            fig1_savename = f'ave_TM{n_trimmed}_DfC_div_{error_type}.png'
+            fig1_savename = f'ave_TM{n_trimmed}_DfC_div_{error_type}{plt_suffix}.png'
         else:
             fig1_title = f'{ave_over} average average DfC / {error_type}  across all runs\n(n={ave_over_n})'
-            fig1_savename = f'ave_DfC_div_{error_type}.png'
+            fig1_savename = f'ave_DfC_div_{error_type}{plt_suffix}.png'
 
         plot_pos_sep_and_1probe(dfc_div_error_df,
                                 thr_col='newLum',
@@ -3418,7 +3436,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         plt.close()
 
         if verbose:
-            print('finished fig1a')
+            print('finished t-scores plot')
 
         if len(isi_name_list) > 1 and len(sep_name_list) > 1:
             print('making dfc heatmaps per-row and per-column')
@@ -3426,10 +3444,10 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
             print(f"\nplot_diff_from_conc_per_row\n")
             if n_trimmed is not None:
                 heatmap_dfc_pr_title = f'{ave_over} plot_diff_from_conc_per_row (n={ave_over_n}, trim={n_trimmed}).'
-                heatmap_dfc_pr_savename = f'mean_TM{n_trimmed}_plot_diff_from_conc_per_row'
+                heatmap_dfc_pr_savename = f'mean_TM{n_trimmed}_plot_diff_from_conc_per_row{plt_suffix}'
             else:
                 heatmap_dfc_pr_title = f'{ave_over} plot_diff_from_conc_per_row (n={ave_over_n})'
-                heatmap_dfc_pr_savename = 'mean_plot_diff_from_conc_per_row'
+                heatmap_dfc_pr_savename = f'mean_plot_diff_from_conc_per_row{plt_suffix}'
 
             if 'ISI_-1' in list(ave_DfC_df.columns):
                 DfC_no_conc_df = ave_DfC_df.drop(['ISI_-1'], axis=1)
