@@ -103,7 +103,9 @@ for p_name in list(convert_dict.keys()):
         combined_this_df_path = os.path.join(combined_p_path, this_df_name)
         combined_this_df.to_csv(combined_this_df_path, index=False)
 
-
+'''
+For analysis I removed my extra conditions (sep7-11) after e_averages.
+I also had to comment out fig 1a from make_average plots (participants) because it was throwing an error.'''
 
 
 
