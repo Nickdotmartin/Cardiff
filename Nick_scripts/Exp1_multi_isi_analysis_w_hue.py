@@ -60,6 +60,8 @@ for p_idx, participant_name in enumerate(participant_list):
         p_name = participant_name
 
         '''a'''
+        # todo: copy look for sep_dirs from other analysis script.
+
         # # I don't need data extraction as all ISIs are in same df.
         p_name = f'{participant_name}_output'  # use this one
         try:

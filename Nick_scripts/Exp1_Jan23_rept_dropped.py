@@ -127,11 +127,10 @@ save_output_as = os.path.join(save_dir, incomplete_output_filename)
 
 
 # Experiment Handler
-# todo: save pydat file or log file to have ALL info I need
-
 thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
                                  extraInfo=expInfo,
-                                 # runtimeInfo=None, savePickle=None,
+                                 # runtimeInfo=None,
+                                 savePickle=True,
                                  saveWideText=True,
                                  dataFileName=save_output_as)
 

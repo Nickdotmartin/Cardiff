@@ -78,7 +78,7 @@ expInfo = {'1. Participant': 'Nick_test_01062023',
            '8. Record_frame_durs': [True, False],
            '9. Background': ['flow_rad', 'None'],
            # '10. bg_speed_cond': ['Normal', 'Half-speed'],
-           '11. prelim_bg_flow_ms': [350, 70],
+           '11. prelim_bg_flow_ms': [350, 200, 70],
            '12. monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'Samsung',
                                 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18', 'ASUS_2_13_240Hz'],
            '13. mask_type': ['4_circles', '2_spokes']
@@ -135,7 +135,6 @@ print(f'ISI_list: {ISI_list}')
 
 # Separation values in pixels
 separations = [0, 1, 2, 3, 6, 18]
-# todo: sorted separations into descending order
 separations.sort(reverse=True)
 print(f'separations: {separations}')
 
@@ -1155,16 +1154,17 @@ if record_fr_durs:
 
     '''set colours for lines on plot.'''
     # todo: remove this once seaborn is installed on OLED pc.
-    if monitor_name == 'OLED':
-        # list of 20 colours from matplotlib
-        col_list = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple',
-                    'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive', 'tab:cyan',
-                    'xkcd:lightblue', 'xkcd:lightgreen', 'xkcd:lightred', 'xkcd:lightpurple',
-                    'xkcd:lightbrown', 'xkcd:lightpink', 'xkcd:lightgray', 'xkcd:lightolive', 'xkcd:lightcyan']
-        my_colours = col_list[:n_stairs]
-    else:
-        from exp1a_psignifit_analysis import fig_colours
-        my_colours = fig_colours(n_stairs, alternative_colours=False)
+    # if monitor_name == 'OLED':
+    #     # list of 20 colours from matplotlib
+    #     col_list = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple',
+    #                 'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive', 'tab:cyan',
+    #                 'xkcd:lightblue', 'xkcd:lightgreen', 'xkcd:lightred', 'xkcd:lightpurple',
+    #                 'xkcd:lightbrown', 'xkcd:lightpink', 'xkcd:lightgray', 'xkcd:lightolive', 'xkcd:lightcyan']
+    #     my_colours = col_list[:n_stairs]
+    # else:
+    from exp1a_psignifit_analysis import fig_colours
+    my_colours = fig_colours(n_stairs, alternative_colours=False)
+
     # associate colours with conditions
     colour_dict = {k: v for (k, v) in zip(stair_names_list, my_colours)}
     # make list of colours based on order of conditions

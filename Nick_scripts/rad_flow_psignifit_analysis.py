@@ -3060,6 +3060,15 @@ def d_average_participant(root_path, run_dir_names_list,
         print('yes running with groupby_col and cols_to_drop')
 
         groupby_sep_df = get_means_df.drop(cols_to_drop, axis=1)
+        print(f"groupby_sep_df:\n{groupby_sep_df}")
+
+        if cols_to_replace is not None:
+            # replace_cols = groupby_sep_df[[cols_to_replace]]
+            # replace_cols = groupby_sep_df.pop(cols_to_replace)
+            replace_cols = pd.concat([groupby_sep_df.pop(x) for x in cols_to_replace], axis=1)
+            print(f"replace_cols: {cols_to_replace}\n{replace_cols}")
+            # groupby_sep_df = groupby_sep_df.drop(cols_to_replace, axis=1)
+            print(f"groupby_sep_df:\n{groupby_sep_df}")
 
         # for SImon's ricco data the dtypes were all object apart from stack.
         # Will try to convert them to numeric
@@ -3072,9 +3081,9 @@ def d_average_participant(root_path, run_dir_names_list,
                                                       # as_index=False
                                                       ).mean()
 
-        if cols_to_replace is not None:
-            replace_cols = ave_psignifit_thr_df[[cols_to_replace]]
-            print(f"replace_cols: {cols_to_replace}\n{replace_cols}")
+        # if cols_to_replace is not None:
+        #     replace_cols = ave_psignifit_thr_df[[cols_to_replace]]
+        #     print(f"replace_cols: {cols_to_replace}\n{replace_cols}")
 
         if verbose:
             print(f'\ngroupby_sep_df:\n{groupby_sep_df}')
@@ -3333,6 +3342,8 @@ def e_average_exp_data(exp_path, p_names_list,
             # cont_type_col = this_p_ave_df['cond_type'].tolist()
             # neg_sep_col = this_p_ave_df['neg_sep'].tolist()
             # sep_col = this_p_ave_df['separation'].tolist()
+        elif exp_type == 'missing_mixed':
+            print('Do I need to do anything here for missing probe exp?')
         else:
             if 'stair_names' in this_p_ave_df.columns.tolist():
                 stair_names_list = this_p_ave_df['stair_names'].tolist()
@@ -3398,6 +3409,10 @@ def e_average_exp_data(exp_path, p_names_list,
     elif exp_type == 'missing_probe':
         groupby_col = ['cond_type', 'neg_sep']
         groupby_sep_df = groupby_sep_df.drop('separation', axis=1)
+        sort_rows = 'neg_sep'
+    elif exp_type == 'missing_mixed':
+        groupby_col = ['neg_sep']
+        # groupby_sep_df = groupby_sep_df.drop('separation', axis=1)
         sort_rows = 'neg_sep'
     # groupby_col=['cond_type', 'neg_sep'], cols_to_drop='stack', cols_to_replace='separation',
 
