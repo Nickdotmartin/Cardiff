@@ -47,7 +47,7 @@ expInfo = {'1. Participant': 'Nick_test',
            '3. Probe duration in frames': [2, 50, 100],
            '4. fps': [60, 240, 120, 60],
            '5. vary fixation': [True, False],
-           '6. separation': [2, 0, 1, 2, 3, 6, 18, 99],
+           '6. separation': [0, 2, 3],
            '7. Record_frame_durs': [True, False], 
            '8. monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'Samsung',
                                'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18', 'ASUS_2_13_240Hz'],
@@ -100,7 +100,7 @@ For concurrent probes, use ISI==-1.
 '''
 
 cond_type_values = ['missing', 'exp1']
-ISI_values = [-1, 0, 2, 4, 6, 9, 12, 24]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
+ISI_values = [-1, 0, 2, 4, 6]  # select from [-1, 0, 2, 4, 6, 9, 12, 24]
 
 # repeat separation values for each ISI (and target jump) e.g., [0, 0, 0, 0, 6, 6, 6, 6]
 sep_vals_list = list(np.repeat(sep_value, len(ISI_values))) * len(cond_type_values)
