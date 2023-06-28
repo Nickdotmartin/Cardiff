@@ -1,7 +1,9 @@
 from psychopy import monitors
 from psychopy.tools import monitorunittools
+from psychopy.misc import fromFile
 import numpy as np
 import math
+import os
 
 '''
 Page has tools to use for psychoPy experiments.
@@ -167,6 +169,9 @@ monitor_pixel_size_dict = {
     'asus_cal': {'model_name': 'Asus_VG279VM',
                  'dimensions_mm': [567.6, 336.15],
                  'dimensions_pix': [1920, 1080]},
+    'ASUS_2_13_240Hz': {'model_name': 'Asus_VG279VM',
+                 'dimensions_mm': [567.6, 336.15],
+                 'dimensions_pix': [1920, 1080]},
     'Samsung': {'model_name': 'Samsung_F24G35TFWU',
                  'dimensions_mm': [527.04, 296.46],
                  'dimensions_pix': [1920, 1080]},
@@ -252,3 +257,29 @@ def get_pixel_mm_deg_values(monitor_name='asus_cal', n_pixels=1):
     # print("***finished get_pixel_mm_deg_values()***\n")
 
     return pixel_mm_deg_dict
+
+
+# this function will read a psychopy psydat file and print the contents, with an option to save to csv
+def read_psydat_file(file_path, save_to_csv=False):
+    """
+    read a psychopy psydat file and print the contents, with an option to save to csv
+
+    :param file_path: path to the .psydat file
+    :param save_to_csv: return a csv file of the contents ending psydat.csv
+    :return: Nothing
+    """
+
+    psydata = fromFile(file_path)
+    for entry in psydata.entries:
+        print(entry)
+
+    if save_to_csv:
+        # (replace with the file path to where you want the resulting .csv
+        # to be saved)
+        path, psydat_name = os.path.split(file_path)
+        print(f"path: {path}")
+        print(f"psydat_name: {psydat_name}")
+        csv_name = psydat_name.replace('.psydat', '_psydat.csv')
+        save_path = os.path.join(path, csv_name)
+        print(f"save_path: {save_path}")
+        # psydata.saveAsWideText(save_path, delim=',')
