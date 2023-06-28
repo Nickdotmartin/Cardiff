@@ -28,7 +28,7 @@ participant_list = ['Kim', 'Nick', 'Simon']  # , 'Nick_half_speed']
 # participant_list = ['Nick_half_speed', 'Simon_half']  # , 'Nick_half_speed']
 
 exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_23'
-participant_list = ['Nick_240_uncal_bg200']  # 'Nick_240Hz_07062023_bg70', 'Nick_OLED_02062023_bg350', 'Nick_240Hz_02062023_bg350']
+participant_list = ['Nick_240Hz_end_june23_bg350']  # 'Nick_240Hz_07062023_bg70', 'Nick_OLED_02062023_bg350', 'Nick_240Hz_02062023_bg350', Nick_240Hz_end_june23_bg350, Nick_240_uncal_bg200]
 
 # exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_23_OLED'
 # participant_list = ['Nick_70_OLED_2.13A', 'Nick_350_OLED_2.13A', 'Simon_OLED_2.13A_black']
@@ -152,6 +152,15 @@ for p_idx, participant_name in enumerate(participant_list):
         print(f'used_uncalibrated_mon: {used_uncalibrated_mon}')
         if exp_name in used_uncalibrated_mon:
             print('This experiment used the uncalibrated monitor - converting luminance values to equivalent from asus_cal as lum_col: converted_lum')
+
+            if exp_name == 'rad_flow_23':
+                # get value for 'monitor_name' from first row of run_data_df
+                if run_data_df['monitor_name'][0] == 'ASUS_2_13_240Hz':
+                    print(f"monitor_name is ASUS_2_13_240Hz, as expected, continuing")
+                else:
+                    raise ValueError(f"monitor_name is not ASUS_2_13_240Hz, it is {run_data_df['monitor_name'][0]}\n"
+                                     f"Do I need to convert these values?")
+
             if 'converted_lum' not in list(run_data_df.columns):
                 '''Thi8s converts rgb255 values from the uncalibrated monitor to their equivalents on the
                 calibrated monitor (ASUS_CAL) using the luminance lookup tables measured with spyder.
@@ -172,6 +181,13 @@ for p_idx, participant_name in enumerate(participant_list):
                 print('\nadded converted_lum col')
                 print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
 
+            else:
+                print(f"converted_lum is already in run_data_df.columns.to_list(), continuing")
+                lum_col = 'converted_lum'
+                print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
+        else:
+            raise ValueError(f"exp_name is not in used_uncalibrated_mon, it is {exp_name}\n"
+                             f"Do I need to convert these values?")
 
 
         # add neg sep column to make batman plots
@@ -187,6 +203,8 @@ for p_idx, participant_name in enumerate(participant_list):
             run_data_df.insert(7, 'neg_sep', run_data_df.apply(make_neg_sep, axis=1))
             print('\nadded neg_sep col')
             print(run_data_df['neg_sep'].to_list())
+        else:
+            print(f"neg_sep is already in run_data_df.columns.to_list(), continuing")
 
         # remove unnamed columns
         substring = 'Unnamed: '
