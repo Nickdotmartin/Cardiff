@@ -81,7 +81,8 @@ expInfo = {'1. Participant': 'Nick_test_01062023',
            '11. prelim_bg_flow_ms': [350, 200, 70],
            '12. monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'Samsung',
                                 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18', 'ASUS_2_13_240Hz'],
-           '13. mask_type': ['4_circles', '2_spokes']
+           '13. mask_type': ['4_circles', '2_spokes'],
+           '14. verbose': [False, True]
            }
 
 # dialogue box
@@ -103,6 +104,7 @@ background = expInfo['9. Background']
 prelim_bg_flow_ms = int(expInfo['11. prelim_bg_flow_ms'])
 monitor_name = expInfo['12. monitor_name']
 mask_type = expInfo['13. mask_type']
+verbose = eval(expInfo['14. verbose'])
 
 
 # misc settings
@@ -127,25 +129,29 @@ else:
     ISI_frames = int(ISI_selected_ms * fps / 1000)
     ISI_actual_ms = (1/fps) * ISI_frames * 1000
 ISI = ISI_frames
-print(f"\nSelected {ISI_selected_ms}ms ISI.\n"
-      f"At {fps}Hz this is {ISI_frames} frames which each take {round(1000/fps, 2)} ms.\n")
+if verbose:
+    print(f"\nSelected {ISI_selected_ms}ms ISI.\n"
+          f"At {fps}Hz this is {ISI_frames} frames which each take {round(1000/fps, 2)} ms.\n")
 ISI_list = [ISI_frames]
-print(f'ISI_list: {ISI_list}')
+if verbose:
+    print(f'ISI_list: {ISI_list}')
 
 
 # Separation values in pixels
 separations = [0, 1, 2, 3, 6, 18]
 separations.sort(reverse=True)
-print(f'separations: {separations}')
+if verbose:
+    print(f'separations: {separations}')
 
 
 # # main contrast is whether the background and target motion is in same or opposite direction.
 # congruence_vals: 1=congruent/same, -1=incongruent/different
 # todo: DO i need to sort congruence to make sure that the staircases are in the same order?
 congruence_vals = [1, -1]
-print(f'congruence_vals: {congruence_vals}')
 congruence_names = ['cong', 'incong']
-print(f'congruence_names: {congruence_names}')
+if verbose:
+    print(f'congruence_vals: {congruence_vals}')
+    print(f'congruence_names: {congruence_names}')
 
 # lists of values for each condition (all list are same length = n_stairs)
 '''each separation value appears in 2 stairs, e.g.,
@@ -154,23 +160,25 @@ e.g., sep_vals_list = [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]
 this study does not include the two single probe conditions (labeled 99 in previous exp)
 '''
 ISI_vals_list = list(np.repeat(ISI_list, len(separations))) * len(congruence_vals)
-print(f'ISI_vals_list: {ISI_vals_list}')
 sep_vals_list = list(np.tile(separations, len(ISI_list) * len(congruence_vals)))
-print(f'sep_vals_list: {sep_vals_list}')
 cong_vals_list = list(np.repeat(congruence_vals, len(sep_vals_list) / len(congruence_vals)))
-print(f'cong_vals_list: {cong_vals_list}')
 cong_names_list = list(np.repeat(congruence_names, len(sep_vals_list) / len(congruence_vals)))
-print(f'cong_names_list: {cong_names_list}')
+if verbose:
+    print(f'ISI_vals_list: {ISI_vals_list}')
+    print(f'sep_vals_list: {sep_vals_list}')
+    print(f'cong_vals_list: {cong_vals_list}')
+    print(f'cong_names_list: {cong_names_list}')
 
 
 # stair_names_list joins cong_names_list, sep_vals_list and ISI_vals_list
 # e.g., ['cong_sep18_ISI6', 'cong_sep6_ISI6', 'incong_sep18_ISI6', 'incong_sep6_ISI6', ]
 stair_names_list = [f'{p}_sep{s}_ISI{i}' for p, s, i in zip(cong_names_list, sep_vals_list, ISI_vals_list)]
-print(f'stair_names_list: {stair_names_list}')
 n_stairs = len(sep_vals_list)
-print(f'n_stairs: {n_stairs}')
 total_n_trials = int(n_trials_per_stair * n_stairs)
-print(f'total_n_trials: {total_n_trials}')
+if verbose:
+    print(f'stair_names_list: {stair_names_list}')
+    print(f'n_stairs: {n_stairs}')
+    print(f'total_n_trials: {total_n_trials}')
 
 
 # Experiment handling and saving
@@ -196,7 +204,8 @@ thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
 
 
 # MONITOR details: colour, luminance, pixel size and frame rate
-print(f"\nmonitor_name: {monitor_name}")
+if verbose:
+    print(f"\nmonitor_name: {monitor_name}")
 thisMon = monitors.Monitor(monitor_name)
 
 '''
@@ -215,7 +224,8 @@ bgLum = maxLum * bgLumProp
 bgColor255 = int(bgLum * LumColor255Factor)
 bgColor_rgb1 = bgLum / maxLum
 bg_color_rgb = (bgColor_rgb1 * 2) - 1
-print(f'bgLum: {bgLum}, bgColor255: {bgColor255}, bgColor_rgb1: {bgColor_rgb1}, bg_color_rgb: {bg_color_rgb}')
+if verbose:
+    print(f'bgLum: {bgLum}, bgColor255: {bgColor255}, bgColor_rgb1: {bgColor_rgb1}, bg_color_rgb: {bg_color_rgb}')
 
 # colour space
 this_colourSpace = 'rgb255'  # 'rgb255', 'rgb1'
@@ -225,8 +235,9 @@ if monitor_name == 'OLED':
     this_colourSpace = 'rgb1'  # values between 0 and 1
     this_bgColour = [bgColor_rgb1, bgColor_rgb1, bgColor_rgb1]
     adj_dots_col = .15
-print(f"this_colourSpace: {this_colourSpace}, this_bgColour: {this_bgColour}")
-print(f"adj_dots_col colours: {adj_dots_col}")
+if verbose:
+    print(f"this_colourSpace: {this_colourSpace}, this_bgColour: {this_bgColour}")
+    print(f"adj_dots_col colours: {adj_dots_col}")
 
 # don't use full screen on external monitor
 display_number = 1  # 0 indexed, 1 for external display, 0 for internal
@@ -235,7 +246,8 @@ if monitor_name in ['asus_cal', 'Nick_work_laptop', 'NickMac', 'OLED', 'ASUS_2_1
 use_full_screen = True
 if display_number > 0:
     use_full_screen = False
-print(f"display_number: {display_number}, use_full_screen: {use_full_screen}")
+if verbose:
+    print(f"display_number: {display_number}, use_full_screen: {use_full_screen}")
 
 widthPix = int(thisMon.getSizePix()[0])
 heightPix = int(thisMon.getSizePix()[1])
@@ -244,8 +256,9 @@ viewdist = thisMon.getDistance()  # viewing distance in cm
 viewdistPix = widthPix / monitorwidth*viewdist  # used for calculating visual angle (e.g., probe locations at 4dva)
 mon = monitors.Monitor(monitor_name, width=monitorwidth, distance=viewdist)
 mon.setSizePix((widthPix, heightPix))
-print(f"widthPix: {widthPix}, heightPix: {heightPix}, monitorwidth: {monitorwidth}, "
-      f"viewdist: {viewdist}, viewdistPix: {viewdistPix}")
+if verbose:
+    print(f"widthPix: {widthPix}, heightPix: {heightPix}, monitorwidth: {monitorwidth}, "
+          f"viewdist: {viewdist}, viewdistPix: {viewdistPix}")
 
 # WINDOW
 # note change of winType 23/05/2023 from pyglet to glfw, might still need pyglet on pycharm/mac though.
@@ -257,20 +270,24 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     screen=display_number,
                     allowGUI=False,
                     fullscr=use_full_screen)
-print(f'winType: {win.winType}')
+if verbose:
+    print(f'winType: {win.winType}')
 
 
 # pixel size
 pixel_mm_deg_dict = get_pixel_mm_deg_values(monitor_name=monitor_name)
-print(f"diagonal pixel size: {pixel_mm_deg_dict['diag_mm']} mm, or {pixel_mm_deg_dict['diag_deg']} dva")
+if verbose:
+    print(f"diagonal pixel size: {pixel_mm_deg_dict['diag_mm']} mm, or {pixel_mm_deg_dict['diag_deg']} dva")
 
 
 # frame duration (expected and actual)
 expected_fr_sec = 1/fps
 expected_fr_ms = expected_fr_sec * 1000
-print(f"\nexpected frame duration: {expected_fr_ms} ms (or {round(expected_fr_sec, 5)} seconds).")
+if verbose:
+    print(f"\nexpected frame duration: {expected_fr_ms} ms (or {round(expected_fr_sec, 5)} seconds).")
 actualFrameRate = int(win.getActualFrameRate())
-print(f"actual fps: {win.getActualFrameRate()}")
+if verbose:
+    print(f"actual fps: {win.getActualFrameRate()}")
 if abs(fps-actualFrameRate) > 5:
     raise ValueError(f"\nfps ({fps}) does not match actualFrameRate ({actualFrameRate}).")
 
@@ -285,9 +302,10 @@ frame_tolerance_sec = max_fr_dur_sec - expected_fr_sec
 frame_tolerance_ms = frame_tolerance_sec * 1000
 frame_tolerance_prop = frame_tolerance_sec / expected_fr_sec
 min_fr_dur_sec = expected_fr_sec - (expected_fr_sec * frame_tolerance_prop)
-print(f"\nframe_tolerance_sec: {frame_tolerance_sec} ({frame_tolerance_prop}% of {expected_fr_sec} sec)")
-print(f"max_fr_dur_sec ({100 + (100 * frame_tolerance_prop)}%): {max_fr_dur_sec} (or {max_fr_dur_ms}ms)")
-print(f"min_fr_dur_sec ({100 - (100 * frame_tolerance_prop)}%): {min_fr_dur_sec} (or {min_fr_dur_sec * 1000}ms)")
+if verbose:
+    print(f"\nframe_tolerance_sec: {frame_tolerance_sec} ({frame_tolerance_prop}% of {expected_fr_sec} sec)")
+    print(f"max_fr_dur_sec ({100 + (100 * frame_tolerance_prop)}%): {max_fr_dur_sec} (or {max_fr_dur_ms}ms)")
+    print(f"min_fr_dur_sec ({100 - (100 * frame_tolerance_prop)}%): {min_fr_dur_sec} (or {min_fr_dur_sec * 1000}ms)")
 
 # quit experiment if there are more than 10 trials with dropped frames
 max_droped_fr_trials = 10
@@ -357,6 +375,7 @@ elif mask_type == '2_spokes':
 
     # the corners of the cross are offset (by around 42 pixels on my laptop); which is half the mask_size / the screen aspect ratio (pixl shape)
     offset_pix = int((mask_size / 2) / (widthPix / heightPix))
+    if verbose:
     print(f'offset_pix = {offset_pix}')
 
     '''vertices start at the bottom left corner and go clockwise, with three values for each side.  
@@ -383,9 +402,10 @@ elif mask_type == '2_spokes':
 # timing for background motion converted to frames (e.g., 70ms is 17frames at 240Hz).
 prelim_bg_flow_fr = int(prelim_bg_flow_ms * fps / 1000)
 actual_prelim_bg_flow_ms = prelim_bg_flow_fr * 1000 / fps
-print(f'\nprelim_bg_flow_ms: {prelim_bg_flow_ms}')
-print(f'prelim_bg_flow_fr: {prelim_bg_flow_fr}')
-print(f'actual_prelim_bg_flow_ms: {actual_prelim_bg_flow_ms}')
+if verbose:
+    print(f'\nprelim_bg_flow_ms: {prelim_bg_flow_ms}')
+    print(f'prelim_bg_flow_fr: {prelim_bg_flow_fr}')
+    print(f'actual_prelim_bg_flow_ms: {actual_prelim_bg_flow_ms}')
 
 
 # flow_dots
@@ -416,7 +436,8 @@ if monitor_name == 'OLED':
 flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
                                     units='pix', nElements=nDots, sizes=10,
                                     colorSpace=this_colourSpace, colors=flow_dots_colour)
-print(f"flow_dot colours: {flow_dots_colour}")
+if verbose:
+    print(f"flow_dot colours: {flow_dots_colour}")
 
 # full screen mask to blend off edges and fade to black
 # Create a raisedCosine mask array and assign it to a Grating stimulus (grey outside, transparent inside)
@@ -465,7 +486,8 @@ if n_breaks > 0:
 else:
     take_break = max_without_break
 break_dur = 30
-print(f"\ntake a {break_dur} second break every {take_break} trials ({n_breaks} breaks in total).")
+if verbose:
+    print(f"\ntake a {break_dur} second break every {take_break} trials ({n_breaks} breaks in total).")
 break_text = f"Break\nTurn on the light and take at least {break_dur} seconds break.\n" \
              "Keep focussed on the fixation circle in the middle of the screen.\n" \
              "Remember, if you don't see the target, just guess!"
@@ -514,9 +536,10 @@ if monitor_name == 'OLED':
 miniVal = bgLum
 maxiVal = maxLum
 
-print('\nexpInfo (dict)')
-for k, v in expInfo.items():
-    print(f"{k}: {v}")
+if verbose:
+    print('\nexpInfo (dict)')
+    for k, v in expInfo.items():
+        print(f"{k}: {v}")
 
 stairs = []
 for stair_idx in expInfo['stair_list']:
@@ -544,7 +567,8 @@ actual_trials_inc_rpt = 0
 
 
 # EXPERIMENT
-print('\n*** exp loop*** \n\n')
+if verbose:
+    print('\n*** exp loop*** \n\n')
 for step in range(n_trials_per_stair):
     np.random.shuffle(stairs)
     for thisStair in stairs:
@@ -557,14 +581,16 @@ for step in range(n_trials_per_stair):
             trial_number += 1
             actual_trials_inc_rpt += 1
             stair_idx = thisStair.extraInfo['stair_idx']
-            print(f"\n({actual_trials_inc_rpt}) trial_number: {trial_number}, "
-                  f"stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
+            if verbose:
+                print(f"\n({actual_trials_inc_rpt}) trial_number: {trial_number}, "
+                      f"stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
 
             # conditions (ISI, congruence)
             ISI = ISI_vals_list[stair_idx]
             congruent = cong_vals_list[stair_idx]
             cong_name = cong_names_list[stair_idx]
-            print(f"ISI: {ISI}, congruent: {congruent} ({cong_name})")
+            if verbose:
+                print(f"ISI: {ISI}, congruent: {congruent} ({cong_name})")
 
             # conditions (sep, sep_deg, neg_sep)
             sep = sep_vals_list[stair_idx]
@@ -581,7 +607,8 @@ for step in range(n_trials_per_stair):
                     neg_sep = -.1
             else:
                 neg_sep = sep
-            print(f"sep: {sep}, sep_deg: {sep_deg}, neg_sep: {neg_sep}")
+            if verbose:
+                print(f"sep: {sep}, sep_deg: {sep_deg}, neg_sep: {neg_sep}")
 
             # use congruence to determine the flow direction and target jump direction
             # 1 is contracting/inward/backwards, -1 is expanding/outward/forwards
@@ -597,7 +624,8 @@ for step in range(n_trials_per_stair):
                 jump_dir = 'cont'
                 if target_jump == -1:
                     jump_dir = 'exp'
-            print(f"flow_dir: {flow_dir}, jump dir: {target_jump} {jump_dir} ({cong_name})")
+            if verbose:
+                print(f"flow_dir: {flow_dir}, jump dir: {target_jump} {jump_dir} ({cong_name})")
 
             # vary fixation polarity to reduce risk of screen burn.
             if monitor_name == 'OLED':
@@ -618,8 +646,9 @@ for step in range(n_trials_per_stair):
                 this_probeColor = probeColor1
             probe1.setFillColor([this_probeColor, this_probeColor, this_probeColor])
             probe2.setFillColor([this_probeColor, this_probeColor, this_probeColor])
-            print(f"probeLum: {probeLum}, this_probeColor: {this_probeColor}, "
-                  f"probeColor255: {probeColor255}, probeColor1: {probeColor1}")
+            if verbose:
+                print(f"probeLum: {probeLum}, this_probeColor: {this_probeColor}, "
+                      f"probeColor255: {probeColor255}, probeColor1: {probeColor1}")
 
 
             # PROBE LOCATION
@@ -627,7 +656,8 @@ for step in range(n_trials_per_stair):
             corner = random.choice([45, 135, 225, 315])
             corner_name_dict = {45: 'top_right', 135: 'top_left', 225: 'bottom_left', 315: 'bottom_right'}
             corner_name = corner_name_dict[corner]
-            print(f"corner: {corner} {corner_name}")
+            if verbose:
+                print(f"corner: {corner} {corner_name}")
 
 
             # flow_dots
@@ -658,7 +688,8 @@ for step in range(n_trials_per_stair):
                 np.random.shuffle(extra_shifted_pixel)
                 p1_shift = (sep*probe_size) // 2 + extra_shifted_pixel[0]
                 p2_shift = (sep*probe_size) // 2 + extra_shifted_pixel[1]
-            print(f"p1_shift: {p1_shift}, p2_shift: {p2_shift}")
+            if verbose:
+                print(f"p1_shift: {p1_shift}, p2_shift: {p2_shift}")
 
 
             # set position and orientation of probes
@@ -790,8 +821,9 @@ for step in range(n_trials_per_stair):
             probe1.setOri(probe1_ori)
             probe2.setPos(probe2_pos)
             probe2.setOri(probe2_ori)
-            print(f"loc_marker: {[loc_x, loc_y]}, probe1_pos: {probe1_pos}, "
-                  f"probe2_pos: {probe2_pos}. dff: {dist_from_fix}")
+            if verbose:
+                print(f"loc_marker: {[loc_x, loc_y]}, probe1_pos: {probe1_pos}, "
+                      f"probe2_pos: {probe2_pos}. dff: {dist_from_fix}")
 
 
             # VARIABLE FIXATION TIME
@@ -818,8 +850,9 @@ for step in range(n_trials_per_stair):
             t_ISI = t_probe_1 + isi_dur_fr
             t_probe_2 = t_ISI + p2_fr
             t_response = t_probe_2 + 10000 * fps  # ~40 seconds to respond
-            print(f"t_fixation: {t_fixation}, t_probe_1: {t_probe_1}, "
-                  f"t_ISI: {t_ISI}, t_probe_2: {t_probe_2}, t_response: {t_response}\n")
+            if verbose:
+                print(f"t_fixation: {t_fixation}, t_probe_1: {t_probe_1}, "
+                      f"t_ISI: {t_ISI}, t_probe_2: {t_probe_2}, t_response: {t_response}\n")
 
 
             # continue_routine refers to flipping the screen to show next frame

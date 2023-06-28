@@ -51,7 +51,7 @@ expInfo = {'1. Participant': 'Nick_test',
            '7. Record_frame_durs': [True, False], 
            '8. monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'Samsung',
                                'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18', 'ASUS_2_13_240Hz'],
-           '9. verbose': [True, False, True]}
+           '9. verbose': [False, True]}
 
 # dialogue box
 dlg = gui.DlgFromDict(dictionary=expInfo, title=expName)
@@ -88,7 +88,7 @@ if orientation == 'radial':
     exp1_coherence = 'radial'
 
 
-n_trials_per_stair = 7
+n_trials_per_stair = 25
 probe_ecc = 4
 expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
 expInfo['time'] = datetime.now().strftime("%H:%M:%S")
