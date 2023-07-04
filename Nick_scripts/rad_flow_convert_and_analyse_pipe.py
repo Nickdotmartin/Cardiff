@@ -28,7 +28,7 @@ participant_list = ['Kim', 'Nick', 'Simon']  # , 'Nick_half_speed']
 # participant_list = ['Nick_half_speed', 'Simon_half']  # , 'Nick_half_speed']
 
 exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_23'
-participant_list = ['Nick_240Hz_end_june23_bg350']  # 'Nick_240Hz_07062023_bg70', 'Nick_OLED_02062023_bg350', 'Nick_240Hz_02062023_bg350', Nick_240Hz_end_june23_bg350, Nick_240_uncal_bg200]
+participant_list = ['Nick_240Hz_uncal_bg200']  # 'Nick_240Hz_07062023_bg70', 'Nick_OLED_02062023_bg350', 'Nick_240Hz_02062023_bg350', Nick_240Hz_end_june23_bg350, Nick_240_uncal_bg200]
 
 # exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_23_OLED'
 # participant_list = ['Nick_70_OLED_2.13A', 'Nick_350_OLED_2.13A', 'Simon_OLED_2.13A_black']
@@ -109,191 +109,191 @@ for p_idx, participant_name in enumerate(participant_list):
         # needed to ensure names go name1, name2, name3 not name1, name12, name123
         p_name = participant_name
 
-        '''a'''
-        p_name = f'{participant_name}_{r_idx_plus}'
-
-        a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=run_isi_list, verbose=verbose)
-
-        # run_data_path = f'{save_path}{os.sep}ALL_ISIs_sorted.xlsx'  # delete this, using RUNDATA-sorted.xlsx
-        run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
-
-        run_data_df = pd.read_excel(run_data_path, engine='openpyxl')
-        print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
-
-        # # code to make sure luminance is int, not float.
-        # # todo: don't use this, as it just gives new LUM values that do not reflect spyder output from 12062023
-        # if run_data_df['probeColor255'].dtypes == 'int64':
-        #     lum_col = 'probeLum'
-        #     print(f"probeColor255 is {run_data_df['probeColor255'].dtypes}, lum_col is {lum_col}")
+        # '''a'''
+        # p_name = f'{participant_name}_{r_idx_plus}'
+        #
+        # a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=run_isi_list, verbose=verbose)
+        #
+        # # run_data_path = f'{save_path}{os.sep}ALL_ISIs_sorted.xlsx'  # delete this, using RUNDATA-sorted.xlsx
+        # run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
+        #
+        # run_data_df = pd.read_excel(run_data_path, engine='openpyxl')
+        # print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
+        #
+        # # # code to make sure luminance is int, not float.
+        # # # todo: don't use this, as it just gives new LUM values that do not reflect spyder output from 12062023
+        # # if run_data_df['probeColor255'].dtypes == 'int64':
+        # #     lum_col = 'probeLum'
+        # #     print(f"probeColor255 is {run_data_df['probeColor255'].dtypes}, lum_col is {lum_col}")
+        # # else:
+        # #     '''add newLum column
+        # #             in old version, the experiment script varies probeLum and converts to float(RGB255) values for screen.
+        # #             However, monitor can only use int(RGB255).
+        # #             This function will will round RGB255 values to int(RGB255), then convert to NEW_probeLum
+        # #             LumColor255Factor = 2.395387069
+        # #             1. get probeColor255 column.
+        # #             2. convert to int(RGB255) and convert to new_Lum with int(RGB255)/LumColor255Factor
+        # #             3. add to run_data_df'''
+        # #     lum_col = 'newLum'
+        # #     print(f"probeColor255 is {run_data_df['probeColor255'].dtypes}, lum_col is {lum_col}")
+        # #     if 'newLum' not in run_data_df.columns.to_list():
+        # #         LumColor255Factor = 2.395387069
+        # #         rgb255_col = run_data_df['probeColor255'].to_list()
+        # #         newLum = [int(i) / LumColor255Factor for i in rgb255_col]
+        # #         run_data_df.insert(11, 'newLum', newLum)
+        # #         print(f"added newLum column\n"
+        # #               f"run_data_df: {run_data_df.columns.to_list()}")
+        #
+        #
+        #
+        # # add converted_lum as a new column using the function rad_flow_mon_conversion
+        # _, exp_name = os.path.split(exp_path)
+        # print(f'\nexp_name: {exp_name}')
+        # print(f'used_uncalibrated_mon: {used_uncalibrated_mon}')
+        # if exp_name in used_uncalibrated_mon:
+        #     print('This experiment used the uncalibrated monitor - converting luminance values to equivalent from asus_cal as lum_col: converted_lum')
+        #
+        #     if exp_name == 'rad_flow_23':
+        #         # get value for 'monitor_name' from first row of run_data_df
+        #         if run_data_df['monitor_name'][0] == 'ASUS_2_13_240Hz':
+        #             print(f"monitor_name is ASUS_2_13_240Hz, as expected, continuing")
+        #         else:
+        #             raise ValueError(f"monitor_name is not ASUS_2_13_240Hz, it is {run_data_df['monitor_name'][0]}\n"
+        #                              f"Do I need to convert these values?")
+        #
+        #     if 'converted_lum' not in list(run_data_df.columns):
+        #         '''Thi8s converts rgb255 values from the uncalibrated monitor to their equivalents on the
+        #         calibrated monitor (ASUS_CAL) using the luminance lookup tables measured with spyder.
+        #
+        #         The max lum with these measurements reflects the max lum, as measured on on 12/06/2023, (e.g., around 150),
+        #         rather than the max lum given in the script (which was set by Martin as 106)'''
+        #
+        #         probeRGB255_list = run_data_df['probeColor255'].to_list()  # probeColor255 is the uncalibrated RGB255
+        #         print(f'\nprobeRGB255_list: {probeRGB255_list}')
+        #
+        #         conv_lum_list = []
+        #         for probeRGB255 in probeRGB255_list:
+        #             conv_lum_list.append(rad_flow_mon_conversion(uncalibrated_rgb255_val=probeRGB255, verbose=True))
+        #         print(f'\nconv_lum_list: {conv_lum_list}')
+        #         run_data_df.insert(11, 'converted_lum', conv_lum_list)
+        #         lum_col = 'converted_lum'
+        #
+        #         print('\nadded converted_lum col')
+        #         print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
+        #
+        #     else:
+        #         print(f"converted_lum is already in run_data_df.columns.to_list(), continuing")
+        #         lum_col = 'converted_lum'
+        #         print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
         # else:
-        #     '''add newLum column
-        #             in old version, the experiment script varies probeLum and converts to float(RGB255) values for screen.
-        #             However, monitor can only use int(RGB255).
-        #             This function will will round RGB255 values to int(RGB255), then convert to NEW_probeLum
-        #             LumColor255Factor = 2.395387069
-        #             1. get probeColor255 column.
-        #             2. convert to int(RGB255) and convert to new_Lum with int(RGB255)/LumColor255Factor
-        #             3. add to run_data_df'''
-        #     lum_col = 'newLum'
-        #     print(f"probeColor255 is {run_data_df['probeColor255'].dtypes}, lum_col is {lum_col}")
-        #     if 'newLum' not in run_data_df.columns.to_list():
-        #         LumColor255Factor = 2.395387069
-        #         rgb255_col = run_data_df['probeColor255'].to_list()
-        #         newLum = [int(i) / LumColor255Factor for i in rgb255_col]
-        #         run_data_df.insert(11, 'newLum', newLum)
-        #         print(f"added newLum column\n"
-        #               f"run_data_df: {run_data_df.columns.to_list()}")
-
-
-
-        # add converted_lum as a new column using the function rad_flow_mon_conversion
-        _, exp_name = os.path.split(exp_path)
-        print(f'\nexp_name: {exp_name}')
-        print(f'used_uncalibrated_mon: {used_uncalibrated_mon}')
-        if exp_name in used_uncalibrated_mon:
-            print('This experiment used the uncalibrated monitor - converting luminance values to equivalent from asus_cal as lum_col: converted_lum')
-
-            if exp_name == 'rad_flow_23':
-                # get value for 'monitor_name' from first row of run_data_df
-                if run_data_df['monitor_name'][0] == 'ASUS_2_13_240Hz':
-                    print(f"monitor_name is ASUS_2_13_240Hz, as expected, continuing")
-                else:
-                    raise ValueError(f"monitor_name is not ASUS_2_13_240Hz, it is {run_data_df['monitor_name'][0]}\n"
-                                     f"Do I need to convert these values?")
-
-            if 'converted_lum' not in list(run_data_df.columns):
-                '''Thi8s converts rgb255 values from the uncalibrated monitor to their equivalents on the
-                calibrated monitor (ASUS_CAL) using the luminance lookup tables measured with spyder.
-
-                The max lum with these measurements reflects the max lum, as measured on on 12/06/2023, (e.g., around 150),
-                rather than the max lum given in the script (which was set by Martin as 106)'''
-
-                probeRGB255_list = run_data_df['probeColor255'].to_list()  # probeColor255 is the uncalibrated RGB255
-                print(f'\nprobeRGB255_list: {probeRGB255_list}')
-
-                conv_lum_list = []
-                for probeRGB255 in probeRGB255_list:
-                    conv_lum_list.append(rad_flow_mon_conversion(uncalibrated_rgb255_val=probeRGB255, verbose=True))
-                print(f'\nconv_lum_list: {conv_lum_list}')
-                run_data_df.insert(11, 'converted_lum', conv_lum_list)
-                lum_col = 'converted_lum'
-
-                print('\nadded converted_lum col')
-                print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
-
-            else:
-                print(f"converted_lum is already in run_data_df.columns.to_list(), continuing")
-                lum_col = 'converted_lum'
-                print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
-        else:
-            raise ValueError(f"exp_name is not in used_uncalibrated_mon, it is {exp_name}\n"
-                             f"Do I need to convert these values?")
-
-
-        # add neg sep column to make batman plots
-        if 'neg_sep' not in list(run_data_df.columns):
-            def make_neg_sep(df):
-                if (df.congruent == -1) and (df.separation == 0.0):
-                    return -.1
-                elif df.congruent == -1:
-                    return 0 - df.separation
-                else:
-                    return df.separation
-
-            run_data_df.insert(7, 'neg_sep', run_data_df.apply(make_neg_sep, axis=1))
-            print('\nadded neg_sep col')
-            print(run_data_df['neg_sep'].to_list())
-        else:
-            print(f"neg_sep is already in run_data_df.columns.to_list(), continuing")
-
-        # remove unnamed columns
-        substring = 'Unnamed: '
-        unnamed_cols = [i for i in run_data_df.columns.to_list() if substring in i]
-        print(f"unnamed_cols: {unnamed_cols}")
-        for col_name in unnamed_cols:
-            run_data_df.drop(col_name, axis=1, inplace=True)
-
-        # save run_data_df
-        run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
-        run_data_df.to_excel(run_data_path, index=False)
-        print(f"run_data_df:\n{run_data_df}")
-
-
-        '''
-        Data should be analysed in a particular order to ensure correct order on plots etc.
-        The order will be (neg_sep) [18, -18, 6, -6, 3, -3, 2, -2, 1, -1, 0, -.1]
-        first get values in stair name order, then get indices to put neg_sep in the correct order.
-        Use these indices to sort the lists to feed into psignifit.
-        '''
-
-        # get a list of all unique values in the 'stair' column, in the order they appear
-        stair_list = run_data_df['stair'].unique().tolist()
-
-        # check that there is just one unique value associated with each stair for separation, neg_sep, ISI and congruent.
-        # append the unique values to sep_vals_list, neg_sep_vals_list, and cong_vals_list.
-        sep_vals_list = []
-        neg_sep_vals_list = []
-        cong_vals_list = []
-
-        for stair in stair_list:
-            stair_df = run_data_df[run_data_df['stair'] == stair]
-            separation = stair_df['separation'].unique().tolist()
-            neg_sep = stair_df['neg_sep'].unique().tolist()
-            congruent = stair_df['congruent'].unique().tolist()
-            if len(separation) > 1:
-                raise ValueError(f"More than one unique separation: {separation}")
-            if len(neg_sep) > 1:
-                raise ValueError(f"More than one unique neg_sep: {neg_sep}")
-            if len(congruent) > 1:
-                raise ValueError(f"More than one unique congruent: {congruent}")
-
-            sep_vals_list.append(separation[0])
-            neg_sep_vals_list.append(neg_sep[0])
-            cong_vals_list.append(congruent[0])
-
-        print(f"\nsep_vals_list: {sep_vals_list}")
-        print(f"cong_vals_list: {cong_vals_list}")
-
-        # sort lists so that neg_sep_vals is in order [18, -18, 6, -6,...1, -1, 0, -.1]
-        print(f"\nneg_sep_vals_list: {neg_sep_vals_list}")
-        sorted_neg_sep_indices = get_sorted_neg_sep_indices(neg_sep_vals_list)
-
-        # sort stair_list, sep_vals_list, neg_sep_vals_list and cong_vals_list using sorted_neg_sep_indices
-        stair_list_sorted = sort_with_neg_sep_indices(stair_list, sorted_neg_sep_indices)
-        print(f"stair_list_sorted: {stair_list_sorted}")
-
-        sep_vals_list_sorted = sort_with_neg_sep_indices(sep_vals_list, sorted_neg_sep_indices)
-        print(f"sep_vals_list_sorted: {sep_vals_list_sorted}")
-
-        neg_sep_vals_list_sorted = sort_with_neg_sep_indices(neg_sep_vals_list, sorted_neg_sep_indices)
-        print(f"neg_sep_vals_list_sorted: {neg_sep_vals_list_sorted}")
-
-        cong_vals_list_sorted = sort_with_neg_sep_indices(cong_vals_list, sorted_neg_sep_indices)
-        print(f"cong_vals_list_sorted: {cong_vals_list_sorted}")
-
-        '''get psignifit thresholds df'''
-        cols_to_add_dict = {'stair_names': neg_sep_vals_list_sorted,
-                            'congruent': cong_vals_list_sorted,
-                            'separation': sep_vals_list_sorted}
-        print('\ncols_to_add_dict:')
-        for k, v in cols_to_add_dict.items():
-            print(f'{k}: {v}')
-
-        thr_df = get_psignifit_threshold_df(root_path=root_path,
-                                            p_run_name=run_dir,
-                                            csv_name=run_data_df,
-                                            n_bins=9, q_bins=True,
-                                            sep_col='neg_sep',
-                                            thr_col=lum_col,
-                                            isi_list=run_isi_list,
-                                            sep_list=neg_sep_vals_list_sorted,
-                                            conf_int=True,
-                                            thr_type='Bayes',
-                                            plot_both_curves=False,
-                                            cols_to_add_dict=cols_to_add_dict,
-                                            show_plots=False,
-                                            verbose=verbose)
-        print(f'thr_df:\n{thr_df}')
+        #     raise ValueError(f"exp_name is not in used_uncalibrated_mon, it is {exp_name}\n"
+        #                      f"Do I need to convert these values?")
+        #
+        #
+        # # add neg sep column to make batman plots
+        # if 'neg_sep' not in list(run_data_df.columns):
+        #     def make_neg_sep(df):
+        #         if (df.congruent == -1) and (df.separation == 0.0):
+        #             return -.1
+        #         elif df.congruent == -1:
+        #             return 0 - df.separation
+        #         else:
+        #             return df.separation
+        #
+        #     run_data_df.insert(7, 'neg_sep', run_data_df.apply(make_neg_sep, axis=1))
+        #     print('\nadded neg_sep col')
+        #     print(run_data_df['neg_sep'].to_list())
+        # else:
+        #     print(f"neg_sep is already in run_data_df.columns.to_list(), continuing")
+        #
+        # # remove unnamed columns
+        # substring = 'Unnamed: '
+        # unnamed_cols = [i for i in run_data_df.columns.to_list() if substring in i]
+        # print(f"unnamed_cols: {unnamed_cols}")
+        # for col_name in unnamed_cols:
+        #     run_data_df.drop(col_name, axis=1, inplace=True)
+        #
+        # # save run_data_df
+        # run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
+        # run_data_df.to_excel(run_data_path, index=False)
+        # print(f"run_data_df:\n{run_data_df}")
+        #
+        #
+        # '''
+        # Data should be analysed in a particular order to ensure correct order on plots etc.
+        # The order will be (neg_sep) [18, -18, 6, -6, 3, -3, 2, -2, 1, -1, 0, -.1]
+        # first get values in stair name order, then get indices to put neg_sep in the correct order.
+        # Use these indices to sort the lists to feed into psignifit.
+        # '''
+        #
+        # # get a list of all unique values in the 'stair' column, in the order they appear
+        # stair_list = run_data_df['stair'].unique().tolist()
+        #
+        # # check that there is just one unique value associated with each stair for separation, neg_sep, ISI and congruent.
+        # # append the unique values to sep_vals_list, neg_sep_vals_list, and cong_vals_list.
+        # sep_vals_list = []
+        # neg_sep_vals_list = []
+        # cong_vals_list = []
+        #
+        # for stair in stair_list:
+        #     stair_df = run_data_df[run_data_df['stair'] == stair]
+        #     separation = stair_df['separation'].unique().tolist()
+        #     neg_sep = stair_df['neg_sep'].unique().tolist()
+        #     congruent = stair_df['congruent'].unique().tolist()
+        #     if len(separation) > 1:
+        #         raise ValueError(f"More than one unique separation: {separation}")
+        #     if len(neg_sep) > 1:
+        #         raise ValueError(f"More than one unique neg_sep: {neg_sep}")
+        #     if len(congruent) > 1:
+        #         raise ValueError(f"More than one unique congruent: {congruent}")
+        #
+        #     sep_vals_list.append(separation[0])
+        #     neg_sep_vals_list.append(neg_sep[0])
+        #     cong_vals_list.append(congruent[0])
+        #
+        # print(f"\nsep_vals_list: {sep_vals_list}")
+        # print(f"cong_vals_list: {cong_vals_list}")
+        #
+        # # sort lists so that neg_sep_vals is in order [18, -18, 6, -6,...1, -1, 0, -.1]
+        # print(f"\nneg_sep_vals_list: {neg_sep_vals_list}")
+        # sorted_neg_sep_indices = get_sorted_neg_sep_indices(neg_sep_vals_list)
+        #
+        # # sort stair_list, sep_vals_list, neg_sep_vals_list and cong_vals_list using sorted_neg_sep_indices
+        # stair_list_sorted = sort_with_neg_sep_indices(stair_list, sorted_neg_sep_indices)
+        # print(f"stair_list_sorted: {stair_list_sorted}")
+        #
+        # sep_vals_list_sorted = sort_with_neg_sep_indices(sep_vals_list, sorted_neg_sep_indices)
+        # print(f"sep_vals_list_sorted: {sep_vals_list_sorted}")
+        #
+        # neg_sep_vals_list_sorted = sort_with_neg_sep_indices(neg_sep_vals_list, sorted_neg_sep_indices)
+        # print(f"neg_sep_vals_list_sorted: {neg_sep_vals_list_sorted}")
+        #
+        # cong_vals_list_sorted = sort_with_neg_sep_indices(cong_vals_list, sorted_neg_sep_indices)
+        # print(f"cong_vals_list_sorted: {cong_vals_list_sorted}")
+        #
+        # '''get psignifit thresholds df'''
+        # cols_to_add_dict = {'stair_names': neg_sep_vals_list_sorted,
+        #                     'congruent': cong_vals_list_sorted,
+        #                     'separation': sep_vals_list_sorted}
+        # print('\ncols_to_add_dict:')
+        # for k, v in cols_to_add_dict.items():
+        #     print(f'{k}: {v}')
+        #
+        # thr_df = get_psignifit_threshold_df(root_path=root_path,
+        #                                     p_run_name=run_dir,
+        #                                     csv_name=run_data_df,
+        #                                     n_bins=9, q_bins=True,
+        #                                     sep_col='neg_sep',
+        #                                     thr_col=lum_col,
+        #                                     isi_list=run_isi_list,
+        #                                     sep_list=neg_sep_vals_list_sorted,
+        #                                     conf_int=True,
+        #                                     thr_type='Bayes',
+        #                                     plot_both_curves=False,
+        #                                     cols_to_add_dict=cols_to_add_dict,
+        #                                     show_plots=False,
+        #                                     verbose=verbose)
+        # print(f'thr_df:\n{thr_df}')
 #
 #
 # #         '''b3'''
@@ -328,7 +328,7 @@ for p_idx, participant_name in enumerate(participant_list):
                        ave_df_path=p_ave_path,
                        error_bars_path=err_path,
                        thr_col='probeLum',
-                       stair_names_col='stair_names',
+                       stair_names_col='neg_sep',
                        n_trimmed=trim_n,
                        ave_over_n=len(run_folder_names),
                        exp_ave=participant_name,

@@ -2,6 +2,8 @@ from __future__ import division
 
 import psychopy
 
+# todo: add thisStair and trial number to dropped frame warnings.
+
 '''
 The lab machine uses 2021.2.3, but this doesn't work on my laptop.
 ImportError: cannot import name '_vmTesting' from 'psychopy.tests' (unknown location)
@@ -376,7 +378,7 @@ elif mask_type == '2_spokes':
     # the corners of the cross are offset (by around 42 pixels on my laptop); which is half the mask_size / the screen aspect ratio (pixl shape)
     offset_pix = int((mask_size / 2) / (widthPix / heightPix))
     if verbose:
-    print(f'offset_pix = {offset_pix}')
+        print(f'offset_pix = {offset_pix}')
 
     '''vertices start at the bottom left corner and go clockwise, with three values for each side.  
     The first three values are for the left of the X, the next three for the top

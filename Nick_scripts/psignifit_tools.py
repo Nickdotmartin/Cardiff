@@ -139,6 +139,7 @@ def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='sta
             data_arr.append([bin_interval.left, this_bin_vals, correct_per_bin, bin_count[bin_interval]])
             # found_bins_left.append(round(bin_interval.left, 3))
             found_bins_left.append(bin_interval.left)
+            # todo: instead of using bin_interval.left, I should get the bin mid point
 
     # make data df
     data_df = pd.DataFrame(data_arr, columns=['bin_left', 'stim_level', 'n_correct', 'n_total'])

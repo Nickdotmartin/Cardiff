@@ -14,6 +14,8 @@ from kestenSTmaxVal import Staircase
 from PsychoPy_tools import get_pixel_mm_deg_values
 from exp1a_psignifit_analysis import fig_colours
 
+# todo: add thisStair and trial number to dropped frame warnings.
+
 
 '''
 This version (interleaved) combined missing_probe (e.g., 3 targets) and exp 1 (one target).
@@ -1005,8 +1007,8 @@ for step in range(n_trials_per_stair):
                                 trial_x_locs = [exp_n_fr_recorded_list[-2], exp_n_fr_recorded_list[-1]]
                                 dropped_fr_trial_x_locs.append(trial_x_locs)
                                 continue
-                            else:
-                                print('Timing good')
+                            # else:
+                            #     print('Timing good')
 
                             # empty frameIntervals cache
                             win.frameIntervals = []

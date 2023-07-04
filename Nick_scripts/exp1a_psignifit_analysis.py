@@ -1,6 +1,7 @@
 import os
 import matplotlib.lines as mlines
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -192,8 +193,9 @@ def split_df_into_pos_sep_df_and_1probe_df(pos_sep_and_1probe_df,
         print("\n*** running split_df_into_pos_sep_df_and_1probe_df() ***")
 
     if isi_name_list is None:
-        isi_name_list = ['Conc', 'ISI0', 'ISI2', 'ISI4',
-                         'ISI6', 'ISI9', 'ISI12', 'ISI24']
+        # todo: change to use isi_name_list from df
+        isi_name_list = ['ISI_-1', 'ISI_0', 'ISI_2', 'ISI_4',
+                         'ISI_6', 'ISI_9', 'ISI_12', 'ISI_24']
 
     # check that the df only contains positive separation values
     if 'sep' in list(data_df.columns):
@@ -721,6 +723,7 @@ def plot_1probe_w_errors(fig_df, error_df,
 
     # get number of locations for jitter list
     n_pos_sep = len(two_probe_df.index.to_list())
+    print(f"\nn_pos_sep: {n_pos_sep}")
 
     jit_max = 0
     if jitter:
@@ -741,6 +744,8 @@ def plot_1probe_w_errors(fig_df, error_df,
 
     for idx, name in enumerate(column_names):
 
+        print(f'idx: {idx}, name: {name}')
+
         # get rand float to add to x-axis for jitter
         jitter_list = np.random.uniform(size=n_pos_sep, low=-jit_max, high=jit_max)
 
@@ -751,7 +756,8 @@ def plot_1probe_w_errors(fig_df, error_df,
                 print(f'one_probe_df[thr_col][idx]: {one_probe_df[thr_col][idx]}')
                 print(f'one_probe_er_df[thr_col][idx]: {one_probe_er_df[thr_col][idx]}')
 
-                ax.errorbar(x=x_tick_vals + np.random.uniform(size=len(x_tick_vals), low=-jit_max, high=jit_max),
+                # ax.errorbar(x=x_tick_vals + np.random.uniform(size=len(x_tick_vals), low=-jit_max, high=jit_max),
+                ax.errorbar(x=x_tick_vals[-1] + np.random.uniform(size=1, low=-jit_max, high=jit_max),
                             y=one_probe_df[thr_col][idx],
                             yerr=one_probe_er_df[thr_col][idx],
                             marker='.', lw=2, elinewidth=.7,
@@ -768,7 +774,10 @@ def plot_1probe_w_errors(fig_df, error_df,
 
         # force it to use sep index
         if x_tick_vals is not None:
-            ax.errorbar(x=x_tick_vals + jitter_list,
+            # # I've updated this as the x tick vals list was longer than jitter list.
+            print(f"x_tick_vals[:-1]: {x_tick_vals[:-1]} + jitter_list: {jitter_list} == {x_tick_vals[:-1] + jitter_list}")
+            ax.errorbar(x=x_tick_vals[:-1] + jitter_list,
+            # ax.errorbar(x=x_tick_vals[-1] + jitter_list[-1],
                         y=two_probe_df[name], yerr=two_probe_er_df[name],
                         marker='.', lw=2, elinewidth=.7,
                         capsize=cap_size,
@@ -1320,9 +1329,16 @@ def plot_diff_from_conc_lineplot(ave_DfC_df, error_df, fig_title=None,
     x_tick_labels = ['Conc' if i in ['ISI_-1', 'Concurrent'] else i for i in column_names]
 
     index_names = ave_DfC_df.index.tolist()
+    print(f"\nindex_names:\n{index_names}")
+    # check if any of the index_names include the substring 'missing'
+    missing_sep = [i for i in index_names if 'missing' in i]
+    exp1_sep = [i for i in index_names if 'exp1' in i]
+    with_hue = False
+    if (len(missing_sep) > 0) and (len(exp1_sep) > 0):
+        with_hue = True
+        print(f"\nwith_hue: {with_hue}")
 
     my_colours = fig_colours(len(index_names))
-
 
     # fig, ax = plt.subplots(figsize=(10, 6))
     fig, ax = plt.subplots()
@@ -1333,19 +1349,40 @@ def plot_diff_from_conc_lineplot(ave_DfC_df, error_df, fig_title=None,
     for idx, sep_row in enumerate(ave_DfC_df.index):
 
         print(f"\ncolumn_names:\n{column_names}")
+        print(f"idx, sep_row: {idx}, {sep_row}.  index_names[idx]: {index_names[idx]}")
         print(f"ave_DfC_df.iloc[idx]:\n{ave_DfC_df.iloc[idx]}")
         print(f"error_df.iloc[idx]:\n{error_df.iloc[idx]}")
+
+        this_colour = my_colours[idx]
+        linestyle = '-'
+
+        if with_hue:
+            # match colours to half of length of index_names
+            half_list_len = len(index_names) / 2
+            half_list_val = idx
+            if idx >= half_list_len:
+                half_list_val = int(idx - half_list_len)
+            this_colour = my_colours[half_list_val]
+            # print(idx, half_list_val)
+
+            # use dashed line if with_hue is True
+            if index_names[idx] in missing_sep:
+                linestyle = '--'
 
         ax.errorbar(x=column_names,
                     y=ave_DfC_df.iloc[idx],
                     yerr=error_df.iloc[idx],
                     marker='.', lw=2, elinewidth=.7,
                     capsize=5,
-                    color=my_colours[idx])
+                    linestyle=linestyle,
+                    color=this_colour)
 
-        leg_handle = mlines.Line2D([], [], color=my_colours[idx], label=sep_row,
-                                   marker='.', linewidth=.5, markersize=4)
+        leg_handle = mlines.Line2D([], [], color=this_colour, label=sep_row,
+                                   linestyle=linestyle, linewidth=.5, markersize=4)
         legend_handles_list.append(leg_handle)
+
+
+
 
     ax.set_xticks(list(range(len(x_tick_labels))))
     ax.set_xticklabels(x_tick_labels)
@@ -1361,7 +1398,7 @@ def plot_diff_from_conc_lineplot(ave_DfC_df, error_df, fig_title=None,
                                    linestyle='--')
         legend_handles_list.append(leg_handle)
 
-    ax.legend(handles=legend_handles_list, fontsize=6, title='separation', framealpha=.5)
+    ax.legend(handles=legend_handles_list, fontsize=8, title='separation', framealpha=.5)
 
     if save_path is not None:
         if save_name is not None:
@@ -1374,28 +1411,34 @@ def plot_diff_from_conc_lineplot(ave_DfC_df, error_df, fig_title=None,
 
 
 
-def plot_thr_3dsurface(plot_df, my_rotation=True, even_spaced=False,
-                       transpose_df=False, rev_rows=False, rev_cols=False,
-                       show_min_per_sep=True, min_per_df_row=False,
-                       my_elev=15, my_azim=300,
+def plot_thr_3dsurface(plot_df,
+                       drop_1probe=False,
+                       drop_conc=False,
+                       ra_cd_size_dict=None,
+                       even_spaced=False,
+                       transpose_df=False,
+                       show_min_per_sep=True,
+                       my_elev=None, my_rotation=None,
                        fig_title=None,
                        save_path=None, save_name=None,
                        verbose=True):
     """
     Function to plot a 3d surface plot of average thresholds.
     Can add markers to show minimum per ISI or Separation.
+    
+    I currently like to use transpose_df=True, with my_rotation=315.
 
     :param plot_df: dataframe (sep index, ISI columns)
-    :param my_rotation: transform df to my preferred alignment (reverse columns)
     :param even_spaced: Evenly spaced axis are better if I am transforming data (not sure why)
     :param transpose_df: If not using my_rotation, I can manually transpose df.
-    :param rev_rows: If not using my_rotation, I can manually reverse order of rows.
-    :param rev_cols: If not using my_rotation, I can manually reverse order of columns.
     :param show_min_per_sep: If True, Show minimum value per separation with markers.
-    :param min_per_df_row: If False (and if show_min_per_sep) shows minimum value
-                          per ISI with markers.
-    :param my_elev: Change viewing angle elevation.
-    :param my_azim: Change viewing angle azimuth.
+    :param my_elev: Change viewing angle elevation.  90 is top down, 0 is side on, default is 30.
+    :param my_rotation: Change viewing angle azimuth.
+                    Default is -60: This gives 0-24 ISI on the left and 0-18 sep on the right.
+                    45: 0-18 sep on left, 24-0 ISI on right.
+                    135: 24-0 ISI on left, 18-0 sep on right.
+                    225: 18-0 sep on left, 0-24 ISI on right.
+                    315: 0-24 ISI on the left and 0-18 sep on the right.
     :param fig_title: Title if I want to override defaults.
     :param save_path: Path to save to.
     :param save_name: File name to save
@@ -1406,111 +1449,137 @@ def plot_thr_3dsurface(plot_df, my_rotation=True, even_spaced=False,
     print('\n*** running plot_thr_3dsurface() ***')
 
     if verbose:
-        print(f'input plot_df:\n{plot_df}')
+        print(f'\ninput plot_df:\n{plot_df}')
+
+    # change index and column labels to int
+    sep_labels = list(plot_df.index)
+    isi_labels = list(plot_df.columns)
+
+    # if col labels contain "ISI " or "ISI_", strip it from values and convert to int
+    if 'ISI ' in isi_labels[1]:
+        isi_labels = [int(i.split(' ')[1]) for i in isi_labels]
+    elif 'ISI_' in isi_labels[1]:
+        isi_labels = [int(i.split('_')[1]) for i in isi_labels]
+    plot_df.columns = isi_labels
+
+    # if plot_df.index is 'separation', just convert to int
+    if plot_df.index.name == 'separation':
+        sep_labels = [20 if i == '1Probe' else int(i) for i in sep_labels]
+        plot_df.index = sep_labels
+
+    if drop_1probe:
+        if 20 in plot_df.index:
+            plot_df = plot_df.drop(20)
+            print(f'20 (1probe) dropped from index: {plot_df.index}')
+            sep_labels = list(plot_df.index)
+        else:
+            print(f'20 (1probe) not in index: {plot_df.index}')
+    if drop_conc:
+        if -1 in list(plot_df.columns):
+            plot_df = plot_df.drop(-1, axis=1)
+            print(f'-1 (concurrent) dropped from columns: {plot_df.columns}')
+            isi_labels = list(plot_df.columns)
+        else:
+            print(f'-1 (concurrent) not in columns: {plot_df.columns}')
+    if verbose:
+        print(f'\ninput plot_df:\n{plot_df}')
+        print(f'sep_labels: {sep_labels}')
+        print(f'isi_labels: {isi_labels}')
 
     x_label = 'ISI'
     y_label = 'Separation'
     figure_title = 'Average threshold for each ISI and separation condition.'
+    x_isi_y_sep = True  # do I need this for getting correct labels & locations if I transpose df?
 
-    # # If I want to rotate the data, I need to switch to evenly spaced axes.
-    if my_rotation:
-        # my rotation is just the normal df (not transposed) with cols reversed
-        even_spaced = True
+    if transpose_df:  # swap index and columns
+        plot_df = plot_df.T
+        x_label = 'Separation'
+        y_label = 'ISI'
+        x_isi_y_sep = False
 
-        # #reverse order of columns
-        plot_df = plot_df.loc[:, ::-1]
-    else:
-        # for future reference, to reverse order of rows and columns
-        if transpose_df:
-            # swap index and columns
-            plot_df = plot_df.T
-            x_label = 'ISI'
-            y_label = 'Separation'
-            even_spaced = True
-        if rev_rows:
-            # reverse order of rows
-            plot_df = plot_df[::-1]
-            even_spaced = True
-        if rev_cols:
-            # #reverse order of columns
-            plot_df = plot_df.loc[:, ::-1]
-            even_spaced = True
+        # swap row and column labels
+        sep_labels = list(plot_df.index)
+        isi_labels = list(plot_df.columns)
 
-    # arrays to use for the meshgrid
-    rows_array = np.array(list(plot_df.index))
-    cols_array = np.array(list(plot_df.columns))
 
-    if even_spaced:
-        # values to use for axis labels
-        row_labels = list(plot_df.index)
-        col_labels = list(plot_df.columns)
+    # # arrays to use for the meshgrid (scatter points for lower ISI per sep)
+    sep_array = np.array(sep_labels)
+    isi_array = np.array(isi_labels)
 
-        # change labels for 1probe and concurrent so it is clear
-        if -1 in row_labels:
-            row_labels = ['Conc' if i == -1 else i for i in row_labels]
-        if -1 in col_labels:
-            col_labels = ['Conc' if i == -1 else i for i in col_labels]
-        if 20 in row_labels:
-            row_labels = ['1pr' if i == 20 else i for i in row_labels]
-        if 20 in col_labels:
-            col_labels = ['1pr' if i == 20 else i for i in col_labels]
-
-        row_labels = np.array(row_labels)
-        col_labels = np.array(col_labels)
+    if even_spaced:  # # replace cols and row names with ascending values,
 
         # evenly spaced axes for meshgrid
-        rows_array = np.array(list(range(len(rows_array))))
-        cols_array = np.array(list(range(len(cols_array))))
+        sep_array = np.array(list(range(len(sep_array))))
+        isi_array = np.array(list(range(len(isi_array))))
 
         # give df basic rows and cols
         plot_df.reset_index(inplace=True, drop=True)
-        plot_df.columns = cols_array
+        plot_df.columns = isi_array
 
     if verbose:
         print(f'transformed plot_df:\n{plot_df}')
 
     # data for surface
-    x_array, y_array = np.meshgrid(cols_array, rows_array)
+    x_array, y_array = np.meshgrid(isi_array, sep_array)
     z_array = plot_df.to_numpy()
     if verbose:
         print(f'\nvalues for surface:')
-        print(f'rows_array: {rows_array}')
-        print(f'cols_array: {cols_array}')
+        print(f'sep_array: {sep_array}')
+        print(f'isi_array: {isi_array}')
+        print(f'x_array:\n{x_array}')
+        print(f'y_array:\n{y_array}')
         print(f'z_array:\n{z_array}')
 
     # make figure
     fig = plt.figure()
-    ax = fig.gca(projection='3d')  # to work in 3d
+    ax = fig.add_subplot(projection='3d')
 
-    # my_cmap = plt.get_cmap('Spectral')
-    my_cmap = cm.coolwarm
+
+    # get the min and max values from the data for the colourbar.
+    # Use Matplotlib's TwoSlopeNorm() to centre the colormap at zero.
+    z_thr_min = np.min(z_array)
+    z_thr_max = np.max(z_array)
+    print(f"z_thr_min: {z_thr_min}, z_thr_max: {z_thr_max}")
+    two_slope_norm = colors.TwoSlopeNorm(vmin=z_thr_min, vcenter=0, vmax=z_thr_max)
+
+    # use two_slope_norm as my colourmap
+    my_cmap = cm.bwr
+
     surf = ax.plot_surface(X=x_array, Y=y_array, Z=z_array,
                            cmap=my_cmap,
+                           norm=two_slope_norm,
                            edgecolor='grey',
-                           alpha=.5,
-                           )
-    fig.colorbar(surf, ax=ax, shrink=0.75)
+                           alpha=.5)
+    fig.colorbar(surf, ax=ax, shrink=0.75, label='thr diff from conc')
 
     if show_min_per_sep:
+        fig_title = f"{fig_title}\nMarkers show ISI cond with lowest thr per separation"
+
         if even_spaced:
             plot_df.reset_index(drop=True, inplace=True)
         scat_x = []
+        scat_isi_idx = []
         scat_y = []
         scat_z = []
-        if min_per_df_row:
-            figure_title = 'Average threshold for each ISI and separation condition.\n' \
-                           'Markers show min thr per Separation'
-            for index, row in plot_df.iterrows():
-                scat_x.append(row.argmin())
-                scat_y.append(index)
-                scat_z.append(row.min()+.1)
-        else:  # min per column
-            figure_title = 'Average threshold for each ISI and separation condition.\n' \
-                           'Markers show min thr per ISI'
+
+        # figure out if separation is in rows or columns.  If rows, then min is per column.  If columns, then min is per row
+        if x_label == 'Separation':
+            print(f"x_label is separation, so each sep val has its own column")
             for index, row in plot_df.T.iterrows():
                 scat_x.append(index)
-                scat_y.append(row.argmin())
-                scat_z.append((.1+row.min()))
+                scat_isi_idx.append(row.argmin())
+                scat_z.append(row.min()+1)
+            scat_y = [sep_array[i] for i in scat_isi_idx]
+
+        else:  # min per column
+            print(f"y_label is separation, so each sep val has its own row")
+
+            for index, row in plot_df.iterrows():
+                scat_isi_idx.append(row.argmin())
+                scat_y.append(index)
+                scat_z.append(row.min())
+                print(f"x: {row.argmin()}, y: {index}, z: {row.min()}")
+            scat_x = [isi_array[i] for i in scat_isi_idx]
 
         if verbose:
             print(f'\nValues for 3d scatter\n'
@@ -1518,33 +1587,183 @@ def plot_thr_3dsurface(plot_df, my_rotation=True, even_spaced=False,
                   f'scat_y: {scat_y}\n'
                   f'scat_z: {scat_z}\n')
 
-        # Creating scatter plot
+        # Creating scatter plot - marking lowest ISI cond per separation with a diamond
         ax.scatter3D(scat_x, scat_y, scat_z,
                      color="black",
-                     marker='D'
-                     )
+                     marker='D')
 
-    if even_spaced:
-        # # # evenly spaced axes
-        ax.set_xticks(cols_array)
-        ax.set_yticks(rows_array)
-        ax.set_xticklabels(col_labels)
-        ax.set_yticklabels(row_labels)
+    # if given, mark the RA and CD with a line or plane
+    if ra_cd_size_dict:
+        print(f"getting RA and CD size from ra_cd_size_dict: {ra_cd_size_dict}")
+        if even_spaced:
+            # if even spaced, use ra_sep_idx and cd_isi_idx
+            ra_val = ra_cd_size_dict['ra_sep_idx']
+            cd_val = ra_cd_size_dict['cd_isi_idx']
+        else:
+            # if not evenly spaced, use ra_size_sep and cd_size_isi
+            ra_val = ra_cd_size_dict['ra_size_sep']
+            cd_val = ra_cd_size_dict['cd_size_isi']
 
+        if verbose:
+            print(f'\n(even_spaced: {even_spaced}).  ra_val: {ra_val} cd_val: {cd_val}')
+
+        if not even_spaced:
+            # todo: I've not configured ra and cd for even_spaced yet
+            # if not even_spaced, use actual ra_val and cd_val (not idx)
+
+            # RA: I need to interpolate between each point to get the z value for the ra_val
+            # find sep val below ra_size_sep
+            ra_minus1 = [i for i in sep_array if i < ra_val][-1]
+            print(f"ra_minus1: {ra_minus1}")
+
+            # find idx of sep val above ra_size_sep
+            ra_plus1 = [i for i in sep_array if i > ra_val][0]
+            print(f"ra_plus1: {ra_plus1}")
+
+            # get size between values either size of ra_size_sep
+            sep_vals_gap = sep_array[ra_minus1 + 1] - sep_array[ra_minus1]
+            print(f"sep_vals_gap: {sep_vals_gap}")
+
+            # take decimal from end of ra_size_sep
+            decimal_to_add = ra_val - sep_array[ra_minus1]
+            print(f"decimal_to_add: {decimal_to_add}")
+
+            # scale decimal to size of gap, e.g., if ra_size_sep is 3.5, and it is between values of 3 and 6,
+            # then on plots the line should be 1/6th of the way between 3 and 6.
+            scaled_dec_to_add = decimal_to_add / sep_vals_gap
+            print(f"scaled_dec_to_add: {scaled_dec_to_add}")
+
+            # get the theshold (z) values for the slice below and above ra for interpolation
+            ra_minus1_z = list(plot_df.loc[ra_minus1, :])
+            ra_plus1_z = list(plot_df.loc[ra_plus1, :])
+            print(f"ra_minus1_z: {ra_minus1_z}")
+            print(f"ra_plus1_z: {ra_plus1_z}")
+
+            # z values for ra = ra_minus1 + (ra_plus1 - ra_minus1) * scaled_dec_to_add
+            ra_z = [ra_minus1_z[i] + (ra_plus1_z[i] - ra_minus1_z[i]) * scaled_dec_to_add for i in range(len(ra_minus1_z))]
+            print(f"ra_z: {ra_z}")
+            print(f"plot_df:\n{plot_df}")
+
+            print(f"isi_array: {isi_array}")
+
+
+            # # add a line to mark the ra_val on the separation axis which follows the contours of the surface
+            # for each isi_array value, the line passes through ra_val with the z value from ra_z (isi 0 to 24)
+            ax.plot(xs=isi_array, ys=[ra_val]*len(isi_array), zs=ra_z, color='green', linewidth=2, linestyle="--")
+
+            # add a line from z=0 up to the last ra_z point on the separation axis (isi = 24, 24)
+            ax.plot(xs=[isi_array[-1], isi_array[-1]], ys=[ra_val, ra_val], zs=[z_thr_min, ra_z[-1]], color='green', linewidth=2, linestyle="--")
+
+            # add a line from last isi_array point to first isi_array point on the separation axis at z=0 (isi 24 to 0)
+            ax.plot(xs=[isi_array[-1], isi_array[0]], ys=[ra_val, ra_val], zs=[z_thr_min, z_thr_min], color='green', linewidth=2, linestyle="--")
+
+            # add a line from z=0 up to the first ra_z point on the separation axis (isi = 0, 0)
+            ax.plot(xs=[isi_array[0], isi_array[0]], ys=[ra_val, ra_val], zs=[z_thr_min, ra_z[0]], color='green', linewidth=2, linestyle="--")
+
+
+            ############
+            print(f"\n\ncd_val: {cd_val}")
+
+            # CD: I need to interpolate between each point to get the z value for the cd_val
+            # find isi val below cd_size_isi
+            print(f"isi_array: {isi_array}")
+            cd_minus1 = [i for i in isi_array if i < cd_val][-1]
+            print(f"cd_minus1: {cd_minus1}")
+
+            # find idx of sep val above ra_size_sep
+            cd_plus1 = [i for i in isi_array if i > cd_val][0]
+            print(f"cd_plus1: {cd_plus1}")
+
+            # get size between values either size of ra_size_sep
+            cd_vals_gap = cd_plus1 - cd_minus1
+            print(f"cd_vals_gap: {cd_vals_gap}")
+
+            # take decimal from end of ra_size_sep
+            decimal_to_add = cd_val - cd_minus1
+            print(f"decimal_to_add: {decimal_to_add}")
+
+            # scale decimal to size of gap, e.g., if cd_size_isi is 3.5, and it is between values of 4 and 6,
+            # then on plots the line should be 1/4th of the way between 4 and 6 = .5 / 2 = .25
+            scaled_dec_to_add = decimal_to_add / cd_vals_gap
+            print(f"scaled_dec_to_add: {scaled_dec_to_add}")
+
+            # get the theshold (z) values for the slice below and above cd for interpolation
+            cd_minus1_z = list(plot_df.loc[:, cd_minus1])
+            cd_plus1_z = list(plot_df.loc[:, cd_plus1])
+            print(f"cd_minus1_z: {cd_minus1_z}")
+            print(f"cd_plus1_z: {cd_plus1_z}")
+
+            # z values for ra = cd_minus1 + (cd_plus1 - cd_minus1) * scaled_dec_to_add
+            cd_z = [cd_minus1_z[i] + (cd_plus1_z[i] - cd_minus1_z[i]) * scaled_dec_to_add for i in
+                    range(len(cd_minus1_z))]
+            print(f"cd_z: {cd_z}")
+            print(f"plot_df:\n{plot_df}")
+
+            # # add a line to mark the cd_val on the separation axis which follows the contours of the surface
+            # for each isi_array value, the line passes through cd_val with the z value from cd_z (sep 0-18)
+            ax.plot(xs=[cd_val] * len(sep_array), ys=sep_array, zs=cd_z,
+                    color='orange', linewidth=2, linestyle="--")
+
+            # add a line from z=0 up to the last cd_z point on the separation axis (sep 18)
+            ax.plot(xs=[cd_val, cd_val], ys=[sep_array[-1], sep_array[-1]], zs=[z_thr_min, cd_z[-1]],
+                    color='orange', linewidth=2, linestyle="--")
+
+            # add a line from last sep_array point to first sep_array point on the isi axis at z=0 (sep 18 to 0)
+            ax.plot(xs=[cd_val, cd_val], ys=[sep_array[-1], sep_array[0]], zs=[z_thr_min, z_thr_min],
+                    color='orange', linewidth=2, linestyle="--")
+
+            # add a line from z=0 up to the first cd_z point on the separation axis (sep 0)
+            ax.plot(xs=[cd_val, cd_val], ys=[sep_array[0], sep_array[0]], zs=[z_thr_min, cd_z[0]],
+                    color='orange', linewidth=2, linestyle="--")
+
+
+            # add ra and cd lines to legend
+            ra_line_leg = mlines.Line2D([], [], color='green', linewidth=2, linestyle="--",
+                                label="Ricco's Area")
+            cd_line_leg = mlines.Line2D([], [], color='orange', linewidth=2, linestyle="--",
+                                label="Critical Duration")
+            ax.legend(handles=[ra_line_leg, cd_line_leg], fontsize=8)
+
+
+
+    # change labels for 1probe and concurrent so it is clear
+    if -1 in sep_labels:
+        sep_labels = ['Conc' if i == -1 else i for i in sep_labels]
+    if -1 in isi_labels:
+        isi_labels = ['Conc' if i == -1 else i for i in isi_labels]
+    if 20 in sep_labels:
+        sep_labels = ['1pr' if i == 20 else i for i in sep_labels]
+    if 20 in isi_labels:
+        isi_labels = ['1pr' if i == 20 else i for i in isi_labels]
+
+    # set labels and ticks
+    # It seems to know when to use sep_labels and when to use isi_labels
+    # if x_isi_y_sep:
+    ax.set_xticks(isi_array)
+    ax.set_xticklabels(isi_labels)
     ax.set_xlabel(x_label)
+
+    ax.set_yticks(sep_array)
+    ax.set_yticklabels(sep_labels)
     ax.set_ylabel(y_label)
+
     ax.set_zlabel('threshold')
 
     if fig_title is not None:
         figure_title = fig_title
     plt.suptitle(figure_title)
 
+    # change viewing angle:  default elev=30, azim=300 (counterclockwise on z axis)
+    if my_elev is not None or my_rotation is not None:
+        ax.view_init(elev=my_elev, azim=my_rotation)
+        print(f"elev: {my_elev}, azim: {my_rotation}")
+    else:
+        print('default ax.azim {}'.format(ax.azim))
+        print('default ax.elev {}'.format(ax.elev))
+
     if save_path is not None:
         if save_name is not None:
             plt.savefig(f'{save_path}/{save_name}.png')
-
-    # change viewing angle:  default elev=30, azim=300 (counterclockwise on z axis)
-    ax.view_init(elev=my_elev, azim=my_azim)
 
     print('*** finished plot_thr_3dsurface() ***')
 
@@ -3479,5 +3698,57 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
             if show_plots:
                 plt.show()
             plt.close()
+
+
+            '''Make diff from conc surface plot with RA/CD lines'''
+
+            for k, v in ra_cd_size_dict.items():
+                print(f"{k}: {v}")
+
+            print(f"\nplot_diff_from_conc_surface\n")
+
+            if n_trimmed is not None:
+                dfc_surface_title = f'{ave_over} difference from concurrent surface (n={ave_over_n}, trim={n_trimmed}).'
+                dfc_surface_savename = f'mean_TM{n_trimmed}_dfc_surface_{plt_suffix}'
+            else:
+                dfc_surface_title = f'{ave_over} difference from concurrent surface (n={ave_over_n})'
+                dfc_surface_savename = f'mean__dfc_surface_{plt_suffix}'
+
+            plot_thr_3dsurface(plot_df=ave_DfC_df,
+                               drop_1probe=True,
+                               drop_conc=False,
+                               ra_cd_size_dict=ra_cd_size_dict,
+                               even_spaced=False,
+                               transpose_df=True,
+                               show_min_per_sep=True,
+                               my_rotation=330,
+                               fig_title=dfc_surface_title,
+                               save_path=save_path, save_name=dfc_surface_savename,
+                               verbose=True)
+            if show_plots:
+                plt.show()
+            plt.close()
+
+
+            # fig 1c, eight diff from conc plots - seven showing a particular separation, eighth showing all separations.
+            if n_trimmed is not None:
+                dfc_per_sep_title = f'{ave_over} average diff from conc per separation.  (n={ave_over_n}, trim={n_trimmed}, err={error_type}).'
+                dfc_per_sep_savename = f'ave_TM{n_trimmed}_dfc_per_sep{plt_suffix}.png'
+            else:
+                dfc_per_sep_title = f'{ave_over} average diff from conc per separation.  (n={ave_over_n}, err={error_type})'
+                dfc_per_sep_savename = f'ave_dfc_per_sep{plt_suffix}.png'
+
+            plot_n_sep_thr_w_scatter(all_thr_df=ave_DfC_df, exp_ave=exp_ave,
+                                     ra_cd_v_line=ra_cd_size_dict['cd_isi_idx'],
+                                     fig_title=dfc_per_sep_title,
+                                     save_name=dfc_per_sep_savename, save_path=save_path, verbose=True)
+            if show_plots:
+                plt.show()
+            plt.close()
+
+            if verbose:
+                print('finished diff from conc per sep')
+
+
 
     print("\n*** finished make_average_plots()***\n")

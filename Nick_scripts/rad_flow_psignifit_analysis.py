@@ -3063,6 +3063,17 @@ def d_average_participant(root_path, run_dir_names_list,
         print(f"groupby_sep_df:\n{groupby_sep_df}")
 
         if cols_to_replace is not None:
+
+            # first create a dictionary where the keys are the unique values from the neg_sep column and the
+            # keys are the corresponding values in the 'cond_type' and 'separation' columns
+            cols_to_replace_dict = {}
+            for neg_sep_val in list(groupby_sep_df['neg_sep'].unique()):
+                cols_to_replace_dict[neg_sep_val] = {'cond_type': groupby_sep_df[groupby_sep_df['neg_sep'] == neg_sep_val]['cond_type'].unique()[0],
+                                                     'separation': groupby_sep_df[groupby_sep_df['neg_sep'] == neg_sep_val]['separation'].unique()[0]}
+            print(f"cols_to_replace_dict: {cols_to_replace_dict}")
+
+
+
             # replace_cols = groupby_sep_df[[cols_to_replace]]
             # replace_cols = groupby_sep_df.pop(cols_to_replace)
             replace_cols = pd.concat([groupby_sep_df.pop(x) for x in cols_to_replace], axis=1)
@@ -3080,10 +3091,31 @@ def d_average_participant(root_path, run_dir_names_list,
         ave_psignifit_thr_df = groupby_sep_df.groupby(groupby_col, sort=False,
                                                       # as_index=False
                                                       ).mean()
+        ave_psignifit_thr_df.reset_index(inplace=True)
+
+        if verbose:
+            print(f'\ngroupby_sep_df:\n{groupby_sep_df}')
+            print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
 
         # if cols_to_replace is not None:
         #     replace_cols = ave_psignifit_thr_df[[cols_to_replace]]
         #     print(f"replace_cols: {cols_to_replace}\n{replace_cols}")
+        if cols_to_replace is not None:
+            # ave_psignifit_thr_df.insert(1, cols_to_replace, replace_cols)
+
+            # make a cond_type list from the neg_sep column
+            # cond_type_list = [cols_to_replace_dict[x]['cond_type'] for x in ave_psignifit_thr_df['neg_sep'].to_list()]
+            # cond_type_list = []
+            # for neg_sep_val in list(ave_psignifit_thr_df['neg_sep']):
+            #     cond_type_list.append(cols_to_replace_dict[neg_sep_val]['cond_type'])
+            # print(f"cond_type_list: {cond_type_list}")
+
+            # insert cond_type and separation columns to ave_psignifit_thr_df from cols_to_replace_dict
+            ave_psignifit_thr_df.insert(1, 'cond_type', [cols_to_replace_dict[x]['cond_type'] for x in ave_psignifit_thr_df['neg_sep'].to_list()])
+            ave_psignifit_thr_df.insert(2, 'separation', [cols_to_replace_dict[x]['separation'] for x in ave_psignifit_thr_df['neg_sep'].to_list()])
+
+
+
 
         if verbose:
             print(f'\ngroupby_sep_df:\n{groupby_sep_df}')
@@ -3101,10 +3133,18 @@ def d_average_participant(root_path, run_dir_names_list,
                              f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
                              f"'deviation', 'standard_deviation']")
 
+        error_bars_df.reset_index(inplace=True)
+        if verbose:
+            print(f'\nerror_bars_df:\n{error_bars_df}')
+
         if cols_to_replace is not None:
-            error_bars_df = error_bars_df.drop(cols_to_replace, axis=1)
-            error_bars_df.insert(0, cols_to_replace, replace_cols)
-            error_bars_df.fillna(0)
+            # error_bars_df = error_bars_df.drop(cols_to_replace, axis=1)
+            # error_bars_df.insert(0, cols_to_replace, replace_cols)
+            # error_bars_df.fillna(0)
+
+            # insert cond_type and separation columns to error_bars_df from cols_to_replace_dict
+            error_bars_df.insert(0, 'cond_type', [cols_to_replace_dict[x]['cond_type'] for x in error_bars_df['neg_sep'].to_list()])
+            error_bars_df.insert(1, 'separation', [cols_to_replace_dict[x]['separation'] for x in error_bars_df['neg_sep'].to_list()])
         if verbose:
             print(f'\nerror_bars_df:\n{error_bars_df}')
 
@@ -3245,11 +3285,11 @@ def d_average_participant(root_path, run_dir_names_list,
     # todo: since I added extra ISI conditions, ISI conds are not in ascending order.
     #  Perhaps re-order columns before saving?
     if trim_n is not None:
-        ave_psignifit_thr_df.to_csv(os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv'))
-        error_bars_df.to_csv(os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thr_error_{error_type}.csv'))
+        ave_psignifit_thr_df.to_csv(os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv'), index=False)
+        error_bars_df.to_csv(os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thr_error_{error_type}.csv'), index=False)
     else:
-        ave_psignifit_thr_df.to_csv(os.path.join(root_path, 'MASTER_ave_thresh.csv'))
-        error_bars_df.to_csv(os.path.join(root_path, f'MASTER_ave_thr_error_{error_type}.csv'))
+        ave_psignifit_thr_df.to_csv(os.path.join(root_path, 'MASTER_ave_thresh.csv'), index=False)
+        error_bars_df.to_csv(os.path.join(root_path, f'MASTER_ave_thr_error_{error_type}.csv'), index=False)
     print("\n*** finished d_average_participant()***\n")
 
     return ave_psignifit_thr_df, error_bars_df
