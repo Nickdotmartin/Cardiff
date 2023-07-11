@@ -57,97 +57,96 @@ for p_idx, participant_name in enumerate(participant_list):
         # needed to ensure names go name1, name2, name3 not name1, name12, name123
         p_name = participant_name
 
-        '''a'''
-        # # todo: copy look for sep_dirs from other analysis script.
-        #
-        # # # I don't need data extraction as all ISIs are in same df.
-        # p_name = f'{participant_name}_output'  # use this one
-        # '''check for unique sep folders.  If found: collate those; else look for output file.'''
-        # sep_dirs = [d for d in os.listdir(save_path) if os.path.isdir(os.path.join(save_path, d))]
-        # sep_dirs = [d for d in sep_dirs if 'sep_' in d]
-        #
-        # if len(sep_dirs) > 0:
-        #     print(f"sep_dirs: {sep_dirs}")
-        #     run_data_df = a_data_extraction_sep(participant_name=participant_name,
-        #                                         run_dir=save_path, sep_dirs=sep_dirs,
-        #                                         save_all_data=True, verbose=True)
-        # else:
-        #     print("No sep dirs found, looking for output file")
-        #
-        #     # # I don't need data extraction as all ISIs are in same df.
-        #     try:
-        #         run_data_df = pd.read_csv(os.path.join(save_path, f'{p_name}.csv'))
-        #     except:
-        #         p_name = f'{participant_name}_{r_idx_plus}_output'  # use this one
-        #         run_data_df = pd.read_csv(os.path.join(save_path, f'{p_name}.csv'))
-        #
-        # # run_data_df = pd.read_csv(os.path.join(save_path, f'{p_name}.csv'))
-        # run_data_df = run_data_df.sort_values(by=['stair', 'trial_number'])
-        # print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
-        #
-        # # remove unnamed columns
-        # substring = 'Unnamed: '
-        # unnamed_cols = [i for i in run_data_df.columns.to_list() if substring in i]
-        # print(f"unnamed_cols: {unnamed_cols}")
-        # for col_name in unnamed_cols:
-        #     run_data_df.drop(col_name, axis=1, inplace=True)
-        #
-        # print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
-        # run_data_df.to_excel(os.path.join(save_path, 'RUNDATA-sorted.xlsx'), index=False)
-        #
-        # # # # get cond details for this exp
-        # sep_list = sorted(list(run_data_df['separation'].unique()))
-        # print(f'sep_list: {sep_list}')
-        #
-        # isi_list = sorted(list(run_data_df['ISI'].unique()))
-        # # make sure concurrent (-1) is the first value, not zero
-        # if -1 in isi_list:
-        #     if isi_list[0] != -1:
-        #         isi_list.remove(-1)
-        #         isi_list = [-1] + isi_list
-        # print(f"isi_list: {isi_list}")
-        #
-        # # # neg sep and cond type need to align so -sep==missing and sep==exp 1, so sort accordingly
-        # # todo: don't sort neg_sep_list, check they match
-        # # neg_sep_list = run_data_df['neg_sep'].unique().tolist()
-        # neg_sep_list = [-.01, -2, -3, 0, 2, 3]
-        # cond_type_list = sorted(run_data_df['cond_type'].unique().tolist(), reverse=True)
-        #
-        # # todo: if there are multiple sep conds, does cond type list needs to be repeated?
-        # # cond_type_list = list(np.repeat(cond_type_list, len(neg_sep_list) / 2))
-        #
-        # print(f'neg_sep_list: {neg_sep_list}')
-        # print(f'cond_type_list: {cond_type_list}')
-        #
-        # cols_to_add_dict = {'neg_sep': neg_sep_list}
-        # #
-        # # # todo: does neg_sep align with sep and cond_type?
-        # #
-        # thr_df = get_psig_thr_w_hue(root_path=root_path,
-        #                             p_run_name=run_dir,
-        #                             output_df=run_data_df,
-        #                             n_bins=9, q_bins=True,
-        #                             thr_col='probeLum',
-        #                             sep_col='separation', sep_list=sep_list,
-        #                             isi_col='ISI', isi_list=isi_list,
-        #                             hue_col='cond_type', hue_list=cond_type_list,
-        #                             trial_correct_col='trial_response',
-        #                             conf_int=True,
-        #                             thr_type='Bayes',
-        #                             plot_both_curves=False,
-        #                             cols_to_add_dict=cols_to_add_dict,
-        #                             show_plots=False,
-        #                             verbose=verbose)
-        # print(f'thr_df:\n{thr_df}')
-
-    # run_folder_names = ['Nick_1', 'Nick_5', 'Nick_6']
-    '''d participant averages'''
-
+    #     '''a'''
+    #     # todo: copy look for sep_dirs from other analysis script.
+    #
+    #     # # I don't need data extraction as all ISIs are in same df.
+    #     p_name = f'{participant_name}_output'  # use this one
+    #     '''check for unique sep folders.  If found: collate those; else look for output file.'''
+    #     sep_dirs = [d for d in os.listdir(save_path) if os.path.isdir(os.path.join(save_path, d))]
+    #     sep_dirs = [d for d in sep_dirs if 'sep_' in d]
+    #
+    #     if len(sep_dirs) > 0:
+    #         print(f"sep_dirs: {sep_dirs}")
+    #         run_data_df = a_data_extraction_sep(participant_name=participant_name,
+    #                                             run_dir=save_path, sep_dirs=sep_dirs,
+    #                                             save_all_data=True, verbose=True)
+    #     else:
+    #         print("No sep dirs found, looking for output file")
+    #
+    #         # # I don't need data extraction as all ISIs are in same df.
+    #         try:
+    #             run_data_df = pd.read_csv(os.path.join(save_path, f'{p_name}.csv'))
+    #         except:
+    #             p_name = f'{participant_name}_{r_idx_plus}_output'  # use this one
+    #             run_data_df = pd.read_csv(os.path.join(save_path, f'{p_name}.csv'))
+    #
+    #     # run_data_df = pd.read_csv(os.path.join(save_path, f'{p_name}.csv'))
+    #     run_data_df = run_data_df.sort_values(by=['stair', 'trial_number'])
+    #     print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
+    #
+    #     # remove unnamed columns
+    #     substring = 'Unnamed: '
+    #     unnamed_cols = [i for i in run_data_df.columns.to_list() if substring in i]
+    #     print(f"unnamed_cols: {unnamed_cols}")
+    #     for col_name in unnamed_cols:
+    #         run_data_df.drop(col_name, axis=1, inplace=True)
+    #
+    #     print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
+    #     run_data_df.to_excel(os.path.join(save_path, 'RUNDATA-sorted.xlsx'), index=False)
+    #
+    #     # # # get cond details for this exp
+    #     isi_list = sorted(list(run_data_df['ISI'].unique()))
+    #     # make sure concurrent (-1) is the first value, not zero
+    #     if -1 in isi_list:
+    #         if isi_list[0] != -1:
+    #             isi_list.remove(-1)
+    #             isi_list = [-1] + isi_list
+    #     print(f"isi_list: {isi_list}")
+    #
+    #     sep_list = sorted(list(run_data_df['separation'].unique()))
+    #     print(f'sep_list: {sep_list}')
+    #
+    #     # # neg sep and cond type need to align so -sep==missing and sep==exp 1, so sort accordingly
+    #     # todo: don't sort neg_sep_list, check they match
+    #     # neg_sep_list = run_data_df['neg_sep'].unique().tolist()
+    #     neg_sep_list = [-.01, -2, -3, 0, 2, 3]
+    #     cond_type_list = sorted(run_data_df['cond_type'].unique().tolist(), reverse=True)
+    #
+    #     # todo: if there are multiple sep conds, does cond type list needs to be repeated?
+    #     # cond_type_list = list(np.repeat(cond_type_list, len(neg_sep_list) / 2))
+    #
+    #     print(f'neg_sep_list: {neg_sep_list}')
+    #     print(f'cond_type_list: {cond_type_list}')
+    #
+    #     cols_to_add_dict = {'neg_sep': neg_sep_list}
+    #     #
+    #     # # todo: does neg_sep align with sep and cond_type?
+    #     #
+    #     thr_df = get_psig_thr_w_hue(root_path=root_path,
+    #                                 p_run_name=run_dir,
+    #                                 output_df=run_data_df,
+    #                                 n_bins=9, q_bins=True,
+    #                                 thr_col='probeLum',
+    #                                 sep_col='separation', sep_list=sep_list,
+    #                                 isi_col='ISI', isi_list=isi_list,
+    #                                 hue_col='cond_type', hue_list=cond_type_list,
+    #                                 trial_correct_col='trial_response',
+    #                                 conf_int=True,
+    #                                 thr_type='Bayes',
+    #                                 plot_both_curves=False,
+    #                                 cols_to_add_dict=cols_to_add_dict,
+    #                                 show_plots=False,
+    #                                 verbose=verbose)
+    #     print(f'thr_df:\n{thr_df}')
+    #
+    # '''d participant averages'''
+    #
     # d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
     #                       groupby_col=['neg_sep'], cols_to_drop='stack', cols_to_replace=['cond_type', 'separation'],
     #                       trim_n=trim_n, error_type='SE', verbose=verbose)
-
-
+    #
+    #
     # making average plot
     all_df_path = os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv')
     p_ave_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv')
@@ -158,19 +157,20 @@ for p_idx, participant_name in enumerate(participant_list):
         err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
     exp_ave = False
 
-    cond_type_list = ['missing', 'exp1']
+    # cond_type_list = ['missing', 'exp1']
+    cond_type_list = ['exp1', 'missing']
 
-    # make_average_plots(all_df_path=all_df_path,
-    #                    ave_df_path=p_ave_path,
-    #                    error_bars_path=err_path,
-    #                    thr_col='probeLum',
-    #                    stair_names_col='neg_sep',
-    #                    cond_type_col='cond_type',
-    #                    cond_type_order=cond_type_list,
-    #                    n_trimmed=trim_n,
-    #                    ave_over_n=len(run_folder_names),
-    #                    exp_ave=participant_name,
-    #                    show_plots=True, verbose=True)
+    make_average_plots(all_df_path=all_df_path,
+                       ave_df_path=p_ave_path,
+                       error_bars_path=err_path,
+                       thr_col='probeLum',
+                       stair_names_col='neg_sep',
+                       cond_type_col='cond_type',
+                       cond_type_order=cond_type_list,
+                       n_trimmed=trim_n,
+                       ave_over_n=len(run_folder_names),
+                       exp_ave=participant_name,
+                       show_plots=True, verbose=True)
 
     print(f"\nfig_3a - difference from concurrent\n")
     run_this_plot = False
@@ -202,14 +202,13 @@ for p_idx, participant_name in enumerate(participant_list):
             error_DfC_df = pd.read_csv(os.path.join(root_path, error_DfC_name))
         else:
             print("making DfC files")
-            all_df_for_df_path = os.path.join(root_path, f'MASTER_psignifit_thresholds_for_dfc.csv')
+            # all_df_for_df_path = os.path.join(root_path, f'MASTER_psignifit_thresholds_for_dfc.csv')
+            all_df_for_df_path = os.path.join(root_path, f'MASTER_psignifit_thresholds.csv')
             ave_DfC_df, error_DfC_df = make_diff_from_conc_df(all_df_for_df_path, root_path,
                                                               n_trimmed=n_trimmed, exp_ave=exp_ave)
 
-        error_DfC_df.rename(columns={'Concurrent': 'Conc', 'ISI_-1': 'Conc'},
-                            inplace=True)
         print(f"ave_DfC_df:\n{ave_DfC_df}")
-        print(f"error_DfC_df:\n{error_DfC_df}")
+        print(f"\nerror_DfC_df:\n{error_DfC_df}")
 
     if run_this_plot:
 
@@ -220,7 +219,7 @@ for p_idx, participant_name in enumerate(participant_list):
             fig3a_save_name = 'diff_from_conc.png'
             fig3a_title = f'{ave_over} ISI difference in threshold from concurrent\n(n={ave_over_n})'
 
-        plot_diff_from_conc_lineplot(ave_DfC_df, error_df=error_DfC_df,
+        plot_diff_from_conc_lineplot(ave_DfC_df, err_DfC_df=error_DfC_df,
                                      # ra_cd_v_line=ra_cd_size_dict['cd_isi_idx'],
                                      fig_title=fig3a_title,
                                      save_name=fig3a_save_name, save_path=root_path)

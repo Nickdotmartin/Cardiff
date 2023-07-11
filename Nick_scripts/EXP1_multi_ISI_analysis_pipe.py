@@ -223,8 +223,9 @@ for p_idx, participant_name in enumerate(participant_list):
     #
     print(f'root_path: {root_path}')
     # todo: comment this out
-    trim_list = [2, 2, 2]
-    trim_n = 2
+    # trim_list = [2, 2, 2]
+    # trim_n = 2
+    # run_folder_names = list(range(12))
     print(f"\n\ntrim_list: {trim_list}, trim_n: {trim_n}\n\n")
 
 
@@ -258,7 +259,7 @@ for p_idx, participant_name in enumerate(participant_list):
             isi_vals_list = [-1] + isi_vals_list
     print(isi_vals_list)
 
-    isi_name_list = [f"conc" if i == -1 else f"ISI_{i}" for i in isi_vals_list]
+    isi_name_list = [f"Conc" if i == -1 else f"ISI {i}" for i in isi_vals_list]
 
     sep_vals_list = list(p_ave_df['separation'])
     sep_name_list = [f"1probe" if i == 20 else i for i in sep_vals_list]
@@ -416,7 +417,7 @@ for p_idx, participant_name in enumerate(participant_list):
 #
 # isi_vals_list = sorted([int(i[4:]) for i in list(exp_ave_df.columns)[1:]])
 # # isi_vals_list = [-1, 0, 2, 4, 6, 9, 12, 24]
-# isi_name_list = [f"conc" if i == -1 else f"ISI_{i}" for i in isi_vals_list]
+# isi_name_list = [f"Conc" if i == -1 else f"ISI {i}" for i in isi_vals_list]
 #
 # sep_vals_list = list(exp_ave_df['separation'])
 # sep_name_list = [f"1probe" if i == 20 else i for i in sep_vals_list]

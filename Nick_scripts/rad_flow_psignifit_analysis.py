@@ -1796,6 +1796,7 @@ def multi_batman_plots(mean_df, thr1_df, thr2_df,
 
 def multi_pos_sep_per_isi(ave_thr_df, error_df,
                           stair_names_col='stair_names',
+                          pos_neg_labels=['Congrent', 'Incongruent'],
                           even_spaced_x=True, error_caps=True,
                           fig_title=None,
                           save_path=None, save_name=None,
@@ -1806,6 +1807,7 @@ def multi_pos_sep_per_isi(ave_thr_df, error_df,
     :param ave_thr_df: dataframe to analyse containing mean thresholds
     :param error_df: dataframe containing error values
     :param stair_names_col: name of column containing separation and congruent info
+    :param pos_neg_labels: names of positive (1st) and negative (2nd) values e.g., ['Congruent', 'Incongruent']
     :param even_spaced_x: If true will evenly space ticks on x-axis.
         If false will use values given which might not be evenly spaces (e.g., 1, 2, 3, 6, 18)
     :param error_caps: Whether to add caps to error bars
@@ -1880,6 +1882,9 @@ def multi_pos_sep_per_isi(ave_thr_df, error_df,
         print(f'\ncong_err_df: {cong_err_df.shape}\n{cong_err_df}')
         print(f'\nincong_df: {incong_df.shape}\n{incong_df}')
         print(f'\nincong_err_df: {incong_err_df.shape}\n{incong_err_df}\n')
+
+    if type(pos_neg_labels[0]) != str:
+        pos_neg_labels = ['Congruent', 'Incongruent']
 
     cap_size = 0
     if error_caps:
@@ -1971,14 +1976,18 @@ def multi_pos_sep_per_isi(ave_thr_df, error_df,
                         ax.yaxis.label.set_visible(False)
 
                     # artist for legend
+                    
                     st1 = mlines.Line2D([], [], color=my_colours[ax_counter],
                                         # marker='v',
                                         linewidth=.5,
-                                        markersize=4, label='Congruent')
+                                        # markersize=4, label='Congruent')
+                                        markersize=4, label=pos_neg_labels[0])
+
                     st2 = mlines.Line2D([], [], color=my_colours[ax_counter],
                                         # marker='o',
                                         marker=None, linewidth=.5, linestyle="dotted",
-                                        markersize=4, label='Incongruent')
+                                        # markersize=4, label='Incongruent')
+                                        markersize=4, label=pos_neg_labels[1])
 
                     ax.legend(handles=[st1, st2], fontsize=6)
 
@@ -2052,11 +2061,14 @@ def multi_pos_sep_per_isi(ave_thr_df, error_df,
             st1 = mlines.Line2D([], [], color=my_colours[row_idx],
                                 # marker='v',
                                 linewidth=.5,
-                                markersize=4, label='Congruent')
+                                # markersize=4, label='Congruent')
+                                markersize=4, label=pos_neg_labels[0])
+
             st2 = mlines.Line2D([], [], color=my_colours[row_idx],
                                 # marker='o',
                                 marker=None, linewidth=.5, linestyle="dotted",
-                                markersize=4, label='Incongruent')
+                                # markersize=4, label='Incongruent')
+                                markersize=4, label=pos_neg_labels[1])
 
             ax.legend(handles=[st1, st2], fontsize=6)
 
@@ -3521,9 +3533,18 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     :param ave_df_path: Path to df with average across all stacks/participants
     :param error_bars_path: Path to df for errors bars with SE/SD associated with averages.
     :param thr_col: Name of column containing threshold values.
+    :param stair_names_col: Name of column containing condition names (e.g., neg_sep)
+    :param cond_type_col: Name of column containing condition type (e.g., congruent)
+    :param cond_type_order: Order of condition types (e.g., [1, -1]).
+                            Does not have to match the order they appear in the dfs,
+                            but the order you want them presented.
+                            The first item is a solid line, the second is a dashed line.
     :param n_trimmed: Whether averages data has been trimmed.
+    :param ave_over_n: Number of runs or participants it is averaging over.
     :param exp_ave: If False, this script is for participant averages over runs.
                     If True, the script if for experiment averages over participants.
+    :param isi_name_list: List of ISI names (e.g., ['ISI_0', 'ISI_1', 'ISI_2'])
+    :param isi_vals_list: List of ISI values (e.g., [0, 1, 2])
     :param show_plots:
     :param verbose:
     :return: """
@@ -3622,10 +3643,16 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     if n_trimmed is not None:
         fig_1a_title = f'{ave_over} ave thresholds per ISI. (n={ave_over_n}, trim={n_trimmed}).\n' \
                        f'positive=congruent probe/flow motion, negative=incongruent. Bars=SE.'
+        if type(cond_type_order[0]) is str:
+            fig_1a_title = f'{ave_over} ave thresholds per ISI. (n={ave_over_n}, trim={n_trimmed}).\n' \
+                           f'positive={cond_type_order[0]}, negative={cond_type_order[1]}. Bars=SE.'
         fig_1a_savename = f'ave_TM{n_trimmed}_thr_pos_and_neg.png'
     else:
         fig_1a_title = f'{ave_over} ave threshold per ISI. (n={ave_over_n})\n' \
                        f'positive=congruent probe/flow motion, negative=incongruent. Bars=SE.'
+        if type(cond_type_order[0]) is str:
+            fig_1a_title = f'{ave_over} ave threshold per ISI. (n={ave_over_n})\n' \
+                           f'positive={cond_type_order[0]}, negative={cond_type_order[1]}. Bars=SE.'
         fig_1a_savename = f'ave_thr_pos_and_neg.png'
 
     # use ave_w_sep_idx_df for fig 1a and heatmap
@@ -3717,16 +3744,23 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         if n_trimmed is not None:
             fig_1d_title = f'{ave_over} Congruent and Incongruent thresholds for each ISI (trim={n_trimmed}).\n' \
                            f'Bars=SE, n={ave_over_n}'
+            if type(cond_type_order[0]) is str:
+                fig_1d_title = f'{ave_over} {cond_type_order[0]} and {cond_type_order[1]} thresholds for each ISI (trim={n_trimmed}).\n' \
+                               f'Bars=SE, n={ave_over_n}'
             fig_1d_savename = f'ave_TM{n_trimmed}_pos_sep_per_isi.png'
         else:
             fig_1d_title = f'{ave_over} Congruent and Incongruent thresholds for each ISI\n' \
                            f'Bars=SE, n={ave_over_n}'
+            if type(cond_type_order[0]) is str:
+                fig_1d_title = f'{ave_over} {cond_type_order[0]} and {cond_type_order[1]} thresholds for each ISI\n' \
+                                 f'Bars=SE, n={ave_over_n}'
             fig_1d_savename = f'ave_thr_pos_sep_per_isi.png'
 
         use_these_cols = [stair_names_col] + isi_name_list
 
         multi_pos_sep_per_isi(ave_thr_df=ave_df[use_these_cols], error_df=error_bars_df[use_these_cols],
                               stair_names_col=stair_names_col,
+                              pos_neg_labels=cond_type_order,
                               even_spaced_x=True, error_caps=True,
                               fig_title=fig_1d_title,
                               save_path=save_path, save_name=fig_1d_savename,
@@ -3786,6 +3820,9 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         heatmap_title = f'{ave_over} mean Threshold for each ISI and separation (n={ave_over_n})'
         heatmap_savename = 'mean_thr_heatmap'
 
+    if type(cond_type_order[0]) is str:
+        heatmap_title = heatmap_title + f'\npos = {cond_type_order[0]}, neg = {cond_type_order[1]}'
+
     # todo: I used to use ave_w_sep_idx_df.T, but I will try without the transpose to compare with other heatmaps.
     plot_thr_heatmap(
         # heatmap_df=ave_w_sep_idx_df.T,
@@ -3817,6 +3854,9 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
             heatmap_pr_title = f'{ave_over} Heatmap per row (n={ave_over_n})'
             heatmap_pr_savename = 'mean_heatmap_per_row'
 
+        if type(cond_type_order[0]) is str:
+            heatmap_pr_title = heatmap_pr_title + f'\npos = {cond_type_order[0]}, neg = {cond_type_order[1]}'
+
         plt_heatmap_row_col(heatmap_df=ave_w_sep_idx_df,
                             colour_by='row',
                             # x_tick_labels=None,
@@ -3844,6 +3884,10 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         else:
             heatmap_pr_title = f'{ave_over} Heatmap per col (n={ave_over_n})'
             heatmap_pr_savename = 'AAA_mean_heatmap_per_col.png'
+
+        if type(cond_type_order[0]) is str:
+            heatmap_pr_title = heatmap_pr_title + f'\npos = {cond_type_order[0]}, neg = {cond_type_order[1]}'
+
 
         plt_heatmap_row_col(heatmap_df=ave_w_sep_idx_df,
                             colour_by='col',
