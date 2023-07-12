@@ -329,6 +329,8 @@ for p_idx, participant_name in enumerate(participant_list):
                        error_bars_path=err_path,
                        thr_col='probeLum',
                        stair_names_col='neg_sep',
+                       cond_type_order=[1, -1],
+                       pos_neg_labels=['Congruent', 'Incongruent'],
                        n_trimmed=trim_n,
                        ave_over_n=len(run_folder_names),
                        exp_ave=participant_name,

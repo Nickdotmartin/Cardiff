@@ -504,6 +504,134 @@ def make_long_df(wide_df,
     return long_df
 
 
+def neg_sep_to_sep_w_cond_type(orig_df, pos_neg_labels=['Congruent', 'Incongruent'],
+                               neg_sep_col='neg_sep',
+                               cols_to_drop=['stair_names', 'neg_sep']):
+    """
+    Function to convert a dataframe with a column of negative separations to a dataframe with a column cond_type.
+    :param orig_df: dataframe with no cond_type col but with neg_sep_col or stair_names col showing neg_sep.
+    :param pos_neg_labels: labels for positive and negative conditions (in that order)
+    :param neg_sep_col: column to evaluate for negative separations
+    :param cols_to_drop: columns to drop (will attempt to drop them even if missing without failing)
+
+    :return: new_df with cond_type column
+    """
+
+    print('\n*** running neg_sep_to_sep_w_cond_type() ***')
+
+    # make a copy of the original df so the original is unchanged
+    edit_this_df = orig_df.copy()
+
+    # see if 'cond_type' already exists, if not add it using pos_neg_labels
+    if 'cond_type' not in edit_this_df.columns:
+        if pos_neg_labels is not None:
+            cond_type_vals = [pos_neg_labels[1] if i < 0 else pos_neg_labels[0] for i in
+                              edit_this_df[neg_sep_col]]
+            edit_this_df.insert(loc=0, column='cond_type', value=cond_type_vals)
+        else:
+            raise ValueError(f'cond_type not in edit_this_df.columns and pos_neg_labels is None')
+
+    if 'separation' not in edit_this_df.columns:
+        sep_vals = [0 if i == .01 else abs(i) for i in edit_this_df[neg_sep_col]]
+        edit_this_df.insert(loc=1, column='separation', value=sep_vals)
+
+    # drop any columns in cols_to_drop
+    for i in cols_to_drop:
+        if i in edit_this_df.columns:
+            edit_this_df.drop(columns=i, inplace=True)
+
+    # sort by separation so that the new columns are in the right order
+    new_df = edit_this_df.sort_values(by='separation')
+
+    # Convert the values in the separation column to ints to give shorted column names
+    new_df['separation'] = new_df['separation'].astype(int)
+
+    print('\n*** finished neg_sep_to_sep_w_cond_type() ***')
+
+    return new_df
+
+
+def transpose_df_w_cond_type(orig_df,
+                             cols_to_rows=['ISI_4', 'ISI_6', 'ISI_9'],
+                             add_pos_neg_labels=['Congruent', 'Incongruent'],
+                             cols_to_drop=['stair_names', 'neg_sep'],
+                             cond_type_col='cond_type',
+                             rows_to_cols='separation',
+                             verbose=True
+                             ):
+    """
+    Function to transpose a dataframe with a column that is to be kept as a column,
+    and the rest of the columns are to be transposed into rows.
+    e.g.,  make 'separation' values into columns ['sep_0', 'sep_2'...], and 'ISI' columns from cols_to_rows into rows
+
+    :param orig_df: dataframe to transpose
+    :param cols_to_rows: column names to transpose into rows (e.g., ['ISI_-1', 'ISI_0'...])
+    :param add_pos_neg_labels: labels to add to cond_type_col if it doesn't exist
+    :param cols_to_drop: columns to drop from orig_df (e.g., ['stair_names', 'neg_sep'])
+    :param cond_type_col: column names to keep as a columns, will make this column if it doesn't exist.
+    :param rows_to_cols: row names to transpose into columns (e.g., 'separation').  Not currently using this
+
+    :return: transposed dataframe
+    """
+    print("\n*** running transpose_df_w_cond_type() ***")
+
+    # make a copy of the original df so the original is unchanged
+    edit_this_df = orig_df.copy()
+
+    if verbose:
+        print(f'edit_this_df: \n{edit_this_df}')
+
+    # see if cond_type_col already exists, if not add it using add_pos_neg_labels
+    if cond_type_col not in edit_this_df.columns:
+        if add_pos_neg_labels is not None:
+            if 'neg_sep' in edit_this_df.columns:
+                cond_type_vals = [add_pos_neg_labels[1] if i < 0 else add_pos_neg_labels[0] for i in
+                                  edit_this_df['neg_sep']]
+            else:
+                raise ValueError(f'neg_sep not in edit_this_df.columns and add_pos_neg_labels is not None')
+            edit_this_df.insert(loc=0, column=cond_type_col, value=cond_type_vals)
+        else:
+            raise ValueError('There are no add_pos_neg_labels to use to construct cond_type column')
+
+
+    # drop any columns in cols_to_drop
+    for i in cols_to_drop:
+        if i in edit_this_df.columns:
+            edit_this_df.drop(columns=i, inplace=True)
+
+    # sort by separation so that the new columns are in the right order
+    edit_this_df.sort_values(by='separation', inplace=True)
+
+    # Convert the values in the separation column to ints to give shorted column names
+    edit_this_df['separation'] = edit_this_df['separation'].astype(int)
+
+    # Melt the DataFrame into long form with columns ['cond_type', 'separation', 'ISI', 'value']
+    long_df = edit_this_df.melt(id_vars=[cond_type_col, 'separation'], value_vars=cols_to_rows, var_name='ISI',
+                           value_name='value')
+
+    # make a list of the unique values in the sep column prefixed with 'sep_'
+    sep_names_list = ['sep_' + str(i) for i in long_df['separation'].unique()]
+
+    # use pivot_table to reshape the df so that the ['sep', and 'value'] columns are reshaped into individual 'sep_' columns containing the corresponding values
+    transposed_df = long_df.pivot_table(index=[cond_type_col, 'ISI'], columns='separation', values='value')
+
+    # rename the columns which match values in long_df['sep'].unique() with the values in sep_names_list
+    transposed_df.columns = sep_names_list
+
+    # reset the index so that the cond_type and ISI columns are no longer the index
+    transposed_df.reset_index(inplace=True, drop=False)
+
+    # strip 'ISI_' from the ISI column values
+    transposed_df['ISI'] = transposed_df['ISI'].str.strip('ISI_')
+
+    # sort values by cond_type and ISI
+    transposed_df.sort_values(by=[cond_type_col, 'ISI'], inplace=True)
+
+    if verbose:
+        print(f'transposed_df: \n{transposed_df}')
+
+    return transposed_df
+
 def fig_colours(n_conditions, alternative_colours=False):
     """
     Use this to always get the same colours in the same order with no fuss.
@@ -1386,7 +1514,7 @@ def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'
 
         # add column with new evenly spaced x-values, relating to original x_values
 
-        # sort long df by x axis so tick labels are in ascending order
+        # sort long df by x_axis so tick labels are in ascending order
         long_df.sort_values(by=x_axis, inplace=True)
 
         spaced_x = [x_space_dict[i] for i in list(long_df[x_axis])]
@@ -2090,6 +2218,221 @@ def multi_pos_sep_per_isi(ave_thr_df, error_df,
     return fig
 
 
+def multi_plt_per_col_w_hue(ave_thr_df, error_df,
+                            cond_type_col='cond_type',
+                            pos_neg_labels=['Congrent', 'Incongruent'],
+                            x_label_col='separation',
+                            even_spaced_x=True, error_caps=True,
+                            fig_title=None,
+                            save_path=None, save_name=None,
+                            verbose=True):
+    """
+    Function to plot multi-plot for comparing cong and incong for each isi.
+
+    :param ave_thr_df: dataframe to analyse containing mean thresholds
+    :param error_df: dataframe containing error values
+    :param cond_type_col: name of column containing condition type info e.g., 'cond_type'
+    :param pos_neg_labels: names of positive (1st) and negative (2nd) values e.g., ['Congruent', 'Incongruent']
+    :param x_label_col: name of column containing x-axis labels e.g., 'separation'
+    :param even_spaced_x: If true will evenly space ticks on x-axis.
+        If false will use values given which might not be evenly spaces (e.g., 1, 2, 3, 6, 18)
+    :param error_caps: Whether to add caps to error bars
+    :param fig_title: Title for page of figures
+    :param save_path: directory to save into
+    :param save_name: name of saved file
+    :param verbose: if Ture, will print progress to screen
+
+    :return: figure
+    """
+    print("\n*** running multi_plt_per_col_w_hue() ***")
+
+    # get names of columns that are not cond_type_col or x_label_col
+    each_plot_col = [i for i in ave_thr_df.columns if i not in [cond_type_col, x_label_col]]
+
+    # get a list of x_tick_labels from sorted set of ave_thr_df[x_label_col]
+    x_tick_labels = sorted(set(ave_thr_df[x_label_col]))
+    x_tick_labels = [int(i) for i in x_tick_labels]
+
+    if verbose:
+        print(f'ave_thr_df:\n{ave_thr_df}\n'
+              f'error_df:\n{error_df}')
+        print(f"each_plot_col: {each_plot_col}")
+        print(f"x_tick_labels: {x_tick_labels}")
+
+    # make two dataframes, cond_0_df and cond_1_df based on pos_neg_labels
+    if not all(i in ave_thr_df[cond_type_col].unique() for i in pos_neg_labels):
+        raise ValueError(
+            f"one or more of the pos_neg_labels ({pos_neg_labels}) not in cond_type_col ({ave_thr_df[cond_type_col].unique()})")
+    cond_0_df = ave_thr_df[ave_thr_df[cond_type_col] == pos_neg_labels[0]].copy()
+    cond_1_df = ave_thr_df[ave_thr_df[cond_type_col] == pos_neg_labels[1]].copy()
+    cond_0_err_df = error_df[error_df[cond_type_col] == pos_neg_labels[0]].copy()
+    cond_1_err_df = error_df[error_df[cond_type_col] == pos_neg_labels[1]].copy()
+
+    # drop cond_type_col from all four dataframes
+    cond_0_df.drop(columns=cond_type_col, inplace=True)
+    cond_1_df.drop(columns=cond_type_col, inplace=True)
+    cond_0_err_df.drop(columns=cond_type_col, inplace=True)
+    cond_1_err_df.drop(columns=cond_type_col, inplace=True)
+
+    if verbose:
+        print(f'\ncond_0_df: {cond_0_df.shape}\n{cond_0_df}')
+        print(f'cond_0_err_df: {cond_0_err_df.shape}\n{cond_0_err_df}')
+        print(f'cond_1_df: {cond_1_df.shape}\n{cond_1_df}')
+        print(f'cond_1_err_df: {cond_1_err_df.shape}\n{cond_1_err_df}\n')
+
+    cap_size = 0
+    if error_caps:
+        cap_size = 5
+
+    if even_spaced_x:
+        x_values = list(range(len(x_tick_labels)))
+    else:
+        x_values = x_tick_labels
+
+    # make plots
+    my_colours = fig_colours(len(each_plot_col))
+
+    # get configuration of subplots
+    n_plots = len(each_plot_col)  # + 1
+    n_rows, n_cols = get_n_rows_n_cols(n_plots)
+    fig, axes = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(3 * n_cols, 3 * n_rows))
+    print(
+        f'\nplotting {n_rows} rows and {n_cols} cols for {len(axes)} plots (with {(n_rows * n_cols) - n_plots} empty)')
+
+    if fig_title is not None:
+        fig.suptitle(fig_title)
+
+    ax_counter = 0
+    # loop through the different axes
+    for row_idx, row in enumerate(axes):
+
+        print(f'\nrow_idx: {row_idx}, type(row): {type(row)}, row: {row}')
+        # if there are multiple ISIs
+        if isinstance(row, np.ndarray):
+            print(f'type (AxesSubplot): {type(row)}')
+            for col_idx, ax in enumerate(row):
+                print(f'col_idx: {col_idx}; ax: {ax}')
+
+                if ax_counter < len(each_plot_col):
+
+                    this_col_label = each_plot_col[ax_counter]
+                    print(f'this_col_label: {this_col_label}')
+
+                    # plots means and errors for congruent
+                    ax.errorbar(x=x_values, y=cond_0_df[this_col_label],
+                                yerr=cond_0_err_df[this_col_label],
+                                marker=None, lw=2, elinewidth=.7,
+                                capsize=cap_size,
+                                color=my_colours[ax_counter])
+
+                    # plots means and errors for incongruent
+                    ax.errorbar(x=x_values, y=cond_1_df[this_col_label],
+                                yerr=cond_1_err_df[this_col_label],
+                                linestyle='dashed',
+                                marker=None, lw=2, elinewidth=.7,
+                                capsize=cap_size,
+                                color=my_colours[ax_counter])
+
+                    ax.set_title(each_plot_col[ax_counter])
+                    if even_spaced_x:
+                        ax.set_xticks(list(range(len(x_tick_labels))))
+                    else:
+                        ax.set_xticks(x_tick_labels)
+                    ax.set_xticklabels(x_tick_labels)
+
+                    if row_idx == 1:
+                        ax.set_xlabel(x_label_col)
+                    else:
+                        ax.xaxis.label.set_visible(False)
+
+                    if col_idx == 0:
+                        ax.set_ylabel('Probe Luminance')
+                    else:
+                        ax.yaxis.label.set_visible(False)
+
+                    # artist for legend
+                    st1 = mlines.Line2D([], [], color=my_colours[ax_counter],
+                                        linewidth=.5,
+                                        markersize=4, label=pos_neg_labels[0])
+                    st2 = mlines.Line2D([], [], color=my_colours[ax_counter],
+                                        marker=None, linewidth=.5, linestyle="dotted",
+                                        markersize=4, label=pos_neg_labels[1])
+                    ax.legend(handles=[st1, st2], fontsize=6)
+
+                    ax_counter += 1
+                else:
+                    fig.delaxes(ax=axes[row_idx, col_idx])
+
+        else:  # if there is only one isi in this row
+            print(f'type (NOT AxesSubplot):{type(row)}')
+
+            ax = row
+            this_col_label = each_plot_col[row_idx]
+            print(f'ax: {ax}; this_col_label: {this_col_label}')
+            print(f'x_values: {x_values}')
+            check_nan = cond_0_err_df[this_col_label].isnull().values.any()
+            print(f'check_nan: {check_nan}')
+            if check_nan:
+                ax.errorbar(x=x_values, y=cond_0_df[this_col_label],
+                            linestyle='dashed',
+                            marker=None, lw=2,
+                            color=my_colours[row_idx])
+
+                ax.errorbar(x=x_values, y=cond_1_df[this_col_label],
+                            marker=None, lw=2,
+                            color=my_colours[row_idx])
+            else:
+                # if NOT nan
+                ax.errorbar(x=x_values, y=cond_0_df[this_col_label],
+                            yerr=cond_0_err_df[this_col_label],
+                            linestyle='dashed',
+                            marker=None, lw=2,
+                            elinewidth=.7, capsize=cap_size,
+                            color=my_colours[row_idx])
+
+                ax.errorbar(x=x_values, y=cond_1_df[this_col_label],
+                            yerr=cond_1_err_df[this_col_label],
+                            marker=None, lw=2,
+                            elinewidth=.7, capsize=cap_size,
+                            color=my_colours[row_idx])
+
+            ax.set_title(each_plot_col[row_idx])
+            if even_spaced_x:
+                ax.set_xticks(list(range(len(x_tick_labels))))
+            else:
+                ax.set_xticks(x_tick_labels)
+            ax.set_xticklabels(x_tick_labels)
+
+            ax.set_xlabel(x_label_col)
+            ax.set_ylabel('Probe Luminance')
+
+            # artist for legend
+            st1 = mlines.Line2D([], [], color=my_colours[row_idx],
+                                linewidth=.5,
+                                markersize=4, label=pos_neg_labels[0])
+            st2 = mlines.Line2D([], [], color=my_colours[row_idx],
+                                marker=None, linewidth=.5, linestyle="dotted",
+                                markersize=4, label=pos_neg_labels[1])
+            ax.legend(handles=[st1, st2], fontsize=6)
+
+            print(f'ax_counter: {ax_counter}, len(isi_name_list): {len(each_plot_col)}')
+            if ax_counter + 1 == len(each_plot_col):
+                print(f'idiot check, no more plots to make here')
+                break
+
+    plt.tight_layout()
+
+    if save_path is not None:
+        if save_name is not None:
+            plt.savefig(os.path.join(save_path, save_name))
+            print(f'plt saved to: {os.path.join(save_path, save_name)}')
+
+    print("\n*** finished multi_plt_per_col_w_hue() ***")
+
+    return fig
+
+
+
 def plot_thr_heatmap(heatmap_df,
                      x_tick_labels=None,
                      x_axis_label=None,
@@ -2371,13 +2714,10 @@ def b3_plot_staircase(all_data_path, thr_col='newLum', resp_col='trial_response'
     # remove extra columns
     if 'stair' in list(psignifit_thr_df.columns):
         psignifit_thr_df = psignifit_thr_df.drop(['stair'], axis=1)
-
     if 'stair_names' in list(psignifit_thr_df.columns):
         psignifit_thr_df = psignifit_thr_df.drop(['stair_names'], axis=1)
-
     if 'congruent' in list(psignifit_thr_df.columns):
         psignifit_thr_df = psignifit_thr_df.drop(['congruent'], axis=1)
-
     if 'separation' in list(psignifit_thr_df.columns):
         sep_list = psignifit_thr_df.pop('separation').tolist()
     print(f'sep_list: {sep_list}')
@@ -2638,13 +2978,10 @@ def b3_plot_stair_sep0(all_data_path, thr_col='newLum', resp_col='trial_response
     # remove extra columns
     if 'stair' in list(psignifit_thr_df.columns):
         psignifit_thr_df = psignifit_thr_df.drop(['stair'], axis=1)
-
     if 'stair_names' in list(psignifit_thr_df.columns):
         psignifit_thr_df = psignifit_thr_df.drop(['stair_names'], axis=1)
-
     if 'congruent' in list(psignifit_thr_df.columns):
         psignifit_thr_df = psignifit_thr_df.drop(['congruent'], axis=1)
-
     if 'separation' in list(psignifit_thr_df.columns):
         sep_list = psignifit_thr_df.pop('separation').tolist()
 
@@ -3190,7 +3527,7 @@ def d_average_participant(root_path, run_dir_names_list,
                 groupby_sep_df = groupby_sep_df.drop('separation', axis=1)
                 if 'cond' in groupby_sep_df.columns:
                     groupby_sep_df = groupby_sep_df.drop('cond', axis=1)
-                ave_psignifit_thr_df = groupby_sep_df.groupby('stair_names', sort=False).mean()
+                # ave_psignifit_thr_df = groupby_sep_df.groupby('stair_names', sort=False).mean()
             ave_psignifit_thr_df = groupby_sep_df.groupby('stair_names', sort=False).mean()
 
             if verbose:
@@ -3200,17 +3537,24 @@ def d_average_participant(root_path, run_dir_names_list,
             # groupby_sep_df = groupby_sep_df.drop(['separation', 'cond', 'area_deg'], axis=1)
             # print(f'\ngroupby_sep_df:\n{groupby_sep_df}')
 
+            # groupby_cols is a list of column names which do not include columns containing the substring  'ISI_'
+            groupby_cols = [x for x in groupby_sep_df.columns if 'ISI_' not in x]
+
+
             if error_type in [False, None]:
                 error_bars_df = None
             elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
-                error_bars_df = groupby_sep_df.groupby('stair_names', sort=False).sem()
+                # error_bars_df = groupby_sep_df.groupby('stair_names', sort=False).sem()
+                error_bars_df = groupby_sep_df.groupby(groupby_cols, sort=False).sem()
+
             elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
-                error_bars_df = groupby_sep_df.groupby('stair_names', sort=False).std()
+                error_bars_df = groupby_sep_df.groupby(groupby_cols, sort=False).std()
             else:
                 raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
                                  f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standard_error']\n"
                                  f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
                                  f"'deviation', 'standard_deviation']")
+            print(f'\nerror_bars_df:\n{error_bars_df}')
             # print('just made error_bars_df')
 
             # if 'area_deg' in error_bars_df.columns.to_list():
@@ -3291,7 +3635,8 @@ def d_average_participant(root_path, run_dir_names_list,
                                      f"'deviation', 'standard_deviation']")
                 print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
 
-
+    ave_psignifit_thr_df.reset_index(inplace=True)
+    error_bars_df.reset_index(inplace=True)
 
     # save csv with average values
     # todo: since I added extra ISI conditions, ISI conds are not in ascending order.
@@ -3515,6 +3860,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                        stair_names_col='stair_names',
                        cond_type_col='congruent',
                        cond_type_order=[1, -1],
+                       pos_neg_labels=['Congruent', 'Incongruent'],
                        n_trimmed=False,
                        ave_over_n=None,
                        exp_ave=False,
@@ -3539,6 +3885,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                             Does not have to match the order they appear in the dfs,
                             but the order you want them presented.
                             The first item is a solid line, the second is a dashed line.
+    :param pos_neg_labels: Labels for condition types (e.g., ['Congruent', 'Incongruent'])
     :param n_trimmed: Whether averages data has been trimmed.
     :param ave_over_n: Number of runs or participants it is averaging over.
     :param exp_ave: If False, this script is for participant averages over runs.
@@ -3657,17 +4004,26 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     # use ave_w_sep_idx_df for fig 1a and heatmap
     ave_w_sep_idx_df = ave_df.set_index(stair_names_col)
+    err_w_sep_idx_df = error_bars_df.set_index(stair_names_col)
     ave_w_sep_idx_df.sort_index(inplace=True)
+    err_w_sep_idx_df.sort_index(inplace=True)
     if 'cond_type' in list(ave_w_sep_idx_df.columns):
         ave_w_sep_idx_df.drop('cond_type', axis=1, inplace=True)
+        err_w_sep_idx_df.drop('cond_type', axis=1, inplace=True)
     if 'separation' in list(ave_w_sep_idx_df.columns):
         ave_w_sep_idx_df.drop('separation', axis=1, inplace=True)
+        err_w_sep_idx_df.drop('separation', axis=1, inplace=True)
     if 'neg_sep' in list(ave_w_sep_idx_df.columns):
         ave_w_sep_idx_df.drop('neg_sep', axis=1, inplace=True)
+        err_w_sep_idx_df.drop('neg_sep', axis=1, inplace=True)
+    if 'stair_names' in list(ave_w_sep_idx_df.columns):
+        ave_w_sep_idx_df.drop('stair_names', axis=1, inplace=True)
+        err_w_sep_idx_df.drop('stair_names', axis=1, inplace=True)
     print(f"ave_w_sep_idx_df:\n{ave_w_sep_idx_df}")
+    print(f"err_w_sep_idx_df:\n{err_w_sep_idx_df}")
 
     # if I delete this messy plot, I can also delete the function that made it.
-    plot_runs_ave_w_errors(fig_df=ave_w_sep_idx_df, error_df=error_bars_df,
+    plot_runs_ave_w_errors(fig_df=ave_w_sep_idx_df, error_df=err_w_sep_idx_df,
                            jitter=.1, error_caps=True, alt_colours=False,
                            legend_names=isi_name_list,
                            x_tick_vals=stair_names_list,
@@ -3737,8 +4093,28 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     #################
     if len(isi_vals_list) == 1:
-        print("skipping fig_1d as there is only 1 ISI value")
+        print("skipping fig_1d and fig_1e (multiplots) as there is only 1 ISI value")
     else:
+        '''Plots per ISI'''
+        # check if 'cond_type' column is in ave_df, if not add it with neg_sep_to_sep_w_cond_type()
+        if cond_type_col not in ave_df.columns:
+            print(f"adding {cond_type_col} column to ave_df")
+            new_ave_df = neg_sep_to_sep_w_cond_type(orig_df=ave_df, pos_neg_labels=pos_neg_labels,
+                                                    neg_sep_col='neg_sep',
+                                                    cols_to_drop=['stair_names', 'neg_sep'])
+            new_err_df = neg_sep_to_sep_w_cond_type(orig_df=error_bars_df, pos_neg_labels=pos_neg_labels,
+                                                    neg_sep_col='neg_sep',
+                                                    cols_to_drop=['stair_names', 'neg_sep'])
+        else:
+            print(f"cond_type_col: {cond_type_col} already in ave_df")
+            # drop 'neg_sep' column from ave_df and error_bars_df
+            new_ave_df = ave_df.drop(columns=['neg_sep'])
+            new_err_df = error_bars_df.drop(columns=['neg_sep'])
+
+        print(f"new_ave_df: \n{new_ave_df}")
+        print(f"new_err_df: \n{new_err_df}")
+
+        # plot per ISI
         # figure 1d multiple plots with single line.
         print("\n\nfig_1d: one ax per ISI, pos_sep, compare congruent and incongruent.")
         if n_trimmed is not None:
@@ -3747,27 +4123,72 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
             if type(cond_type_order[0]) is str:
                 fig_1d_title = f'{ave_over} {cond_type_order[0]} and {cond_type_order[1]} thresholds for each ISI (trim={n_trimmed}).\n' \
                                f'Bars=SE, n={ave_over_n}'
-            fig_1d_savename = f'ave_TM{n_trimmed}_pos_sep_per_isi.png'
+            fig_1d_savename = f'ave_TM{n_trimmed}_per_isi.png'
         else:
             fig_1d_title = f'{ave_over} Congruent and Incongruent thresholds for each ISI\n' \
                            f'Bars=SE, n={ave_over_n}'
             if type(cond_type_order[0]) is str:
                 fig_1d_title = f'{ave_over} {cond_type_order[0]} and {cond_type_order[1]} thresholds for each ISI\n' \
-                                 f'Bars=SE, n={ave_over_n}'
-            fig_1d_savename = f'ave_thr_pos_sep_per_isi.png'
+                               f'Bars=SE, n={ave_over_n}'
+            fig_1d_savename = f'ave_thr_per_isi.png'
 
-        use_these_cols = [stair_names_col] + isi_name_list
-
-        multi_pos_sep_per_isi(ave_thr_df=ave_df[use_these_cols], error_df=error_bars_df[use_these_cols],
-                              stair_names_col=stair_names_col,
-                              pos_neg_labels=cond_type_order,
-                              even_spaced_x=True, error_caps=True,
-                              fig_title=fig_1d_title,
-                              save_path=save_path, save_name=fig_1d_savename,
-                              verbose=verbose)
+        multi_plt_per_col_w_hue(ave_thr_df=new_ave_df, error_df=new_err_df,
+                                cond_type_col='cond_type',
+                                pos_neg_labels=pos_neg_labels,
+                                x_label_col='separation',
+                                even_spaced_x=True, error_caps=True,
+                                fig_title=fig_1d_title,
+                                save_path=save_path, save_name=fig_1d_savename,
+                                verbose=verbose)
         if show_plots:
             plt.show()
         plt.close()
+
+
+        '''Plots per separation'''
+        # transpose plots to do plot per separation
+        transposed_df = transpose_df_w_cond_type(orig_df=ave_df,
+                                                 cols_to_rows=isi_name_list,
+                                                 add_pos_neg_labels=pos_neg_labels,
+                                                 cond_type_col='cond_type',
+                                                 verbose=True)
+        transposed_err_df = transpose_df_w_cond_type(orig_df=error_bars_df,
+                                                     cols_to_rows=isi_name_list,
+                                                     add_pos_neg_labels=pos_neg_labels,
+                                                     cond_type_col='cond_type',
+                                                     verbose=True)
+        print(f'transposed_df: \n{transposed_df}')
+        print(f'transposed_err_df: \n{transposed_err_df}')
+
+        # figure 1 multiple plots with single line.  Per separation
+        print("\n\nfig_1e: one ax per sep")
+        if n_trimmed is not None:
+            fig_1e_title = f'{ave_over} Congruent and Incongruent thresholds for each separation (trim={n_trimmed}).\n' \
+                           f'Bars=SE, n={ave_over_n}'
+            if type(cond_type_order[0]) is str:
+                fig_1e_title = f'{ave_over} {cond_type_order[0]} and {cond_type_order[1]} thresholds for each separation (trim={n_trimmed}).\n' \
+                               f'Bars=SE, n={ave_over_n}'
+            fig_1e_savename = f'ave_TM{n_trimmed}_per_sep.png'
+        else:
+            fig_1e_title = f'{ave_over} Congruent and Incongruent thresholds for each separation\n' \
+                           f'Bars=SE, n={ave_over_n}'
+            if type(cond_type_order[0]) is str:
+                fig_1e_title = f'{ave_over} {cond_type_order[0]} and {cond_type_order[1]} thresholds for each separation\n' \
+                               f'Bars=SE, n={ave_over_n}'
+            fig_1e_savename = f'ave_thr_per_sep.png'
+
+        multi_plt_per_col_w_hue(ave_thr_df=transposed_df, error_df=transposed_err_df,
+                                cond_type_col='cond_type',
+                                pos_neg_labels=pos_neg_labels,
+                                x_label_col='ISI',
+                                even_spaced_x=True, error_caps=True,
+                                fig_title=fig_1e_title,
+                                save_path=save_path, save_name=fig_1e_savename,
+                                verbose=verbose)
+        if show_plots:
+            plt.show()
+        plt.close()
+
 
 
     if len(isi_vals_list) == 1:
@@ -3784,6 +4205,9 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
             fig_2a_savename = f'ave_diff_x_sep.png'
 
         use_these_cols = [stair_names_col] + isi_name_list
+        print(f"ave_df: \n{ave_df}")
+        print(f"use_these_cols: {use_these_cols}")
+        print(f"ave_df[use_these_cols]: \n{ave_df[use_these_cols]}")
 
         plot_diff(ave_df[use_these_cols], stair_names_col=stair_names_col,
                   fig_title=fig_2a_title, save_path=save_path, save_name=fig_2a_savename,
@@ -3823,18 +4247,13 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
     if type(cond_type_order[0]) is str:
         heatmap_title = heatmap_title + f'\npos = {cond_type_order[0]}, neg = {cond_type_order[1]}'
 
-    # todo: I used to use ave_w_sep_idx_df.T, but I will try without the transpose to compare with other heatmaps.
-    plot_thr_heatmap(
-        # heatmap_df=ave_w_sep_idx_df.T,
-        #              x_tick_labels=stair_names_labels,
-        #              y_tick_labels=isi_name_list,
-        heatmap_df=ave_w_sep_idx_df,
-        x_tick_labels=isi_name_list,
-        y_tick_labels=stair_names_labels,
-        fig_title=heatmap_title,
-        save_name=heatmap_savename,
-        save_path=save_path,
-        verbose=verbose)
+    plot_thr_heatmap(heatmap_df=ave_w_sep_idx_df,
+                     x_tick_labels=isi_name_list,
+                     y_tick_labels=stair_names_labels,
+                     fig_title=heatmap_title,
+                     save_name=heatmap_savename,
+                     save_path=save_path,
+                     verbose=verbose)
     if show_plots:
         plt.show()
     plt.close()
@@ -3859,9 +4278,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
         plt_heatmap_row_col(heatmap_df=ave_w_sep_idx_df,
                             colour_by='row',
-                            # x_tick_labels=None,
                             x_axis_label='ISI',
-                            # y_tick_labels=None,
                             fontsize=12,
                             annot_fmt='.3g',
                             y_axis_label='Separation',
@@ -3891,9 +4308,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
         plt_heatmap_row_col(heatmap_df=ave_w_sep_idx_df,
                             colour_by='col',
-                            # x_tick_labels=None,
                             x_axis_label='ISI',
-                            # y_tick_labels=None,
                             fontsize=12,
                             annot_fmt='.3g',
                             y_axis_label='Separation',

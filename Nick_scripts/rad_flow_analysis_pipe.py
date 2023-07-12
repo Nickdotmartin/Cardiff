@@ -18,8 +18,10 @@ from exp1a_psignifit_analysis import plt_heatmap_row_col
 # participant_list = ['Nick_half', 'Simon_half']
 
 # # todo: why does a_extract data work for my data but not Simon's???
-# exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_UNCALIBRATED_MON\rad_flow_2'
+exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_UNCALIBRATED_MON\rad_flow_2'
 # participant_list = ['Simon', 'Nick']  # , 'Simon']  # , 'Nick_half_speed']
+participant_list = ['Nick']  # , 'Simon']  # , 'Nick_half_speed']
+
 
 # exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_UNCALIBRATED_MON\rad_flow_2_350'
 # participant_list = ['Simon', 'Nick_350']
@@ -30,8 +32,8 @@ from exp1a_psignifit_analysis import plt_heatmap_row_col
 # exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_UNCALIBRATED_MON\rad_flow_23_OLED'
 # participant_list = ['Nick_70_OLED_2.13A', 'Nick_350_OLED_2.13A', 'Simon_OLED_2.13A_black']
 
-exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_UNCALIBRATED_MON\rad_flow_23'
-participant_list = ['Nick_240Hz_uncal_bg200'] #  'Nick_240Hz_07062023_bg70', 'Nick_OLED_02062023_bg350', 'Nick_240Hz_02062023_bg350', Nick_240Hz_end_june23_bg350, Nick_240_uncal_bg200]
+# exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_UNCALIBRATED_MON\rad_flow_23'
+# participant_list = ['Nick_240Hz_uncal_bg200'] #  'Nick_240Hz_07062023_bg70', 'Nick_OLED_02062023_bg350', 'Nick_240Hz_02062023_bg350', Nick_240Hz_end_june23_bg350, Nick_240_uncal_bg200]
 
 
 
@@ -112,107 +114,107 @@ for p_idx, participant_name in enumerate(participant_list):
         '''a'''
         p_name = f'{participant_name}_{r_idx_plus}'
 
-        a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=run_isi_list, verbose=verbose)
-
-        run_data_path = f'{save_path}{os.sep}RUNDATA-sorted.xlsx'
-        run_data_df = pd.read_excel(run_data_path, engine='openpyxl')
-        print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
-
-        # add neg sep column to make batman plots
-        if 'neg_sep' not in list(run_data_df.columns):
-            def make_neg_sep(df):
-                if (df.congruent == -1) and (df.separation == 0.0):
-                    return -.1
-                elif df.congruent == -1:
-                    return 0 - df.separation
-                else:
-                    return df.separation
-
-
-            run_data_df.insert(7, 'neg_sep', run_data_df.apply(make_neg_sep, axis=1))
-            print('\nadded neg_sep col')
-            print(run_data_df['neg_sep'].to_list())
-
-        '''
-        Data should be analysed in a particular order to ensure correct order on plots etc.
-        The order will be (neg_sep) [18, -18, 6, -6, 3, -3, 2, -2, 1, -1, 0, -.1]
-        first get values in stair name order, then get indices to put neg_sep in the correct order.
-        Use these indices to sort the lists to feed into psignifit.
-        '''
-
-        # get a list of all unique values in the 'stair' column, in the order they appear
-        stair_list = run_data_df['stair'].unique().tolist()
-
-        # check that there is just one unique value associated with each stair for separation, neg_sep, ISI and congruent.
-        # append the unique values to sep_vals_list, neg_sep_vals_list, and cong_vals_list.
-        sep_vals_list = []
-        neg_sep_vals_list = []
-        cong_vals_list = []
-
-        for stair in stair_list:
-            stair_df = run_data_df[run_data_df['stair'] == stair]
-            # stair_name = stair_df['stair_name'].unique().tolist()
-            separation = stair_df['separation'].unique().tolist()
-            neg_sep = stair_df['neg_sep'].unique().tolist()
-            congruent = stair_df['congruent'].unique().tolist()
-            # if len(stair_name) > 1:
-            #     raise ValueError(f"More than one unique stair name: {stair_name}")
-            if len(separation) > 1:
-                raise ValueError(f"More than one unique separation: {separation}")
-            if len(neg_sep) > 1:
-                raise ValueError(f"More than one unique neg_sep: {neg_sep}")
-            if len(congruent) > 1:
-                raise ValueError(f"More than one unique congruent: {congruent}")
-
-            sep_vals_list.append(separation[0])
-            neg_sep_vals_list.append(neg_sep[0])
-            cong_vals_list.append(congruent[0])
-
-        print(f"\nsep_vals_list: {sep_vals_list}")
-        print(f"neg_sep_vals_list: {neg_sep_vals_list}")
-        # print(f"ISI_vals_list: {ISI_vals_list}")
-        print(f"cong_vals_list: {cong_vals_list}")
-
-        # sort lists so that neg_sep_vals is in order [18, -18, 6, -6,...1, -1, 0, -.1]
-        print(f"\nneg_sep_vals_list: {neg_sep_vals_list}")
-        sorted_neg_sep_indices = get_sorted_neg_sep_indices(neg_sep_vals_list)
-
-        # sort stair_list, sep_vals_list, neg_sep_vals_list and cong_vals_list using sorted_neg_sep_indices
-        stair_list_sorted = sort_with_neg_sep_indices(stair_list, sorted_neg_sep_indices)
-        print(f"stair_list_sorted: {stair_list_sorted}")
-
-        sep_vals_list_sorted = sort_with_neg_sep_indices(sep_vals_list, sorted_neg_sep_indices)
-        print(f"stair_list_sorted: {stair_list_sorted}")
-
-        neg_sep_vals_list_sorted = sort_with_neg_sep_indices(neg_sep_vals_list, sorted_neg_sep_indices)
-        print(f"stair_list_sorted: {stair_list_sorted}")
-
-        cong_vals_list_sorted = sort_with_neg_sep_indices(cong_vals_list, sorted_neg_sep_indices)
-        print(f"stair_list_sorted: {stair_list_sorted}")
-
-        '''get psignifit thresholds df'''
-        cols_to_add_dict = {'stair_names': neg_sep_vals_list_sorted,
-                            'congruent': cong_vals_list_sorted,
-                            'separation': sep_vals_list_sorted}
-        print('\ncols_to_add_dict:')
-        for k, v in cols_to_add_dict.items():
-            print(f'{k}: {v}')
-
-        thr_df = get_psignifit_threshold_df(root_path=root_path,
-                                            p_run_name=run_dir,
-                                            csv_name=run_data_df,
-                                            n_bins=9, q_bins=True,
-                                            sep_col='neg_sep',
-                                            thr_col='probeLum',
-                                            isi_list=run_isi_list,
-                                            sep_list=neg_sep_vals_list_sorted,
-                                            conf_int=True,
-                                            thr_type='Bayes',
-                                            plot_both_curves=False,
-                                            cols_to_add_dict=cols_to_add_dict,
-                                            show_plots=False,
-                                            verbose=verbose)
-        print(f'thr_df:\n{thr_df}')
+        # a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=run_isi_list, verbose=verbose)
+        #
+        # run_data_path = f'{save_path}{os.sep}RUNDATA-sorted.xlsx'
+        # run_data_df = pd.read_excel(run_data_path, engine='openpyxl')
+        # print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
+        #
+        # # add neg sep column to make batman plots
+        # if 'neg_sep' not in list(run_data_df.columns):
+        #     def make_neg_sep(df):
+        #         if (df.congruent == -1) and (df.separation == 0.0):
+        #             return -.1
+        #         elif df.congruent == -1:
+        #             return 0 - df.separation
+        #         else:
+        #             return df.separation
+        #
+        #
+        #     run_data_df.insert(7, 'neg_sep', run_data_df.apply(make_neg_sep, axis=1))
+        #     print('\nadded neg_sep col')
+        #     print(run_data_df['neg_sep'].to_list())
+        #
+        # '''
+        # Data should be analysed in a particular order to ensure correct order on plots etc.
+        # The order will be (neg_sep) [18, -18, 6, -6, 3, -3, 2, -2, 1, -1, 0, -.1]
+        # first get values in stair name order, then get indices to put neg_sep in the correct order.
+        # Use these indices to sort the lists to feed into psignifit.
+        # '''
+        #
+        # # get a list of all unique values in the 'stair' column, in the order they appear
+        # stair_list = run_data_df['stair'].unique().tolist()
+        #
+        # # check that there is just one unique value associated with each stair for separation, neg_sep, ISI and congruent.
+        # # append the unique values to sep_vals_list, neg_sep_vals_list, and cong_vals_list.
+        # sep_vals_list = []
+        # neg_sep_vals_list = []
+        # cong_vals_list = []
+        #
+        # for stair in stair_list:
+        #     stair_df = run_data_df[run_data_df['stair'] == stair]
+        #     # stair_name = stair_df['stair_name'].unique().tolist()
+        #     separation = stair_df['separation'].unique().tolist()
+        #     neg_sep = stair_df['neg_sep'].unique().tolist()
+        #     congruent = stair_df['congruent'].unique().tolist()
+        #     # if len(stair_name) > 1:
+        #     #     raise ValueError(f"More than one unique stair name: {stair_name}")
+        #     if len(separation) > 1:
+        #         raise ValueError(f"More than one unique separation: {separation}")
+        #     if len(neg_sep) > 1:
+        #         raise ValueError(f"More than one unique neg_sep: {neg_sep}")
+        #     if len(congruent) > 1:
+        #         raise ValueError(f"More than one unique congruent: {congruent}")
+        #
+        #     sep_vals_list.append(separation[0])
+        #     neg_sep_vals_list.append(neg_sep[0])
+        #     cong_vals_list.append(congruent[0])
+        #
+        # print(f"\nsep_vals_list: {sep_vals_list}")
+        # print(f"neg_sep_vals_list: {neg_sep_vals_list}")
+        # # print(f"ISI_vals_list: {ISI_vals_list}")
+        # print(f"cong_vals_list: {cong_vals_list}")
+        #
+        # # sort lists so that neg_sep_vals is in order [18, -18, 6, -6,...1, -1, 0, -.1]
+        # print(f"\nneg_sep_vals_list: {neg_sep_vals_list}")
+        # sorted_neg_sep_indices = get_sorted_neg_sep_indices(neg_sep_vals_list)
+        #
+        # # sort stair_list, sep_vals_list, neg_sep_vals_list and cong_vals_list using sorted_neg_sep_indices
+        # stair_list_sorted = sort_with_neg_sep_indices(stair_list, sorted_neg_sep_indices)
+        # print(f"stair_list_sorted: {stair_list_sorted}")
+        #
+        # sep_vals_list_sorted = sort_with_neg_sep_indices(sep_vals_list, sorted_neg_sep_indices)
+        # print(f"stair_list_sorted: {stair_list_sorted}")
+        #
+        # neg_sep_vals_list_sorted = sort_with_neg_sep_indices(neg_sep_vals_list, sorted_neg_sep_indices)
+        # print(f"stair_list_sorted: {stair_list_sorted}")
+        #
+        # cong_vals_list_sorted = sort_with_neg_sep_indices(cong_vals_list, sorted_neg_sep_indices)
+        # print(f"stair_list_sorted: {stair_list_sorted}")
+        #
+        # '''get psignifit thresholds df'''
+        # cols_to_add_dict = {'stair_names': neg_sep_vals_list_sorted,
+        #                     'congruent': cong_vals_list_sorted,
+        #                     'separation': sep_vals_list_sorted}
+        # print('\ncols_to_add_dict:')
+        # for k, v in cols_to_add_dict.items():
+        #     print(f'{k}: {v}')
+        #
+        # thr_df = get_psignifit_threshold_df(root_path=root_path,
+        #                                     p_run_name=run_dir,
+        #                                     csv_name=run_data_df,
+        #                                     n_bins=9, q_bins=True,
+        #                                     sep_col='neg_sep',
+        #                                     thr_col='probeLum',
+        #                                     isi_list=run_isi_list,
+        #                                     sep_list=neg_sep_vals_list_sorted,
+        #                                     conf_int=True,
+        #                                     thr_type='Bayes',
+        #                                     plot_both_curves=False,
+        #                                     cols_to_add_dict=cols_to_add_dict,
+        #                                     show_plots=False,
+        #                                     verbose=verbose)
+        # print(f'thr_df:\n{thr_df}')
 #
 #
 # #         '''b3'''
@@ -228,8 +230,8 @@ for p_idx, participant_name in enumerate(participant_list):
         trim_n = 2
     print(f'\ntrim_n: {trim_n}')
 
-    d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-                          trim_n=trim_n, error_type='SE', verbose=verbose)
+    # d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
+    #                       trim_n=trim_n, error_type='SE', verbose=verbose)
 
 
     # making average plot
@@ -248,6 +250,8 @@ for p_idx, participant_name in enumerate(participant_list):
                        error_bars_path=err_path,
                        thr_col='probeLum',
                        stair_names_col='neg_sep',
+                       cond_type_order=[1, -1],
+                       pos_neg_labels=['Congruent', 'Incongruent'],
                        n_trimmed=trim_n,
                        ave_over_n=len(run_folder_names),
                        exp_ave=participant_name,
