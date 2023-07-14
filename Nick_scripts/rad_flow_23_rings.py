@@ -62,6 +62,56 @@ def wrap_depth_vals(depth_arr, min_depth, max_depth):
     return depth_arr
 
 
+def calculate_maximum_radius_including_corners(monitor_size):
+    """Calculates the maximum radius of a ring that covers the whole screen including the corners.
+
+    Args:
+    monitor_size: The size of the monitor in the format (w, h).
+
+    Returns:
+    The maximum radius of the ring.
+    """
+
+    w, h = monitor_size
+    maximum_radius = np.sqrt(np.square(w) + np.square(h)) / 2
+
+    return maximum_radius
+
+
+
+def get_next_radii(current_radii, motion_speed, min_radius, max_radius, expanding=True):
+    """Generates radii for the next frame of the animation.
+    Radii near the edge of the screen change by larger values than those in the center.
+
+    Args:
+    current_radii: The array of current radii.
+    motion_speed: The speed at which the rings expand.
+    min_radius: The minimum radius of the rings.
+    max_radius: The maximum radius of the rings.
+    expanding: Whether the rings are expanding or contracting.
+
+    Returns: an array of updated radii.
+    """
+
+    # add (or sub) element*speed to each element, so radii near edge change by larger values than those in center.
+    if expanding:
+        next_radii = current_radii + np.multiply(current_radii, motion_speed)
+    else:
+        next_radii = current_radii - np.multiply(current_radii, motion_speed)
+
+    # adjust depth_arr values less than min_depth by adding depth_adj
+    lessthanmin = (next_radii < min_radius)
+    next_radii[lessthanmin] = max_radius
+    # adjust depth_arr values more than max_depth by subtracting depth_adj
+    morethanmax = (next_radii > max_radius)
+    next_radii[morethanmax] = min_radius
+
+    # print(f"current_radii: {current_radii}, next_radii: {next_radii}\n")
+
+    return next_radii
+
+
+
 # Ensure that relative paths start from the same directory as this script
 _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
@@ -69,8 +119,8 @@ os.chdir(_thisDir)
 # todo: uses ASUS_2_13_240Hz for replicating old results, but then use asus_cal for testing.
 
 # Store info about the experiment session (numbers keep the order)
-expName = 'rad_flow_23'  # from the Builder filename that created this script
-expInfo = {'1. Participant': 'Nick_test_01062023',
+expName = 'rad_flow_23_rings'   # from the Builder filename that created this script
+expInfo = {'1. Participant': 'Nick_test_13072023',
            '2. Run_number': '1',
            '3. Probe duration in frames': [2, 1, 50, 100],
            '4. fps': [60, 240, 120, 60],
@@ -78,9 +128,9 @@ expInfo = {'1. Participant': 'Nick_test_01062023',
            '6. Probe_orientation': ['radial', 'tangent'],
            '7. Vary_fixation': [True, False],
            '8. Record_frame_durs': [True, False],
-           '9. Background': ['flow_rad', 'None'],
+           '9. Background': ['flow_rings', 'flow_dots', None],
            # '10. bg_speed_cond': ['Normal', 'Half-speed'],
-           '11. prelim_bg_flow_ms': [350, 200, 70],
+           '11. prelim_bg_flow_ms': [2000, 350, 200, 70],
            '12. monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'Samsung',
                                 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18', 'ASUS_2_13_240Hz'],
            '13. mask_type': ['4_circles', '2_spokes'],
@@ -316,12 +366,12 @@ max_droped_fr_trials = 10
 
 # ELEMENTS
 # fixation bull eye
-if background == 'flow_rad':
-    fixation = visual.Circle(win, radius=2, units='pix',
-                             lineColor='black', fillColor='grey', colorSpace=this_colourSpace)
-else:
+if background == None:
     fixation = visual.Circle(win, radius=2, units='pix',
                              lineColor='white', fillColor='black', colorSpace=this_colourSpace)
+else:
+    fixation = visual.Circle(win, radius=2, units='pix',
+                             lineColor='black', fillColor='grey', colorSpace=this_colourSpace)
 
 # PROBEs
 # default is to use 5 pixel probes,but can use 7 on OLED if needed
@@ -429,6 +479,17 @@ dot_array_width = 10000  # original script used 5000
 minDist = 0.5  # depth values
 maxDist = 5  # depth values
 
+# values for rings
+n_rings = 8
+# ring_array_width = widthPix / 2
+max_radius = calculate_maximum_radius_including_corners((widthPix, heightPix))
+# ring_depth_min = 0.5
+# ring_max_depth = 5
+# ring_flow_speed = .05
+# ring_z_value = 21
+motion_speed = 0.1
+min_radius = 4  # fixation point has radius of 2.
+
 # pale green
 flow_dots_colour = [this_bgColour[0]-adj_dots_col, this_bgColour[1], this_bgColour[2]-adj_dots_col]
 if monitor_name == 'OLED':
@@ -440,6 +501,15 @@ flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
                                     colorSpace=this_colourSpace, colors=flow_dots_colour)
 if verbose:
     print(f"flow_dot colours: {flow_dots_colour}")
+
+# instead of lots of flow dots, I want to have a few expanding rings, whose radii are defined by the x_flow variable (below)
+ring_list = []
+
+for i in range(n_rings):
+    ring_list.append(visual.Circle(win, radius=2, units='pix',
+                                   lineColor=flow_dots_colour, lineWidth=5,
+                                   fillColor=None, colorSpace=this_colourSpace))
+
 
 # full screen mask to blend off edges and fade to black
 # Create a raisedCosine mask array and assign it to a Grating stimulus (grey outside, transparent inside)
@@ -454,7 +524,7 @@ blankslab = np.ones((heightPix, slab_width))  # create blank slabs to put to lef
 mmask = np.append(blankslab, invRaisedCosTexture, axis=1)  # append blank slab to left
 mmask = np.append(mmask, blankslab, axis=1)  # and right
 # changed dotsmask color from grey, fades to black round edges which makes screen edges less visible
-dotsMask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
+edge_mask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
                               size=(widthPix, heightPix), units='pix', color='black')
 
 
@@ -615,7 +685,13 @@ for step in range(n_trials_per_stair):
             # use congruence to determine the flow direction and target jump direction
             # 1 is contracting/inward/backwards, -1 is expanding/outward/forwards
             flow_dir = np.random.choice([1, -1])
+            # todo: put flow dir back in
+            # flow_dir = -1
             target_jump = congruent * flow_dir
+
+            exp_rings = False
+            if flow_dir == -1:
+                exp_rings = True
 
             # # direction in which the probe jumps : CW or CCW (tangent) or expand vs contract (radial)
             if orientation == 'tangent':
@@ -663,12 +739,60 @@ for step in range(n_trials_per_stair):
 
 
             # flow_dots
+            '''
+            x and y
+            np.random.rand(nDots) = array of floats (between 0 and 1).
+            dot_array_width = 10000
+            np.random.rand(nDots) * dot_array_width = array of floats (between 0 and 10000 e.g., dot_array_width). 
+            np.random.rand(nDots) * dot_array_width - dot_array_width / 2 = array of floats (between -dot_array_width/2 and dot_array_width/2).
+            e.g., between -5000 and 5000
+            
+            z
+            maxDist, minDist = 5, .5
+            np.random.rand(nDots) * (maxDist - minDist) + minDist = array of floats (between minDist and maxDist).
+            e.g., floats are multiplied by 4.5 (giving values in the range 0 to 4.5, then .5 is added, giving values in the range .5 to 5).
+            
+            x_flow = x / z
+            this is an (fairly) normally distributed array of floats (between -10000 and 10000) divided by an array of floats (between .5 and 5).
+            max x value of 5000 is 10000 if divided by .5, and 1000 if divided by 5.
+            So there is a cluster between -1000 and 1000.
+            
+            # later, (in per frame section), zs are updated with z = z + flow_speed * flow_dir
+            flow_speed is currently set to .2.  so zs are updated by adding either .2 or -.2.
+            on the first update, xs are divided by new zs which are in range .7 to 5.2.  
+            max x values of 5000 is 7142 if divided by .7, and 961 if divided by 5.2.
+            
+            the next updated, xs are divided by new zs which are in range .9 to 5.4.
+            max x values of 5000 is 5555 if divided by .9, and 925 if divided by 5.4.
+            
+            '''
             x = np.random.rand(nDots) * dot_array_width - dot_array_width / 2
             y = np.random.rand(nDots) * dot_array_width - dot_array_width / 2
             z = np.random.rand(nDots) * (maxDist - minDist) + minDist
+            print(f"x: {x}, y: {y}, z: {z}")
+            print(f"dot_array_width: {dot_array_width}, maxDist: {maxDist}, minDist: {minDist}")
+            print(f"(maxDist - minDist) + minDist: {(maxDist - minDist) + minDist}")
             # z was called z_flow but is actually z position like x and y
             x_flow = x / z
             y_flow = y / z
+            print(f"x_flow: {x_flow}, y_flow: {y_flow}")
+
+            # plot the distribution of x_flow
+            # plt.hist(x_flow, bins=100)
+            # plt.show()
+
+            # ring_radii_array are exponentially spaced values between 0 and max_radius (e.g., more dots near centre)
+            ring_radii_array = np.geomspace(start=10, stop=max_radius, num=n_rings)
+            print(f"ring_radii_array:\n{ring_radii_array}")
+
+            # # # this is the depth variable which is used to define their speed relative to their radius
+            # # ring_z_array = np.sort(np.random.rand(n_rings) * (ring_max_depth - ring_depth_min) + ring_depth_min)
+            #
+            # # ring_z_array as a constant value defined above by ring_z_value
+            # ring_z_array = np.full(n_rings, ring_z_value)
+            #
+            # ring_flow = ring_radii_array / ring_z_array
+            # print(f"ring_radii_array:\n{ring_radii_array}\nring_z_array:\n{ring_z_array}\nring_flow: {ring_flow}")
 
 
             # shift probes by separation
@@ -910,6 +1034,9 @@ for step in range(n_trials_per_stair):
 
                 if frameN == t_probe_2 + 1:
 
+                    # print(f"\nend...ring_z_array:\n{ring_z_array}\nring_flow: {ring_flow}")
+                    print(f"\nend...ring_radii_array:\n{ring_radii_array}")
+
                     if record_fr_durs:
                         win.recordFrameIntervals = False
 
@@ -917,45 +1044,82 @@ for step in range(n_trials_per_stair):
                 '''Experiment timings'''
                 # FIXATION - up to the end of fixation period
                 if t_fixation >= frameN > 0:
-                    if background == 'flow_rad':
-                        # draw flow_dots but with no motion
-                        flow_dots.xys = np.array([x_flow, y_flow]).transpose()
-                        flow_dots.draw()
+                    if background != None:
+                        # draw dots/rings but with no motion
+                        if background == 'flow_dots':
+                            flow_dots.xys = np.array([x_flow, y_flow]).transpose()
+                            flow_dots.draw()
+                        elif background == 'flow_rings':
+                            for idx, ring in enumerate(ring_list):
+                                # ring.radius = ring_flow[idx]
+                                ring.radius = ring_radii_array[idx]
+                                ring.draw()
+
+                        # probes are drawn on top of probe mask.  dots/ring are behind probe_mask and edge_mask
                         for probe_mask in probe_mask_list:
                             probe_mask.draw()
-                        dotsMask.draw()
+                        # edge_mask.draw()
+
                     fixation.setRadius(3)
                     fixation.draw()
 
                 # Background motion prior to probe1 - after fixation, but before probe 1
                 elif t_bg_motion >= frameN > t_fixation:
-                    if background == 'flow_rad':
-                        # draw dots with motion
-                        z = z + flow_speed * flow_dir
-                        z = wrap_depth_vals(z, minDist, maxDist)
-                        x_flow = x / z
-                        y_flow = y / z
-                        flow_dots.xys = np.array([x_flow, y_flow]).transpose()
-                        flow_dots.draw()
+                    if background != None:
+                        # draw dots/rings with motion
+                        if background == 'flow_dots':
+                            z = z + flow_speed * flow_dir
+                            z = wrap_depth_vals(z, minDist, maxDist)
+                            x_flow = x / z
+                            y_flow = y / z
+                            flow_dots.xys = np.array([x_flow, y_flow]).transpose()
+                            flow_dots.draw()
+                        elif background == 'flow_rings':
+                            # ring_z_array = ring_z_array + ring_flow_speed * flow_dir
+                            # ring_z_array = wrap_depth_vals(ring_z_array, ring_depth_min, ring_max_depth)
+                            # ring_flow = ring_radii_array / ring_z_array
+                            ring_radii_array = get_next_radii(ring_radii_array, motion_speed,
+                                                              min_radius, max_radius, expanding=exp_rings)
+                            for idx, ring in enumerate(ring_list):
+                                # ring.radius = ring_flow[idx]
+                                ring.radius = ring_radii_array[idx]
+                                ring.draw()
+
+                        # probes are drawn on top of probe mask.  dots/ring are behind probe_mask and edge_mask
                         for probe_mask in probe_mask_list:
                             probe_mask.draw()
-                        dotsMask.draw()
+                        # edge_mask.draw()
+
+
                     fixation.setRadius(3)
                     fixation.draw()
 
                 # PROBE 1 - after background motion, before end of probe1 interval
                 elif t_probe_1 >= frameN > t_bg_motion:
-                    if background == 'flow_rad':
-                        # draw dots with motion
-                        z = z + flow_speed * flow_dir
-                        z = wrap_depth_vals(z, minDist, maxDist)
-                        x_flow = x / z
-                        y_flow = y / z
-                        flow_dots.xys = np.array([x_flow, y_flow]).transpose()
-                        flow_dots.draw()
+                    if background != None:
+                        # draw dots/rings with motion
+                        if background == 'flow_dots':
+                            z = z + flow_speed * flow_dir
+                            z = wrap_depth_vals(z, minDist, maxDist)
+                            x_flow = x / z
+                            y_flow = y / z
+                            flow_dots.xys = np.array([x_flow, y_flow]).transpose()
+                            flow_dots.draw()
+                        elif background == 'flow_rings':
+                            # ring_z_array = ring_z_array + ring_flow_speed * flow_dir
+                            # ring_z_array = wrap_depth_vals(ring_z_array, ring_depth_min, ring_max_depth)
+                            # ring_flow = ring_radii_array / ring_z_array
+                            ring_radii_array = get_next_radii(ring_radii_array, motion_speed,
+                                                              min_radius, max_radius, expanding=exp_rings)
+                            for idx, ring in enumerate(ring_list):
+                                # ring.radius = ring_flow[idx]
+                                ring.radius = ring_radii_array[idx]
+                                ring.draw()
+                            
+                        # probes are drawn on top of probe mask.  dots/ring are behind probe_mask and edge_mask
                         for probe_mask in probe_mask_list:
                             probe_mask.draw()
-                        dotsMask.draw()
+                        # edge_mask.draw()
                     fixation.setRadius(3)
                     fixation.draw()
 
@@ -967,33 +1131,59 @@ for step in range(n_trials_per_stair):
 
                 # ISI
                 elif t_ISI >= frameN > t_probe_1:
-                    if background == 'flow_rad':
-                        # draw dots with motion
-                        z = z + flow_speed * flow_dir
-                        z = wrap_depth_vals(z, minDist, maxDist)
-                        x_flow = x / z
-                        y_flow = y / z
-                        flow_dots.xys = np.array([x_flow, y_flow]).transpose()
-                        flow_dots.draw()
+                    if background != None:
+                        if background == 'flow_dots':
+                            # draw dots with motion
+                            z = z + flow_speed * flow_dir
+                            z = wrap_depth_vals(z, minDist, maxDist)
+                            x_flow = x / z
+                            y_flow = y / z
+                            flow_dots.xys = np.array([x_flow, y_flow]).transpose()
+                            flow_dots.draw()
+                        elif background == 'flow_rings':
+                            # ring_z_array = ring_z_array + ring_flow_speed * flow_dir
+                            # ring_z_array = wrap_depth_vals(ring_z_array, ring_depth_min, ring_max_depth)
+                            # ring_flow = ring_radii_array / ring_z_array
+                            ring_radii_array = get_next_radii(ring_radii_array, motion_speed,
+                                                              min_radius, max_radius, expanding=exp_rings)
+                            for idx, ring in enumerate(ring_list):
+                                # ring.radius = ring_flow[idx]
+                                ring.radius = ring_radii_array[idx]
+                                ring.draw()
+                            
+                        # probes are drawn on top of probe mask.  dots/ring are behind probe_mask and edge_mask
                         for probe_mask in probe_mask_list:
                             probe_mask.draw()
-                        dotsMask.draw()
+                        # edge_mask.draw()
                     fixation.setRadius(3)
                     fixation.draw()
 
                 # PROBE 2 - after ISI but before end of probe2 interval
                 elif t_probe_2 >= frameN > t_ISI:
-                    if background == 'flow_rad':
-                        # draw dots with motion
-                        z = z + flow_speed * flow_dir
-                        z = wrap_depth_vals(z, minDist, maxDist)
-                        x_flow = x / z
-                        y_flow = y / z
-                        flow_dots.xys = np.array([x_flow, y_flow]).transpose()
-                        flow_dots.draw()
+                    if background != None:
+                        if background == 'flow_dots':
+                            # draw dots with motion
+                            z = z + flow_speed * flow_dir
+                            z = wrap_depth_vals(z, minDist, maxDist)
+                            x_flow = x / z
+                            y_flow = y / z
+                            flow_dots.xys = np.array([x_flow, y_flow]).transpose()
+                            flow_dots.draw()
+                        elif background == 'flow_rings':
+                            # ring_z_array = ring_z_array + ring_flow_speed * flow_dir
+                            # ring_z_array = wrap_depth_vals(ring_z_array, ring_depth_min, ring_max_depth)
+                            # ring_flow = ring_radii_array / ring_z_array
+                            ring_radii_array = get_next_radii(ring_radii_array, motion_speed,
+                                                              min_radius, max_radius, expanding=exp_rings)
+                            for idx, ring in enumerate(ring_list):
+                                # ring.radius = ring_flow[idx]
+                                ring.radius = ring_radii_array[idx]
+                                ring.draw()
+                            
+                        # probes are drawn on top of probe mask.  dots/ring are behind probe_mask and edge_mask
                         for probe_mask in probe_mask_list:
                             probe_mask.draw()
-                        dotsMask.draw()
+                        # edge_mask.draw()
                     fixation.setRadius(3)
                     fixation.draw()
 
@@ -1003,12 +1193,20 @@ for step in range(n_trials_per_stair):
 
                 # ANSWER - after probe 2 interval
                 elif frameN > t_probe_2:
-                    if background == 'flow_rad':
-                        # draw flow_dots but with no motion
-                        flow_dots.draw()
+                    if background != None:
+                        # draw dots/rings but with no motion
+                        if background == 'flow_dots':
+                            flow_dots.draw()
+                        elif background == 'flow_rings':
+                            for idx, ring in enumerate(ring_list):
+                                # ring.radius = ring_flow[idx]
+                                ring.radius = ring_radii_array[idx]
+                                ring.draw()
+
+                        # probes are drawn on top of probe mask.  dots/ring are behind probe_mask and edge_mask
                         for probe_mask in probe_mask_list:
                             probe_mask.draw()
-                        dotsMask.draw()
+                        # edge_mask.draw()
                     fixation.setRadius(2)
                     fixation.draw()
 

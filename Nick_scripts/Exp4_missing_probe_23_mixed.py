@@ -14,8 +14,6 @@ from kestenSTmaxVal import Staircase
 from PsychoPy_tools import get_pixel_mm_deg_values
 from exp1a_psignifit_analysis import fig_colours
 
-# todo: add thisStair and trial number to dropped frame warnings.
-
 
 '''
 This version (interleaved) combined missing_probe (e.g., 3 targets) and exp 1 (one target).
@@ -44,8 +42,8 @@ os.chdir(_thisDir)
 
 # Store info about the experiment session
 expName = 'Exp4_missing_probe_23_mixed'
-expInfo = {'1. Participant': 'Nick_test',
-           '2. run_number': '2',
+expInfo = {'1. Participant': 'Nick_test_13072023',
+           '2. run_number': '1',
            '3. Probe duration in frames': [2, 50, 100],
            '4. fps': [60, 240, 120, 60],
            '5. vary fixation': [True, False],
@@ -53,7 +51,8 @@ expInfo = {'1. Participant': 'Nick_test',
            '7. Record_frame_durs': [True, False], 
            '8. monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'Samsung',
                                'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18', 'ASUS_2_13_240Hz'],
-           '9. verbose': [False, True]}
+           '9. verbose': [False, True],
+           '10. cue_trials': [True, False]}
 
 # dialogue box
 dlg = gui.DlgFromDict(dictionary=expInfo, title=expName)
@@ -69,8 +68,8 @@ vary_fixation = eval(expInfo['5. vary fixation'])
 sep_value = [int(expInfo['6. separation'])]
 record_fr_durs = eval(expInfo['7. Record_frame_durs'])
 monitor_name = expInfo['8. monitor_name']
-# todo: add if verbose to print statements
 verbose = eval(expInfo['9. verbose'])
+cue_trials = eval(expInfo['10. cue_trials'])
 
 if verbose:
     print(f'\nTrial condition details:')
@@ -94,6 +93,9 @@ n_trials_per_stair = 25
 probe_ecc = 4
 expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
 expInfo['time'] = datetime.now().strftime("%H:%M:%S")
+
+cue_dur_sec = 1.0
+
 
 # VARIABLES
 '''Distances between probes (spatially and temporally)
@@ -356,21 +358,36 @@ myMouse = event.Mouse(visible=False)
 resp = event.BuilderKeyResponse()
 
 # INSTRUCTION
+inst_text = "\n\n\n\n\n\nFocus on the small circle at the centre of the screen.\n" \
+            "There are two types of trials:\n" \
+            "\t1. A single target will flash in one of the corners\n" \
+            "\t press the key related to the location of the probe:\n" \
+            "\t2. Targets will flash in three corners,\n" \
+            "\tpress the key related to the location which did NOT contain a probe:\n" \
+            "[4]/[Q] top-left\t\t\t[5]/[W] top-right\n\n\n\n" \
+            "[1]/[A] bottom-left\t\t\t[2]/[S] bottom-right.\n\n\n" \
+            "Some flashes will seem bright and easy to see\n" \
+            "Some will be dim and harder to spot\n" \
+            "If you are unsure, just guess!\n" \
+            "You don't need to think for long. " \
+            "Respond quickly, but try to push press the correct key!\n" \
+            "Don't let your eyes wander, keep focussed on the circle in the middle throughout."
+if cue_trials:
+    inst_text = "\n\n\n\n\n\nFocus on the small circle at the centre of the screen.\n" \
+                "If cues with 'Single probe':\n" \
+                "\t press the key related to the location of the probe:\n" \
+                "If the cue is 'Missing probe':\n" \
+                "\tpress the key related to the location which did NOT contain a probe:\n" \
+                "[4]/[Q] top-left\t\t\t[5]/[W] top-right\n\n\n\n" \
+                "[1]/[A] bottom-left\t\t\t[2]/[S] bottom-right.\n\n\n" \
+                "Some flashes will seem bright and easy to see\n" \
+                "Some will be dim and harder to spot\n" \
+                "If you are unsure, just guess!\n" \
+                "You don't need to think for long. " \
+                "Respond quickly, but try to push press the correct key!\n" \
+                "Don't let your eyes wander, keep focussed on the circle in the middle throughout."
 instructions = visual.TextStim(win=win, name='instructions',
-                               text="\n\n\n\n\n\nFocus on the small circle at the centre of the screen.\n"
-                                    "There are two types of trials:\n"
-                                    "\t1. A single target will flash in one of the corners\n"
-                                    "\t press the key related to the location of the probe:\n"
-                                    "\t2. Targets will flash in three corners,\n"
-                                    "\tpress the key related to the location which did NOT contain a probe:\n"
-                                    "[4]/[Q] top-left\t\t\t[5]/[W] top-right\n\n\n\n"
-                                    "[1]/[A] bottom-left\t\t\t[2]/[S] bottom-right.\n\n\n"
-                                    "Some flashes will seem bright and easy to see\n"
-                                    "Some will be dim and harder to spot\n"
-                                    "If you are unsure, just guess!\n"
-                                    "You don't need to think for long. "
-                                    "Respond quickly, but try to push press the correct key!\n"
-                                    "Don't let your eyes wander, keep focussed on the circle in the middle throughout.",
+                               text=inst_text,
                                font='Arial', height=20, color='white', colorSpace=this_colourSpace)
 
 
@@ -405,6 +422,15 @@ too_many_dropped_fr = visual.TextStim(win=win, name='too_many_dropped_fr',
                                            "Please contact the experimenter.\n\n"
                                            "Press any key to return to the desktop.",
                                       font='Arial', height=20, colorSpace=this_colourSpace,)
+
+# cue trial text
+cue_exp1_text = visual.TextStim(win=win, name='cue_exp1_text',
+                                text="Single probe",
+                                font='Arial', height=20, color='white', colorSpace=this_colourSpace,)
+cue_missing_text = visual.TextStim(win=win, name='cue_missing_text',
+                                   text="Missing probe",
+                                   font='Arial', height=20, color='white', colorSpace=this_colourSpace,)
+
 
 while not event.getKeys():
     fixation.setRadius(3)
@@ -473,6 +499,7 @@ for step in range(n_trials_per_stair):
                 print(f"\n({actual_trials_inc_rpt}) trial_number: {trial_number}, "
                       f"cond_type: {cond_type}, stair_idx: {stair_idx}, "
                       f"thisStair: {thisStair}, step: {step}")
+
 
             # condition (Separation, ISI)
             sep = sep_vals_list[stair_idx]
@@ -742,6 +769,11 @@ for step in range(n_trials_per_stair):
             # loc_marker_br.setPos([br_loc_x, br_loc_y])
 
 
+            # set cue duration
+            cue_dur_fr = 0
+            if cue_trials:
+                cue_dur_fr = int(cue_dur_sec * fps)
+
             # VARIABLE FIXATION TIME
             '''to reduce anticipatory effects that might arise from fixation always being same length.
             if False, vary_fix == .5 seconds, so t_fixation is 1 second.
@@ -758,13 +790,14 @@ for step in range(n_trials_per_stair):
                 isi_dur_fr = p2_fr = 0
 
             # cumulative timing in frames for each part of a trial
-            t_fixation = int(fps / 2) + vary_fix
+            t_cue = cue_dur_fr
+            t_fixation = int(fps / 2) + vary_fix + t_cue
             t_probe_1 = t_fixation + probe_duration
             t_ISI = t_probe_1 + isi_dur_fr
             t_probe_2 = t_ISI + p2_fr
             t_response = t_probe_2 + 10000 * fps  # ~40 seconds to respond
             if verbose:
-                print(f"t_fixation: {t_fixation}, t_probe_1: {t_probe_1}, "
+                print(f"t_cue: {t_cue}, t_fixation: {t_fixation}, t_probe_1: {t_probe_1}, "
                       f"t_ISI: {t_ISI}, t_probe_2: {t_probe_2}, t_response: {t_response}\n")
 
             # continue_routine refers to flipping the screen to show next frame
@@ -818,8 +851,16 @@ for step in range(n_trials_per_stair):
 
 
                 '''Experiment timings'''
+                # CUE trial type
+                if t_cue >= frameN > 0:
+                    if cond_type == 'missing':
+                        cue_missing_text.draw()
+                    else:  # if cond_type == 'exp1'
+                        cue_exp1_text.draw()
+
                 # FIXATION
-                if t_fixation >= frameN > 0:
+                # if t_fixation >= frameN > 0:
+                elif t_fixation >= frameN > t_cue:
                     fixation.setRadius(3)
                     fixation.draw()
                     # loc_marker_tr.draw()
@@ -995,9 +1036,9 @@ for step in range(n_trials_per_stair):
                             # if timings are bad, repeat trial
                             if max(trial_fr_intervals) > max_fr_dur_sec or min(trial_fr_intervals) < min_fr_dur_sec:
                                 if max(trial_fr_intervals) > max_fr_dur_sec:
-                                    logging.warning(f"\n\toh no! Frame too long! {round(max(trial_fr_intervals), 2)} > {round(max_fr_dur_sec, 2)}")
+                                    logging.warning(f"\n\toh no! Frame too long! {round(max(trial_fr_intervals), 2)} > {round(max_fr_dur_sec, 2)}: trial: {trial_number}, {thisStair.name}")
                                 elif min(trial_fr_intervals) < min_fr_dur_sec:
-                                    logging.warning(f"\n\toh no! Frame too short! {min(trial_fr_intervals)} < {min_fr_dur_sec}")
+                                    logging.warning(f"\n\toh no! Frame too short! {min(trial_fr_intervals)} < {min_fr_dur_sec}: trial: {trial_number}, {thisStair.name}")
                                 repeat = True
                                 dropped_fr_trial_counter += 1
                                 trial_number -= 1
