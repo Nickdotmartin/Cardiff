@@ -582,12 +582,11 @@ def make_long_df(wide_df, wide_stubnames='ISI', thr_col='newLum',
             new_col_names = [f"ISI {i.strip('ISI ')}" if 'ISI ' in i else i for i in orig_col_names]
     else:
         new_col_names = [f"ISI {i.strip('ISI')}" if 'ISI' in i else i for i in orig_col_names]
-    print(f'orig_col_names:\n{orig_col_names}')
-    print(f'new_col_names:\n{new_col_names}')
 
     # change 'concurrent' to 999 not -1 as wide_to_long won't take negative numbers
     new_col_names = [f"ISI 999" if i in ['Concurrent', 'Conc', 'ISI_-1', 'ISI -1'] else i for i in new_col_names]
 
+    print(f'orig_col_names:\n{orig_col_names}')
     print(f'new_col_names:\n{new_col_names}')
 
     wide_df.columns = new_col_names
@@ -596,6 +595,11 @@ def make_long_df(wide_df, wide_stubnames='ISI', thr_col='newLum',
     # todo: just trying restting index to see if that helps: KeyError: "None of [Index(['stack', 'separation'], dtype='object')] are in the [columns]"
     wide_df = wide_df.reset_index()
     print(f'wide_df (reset index):\n{wide_df}')
+
+    print("\n\nidiot check")
+    print(f"wide_stubnames: {wide_stubnames}")
+    print(f"idx_col: {idx_col}")
+    print(f"col_to_keep: {col_to_keep}")
 
 
     # use pandas wide_to_long for transform df
@@ -705,11 +709,17 @@ def plot_pos_sep_and_1probe(pos_sep_and_1probe_df,
         plt.axvline(x=ra_cd_v_line, linestyle='--', color='lightgrey')
 
     # decorate plot
-    ax.legend(labels=isi_name_list, title='ISI',
+    # todo: fix this so all handles are either lines or markers (currently every other one is a rectangle)
+
+    ax.legend(labels=isi_name_list,
+              title='ISI',
               shadow=True,
               # place lower left corner of legend at specified location.
               loc='lower left', bbox_to_anchor=(0.96, 0.5))
 
+    print("idiot check")
+    print(f"pos_set_ticks: {pos_set_ticks}")
+    print(f"pos_tick_labels: {pos_tick_labels}")
     if one_probe:
         ax.set_xticks(pos_set_ticks)
         ax.set_xticklabels(pos_tick_labels)
@@ -1085,9 +1095,12 @@ def plot_thr_heatmap(heatmap_df,
 
     # if 'ISI_' in any of the column names, rename them to just the ISI value.
     for col in heatmap_df.columns:
-        if 'ISI_' in col:
+        if type(col) == str and 'ISI_' in col:
             new_col = col.split('_')[1]
             heatmap_df.rename(columns={col: new_col}, inplace=True)
+        # if 'ISI_' in col:
+        #     new_col = col.split('_')[1]
+        #     heatmap_df.rename(columns={col: new_col}, inplace=True)
 
     if verbose:
         print(f'heatmap_df:\n{heatmap_df}')
@@ -1344,8 +1357,12 @@ def make_diff_from_conc_df(MASTER_TM2_thr_df, root_path, error_type='SE',
     thr_df.rename(index={20: '1Probe'}, inplace=True)
 
     if ave_over == 'Exp':
-        thr_df.drop('p_stack_sep', axis=1, inplace=True)
-        thr_df.drop('participant', axis=1, inplace=True)
+        # thr_df.drop('p_stack_sep', axis=1, inplace=True)
+        # thr_df.drop('participant', axis=1, inplace=True)
+        p_stack_sep_S = thr_df.pop('p_stack_sep').to_list()
+        participant_S = thr_df.pop('participant').to_list()
+        print(f'p_stack_sep_S: {p_stack_sep_S}')
+        print(f'participant_S: {participant_S}')
 
     # check column order
     if 'Concurrent' in list(thr_df.columns):
@@ -1387,11 +1404,15 @@ def make_diff_from_conc_df(MASTER_TM2_thr_df, root_path, error_type='SE',
         all_dfc_df = thr_df.iloc[:, :].sub(thr_df['ISI 999'], axis=0)
 
     all_dfc_df.reset_index(inplace=True, drop=False)
-
     if verbose:
         print(f'all_dfc_df:\n{all_dfc_df}')
 
     if not mean_and_err_df:  # just return all dfc values, not mean and error
+
+        all_dfc_df.insert(0, 'p_stack_sep', p_stack_sep_S)
+        all_dfc_df.insert(1, 'participant', participant_S)
+        if verbose:
+            print(f'returning all_dfc_df:\n{all_dfc_df}')
 
         return all_dfc_df
 
@@ -1399,10 +1420,12 @@ def make_diff_from_conc_df(MASTER_TM2_thr_df, root_path, error_type='SE',
 
         # get means and errors
         get_means_df = all_dfc_df
+        if verbose:
+            print(f'get_means_df:\n{get_means_df}')
 
         # # get means and errors
         # reset index so we can groupby separation and remove stack
-        get_means_df.reset_index(inplace=True, drop=False)
+        # get_means_df.reset_index(inplace=True, drop=False)
         get_means_df.set_index('separation', inplace=True, drop=True)
 
         # use neg sep to average over if available
@@ -1443,11 +1466,11 @@ def make_diff_from_conc_df(MASTER_TM2_thr_df, root_path, error_type='SE',
 
         # save csv with average values
         if n_trimmed is not None:
-            ave_DfC_df.to_csv(os.path.join(root_path, f'MASTER_ave_TM{n_trimmed}_DfC.csv'))
-            error_DfC_df.to_csv(os.path.join(root_path, f'MASTER_ave_TM{n_trimmed}_DfC_error_{error_type}.csv'))
+            ave_DfC_df.to_csv(os.path.join(root_path, f'MASTER_ave_TM{n_trimmed}_DfC.csv'), index=False)
+            error_DfC_df.to_csv(os.path.join(root_path, f'MASTER_ave_TM{n_trimmed}_DfC_error_{error_type}.csv'), index=False)
         else:
-            ave_DfC_df.to_csv(os.path.join(root_path, 'MASTER_ave_DfC.csv'))
-            error_DfC_df.to_csv(os.path.join(root_path, f'MASTER_ave_DfC_error_{error_type}.csv'))
+            ave_DfC_df.to_csv(os.path.join(root_path, 'MASTER_ave_DfC.csv'), index=False)
+            error_DfC_df.to_csv(os.path.join(root_path, f'MASTER_ave_DfC_error_{error_type}.csv'), index=False)
 
         print('\n*** finished make_diff_from_conc_df() ***')
 
@@ -2168,6 +2191,19 @@ def plot_n_sep_thr_w_scatter(all_thr_df, thr_col='probeLum', exp_ave=False,
         print(f'min_thr: {min_thr}; max_thr: {max_thr}')
 
     # convert wide_df to long for getting means and standard error.
+    if verbose:
+        print("making long_fig_df")
+        print(f"all_thr_df:\n{all_thr_df}")
+        print(f"thr_col: {thr_col}")
+        print(f"long_df_idx_col: {long_df_idx_col}")
+    if long_df_idx_col == 'p_stack_sep' and 'p_stack_sep' not in list(all_thr_df.columns):
+        if 'stack' in list(all_thr_df.columns):
+            long_df_idx_col = ['index', 'stack']
+        else:
+            raise ValueError(f"long_df_idx_col: {long_df_idx_col} not in all_thr_df.columns: {list(all_thr_df.columns)}")
+        if verbose:
+            print(f"long_df_idx_col: {long_df_idx_col}")
+
     long_fig_df = make_long_df(all_thr_df, thr_col=thr_col, idx_col=long_df_idx_col)
     if verbose:
         print(f'long_fig_df:\n{long_fig_df}')
@@ -3035,7 +3071,7 @@ def d_average_participant(root_path, run_dir_names_list,
                                        reference_col='separation',
                                        stack_col_id='stack',
                                        verbose=verbose)
-        trimmed_df.to_csv(os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv'), index=False)
+        trimmed_df.to_csv(os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv'))
 
         get_means_df = trimmed_df
     else:
@@ -3062,12 +3098,15 @@ def d_average_participant(root_path, run_dir_names_list,
         print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
 
     # save csv with average values
+    ave_psignifit_thr_df.reset_index(inplace=True, drop=False)
+    error_bars_df.reset_index(inplace=True, drop=False)
+
     if trim_n is not None:
-        ave_psignifit_thr_df.to_csv(os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv'))
-        error_bars_df.to_csv(os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thr_error_{error_type}.csv'))
+        ave_psignifit_thr_df.to_csv(os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv'), index=False)
+        error_bars_df.to_csv(os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thr_error_{error_type}.csv'), index=False)
     else:
-        ave_psignifit_thr_df.to_csv(os.path.join(root_path, 'MASTER_ave_thresh.csv'))
-        error_bars_df.to_csv(os.path.join(root_path, f'MASTER_ave_thr_error_{error_type}.csv'))
+        ave_psignifit_thr_df.to_csv(os.path.join(root_path, 'MASTER_ave_thresh.csv'), index=False)
+        error_bars_df.to_csv(os.path.join(root_path, f'MASTER_ave_thr_error_{error_type}.csv'), index=False)
 
     # # get difference from concurrent plot.
     # if any(item in ['ISI_-1', 'ISI -1', 'conc', 'Conc', 'Concurrent', 'concurrent']
@@ -3605,7 +3644,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         adjusted_h_line = None
 
     # regular (not transpose)
-    plot_thr_heatmap(heatmap_df=ave_df, x_tick_labels=isi_name_list,
+    plot_thr_heatmap(heatmap_df=ave_df.copy(), x_tick_labels=isi_name_list,
                      y_tick_labels=sep_name_list,
                      ra_cd_v_line=adjusted_v_line,
                      ra_cd_h_line=adjusted_h_line,
@@ -3640,7 +3679,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         adjusted_h_line = None
 
     # regular (not transpose)
-    plot_thr_heatmap(heatmap_df=error_bars_df, x_tick_labels=isi_name_list,
+    plot_thr_heatmap(heatmap_df=error_bars_df.copy(), x_tick_labels=isi_name_list,
                      y_tick_labels=sep_name_list,
                      ra_cd_v_line=adjusted_v_line,
                      ra_cd_h_line=adjusted_h_line,
@@ -3823,7 +3862,7 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         else:
             adjusted_h_line = None
 
-        plot_thr_heatmap(heatmap_df=ave_DfC_df,
+        plot_thr_heatmap(heatmap_df=ave_DfC_df.copy(),
                          midpoint=0,
                          ra_cd_v_line=adjusted_v_line,
                          ra_cd_h_line=adjusted_h_line,
@@ -3857,8 +3896,19 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         error_DfC_df.index = [idx.replace('1Probe', '1pr') for idx in error_DfC_df.index]
         print(f"error_DfC_df:\n{error_DfC_df}")
 
+        # copy ave_DfC_df and edit column names
+        my_ave_DfC_df = ave_DfC_df.copy()
+        my_ave_DfC_col_names = my_ave_DfC_df.columns
+        my_ave_DfC_col_names = ['Conc' if 'ISI_-1' in col_name else col_name for col_name in my_ave_DfC_col_names]
+        my_ave_DfC_col_names = [int(col_name.replace('ISI_', '')) if 'ISI_' in col_name else col_name for col_name in my_ave_DfC_col_names]
+        my_ave_DfC_df.columns = my_ave_DfC_col_names
 
-        dfc_div_error_df = ave_DfC_df.div(error_DfC_df).fillna(0)
+        # if '1Probe' in my_ave_DfC_df index, change to '1pr'
+        my_ave_DfC_df.index = [idx.replace('1Probe', '1pr') for idx in my_ave_DfC_df.index]
+        print(f"my_ave_DfC_df:\n{my_ave_DfC_df}")
+
+
+        dfc_div_error_df = my_ave_DfC_df.div(error_DfC_df).fillna(0)
         print(f"dfc_div_error_df:\n{dfc_div_error_df}")
 
         if ra_cd_size_dict['cd_isi_idx']:
@@ -3871,13 +3921,15 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         else:
             adjusted_h_line = None
 
-        plot_thr_heatmap(heatmap_df=dfc_div_error_df,
+        plot_thr_heatmap(heatmap_df=dfc_div_error_df.copy(),
                          midpoint=0,
                          ra_cd_v_line=adjusted_v_line,
                          ra_cd_h_line=adjusted_h_line,
                          annot_fmt=heatmap_annot_fmt,
                          fig_title=heatmap_dfc_title, save_name=heatmap_dfc_savename,
                          save_path=save_path, verbose=True)
+
+
 
         print(f"\nt-scores plot\n")
         if n_trimmed is not None:
@@ -3886,6 +3938,15 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         else:
             fig1_title = f'{ave_over} average average DfC / {error_type}  across all runs\n(n={ave_over_n})'
             fig1_savename = f'ave_DfC_div_{error_type}{plt_suffix}.png'
+
+        # reset the index and rename the current index column 'separation'
+        dfc_div_error_df = dfc_div_error_df.reset_index().rename(columns={'index': 'separation'})
+        print(f"dfc_div_error_df:\n{dfc_div_error_df}")
+        if "Bloch's CD" in sep_name_list:
+            # remove "Bloch's CD" from sep_name_list
+            print(f"sep_name_list: {sep_name_list}")
+            sep_name_list.remove("Bloch's CD")
+            print(f"sep_name_list: {sep_name_list}")
 
         plot_pos_sep_and_1probe(dfc_div_error_df,
                                 thr_col='newLum',
@@ -3983,8 +4044,14 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                 dfc_per_sep_title = f'{ave_over} average diff from conc per separation.  (n={ave_over_n}, err={error_type})'
                 dfc_per_sep_savename = f'ave_dfc_per_sep{plt_suffix}.png'
 
+            print("\n\nidiot check")
+            print(f"all_df:\n{all_df}")
+
             # make all_dfc_df (not ave)
-            all_dfc_df = make_diff_from_conc_df(all_df, root_path=save_path, mean_and_err_df=False)
+            all_dfc_df = make_diff_from_conc_df(all_df, root_path=save_path, mean_and_err_df=False, exp_ave=exp_ave)
+
+            print("\n\nidiot check")
+            print(f"all_dfc_df:\n{all_dfc_df}")
 
             plot_n_sep_thr_w_scatter(all_thr_df=all_dfc_df, exp_ave=exp_ave,
                                      ra_cd_v_line=ra_cd_size_dict['cd_isi_idx'],

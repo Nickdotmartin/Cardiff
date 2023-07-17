@@ -1076,11 +1076,13 @@ for step in range(n_trials_per_stair):
                             # todo: I've changed this on 13072023 to see if it reduces timing issues.
                             timing_bad = False
                             if max(trial_fr_intervals) > max_fr_dur_sec:
-                                logging.warning(f"\n\toh no! Frame too long! {round(max(trial_fr_intervals), 2)} > {round(max_fr_dur_sec, 2)}")
+                                logging.warning(f"\n\toh no! Frame too long! {round(max(trial_fr_intervals), 2)} > {round(max_fr_dur_sec, 2)}"
+                                                f": trial: {trial_number}, {thisStair.name}")
                                 timing_bad = True
 
                             if min(trial_fr_intervals) < min_fr_dur_sec:
-                                logging.warning(f"\n\toh no! Frame too short! {min(trial_fr_intervals)} < {min_fr_dur_sec}")
+                                logging.warning(f"\n\toh no! Frame too short! {min(trial_fr_intervals)} < {min_fr_dur_sec}: "
+                                                f"trial: {trial_number}, {thisStair.name}")
                                 timing_bad = True
 
                             if timing_bad:

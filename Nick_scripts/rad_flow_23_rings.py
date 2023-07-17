@@ -1,9 +1,5 @@
 from __future__ import division
-
 import psychopy
-
-# todo: add thisStair and trial number to dropped frame warnings.
-
 '''
 The lab machine uses 2021.2.3, but this doesn't work on my laptop.
 ImportError: cannot import name '_vmTesting' from 'psychopy.tests' (unknown location)
@@ -24,11 +20,6 @@ from datetime import datetime
 from math import tan, sqrt
 from PsychoPy_tools import get_pixel_mm_deg_values
 from kestenSTmaxVal import Staircase
-
-
-
-
-
 
 from psychopy import __version__ as psychopy_version
 print(f"PsychoPy_version: {psychopy_version}")
@@ -109,7 +100,6 @@ def get_next_radii(current_radii, motion_speed, min_radius, max_radius, expandin
     # print(f"current_radii: {current_radii}, next_radii: {next_radii}\n")
 
     return next_radii
-
 
 
 # Ensure that relative paths start from the same directory as this script
@@ -234,7 +224,7 @@ if verbose:
 
 
 # Experiment handling and saving
-# FILENAME: join participant_name with prelim_bg_flow_ms so that different prelim values don't get overwritten or confused.
+# FILENAME: join participant_name with prelim_bg_flow_ms to keep different prelim values separate
 participant_name = participant_name + f'_bg{prelim_bg_flow_ms}'
 
 # save each participant's files into separate dir for each ISI
@@ -366,7 +356,7 @@ max_droped_fr_trials = 10
 
 # ELEMENTS
 # fixation bull eye
-if background == None:
+if background is None:
     fixation = visual.Circle(win, radius=2, units='pix',
                              lineColor='white', fillColor='black', colorSpace=this_colourSpace)
 else:
@@ -425,7 +415,8 @@ elif mask_type == '2_spokes':
     # since the middle of the screen is 0, 0; the corners are defined by half the width or height of the screen.
     half_hi_pix = int(heightPix / 2)
 
-    # the corners of the cross are offset (by around 42 pixels on my laptop); which is half the mask_size / the screen aspect ratio (pixl shape)
+    # the corners of the cross are offset (by around 42 pixels on my laptop);
+    # which is half the mask_size / the screen aspect ratio (pixl shape)
     offset_pix = int((mask_size / 2) / (widthPix / heightPix))
     if verbose:
         print(f'offset_pix = {offset_pix}')
@@ -439,13 +430,29 @@ elif mask_type == '2_spokes':
     5. vertically centred, but offset above the centre.
     6. the tr corner of the cross, which is at the top of the window, with an offset (e.g., not in the corner of the window).
     '''
-    vertices = np.array([[-half_hi_pix - offset_pix, -half_hi_pix], [-offset_pix, 0], [-half_hi_pix - offset_pix, half_hi_pix],
-                         [-half_hi_pix + offset_pix, half_hi_pix], [0, offset_pix], [half_hi_pix - offset_pix, half_hi_pix],
-                         [half_hi_pix + offset_pix, half_hi_pix], [offset_pix, 0], [half_hi_pix + offset_pix, -half_hi_pix],
-                         [half_hi_pix - offset_pix, -half_hi_pix], [0, -offset_pix], [-half_hi_pix + offset_pix, -half_hi_pix]
+    # # original vertices as plain cross X
+    # vertices = np.array([[-half_hi_pix - offset_pix, -half_hi_pix], [-offset_pix, 0], [-half_hi_pix - offset_pix, half_hi_pix],
+    #                      [-half_hi_pix + offset_pix, half_hi_pix], [0, offset_pix], [half_hi_pix - offset_pix, half_hi_pix],
+    #                      [half_hi_pix + offset_pix, half_hi_pix], [offset_pix, 0], [half_hi_pix + offset_pix, -half_hi_pix],
+    #                      [half_hi_pix - offset_pix, -half_hi_pix], [0, -offset_pix], [-half_hi_pix + offset_pix, -half_hi_pix]
+    #                      ])
+
+    # updated vertices with wedge shape
+    vertices = np.array([[-half_hi_pix - offset_pix*2, -half_hi_pix], [-offset_pix/2, 0], [-half_hi_pix - offset_pix*2, half_hi_pix],
+                         [-half_hi_pix + offset_pix*2, half_hi_pix], [0, offset_pix/2], [half_hi_pix - offset_pix*2, half_hi_pix],
+                         [half_hi_pix + offset_pix*2, half_hi_pix], [offset_pix/2, 0], [half_hi_pix + offset_pix*2, -half_hi_pix],
+                         [half_hi_pix - offset_pix*2, -half_hi_pix], [0, -offset_pix/2], [-half_hi_pix + offset_pix*2, -half_hi_pix]
                          ])
+
     spokes_mask = visual.ShapeStim(win, vertices=vertices, colorSpace=this_colourSpace,
                                    fillColor=this_bgColour, lineColor=this_bgColour, lineWidth=0)
+    # add spokes_mask as a mask on a gratingStim so that it blends the edges of the mask with the background
+    # spokes_blended_mask = visual.GratingStim(win=win, mask=spokes_mask, size=(widthPix, heightPix),
+    #                                          colorSpace=this_colourSpace, color=this_bgColour,
+    #                                          units='pix', tex=None, pos=[0, 0])
+    # spokes_blended_mask = visual.GratingStim(win=win, mask=spokes_mask, size=(1, 1),
+    #                                          colorSpace=this_colourSpace, color=this_bgColour,
+    #                                          tex=None, units='pix', pos=[0, 0])
     probe_mask_list = [spokes_mask]
 
 
@@ -480,15 +487,32 @@ minDist = 0.5  # depth values
 maxDist = 5  # depth values
 
 # values for rings
-n_rings = 8
+
 # ring_array_width = widthPix / 2
-max_radius = calculate_maximum_radius_including_corners((widthPix, heightPix))
+# max_radius = calculate_maximum_radius_including_corners((widthPix, heightPix))
+max_radius = heightPix / 2  # with edge_mask on, there is no need to expand to full screen size
+
+'''Vary number of rings depending on monitorwidth(cm, e.g., (int(30.9/10) + 5 for my laptop = 8.
+OLED would be (int(79.7/10) + 5 for my laptop = 13.'''
+# n_rings = 5
+n_rings = (int(monitorwidth / 10) + 5) * 2
+print(f"monitorwidth: {monitorwidth}")
+print(f"monitorwidth / 100: {monitorwidth / 10}")
+
 # ring_depth_min = 0.5
 # ring_max_depth = 5
 # ring_flow_speed = .05
 # ring_z_value = 21
+# todo: scale ring_line_width and motion_speed with monitor size and or view_dist.
 motion_speed = 0.1
-min_radius = 4  # fixation point has radius of 2.
+ring_line_width = 25
+min_radius = int(ring_line_width/2) + 2  # fixation has radius of 2, so at ring_line_width/2, the ring will touch fixation.
+
+
+
+# ring_radii_array are exponentially spaced values between 0 and max_radius (e.g., more dots near centre)
+ring_radii_array = np.geomspace(start=min_radius, stop=max_radius, num=n_rings)
+print(f"ring_radii_array:\n{ring_radii_array}")
 
 # pale green
 flow_dots_colour = [this_bgColour[0]-adj_dots_col, this_bgColour[1], this_bgColour[2]-adj_dots_col]
@@ -506,8 +530,15 @@ if verbose:
 ring_list = []
 
 for i in range(n_rings):
+
+    # alternate between flow_dots_colour and this_bgColour
+    if i % 2 == 0:
+        this_ring_colour = flow_dots_colour
+    else:
+        this_ring_colour = this_bgColour
+
     ring_list.append(visual.Circle(win, radius=2, units='pix',
-                                   lineColor=flow_dots_colour, lineWidth=5,
+                                   lineColor=this_ring_colour, lineWidth=ring_line_width,
                                    fillColor=None, colorSpace=this_colourSpace))
 
 
@@ -685,8 +716,6 @@ for step in range(n_trials_per_stair):
             # use congruence to determine the flow direction and target jump direction
             # 1 is contracting/inward/backwards, -1 is expanding/outward/forwards
             flow_dir = np.random.choice([1, -1])
-            # todo: put flow dir back in
-            # flow_dir = -1
             target_jump = congruent * flow_dir
 
             exp_rings = False
@@ -769,21 +798,22 @@ for step in range(n_trials_per_stair):
             x = np.random.rand(nDots) * dot_array_width - dot_array_width / 2
             y = np.random.rand(nDots) * dot_array_width - dot_array_width / 2
             z = np.random.rand(nDots) * (maxDist - minDist) + minDist
-            print(f"x: {x}, y: {y}, z: {z}")
-            print(f"dot_array_width: {dot_array_width}, maxDist: {maxDist}, minDist: {minDist}")
-            print(f"(maxDist - minDist) + minDist: {(maxDist - minDist) + minDist}")
+            # print(f"x: {x}, y: {y}, z: {z}")
+            # print(f"dot_array_width: {dot_array_width}, maxDist: {maxDist}, minDist: {minDist}")
+            # print(f"(maxDist - minDist) + minDist: {(maxDist - minDist) + minDist}")
             # z was called z_flow but is actually z position like x and y
             x_flow = x / z
             y_flow = y / z
-            print(f"x_flow: {x_flow}, y_flow: {y_flow}")
+            # print(f"x_flow: {x_flow}, y_flow: {y_flow}")
 
             # plot the distribution of x_flow
             # plt.hist(x_flow, bins=100)
             # plt.show()
 
-            # ring_radii_array are exponentially spaced values between 0 and max_radius (e.g., more dots near centre)
-            ring_radii_array = np.geomspace(start=10, stop=max_radius, num=n_rings)
-            print(f"ring_radii_array:\n{ring_radii_array}")
+            # # ring_radii_array are defined above with other ring variables
+            # # ring_radii_array are exponentially spaced values between 0 and max_radius (e.g., more dots near centre)
+            # ring_radii_array = np.geomspace(start=10, stop=max_radius, num=n_rings)
+            # print(f"ring_radii_array:\n{ring_radii_array}")
 
             # # # this is the depth variable which is used to define their speed relative to their radius
             # # ring_z_array = np.sort(np.random.rand(n_rings) * (ring_max_depth - ring_depth_min) + ring_depth_min)
@@ -1035,7 +1065,7 @@ for step in range(n_trials_per_stair):
                 if frameN == t_probe_2 + 1:
 
                     # print(f"\nend...ring_z_array:\n{ring_z_array}\nring_flow: {ring_flow}")
-                    print(f"\nend...ring_radii_array:\n{ring_radii_array}")
+                    # print(f"\nend...ring_radii_array:\n{ring_radii_array}")
 
                     if record_fr_durs:
                         win.recordFrameIntervals = False
@@ -1058,7 +1088,7 @@ for step in range(n_trials_per_stair):
                         # probes are drawn on top of probe mask.  dots/ring are behind probe_mask and edge_mask
                         for probe_mask in probe_mask_list:
                             probe_mask.draw()
-                        # edge_mask.draw()
+                        edge_mask.draw()
 
                     fixation.setRadius(3)
                     fixation.draw()
@@ -1088,7 +1118,7 @@ for step in range(n_trials_per_stair):
                         # probes are drawn on top of probe mask.  dots/ring are behind probe_mask and edge_mask
                         for probe_mask in probe_mask_list:
                             probe_mask.draw()
-                        # edge_mask.draw()
+                        edge_mask.draw()
 
 
                     fixation.setRadius(3)
@@ -1119,7 +1149,7 @@ for step in range(n_trials_per_stair):
                         # probes are drawn on top of probe mask.  dots/ring are behind probe_mask and edge_mask
                         for probe_mask in probe_mask_list:
                             probe_mask.draw()
-                        # edge_mask.draw()
+                        edge_mask.draw()
                     fixation.setRadius(3)
                     fixation.draw()
 
@@ -1154,7 +1184,7 @@ for step in range(n_trials_per_stair):
                         # probes are drawn on top of probe mask.  dots/ring are behind probe_mask and edge_mask
                         for probe_mask in probe_mask_list:
                             probe_mask.draw()
-                        # edge_mask.draw()
+                        edge_mask.draw()
                     fixation.setRadius(3)
                     fixation.draw()
 
@@ -1183,7 +1213,7 @@ for step in range(n_trials_per_stair):
                         # probes are drawn on top of probe mask.  dots/ring are behind probe_mask and edge_mask
                         for probe_mask in probe_mask_list:
                             probe_mask.draw()
-                        # edge_mask.draw()
+                        edge_mask.draw()
                     fixation.setRadius(3)
                     fixation.draw()
 
@@ -1206,7 +1236,7 @@ for step in range(n_trials_per_stair):
                         # probes are drawn on top of probe mask.  dots/ring are behind probe_mask and edge_mask
                         for probe_mask in probe_mask_list:
                             probe_mask.draw()
-                        # edge_mask.draw()
+                        edge_mask.draw()
                     fixation.setRadius(2)
                     fixation.draw()
 
@@ -1274,11 +1304,13 @@ for step in range(n_trials_per_stair):
                             # todo: I've changed this on 13072023 to see if it reduces timing issues.
                             timing_bad = False
                             if max(trial_fr_intervals) > max_fr_dur_sec:
-                                logging.warning(f"\n\toh no! Frame too long! {round(max(trial_fr_intervals), 2)} > {round(max_fr_dur_sec, 2)}")
+                                logging.warning(f"\n\toh no! Frame too long! {round(max(trial_fr_intervals), 2)} > {round(max_fr_dur_sec, 2)}: "
+                                                f"trial: {trial_number}, {thisStair.name}")
                                 timing_bad = True
 
                             if min(trial_fr_intervals) < min_fr_dur_sec:
-                                logging.warning(f"\n\toh no! Frame too short! {min(trial_fr_intervals)} < {min_fr_dur_sec}")
+                                logging.warning(f"\n\toh no! Frame too short! {min(trial_fr_intervals)} < {min_fr_dur_sec}, "
+                                                f": trial: {trial_number}, {thisStair.name}")
                                 timing_bad = True
 
                             if timing_bad:

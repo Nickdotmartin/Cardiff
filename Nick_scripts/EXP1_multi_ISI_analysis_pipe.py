@@ -28,10 +28,10 @@ exp_path = convert_path1
 # print(f"exp_path: {exp_path}")
 # participant_list = ['Kim']  # 'Nick_sep0123', 'Nick_sep45', 'Nick_sep67', 'Nick_sep89', 'Nick_sep18_20']  #  'Simon', 'Nick'
 # participant_list = ['aa', 'bb', 'dd', 'ee', 'Nick']
-participant_list = ['Kim']  # , 'Simon', 'Nick']  # , 'Tony', 'Kristian']
+participant_list = ['Tony']  # , 'Simon', 'Nick']  # , 'Tony', 'Kristian']
 
 
-split_1probe = False
+split_1probe = True
 n_runs = 12
 
 analyse_from_run = 1
@@ -41,47 +41,47 @@ for p_idx, participant_name in enumerate(participant_list):
     root_path = os.path.join(exp_path, participant_name)
     print(f"root_path: {root_path}")
 
-    # search to automatically get run_folder_names
-    dir_list = os.listdir(root_path)
-    run_folder_names = []
-    for i in range(n_runs):  # numbers 0 to 11
-        check_dir = f'{participant_name}_{i+analyse_from_run}'   # numbers 1 to 12
-        if check_dir in dir_list:
-            run_folder_names.append(check_dir)
-
-    if len(run_folder_names) > 0:
-        print(f"{len(run_folder_names)} run folders found:\n{run_folder_names}")
-        # for i in run_folder_names:
-        #     print(i)
-    else:
-        print("no run folders found")
-
-    trim_n = None
-    if len(run_folder_names) == 12:
-        trim_n = 2
-    elif len(run_folder_names) > 12:
-        # trim_n = 2
-        if len(run_folder_names) % 2 == 0:  # if even
-            trim_n = int((len(run_folder_names)-12)/2)
-        else:
-            raise ValueError(f"for this exp you have {len(run_folder_names)} runs, set rules for trimming.")
-    trim_list.append(trim_n)
-
-    for run_idx, run_dir in enumerate(run_folder_names):
-
-        r_idx_plus = run_idx + analyse_from_run
-
-        print(f'\nrunning analysis for {participant_name}, {run_dir}, {participant_name}{r_idx_plus}\n')
-        # print(f'\nrunning analysis for {participant_name}\n')
-
-        save_path = os.path.join(root_path, run_dir)
-
-        # don't delete this (participant_name = participant_name),
-        # needed to ensure names go name1, name2, name3 not name1, name12, name123
-        p_name = participant_name
-
-        # # '''a'''
-        p_name = f'{participant_name}_output'  # use this one
+    # # search to automatically get run_folder_names
+    # dir_list = os.listdir(root_path)
+    # run_folder_names = []
+    # for i in range(n_runs):  # numbers 0 to 11
+    #     check_dir = f'{participant_name}_{i+analyse_from_run}'   # numbers 1 to 12
+    #     if check_dir in dir_list:
+    #         run_folder_names.append(check_dir)
+    #
+    # if len(run_folder_names) > 0:
+    #     print(f"{len(run_folder_names)} run folders found:\n{run_folder_names}")
+    #     # for i in run_folder_names:
+    #     #     print(i)
+    # else:
+    #     print("no run folders found")
+    #
+    # trim_n = None
+    # if len(run_folder_names) == 12:
+    #     trim_n = 2
+    # elif len(run_folder_names) > 12:
+    #     # trim_n = 2
+    #     if len(run_folder_names) % 2 == 0:  # if even
+    #         trim_n = int((len(run_folder_names)-12)/2)
+    #     else:
+    #         raise ValueError(f"for this exp you have {len(run_folder_names)} runs, set rules for trimming.")
+    # trim_list.append(trim_n)
+    #
+    # for run_idx, run_dir in enumerate(run_folder_names):
+    #
+    #     r_idx_plus = run_idx + analyse_from_run
+    #
+    #     print(f'\nrunning analysis for {participant_name}, {run_dir}, {participant_name}{r_idx_plus}\n')
+    #     # print(f'\nrunning analysis for {participant_name}\n')
+    #
+    #     save_path = os.path.join(root_path, run_dir)
+    #
+    #     # don't delete this (participant_name = participant_name),
+    #     # needed to ensure names go name1, name2, name3 not name1, name12, name123
+    #     p_name = participant_name
+    #
+    #     # # '''a'''
+    #     p_name = f'{participant_name}_output'  # use this one
 
 
     #     '''check for unique sep folders.  If found: collate those; else look for output file.'''
@@ -146,7 +146,7 @@ for p_idx, participant_name in enumerate(participant_list):
     #      If experiment was run after 3rd Nov, keep data as is, otherwise,
     #      remove any ISI=-1 conditions from output file (I have a backup)
     #      and then analyse the shortened output."""
-    #
+    #     isi_list = run_data_df['ISI'].unique().tolist()
     #     if -1 in isi_list:
     #
     #         # I'm treating 4th Nov as first date with trustworthy data
@@ -221,225 +221,229 @@ for p_idx, participant_name in enumerate(participant_list):
     #                                         verbose=True)
     #     print(f'thr_df:\n{thr_df}')
     #
-    print(f'root_path: {root_path}')
-    # todo: comment this out
-    # trim_list = [2, 2, 2]
+    # print(f'root_path: {root_path}')
+    # # todo: comment this out
+    # # trim_list = [2, 2, 2]
     # trim_n = 2
     # run_folder_names = list(range(12))
-    print(f"\n\ntrim_list: {trim_list}, trim_n: {trim_n}\n\n")
+    # print(f"\n\ntrim_list: {trim_list}, trim_n: {trim_n}\n\n")
 
 
-    '''d'''
+    # '''d'''
     # d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
     #                       trim_n=trim_n, error_type='SE')
 
-    all_df_path = os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv')
-    p_ave_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv')
-    err_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thr_error_SE.csv')
-    if trim_n is None:
-        all_df_path = os.path.join(root_path, 'MASTER_psignifit_thresholds.csv')
-        p_ave_path = os.path.join(root_path, 'MASTER_ave_thresh.csv')
-        err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
+    # all_df_path = os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv')
+    # p_ave_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv')
+    # err_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thr_error_SE.csv')
+    # if trim_n is None:
+    #     all_df_path = os.path.join(root_path, 'MASTER_psignifit_thresholds.csv')
+    #     p_ave_path = os.path.join(root_path, 'MASTER_ave_thresh.csv')
+    #     err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
+    #
+    #
+    #
+    # p_ave_df = pd.read_csv(p_ave_path, )
+    # print(f"p_ave_df:\n{p_ave_df}")
+    #
+    # ave_DfC_df, error_DfC_df = make_diff_from_conc_df(all_df_path, root_path,
+    #                                                   n_trimmed=trim_n, mean_and_err_df=True)
+    # print(f"ave_DfC_df:\n{ave_DfC_df}")
+    # print(f"error_DfC_df:\n{error_DfC_df}")
+    #
+    #
+    # print(f'list(p_ave_df.columns): {list(p_ave_df.columns)}')
+    # isi_vals_list = [int(i[4:]) for i in list(p_ave_df.columns)[1:]]
+    # if -1 in isi_vals_list:
+    #     if isi_vals_list[0] != -1:
+    #         isi_vals_list.remove(-1)
+    #         isi_vals_list = [-1] + isi_vals_list
+    # print(isi_vals_list)
+    #
+    # isi_name_list = [f"Conc" if i == -1 else f"ISI {i}" for i in isi_vals_list]
+    #
+    # sep_vals_list = list(p_ave_df['separation'])
+    # sep_name_list = [f"1probe" if i == 20 else i for i in sep_vals_list]
+    # if '1probe' in sep_name_list:
+    #     split_1probe = True
+    # print(f"isi_name_list:\n{isi_name_list}")
+    # print(f"isi_vals_list:\n{isi_vals_list}")
+    # print(f"sep_vals_list:\n{sep_vals_list}")
+    # print(f"sep_name_list:\n{sep_name_list}")
+    #
+    # #############################################
+    #
+    # '''look for RA and CD size'''
+    # ra_size_sep = ra_size_deg = cd_size_isi = cd_size_ms = None
+    # # get participant name to check
+    # if participant_name in ['aa', 'bb', 'cc', 'dd', 'ee']:
+    #     check_name = lookup_p_name(participant_name)
+    # else:
+    #     check_name = participant_name
+    # if check_name == 'Kris':
+    #     check_name = 'Kristian'
+    # print(f"\nparticipant_name: {participant_name}, check_name (): {check_name}")
+    #
+    # # get RA size
+    # ra_size_df = pd.read_csv(r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp3_Ricco_all\RA_size_df.csv")
+    # print(f"ra_size_df:\n{ra_size_df}")
+    # ra_names_list = ra_size_df['participant'].to_list()
+    # # print(f"ra_names_list:\n{ra_names_list}")
+    # if check_name in ra_names_list:
+    #     ra_size_sep = ra_size_df.loc[ra_size_df['participant'] == check_name, 'separation'].values[0]
+    #     ra_size_deg = ra_size_df.loc[ra_size_df['participant'] == check_name, 'degrees'].values[0]
+    #
+    # # get cd size
+    # cd_size_df = pd.read_csv(r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp2_Bloch_NM_v5\CD_size_df.csv")
+    # print(f"cd_size_df:\n{cd_size_df}")
+    # cd_names_list = cd_size_df['participant'].to_list()
+    # # if check_name == 'Kristian':
+    # #     check_name = 'Kris'
+    #
+    # if check_name in cd_names_list:
+    #     cd_size_isi = cd_size_df.loc[cd_size_df['participant'] == check_name, 'isi'].values[0]
+    #     cd_size_ms = cd_size_df.loc[cd_size_df['participant'] == check_name, 'ms'].values[0]
+    #
+    # ra_cd_size_dict = {'ra_size_sep': ra_size_sep, 'ra_size_deg': ra_size_deg,
+    #                    'cd_size_isi': cd_size_isi, 'cd_size_ms': cd_size_ms}
+    # print("\nra_cd_size_dict:")
+    # for k, v in ra_cd_size_dict.items():
+    #     print(f"{k}: {v}")
+    #
+    # if participant_name == 'cc':
+    #     ra_cd_size_dict = None
+    # #############################################
+    #
+    #
+    # make_average_plots(all_df_path=all_df_path,
+    #                    ave_df_path=p_ave_path,
+    #                    error_bars_path=err_path,
+    #                    thr_col='newLum',
+    #                    error_type='SE',
+    #                    n_trimmed=trim_n,
+    #                    ave_over_n=len(run_folder_names),
+    #                    split_1probe=split_1probe,
+    #                    # isi_name_list=isi_name_list,
+    #                    # sep_vals_list=sep_vals_list,
+    #                    # sep_name_list=sep_name_list,
+    #                    exp_ave=participant_name,  # participant ave, not exp ave
+    #                    ra_cd_size_dict=ra_cd_size_dict,
+    #                    heatmap_annot_fmt='.0f',  # use '.3g' for 3 significant figures, '.2f' for 2dp, '.0f' for int.
+    #                    show_plots=True, verbose=True)
+    # '''end of participant analysis'''
+
+'''experiment level analysis.  If the participant data has already been analysed, just comment out all the stuff above and run from here.'''
+print(f'exp_path: {exp_path}')
+print('\nget exp_average_data')
+print(f'trim_list: {trim_list}')
+
+# participant_list = ['aa', 'bb', 'cc', 'dd', 'ee', 'Nick']
+# trim_list = [2, 2, 2, 2, 2, 2]
+# participant_list = ['Kristian', 'Nick', 'Simon', 'Tony', 'Kim']
+# trim_list = [2, 2, 2, 2, 2]  # , 2, None]
+participant_list = ['Nick', 'Simon', 'Tony', 'Kim']
+trim_list = [2, 2, 2, 2]  # , 2, None]
+n_trimmed = 2
+# lum_col = 'probeLum'
+
+e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
+                   error_type='SE', n_trimmed=trim_list, verbose=True)
+
+#############################################
+
+'''look for RA and CD size, with error bar data'''
+ra_size_sep = ra_size_deg = cd_size_isi = cd_size_ms = None
 
 
+# get RA size
+ra_size_df = pd.read_csv(r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp3_Ricco_all\RA_size_df.csv")
+print(f"ra_size_df:\n{ra_size_df}")
+ra_names_list = ra_size_df['participant'].to_list()
+# print(f"ra_names_list:\n{ra_names_list}")
 
-    p_ave_df = pd.read_csv(p_ave_path)
-    print(f"p_ave_df:\n{p_ave_df}")
+# get mean and SE/2 (half SE or error bars)
+if 'exp_ave' in ra_names_list:
+    ra_size_sep = ra_size_df.loc[ra_size_df['participant'] == 'exp_ave', 'separation'].values[0]
+    ra_CI95_sep = ra_size_df.loc[ra_size_df['participant'] == 'CI95', 'separation'].values[0]
+    ra_size_deg = ra_size_df.loc[ra_size_df['participant'] == 'exp_ave', 'degrees'].values[0]
+    ra_CI95_deg = ra_size_df.loc[ra_size_df['participant'] == 'CI95', 'degrees'].values[0]
 
-    ave_DfC_df, error_DfC_df = make_diff_from_conc_df(all_df_path, root_path, n_trimmed=trim_n)
-    print(f"ave_DfC_df:\n{ave_DfC_df}")
-    print(f"error_DfC_df:\n{error_DfC_df}")
+print(f"ra_size_sep: {ra_size_sep}, ra_CI95_sep: {ra_CI95_sep}\n"
+      f"error bars from: {ra_size_sep - ra_CI95_sep} to {ra_size_sep + ra_CI95_sep}")
 
+# get cd size
+cd_size_df = pd.read_csv(r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp2_Bloch_NM_v5\CD_size_df.csv")
+print(f"cd_size_df:\n{cd_size_df}")
+cd_names_list = cd_size_df['participant'].to_list()
 
-    print(f'list(p_ave_df.columns): {list(p_ave_df.columns)}')
-    isi_vals_list = [int(i[4:]) for i in list(p_ave_df.columns)[1:]]
-    if -1 in isi_vals_list:
-        if isi_vals_list[0] != -1:
-            isi_vals_list.remove(-1)
-            isi_vals_list = [-1] + isi_vals_list
-    print(isi_vals_list)
+if 'exp_ave' in cd_names_list:
+    cd_size_isi = cd_size_df.loc[cd_size_df['participant'] == 'exp_ave', 'isi'].values[0]
+    cd_CI95_isi = cd_size_df.loc[cd_size_df['participant'] == 'CI95', 'isi'].values[0]
+    cd_ave_ms = cd_size_df.loc[cd_size_df['participant'] == 'exp_ave', 'ms'].values[0]
+    cd_size_ms = cd_size_df.loc[cd_size_df['participant'] == 'CI95', 'ms'].values[0]
 
-    isi_name_list = [f"Conc" if i == -1 else f"ISI {i}" for i in isi_vals_list]
+print(f"cd_size_isi: {cd_size_isi}, cd_CI95_isi: {cd_CI95_isi}\n"
+      f"error bars from: {cd_size_isi - cd_CI95_isi} to {cd_size_isi + cd_CI95_isi}")
 
-    sep_vals_list = list(p_ave_df['separation'])
-    sep_name_list = [f"1probe" if i == 20 else i for i in sep_vals_list]
-    if '1probe' in sep_name_list:
-        split_1probe = True
-    print(f"isi_name_list:\n{isi_name_list}")
-    print(f"isi_vals_list:\n{isi_vals_list}")
-    print(f"sep_vals_list:\n{sep_vals_list}")
-    print(f"sep_name_list:\n{sep_name_list}")
+ra_cd_size_dict = {'ra_size_sep': ra_size_sep, 'ra_CI95_sep': ra_CI95_sep,
+                   'ra_size_deg': ra_size_deg, 'ra_CI95_deg': ra_CI95_deg,
+                   'cd_size_isi': cd_size_isi, 'cd_CI95_isi': cd_CI95_isi,
+                   'cd_size_ms': cd_size_ms, 'cd_size_ms': cd_size_ms}
+print("\nra_cd_size_dict:")
+for k, v in ra_cd_size_dict.items():
+    print(f"{k}: {v}")
 
-    #############################################
+#############################################
 
-    '''look for RA and CD size'''
-    ra_size_sep = ra_size_deg = cd_size_isi = cd_size_ms = None
-    # get participant name to check
-    if participant_name in ['aa', 'bb', 'cc', 'dd', 'ee']:
-        check_name = lookup_p_name(participant_name)
-    else:
-        check_name = participant_name
-    if check_name == 'Kris':
-        check_name = 'Kristian'
-    print(f"\nparticipant_name: {participant_name}, check_name (): {check_name}")
+all_df_path = os.path.join(exp_path, 'MASTER_exp_all_thr.csv')
+exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
+err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
 
-    # get RA size
-    ra_size_df = pd.read_csv(r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp3_Ricco_all\RA_size_df.csv")
-    print(f"ra_size_df:\n{ra_size_df}")
-    ra_names_list = ra_size_df['participant'].to_list()
-    # print(f"ra_names_list:\n{ra_names_list}")
-    if check_name in ra_names_list:
-        ra_size_sep = ra_size_df.loc[ra_size_df['participant'] == check_name, 'separation'].values[0]
-        ra_size_deg = ra_size_df.loc[ra_size_df['participant'] == check_name, 'degrees'].values[0]
-
-    # get cd size
-    cd_size_df = pd.read_csv(r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp2_Bloch_NM_v5\CD_size_df.csv")
-    print(f"cd_size_df:\n{cd_size_df}")
-    cd_names_list = cd_size_df['participant'].to_list()
-    # if check_name == 'Kristian':
-    #     check_name = 'Kris'
-
-    if check_name in cd_names_list:
-        cd_size_isi = cd_size_df.loc[cd_size_df['participant'] == check_name, 'isi'].values[0]
-        cd_size_ms = cd_size_df.loc[cd_size_df['participant'] == check_name, 'ms'].values[0]
-
-    ra_cd_size_dict = {'ra_size_sep': ra_size_sep, 'ra_size_deg': ra_size_deg,
-                       'cd_size_isi': cd_size_isi, 'cd_size_ms': cd_size_ms}
-    print("\nra_cd_size_dict:")
-    for k, v in ra_cd_size_dict.items():
-        print(f"{k}: {v}")
-
-    if participant_name == 'cc':
-        ra_cd_size_dict = None
-    #############################################
+# # todo: delete this other than for combined_sep45_exp1
+keep_sep = [0, 1, 2, 3, 4, 5, 6, 18, 20]
+all_df = pd.read_csv(all_df_path)
+all_df = all_df[all_df['separation'].isin(keep_sep)]
+all_df.to_csv(all_df_path, index=False)
+ave_df = pd.read_csv(exp_ave_path)
+ave_df = ave_df[ave_df['separation'].isin(keep_sep)]
+ave_df.to_csv(exp_ave_path, index=False)
+err_df = pd.read_csv(err_path)
+err_df = err_df[err_df['separation'].isin(keep_sep)]
+err_df.to_csv(err_path, index=False)
 
 
-    make_average_plots(all_df_path=all_df_path,
-                       ave_df_path=p_ave_path,
-                       error_bars_path=err_path,
-                       thr_col='newLum',
-                       error_type='SE',
-                       n_trimmed=trim_n,
-                       ave_over_n=len(run_folder_names),
-                       split_1probe=split_1probe,
-                       # isi_name_list=isi_name_list,
-                       # sep_vals_list=sep_vals_list,
-                       # sep_name_list=sep_name_list,
-                       exp_ave=participant_name,  # participant ave, not exp ave
-                       ra_cd_size_dict=ra_cd_size_dict,
-                       heatmap_annot_fmt='.0f',  # use '.3g' for 3 significant figures, '.2f' for 2dp, '.0f' for int.
-                       show_plots=True, verbose=True)
-    '''end of participant analysis'''
+ave_DfC_df, error_DfC_df = make_diff_from_conc_df(all_df_path, exp_path, n_trimmed=2, exp_ave=True)
+print(f"ave_DfC_df:\n{ave_DfC_df}")
+print(f"error_DfC_df:\n{error_DfC_df}")
+# get ISI and sep values for whole experiment (not just last participant)
+exp_ave_df = pd.read_csv(exp_ave_path)
+print(f"exp_ave_df:\n{exp_ave_df}")
 
-# '''experiment level analysis.  If the participant data has already been analysed, just comment out all the stuff above and run from here.'''
-# print(f'exp_path: {exp_path}')
-# print('\nget exp_average_data')
-# print(f'trim_list: {trim_list}')
-#
-# # participant_list = ['aa', 'bb', 'cc', 'dd', 'ee', 'Nick']
-# # trim_list = [2, 2, 2, 2, 2, 2]
-# # participant_list = ['Kristian', 'Nick', 'Simon', 'Tony', 'Kim']
-# # trim_list = [2, 2, 2, 2, 2]  # , 2, None]
-# # lum_col = 'probeLum'
-#
-# # e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
-# #                    error_type='SE', n_trimmed=trim_list, verbose=True)
-#
-# #############################################
-#
-# '''look for RA and CD size, with error bar data'''
-# ra_size_sep = ra_size_deg = cd_size_isi = cd_size_ms = None
-#
-#
-# # get RA size
-# ra_size_df = pd.read_csv(r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp3_Ricco_all\RA_size_df.csv")
-# print(f"ra_size_df:\n{ra_size_df}")
-# ra_names_list = ra_size_df['participant'].to_list()
-# # print(f"ra_names_list:\n{ra_names_list}")
-#
-# # get mean and SE/2 (half SE or error bars)
-# if 'exp_ave' in ra_names_list:
-#     ra_size_sep = ra_size_df.loc[ra_size_df['participant'] == 'exp_ave', 'separation'].values[0]
-#     ra_CI95_sep = ra_size_df.loc[ra_size_df['participant'] == 'CI95', 'separation'].values[0]
-#     ra_size_deg = ra_size_df.loc[ra_size_df['participant'] == 'exp_ave', 'degrees'].values[0]
-#     ra_CI95_deg = ra_size_df.loc[ra_size_df['participant'] == 'CI95', 'degrees'].values[0]
-#
-# print(f"ra_size_sep: {ra_size_sep}, ra_CI95_sep: {ra_CI95_sep}\n"
-#       f"error bars from: {ra_size_sep - ra_CI95_sep} to {ra_size_sep + ra_CI95_sep}")
-#
-# # get cd size
-# cd_size_df = pd.read_csv(r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp2_Bloch_NM_v5\CD_size_df.csv")
-# print(f"cd_size_df:\n{cd_size_df}")
-# cd_names_list = cd_size_df['participant'].to_list()
-#
-# if 'exp_ave' in cd_names_list:
-#     cd_size_isi = cd_size_df.loc[cd_size_df['participant'] == 'exp_ave', 'isi'].values[0]
-#     cd_CI95_isi = cd_size_df.loc[cd_size_df['participant'] == 'CI95', 'isi'].values[0]
-#     cd_ave_ms = cd_size_df.loc[cd_size_df['participant'] == 'exp_ave', 'ms'].values[0]
-#     cd_size_ms = cd_size_df.loc[cd_size_df['participant'] == 'CI95', 'ms'].values[0]
-#
-# print(f"cd_size_isi: {cd_size_isi}, cd_CI95_isi: {cd_CI95_isi}\n"
-#       f"error bars from: {cd_size_isi - cd_CI95_isi} to {cd_size_isi + cd_CI95_isi}")
-#
-# ra_cd_size_dict = {'ra_size_sep': ra_size_sep, 'ra_CI95_sep': ra_CI95_sep,
-#                    'ra_size_deg': ra_size_deg, 'ra_CI95_deg': ra_CI95_deg,
-#                    'cd_size_isi': cd_size_isi, 'cd_CI95_isi': cd_CI95_isi,
-#                    'cd_size_ms': cd_size_ms, 'cd_size_ms': cd_size_ms}
-# print("\nra_cd_size_dict:")
-# for k, v in ra_cd_size_dict.items():
-#     print(f"{k}: {v}")
-#
-# #############################################
-#
-# all_df_path = os.path.join(exp_path, 'MASTER_exp_all_thr.csv')
-# exp_ave_path = os.path.join(exp_path, 'MASTER_exp_ave_thr.csv')
-# err_path = os.path.join(exp_path, 'MASTER_ave_thr_error_SE.csv')
-#
-# # # todo: delete this
-# # keep_sep = [0, 1, 2, 3, 4, 5, 6, 18, 20]
-# # all_df = pd.read_csv(all_df_path)
-# # all_df = all_df[all_df['separation'].isin(keep_sep)]
-# # all_df.to_csv(all_df_path, index=False)
-# # ave_df = pd.read_csv(exp_ave_path)
-# # ave_df = ave_df[ave_df['separation'].isin(keep_sep)]
-# # ave_df.to_csv(exp_ave_path, index=False)
-# # err_df = pd.read_csv(err_path)
-# # err_df = err_df[err_df['separation'].isin(keep_sep)]
-# # err_df.to_csv(err_path, index=False)
-#
-#
-# ave_DfC_df, error_DfC_df = make_diff_from_conc_df(all_df_path, exp_path, n_trimmed=2, exp_ave=True)
-# print(f"ave_DfC_df:\n{ave_DfC_df}")
-# print(f"error_DfC_df:\n{error_DfC_df}")
-# # get ISI and sep values for whole experiment (not just last participant)
-# exp_ave_df = pd.read_csv(exp_ave_path)
-# print(f"exp_ave_df:\n{exp_ave_df}")
-#
-# isi_vals_list = sorted([int(i[4:]) for i in list(exp_ave_df.columns)[1:]])
-# # isi_vals_list = [-1, 0, 2, 4, 6, 9, 12, 24]
-# isi_name_list = [f"Conc" if i == -1 else f"ISI {i}" for i in isi_vals_list]
-#
-# sep_vals_list = list(exp_ave_df['separation'])
-# sep_name_list = [f"1probe" if i == 20 else i for i in sep_vals_list]
-# print(f"isi_name_list:\n{isi_name_list}")
-# print(f"isi_vals_list:\n{isi_vals_list}")
-# print(f"sep_vals_list:\n{sep_vals_list}")
-# print(f"sep_name_list:\n{sep_name_list}")
-#
-# make_average_plots(all_df_path=all_df_path,
-#                    ave_df_path=exp_ave_path,
-#                    error_bars_path=err_path,
-#                    error_type='SE',
-#                    ave_over_n=len(participant_list),
-#                    # n_trimmed=2,
-#                    n_trimmed=trim_list,
-#                    split_1probe=split_1probe,
-#                    # isi_name_list=isi_name_list,
-#                    # sep_vals_list=sep_vals_list,
-#                    # sep_name_list=sep_name_list,
-#                    exp_ave=True,  # participant ave, not exp ave
-#                    ra_cd_size_dict=ra_cd_size_dict,
-#                    heatmap_annot_fmt='.0f',  # use '.3g' for 3 significant figures, '.2f' for 2dp, '.0f' for int.
-#                    show_plots=True, verbose=True)
+isi_vals_list = sorted([int(i[4:]) for i in list(exp_ave_df.columns)[1:]])
+# isi_vals_list = [-1, 0, 2, 4, 6, 9, 12, 24]
+isi_name_list = [f"Conc" if i == -1 else f"ISI {i}" for i in isi_vals_list]
+
+sep_vals_list = list(exp_ave_df['separation'])
+sep_name_list = [f"1probe" if i == 20 else i for i in sep_vals_list]
+print(f"isi_name_list:\n{isi_name_list}")
+print(f"isi_vals_list:\n{isi_vals_list}")
+print(f"sep_vals_list:\n{sep_vals_list}")
+print(f"sep_name_list:\n{sep_name_list}")
+
+make_average_plots(all_df_path=all_df_path,
+                   ave_df_path=exp_ave_path,
+                   error_bars_path=err_path,
+                   error_type='SE',
+                   ave_over_n=len(participant_list),
+                   # n_trimmed=2,
+                   n_trimmed=n_trimmed,
+                   split_1probe=split_1probe,
+                   # isi_name_list=isi_name_list,
+                   # sep_vals_list=sep_vals_list,
+                   # sep_name_list=sep_name_list,
+                   exp_ave=True,  # participant ave, not exp ave
+                   ra_cd_size_dict=ra_cd_size_dict,
+                   heatmap_annot_fmt='.0f',  # use '.3g' for 3 significant figures, '.2f' for 2dp, '.0f' for int.
+                   show_plots=True, verbose=True)
 
 print('\nexp1a_analysis_pipe finished\n')

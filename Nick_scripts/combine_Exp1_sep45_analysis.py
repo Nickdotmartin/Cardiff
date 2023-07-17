@@ -22,10 +22,11 @@ from python_tools import which_path, running_on_laptop, switch_path
 project_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff"
 combined_dir_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\combined_exp1_sep45"
 
-convert_dict = {'Simon': {'exp1_p_name': 'bb', 'sep45_p_name': 'Simon', 'sep45_exp': 'EXP1_sep4_5'},
-                'Nick': {'exp1_p_name': 'Nick', 'sep45_p_name': 'Nick', 'sep45_exp': 'EXP1_sep4_5'},
-                'Kim': {'exp1_p_name': 'ee', 'sep45_p_name': 'Kim', 'sep45_exp': 'Exp1_Jan23_sep45'},
-                # 'Tony': {'exp1_p_name': 'aa', 'sep45_p_name': 'Tony', 'sep45_exp': 'Exp1_Jan23_sep45'},
+convert_dict = {
+                # 'Simon': {'exp1_p_name': 'bb', 'sep45_p_name': 'Simon', 'sep45_exp': 'EXP1_sep4_5'},
+                # 'Nick': {'exp1_p_name': 'Nick', 'sep45_p_name': 'Nick', 'sep45_exp': 'EXP1_sep4_5'},
+                # 'Kim': {'exp1_p_name': 'ee', 'sep45_p_name': 'Kim', 'sep45_exp': 'Exp1_Jan23_sep45'},
+                'Tony': {'exp1_p_name': 'aa', 'sep45_p_name': 'Tony', 'sep45_exp': 'Exp1_Jan23_sep45'},
                 # 'Kristian': {'exp1_p_name': 'dd', 'sep45_p_name': 'Kristian', 'sep45_exp': 'Exp1_Jan23_sep45'}
                 }
 
