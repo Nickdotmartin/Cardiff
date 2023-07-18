@@ -3366,6 +3366,21 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         print(f'sep_idx_list: {sep_idx_list}')
         print(f'n_trimmed: {n_trimmed}')
 
+    # todo: if '1Probe' in sep_name_list, calculate mean_1Probe_val from all_df
+    # get the mean of all thresholds where 'separation' == 20
+
+    # print(f"mean_1Probe_val: {mean_1Probe_val}")
+
+
+
+    # todo: if 18 in sep_name_list, extract proba_sum_val
+
+    # print(f"proba_sum_val: {proba_sum_val}")
+
+
+    # add option to add horizontal line for mean_1Probe_val and proba_sum_val.
+
+
     if ra_cd_size_dict:
         # associate RA_size_sep with sep_idx_list number to draw line at correct point of axis.
         ra_size_sep = ra_cd_size_dict['ra_size_sep']

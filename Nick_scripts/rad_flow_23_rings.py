@@ -370,13 +370,6 @@ probe_n_pixels = 5  # 7
 probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
              (1, -2), (-1, -2), (-1, -1), (0, -1)]
 
-# todo: get rid of all this 7 pixel stuff
-# if probe_n_pixels == 7:
-#     # this one looks back-to-front as the extra bits have turned the 'm's into 'w's,
-#     # so probes are rotated 180 degrees compared to regular probes.
-#     probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, 2), (0, 2), (0, 1),
-#                  (-1, 1), (-1, 0), (-2, 0), (-2, -2), (-1, -2), (-1, -1), (0, -1)]
-
 probe_size = 1
 probe1 = visual.ShapeStim(win, vertices=probeVert, fillColor='red', colorSpace=this_colourSpace,
                           lineWidth=0, opacity=1, size=probe_size, interpolate=False)
@@ -446,13 +439,7 @@ elif mask_type == '2_spokes':
 
     spokes_mask = visual.ShapeStim(win, vertices=vertices, colorSpace=this_colourSpace,
                                    fillColor=this_bgColour, lineColor=this_bgColour, lineWidth=0)
-    # add spokes_mask as a mask on a gratingStim so that it blends the edges of the mask with the background
-    # spokes_blended_mask = visual.GratingStim(win=win, mask=spokes_mask, size=(widthPix, heightPix),
-    #                                          colorSpace=this_colourSpace, color=this_bgColour,
-    #                                          units='pix', tex=None, pos=[0, 0])
-    # spokes_blended_mask = visual.GratingStim(win=win, mask=spokes_mask, size=(1, 1),
-    #                                          colorSpace=this_colourSpace, color=this_bgColour,
-    #                                          tex=None, units='pix', pos=[0, 0])
+
     probe_mask_list = [spokes_mask]
 
 
@@ -468,13 +455,6 @@ if verbose:
 
 
 # flow_dots
-# if bg_speed_cond == 'Normal':
-#     flow_speed = 0.2
-# elif bg_speed_cond == 'Half-speed':
-#     flow_speed = 0.1
-# else:
-#     raise ValueError(f'background speed should be selected from drop down menu: Normal or Half-speed')
-
 # the flow speed on the OLED appears half the speed of the 240Hz monitor because the monitor is 120Hz.
 # doubling it on the OLED should rectify this
 flow_speed = 0.2
@@ -486,9 +466,8 @@ dot_array_width = 10000  # original script used 5000
 minDist = 0.5  # depth values
 maxDist = 5  # depth values
 
-# values for rings
 
-# ring_array_width = widthPix / 2
+# values for rings
 # max_radius = calculate_maximum_radius_including_corners((widthPix, heightPix))
 max_radius = heightPix / 2  # with edge_mask on, there is no need to expand to full screen size
 
@@ -498,17 +477,10 @@ OLED would be (int(79.7/10) + 5 for my laptop = 13.'''
 n_rings = (int(monitorwidth / 10) + 5) * 2
 print(f"monitorwidth: {monitorwidth}")
 print(f"monitorwidth / 100: {monitorwidth / 10}")
-
-# ring_depth_min = 0.5
-# ring_max_depth = 5
-# ring_flow_speed = .05
-# ring_z_value = 21
 # todo: scale ring_line_width and motion_speed with monitor size and or view_dist.
 motion_speed = 0.1
 ring_line_width = 25
 min_radius = int(ring_line_width/2) + 2  # fixation has radius of 2, so at ring_line_width/2, the ring will touch fixation.
-
-
 
 # ring_radii_array are exponentially spaced values between 0 and max_radius (e.g., more dots near centre)
 ring_radii_array = np.geomspace(start=min_radius, stop=max_radius, num=n_rings)
@@ -806,24 +778,6 @@ for step in range(n_trials_per_stair):
             y_flow = y / z
             # print(f"x_flow: {x_flow}, y_flow: {y_flow}")
 
-            # plot the distribution of x_flow
-            # plt.hist(x_flow, bins=100)
-            # plt.show()
-
-            # # ring_radii_array are defined above with other ring variables
-            # # ring_radii_array are exponentially spaced values between 0 and max_radius (e.g., more dots near centre)
-            # ring_radii_array = np.geomspace(start=10, stop=max_radius, num=n_rings)
-            # print(f"ring_radii_array:\n{ring_radii_array}")
-
-            # # # this is the depth variable which is used to define their speed relative to their radius
-            # # ring_z_array = np.sort(np.random.rand(n_rings) * (ring_max_depth - ring_depth_min) + ring_depth_min)
-            #
-            # # ring_z_array as a constant value defined above by ring_z_value
-            # ring_z_array = np.full(n_rings, ring_z_value)
-            #
-            # ring_flow = ring_radii_array / ring_z_array
-            # print(f"ring_radii_array:\n{ring_radii_array}\nring_z_array:\n{ring_z_array}\nring_flow: {ring_flow}")
-
 
             # shift probes by separation
             '''Both probes should be equally spaced around the meridian point.
@@ -1064,9 +1018,6 @@ for step in range(n_trials_per_stair):
 
                 if frameN == t_probe_2 + 1:
 
-                    # print(f"\nend...ring_z_array:\n{ring_z_array}\nring_flow: {ring_flow}")
-                    # print(f"\nend...ring_radii_array:\n{ring_radii_array}")
-
                     if record_fr_durs:
                         win.recordFrameIntervals = False
 
@@ -1105,13 +1056,9 @@ for step in range(n_trials_per_stair):
                             flow_dots.xys = np.array([x_flow, y_flow]).transpose()
                             flow_dots.draw()
                         elif background == 'flow_rings':
-                            # ring_z_array = ring_z_array + ring_flow_speed * flow_dir
-                            # ring_z_array = wrap_depth_vals(ring_z_array, ring_depth_min, ring_max_depth)
-                            # ring_flow = ring_radii_array / ring_z_array
                             ring_radii_array = get_next_radii(ring_radii_array, motion_speed,
                                                               min_radius, max_radius, expanding=exp_rings)
                             for idx, ring in enumerate(ring_list):
-                                # ring.radius = ring_flow[idx]
                                 ring.radius = ring_radii_array[idx]
                                 ring.draw()
 
@@ -1136,13 +1083,9 @@ for step in range(n_trials_per_stair):
                             flow_dots.xys = np.array([x_flow, y_flow]).transpose()
                             flow_dots.draw()
                         elif background == 'flow_rings':
-                            # ring_z_array = ring_z_array + ring_flow_speed * flow_dir
-                            # ring_z_array = wrap_depth_vals(ring_z_array, ring_depth_min, ring_max_depth)
-                            # ring_flow = ring_radii_array / ring_z_array
                             ring_radii_array = get_next_radii(ring_radii_array, motion_speed,
                                                               min_radius, max_radius, expanding=exp_rings)
                             for idx, ring in enumerate(ring_list):
-                                # ring.radius = ring_flow[idx]
                                 ring.radius = ring_radii_array[idx]
                                 ring.draw()
                             
@@ -1158,7 +1101,6 @@ for step in range(n_trials_per_stair):
                         if sep <= 18:  # don't draw 2nd probe in 1probe cond (sep==99)
                             probe2.draw()
 
-
                 # ISI
                 elif t_ISI >= frameN > t_probe_1:
                     if background != None:
@@ -1171,13 +1113,9 @@ for step in range(n_trials_per_stair):
                             flow_dots.xys = np.array([x_flow, y_flow]).transpose()
                             flow_dots.draw()
                         elif background == 'flow_rings':
-                            # ring_z_array = ring_z_array + ring_flow_speed * flow_dir
-                            # ring_z_array = wrap_depth_vals(ring_z_array, ring_depth_min, ring_max_depth)
-                            # ring_flow = ring_radii_array / ring_z_array
                             ring_radii_array = get_next_radii(ring_radii_array, motion_speed,
                                                               min_radius, max_radius, expanding=exp_rings)
                             for idx, ring in enumerate(ring_list):
-                                # ring.radius = ring_flow[idx]
                                 ring.radius = ring_radii_array[idx]
                                 ring.draw()
                             
@@ -1200,13 +1138,9 @@ for step in range(n_trials_per_stair):
                             flow_dots.xys = np.array([x_flow, y_flow]).transpose()
                             flow_dots.draw()
                         elif background == 'flow_rings':
-                            # ring_z_array = ring_z_array + ring_flow_speed * flow_dir
-                            # ring_z_array = wrap_depth_vals(ring_z_array, ring_depth_min, ring_max_depth)
-                            # ring_flow = ring_radii_array / ring_z_array
                             ring_radii_array = get_next_radii(ring_radii_array, motion_speed,
                                                               min_radius, max_radius, expanding=exp_rings)
                             for idx, ring in enumerate(ring_list):
-                                # ring.radius = ring_flow[idx]
                                 ring.radius = ring_radii_array[idx]
                                 ring.draw()
                             
