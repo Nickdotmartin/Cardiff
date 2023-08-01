@@ -191,13 +191,15 @@ monitor_pixel_size_dict = {
                 'dimensions_mm': [304.1, 191.9],
                 'dimensions_pix': [2560, 1600]},
 
-    'Iiyama_2_18': {'model_name': '',  # todo: get model name
-                'dimensions_mm': [],  # todo: get screen dimensions
-                'dimensions_pix': [1920, 1080]},
+    # 'Iiyama_2_18': {'model_name': '',  # todo: get model name
+    #             'dimensions_mm': [],  # todo: get screen dimensions
+    #             'dimensions_pix': [1920, 1080]},
 
 }
 
-
+def get_mon_size_dict():
+    '''Returns the saved monitor size dictionary'''
+    return monitor_pixel_size_dict
 
 def mm_to_degrees(pixel_size_mm, distance_mm):
 

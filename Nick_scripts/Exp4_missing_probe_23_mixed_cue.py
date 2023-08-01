@@ -41,7 +41,7 @@ _thisDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_thisDir)
 
 # Store info about the experiment session
-expName = 'Exp4_missing_probe_23_mixed'
+expName = 'Exp4_missing_probe_23_mixed_cue'
 expInfo = {'1. Participant': 'Nick_test_13072023',
            '2. run_number': '1',
            '3. Probe duration in frames': [2, 50, 100],
@@ -1117,6 +1117,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('frame_tolerance_prop', frame_tolerance_prop)
         thisExp.addData('expName', expName)
         thisExp.addData('exp_type', exp_type)
+        thisExp.addData('cue_trials', cue_trials)
         thisExp.addData('psychopy_version', psychopy_version)
         thisExp.addData('date', expInfo['date'])
         thisExp.addData('time', expInfo['time'])

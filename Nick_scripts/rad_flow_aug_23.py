@@ -10,9 +10,8 @@ psychopy.useVersion('2021.2.2')  # works
 from psychopy import gui, visual, core, data, event, monitors
 
 import logging
-import os
-import copy
-import random
+from os import path, chdir
+from copy import copy
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
@@ -51,22 +50,6 @@ def wrap_depth_vals(depth_arr, min_depth, max_depth):
     morethanmax = (depth_arr > max_depth)
     depth_arr[morethanmax] -= depth_adj
     return depth_arr
-
-
-def calculate_maximum_radius_including_corners(monitor_size):
-    """Calculates the maximum radius of a ring that covers the whole screen including the corners.
-
-    Args:
-    monitor_size: The size of the monitor in the format (w, h).
-
-    Returns:
-    The maximum radius of the ring.
-    """
-
-    w, h = monitor_size
-    maximum_radius = np.sqrt(np.square(w) + np.square(h)) / 2
-
-    return maximum_radius
 
 
 
@@ -117,24 +100,21 @@ def plot_trial_timing_errors(stim_err_ms, cond_list, fr_err_ms, save_fig_path,
     :return: figure
     """
 
-    # check that stim_err_ms and cond_list are the same length
+    # check that stim_err_ms and cond_list are the same length (so all dots have a colour)
     if len(stim_err_ms) != len(cond_list):
         raise ValueError(f"stim_err_ms ({len(stim_err_ms)}) and cond_list ({len(cond_list)}) are not the same length")
 
-    # get trial numbers for x-axis
-    trial_nums = list(range(1, len(stim_err_ms) + 1))
-
     # get unique conditions for selecting colours
     unique_conds = list(set(cond_list))
-    print(f"unique_conds: {unique_conds}")
 
     # select colour for each condition from tab20, using order shown colours_in_order
     colours_in_order = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19]
     selected_colours = colours_in_order[:len(unique_conds)]
-    print(f"selected_colours: {selected_colours}")
     my_colours = iter([plt.cm.tab20(i) for i in selected_colours])
     colour_dict = {k: v for (k, v) in zip(unique_conds, my_colours)}
 
+    # get trial numbers for x-axis
+    trial_nums = list(range(1, len(stim_err_ms) + 1))
 
     # plot stim_err_ms_trials as a line plot
     plt.plot(trial_nums, stim_err_ms, c='lightgrey')
@@ -142,15 +122,28 @@ def plot_trial_timing_errors(stim_err_ms, cond_list, fr_err_ms, save_fig_path,
     # plot stim_err_ms_trials as a scatter plot, coloured for each condition
     plt.scatter(trial_nums, stim_err_ms, c=list(map(colour_dict.get, cond_list)))
 
-    # add legend with colours per condition
+    # get legend with colours per condition
     legend_handles_list = []
     for this_cond in unique_conds:
         leg_handle = mlines.Line2D([], [], color=colour_dict[this_cond], label=this_cond,
-                                   marker='.', linewidth=.5, markersize=4)
+                                   marker='o', linewidth=0, markersize=6)
         legend_handles_list.append(leg_handle)
+
+    # horizontal line showing threshold for timing error
+    plt.axhline(y=fr_err_ms, color='orange', linestyle='--')
+    legend_handles_list.append(mlines.Line2D([], [], color='orange', label='error threshold',
+                                             linestyle='dashed'))
+
+    # add line for double expected length if values exceed this.
+    if max(stim_err_ms) > expected_fr_ms:
+        plt.axhline(y=expected_fr_ms, color='r', linestyle='-.')
+        legend_handles_list.append(mlines.Line2D([], [], color='r', label='frame duration',
+                                                 linestyle='dashed'))
+
+    # plot legend
     plt.legend(handles=legend_handles_list, fontsize=6, title='conditions', framealpha=.5)
 
-    plt.axhline(y=fr_err_ms, color='r', linestyle='--')
+    # decorate plot
     plt.xticks(trial_nums)
     plt.ylabel('Trial error (ms)')
     plt.xlabel('Trial number')
@@ -161,9 +154,9 @@ def plot_trial_timing_errors(stim_err_ms, cond_list, fr_err_ms, save_fig_path,
     # make title text for fig
     title_text = f'{n_bad}/{trial_nums[-1]} trials with bad timing'
     if monitor_name is not None and fps is not None:
-        title_text = f'{monitor_name} {fps}Hz. ' + title_text
+        title_text = title_text + f'{monitor_name} {fps}Hz. '
     if frame_tolerance_prop is not None and fr_err_ms is not None:
-        title_text = title_text + f'\n(dashed line is frame_tolerance_prop of {frame_tolerance_prop * 100}%={round(fr_err_ms, 2)}ms))'
+        title_text = title_text + f'\n(orange dashed line is error threshold of {frame_tolerance_prop * 100}%={round(fr_err_ms, 2)}ms))'
     if n_frames_per_trial is not None:
         title_text = title_text + f'\n1 trial = {n_frames_per_trial} frames'
     plt.title(title_text)
@@ -172,11 +165,14 @@ def plot_trial_timing_errors(stim_err_ms, cond_list, fr_err_ms, save_fig_path,
 
     plt.savefig(save_fig_path)
 
+    # plt.close()
+
     return plt.gcf()
 
+
 # Ensure that relative paths start from the same directory as this script
-_thisDir = os.path.dirname(os.path.abspath(__file__))
-os.chdir(_thisDir)
+_thisDir = path.dirname(path.abspath(__file__))
+chdir(_thisDir)
 
 # todo: uses ASUS_2_13_240Hz for replicating old results, but then use asus_cal for testing.
 
@@ -303,15 +299,15 @@ if verbose:
 
 # save each participant's files into separate dir for each ISI
 isi_dir = f'ISI_{ISI}'
-# save_dir = os.path.join(_thisDir, expName, participant_name,
+# save_dir = path.join(_thisDir, expName, participant_name,
 #                         f'{participant_name}_{run_number}', isi_dir)
-save_dir = os.path.join(_thisDir, expName, participant_name, f'_bg{prelim_bg_flow_ms}',
+save_dir = path.join(_thisDir, expName, participant_name, f'_bg{prelim_bg_flow_ms}',
                         f'{participant_name}_{run_number}', isi_dir)
 
 
 # files are labelled as '_incomplete' unless entire script runs.
 incomplete_output_filename = f'{participant_name}_{run_number}_incomplete'
-save_output_as = os.path.join(save_dir, incomplete_output_filename)
+save_output_as = path.join(save_dir, incomplete_output_filename)
 
 
 # Experiment Handler
@@ -1443,72 +1439,85 @@ for step in range(n_trials_per_stair):
 
 print("\nend of experiment loop, saving data\n")
 # now exp is completed, save as '_output' rather than '_incomplete'
-thisExp.dataFileName = os.path.join(save_dir, f'{participant_name}_{run_number}_output')
+thisExp.dataFileName = path.join(save_dir, f'{participant_name}_{run_number}_output')
 thisExp.close()
 
 # todo: convert plot_frame_intervals into a function.
 # plot frame intervals
-if record_fr_durs:
+# if record_fr_durs:
+#
+#     # flatten list of lists (fr_int_per_trial) to get len
+#     all_fr_intervals = [val for sublist in fr_int_per_trial for val in sublist]
+#     total_recorded_fr = len(all_fr_intervals)
+#
+#     print(f"{dropped_fr_trial_counter}/{total_n_trials} trials with bad timing "
+#           f"(expected: {round(expected_fr_ms, 2)}ms, "
+#           f"frame_tolerance_ms: +/- {round(frame_tolerance_ms, 2)})")
+#
+#     '''set colours for lines on plot.'''
+#
+#     from exp1a_psignifit_analysis import fig_colours
+#     my_colours = fig_colours(n_stairs, alternative_colours=False)
+#
+#     # associate colours with conditions
+#     colour_dict = {k: v for (k, v) in zip(stair_names_list, my_colours)}
+#     # make list of colours based on order of conditions
+#     cond_colour_list = [colour_dict[i] for i in cond_list]
+#
+#     # todo: delete line below
+#     print(f"fr_counter_per_trial: {fr_counter_per_trial}")
+#
+#
+#     # plot frame intervals across the experiment with discontinuous line, coloured for each cond
+#     for trial_x_vals, trial_fr_durs, colour in zip(fr_counter_per_trial, fr_int_per_trial, cond_colour_list):
+#         plt.plot(trial_x_vals, trial_fr_durs, color=colour)
+#
+#     # add legend with colours per condition
+#     legend_handles_list = []
+#     for cond in stair_names_list:
+#         leg_handle = mlines.Line2D([], [], color=colour_dict[cond], label=cond,
+#                                    marker='.', linewidth=.5, markersize=4)
+#         legend_handles_list.append(leg_handle)
+#
+#     plt.legend(handles=legend_handles_list, fontsize=6, title='conditions', framealpha=.5)
+#
+#     # add vertical lines to signify trials, shifted back so trials fall between lines
+#     fr_v_lines = [i - .5 for i in exp_n_fr_recorded_list]
+#     for trial_line in fr_v_lines:
+#         plt.axvline(x=trial_line, color='silver', linestyle='dashed', zorder=0)
+#
+#     # add horizontal lines: green = expected frame duration, red = frame error tolerance
+#     plt.axhline(y=expected_fr_sec, color='grey', linestyle='dotted', alpha=.5)
+#     plt.axhline(y=max_fr_dur_sec, color='red', linestyle='dotted', alpha=.5)
+#     plt.axhline(y=min_fr_dur_sec, color='red', linestyle='dotted', alpha=.5)
+#
+#     # shade trials that were repeated: red = bad timing, orange = user repeat
+#     for loc_pair in dropped_fr_trial_x_locs:
+#         print(loc_pair)
+#         x0, x1 = loc_pair[0] - .5, loc_pair[1] - .5
+#         plt.axvspan(x0, x1, color='red', alpha=0.15, zorder=0, linewidth=None)
+#
+#     plt.title(f"{monitor_name}, {fps}Hz, {expInfo['date']}\n{dropped_fr_trial_counter}/{total_n_trials} trials."
+#               f"dropped fr (expected: {round(expected_fr_ms, 2)}ms, "
+#               f"frame_tolerance_ms: +/- {round(frame_tolerance_ms, 2)})")
+#     fig_name = f'{participant_name}_{run_number}_frames.png'
+#     print(f"fig_name: {fig_name}")
+#     plt.savefig(path.join(save_dir, fig_name))
+#     plt.close()
 
-    # flatten list of lists (fr_int_per_trial) to get len
-    all_fr_intervals = [val for sublist in fr_int_per_trial for val in sublist]
-    total_recorded_fr = len(all_fr_intervals)
 
-    print(f"{dropped_fr_trial_counter}/{total_n_trials} trials with bad timing "
-          f"(expected: {round(expected_fr_ms, 2)}ms, "
-          f"frame_tolerance_ms: +/- {round(frame_tolerance_ms, 2)})")
-
-    '''set colours for lines on plot.'''
-
-    from exp1a_psignifit_analysis import fig_colours
-    my_colours = fig_colours(n_stairs, alternative_colours=False)
-
-    # associate colours with conditions
-    colour_dict = {k: v for (k, v) in zip(stair_names_list, my_colours)}
-    # make list of colours based on order of conditions
-    cond_colour_list = [colour_dict[i] for i in cond_list]
-
-    # todo: delete line below
-    print(f"fr_counter_per_trial: {fr_counter_per_trial}")
-
-
-    # plot frame intervals across the experiment with discontinuous line, coloured for each cond
-    for trial_x_vals, trial_fr_durs, colour in zip(fr_counter_per_trial, fr_int_per_trial, cond_colour_list):
-        plt.plot(trial_x_vals, trial_fr_durs, color=colour)
-
-    # add legend with colours per condition
-    legend_handles_list = []
-    for cond in stair_names_list:
-        leg_handle = mlines.Line2D([], [], color=colour_dict[cond], label=cond,
-                                   marker='.', linewidth=.5, markersize=4)
-        legend_handles_list.append(leg_handle)
-
-    plt.legend(handles=legend_handles_list, fontsize=6, title='conditions', framealpha=.5)
-
-    # add vertical lines to signify trials, shifted back so trials fall between lines
-    fr_v_lines = [i - .5 for i in exp_n_fr_recorded_list]
-    for trial_line in fr_v_lines:
-        plt.axvline(x=trial_line, color='silver', linestyle='dashed', zorder=0)
-
-    # add horizontal lines: green = expected frame duration, red = frame error tolerance
-    plt.axhline(y=expected_fr_sec, color='grey', linestyle='dotted', alpha=.5)
-    plt.axhline(y=max_fr_dur_sec, color='red', linestyle='dotted', alpha=.5)
-    plt.axhline(y=min_fr_dur_sec, color='red', linestyle='dotted', alpha=.5)
-
-    # shade trials that were repeated: red = bad timing, orange = user repeat
-    for loc_pair in dropped_fr_trial_x_locs:
-        print(loc_pair)
-        x0, x1 = loc_pair[0] - .5, loc_pair[1] - .5
-        plt.axvspan(x0, x1, color='red', alpha=0.15, zorder=0, linewidth=None)
-
-    plt.title(f"{monitor_name}, {fps}Hz, {expInfo['date']}\n{dropped_fr_trial_counter}/{total_n_trials} trials."
-              f"dropped fr (expected: {round(expected_fr_ms, 2)}ms, "
-              f"frame_tolerance_ms: +/- {round(frame_tolerance_ms, 2)})")
-    fig_name = f'{participant_name}_{run_number}_frames.png'
-    print(f"fig_name: {fig_name}")
-    plt.savefig(os.path.join(save_dir, fig_name))
-    plt.close()
-
+# todo: this function is for plotting error per trial (p2_stop-p1-start) not frame intervals
+# if record_fr_durs:
+#     # if all values in fr_per_trial are the same, then n_frames_per_trial equals the first value, else raise an error
+#     if all(x == fr_per_trial[0] for x in fr_per_trial):
+#         n_frames_per_trial = fr_per_trial[0]
+#     else:
+#         raise ValueError("not all values in fr_per_trial are the same")
+#     print(f"n_frames_per_trial: {n_frames_per_trial}")
+#
+#     timing_fig = plot_trial_timing_errors(stim_err_ms=stim_err_ms, cond_list=cond_list, fr_err_ms=fr_err_ms,
+#                                           monitor_name=monitor_name, fps=fps, frame_tolerance_prop=frame_tolerance_prop,
+#                                           n_frames_per_trial=n_frames_per_trial, save_fig_path=save_fig_path)
 
 while not event.getKeys():
     # display end of experiment screen
