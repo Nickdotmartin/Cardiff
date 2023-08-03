@@ -32,25 +32,233 @@ Has same colour space and background colour as exp1.
 Updated wrap_depth_vals (WrapPoints) function.  
 '''
 
+# function to get the pixel location and orientation of the probes
+def get_probe_pos_dict(separation, target_jump, corner, dist_from_fix,
+                       probe_size=1, probes_ori='radial', verbose=False):
+    """
+    This function gets the pixel positions of the two probes, given the parameters.
 
-def wrap_depth_vals(depth_arr, min_depth, max_depth):
+    The default probes_ori is 'radial' meaning both probes appear ON the meridian line.
+    A value of 'tangent' means the probes appear either side of the meridian line.
+
+    The mid-point between the two probes is give by (loc_x_loc_y).  The probes should be equally
+    spaced around (loc_x_loc_y) by separation.  e.g., if separation = 4, probe 1 will be
+    shifted 2 pixels away from (loc_x_loc_y) in one direction and probe 2 will be
+    shifted 2 pixels away from (loc_x_loc_y) in the other direction.
+    However, if separation is an odd number, an addition pixel will be added to either probe 1 or probe 2.
+    The first step is to calculate this shift for each probe.
+
+    (loc_x loc_y) is the pixel positions along the meridian line (given by 'corner'),
+    at the correct eccentricity (e.g., distance from fixation, given by 'dist_from_fix').
+    The centre of the screen is 0, 0, so whether these values are positive or negative
+    will depend on the corner the probes are due to appear in.
+    The second step is to get the (loc_x, loc_y) values, which the shift is applied to.
+
+    The probes are rotated according to the corner but should always be facing each other
+    (e.g., orientation differs by 180 degrees).
+
+    Finally. probe 2 is always ofset by probe_size from probe 1,
+    e.g., the 'm' and 'w' shaped probes don't mirror each other, but fit together like a zipper.
+
+    :param separation: spatial separation between probes in pixels.
+    :param target_jump: Whether probe 2 is inward (contracting) or outward (expanding) from probe 1.
+    :param corner: Which corner the probes are in. 0 = top left, 45 = top right, 90 = bottom right, 135 = bottom left.
+                   This will determine whether (loc_x, loc_y) are positive or negative.
+    :param dist_from_fix: Distance in pixels from the centre of the screen along the meridian line.
+    :param probe_size: Gives the ofset of probe 2, even if the probes have been scaled (to test stimuli).
+    :param probes_ori: The relationship between the probes.
+                       Default is 'radial', where both probes appear ON the meridian line.
+                       'tangent' means the probes appear either side of the meridian.
+    :param verbose: Whether to print details to the console.
+
+    :return: A dictionary with the pixel positions and orientation of the two probes,
+             along with the (loc_x, loc_y) values for showing the loc_marker guide (during script testing).
     """
-    function to take an array (depth_arr) and adjust any values below min_depth
-    or above max_depth with +/- (max_depth-min_depth)
-    :param depth_arr: np.random.rand(nDots) array giving depth values for radial_flow dots.
-    :param min_depth: value to set as minimum depth.
-    :param max_depth: value to set as maximum depth.
-    :return: updated depth array.
+
+    # # First calculate the shift of the probes from the meridian line.
+    if separation == 99:  # there is only one probe, which is ON the merrian line
+        p1_shift = p2_shift = 0
+    elif separation % 2 == 0:  # even number
+        p1_shift = p2_shift = (separation * probe_size) // 2
+    else:  # odd number: shift by half sep, then either add 1 or 0 extra pixel to the shift.
+        extra_shifted_pixel = [0, 1]
+        np.random.shuffle(extra_shifted_pixel)
+        p1_shift = (separation * probe_size) // 2 + extra_shifted_pixel[0]
+        p2_shift = (separation * probe_size) // 2 + extra_shifted_pixel[1]
+    if verbose:
+        print(f"p1_shift: {p1_shift}, p2_shift: {p2_shift}")
+
+    # Get position and orientation of probes
+    probe1_ori = 0
+    probe2_ori = 180
+    if corner == 45:  # top right
+        '''in top-right corner, both x and y increase (right and up)'''
+        loc_x = dist_from_fix * 1
+        loc_y = dist_from_fix * 1
+        '''probes_ori' here refers to the relationship between probes (radial or tangent), 
+        whereas probe1_ori refers to rotational angle of probe stimulus'''
+        if probes_ori == 'tangent':
+            if target_jump == 1:  # CW
+                probe1_ori += 180
+                probe2_ori += 180
+                # probe 2 is right and down from probe 1
+                probe1_pos = [loc_x - p1_shift, loc_y + p1_shift]
+                probe2_pos = [loc_x + p2_shift - probe_size, loc_y - p2_shift]
+            elif target_jump == -1:  # ACW
+                probe1_ori += 0
+                probe2_ori += 0
+                # probe 2 is left and up from probe 1
+                probe1_pos = [loc_x + p1_shift, loc_y - p1_shift]
+                probe2_pos = [loc_x - p2_shift + probe_size, loc_y + p2_shift]
+        elif probes_ori == 'radial':
+            if target_jump == 1:  # inward
+                probe1_ori += 270
+                probe2_ori += 270
+                # probe2 is left and down from probe1
+                probe1_pos = [loc_x + p1_shift, loc_y + p1_shift]
+                probe2_pos = [loc_x - p2_shift + probe_size, loc_y - p2_shift]
+            elif target_jump == -1:  # outward
+                probe1_ori += 90
+                probe2_ori += 90
+                # probe2 is right and up from probe1
+                probe1_pos = [loc_x - p1_shift, loc_y - p1_shift]
+                probe2_pos = [loc_x + p2_shift - probe_size, loc_y + p2_shift]
+    elif corner == 135:  # top-left
+        loc_x = dist_from_fix * -1
+        loc_y = dist_from_fix * 1
+        if probes_ori == 'tangent':
+            if target_jump == 1:  # ACW
+                probe1_ori += 90
+                probe2_ori += 90
+                # probe2 is left and down from probe1
+                probe1_pos = [loc_x - p1_shift, loc_y - p1_shift]
+                probe2_pos = [loc_x + p2_shift - probe_size, loc_y + p2_shift]
+            elif target_jump == -1:  # CW
+                probe1_ori += 270
+                probe2_ori += 270
+                # probe2 is right and up from probe1
+                probe1_pos = [loc_x + p1_shift, loc_y + p1_shift]
+                probe2_pos = [loc_x - p2_shift + probe_size, loc_y - p2_shift]
+        elif probes_ori == 'radial':
+            if target_jump == 1:  # inward
+                probe1_ori += 180
+                probe2_ori += 180
+                # probe2 is right and down from probe1
+                probe1_pos = [loc_x - p1_shift, loc_y + p1_shift]
+                probe2_pos = [loc_x + p2_shift - probe_size, loc_y - p2_shift]
+            elif target_jump == -1:  # outward
+                probe1_ori += 0
+                probe2_ori += 0
+                # probe2 is left and up from probe1
+                probe1_pos = [loc_x + p1_shift, loc_y - p1_shift]
+                probe2_pos = [loc_x - p2_shift + probe_size, loc_y + p2_shift]
+    elif corner == 225:  # bottom-left
+        loc_x = dist_from_fix * -1
+        loc_y = dist_from_fix * -1
+        if probes_ori == 'tangent':
+            if target_jump == 1:  # CW
+                probe1_ori += 0
+                probe2_ori += 0
+                # probe2 is left and up from probe1
+                probe1_pos = [loc_x + p1_shift, loc_y - p1_shift]
+                probe2_pos = [loc_x - p2_shift + probe_size, loc_y + p2_shift]
+            elif target_jump == -1:  # ACW
+                probe1_ori += 180
+                probe2_ori += 180
+                # probe2 is right and down from probe1
+                probe1_pos = [loc_x - p1_shift, loc_y + p1_shift]
+                probe2_pos = [loc_x + p2_shift - probe_size, loc_y - p2_shift]
+        elif probes_ori == 'radial':
+            if target_jump == 1:  # inward
+                probe1_ori += 90
+                probe2_ori += 90
+                # probe2 is right and up from probe1
+                probe1_pos = [loc_x - p1_shift, loc_y - p1_shift]
+                probe2_pos = [loc_x + p2_shift - probe_size, loc_y + p2_shift]
+            elif target_jump == -1:  # outward
+                probe1_ori += 270
+                probe2_ori += 270
+                # probe2 is left and down from probe1
+                probe1_pos = [loc_x + p1_shift, loc_y + p1_shift]
+                probe2_pos = [loc_x - p2_shift + probe_size, loc_y - p2_shift]
+    else:
+        corner = 315  # bottom-right
+        loc_x = dist_from_fix * 1
+        loc_y = dist_from_fix * -1
+        if probes_ori == 'tangent':
+            if target_jump == 1:  # ACW
+                probe1_ori += 270
+                probe2_ori += 270
+                # probe2 is right and up from probe1
+                probe1_pos = [loc_x + p1_shift, loc_y + p1_shift]
+                probe2_pos = [loc_x - p2_shift + probe_size, loc_y - p2_shift]
+            elif target_jump == -1:  # CW
+                probe1_ori += 90
+                probe2_ori += 90
+                # probe2 is left and down from probe1
+                probe1_pos = [loc_x - p1_shift, loc_y - p1_shift]
+                probe2_pos = [loc_x + p2_shift - probe_size, loc_y + p2_shift]
+        elif probes_ori == 'radial':
+            if target_jump == 1:  # inward
+                probe1_ori += 0
+                probe2_ori += 0
+                # probe2 is left and up from probe1
+                probe1_pos = [loc_x + p1_shift, loc_y - p1_shift]
+                probe2_pos = [loc_x - p2_shift + probe_size, loc_y + p2_shift]
+            elif target_jump == -1:  # outward
+                probe1_ori += 180
+                probe2_ori += 180
+                # probe2 is right and down from probe1
+                probe1_pos = [loc_x - p1_shift, loc_y + p1_shift]
+                probe2_pos = [loc_x + p2_shift - probe_size, loc_y - p2_shift]
+
+    probe_pos_dict = {'probe1_pos': probe1_pos, 'probe2_pos': probe2_pos,
+                      'probe1_ori': probe1_ori, 'probe2_ori': probe2_ori,
+                      'corner': corner, 'loc_x': loc_x, 'loc_y': loc_y}
+
+    return probe_pos_dict
+
+def new_dots_depth_and_pos(x_array, y_array, depth_array, dots_speed, flow_dir, min_depth, max_depth):
     """
+    This is a function to update flow_dots depth array and get new pixel co-ordinatesusing the original x_array and y_array.
+
+    1a. Update depth_array by adding dots_speed * flow_dir to the current z values.
+    1b. adjust any values below dots_min_depth or above dots_max_depth.
+    2a. Get new x_pos and y_pos co-ordinates values by dividing x_array and y_array by the new depth_array.
+    2b. put the new x_pos and y_pos co-ordinates into an array and transposes it.
+
+    :param x_array: Original x_array positions for the dots (shape = (nDots, 1))
+    :param y_array: Original y_array positions for the dots (shape = (nDots, 1))
+    :param depth_array: array of depth values for the dots (shape = (nDots, 1))
+    :param dots_speed: speed of the dots (float, smaller = slower, larger = faster)
+    :param flow_dir: either 1 (contracting/inward/backwards) or -1 (expanding/outward/forwards)
+    :param dots_min_depth: default is .5, values below this are adjusted to dots_max_depth
+    :param dots_max_depth: default is 5, values above this are adjusted to dots_min_depth
+    :return: new dots_pos_array
+    """
+
+    # # 1. Update z (depth values) # #
+    # Add dots_speed * flow_dir to the current z values.
+    updated_dept_arr = depth_array + dots_speed * flow_dir
+
+    # adjust any depth values below min_depth or above max_depth by depth_adj
     depth_adj = max_depth - min_depth
-    # adjust depth_arr values less than min_depth by adding depth_adj
-    lessthanmin = (depth_arr < min_depth)
-    depth_arr[lessthanmin] += depth_adj
-    # adjust depth_arr values more than max_depth by subtracting depth_adj
-    morethanmax = (depth_arr > max_depth)
-    depth_arr[morethanmax] -= depth_adj
-    return depth_arr
+    # adjust updated_dept_arr values less than min_depth by adding depth_adj
+    lessthanmin = (updated_dept_arr < min_depth)
+    updated_dept_arr[lessthanmin] += depth_adj
+    # adjust updated_dept_arr values more than max_depth by subtracting depth_adj
+    morethanmax = (updated_dept_arr > max_depth)
+    updated_dept_arr[morethanmax] -= depth_adj
+    # print(f"updated_dept_arr (clipped):\n{updated_dept_arr}\n")
 
+    # # 2. Get new pixel co-ordinates for dots using original x_array and y_array and updated_dept_arr # #
+    x_pos = x_array / updated_dept_arr
+    y_pos = y_array / updated_dept_arr
+
+    # puts the new co-ordinates into an array and transposes it, ready to use.
+    dots_pos_array = np.array([x_pos, y_pos]).T
+
+    return updated_dept_arr, dots_pos_array
 
 
 def get_next_radii(current_radii, rings_speed, min_radius, max_radius, expanding=True):
@@ -187,12 +395,11 @@ expInfo = {'1. Participant': 'Nick_test_31072023',
            '7. Vary_fixation': [True, False],
            '8. Record_frame_durs': [True, False],
            '9. Background': ['flow_dots', 'flow_rings', None],
-           # '10. bg_speed_cond': ['Normal', 'Half-speed'],
-           '11. prelim_bg_flow_ms': [200, 350, 200, 70],
-           '12. monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'Samsung',
+           '10. prelim_bg_flow_ms': [200, 350, 200, 70],
+           '11. monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'Samsung',
                                 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18', 'ASUS_2_13_240Hz'],
-           '13. mask_type': ['4_circles', '2_spokes'],
-           '14. verbose': [True, False]
+           '12. mask_type': ['4_circles', '2_spokes'],
+           '13. verbose': [True, False]
            }
 
 # dialogue box
@@ -210,11 +417,10 @@ orientation = expInfo['6. Probe_orientation']
 vary_fixation = eval(expInfo['7. Vary_fixation'])
 record_fr_durs = eval(expInfo['8. Record_frame_durs'])
 background = expInfo['9. Background']
-# bg_speed_cond = expInfo['10. bg_speed_cond']
-prelim_bg_flow_ms = int(expInfo['11. prelim_bg_flow_ms'])
-monitor_name = expInfo['12. monitor_name']
-mask_type = expInfo['13. mask_type']
-verbose = eval(expInfo['14. verbose'])
+prelim_bg_flow_ms = int(expInfo['12. prelim_bg_flow_ms'])
+monitor_name = expInfo['11. monitor_name']
+mask_type = expInfo['12. mask_type']
+verbose = eval(expInfo['13. verbose'])
 
 
 # misc settings
@@ -293,14 +499,9 @@ if verbose:
 
 
 # Experiment handling and saving
-# todo: change this so prelim_bg_flow_ms are different folders within the participant directory.
-# FILENAME: join participant_name with prelim_bg_flow_ms to keep different prelim values separate
-# participant_name = participant_name + f'_bg{prelim_bg_flow_ms}'
-
+# todo: add rings/dot dir to save dir
 # save each participant's files into separate dir for each ISI
 isi_dir = f'ISI_{ISI}'
-# save_dir = path.join(_thisDir, expName, participant_name,
-#                         f'{participant_name}_{run_number}', isi_dir)
 save_dir = path.join(_thisDir, expName, participant_name, f'_bg{prelim_bg_flow_ms}',
                         f'{participant_name}_{run_number}', isi_dir)
 
@@ -540,13 +741,17 @@ if background == 'flow_dots':
     # flow_dots
     # the flow speed on the OLED appears half the speed of the 240Hz monitor because the monitor is 120Hz.
     # doubling it on the OLED should rectify this
-    dots_speed = 0.2
+    dots_speed = 0.2  # 0.2  low values are slow and higher values are faster
     if monitor_name == 'OLED':
         dots_speed = 0.4
     BGspeed = dots_speed
     # todo: do we need to increase the number of dots for OLED?
     nDots = 10000
     dot_array_width = 10000  # original script used 5000
+    # dot_array_width = widthPix / 2  # this seems to work well but they are too bunched up.
+
+    # todo: most of the dots are off screen using this current dots_array_width.
+    #  If we set it to be half of the monitor width, then they are all on screen., but they are bunched in the middle.
     dots_min_depth = 0.5  # depth values
     dots_max_depth = 5  # depth values
 
@@ -558,6 +763,12 @@ if background == 'flow_dots':
 
     x_flow = x / z
     y_flow = y / z
+
+    dots_xys_array = np.array([x_flow, y_flow]).T
+    if verbose:
+        print(f"flow_dots (initial): {np.shape(dots_xys_array)}"
+              f"\n{dots_xys_array}")
+
 
     flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
                                         units='pix', nElements=nDots, sizes=10,
@@ -735,7 +946,7 @@ actual_trials_inc_rpt = 0
 
 # EXPERIMENT
 if verbose:
-    print('\n*** exp loop*** \n\n')
+    print('\n*** exp loop*** \n')
 for step in range(n_trials_per_stair):
     np.random.shuffle(stairs)
     for thisStair in stairs:
@@ -753,17 +964,14 @@ for step in range(n_trials_per_stair):
                       f"stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
 
             # conditions (ISI, congruence)
-            # todo: use multiple assignments here.
-            # ISI = ISI_vals_list[stair_idx]
-            # congruent = cong_vals_list[stair_idx]
-            # cong_name = cong_names_list[stair_idx]
-            ISI, sep = ISI_vals_list[stair_idx], sep_vals_list[stair_idx]
-            congruent, cong_name = cong_vals_list[stair_idx], cong_names_list[stair_idx]
+            ISI = ISI_vals_list[stair_idx]
+            congruent = cong_vals_list[stair_idx]
+            cong_name = cong_names_list[stair_idx]
             if verbose:
                 print(f"ISI: {ISI}, congruent: {congruent} ({cong_name})")
 
             # conditions (sep, sep_deg, neg_sep)
-            # sep = sep_vals_list[stair_idx]
+            sep = sep_vals_list[stair_idx]
             # separation expressed as degrees.
             if -1 < sep < 99:
                 sep_deg = sep * pixel_mm_deg_dict['diag_deg']
@@ -835,6 +1043,9 @@ for step in range(n_trials_per_stair):
 
 
             # flow_dots
+            # todo: should I get new x and y co-ordinates each trial?  If so, uncomment next 2 lines
+            # x = np.random.rand(nDots) * dot_array_width - dot_array_width / 2
+            # y = np.random.rand(nDots) * dot_array_width - dot_array_width / 2
             '''
             x and y
             np.random.rand(nDots) = array of floats (between 0 and 1).
@@ -850,7 +1061,7 @@ for step in range(n_trials_per_stair):
             
             x_flow = x / z
             this is an (fairly) normally distributed array of floats (between -10000 and 10000) divided by an array of floats (between .5 and 5).
-            max x value of 5000 is 10000 if divided by .5, and 1000 if divided by 5.
+            max x value of (+/-) 5000 if 10000 if divided by .5, and 1000 if divided by 5.
             So there is a cluster between -1000 and 1000.
             
             # later, (in per frame section), zs are updated with z = z + dots_speed * flow_dir
@@ -862,176 +1073,20 @@ for step in range(n_trials_per_stair):
             max x values of 5000 is 5555 if divided by .9, and 925 if divided by 5.4.
             
             '''
-            # if background == 'flow_dots':
-                # x = np.random.rand(nDots) * dot_array_width - dot_array_width / 2
-                # y = np.random.rand(nDots) * dot_array_width - dot_array_width / 2
-                # z = np.random.rand(nDots) * (dots_max_depth - dots_min_depth) + dots_min_depth
-                # # print(f"x: {x}, y: {y}, z: {z}")
-                # print(f"dot_array_width: {dot_array_width}, dots_max_depth: {dots_max_depth}, dots_min_depth: {dots_min_depth}")
-                # print(f"(dots_max_depth - dots_min_depth) + dots_min_depth: {(dots_max_depth - dots_min_depth) + dots_min_depth}")
-                # z was called z_flow but is actually z position like x and y
-                # x_flow = x / z
-                # y_flow = y / z
-                # print(f"x_flow: {x_flow}, y_flow: {y_flow}")
 
-
-            # shift probes by separation
-            # todo: turn shifted pixels into a function?
-            '''Both probes should be equally spaced around the meridian point.
-            The original script had probe 1 on meridian and probe 2 shifted by separation.
-            So now they both should be shifted by half the separation away from meridian in opposite directions.
-            E.g., if sep = 4, probe 1 will be shifted 2 pixels away from meridian in one direction 
-            probe 2 will be shifted 2 pixels away from the meridian in the other direction. 
-            Where separation is an odd number, both probes are shift by half sep, 
-            then the extra pixel is added onto either probe 1 r probe 2.  
-            E.g., if sep = 5, either probe1 shifts by 2 and probe 2 by 3, or vice versa. 
-            To check probe locations, uncomment loc_marker'''
-            if sep == 99:
-                p1_shift = p2_shift = 0
-            elif sep % 2 == 0:  # even number
-                p1_shift = p2_shift = (sep*probe_size) // 2
-            else:  # odd number: shift by half sep, then either add 1 or 0 extra pixel to the shift.
-                extra_shifted_pixel = [0, 1]
-                np.random.shuffle(extra_shifted_pixel)
-                p1_shift = (sep*probe_size) // 2 + extra_shifted_pixel[0]
-                p2_shift = (sep*probe_size) // 2 + extra_shifted_pixel[1]
-            if verbose:
-                print(f"p1_shift: {p1_shift}, p2_shift: {p2_shift}")
-
-
-            # set position and orientation of probes
-            # todo: turn probe positions and orientation into a function?
-            '''NEW - set orientations to p1=zero and p2=180 (not zero), 
-            then add the same orientation change to both'''
-            probe1_ori = 0
-            probe2_ori = 180
-            if probe_n_pixels == 7:
-                probe1_ori = 180
-                probe2_ori = 0
-            if corner == 45:  # top right
-                '''in top-right corner, both x and y increase (right and up)'''
-                loc_x = dist_from_fix * 1
-                loc_y = dist_from_fix * 1
-                '''orientation' here refers to the relationship between probes, 
-                whereas probe1_ori refers to rotational angle of probe stimulus'''
-                if orientation == 'tangent':
-                    if target_jump == 1:  # CW
-                        probe1_ori += 180
-                        probe2_ori += 180
-                        probe1_pos = [loc_x - p1_shift, loc_y + p1_shift]
-                        probe2_pos = [loc_x + p2_shift - probe_size, loc_y - p2_shift]
-                    elif target_jump == -1:  # ACW
-                        probe1_ori += 0
-                        probe2_ori += 0
-                        probe1_pos = [loc_x + p1_shift, loc_y - p1_shift]
-                        probe2_pos = [loc_x - p2_shift + probe_size, loc_y + p2_shift]
-                elif orientation == 'radial':
-                    if target_jump == 1:  # inward
-                        probe1_ori += 270
-                        probe2_ori += 270
-                        # probe2 is left and down from probe1
-                        probe1_pos = [loc_x + p1_shift, loc_y + p1_shift]
-                        probe2_pos = [loc_x - p2_shift + probe_size, loc_y - p2_shift]
-                    elif target_jump == -1:  # outward
-                        probe1_ori += 90
-                        probe2_ori += 90
-                        # probe2 is right and up from probe1
-                        probe1_pos = [loc_x - p1_shift, loc_y - p1_shift]
-                        probe2_pos = [loc_x + p2_shift - probe_size, loc_y + p2_shift]
-
-            elif corner == 135:  # top-left
-                loc_x = dist_from_fix * -1
-                loc_y = dist_from_fix * 1
-                if orientation == 'tangent':
-                    if target_jump == 1:  # ACW
-                        probe1_ori += 90
-                        probe2_ori += 90
-                        probe1_pos = [loc_x - p1_shift, loc_y - p1_shift]
-                        probe2_pos = [loc_x + p2_shift - probe_size, loc_y + p2_shift]
-                    elif target_jump == -1:  # CW
-                        probe1_ori += 270
-                        probe2_ori += 270
-                        probe1_pos = [loc_x + p1_shift, loc_y + p1_shift]
-                        probe2_pos = [loc_x - p2_shift + probe_size, loc_y - p2_shift]
-                elif orientation == 'radial':
-                    if target_jump == 1:  # inward
-                        probe1_ori += 180
-                        probe2_ori += 180
-                        # probe2 is right and down from probe1
-                        probe1_pos = [loc_x - p1_shift, loc_y + p1_shift]
-                        probe2_pos = [loc_x + p2_shift - probe_size, loc_y - p2_shift]
-                    elif target_jump == -1:  # outward
-                        probe1_ori += 0
-                        probe2_ori += 0
-                        # probe2 is left and up from probe1
-                        probe1_pos = [loc_x + p1_shift, loc_y - p1_shift]
-                        probe2_pos = [loc_x - p2_shift + probe_size, loc_y + p2_shift]
-
-            elif corner == 225:  # bottom-left
-                loc_x = dist_from_fix * -1
-                loc_y = dist_from_fix * -1
-                if orientation == 'tangent':
-                    if target_jump == 1:  # CW
-                        probe1_ori += 0
-                        probe2_ori += 0
-                        probe1_pos = [loc_x + p1_shift, loc_y - p1_shift]
-                        probe2_pos = [loc_x - p2_shift + probe_size, loc_y + p2_shift]
-                    elif target_jump == -1:  # ACW
-                        probe1_ori += 180
-                        probe2_ori += 180
-                        probe1_pos = [loc_x - p1_shift, loc_y + p1_shift]
-                        probe2_pos = [loc_x + p2_shift - probe_size, loc_y - p2_shift]
-                elif orientation == 'radial':
-                    if target_jump == 1:  # inward
-                        probe1_ori += 90
-                        probe2_ori += 90
-                        # probe2 is right and up from probe1
-                        probe1_pos = [loc_x - p1_shift, loc_y - p1_shift]
-                        probe2_pos = [loc_x + p2_shift - probe_size, loc_y + p2_shift]
-                    elif target_jump == -1:  # outward
-                        probe1_ori += 270
-                        probe2_ori += 270
-                        # probe2 is left and down from probe1
-                        probe1_pos = [loc_x + p1_shift, loc_y + p1_shift]
-                        probe2_pos = [loc_x - p2_shift + probe_size, loc_y - p2_shift]
-
-            else:
-                corner = 315  # bottom-right
-                loc_x = dist_from_fix * 1
-                loc_y = dist_from_fix * -1
-                if orientation == 'tangent':
-                    if target_jump == 1:  # ACW
-                        probe1_ori += 270
-                        probe2_ori += 270
-                        probe1_pos = [loc_x + p1_shift, loc_y + p1_shift]
-                        probe2_pos = [loc_x - p2_shift + probe_size, loc_y - p2_shift]
-                    elif target_jump == -1:  # CW
-                        probe1_ori += 90
-                        probe2_ori += 90
-                        probe1_pos = [loc_x - p1_shift, loc_y - p1_shift]
-                        probe2_pos = [loc_x + p2_shift - probe_size, loc_y + p2_shift]
-                elif orientation == 'radial':
-                    if target_jump == 1:  # inward
-                        probe1_ori += 0
-                        probe2_ori += 0
-                        # probe2 is left and up from probe1
-                        probe1_pos = [loc_x + p1_shift, loc_y - p1_shift]
-                        probe2_pos = [loc_x - p2_shift + probe_size, loc_y + p2_shift]
-                    elif target_jump == -1:  # outward
-                        probe1_ori += 180
-                        probe2_ori += 180
-                        # probe2 is right and down from probe1
-                        probe1_pos = [loc_x - p1_shift, loc_y + p1_shift]
-                        probe2_pos = [loc_x + p2_shift - probe_size, loc_y - p2_shift]
+            # PROBE POSITION (including shift around dist_from_fix)
+            probe_pos_dict = get_probe_pos_dict(sep, target_jump, corner,
+                                                dist_from_fix, verbose=verbose)
 
             # loc_marker.setPos([loc_x, loc_y])
-            probe1.setPos(probe1_pos)
-            probe1.setOri(probe1_ori)
-            probe2.setPos(probe2_pos)
-            probe2.setOri(probe2_ori)
+            probe1.setPos(probe_pos_dict['probe1_pos'])
+            probe1.setOri(probe_pos_dict['probe1_ori'])
+            probe2.setPos(probe_pos_dict['probe2_pos'])
+            probe2.setOri(probe_pos_dict['probe2_ori'])
             if verbose:
-                print(f"loc_marker: {[loc_x, loc_y]}, probe1_pos: {probe1_pos}, "
-                      f"probe2_pos: {probe2_pos}. dff: {dist_from_fix}")
+                print(f"loc_marker: {[probe_pos_dict['loc_x'], probe_pos_dict['loc_y']]}, "
+                      f"probe1_pos: {probe_pos_dict['probe1_pos']}, "
+                      f"probe2_pos: {probe_pos_dict['probe2_pos']}. dff: {dist_from_fix}")
 
 
             # VARIABLE FIXATION TIME
@@ -1066,7 +1121,6 @@ for step in range(n_trials_per_stair):
             # continue_routine refers to flipping the screen to show next frame
 
             # take a break every ? trials
-            # if (trial_number % take_break == 1) & (trial_number > 1):
             if (actual_trials_inc_rpt % take_break == 1) & (actual_trials_inc_rpt > 1):
                 print("\nTaking a break.\n")
 
@@ -1127,7 +1181,7 @@ for step in range(n_trials_per_stair):
                     if background != None:
                         # draw dots/rings but with no motion
                         if background == 'flow_dots':
-                            flow_dots.xys = np.array([x_flow, y_flow]).transpose()
+                            flow_dots.xys = dots_xys_array
                             flow_dots.draw()
                         elif background == 'flow_rings':
                             for idx, ring in enumerate(ring_list):
@@ -1148,11 +1202,10 @@ for step in range(n_trials_per_stair):
                     if background != None:
                         # draw dots/rings with motion
                         if background == 'flow_dots':
-                            z = z + dots_speed * flow_dir
-                            z = wrap_depth_vals(z, dots_min_depth, dots_max_depth)
-                            x_flow = x / z
-                            y_flow = y / z
-                            flow_dots.xys = np.array([x_flow, y_flow]).transpose()
+                            # get new depth_vals array (z) and dots_xys_array (x, y)
+                            z, dots_xys_array = new_dots_depth_and_pos(x, y, z, dots_speed, flow_dir,
+                                                                       dots_min_depth, dots_max_depth)
+                            flow_dots.xys = dots_xys_array
                             flow_dots.draw()
                         elif background == 'flow_rings':
                             ring_radii_array = get_next_radii(ring_radii_array, rings_speed,
@@ -1175,11 +1228,10 @@ for step in range(n_trials_per_stair):
                     if background != None:
                         # draw dots/rings with motion
                         if background == 'flow_dots':
-                            z = z + dots_speed * flow_dir
-                            z = wrap_depth_vals(z, dots_min_depth, dots_max_depth)
-                            x_flow = x / z
-                            y_flow = y / z
-                            flow_dots.xys = np.array([x_flow, y_flow]).transpose()
+                            # get new depth_vals array (z) and dots_xys_array (x, y)
+                            z, dots_xys_array = new_dots_depth_and_pos(x, y, z, dots_speed, flow_dir,
+                                                                       dots_min_depth, dots_max_depth)
+                            flow_dots.xys = dots_xys_array
                             flow_dots.draw()
                         elif background == 'flow_rings':
                             ring_radii_array = get_next_radii(ring_radii_array, rings_speed,
@@ -1204,12 +1256,10 @@ for step in range(n_trials_per_stair):
                 elif end_ISI_fr >= frameN > end_p1_fr:
                     if background != None:
                         if background == 'flow_dots':
-                            # draw dots with motion
-                            z = z + dots_speed * flow_dir
-                            z = wrap_depth_vals(z, dots_min_depth, dots_max_depth)
-                            x_flow = x / z
-                            y_flow = y / z
-                            flow_dots.xys = np.array([x_flow, y_flow]).transpose()
+                            # get new depth_vals array (z) and dots_xys_array (x, y)
+                            z, dots_xys_array = new_dots_depth_and_pos(x, y, z, dots_speed, flow_dir,
+                                                                       dots_min_depth, dots_max_depth)
+                            flow_dots.xys = dots_xys_array
                             flow_dots.draw()
                         elif background == 'flow_rings':
                             ring_radii_array = get_next_radii(ring_radii_array, rings_speed,
@@ -1229,12 +1279,10 @@ for step in range(n_trials_per_stair):
                 elif end_p2_fr >= frameN > end_ISI_fr:
                     if background != None:
                         if background == 'flow_dots':
-                            # draw dots with motion
-                            z = z + dots_speed * flow_dir
-                            z = wrap_depth_vals(z, dots_min_depth, dots_max_depth)
-                            x_flow = x / z
-                            y_flow = y / z
-                            flow_dots.xys = np.array([x_flow, y_flow]).transpose()
+                            # get new depth_vals array (z) and dots_xys_array (x, y)
+                            z, dots_xys_array = new_dots_depth_and_pos(x, y, z, dots_speed, flow_dir,
+                                                                       dots_min_depth, dots_max_depth)
+                            flow_dots.xys = dots_xys_array
                             flow_dots.draw()
                         elif background == 'flow_rings':
                             ring_radii_array = get_next_radii(ring_radii_array, rings_speed,
@@ -1355,6 +1403,7 @@ for step in range(n_trials_per_stair):
                                 trial_x_locs = [exp_n_fr_recorded_list[-2], exp_n_fr_recorded_list[-1]]
                                 dropped_fr_trial_x_locs.append(trial_x_locs)
                                 continue
+                                # todo: still plot trial timings if it quits early.  
 
                             # empty frameIntervals cache
                             win.frameIntervals = []

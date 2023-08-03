@@ -267,8 +267,16 @@ win.refreshThreshold = max_fr_dur_sec
 frame_tolerance_sec = max_fr_dur_sec - expected_fr_sec
 frame_tolerance_ms = frame_tolerance_sec * 1000
 min_fr_dur_sec = expected_fr_sec - (expected_fr_sec * frame_tolerance_prop)
+max_dropped_fr_trials = 10
 
-
+too_many_dropped_fr = visual.TextStim(win=win, name='too_many_dropped_fr',
+                                      text="The experiment had quit as the computer is dropping frames.\n"
+                                           "Sorry for the inconvenience.\n"
+                                           "Please contact the experimenter.\n\n"
+                                           "Press any key to return to the desktop.",
+                                      font='Arial', height=20,
+                                      # colorSpace=this_colourSpace
+                                      )
 
 # ------------------------------------------------------------------- INSTRUCTION
 # ------------------------------------------------------------------- INSTRUCTION
@@ -617,17 +625,42 @@ for trialN in range(expInfo['nTrials']):
                                 f": trial: {trial_number}, {thisStair.name}")
                             timing_bad = True
 
+                        if timing_bad:  # comment out stuff for repetitions for now.
+                            # repeat = True
+                            dropped_fr_trial_counter += 1
+                            # trial_number -= 1
+                            # thisStair.trialCount = thisStair.trialCount - 1  # so Kesten doesn't count this trial
+                            # win.frameIntervals = []
+                            # continueRoutine = False
+                            trial_x_locs = [exp_n_fr_recorded_list[-2], exp_n_fr_recorded_list[-1]]
+                            dropped_fr_trial_x_locs.append(trial_x_locs)
+                            # continue
+
                         # empty frameIntervals cache
                         win.frameIntervals = []
 
                 # check for quit
                 if event.getKeys(keyList=["escape"]):
                     core.quit()
-                # redo the trial if i think i made a mistake
-                if event.getKeys(keyList=["r"]) or event.getKeys(keyList=['num_9']):
-                    repeat = True
-                    continueRoutine = False
-                    continue
+
+                # If too many trials have had dropped frames, quit experiment
+                if dropped_fr_trial_counter > max_dropped_fr_trials:
+                    while not event.getKeys():
+                        # display end of experiment screen
+                        too_many_dropped_fr.draw()
+                        win.flip()
+                    else:
+                        # close and quit once a key is pressed
+                        thisExp.close()
+                        win.close()
+                        core.quit()
+
+                # # redo the trial if i think i made a mistake
+                # if event.getKeys(keyList=["r"]) or event.getKeys(keyList=['num_9']):
+                #     repeat = True
+                #     continueRoutine = False
+                #     continue
+
                 # refresh the screen
                 if continueRoutine:
                     win.flip()
