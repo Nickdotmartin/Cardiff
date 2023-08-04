@@ -16,7 +16,10 @@ from scipy.optimize import fsolve
 from kestenSTmaxVal import Staircase
 
 """
-This script is adapted from EXPERIMENT3-backgroundMotion.py, which is in 
+This script is adapted from EXPERIMENT3-backgroundMotion.py, 
+(Martin also has a radial version called integration_RiccoBloch_flow_new.py which is in 
+r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Martin_scripts\EXPERIMENTS_INTEGRATION\EXPERIMENTS_SCRIPTS_NEW\old scripts\integration_RiccoBloch_flow_new.py'
+or Downloads.  
 
 I have made several changes.
 - change import statements (from psychopy.visual import ShapeStim, EnvelopeGrating, Circle) 
@@ -101,20 +104,6 @@ rot_bg_dir = 'both'  # ['both', 'same', 'opposite'], expInfo['9. Background dire
 bg_motion_during = 'transient&probe2'  # ['transient', 'transient&probe2'], expInfo['9. Background motion during'] == 'transient&probe2
 #todo: probes_ori = 'tangent'
 
-if bg_motion_dir == 'radial':
-    # todo: probes_ori = 'radial'
-    dots_speed = 0.2
-    # if monitor_name == 'OLED':
-    #     dots_speed = 0.4
-    BGspeed = dots_speed
-    # todo: do we need to increase the number of dots for OLED?
-    dot_array_width = 10000  # original script used 5000, martin's script uses widthPix (1920)
-    dots_min_depth = 0.5  # depth values
-    dots_max_depth = 5  # depth values
-
-else:
-    print('bg_motion_dir not recognised, please check your input')
-    raise ValueError
 
 
 
@@ -194,7 +183,29 @@ if bg_motion_dir == 'rotation':
     # tranform in polar
     r_dots = (x ** 2 + y ** 2) ** 0.5
     alpha = (np.random.rand(nDots)) * 2 * pi
-else:  # if radial
+
+
+if bg_motion_dir == 'radial':
+    nDots = 10000
+
+    # todo: probes_ori = 'radial'
+    dots_speed = 0.2
+    # if monitor_name == 'OLED':
+    #     dots_speed = 0.4
+    BGspeed = dots_speed
+    # todo: do we need to increase the number of dots for OLED?
+    # dot_array_width = 10000  # original script used 5000
+    # with dot_array_width = widthPix * 3, this gives a values of 5760 on a 1920 monitor,
+    # similar to the original setting of 5000.  It also allows the dots to be scaled to the screen for OLED.
+    dot_array_width = widthPix * 3  # this scales it for the monitor and keeps more dots on screen
+
+    # todo: most of the dots are off screen using this current dots_min_depth, as the distribution of x_flow has large tails.
+    #  Setting it to 1.0 means that the tails are shorted, as dividing x / z only makes values smaller (or the same), not bigger.
+    # dots_min_depth = 0.5  # depth values
+    dots_min_depth = 1.0
+    dots_max_depth = 5  # depth values
+
+
     # initial array values
     x = np.random.rand(nDots) * dot_array_width - dot_array_width / 2
     y = np.random.rand(nDots) * dot_array_width - dot_array_width / 2
@@ -203,6 +214,10 @@ else:  # if radial
 
     x_flow = x / z
     y_flow = y / z
+
+else:
+    print('bg_motion_dir not recognised, please check your input')
+    raise ValueError
 
 
 # mask for the 4 areas
