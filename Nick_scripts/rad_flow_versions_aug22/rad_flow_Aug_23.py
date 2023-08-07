@@ -36,28 +36,26 @@ Updated wrap_depth_vals (WrapPoints) function.
 def get_probe_pos_dict(separation, target_jump, corner, dist_from_fix,
                        probe_size=1, probes_ori='radial', verbose=False):
     """
-    This function gets the pixel positions of the two probes, given the parameters.
-
-    The default probes_ori is 'radial' meaning both probes appear ON the meridian line.
-    A value of 'tangent' means the probes appear either side of the meridian line.
-
-    The mid-point between the two probes is give by (loc_x_loc_y).  The probes should be equally
-    spaced around (loc_x_loc_y) by separation.  e.g., if separation = 4, probe 1 will be
-    shifted 2 pixels away from (loc_x_loc_y) in one direction and probe 2 will be
-    shifted 2 pixels away from (loc_x_loc_y) in the other direction.
-    However, if separation is an odd number, an addition pixel will be added to either probe 1 or probe 2.
-    The first step is to calculate this shift for each probe.
+    This function gets the pixel positions and orientation of the two probes, given the parameters.
 
     (loc_x loc_y) is the pixel positions along the meridian line (given by 'corner'),
     at the correct eccentricity (e.g., distance from fixation, given by 'dist_from_fix').
     The centre of the screen is 0, 0, so whether these values are positive or negative
     will depend on the corner the probes are due to appear in.
-    The second step is to get the (loc_x, loc_y) values, which the shift is applied to.
 
+    The probes should be equally spaced around (loc_x_loc_y) by separation.  e.g., if separation = 4, probe 1 will be
+    shifted 2 pixels away from (loc_x_loc_y) in one direction and probe 2 will be
+    shifted 2 pixels away from (loc_x_loc_y) in the other direction.
+    However, if separation is an odd number, an addition pixel will be added to either probe 1 or probe 2.
+    The first step is to calculate this shift for each probe.
+
+    The second step is to get the (loc_x, loc_y) values, which the shift is applied to.
+    The default probes_ori is 'radial' meaning both probes appear ON the meridian line.
+    A value of 'tangent' means the probes appear either side of the meridian line.
     The probes are rotated according to the corner but should always be facing each other
     (e.g., orientation differs by 180 degrees).
 
-    Finally. probe 2 is always ofset by probe_size from probe 1,
+    Finally. probe 2 is always ofset from probe 1 (by probe_size),
     e.g., the 'm' and 'w' shaped probes don't mirror each other, but fit together like a zipper.
 
     :param separation: spatial separation between probes in pixels.
@@ -88,7 +86,8 @@ def get_probe_pos_dict(separation, target_jump, corner, dist_from_fix,
     if verbose:
         print(f"p1_shift: {p1_shift}, p2_shift: {p2_shift}")
 
-    # Get position and orientation of probes
+
+    # # Second, get position and orientation of probes
     probe1_ori = 0
     probe2_ori = 180
     if corner == 45:  # top right
@@ -224,6 +223,7 @@ def new_dots_depth_and_pos(x_array, y_array, depth_array, dots_speed, flow_dir, 
 
     1a. Update depth_array by adding dots_speed * flow_dir to the current z values.
     1b. adjust any values below dots_min_depth or above dots_max_depth.
+    
     2a. Get new x_pos and y_pos co-ordinates values by dividing x_array and y_array by the new depth_array.
     2b. put the new x_pos and y_pos co-ordinates into an array and transposes it.
 
@@ -294,11 +294,11 @@ def get_next_radii(current_radii, rings_speed, min_radius, max_radius, expanding
 
 
 
-def plt_fr_ints(fr_int_per_trial, dropped_fr_trial_counter,
-                expected_fr_ms, frame_tolerance_ms,
-                cond_list, fr_counter_per_trial, dropped_fr_trial_x_locs,
-                monitor_name, date, fps, participant_name, run_number,
-                save_dir, incomplete=False):
+def plt_fr_ints(time_p_trial_nested_list, n_trials_w_dropped_fr,
+                expected_fr_dur_ms, allowed_err_ms,
+                all_cond_name_list, fr_nums_p_trial, dropped_trial_x_locs,
+                mon_name, date, frame_rate, participant, run_num,
+                save_path, incomplete=False):
 
     """
     This function takes in the frame intervals per trial and plots them.  Rather than a single line plot,
@@ -307,26 +307,27 @@ def plt_fr_ints(fr_int_per_trial, dropped_fr_trial_counter,
     Trials containing dropped frames are highlighted to make them easy to spot.
     The expected frame rate and bounds of an error are also shown.
 
-    :param fr_int_per_trial: a list of lists, where each sublist contains the frame intervals for each trial.
-    :param dropped_fr_trial_counter: int.  How many of the recorded dropped frames included dropped frames.
-    :param expected_fr_ms: the expected duration of each frame in ms.
-    :param frame_tolerance_ms: The tolerance for variation in the frame duration in ms.
-    :param cond_list: a list of condition names for each trial (used to colour plots).
-    :param fr_counter_per_trial: a nested list of frame numbers for each trial, to use as x_axis.
+    :param time_p_trial_nested_list: a list of lists, where each sublist contains the frame intervals for each trial.
+    :param n_trials_w_dropped_fr: int.  How many of the recorded dropped frames included dropped frames.
+    :param expected_fr_dur_ms: the expected duration of each frame in ms.
+    :param allowed_err_ms: The tolerance for variation in the frame duration in ms.
+    :param all_cond_name_list: a list of condition names for each trial (used to colour plots).
+    :param fr_nums_p_trial: a nested list of frame numbers for each trial, to use as x_axis.
                 Using a nexted list allows me to plot each condition separately.
-    :param dropped_fr_trial_x_locs:
-    :param monitor_name: name of monitor from psychopy monitor centre
+    :param dropped_trial_x_locs:
+    :param mon_name: name of monitor from psychopy monitor centre
     :param date: date of experiment
-    :param fps: Frames per second of monitor/experiment.
-    :param participant_name: name of participant
-    :param run_number: run number
-    :param save_dir: path to save plots to
+    :param frame_rate: Frames per second of monitor/experiment.
+    :param participant: name of participant
+    :param run_num: run number
+    :param incomplete: default=False.  Flag as True if the experiment quits early.
+    :param save_path: path to save plots to
     """
 
-    total_recorded_trials = len(fr_int_per_trial)
+    total_recorded_trials = len(time_p_trial_nested_list)
 
     # get unique conditions for selecting colours and plotting legend
-    unique_conds = sorted(list(set(cond_list)))
+    unique_conds = sorted(list(set(all_cond_name_list)))
 
     '''select colours for lines on plot (up to 20)'''
     # select colour for each condition from tab20, using order shown colours_in_order
@@ -341,11 +342,11 @@ def plt_fr_ints(fr_int_per_trial, dropped_fr_trial_counter,
 
 
     '''plot frame intervals, one trial at a time'''
-    for trial_x_vals, trial_fr_durs, this_cond in zip(fr_counter_per_trial, fr_int_per_trial, cond_list):
+    for trial_x_vals, trial_fr_durs, this_cond in zip(fr_nums_p_trial, time_p_trial_nested_list, all_cond_name_list):
         plt.plot(trial_x_vals, trial_fr_durs, color=colour_dict[this_cond])
 
     # add legend with colours per condition
-    if len(cond_list) < 20:
+    if len(all_cond_name_list) < 20:
         legend_handles_list = []
         for cond in unique_conds:
             leg_handle = mlines.Line2D([], [], color=colour_dict[cond], label=cond,
@@ -355,27 +356,27 @@ def plt_fr_ints(fr_int_per_trial, dropped_fr_trial_counter,
 
 
     # add vertical lines between trials, ofset by -.5
-    trial_v_lines = [fr_counter_per_trial[i][0]-.5 for i in range(len(fr_counter_per_trial))]
+    trial_v_lines = [fr_nums_p_trial[i][0]-.5 for i in range(len(fr_nums_p_trial))]
     for trial_line in trial_v_lines:
         plt.axvline(x=trial_line, color='silver', linestyle='dashed', zorder=0)
 
     # add horizontal lines: green = expected frame duration, red = frame error tolerance
-    plt.axhline(y=expected_fr_ms/1000, color='green', linestyle='dotted', alpha=.5)
-    plt.axhline(y=(expected_fr_ms-frame_tolerance_ms)/1000, color='red', linestyle='dotted', alpha=.5)
-    plt.axhline(y=(expected_fr_ms+frame_tolerance_ms)/1000, color='red', linestyle='dotted', alpha=.5)
+    plt.axhline(y=expected_fr_dur_ms/1000, color='green', linestyle='dotted', alpha=.5)
+    plt.axhline(y=(expected_fr_dur_ms-allowed_err_ms)/1000, color='red', linestyle='dotted', alpha=.5)
+    plt.axhline(y=(expected_fr_dur_ms+allowed_err_ms)/1000, color='red', linestyle='dotted', alpha=.5)
 
     # shade trials red that had bad timing
-    for loc_pair in dropped_fr_trial_x_locs:
+    for loc_pair in dropped_trial_x_locs:
         x0, x1 = loc_pair[0] - .5, loc_pair[1] - .5
         plt.axvspan(x0, x1, color='red', alpha=0.15, zorder=0, linewidth=None)
 
-    plt.title(f"{monitor_name}, {fps}Hz, {date}\n{dropped_fr_trial_counter}/{total_recorded_trials} trials."
-              f"dropped fr (expected: {round(expected_fr_ms, 2)}ms, "
-              f"frame_tolerance_ms: +/- {round(frame_tolerance_ms, 2)})")
-    fig_name = f'{participant_name}_{run_number}_frames.png'
+    plt.title(f"{mon_name}, {frame_rate}Hz, {date}\n{n_trials_w_dropped_fr}/{total_recorded_trials} trials."
+              f"dropped fr (expected: {round(expected_fr_dur_ms, 2)}ms, "
+              f"allowed_err_ms: +/- {round(allowed_err_ms, 2)})")
+    fig_name = f'{participant}_{run_num}_frames.png'
     if incomplete:
-        fig_name = f'{participant_name}_{run_number}_frames_incomplete.png'
-    plt.savefig(path.join(save_dir, fig_name))
+        fig_name = f'{participant}_{run_num}_frames_incomplete.png'
+    plt.savefig(path.join(save_path, fig_name))
     plt.close()
 
 
@@ -468,8 +469,12 @@ if verbose:
 # # main contrast is whether the background and target motion is in same or opposite direction.
 # congruence_vals: 1=congruent/same, -1=incongruent/different
 # todo: DO i need to sort congruence to make sure that the staircases are in the same order?
+# todo: if background is None, then congruence is also None
 congruence_vals = [1, -1]
 congruence_names = ['cong', 'incong']
+if background is None:
+    congruence_vals = [1]
+    congruence_names = ['No_bg']
 if verbose:
     print(f'congruence_vals: {congruence_vals}')
     print(f'congruence_names: {congruence_names}')
@@ -573,12 +578,12 @@ widthPix = int(thisMon.getSizePix()[0])
 heightPix = int(thisMon.getSizePix()[1])
 mon_width_cm = thisMon.getWidth()  # monitor width in cm
 view_dist_cm = thisMon.getDistance()  # viewing distance in cm
-viewdistPix = widthPix / mon_width_cm*view_dist_cm  # used for calculating visual angle (e.g., probe locations at 4dva)
+view_dist_pix = widthPix / mon_width_cm*view_dist_cm  # used for calculating visual angle (e.g., probe locations at 4dva)
 mon = monitors.Monitor(monitor_name, width=mon_width_cm, distance=view_dist_cm)
 mon.setSizePix((widthPix, heightPix))
 if verbose:
     print(f"widthPix: {widthPix}, heightPix: {heightPix}, mon_width_cm: {mon_width_cm}, "
-          f"view_dist_cm: {view_dist_cm}, viewdistPix: {viewdistPix}")
+          f"view_dist_cm: {view_dist_cm}, view_dist_pix: {view_dist_pix}")
 
 # WINDOW
 # note change of winType 23/05/2023 from pyglet to glfw, might still need pyglet on pycharm/mac though.
@@ -656,8 +661,9 @@ probe2 = visual.ShapeStim(win, vertices=probeVert, fillColor='green', colorSpace
 
 
 # dist_from_fix is a constant to get 4dva distance from fixation for probes and probe_masks
-dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
-
+dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * view_dist_pix) / sqrt(2))
+if verbose:
+    print(f"\ndist_from_fix: {dist_from_fix} pixels")
 
 # MASK BEHIND PROBES (infront of flow dots to keep probes and motion separate)
 '''This is either circles in the four probe locations or a diagonal cross shape'''
@@ -891,8 +897,6 @@ too_many_dropped_fr = visual.TextStim(win=win, name='too_many_dropped_fr',
                                       font='Arial', height=20, colorSpace=this_colourSpace,)
 
 while not event.getKeys():
-    fixation.setRadius(3)
-    fixation.draw()
     instructions.draw()
     win.flip()
 
@@ -1488,12 +1492,11 @@ for step in range(n_trials_per_stair):
         thisExp.addData('probeColor255', probeColor255)
         thisExp.addData('trial_response', resp.corr)
         thisExp.addData('resp.rt', resp.rt)
-        thisExp.addData('probeColor1', probeColor1)
-        thisExp.addData('probeColor255', probeColor255)
         thisExp.addData('probe_ecc', probe_ecc)
         thisExp.addData('BGspeed', BGspeed)
         thisExp.addData('orientation', orientation)
-        thisExp.addData('vary_fixation', vary_fixation)
+        thisExp.addData('background', background)
+        thisExp.addData('vary_fix', vary_fix)
         thisExp.addData('end_fix_fr', end_fix_fr)
         thisExp.addData('p1_diff', p1_diff)
         thisExp.addData('isi_diff', isi_diff)
@@ -1529,12 +1532,13 @@ if record_fr_durs:
           f"(expected: {round(expected_fr_ms, 2)}ms, "
           f"frame_tolerance_ms: +/- {round(frame_tolerance_ms, 2)})")
 
-    plt_fr_ints(fr_int_per_trial=fr_int_per_trial, dropped_fr_trial_counter=dropped_fr_trial_counter,
-                expected_fr_ms=expected_fr_ms, frame_tolerance_ms=frame_tolerance_ms,
-                cond_list=cond_list, fr_counter_per_trial=fr_counter_per_trial,
-                dropped_fr_trial_x_locs=dropped_fr_trial_x_locs,
-                monitor_name=monitor_name, date=expInfo['date'], fps=fps,
-                participant_name=participant_name, run_number=run_number, save_dir=save_dir)
+    plt_fr_ints(time_p_trial_nested_list=fr_int_per_trial, n_trials_w_dropped_fr=dropped_fr_trial_counter,
+                expected_fr_dur_ms=expected_fr_ms, allowed_err_ms=frame_tolerance_ms,
+                all_cond_name_list=cond_list, fr_nums_p_trial=fr_counter_per_trial,
+                dropped_trial_x_locs=dropped_fr_trial_x_locs,
+                mon_name=monitor_name, date=expInfo['date'], frame_rate=fps,
+                participant=participant_name, run_num=run_number,
+                save_path=save_dir, incomplete=False)
 
 
 

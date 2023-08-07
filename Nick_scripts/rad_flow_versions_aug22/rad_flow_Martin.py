@@ -18,7 +18,7 @@ from kestenSTmaxVal import Staircase
 """
 This script is adapted from EXPERIMENT3-backgroundMotion.py, 
 (Martin also has a radial version called integration_RiccoBloch_flow_new.py which is in 
-r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Martin_scripts\EXPERIMENTS_INTEGRATION\EXPERIMENTS_SCRIPTS_NEW\old scripts\integration_RiccoBloch_flow_new.py'
+r'C: \ Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Martin_scripts\EXPERIMENTS_INTEGRATION\EXPERIMENTS_SCRIPTS_NEW\old scripts\integration_RiccoBloch_flow_new.py'
 or Downloads.  
 
 I have made several changes.
@@ -185,8 +185,8 @@ if bg_motion_dir == 'rotation':
     alpha = (np.random.rand(nDots)) * 2 * pi
 
 
-if bg_motion_dir == 'radial':
-    nDots = 10000
+elif bg_motion_dir == 'radial':
+    nDots = 2000  # 10000
 
     # todo: probes_ori = 'radial'
     dots_speed = 0.2
@@ -214,6 +214,7 @@ if bg_motion_dir == 'radial':
 
     x_flow = x / z
     y_flow = y / z
+
 
 else:
     print('bg_motion_dir not recognised, please check your input')
