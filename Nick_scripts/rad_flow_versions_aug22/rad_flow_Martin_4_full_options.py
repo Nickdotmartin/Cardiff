@@ -878,9 +878,18 @@ for step in range(n_trials_per_stair):
             if verbose:
                 print(f"ISI: {ISI}, congruent: {congruent} ({cong_name})")
 
-            # conditions (sep, sep_deg, neg_sep)
+            # conditions (sep, neg_sep)
             sep = sep_vals_list[stair_idx]
 
+            # negative separation for comparing conditions (e.g., cong sep = 5, incong sep = -5.
+            if cong_name == 'incong':
+                neg_sep = 0 - sep
+                if sep == 0:
+                    neg_sep = -.1
+            else:
+                neg_sep = sep
+            if verbose:
+                print(f"sep: {sep}, neg_sep: {neg_sep}")
 
             # Luminance (staircase varies probeLum)
             probeLum = thisStair.next()
@@ -1219,7 +1228,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('step', step)
         thisExp.addData('separation', sep)
         # thisExp.addData('sep_deg', sep_deg)
-        # thisExp.addData('neg_sep', neg_sep)
+        thisExp.addData('neg_sep', neg_sep)
         thisExp.addData('ISI', ISI)
         thisExp.addData('ISI_selected_ms', ISI_selected_ms)
         thisExp.addData('ISI_actual_ms', ISI_actual_ms)
