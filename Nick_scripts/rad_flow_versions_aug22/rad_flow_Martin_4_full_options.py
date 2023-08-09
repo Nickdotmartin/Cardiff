@@ -494,7 +494,7 @@ if verbose:
 
 # Separation values in pixels.  select from [18, 6, 3, 2, 1, 0] or 99 for 1probe
 # separations = [18, 6, 3, 2, 1, 0]
-separations = [18, 3]
+separations = [18, 1]
 
 # # main contrast is whether the background and target motion is in same or opposite direction.
 # congruence_vals: 1=congruent/same, -1=incongruent/different
@@ -904,8 +904,8 @@ for step in range(n_trials_per_stair):
             this_probeColor = probeColor255
             if this_colourSpace == 'rgb1':
                 this_probeColor = probeColor1
-            probe1.color = [this_probeColor, this_probeColor, this_probeColor]
-            probe2.color = [this_probeColor, this_probeColor, this_probeColor]
+            probe1.fillColor = [this_probeColor, this_probeColor, this_probeColor]
+            probe2.fillColor = [this_probeColor, this_probeColor, this_probeColor]
             if verbose:
                 print(f"probeLum: {probeLum}, this_probeColor: {this_probeColor}, "
                       f"probeColor255: {probeColor255}, probeColor1: {probeColor1}")
