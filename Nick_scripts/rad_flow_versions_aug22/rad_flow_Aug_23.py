@@ -345,34 +345,45 @@ def plt_fr_ints(time_p_trial_nested_list, n_trials_w_dropped_fr,
     for trial_x_vals, trial_fr_durs, this_cond in zip(fr_nums_p_trial, time_p_trial_nested_list, all_cond_name_list):
         plt.plot(trial_x_vals, trial_fr_durs, color=colour_dict[this_cond])
 
+    '''decorate plot'''
     # add legend with colours per condition
+    legend_handles_list = []
     if len(all_cond_name_list) < 20:
-        legend_handles_list = []
         for cond in unique_conds:
             leg_handle = mlines.Line2D([], [], color=colour_dict[cond], label=cond,
                                        marker='.', linewidth=.5, markersize=4)
             legend_handles_list.append(leg_handle)
-        plt.legend(handles=legend_handles_list, fontsize=6, title='conditions', framealpha=.5)
-
 
     # add vertical lines between trials, ofset by -.5
-    trial_v_lines = [fr_nums_p_trial[i][0]-.5 for i in range(len(fr_nums_p_trial))]
+    trial_v_lines = [fr_nums_p_trial[i][0] - .5 for i in range(len(fr_nums_p_trial))]
     for trial_line in trial_v_lines:
         plt.axvline(x=trial_line, color='silver', linestyle='dashed', zorder=0)
 
     # add horizontal lines: green = expected frame duration, red = frame error tolerance
-    plt.axhline(y=expected_fr_dur_ms/1000, color='green', linestyle='dotted', alpha=.5)
-    plt.axhline(y=(expected_fr_dur_ms-allowed_err_ms)/1000, color='red', linestyle='dotted', alpha=.5)
-    plt.axhline(y=(expected_fr_dur_ms+allowed_err_ms)/1000, color='red', linestyle='dotted', alpha=.5)
+    plt.axhline(y=expected_fr_dur_ms / 1000, color='green', linestyle='dotted', alpha=.5)
+    plt.axhline(y=(expected_fr_dur_ms - allowed_err_ms) / 1000, color='red', linestyle='dotted', alpha=.5)
+    plt.axhline(y=(expected_fr_dur_ms + allowed_err_ms) / 1000, color='red', linestyle='dotted', alpha=.5)
+    legend_handles_list.append(mlines.Line2D([], [], color='green', label='expected fr duration',
+                                             linestyle='dotted', linewidth=.5, markersize=0))
+    legend_handles_list.append(mlines.Line2D([], [], color='red', label='bad timing boundary',
+                                             linestyle='dotted', linewidth=.5, markersize=0))
+
+    # plot legend
+    plt.legend(handles=legend_handles_list, fontsize=6, title='conditions', framealpha=.5)
 
     # shade trials red that had bad timing
     for loc_pair in dropped_trial_x_locs:
         x0, x1 = loc_pair[0] - .5, loc_pair[1] - .5
         plt.axvspan(x0, x1, color='red', alpha=0.15, zorder=0, linewidth=None)
 
+    # axis labels and title
+    plt.xlabel('frame number')
+    plt.ylabel('frame duration (sec)')
     plt.title(f"{mon_name}, {frame_rate}Hz, {date}\n{n_trials_w_dropped_fr}/{total_recorded_trials} trials."
               f"dropped fr (expected: {round(expected_fr_dur_ms, 2)}ms, "
               f"allowed_err_ms: +/- {round(allowed_err_ms, 2)})")
+
+    # save fig
     fig_name = f'{participant}_{run_num}_frames.png'
     if incomplete:
         fig_name = f'{participant}_{run_num}_frames_incomplete.png'
@@ -449,7 +460,6 @@ if ISI_selected_ms == -1:
 else:
     ISI_frames = int(ISI_selected_ms * fps / 1000)
     ISI_actual_ms = (1/fps) * ISI_frames * 1000
-ISI = ISI_frames
 if verbose:
     print(f"\nSelected {ISI_selected_ms}ms ISI.\n"
           f"At {fps}Hz this is {ISI_frames} frames which each take {round(1000/fps, 2)} ms.\n")
@@ -510,7 +520,7 @@ if verbose:
 # Experiment handling and saving
 # todo: add rings/dot dir to save dir
 # save each participant's files into separate dir for each ISI
-isi_dir = f'ISI_{ISI}'
+isi_dir = f'ISI_{ISI_frames}'
 save_dir = path.join(_thisDir, expName, participant_name, background, f'bg{prelim_bg_flow_ms}',
                         f'{participant_name}_{run_number}', isi_dir)
 
@@ -648,7 +658,7 @@ else:
 
 # PROBEs
 # default is to use 5 pixel probes,but can use 7 on OLED if needed
-probe_n_pixels = 5  # 7
+# probe_n_pixels = 5  # 7
 
 probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
              (1, -2), (-1, -2), (-1, -1), (0, -1)]
@@ -894,7 +904,7 @@ too_many_dropped_fr = visual.TextStim(win=win, name='too_many_dropped_fr',
                                            "Sorry for the inconvenience.\n"
                                            "Please contact the experimenter.\n\n"
                                            "Press any key to return to the desktop.",
-                                      font='Arial', height=20, colorSpace=this_colourSpace,)
+                                      font='Arial', height=20, colorSpace=this_colourSpace)
 
 while not event.getKeys():
     instructions.draw()

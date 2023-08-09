@@ -162,7 +162,7 @@ viewdistPix = widthPix / monitorwidth * viewdist
 monitorname = 'Nick_work_laptop'  # gamma set at 2.1
 mon = monitors.Monitor(monitorname, width=monitorwidth, distance=viewdist)
 mon.setSizePix((widthPix, heightPix))
-mon.save()
+# mon.save()
 
 # WINDOW SPEC
 win = visual.Window(monitor=mon, size=(widthPix, heightPix), colorSpace='rgb255', color=bgColor255,

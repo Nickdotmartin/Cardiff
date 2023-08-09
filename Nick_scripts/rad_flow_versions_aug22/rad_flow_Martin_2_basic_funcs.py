@@ -502,7 +502,7 @@ view_dist_cm = 57.3  # viewing distance in cm  # todo: change this to thisMon.ge
 view_dist_pix = widthPix / mon_width_cm*view_dist_cm  # used for calculating visual angle (e.g., probe locations at 4dva)
 mon = monitors.Monitor(monitor_name, width=mon_width_cm, distance=view_dist_pix)
 mon.setSizePix((widthPix, heightPix))
-mon.save()
+# mon.save()
 
 # WINDOW SPEC
 win = visual.Window(monitor=mon, size=(widthPix, heightPix), colorSpace='rgb255', color=bgColor255,
