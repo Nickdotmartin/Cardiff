@@ -75,10 +75,12 @@ for rad_flow_Martin_4_full_options.py
 - add in prelim bg motion period  DONE
 - updated speed to be scaled by frame rate to appear the same across monitors  DONE
 - change error to be 1ms regardless of fps?  DONE
-
-
+- added colorSpace=this_colourSpace to all stimuli (probes weren't changing)  DONE
+- probe lum not changing!
 - add in rings (as element array stim?)
 - add in spokes from vertices
+- calculate sep in degrees without importing dict or func
+
 
 """
 
@@ -370,10 +372,10 @@ def plt_fr_ints(time_p_trial_nested_list, n_trials_w_dropped_fr,
                                        marker='.', linewidth=.5, markersize=4)
             legend_handles_list.append(leg_handle)
 
-    # add vertical lines between trials, ofset by -.5
+    # add light-grey vertical lines between trials, ofset by -.5
     trial_v_lines = [fr_nums_p_trial[i][0] - .5 for i in range(len(fr_nums_p_trial))]
     for trial_line in trial_v_lines:
-        plt.axvline(x=trial_line, color='silver', linestyle='dashed', zorder=0)
+        plt.axvline(x=trial_line, color='gainsboro', linestyle='dashed', zorder=0)
 
     # add horizontal lines: green = expected frame duration, red = frame error tolerance
     plt.axhline(y=expected_fr_dur_ms / 1000, color='green', linestyle='dotted', alpha=.5)
@@ -490,8 +492,9 @@ if verbose:
           f"ISI_list (frames): {ISI_list}")
 
 
-# Separation values in pixels
-separations = [18, 6]
+# Separation values in pixels.  select from [18, 6, 3, 2, 1, 0] or 99 for 1probe
+# separations = [18, 6, 3, 2, 1, 0]
+separations = [18, 3]
 
 # # main contrast is whether the background and target motion is in same or opposite direction.
 # congruence_vals: 1=congruent/same, -1=incongruent/different
@@ -615,15 +618,17 @@ resp = event.BuilderKeyResponse()
 
 
 # fixation bull eye
-fixation = visual.Circle(win, radius=2, units='pix', lineColor='white', fillColor='black')
+fixation = visual.Circle(win, radius=2, units='pix', lineColor='white', fillColor='black', colorSpace=this_colourSpace)
 # todo: add change fixation colours on OLED (if if trial_num % 2 == 1: fixation.fillColor = 'white', lineColor = 'black')
 
 
 # PROBEs
 probe_size = 1  # can make them larger for testing new configurations etc
 probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1), (1, -2), (-1, -2), (-1, -1), (0, -1)]  # 5 pixels
-probe1 = visual.ShapeStim(win, vertices=probeVert, lineWidth=0, opacity=1, size=probe_size, interpolate=False)
-probe2 = visual.ShapeStim(win, vertices=probeVert, lineWidth=0, opacity=1, size=probe_size, interpolate=False)
+probe1 = visual.ShapeStim(win, vertices=probeVert, lineWidth=0, opacity=1, size=probe_size, interpolate=False,
+                          colorSpace=this_colourSpace)
+probe2 = visual.ShapeStim(win, vertices=probeVert, lineWidth=0, opacity=1, size=probe_size, interpolate=False,
+                          colorSpace=this_colourSpace)
 
 # probes and probe_masks are at dist_from_fix pixels from middle of the screen
 dist_from_fix = int((np.tan(np.deg2rad(probe_ecc)) * view_dist_pix) / np.sqrt(2))
@@ -899,8 +904,8 @@ for step in range(n_trials_per_stair):
             this_probeColor = probeColor255
             if this_colourSpace == 'rgb1':
                 this_probeColor = probeColor1
-            probe1.setFillColor([this_probeColor, this_probeColor, this_probeColor])
-            probe2.setFillColor([this_probeColor, this_probeColor, this_probeColor])
+            probe1.color = [this_probeColor, this_probeColor, this_probeColor]
+            probe2.color = [this_probeColor, this_probeColor, this_probeColor]
             if verbose:
                 print(f"probeLum: {probeLum}, this_probeColor: {this_probeColor}, "
                       f"probeColor255: {probeColor255}, probeColor1: {probeColor1}")
@@ -1264,10 +1269,11 @@ for step in range(n_trials_per_stair):
         thisExp.addData('date', expInfo['date'])
         thisExp.addData('time', expInfo['time'])
 
-
+        # tell psychopy to move to next trial
         thisExp.nextEntry()
-        thisStair.newValue(resp.corr)  # so that the staircase adjusts itself
 
+        # update staircase based on whether response was correct or incorrect
+        thisStair.newValue(resp.corr)
 
 print("\nend of experiment loop, saving data\n")
 # now exp is completed, save as '_output' rather than '_incomplete'
