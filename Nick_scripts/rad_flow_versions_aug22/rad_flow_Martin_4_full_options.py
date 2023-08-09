@@ -76,10 +76,10 @@ for rad_flow_Martin_4_full_options.py
 - updated speed to be scaled by frame rate to appear the same across monitors  DONE
 - change error to be 1ms regardless of fps?  DONE
 - added colorSpace=this_colourSpace to all stimuli (probes weren't changing)  DONE
-- probe lum not changing!
+
+
 - add in rings (as element array stim?)
 - add in spokes from vertices
-- calculate sep in degrees without importing dict or func
 
 
 """
@@ -606,7 +606,6 @@ if monitor_name in ['asus_cal', 'Nick_work_laptop', 'NickMac', 'OLED', 'ASUS_2_1
 # WINDOW SPEC
 win = visual.Window(monitor=mon, size=(widthPix, heightPix), colorSpace=this_colourSpace, color=this_bgColour,
                     units='pix', screen=display_number, allowGUI=False, fullscr=True)
-
 
 
 '''ELEMENTS'''

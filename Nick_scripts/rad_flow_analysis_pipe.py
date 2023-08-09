@@ -39,6 +39,15 @@ participant_list = ['Nick']  # , 'Simon']  # , 'Nick_half_speed']
 
 # todo: is this the right script or should I use rad_flow_convert_and_analyse?  For now, just use this for files in UNCALIBRATED dir.
 
+# todo: add code to get separation (plus probes, e.g., sep + 2)
+'''
+OLD CODE JUST FOR SEP, not sep and probes
+pixel_mm_deg_dict = get_pixel_mm_deg_values(monitor_name=monitor_name)
+if verbose:
+    print(f"diagonal pixel size: {pixel_mm_deg_dict['diag_mm']} mm, or {pixel_mm_deg_dict['diag_deg']} dva")
+sep_deg = sep * pixel_mm_deg_dict['diag_deg']
+I might want to change this to manually enter view_dist...
+'''
 
 exp_path = os.path.normpath(exp_path)
 convert_path1 = os.path.normpath(exp_path)

@@ -230,6 +230,7 @@ def get_pixel_mm_deg_values(monitor_name='asus_cal', n_pixels=1):
     pix_width_mm = dimensions_mm[0] / dimensions_pix[0]
     pix_height_mm = dimensions_mm[1] / dimensions_pix[1]
     pix_diag_mm = np.sqrt(pix_width_mm ** 2 + pix_height_mm ** 2)
+    # print(f"pix_diag_mm: {pix_diag_mm}")
     # print(f"pix_width_mm: {pix_width_mm}\n"
     #       f"pix_width_mm ** 2: {pix_width_mm ** 2}\n"
     #       f"pix_height_mm: {pix_height_mm}\n"
@@ -240,9 +241,12 @@ def get_pixel_mm_deg_values(monitor_name='asus_cal', n_pixels=1):
 
 
     # convert pixel chosen pixel size to dva
-    viewdist_mm = this_monitor.getDistance() * 10  # view dist is stored in cm
-    if viewdist_mm is None:
-        viewdist_mm = 57.3
+    viewdist_cm = this_monitor.getDistance()  # view dist is stored in cm
+    if viewdist_cm is not None:
+        viewdist_mm = this_monitor.getDistance() * 10  # view dist is stored in cm
+    else:
+    # if viewdist_mm is None:
+        viewdist_mm = 573
     pix_width_deg = mm_to_degrees(pixel_size_mm=pix_width_mm, distance_mm=viewdist_mm)
     pix_height_deg = mm_to_degrees(pixel_size_mm=pix_height_mm, distance_mm=viewdist_mm)
     pix_diag_deg = mm_to_degrees(pixel_size_mm=pix_diag_mm, distance_mm=viewdist_mm)
