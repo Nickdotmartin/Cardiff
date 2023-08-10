@@ -79,11 +79,13 @@ for rad_flow_Martin_4_full_options.py
 - added colorSpace=this_colourSpace to all stimuli (probes weren't changing)  DONE
 - changes ALL experiments to use RGB1 not RGB255  DONE
 
+rad_flow_Martin_5_contRoutine.py
+- change continueRoutine so after keypress it sorts correctAns and timings in segment before the next trial - DONE
 
-- change continueRoutine so after keypress it sorts correctAns and timings in segment before the next trial
+- measure mean dots speed (see if change from dots_min_depth from .5 to 1.0 has changed things 
 - add in rings (as element array stim?)
 - add in spokes from vertices
-
+- set it for 'asus_cal', not uncalibrated monitor.
 
 """
 
@@ -431,19 +433,19 @@ chdir(_thisDir)
 # expName = 'integration-EXP1'  # from the Builder filename that created this script
 expName = path.basename(__file__)[:-3]   # from the Builder filename that created this script
 
-expInfo = {'1. Participant': 'Nick_test_10082023',
+expInfo = {'1. Participant': 'Nick_test_09082023',
            '2. Run_number': '1',
            '3. Probe duration in frames': [2, 1, 50, 100],
-           '4. fps': [240, 120, 60],
+           '4. fps': [60, 240, 120, 60],
            '5. ISI_dur_in_ms': [25, 16.67, 100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0, -1],
            '6. Probe_orientation': ['radial', 'tangent'],
            '7. Record_frame_durs': [True, False],
            '8. Background': ['flow_dots', 'no_bg'],
            '9. prelim_bg_flow_ms': [70, 200, 350, 2000],
-           '10. monitor_name': ['ASUS_2_13_240Hz', 'asus_cal', 'Nick_work_laptop', 'OLED', 'Samsung',
-                                'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
+           '10. monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'Samsung',
+                                'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18', 'ASUS_2_13_240Hz'],
            '12. mask_type': ['4_circles', '2_spokes'],
-           '13. verbose': [False, True]
+           '13. verbose': [True, False]
            }
 
 # GUI
@@ -880,7 +882,7 @@ for step in range(n_trials_per_stair):
     np.random.shuffle(stairs)
     for thisStair in stairs:
 
-        # # repeat the trial if frames were dropped
+        # # Assume the trial needs to be repeated until I've confirmed that no frames were dropped
         repeat = True
         while repeat:
 
@@ -1000,13 +1002,14 @@ for step in range(n_trials_per_stair):
                     # continue the breaks routine until a key is pressed
                     continueRoutine = True
             else:
-                # else continue the trial routine.
+                # else continue the trial routine (per frame section).
                 continueRoutine = True
 
 
             '''TRIAL ROUTINE (per frame)'''
             frameN = -1
             # continueRoutine = True
+            # # continueRoutine here runs the per-frame section of the trial
             while continueRoutine:
                 frameN = frameN + 1
 
@@ -1138,79 +1141,15 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(2)
                     fixation.draw()
 
-                    # ANSWER
+                    # RESPONSE HANDLING
                     theseKeys = event.getKeys(keyList=['num_5', 'num_4', 'num_1', 'num_2', 'w', 'q', 'a', 's'])
                     if len(theseKeys) > 0:  # at least one key was pressed
                         resp.keys = theseKeys[-1]  # just the last key pressed
                         resp.rt = resp.clock.getTime()
 
-                        # default assume response incorrect unless meets criteria below
-                        resp.corr = 0
-
-                        if corner == 45:
-                            if (resp.keys == 'w') or (resp.keys == 'num_5'):
-                                resp.corr = 1
-                        elif corner == 135:
-                            if (resp.keys == 'q') or (resp.keys == 'num_4'):
-                                resp.corr = 1
-                        elif corner == 225:
-                            if (resp.keys == 'a') or (resp.keys == 'num_1'):
-                                resp.corr = 1
-                        elif corner == 315:
-                            if (resp.keys == 's') or (resp.keys == 'num_2'):
-                                resp.corr = 1
-
-
-                        # todo: continue Routine = False
-
-                        '''sort frame interval times to use for plots later'''
-                        if record_fr_durs:
-                            # actual frame interval times (in seconds) for this trial
-                            trial_fr_intervals = win.frameIntervals
-                            fr_int_per_trial.append(trial_fr_intervals)
-
-                            # add list of contiguous frame numbers for this trial
-                            fr_counter_per_trial.append(list(range(recorded_fr_counter,
-                                                                   recorded_fr_counter + len(trial_fr_intervals))))
-                            recorded_fr_counter += len(trial_fr_intervals)
-
-                            # add condition name for this staircase
-                            cond_list.append(thisStair.name)
-
-                            # empty frameIntervals cache
-                            win.frameIntervals = []
-
-                            # check for dropped frames (or frames that are too short)
-                            timing_bad = False
-                            if max(trial_fr_intervals) > max_fr_dur_sec:
-                                logging.warning(f"\n\toh no! Frame too long! {round(max(trial_fr_intervals), 2)} > "
-                                                f"{round(max_fr_dur_sec, 2)}: trial: {trial_number}, {thisStair.name}")
-                                timing_bad = True
-
-                            elif min(trial_fr_intervals) < min_fr_dur_sec:
-                                logging.warning(f"\n\toh no! Frame too short! {round(min(trial_fr_intervals), 2)} < "
-                                                f"{min_fr_dur_sec}, : trial: {trial_number}, {thisStair.name}")
-                                timing_bad = True
-
-                            # if timings are bad, repeat trial
-                            if timing_bad:
-                                repeat = True
-                                continueRoutine = False
-
-                                # decrement trial and stair so that the correct values are used for the next trial
-                                trial_number -= 1
-                                thisStair.trialCount = thisStair.trialCount - 1  # so Kesten doesn't count this trial
-
-                                # get first and last frame numbers for this trial
-                                trial_x_locs = [fr_counter_per_trial[-1][0], fr_counter_per_trial[-1][-1] + 1]  # 1st fr of this trial to 1st of next trial
-                                dropped_fr_trial_x_locs.append(trial_x_locs)
-                                dropped_fr_trial_counter += 1
-                                continue
-
-
-                        # these belong to the end of the answers section
-                        repeat = False
+                        # a response ends the per-frame_section
                         continueRoutine = False
+
 
                 # check for quit
                 if event.getKeys(keyList=["escape"]):
@@ -1219,6 +1158,81 @@ for step in range(n_trials_per_stair):
                 # refresh the screen
                 if continueRoutine:
                     win.flip()
+
+
+            '''End of per-frame section in continueRoutine = False"'''
+
+            # CHECK RESPONSES
+            # default assume response incorrect unless meets criteria below
+            resp.corr = 0
+            if corner == 45:
+                if (resp.keys == 'w') or (resp.keys == 'num_5'):
+                    resp.corr = 1
+            elif corner == 135:
+                if (resp.keys == 'q') or (resp.keys == 'num_4'):
+                    resp.corr = 1
+            elif corner == 225:
+                if (resp.keys == 'a') or (resp.keys == 'num_1'):
+                    resp.corr = 1
+            elif corner == 315:
+                if (resp.keys == 's') or (resp.keys == 'num_2'):
+                    resp.corr = 1
+
+
+
+            '''sort frame interval times to use for plots later'''
+            if record_fr_durs:
+                # actual frame interval times (in seconds) for this trial
+                trial_fr_intervals = win.frameIntervals
+                fr_int_per_trial.append(trial_fr_intervals)
+
+                # add list of contiguous frame numbers for this trial
+                fr_counter_per_trial.append(list(range(recorded_fr_counter,
+                                                       recorded_fr_counter + len(trial_fr_intervals))))
+                recorded_fr_counter += len(trial_fr_intervals)
+
+                # add condition name for this staircase
+                cond_list.append(thisStair.name)
+
+                # empty frameIntervals cache
+                win.frameIntervals = []
+
+                # check for dropped frames (or frames that are too short)
+                if max(trial_fr_intervals) > max_fr_dur_sec or min(trial_fr_intervals) < min_fr_dur_sec:
+
+                    # Timing is bad, this trial will be repeated (with new corner and target_jump)
+                    if verbose:
+                        print(f"\n\toh no! A frame had bad timing! trial: {trial_number}, {thisStair.name}"
+                              f"{round(max(trial_fr_intervals), 2)} > {round(max_fr_dur_sec, 2)} or "
+                              f"{round(min(trial_fr_intervals), 2)} < {round(min_fr_dur_sec, 2)}")
+
+                    print(f"Timing bad, trial {trial_number} repeated\nrepeat: {repeat}, continueRoutine: {continueRoutine}")
+
+                    # decrement trial and stair so that the correct values are used for the next trial
+                    trial_number -= 1
+                    thisStair.trialCount = thisStair.trialCount - 1  # so Kesten doesn't count this trial
+
+                    # get first and last frame numbers for this trial
+                    trial_x_locs = [fr_counter_per_trial[-1][0], fr_counter_per_trial[-1][-1] + 1]  # 1st fr of this trial to 1st of next trial
+                    dropped_fr_trial_x_locs.append(trial_x_locs)
+                    dropped_fr_trial_counter += 1
+                    continue
+                else:
+                    repeat = False  # breaks out of while repeat=True loop to progress to new trial
+                    print(f"Timing good, trial {trial_number} not repeated\nrepeat: {repeat}, continueRoutine: {continueRoutine}")
+
+
+            # # these belong to the end of the answers section
+            # repeat = False
+            # continueRoutine = False
+
+                # # check for quit
+                # if event.getKeys(keyList=["escape"]):
+                #     core.quit()
+                #
+                # # refresh the screen
+                # if continueRoutine:
+                #     win.flip()
 
             # staircase completed
 
@@ -1249,6 +1263,7 @@ for step in range(n_trials_per_stair):
                     core.quit()
 
         # add trial info to csv
+        print(f"adding trial info to csv\nrepeat: {repeat}, continueRoutine: {continueRoutine}")
         thisExp.addData('trial_number', trial_number)
         thisExp.addData('trial_n_inc_rpt', trial_num_inc_repeats)
         thisExp.addData('stair', stair_idx)
