@@ -71,18 +71,25 @@ for rad_flow_Martin_4_full_options.py
 - get tangent probes working  DONE
 - added screen number selector DONE
 - get rid of BGspeed variable, just using dots_speed  DONE
-- changed how trials are repated (from start of trial, not per-frame bit) and got rid of user repeats  DONE
+- changed how trials are repeated (from start of trial, not per-frame bit) and got rid of user repeats  DONE
 - add in edge masks  DONE
 - add in prelim bg motion period  DONE
 - updated speed to be scaled by frame rate to appear the same across monitors  DONE
 - change error to be 1ms regardless of fps?  DONE
 - added colorSpace=this_colourSpace to all stimuli (probes weren't changing)  DONE
+- changes ALL experiments to use RGB1 not RGB255  DONE
 
 
+- change continueRoutine so after keypress it sorts correctAns and timings in segment before the next trial
 - add in rings (as element array stim?)
 - add in spokes from vertices
 
 
+"""
+
+"""
+To use this script you will need the width (cm), screen dims (pixels, width heght) and view dist for you
+monitor into psychopy monitor centre.  Then select you monior.
 """
 
 
@@ -290,6 +297,8 @@ def new_dots_depth_and_pos(x_array, y_array, depth_array, dots_speed, flow_dir, 
     :param dots_max_depth: default is 5, values above this are adjusted to dots_min_depth
     :return: new dots_pos_array
     """
+
+    # todo: change depth to z in names.
 
     # # 1. Update z (depth values) # #
     # Add dots_speed * flow_dir to the current z values.
@@ -570,17 +579,24 @@ maxLum = 106  # 255 RGB
 bgLumProp = .2  # .2  # todo: use .45 to match radial_flow_NM_v2.py, or .2 to match exp1
 # bgLumProp = .45  # .2  # todo: use .45 to match radial_flow_NM_v2.py, or .2 to match exp1
 bgLum = maxLum * bgLumProp
-bgColor255 = bgLum * LumColor255Factor
 
 # colour space
-this_colourSpace = 'rgb255'  # 'rgb255', 'rgb1'
-this_bgColour = [bgColor255, bgColor255, bgColor255]
-adj_dots_col = int(255 * .15)
-if monitor_name == 'OLED':
-    bgColor_rgb1 = bgLum / maxLum
-    this_colourSpace = 'rgb1'  # values between 0 and 1
-    this_bgColour = [bgColor_rgb1, bgColor_rgb1, bgColor_rgb1]
-    adj_dots_col = .15
+# todo: 10082023: going to try with everything using RGB1 rather than RGB255
+# bgColor255 = bgLum * LumColor255Factor
+
+# this_colourSpace = 'rgb255'  # 'rgb255', 'rgb1'
+# this_bgColour = [bgColor255, bgColor255, bgColor255]
+# adj_dots_col = int(255 * .15)
+# if monitor_name == 'OLED':
+#     bgColor_rgb1 = bgLum / maxLum
+#     this_colourSpace = 'rgb1'  # values between 0 and 1
+#     this_bgColour = [bgColor_rgb1, bgColor_rgb1, bgColor_rgb1]
+#     adj_dots_col = .15
+
+bgColor_rgb1 = bgLum / maxLum
+this_colourSpace = 'rgb1'  # values between 0 and 1
+this_bgColour = [bgColor_rgb1, bgColor_rgb1, bgColor_rgb1]
+adj_dots_col = .15
 
 
 # MONITOR SPEC
@@ -702,7 +718,7 @@ if background == 'flow_dots':
     # todo: most of the flow_dots are off screen using this current dots_min_depth, as the distribution of x_flow has large tails.
     #  Setting it to 1.0 means that the tails are shorter, as dividing x / z only makes values smaller (or the same), not bigger.
     dots_min_depth = 1.0  # original script used .5, which increased the tails meaning more dots were offscreen.
-    dots_max_depth = 5  # depth values
+    dots_max_depth = 5  # depth values  # todo: change 5.5 to match original script depth range?
 
     # Changing dots_min_depth from .5 to one means that the proportion of dots onscreen increases from ~42% to ~82%.
     # Therefore, I can half n_dots with little change in the number of dots onscreen, saving processing resources.
@@ -898,17 +914,19 @@ for step in range(n_trials_per_stair):
 
             # Luminance (staircase varies probeLum)
             probeLum = thisStair.next()
-            probeColor255 = int(probeLum * LumColor255Factor)  # rgb255 are ints.
+            # probeColor255 = int(probeLum * LumColor255Factor)  # rgb255 are ints.
             probeColor1 = probeLum / maxLum
 
-            this_probeColor = probeColor255
-            if this_colourSpace == 'rgb1':
-                this_probeColor = probeColor1
+            # this_probeColor = probeColor255
+            # if this_colourSpace == 'rgb1':
+            #     this_probeColor = probeColor1
+            this_probeColor = probeColor1
             probe1.fillColor = [this_probeColor, this_probeColor, this_probeColor]
             probe2.fillColor = [this_probeColor, this_probeColor, this_probeColor]
             if verbose:
                 print(f"probeLum: {probeLum}, this_probeColor: {this_probeColor}, "
-                      f"probeColor255: {probeColor255}, probeColor1: {probeColor1}")
+                      # f"probeColor255: {probeColor255}, "
+                      f"probeColor1: {probeColor1}")
 
 
             # PROBE LOCATION
@@ -991,6 +1009,8 @@ for step in range(n_trials_per_stair):
             # continueRoutine = True
             while continueRoutine:
                 frameN = frameN + 1
+
+                # move record frames analysis to outside continue routine
 
                 '''Turn recording on and off from just before probe1 til just after probe2. '''
                 if frameN == end_bg_motion_fr:
@@ -1140,6 +1160,9 @@ for step in range(n_trials_per_stair):
                             if (resp.keys == 's') or (resp.keys == 'num_2'):
                                 resp.corr = 1
 
+
+                        # todo: continue Routine = False
+
                         '''sort frame interval times to use for plots later'''
                         if record_fr_durs:
                             # actual frame interval times (in seconds) for this trial
@@ -1245,7 +1268,7 @@ for step in range(n_trials_per_stair):
         # thisExp.addData('corner_name', corner_name)
         thisExp.addData('probeLum', probeLum)
         thisExp.addData('probeColor1', probeColor1)
-        thisExp.addData('probeColor255', probeColor255)
+        # thisExp.addData('probeColor255', probeColor255)
         thisExp.addData('trial_response', resp.corr)
         thisExp.addData('resp.rt', resp.rt)
         thisExp.addData('probe_ecc', probe_ecc)
@@ -1320,6 +1343,3 @@ else:
     # close and quit once a key is pressed
     win.close()
     core.quit()
-
-
-
