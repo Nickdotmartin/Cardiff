@@ -71,6 +71,7 @@ for rad_flow_Martin_4_full_options.py
 - get tangent probes working  DONE
 - added screen number selector DONE
 - get rid of BGspeed variable, just using dots_speed  DONE
+- changed how trials are repated (from start of trial, not per-frame bit) and got rid of user repeats  DONE
 - add in edge masks  DONE
 - add in prelim bg motion period  DONE
 - updated speed to be scaled by frame rate to appear the same across monitors  DONE
