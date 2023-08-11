@@ -4,14 +4,8 @@ from psychopy import gui, visual, core, data, event, monitors, logging
 from psychopy import __version__ as psychopy_version
 from os import path, chdir
 import numpy as np
-# from numpy import deg2rad, array, cos, sin
-# from numpy.random import shuffle, choice
-# import random
 import copy
-import time
 from datetime import datetime
-# from math import *
-from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 
@@ -81,6 +75,7 @@ for rad_flow_Martin_4_full_options.py
 
 rad_flow_Martin_5_contRoutine.py
 - change continueRoutine so after keypress it sorts correctAns and timings in segment before the next trial - DONE
+- changed verbose to debug, which if True, selects less trials and prints more info to console.  DONE
 
 - measure mean dots speed (see if change from dots_min_depth from .5 to 1.0 has changed things 
 - add in rings (as element array stim?)
@@ -378,7 +373,7 @@ def plt_fr_ints(time_p_trial_nested_list, n_trials_w_dropped_fr,
     '''decorate plot'''
     # add legend with colours per condition
     legend_handles_list = []
-    if len(all_cond_name_list) < 20:
+    if len(unique_conds) < 20:
         for cond in unique_conds:
             leg_handle = mlines.Line2D([], [], color=colour_dict[cond], label=cond,
                                        marker='.', linewidth=.5, markersize=4)
@@ -422,17 +417,13 @@ def plt_fr_ints(time_p_trial_nested_list, n_trials_w_dropped_fr,
 
 
 
-
-# logging.console.setLevel(logging.DEBUG)
-# logging.console.setLevel(logging.CRITICAL)
-# Ensure that relative paths start from the same directory as this script
+# get filename and path for this experiment
 _thisDir = path.dirname(path.abspath(__file__))
 chdir(_thisDir)
-# Store info about the experiment session
-# psychopyVersion = 'v2020.2.10'
-# expName = 'integration-EXP1'  # from the Builder filename that created this script
-expName = path.basename(__file__)[:-3]   # from the Builder filename that created this script
+expName = path.basename(__file__)[:-3]
 
+
+# dialogue box/drop-down option when exp starts (1st item is default val)
 expInfo = {'1. Participant': 'Nick_test_09082023',
            '2. Run_number': '1',
            '3. Probe duration in frames': [2, 1, 50, 100],
@@ -442,13 +433,13 @@ expInfo = {'1. Participant': 'Nick_test_09082023',
            '7. Record_frame_durs': [True, False],
            '8. Background': ['flow_dots', 'no_bg'],
            '9. prelim_bg_flow_ms': [70, 200, 350, 2000],
-           '10. monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'Samsung',
-                                'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18', 'ASUS_2_13_240Hz'],
+           '10. monitor_name': ['Nick_work_laptop', 'ASUS_2_13_240Hz', 'asus_cal', 'OLED', 'Samsung',
+                                'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
            '12. mask_type': ['4_circles', '2_spokes'],
-           '13. verbose': [True, False]
+           '13. debug': [True, False]
            }
 
-# GUI
+# run drop-down menu, OK continues, cancel quits
 dlg = gui.DlgFromDict(dictionary=expInfo, title=expName)
 if dlg.OK == False:
     core.quit()  # user pressed cancel
@@ -466,16 +457,18 @@ background = expInfo['8. Background']
 prelim_bg_flow_ms = int(expInfo['9. prelim_bg_flow_ms'])
 monitor_name = expInfo['10. monitor_name']
 mask_type = expInfo['12. mask_type']
-verbose = eval(expInfo['13. verbose'])
+debug = eval(expInfo['13. debug'])
 
-if verbose:  # print settings from dlg
-    print("dlg dict")
-    for k, v in expInfo.items():
-        print(f'{k}: {v}')
+# print settings from dlg
+print("dlg dict")
+for k, v in expInfo.items():
+    print(f'{k}: {v}')
 
 
 # Misc settings
-n_trials_per_stair = 2  # this is the number of trials per stair
+n_trials_per_stair = 25  # this is the number of trials per stair
+if debug:
+    n_trials_per_stair = 2
 probe_ecc = 4  # int((expInfo['6. Probe eccentricity in deg']))1
 vary_fixation = True  # vary fixation period between .5 and 1.5 seconds.
 expInfo['time'] = datetime.now().strftime("%H:%M:%S")
@@ -498,15 +491,16 @@ else:
     ISI_actual_ms = (1/fps) * ISI_frames * 1000
 # ISI = ISI_frames  # todo: delete this
 ISI_list = [ISI_frames]
-if verbose:
+if debug:
     print(f"\nSelected {ISI_selected_ms}ms ISI.\n"
           f"At {fps}Hz this is {ISI_frames} frames which each take {round(1000/fps, 2)} ms.\n"
           f"ISI_list (frames): {ISI_list}")
 
 
 # Separation values in pixels.  select from [18, 6, 3, 2, 1, 0] or 99 for 1probe
-# separations = [18, 6, 3, 2, 1, 0]
-separations = [18, 1]
+separations = [18, 6, 3, 2, 1, 0]
+if debug:
+    separations = [18, 1]
 
 # # main contrast is whether the background and target motion is in same or opposite direction.
 # congruence_vals: 1=congruent/same, -1=incongruent/different
@@ -515,7 +509,7 @@ congruence_names = ['cong', 'incong']
 if background == 'no_bg':
     congruence_vals = [1]
     congruence_names = ['No_bg']
-if verbose:
+if debug:
     print(f'congruence_vals: {congruence_vals}')
     print(f'congruence_names: {congruence_names}')
 
@@ -529,7 +523,7 @@ ISI_vals_list = list(np.repeat(ISI_list, len(separations))) * len(congruence_val
 sep_vals_list = list(np.tile(separations, len(ISI_list) * len(congruence_vals)))
 cong_vals_list = list(np.repeat(congruence_vals, len(sep_vals_list) / len(congruence_vals)))
 cong_names_list = list(np.repeat(congruence_names, len(sep_vals_list) / len(congruence_vals)))
-if verbose:
+if debug:
     print(f'ISI_vals_list: {ISI_vals_list}')
     print(f'sep_vals_list: {sep_vals_list}')
     print(f'cong_vals_list: {cong_vals_list}')
@@ -541,10 +535,9 @@ if verbose:
 stair_names_list = [f'{p}_sep{s}_ISI{i}' for p, s, i in zip(cong_names_list, sep_vals_list, ISI_vals_list)]
 n_stairs = len(sep_vals_list)
 total_n_trials = int(n_trials_per_stair * n_stairs)
-if verbose:
-    print(f'stair_names_list: {stair_names_list}')
-    print(f'n_stairs: {n_stairs}')
-    print(f'total_n_trials: {total_n_trials}')
+print(f'\nstair_names_list: {stair_names_list}')
+print(f'n_stairs: {n_stairs}')
+print(f'total_n_trials: {total_n_trials}')
 
 
 '''Experiment handling and saving'''
@@ -583,26 +576,13 @@ bgLumProp = .2  # .2  # todo: use .45 to match radial_flow_NM_v2.py, or .2 to ma
 bgLum = maxLum * bgLumProp
 
 # colour space
-# todo: 10082023: going to try with everything using RGB1 rather than RGB255
-# bgColor255 = bgLum * LumColor255Factor
-
-# this_colourSpace = 'rgb255'  # 'rgb255', 'rgb1'
-# this_bgColour = [bgColor255, bgColor255, bgColor255]
-# adj_dots_col = int(255 * .15)
-# if monitor_name == 'OLED':
-#     bgColor_rgb1 = bgLum / maxLum
-#     this_colourSpace = 'rgb1'  # values between 0 and 1
-#     this_bgColour = [bgColor_rgb1, bgColor_rgb1, bgColor_rgb1]
-#     adj_dots_col = .15
-
-bgColor_rgb1 = bgLum / maxLum
 this_colourSpace = 'rgb1'  # values between 0 and 1
+bgColor_rgb1 = bgLum / maxLum
 this_bgColour = [bgColor_rgb1, bgColor_rgb1, bgColor_rgb1]
-adj_dots_col = .15
 
 
 # MONITOR SPEC
-if verbose:
+if debug:
     print(f"\nmonitor_name: {monitor_name}")
 mon = monitors.Monitor(monitor_name)
 
@@ -690,7 +670,7 @@ edge_mask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
 n_dots = 0  # no dots
 dots_speed = None
 dots_speed = dots_speed
-dot_array_width = None  # this scales it for the monitor and keeps more flow_dots on screen
+dot_array_spread = None  # this scales it for the monitor and keeps more flow_dots on screen
 dots_min_depth = None
 dots_max_depth = None  # depth values
 
@@ -712,10 +692,7 @@ if background == 'flow_dots':
     # todo: this appears too fast to me, but it is the same as the original script.
     dots_speed = 48 / fps
 
-    # dot_array_width is the spread of x and ys BEFORE they are divided by their depth value to get actual positions.
-    # with dot_array_width = widthPix * 3, this gives a values of 5760 on a 1920 monitor,
-    # similar to the original setting of 5000.  It also allows the flow_dots to be scaled to the screen for OLED.
-    dot_array_width = widthPix * 3  # this scales it for the monitor and keeps more flow_dots on screen
+    # dot_array_spread is the spread of x and ys BEFORE they are divided by their depth value to get actual positions.
 
     # todo: most of the flow_dots are off screen using this current dots_min_depth, as the distribution of x_flow has large tails.
     #  Setting it to 1.0 means that the tails are shorter, as dividing x / z only makes values smaller (or the same), not bigger.
@@ -729,9 +706,15 @@ if background == 'flow_dots':
     # todo: do we need to increase n_dots for OLED?
     n_dots = 5000
 
+    # with dot_array_spread = widthPix * 3, this gives a values of 5760 on a 1920 monitor,
+    # similar to the original setting of 5000.  It also allows the flow_dots to be scaled to the screen for OLED.
+    dot_array_spread = widthPix * 3  # this scales it for the monitor and keeps more flow_dots on screen
+
     # initial array values.  x and y are scaled by z, so x and y values can be larger than the screen.
-    x = np.random.rand(n_dots) * dot_array_width - dot_array_width / 2
-    y = np.random.rand(n_dots) * dot_array_width - dot_array_width / 2
+    # x and y are the position of the dots when they are at depth = 1.  These values can be larger than the monitor.
+    # at depths > 1, x and y are divided by z, so they are appear closer to the middle of the screen
+    x = np.random.rand(n_dots) * dot_array_spread - dot_array_spread / 2
+    y = np.random.rand(n_dots) * dot_array_spread - dot_array_spread / 2
     z = np.random.rand(n_dots) * (dots_max_depth - dots_min_depth) + dots_min_depth
     # print(f"x: {x}, y: {y}, z: {z}")
 
@@ -742,7 +725,9 @@ if background == 'flow_dots':
     # array of x, y positions of dots to pass to ElementArrayStim
     dots_xys_array = np.array([x_flow, y_flow]).T
 
-    # Give dots a pale green colour
+    # Give dots a pale green colour, which is adj_dots_col different to the background
+    adj_dots_col = .15
+
     flow_colour = [this_bgColour[0] - adj_dots_col, this_bgColour[1], this_bgColour[2] - adj_dots_col]
     if monitor_name == 'OLED':
         # darker green for low contrast against black background
@@ -752,7 +737,7 @@ if background == 'flow_dots':
                                         units='pix', nElements=n_dots, sizes=10,
                                         colorSpace=this_colourSpace, colors=flow_colour)
 
-if verbose:
+if debug:
     print(f'\nprelim_bg_flow_ms: {prelim_bg_flow_ms}')
     print(f'prelim_bg_flow_fr: {prelim_bg_flow_fr}')
     print(f'actual_prelim_bg_flow_ms: {actual_prelim_bg_flow_ms}')
@@ -772,7 +757,7 @@ max_fr_dur_sec = expected_fr_sec + (expected_fr_sec * frame_tolerance_prop)
 min_fr_dur_sec = expected_fr_sec - (expected_fr_sec * frame_tolerance_prop)
 frame_tolerance_ms = (max_fr_dur_sec - expected_fr_sec) * 1000
 max_dropped_fr_trials = 10  # number of trials with dropped frames to allow before experiment is aborted
-if verbose:
+if debug:
     print(f"\nexpected_fr_ms: {expected_fr_ms}")
     print(f"frame_tolerance_prop: {frame_tolerance_prop}")
     print(f"frame_tolerance_ms: {frame_tolerance_ms}")
@@ -797,8 +782,8 @@ instructions = visual.TextStim(win=win, name='instructions', font='Arial', heigh
                                     "press the key related to the location of the probe:\n\n"
                                     "[4]/[Q] top-left\t\t\t[5]/[W] top-right\n\n\n\n"
                                     "[1]/[A] bottom-left\t\t\t[2]/[S] bottom-right.\n\n\n"
-                                    "Some targets will be easier to see than others,\n"
-                                    "Some will be so dim that you won't see them, so just guess!\n\n"
+                                    "Some targets will be easy to see, others will be hard to spot.\n"
+                                    "If you aren't sure whether you saw the target, just guess!\n\n"
                                     "You don't need to think for long, respond quickly, "
                                     "but try to push press the correct key!\n\n"
                                     "Don't let your eyes wander, keep focussed on the circle in the middle throughout.")
@@ -820,7 +805,7 @@ if n_breaks > 0:
 else:
     take_break = max_without_break
 break_dur = 30
-if verbose:
+if debug:
     print(f"\ntake a {break_dur} second break every {take_break} trials ({n_breaks} breaks in total).")
 break_text = f"Break\nTurn on the light and take at least {break_dur} seconds break.\n" \
              "Keep focussed on the fixation circle in the middle of the screen.\n" \
@@ -890,7 +875,7 @@ for step in range(n_trials_per_stair):
             trial_number += 1
             trial_num_inc_repeats += 1
             stair_idx = thisStair.extraInfo['stair_idx']
-            if verbose:
+            if debug:
                 print(f"\n({trial_num_inc_repeats}) trial_number: {trial_number}, "
                       f"stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
 
@@ -898,7 +883,7 @@ for step in range(n_trials_per_stair):
             ISI = ISI_vals_list[stair_idx]
             congruent = cong_vals_list[stair_idx]
             cong_name = cong_names_list[stair_idx]
-            if verbose:
+            if debug:
                 print(f"ISI: {ISI}, congruent: {congruent} ({cong_name})")
 
             # conditions (sep, neg_sep)
@@ -911,7 +896,7 @@ for step in range(n_trials_per_stair):
                     neg_sep = -.1
             else:
                 neg_sep = sep
-            if verbose:
+            if debug:
                 print(f"sep: {sep}, neg_sep: {neg_sep}")
 
             # Luminance (staircase varies probeLum)
@@ -925,7 +910,7 @@ for step in range(n_trials_per_stair):
             this_probeColor = probeColor1
             probe1.fillColor = [this_probeColor, this_probeColor, this_probeColor]
             probe2.fillColor = [this_probeColor, this_probeColor, this_probeColor]
-            if verbose:
+            if debug:
                 print(f"probeLum: {probeLum}, this_probeColor: {this_probeColor}, "
                       # f"probeColor255: {probeColor255}, "
                       f"probeColor1: {probeColor1}")
@@ -942,14 +927,14 @@ for step in range(n_trials_per_stair):
 
             # PROBE POSITION (including shift around dist_from_fix)
             probe_pos_dict = get_probe_pos_dict(sep, target_jump, corner, dist_from_fix,
-                                                probes_ori=orientation, verbose=verbose)
+                                                probes_ori=orientation, verbose=debug)
 
             # loc_marker.setPos([loc_x, loc_y])
             probe1.setPos(probe_pos_dict['probe1_pos'])
             probe1.setOri(probe_pos_dict['probe1_ori'])
             probe2.setPos(probe_pos_dict['probe2_pos'])
             probe2.setOri(probe_pos_dict['probe2_ori'])
-            if verbose:
+            if debug:
                 print(f"loc_marker: {[probe_pos_dict['loc_x'], probe_pos_dict['loc_y']]}, "
                       f"probe1_pos: {probe_pos_dict['probe1_pos']}, "
                       f"probe2_pos: {probe_pos_dict['probe2_pos']}. dff: {dist_from_fix}")
@@ -979,7 +964,7 @@ for step in range(n_trials_per_stair):
             end_ISI_fr = end_p1_fr + isi_dur_fr
             end_p2_fr = end_ISI_fr + p2_fr
             end_response_fr = end_p2_fr + 10000 * fps  # ~40 seconds to respond
-            if verbose:
+            if debug:
                 print(f"end_fix_fr: {end_fix_fr}, end_bg_motion_fr: {end_bg_motion_fr}, "
                       f"end_p1_fr: {end_p1_fr}, end_ISI_fr: {end_ISI_fr}, end_p2_fr: {end_p2_fr}\n")
 
@@ -1201,7 +1186,7 @@ for step in range(n_trials_per_stair):
                 if max(trial_fr_intervals) > max_fr_dur_sec or min(trial_fr_intervals) < min_fr_dur_sec:
 
                     # Timing is bad, this trial will be repeated (with new corner and target_jump)
-                    if verbose:
+                    if debug:
                         print(f"\n\toh no! A frame had bad timing! trial: {trial_number}, {thisStair.name}"
                               f"{round(max(trial_fr_intervals), 2)} > {round(max_fr_dur_sec, 2)} or "
                               f"{round(min(trial_fr_intervals), 2)} < {round(min_fr_dur_sec, 2)}")
