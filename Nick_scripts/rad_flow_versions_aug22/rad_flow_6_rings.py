@@ -77,8 +77,9 @@ rad_flow_Martin_5_contRoutine.py
 - change continueRoutine so after keypress it sorts correctAns and timings in segment before the next trial - DONE
 - changed verbose to debug, which if True, selects less trials and prints more info to console.  DONE
 
-- measure mean dots speed (see if change from dots_min_depth from .5 to 1.0 has changed things 
-- add in rings (as element array stim?)
+rad_flow_6_rings.py
+- add in rings (as element array stim?)  - DONE
+- set variables for rings (min/max depth, n_rings, etc)  - DONE
 - add in spokes from vertices
 - set it for 'asus_cal', not uncalibrated monitor.
 
@@ -275,50 +276,107 @@ def get_probe_pos_dict(separation, target_jump, corner, dist_from_fix,
     return probe_pos_dict
 
 
-def new_dots_depth_and_pos(x_array, y_array, depth_array, dots_speed, flow_dir, min_depth, max_depth):
+def new_dots_z_and_pos(x_array, y_array, z_array, dots_speed, flow_dir, min_z, max_z):
     """
-    This is a function to update flow_dots depth array and get new pixel co-ordinatesusing the original x_array and y_array.
+    This is a function to update flow_dots depth array and get new pixel co-ordinates
+    using the original x_array and y_array.
 
-    1a. Update depth_array by adding dots_speed * flow_dir to the current z values.
-    1b. adjust any values below dots_min_depth or above dots_max_depth.
+    1a. Update z_array by adding dots_speed * flow_dir to the current z values.
+    1b. adjust any values below dots_min_z or above dots_max_z.
 
-    2a. Get new x_pos and y_pos co-ordinates values by dividing x_array and y_array by the new depth_array.
+    2a. Get new x_pos and y_pos co-ordinates values by dividing x_array and y_array by the new z_array.
     2b. put the new x_pos and y_pos co-ordinates into an array and transposes it.
 
     :param x_array: Original x_array positions for the dots (shape = (n_dots, 1))
     :param y_array: Original y_array positions for the dots (shape = (n_dots, 1))
-    :param depth_array: array of depth values for the dots (shape = (n_dots, 1))
+    :param z_array: array of depth values for the dots (shape = (n_dots, 1))
     :param dots_speed: speed of the dots (float, smaller = slower, larger = faster)
     :param flow_dir: either 1 (contracting/inward/backwards) or -1 (expanding/outward/forwards)
-    :param dots_min_depth: default is .5, values below this are adjusted to dots_max_depth
-    :param dots_max_depth: default is 5, values above this are adjusted to dots_min_depth
+    :param dots_min_z: default is .5, values below this are adjusted to dots_max_z
+    :param dots_max_z: default is 5, values above this are adjusted to dots_min_z
     :return: new dots_pos_array
     """
 
-    # todo: change depth to z in names.
-
     # # 1. Update z (depth values) # #
     # Add dots_speed * flow_dir to the current z values.
-    updated_depth_arr = depth_array + dots_speed * flow_dir
+    updated_z_array = z_array + dots_speed * flow_dir
 
-    # adjust any depth values below min_depth or above max_depth by depth_adj
-    depth_adj = max_depth - min_depth
-    # adjust updated_depth_arr values less than min_depth by adding depth_adj
-    less_than_min = (updated_depth_arr < min_depth)
-    updated_depth_arr[less_than_min] += depth_adj
-    # adjust updated_depth_arr values more than max_depth by subtracting depth_adj
-    more_than_max = (updated_depth_arr > max_depth)
-    updated_depth_arr[more_than_max] -= depth_adj
-    # print(f"updated_depth_arr (clipped):\n{updated_depth_arr}\n")
+    # adjust any depth values below min_z or above max_z by z_adjust
+    z_adjust = max_z - min_z
+    # adjust updated_z_array values less than min_z by adding z_adjust
+    less_than_min = (updated_z_array < min_z)
+    updated_z_array[less_than_min] += z_adjust
+    # adjust updated_z_array values more than max_z by subtracting z_adjust
+    more_than_max = (updated_z_array > max_z)
+    updated_z_array[more_than_max] -= z_adjust
+    # print(f"updated_z_array (clipped):\n{updated_z_array}\n")
 
-    # # 2. Get new pixel co-ordinates for dots using original x_array and y_array and updated_depth_arr # #
-    x_pos = x_array / updated_depth_arr
-    y_pos = y_array / updated_depth_arr
+    # # 2. Get new pixel co-ordinates for dots using original x_array and y_array and updated_z_array # #
+    x_pos = x_array / updated_z_array
+    y_pos = y_array / updated_z_array
 
     # puts the new co-ordinates into an array and transposes it, ready to use.
     dots_pos_array = np.array([x_pos, y_pos]).T
 
-    return updated_depth_arr, dots_pos_array
+    return updated_z_array, dots_pos_array
+
+
+def roll_rings_z_and_colours(z_array, ring_colours, min_z, max_z, flow_dir, flow_speed, initial_x_vals):
+    """
+    This rings will spawn a new ring if the old one either grows too big for the screen (expanding),
+    or shrinks too small (if contracting).
+
+    This function updates the z_array (depth) values for the rings, and adjusts any values below min_z or
+    above max_z by z_adjust.  Any values that are adjusted are then rolled to the end or beginning of the array,
+    depending on whether they are below min_z or above max_z.
+    The same values are then also rolled in the ring_colours array.
+
+    :param z_array: Numpy array of z_array values for the rings (shape = (n_rings, 1))
+    :param ring_colours: List of RGB1 colours for the rings (shape = (n_rings, 3))
+    :param min_z: minimum depth value for the rings (how close they can get to the screen)
+    :param max_z: maximum depth value for the rings (how far away they can get from the screen)
+    :param flow_dir: either 1 (contracting/inward/backwards) or -1 (expanding/outward/forwards)
+    :param flow_speed: speed of the rings (float, smaller = slower, larger = faster)
+    :param initial_x_vals: nupmy array of ring sizes, (all the same size, e.g., 1080, shape = (n_rings, 1))
+
+    :return: z_array (updated), ring_radii_array, ring_colours (rolled if any z_array values are rolled)
+    """
+
+    # update depth values
+    z_array = z_array + flow_speed * flow_dir
+
+    # z_adjust is the size of change to make to out-of-bounds rings
+    z_adjust = max_z - min_z
+
+    # adjust any z_array values below min_z or above max_z by z_adjust
+    if flow_dir == -1:  # expanding, getting closer, might be below min_z
+        # find which rings are less than min and add z_adjust to those rings
+        less_than_min = (z_array < min_z)
+        z_array[less_than_min] += z_adjust
+
+        # shift arrays by this amount (e.g., if 3 rings are less than min, shift by 3)
+        # (note negative shift to move them backwards)
+        shift_num = -sum(less_than_min)
+
+    elif flow_dir == 1:  # contracting, getting further away, might be above max_z
+        # find which rings are more_than_max and subtract z_adjust to those rings
+        more_than_max = (z_array > max_z)
+        z_array[more_than_max] -= z_adjust
+
+        # shift arrays by this amount (e.g., if 3 rings are more_than_max, shift by 3)
+        shift_num = sum(more_than_max)
+
+    # roll the depth and colours arrays so that adjusted rings move to other end of array
+    z_array = np.roll(z_array, shift=shift_num, axis=0)
+    ring_colours = np.roll(ring_colours, shift=shift_num, axis=0)
+
+    # get new ring_radii_array
+    ring_radii_array = initial_x_vals / z_array
+
+    # print(f"\nz_array:\n{z_array}\nring_radii_array:\n{ring_radii_array}\nshift_num:\n{shift_num}\n")
+
+    return z_array, ring_radii_array, ring_colours
+
 
 
 def plt_fr_ints(time_p_trial_nested_list, n_trials_w_dropped_fr,
@@ -431,9 +489,9 @@ expInfo = {'1. Participant': 'Nick_test_09082023',
            '5. ISI_dur_in_ms': [25, 16.67, 100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0, -1],
            '6. Probe_orientation': ['radial', 'tangent'],
            '7. Record_frame_durs': [True, False],
-           '8. Background': ['flow_dots', 'no_bg'],
+           '8. Background': ['flow_dots', 'flow_rings', 'no_bg'],
            '9. prelim_bg_flow_ms': [70, 200, 350, 2000],
-           '10. monitor_name': ['Nick_work_laptop', 'ASUS_2_13_240Hz', 'asus_cal', 'OLED', 'Samsung',
+           '10. monitor_name': ['Nick_work_laptop', 'asus_cal', 'OLED', 'ASUS_2_13_240Hz', 'Samsung',
                                 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
            '12. mask_type': ['4_circles', '2_spokes'],
            '13. debug': [True, False]
@@ -489,7 +547,6 @@ if ISI_selected_ms == -1:
 else:
     ISI_frames = int(ISI_selected_ms * fps / 1000)
     ISI_actual_ms = (1/fps) * ISI_frames * 1000
-# ISI = ISI_frames  # todo: delete this
 ISI_list = [ISI_frames]
 if debug:
     print(f"\nSelected {ISI_selected_ms}ms ISI.\n"
@@ -542,7 +599,6 @@ print(f'total_n_trials: {total_n_trials}')
 
 '''Experiment handling and saving'''
 # save each participant's files into separate dir for each ISI
-# isi_dir = f'ISI_{ISI_frames}'  # todo: delete this
 save_dir = path.join(_thisDir, expName, participant_name,
                      background, f'bg{prelim_bg_flow_ms}',
                      f'{participant_name}_{run_number}',
@@ -572,13 +628,19 @@ Color1LumFactor = 2.39538706913372  ###
 maxLum = 106  # 255 RGB
 # minLum = 0.12  # 0 RGB  # todo: this is currently unused
 bgLumProp = .2  # .2  # todo: use .45 to match radial_flow_NM_v2.py, or .2 to match exp1
-# bgLumProp = .45  # .2  # todo: use .45 to match radial_flow_NM_v2.py, or .2 to match exp1
 bgLum = maxLum * bgLumProp
 
 # colour space
 this_colourSpace = 'rgb1'  # values between 0 and 1
 bgColor_rgb1 = bgLum / maxLum
 this_bgColour = [bgColor_rgb1, bgColor_rgb1, bgColor_rgb1]
+
+# Flow colours
+adj_flow_colour = .15
+# Give dots a pale green colour, which is adj_flow_colour different to the background
+flow_colour = [this_bgColour[0] - adj_flow_colour, this_bgColour[1], this_bgColour[2] - adj_flow_colour]
+if monitor_name == 'OLED':  # darker green for low contrast against black background
+    flow_colour = [this_bgColour[0], this_bgColour[1] + adj_flow_colour / 2, this_bgColour[2]]
 
 
 # MONITOR SPEC
@@ -666,83 +728,133 @@ edge_mask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
                                size=(widthPix, heightPix), units='pix', color='black')
 
 
-# if No moving background, use these values (see below for if there is a moving background)
-n_dots = 0  # no dots
-dots_speed = None
-dots_speed = dots_speed
-dot_array_spread = None  # this scales it for the monitor and keeps more flow_dots on screen
-dots_min_depth = None
-dots_max_depth = None  # depth values
 
-# settings for dots or rings
+
+# flow speed should be scaled by fps, so dots have a greater change per frame on slower monitors.
+# e.g., .2 at 240Hz, .4 at 120Hz and .8 at 60Hz.
+# todo: this appears too fast to me, but it is the same as the original script.
+# flow_speed = 48 / fps
+# todo: I've slowed the flow down
+flow_speed = 48 / fps / 10
+
+
 # timing for background motion converted to frames (e.g., 70ms is 17frames at 240Hz).
-prelim_bg_flow_fr = 0
+prelim_bg_flow_fr = int(prelim_bg_flow_ms * fps / 1000)
 actual_prelim_bg_flow_ms = prelim_bg_flow_fr * 1000 / fps
 
 # flow_dots - e.g., moving background to simulate self motion
 if background == 'flow_dots':
 
-    # timing for background motion converted to frames (e.g., 70ms is 17frames at 240Hz).
-    prelim_bg_flow_fr = int(prelim_bg_flow_ms * fps / 1000)
-    actual_prelim_bg_flow_ms = prelim_bg_flow_fr * 1000 / fps
+    dots_speed = flow_speed
 
-    # rate of change for dots (dots_speed is added to their depth value), which is then divided by their previous x/ y pos.
-    # dots speed should be scaled by fps, so dots have a greater change per frame on slower monitors.
-    # e.g., .2 at 240Hz, .4 at 120Hz and .8 at 60Hz.
-    # todo: this appears too fast to me, but it is the same as the original script.
-    dots_speed = 48 / fps
-
-    # dot_array_spread is the spread of x and ys BEFORE they are divided by their depth value to get actual positions.
-
-    # todo: most of the flow_dots are off screen using this current dots_min_depth, as the distribution of x_flow has large tails.
-    #  Setting it to 1.0 means that the tails are shorter, as dividing x / z only makes values smaller (or the same), not bigger.
-    dots_min_depth = 1.0  # original script used .5, which increased the tails meaning more dots were offscreen.
-    dots_max_depth = 5  # depth values  # todo: change 5.5 to match original script depth range?
-
-    # Changing dots_min_depth from .5 to one means that the proportion of dots onscreen increases from ~42% to ~82%.
+    # Changing dots_min_z from .5 to one means that the proportion of dots onscreen increases from ~42% to ~82%.
     # Therefore, I can half n_dots with little change in the number of dots onscreen, saving processing resources.
     # Note: 'onscreen' was defined as half widthPix (960).  Once the edge mask is added, the square of the visible screen is 1080x1080,
     # minus the blurred edges, so 960 seems reasonable.
+    dots_min_z = 1.0  # original script used .5, which increased the tails meaning more dots were offscreen.
+    dots_max_z = 5.5  # depth values  # todo: changed to 5.5 to match original script depth range?
+
+    
     # todo: do we need to increase n_dots for OLED?
     n_dots = 5000
 
+    # dot_array_spread is the spread of x and ys BEFORE they are divided by their depth value to get actual positions.
     # with dot_array_spread = widthPix * 3, this gives a values of 5760 on a 1920 monitor,
     # similar to the original setting of 5000.  It also allows the flow_dots to be scaled to the screen for OLED.
     dot_array_spread = widthPix * 3  # this scales it for the monitor and keeps more flow_dots on screen
 
-    # initial array values.  x and y are scaled by z, so x and y values can be larger than the screen.
+    # initial array values.  x and y are scaled by z_array, so x and y values can be larger than the screen.
     # x and y are the position of the dots when they are at depth = 1.  These values can be larger than the monitor.
-    # at depths > 1, x and y are divided by z, so they are appear closer to the middle of the screen
-    x = np.random.rand(n_dots) * dot_array_spread - dot_array_spread / 2
-    y = np.random.rand(n_dots) * dot_array_spread - dot_array_spread / 2
-    z = np.random.rand(n_dots) * (dots_max_depth - dots_min_depth) + dots_min_depth
-    # print(f"x: {x}, y: {y}, z: {z}")
+    # at depths > 1, x and y are divided by z_array, so they are appear closer to the middle of the screen
+    x_array = np.random.rand(n_dots) * dot_array_spread - dot_array_spread / 2
+    y_array = np.random.rand(n_dots) * dot_array_spread - dot_array_spread / 2
+    z_array = np.random.rand(n_dots) * (dots_max_z - dots_min_z) + dots_min_z
+    # print(f"x_array: {x_array}, y_array: {y_array}, z_array: {z_array}")
 
-    # x_flow and y_flow are the actual x and y positions of the dots, after being divided by their depth value.
-    x_flow = x / z
-    y_flow = y / z
+    # x_flow and y_flow are the actual x_array and y_array positions of the dots, after being divided by their depth value.
+    x_flow = x_array / z_array
+    y_flow = y_array / z_array
 
-    # array of x, y positions of dots to pass to ElementArrayStim
+    # array of x_array, y_array positions of dots to pass to ElementArrayStim
     dots_xys_array = np.array([x_flow, y_flow]).T
 
-    # todo: move this up and change to adj_flow_colour
-    # Give dots a pale green colour, which is adj_dots_col different to the background
-    adj_dots_col = .15
-
-    flow_colour = [this_bgColour[0] - adj_dots_col, this_bgColour[1], this_bgColour[2] - adj_dots_col]
-    if monitor_name == 'OLED':
-        # darker green for low contrast against black background
-        flow_colour = [this_bgColour[0], this_bgColour[1] + adj_dots_col / 2, this_bgColour[2]]
-
+    # itialise flow_dots
     flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',  # orig used 'gauss'
                                         units='pix', nElements=n_dots, sizes=10,
                                         colorSpace=this_colourSpace, colors=flow_colour)
+
+elif background == 'flow_rings':
+    # # # RINGS
+    ring_speed = flow_speed  # .02  # 48 / fps  # 0.2 at 240Hz
+    n_rings = 100  # scale this to screen size?
+    rings_min_z = .1  # A value < 1 of .1 means that the closest ring's radius is 10x the size of the screen.
+    print(f"ring_speed: {ring_speed}")
+    print(f"n_rings: {n_rings}")
+    print(f"rings_min_z: {rings_min_z}")
+
+    # set the limits on ring size
+    max_radius = heightPix  # Biggest ring is height of screen
+    min_radius = 10  # smallest ring is 10 pixels
+
+    # If I want the smallest radius to be 10 pixels, then the max depth of 108 (1080/108=10)
+    rings_max_z = max_radius / min_radius
+    print(f"rings_max_z: {rings_max_z}")
+
+    # adjust ring depth values by rings_z_adjust
+    rings_z_adjust = rings_max_z - rings_min_z
+
+    '''
+    Dots_array_width was used to give the dots unique x/y positions in 'space'.
+    For rings, they are all at the same x/y position (0, 0), so I don't need dot_array_wdith for them.
+    '''
+    ring_size_list = [1080] * n_rings
+    # print(f"ring_size_list: {ring_size_list}")
+
+    # depth values are evenly spaces and in ascending order, so smaller rings are drawn on top of larger ones.
+    # stop=stop=rings_max_z-(rings_z_adjust/n_rings) gives space the new ring to appear
+    ring_z_array = np.linspace(start=rings_min_z, stop=rings_max_z - (rings_z_adjust / n_rings), num=n_rings)
+
+    # the actual radii list is in descending order, so smaller rings are drawn on top of larger ones.
+    ring_radii_array = ring_size_list / ring_z_array
+
+    # RING COLOURS (alernating this_bgColour and flow_colour
+    ring_colours = [this_bgColour, flow_colour] * int(n_rings / 2)
+
+    # # use ElementArrayStim to draw the rings
+    flow_rings = visual.ElementArrayStim(win, elementTex=None, elementMask='circle', interpolate=True,
+                                         units='pix', nElements=n_rings, sizes=ring_radii_array,
+                                         colors=ring_colours, colorSpace=this_colourSpace)
+elif background == 'no_bg':
+
+    # if No moving background, use these values (see below for if there is a moving background)
+    n_dots = 0  # no dots
+    dots_speed = None
+    dot_array_spread = None  # this scales it for the monitor and keeps more flow_dots on screen
+    dots_min_z = None
+    dots_max_z = None  # depth values
+
+    # settings for dots or rings
+    # timing for background motion converted to frames (e.g., 70ms is 17frames at 240Hz).
+    prelim_bg_flow_fr = 0
+    actual_prelim_bg_flow_ms = prelim_bg_flow_fr * 1000 / fps
+
 
 if debug:
     print(f'\nprelim_bg_flow_ms: {prelim_bg_flow_ms}')
     print(f'prelim_bg_flow_fr: {prelim_bg_flow_fr}')
     print(f'actual_prelim_bg_flow_ms: {actual_prelim_bg_flow_ms}')
-    print(f'dots_speed: {dots_speed}')
+    print(f'flow_speed: {flow_speed}')
+    if background == 'flow_dots':
+        print(f'dots_speed: {dots_speed}')
+        print(f'n_dots: {n_dots}')
+        print(f'dot_array_spread: {dot_array_spread}')
+        print(f'dots_min_z: {dots_min_z}')
+        print(f'dots_max_z: {dots_max_z}')
+    elif background == 'flow_rings':
+        print(f"ring_speed: {ring_speed}")
+        print(f"n_rings: {n_rings}")
+        print(f"rings_min_z: {rings_min_z}")
+        print(f"rings_max_z: {rings_max_z}")
 
 
 
@@ -1025,6 +1137,8 @@ for step in range(n_trials_per_stair):
                     if background == 'flow_dots':
                         flow_dots.xys = dots_xys_array
                         flow_dots.draw()
+                    elif background == 'flow_rings':
+                        flow_rings.draw()
 
                     probeMask1.draw()
                     probeMask2.draw()
@@ -1039,11 +1153,22 @@ for step in range(n_trials_per_stair):
                 # Background motion prior to probe1 - after fixation, but before probe 1
                 elif end_bg_motion_fr >= frameN > end_fix_fr:
                     if background == 'flow_dots':
-                        # get new depth_vals array (z) and dots_xys_array (x, y)
-                        z, dots_xys_array = new_dots_depth_and_pos(x, y, z, dots_speed, flow_dir,
-                                                                   dots_min_depth, dots_max_depth)
+                        # get new depth_vals array (z_array) and dots_xys_array (x_array, y_array)
+                        z_array, dots_xys_array = new_dots_z_and_pos(x_array, y_array, z_array, dots_speed, flow_dir,
+                                                                   dots_min_z, dots_max_z)
                         flow_dots.xys = dots_xys_array
                         flow_dots.draw()
+                    elif background == 'flow_rings':
+                        ring_z_array, ring_radii_array, ring_colours = roll_rings_z_and_colours(ring_z_array,
+                                                                                                ring_colours,
+                                                                                                rings_min_z,
+                                                                                                rings_max_z,
+                                                                                                flow_dir, ring_speed,
+                                                                                                ring_size_list)
+                        flow_rings.sizes = ring_radii_array
+                        flow_rings.colors = ring_colours
+                        flow_rings.draw()
+
                     probeMask1.draw()
                     probeMask2.draw()
                     probeMask3.draw()
@@ -1055,11 +1180,21 @@ for step in range(n_trials_per_stair):
                 # PROBE 1
                 elif end_p1_fr >= frameN > end_bg_motion_fr:
                     if background == 'flow_dots':
-                        # get new depth_vals array (z) and dots_xys_array (x, y)
-                        z, dots_xys_array = new_dots_depth_and_pos(x, y, z, dots_speed, flow_dir,
-                                                                   dots_min_depth, dots_max_depth)
+                        # get new depth_vals array (z_array) and dots_xys_array (x_array, y_array)
+                        z_array, dots_xys_array = new_dots_z_and_pos(x_array, y_array, z_array, dots_speed, flow_dir,
+                                                                   dots_min_z, dots_max_z)
                         flow_dots.xys = dots_xys_array
                         flow_dots.draw()
+                    elif background == 'flow_rings':
+                        ring_z_array, ring_radii_array, ring_colours = roll_rings_z_and_colours(ring_z_array,
+                                                                                                ring_colours,
+                                                                                                rings_min_z,
+                                                                                                rings_max_z,
+                                                                                                flow_dir, ring_speed,
+                                                                                                ring_size_list)
+                        flow_rings.sizes = ring_radii_array
+                        flow_rings.colors = ring_colours
+                        flow_rings.draw()
 
                     probeMask1.draw()
                     probeMask2.draw()
@@ -1080,11 +1215,21 @@ for step in range(n_trials_per_stair):
                 # ISI
                 elif end_ISI_fr >= frameN > end_p1_fr:
                     if background == 'flow_dots':
-                        # get new depth_vals array (z) and dots_xys_array (x, y)
-                        z, dots_xys_array = new_dots_depth_and_pos(x, y, z, dots_speed, flow_dir,
-                                                                   dots_min_depth, dots_max_depth)
+                        # get new depth_vals array (z_array) and dots_xys_array (x_array, y_array)
+                        z_array, dots_xys_array = new_dots_z_and_pos(x_array, y_array, z_array, dots_speed, flow_dir,
+                                                                   dots_min_z, dots_max_z)
                         flow_dots.xys = dots_xys_array
                         flow_dots.draw()
+                    elif background == 'flow_rings':
+                        ring_z_array, ring_radii_array, ring_colours = roll_rings_z_and_colours(ring_z_array,
+                                                                                                ring_colours,
+                                                                                                rings_min_z,
+                                                                                                rings_max_z,
+                                                                                                flow_dir, ring_speed,
+                                                                                                ring_size_list)
+                        flow_rings.sizes = ring_radii_array
+                        flow_rings.colors = ring_colours
+                        flow_rings.draw()
 
                     probeMask1.draw()
                     probeMask2.draw()
@@ -1097,11 +1242,21 @@ for step in range(n_trials_per_stair):
                 # PROBE 2
                 elif end_p2_fr >= frameN > end_ISI_fr:
                     if background == 'flow_dots':
-                        # get new depth_vals array (z) and dots_xys_array (x, y)
-                        z, dots_xys_array = new_dots_depth_and_pos(x, y, z, dots_speed, flow_dir,
-                                                                   dots_min_depth, dots_max_depth)
+                        # get new depth_vals array (z_array) and dots_xys_array (x_array, y_array)
+                        z_array, dots_xys_array = new_dots_z_and_pos(x_array, y_array, z_array, dots_speed, flow_dir,
+                                                                   dots_min_z, dots_max_z)
                         flow_dots.xys = dots_xys_array
                         flow_dots.draw()
+                    elif background == 'flow_rings':
+                        ring_z_array, ring_radii_array, ring_colours = roll_rings_z_and_colours(ring_z_array,
+                                                                                                ring_colours,
+                                                                                                rings_min_z,
+                                                                                                rings_max_z,
+                                                                                                flow_dir, ring_speed,
+                                                                                                ring_size_list)
+                        flow_rings.sizes = ring_radii_array
+                        flow_rings.colors = ring_colours
+                        flow_rings.draw()
 
                     probeMask1.draw()
                     probeMask2.draw()
@@ -1119,6 +1274,9 @@ for step in range(n_trials_per_stair):
                 elif frameN > end_p2_fr:
                     if background == 'flow_dots':
                         flow_dots.draw()
+                    elif background == 'flow_rings':
+                        flow_rings.draw()
+
                     probeMask1.draw()
                     probeMask2.draw()
                     probeMask3.draw()
@@ -1208,19 +1366,7 @@ for step in range(n_trials_per_stair):
                     print(f"Timing good, trial {trial_number} not repeated\nrepeat: {repeat}, continueRoutine: {continueRoutine}")
 
 
-            # # these belong to the end of the answers section
-            # repeat = False
-            # continueRoutine = False
-
-                # # check for quit
-                # if event.getKeys(keyList=["escape"]):
-                #     core.quit()
-                #
-                # # refresh the screen
-                # if continueRoutine:
-                #     win.flip()
-
-            # staircase completed
+            # # # trial completed # # #
 
             # If too many trials have had dropped frames, quit experiment
             if dropped_fr_trial_counter > max_dropped_fr_trials:
@@ -1273,7 +1419,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('trial_response', resp.corr)
         thisExp.addData('resp.rt', resp.rt)
         thisExp.addData('probe_ecc', probe_ecc)
-        thisExp.addData('dots_speed', dots_speed)
+        thisExp.addData('flow_speed', flow_speed)
         thisExp.addData('orientation', orientation)
         thisExp.addData('background', background)
         thisExp.addData('background', background)
