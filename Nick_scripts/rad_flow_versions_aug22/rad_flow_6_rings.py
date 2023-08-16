@@ -80,6 +80,7 @@ rad_flow_Martin_5_contRoutine.py
 rad_flow_6_rings.py
 - add in rings (as element array stim?)  - DONE
 - set variables for rings (min/max depth, n_rings, etc)  - DONE
+- confirmed flow_speed has same appearance across monitors  - DONE
 - add in spokes from vertices
 - set it for 'asus_cal', not uncalibrated monitor.
 
@@ -603,7 +604,7 @@ save_dir = path.join(_thisDir, expName, participant_name,
                      background, f'bg{prelim_bg_flow_ms}',
                      f'{participant_name}_{run_number}',
                      f'ISI_{ISI_frames}')
-print(f"experiment save_dir: {save_dir}")
+print(f"\nexperiment save_dir: {save_dir}")
 
 # files are labelled as '_incomplete' unless entire script runs.
 incomplete_output_filename = f'{participant_name}_{run_number}_incomplete'
@@ -735,7 +736,7 @@ edge_mask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
 # todo: this appears too fast to me, but it is the same as the original script.
 # flow_speed = 48 / fps
 # todo: I've slowed the flow down
-flow_speed = 48 / fps / 10
+flow_speed = 48 / fps
 
 
 # timing for background motion converted to frames (e.g., 70ms is 17frames at 240Hz).
@@ -785,12 +786,12 @@ if background == 'flow_dots':
 
 elif background == 'flow_rings':
     # # # RINGS
-    ring_speed = flow_speed  # .02  # 48 / fps  # 0.2 at 240Hz
+    ring_speed = flow_speed / 4  # .02  # 48 / fps  # 0.2 at 240Hz
     n_rings = 100  # scale this to screen size?
     rings_min_z = .1  # A value < 1 of .1 means that the closest ring's radius is 10x the size of the screen.
-    print(f"ring_speed: {ring_speed}")
-    print(f"n_rings: {n_rings}")
-    print(f"rings_min_z: {rings_min_z}")
+    # print(f"ring_speed: {ring_speed}")
+    # print(f"n_rings: {n_rings}")
+    # print(f"rings_min_z: {rings_min_z}")
 
     # set the limits on ring size
     max_radius = heightPix  # Biggest ring is height of screen
@@ -798,7 +799,7 @@ elif background == 'flow_rings':
 
     # If I want the smallest radius to be 10 pixels, then the max depth of 108 (1080/108=10)
     rings_max_z = max_radius / min_radius
-    print(f"rings_max_z: {rings_max_z}")
+    # print(f"rings_max_z: {rings_max_z}")
 
     # adjust ring depth values by rings_z_adjust
     rings_z_adjust = rings_max_z - rings_min_z
@@ -1084,7 +1085,8 @@ for step in range(n_trials_per_stair):
 
             # take a break every ? trials
             if (trial_num_inc_repeats % take_break == 1) & (trial_num_inc_repeats > 1):
-                print("\nTaking a break.\n")
+                if debug:
+                    print("\nTaking a break.\n")
 
                 breaks.text = break_text + f"\n{trial_number - 1}/{total_n_trials} trials completed."
                 breaks.draw()
@@ -1363,7 +1365,7 @@ for step in range(n_trials_per_stair):
                     continue
                 else:
                     repeat = False  # breaks out of while repeat=True loop to progress to new trial
-                    print(f"Timing good, trial {trial_number} not repeated\nrepeat: {repeat}, continueRoutine: {continueRoutine}")
+                    # print(f"Timing good, trial {trial_number} not repeated\nrepeat: {repeat}, continueRoutine: {continueRoutine}")
 
 
             # # # trial completed # # #
@@ -1395,7 +1397,6 @@ for step in range(n_trials_per_stair):
                     core.quit()
 
         # add trial info to csv
-        print(f"adding trial info to csv\nrepeat: {repeat}, continueRoutine: {continueRoutine}")
         thisExp.addData('trial_number', trial_number)
         thisExp.addData('trial_n_inc_rpt', trial_num_inc_repeats)
         thisExp.addData('stair', stair_idx)
