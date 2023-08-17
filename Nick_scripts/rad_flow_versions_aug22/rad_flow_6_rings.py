@@ -557,7 +557,8 @@ if debug:
 
 
 # Separation values in pixels.  select from [18, 6, 3, 2, 1, 0] or 99 for 1probe
-separations = [18, 6, 3, 2, 1, 0]
+#separations = [18, 6, 3, 2, 1, 0]
+separations = [6, 3, 1]
 if debug:
     separations = [18, 1]
 
@@ -629,7 +630,7 @@ Color1LumFactor = 2.39538706913372  ###
 
 maxLum = 106  # 255 RGB
 # minLum = 0.12  # 0 RGB  # todo: this is currently unused
-bgLumProp = .2  # .2  # todo: use .45 to match radial_flow_NM_v2.py, or .2 to match exp1
+bgLumProp = .45  # .2  # todo: use .45 to match radial_flow_NM_v2.py, or .2 to match exp1
 bgLum = maxLum * bgLumProp
 
 # colour space
