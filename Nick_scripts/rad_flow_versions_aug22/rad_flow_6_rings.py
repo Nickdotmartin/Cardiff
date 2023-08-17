@@ -81,6 +81,7 @@ rad_flow_6_rings.py
 - add in rings (as element array stim?)  - DONE
 - set variables for rings (min/max depth, n_rings, etc)  - DONE
 - confirmed flow_speed has same appearance across monitors  - DONE
+- added setting for more realistic dots, with deeper cone and changing sizes - DONE
 - add in spokes from vertices
 - set it for 'asus_cal', not uncalibrated monitor.
 
@@ -483,19 +484,19 @@ expName = path.basename(__file__)[:-3]
 
 
 # dialogue box/drop-down option when exp starts (1st item is default val)
-expInfo = {'1. Participant': 'Nick_test_09082023',
+expInfo = {'1. Participant': 'Nick_test_17082023',   # 'Nick_orig_dots_17082023',
            '2. Run_number': '1',
            '3. Probe duration in frames': [2, 1, 50, 100],
-           '4. fps': [60, 240, 120, 60],
+           '4. fps': [240, 120, 60],
            '5. ISI_dur_in_ms': [25, 16.67, 100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0, -1],
            '6. Probe_orientation': ['radial', 'tangent'],
            '7. Record_frame_durs': [True, False],
            '8. Background': ['flow_dots', 'flow_rings', 'no_bg'],
            '9. prelim_bg_flow_ms': [70, 200, 350, 2000],
-           '10. monitor_name': ['Nick_work_laptop', 'asus_cal', 'OLED', 'ASUS_2_13_240Hz', 'Samsung',
-                                'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
+           '10. monitor_name': ['ASUS_2_13_240Hz', 'asus_cal', 'OLED', 'Nick_work_laptop',
+                                'Samsung', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
            '12. mask_type': ['4_circles', '2_spokes'],
-           '13. debug': [True, False]
+           '13. debug': [False, True]
            }
 
 # run drop-down menu, OK continues, cancel quits
@@ -734,9 +735,8 @@ edge_mask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
 # flow speed should be scaled by fps, so dots have a greater change per frame on slower monitors.
 # e.g., .2 at 240Hz, .4 at 120Hz and .8 at 60Hz.
 # todo: this appears too fast to me, but it is the same as the original script.
-# flow_speed = 48 / fps
-# todo: I've slowed the flow down
 flow_speed = 48 / fps
+
 
 
 # timing for background motion converted to frames (e.g., 70ms is 17frames at 240Hz).
@@ -746,6 +746,9 @@ actual_prelim_bg_flow_ms = prelim_bg_flow_fr * 1000 / fps
 # flow_dots - e.g., moving background to simulate self motion
 if background == 'flow_dots':
 
+    # If False, use orginal settings, if True, increase dots depth and scale their size with depth
+    deep_with_sizes = False
+
     dots_speed = flow_speed
 
     # Changing dots_min_z from .5 to one means that the proportion of dots onscreen increases from ~42% to ~82%.
@@ -754,8 +757,10 @@ if background == 'flow_dots':
     # minus the blurred edges, so 960 seems reasonable.
     dots_min_z = 1.0  # original script used .5, which increased the tails meaning more dots were offscreen.
     dots_max_z = 5.5  # depth values  # todo: changed to 5.5 to match original script depth range?
+    if deep_with_sizes:
+        # increase cone depth
+        dots_max_depth = 101
 
-    
     # todo: do we need to increase n_dots for OLED?
     n_dots = 5000
 
@@ -769,6 +774,10 @@ if background == 'flow_dots':
     # at depths > 1, x and y are divided by z_array, so they are appear closer to the middle of the screen
     x_array = np.random.rand(n_dots) * dot_array_spread - dot_array_spread / 2
     y_array = np.random.rand(n_dots) * dot_array_spread - dot_array_spread / 2
+    if deep_with_sizes:
+        # narrower spread of dots
+        x = np.random.uniform(-widthPix, widthPix, n_dots)
+        y = np.random.uniform(-widthPix, widthPix, n_dots)
     z_array = np.random.rand(n_dots) * (dots_max_z - dots_min_z) + dots_min_z
     # print(f"x_array: {x_array}, y_array: {y_array}, z_array: {z_array}")
 
@@ -779,14 +788,20 @@ if background == 'flow_dots':
     # array of x_array, y_array positions of dots to pass to ElementArrayStim
     dots_xys_array = np.array([x_flow, y_flow]).T
 
+    dot_sizes = 10
+    if deep_with_sizes:
+        dot_sizes = 50
+
     # itialise flow_dots
     flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',  # orig used 'gauss'
-                                        units='pix', nElements=n_dots, sizes=10,
+                                        units='pix', nElements=n_dots, sizes=dot_sizes,
                                         colorSpace=this_colourSpace, colors=flow_colour)
+    if deep_with_sizes:
+        flow_dots.sizes = dot_sizes / z_array
 
 elif background == 'flow_rings':
     # # # RINGS
-    ring_speed = flow_speed / 4  # .02  # 48 / fps  # 0.2 at 240Hz
+    ring_speed = flow_speed / 4  # todo: this is a quarter the speed of the dots .02  # 48 / fps  # 0.2 at 240Hz
     n_rings = 100  # scale this to screen size?
     rings_min_z = .1  # A value < 1 of .1 means that the closest ring's radius is 10x the size of the screen.
     # print(f"ring_speed: {ring_speed}")
@@ -1159,6 +1174,8 @@ for step in range(n_trials_per_stair):
                         z_array, dots_xys_array = new_dots_z_and_pos(x_array, y_array, z_array, dots_speed, flow_dir,
                                                                    dots_min_z, dots_max_z)
                         flow_dots.xys = dots_xys_array
+                        if deep_with_sizes:
+                            flow_dots.sizes = dot_sizes / z_array
                         flow_dots.draw()
                     elif background == 'flow_rings':
                         ring_z_array, ring_radii_array, ring_colours = roll_rings_z_and_colours(ring_z_array,
@@ -1186,6 +1203,8 @@ for step in range(n_trials_per_stair):
                         z_array, dots_xys_array = new_dots_z_and_pos(x_array, y_array, z_array, dots_speed, flow_dir,
                                                                    dots_min_z, dots_max_z)
                         flow_dots.xys = dots_xys_array
+                        if deep_with_sizes:
+                            flow_dots.sizes = dot_sizes / z_array
                         flow_dots.draw()
                     elif background == 'flow_rings':
                         ring_z_array, ring_radii_array, ring_colours = roll_rings_z_and_colours(ring_z_array,
@@ -1221,6 +1240,8 @@ for step in range(n_trials_per_stair):
                         z_array, dots_xys_array = new_dots_z_and_pos(x_array, y_array, z_array, dots_speed, flow_dir,
                                                                    dots_min_z, dots_max_z)
                         flow_dots.xys = dots_xys_array
+                        if deep_with_sizes:
+                            flow_dots.sizes = dot_sizes / z_array
                         flow_dots.draw()
                     elif background == 'flow_rings':
                         ring_z_array, ring_radii_array, ring_colours = roll_rings_z_and_colours(ring_z_array,
@@ -1248,6 +1269,8 @@ for step in range(n_trials_per_stair):
                         z_array, dots_xys_array = new_dots_z_and_pos(x_array, y_array, z_array, dots_speed, flow_dir,
                                                                    dots_min_z, dots_max_z)
                         flow_dots.xys = dots_xys_array
+                        if deep_with_sizes:
+                            flow_dots.sizes = dot_sizes / z_array
                         flow_dots.draw()
                     elif background == 'flow_rings':
                         ring_z_array, ring_radii_array, ring_colours = roll_rings_z_and_colours(ring_z_array,
