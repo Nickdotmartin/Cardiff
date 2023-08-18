@@ -748,7 +748,7 @@ actual_prelim_bg_flow_ms = prelim_bg_flow_fr * 1000 / fps
 if background == 'flow_dots':
 
     # If False, use orginal settings, if True, increase dots depth and scale their size with depth
-    deep_with_sizes = False
+    deep_with_sizes = True  # False, True
 
     dots_speed = flow_speed
 
@@ -760,7 +760,7 @@ if background == 'flow_dots':
     dots_max_z = 5.5  # depth values  # todo: changed to 5.5 to match original script depth range?
     if deep_with_sizes:
         # increase cone depth
-        dots_max_depth = 101
+        dots_max_z = 101
 
     # todo: do we need to increase n_dots for OLED?
     n_dots = 5000
@@ -777,8 +777,8 @@ if background == 'flow_dots':
     y_array = np.random.rand(n_dots) * dot_array_spread - dot_array_spread / 2
     if deep_with_sizes:
         # narrower spread of dots
-        x = np.random.uniform(-widthPix, widthPix, n_dots)
-        y = np.random.uniform(-widthPix, widthPix, n_dots)
+        x_array = np.random.uniform(-widthPix, widthPix, n_dots)
+        y_array = np.random.uniform(-widthPix, widthPix, n_dots)
     z_array = np.random.rand(n_dots) * (dots_max_z - dots_min_z) + dots_min_z
     # print(f"x_array: {x_array}, y_array: {y_array}, z_array: {z_array}")
 

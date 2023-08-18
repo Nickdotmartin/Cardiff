@@ -209,6 +209,22 @@ if deep_with_sizes:
     x = np.random.uniform(-widthPix, widthPix, n_dots)
     y = np.random.uniform(-widthPix, widthPix, n_dots)
 
+'''Provide space in middle without distracting dots near fixation'''
+# get indices for dots within range -100 to 100 in x array and y array
+x_in_range = np.where((x > -100) & (x < 100))
+y_in_range = np.where((y > -100) & (y < 100))
+
+# combine these to get indices for dots within range -100 to 100 in both x and y
+dots_in_range = np.intersect1d(x_in_range, y_in_range)
+
+# remove these dots from x and y arrays
+x = np.delete(x, dots_in_range)
+y = np.delete(y, dots_in_range)
+
+# get new n_dots value
+n_dots = len(x)
+print(f"n_dots: {n_dots}")
+
 
 # depth values for the dots
 z = np.random.rand(n_dots) * (dots_max_depth - dots_min_depth) + dots_min_depth
