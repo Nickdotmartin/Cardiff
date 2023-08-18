@@ -4238,10 +4238,10 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     print(f"\nHeatmap")
     if n_trimmed is not None:
-        heatmap_title = f'{ave_over} mean Threshold for each ISI and separation (n={ave_over_n}, trim={n_trimmed}).'
+        heatmap_title = f'{ave_over}\nmean Threshold for each ISI and separation (n={ave_over_n}, trim={n_trimmed}).'
         heatmap_savename = f'mean_TM{n_trimmed}_thr_heatmap'
     else:
-        heatmap_title = f'{ave_over} mean Threshold for each ISI and separation (n={ave_over_n})'
+        heatmap_title = f'{ave_over}\nmean Threshold for each ISI and separation (n={ave_over_n})'
         heatmap_savename = 'mean_thr_heatmap'
 
     if type(cond_type_order[0]) is str:
