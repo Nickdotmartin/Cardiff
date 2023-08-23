@@ -8,7 +8,7 @@ def new_dots_depth_and_pos(x_array, y_array, depth_array, dots_speed, flow_dir, 
     """
     This is a function to update flow_dots depth array and get new pixel co-ordinatesusing the original x_array and y_array.
 
-    1a. Update depth_array by adding dots_speed * flow_dir to the current z values.
+    1a. Update depth_array by adding dots_speed * flow_dir to the current z_array values.
     1b. adjust any values below dots_min_depth or above dots_max_depth.
 
     2a. Get new x_pos and y_pos co-ordinates values by dividing x_array and y_array by the new depth_array.
@@ -24,10 +24,10 @@ def new_dots_depth_and_pos(x_array, y_array, depth_array, dots_speed, flow_dir, 
     :return: new dots_pos_array
     """
 
-    # todo: change depth to z in names.
+    # todo: change depth to z_array in names.
 
-    # # 1. Update z (depth values) # #
-    # Add dots_speed * flow_dir to the current z values.
+    # # 1. Update z_array (depth values) # #
+    # Add dots_speed * flow_dir to the current z_array values.
     updated_depth_arr = depth_array + dots_speed * flow_dir
 
     # adjust any depth values below min_depth or above max_depth by depth_adj
@@ -50,17 +50,17 @@ def new_dots_depth_and_pos(x_array, y_array, depth_array, dots_speed, flow_dir, 
     return updated_depth_arr, dots_pos_array
 
 
-def roll_rings_z_and_colours(z, ring_colours, min_z, max_z, flow_dir, flow_speed, initial_x_vals):
+def roll_rings_z_and_colours(z_array, ring_colours, min_z, max_z, flow_dir, flow_speed, initial_x_vals):
     """
     This rings will spawn a new ring if the old one either grows too big for the screen (expanding),
     or shrinks too small (if contracting).
 
-    This function updates the z (depth) values for the rings, and adjusts any values below min_z or
+    This function updates the z_array (depth) values for the rings, and adjusts any values below min_z or
     above max_z by depth_adj.  Any values that are adjusted are then rolled to the end or beginning of the array,
     depending on whether they are below min_z or above max_z.
     The same values are then also rolled in the ring_colours array.
 
-    :param z: Numpy array of z values for the rings (shape = (n_rings, 1))
+    :param z_array: Numpy array of z_array values for the rings (shape = (n_rings, 1))
     :param ring_colours: List of RGB1 colours for the rings (shape = (n_rings, 3))
     :param min_z: minimum depth value for the rings (how close they can get to the screen)
     :param max_z: maximum depth value for the rings (how far away they can get from the screen)
@@ -68,21 +68,21 @@ def roll_rings_z_and_colours(z, ring_colours, min_z, max_z, flow_dir, flow_speed
     :param flow_speed: speed of the rings (float, smaller = slower, larger = faster)
     :param initial_x_vals: nupmy array of ring sizes, (all the same size, e.g., 1080, shape = (n_rings, 1))
 
-    :return: z (updated), ring_radii_array, ring_colours (rolled if any z values are rolled)
+    :return: z_array (updated), ring_radii_array, ring_colours (rolled if any z_array values are rolled)
     """
 
     # update depth values
-    z = z + flow_speed * flow_dir
+    z_array = z_array + flow_speed * flow_dir
 
     # depth_adj is the size of change to make to out-of-bounds rings
     # todo: change to z_adj
     depth_adj = max_z - min_z
 
-    # adjust any z values below min_depth or above max_depth by depth_adj
+    # adjust any z_array values below min_depth or above max_depth by depth_adj
     if flow_dir == -1:  # expanding, getting closer, might be below min_z
         # find which rings are less than min and add depth_adj to those rings
-        less_than_min = (z < min_z)
-        z[less_than_min] += depth_adj
+        less_than_min = (z_array < min_z)
+        z_array[less_than_min] += depth_adj
 
         # shift arrays by this amount (e.g., if 3 rings are less than min, shift by 3)
         # (note negative shift to move them backwards)
@@ -90,22 +90,22 @@ def roll_rings_z_and_colours(z, ring_colours, min_z, max_z, flow_dir, flow_speed
 
     elif flow_dir == 1:  # contracting, getting further away, might be above max_z
         # find which rings are more_than_max and subtract depth_adj to those rings
-        more_than_max = (z > max_z)
-        z[more_than_max] -= depth_adj
+        more_than_max = (z_array > max_z)
+        z_array[more_than_max] -= depth_adj
 
         # shift arrays by this amount (e.g., if 3 rings are more_than_max, shift by 3)
         shift_num = sum(more_than_max)
 
     # roll the depth and colours arrays so that adjusted rings move to other end of array
-    z = np.roll(z, shift=shift_num, axis=0)
+    z_array = np.roll(z_array, shift=shift_num, axis=0)
     ring_colours = np.roll(ring_colours, shift=shift_num, axis=0)
 
     # get new ring_radii_array
-    ring_radii_array = initial_x_vals / z
+    ring_radii_array = initial_x_vals / z_array
 
-    # print(f"\nz:\n{z}\nring_radii_array:\n{ring_radii_array}\nshift_num:\n{shift_num}\n")
+    # print(f"\nz_array:\n{z_array}\nring_radii_array:\n{ring_radii_array}\nshift_num:\n{shift_num}\n")
 
-    return z, ring_radii_array, ring_colours
+    return z_array, ring_radii_array, ring_colours
 
 
 # stop numpy from using scientific-notation
@@ -159,6 +159,42 @@ edge_mask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
 fixation = visual.Circle(win, radius=2, units='pix', lineColor='white', fillColor='black', colorSpace=this_colourSpace)
 
 
+dist_from_fix = 185
+mask_size = 150
+probeMask1 = visual.Circle(win, radius=mask_size/2, units='pix', lineColor='white', fillColor='black',
+                            colorSpace=this_colourSpace, pos=[dist_from_fix, dist_from_fix])
+
+'''get the size of probeMask1 in cm, then convert to degrees'''
+view_dist_cm = 57.3
+mon_width_cm = 30.94
+
+# size of a pixel in cm
+pix_size_cm = mon_width_cm / widthPix
+
+# size of probeMask1 in cm
+probeMask1_size_cm = mask_size * pix_size_cm
+
+# size of probeMask1 in degrees
+probeMask1_size_deg = 2 * np.degrees(np.arctan(probeMask1_size_cm / (2 * view_dist_cm)))
+print(f"probeMask1_size_deg: {probeMask1_size_deg}")
+print(f"probeMask1_size_cm: {probeMask1_size_cm}")
+print(f"pix_size_cm: {pix_size_cm}")
+print(f"view_dist_cm: {view_dist_cm}")
+
+# if you drew a circle at 0, 0 with radial of dist_from_fix, what would be the circumference (in pixels)?
+circumference = 2 * np.pi * dist_from_fix
+print(f"circumference: {circumference}")
+
+# how many are along the circumference in 1 degree?
+dots_per_deg = circumference / 360
+print(f"dots_per_deg: {dots_per_deg}")
+
+# spoke width degrees
+spoke_width_deg = mask_size / dots_per_deg
+print(f"spoke_width_deg: {spoke_width_deg}")
+
+
+
 '''
 This script shows the flow_dots and flow_rings at the same time, 
 useful for eye-balling their relative speeds.
@@ -200,46 +236,132 @@ if deep_with_sizes:
 # with dot_array_spread = widthPix * 3, is 5760 on a 1920 monitor, close to orig value of 5000, but allows for scaling on OLED.
 dot_array_spread = widthPix * 3
 
-# initial array values.  x and y are scaled by z, so x and y values can be larger than the screen.
+# initial array values.  x_array and y_array are scaled by z_array, so x_array and y_array values can be larger than the screen.
 # random.rand gives a uniform distribution between 0 and 1.
-x = np.random.rand(n_dots) * dot_array_spread - dot_array_spread / 2
-y = np.random.rand(n_dots) * dot_array_spread - dot_array_spread / 2
+x_array = np.random.rand(n_dots) * dot_array_spread - dot_array_spread / 2
+y_array = np.random.rand(n_dots) * dot_array_spread - dot_array_spread / 2
 if deep_with_sizes:
     # narrower spread of dots
-    x = np.random.uniform(-widthPix, widthPix, n_dots)
-    y = np.random.uniform(-widthPix, widthPix, n_dots)
+    x_array = np.random.uniform(-widthPix, widthPix, n_dots)
+    y_array = np.random.uniform(-widthPix, widthPix, n_dots)
 
-'''Provide space in middle without distracting dots near fixation'''
-# get indices for dots within range -100 to 100 in x array and y array
-x_in_range = np.where((x > -100) & (x < 100))
-y_in_range = np.where((y > -100) & (y < 100))
+# '''Provide space in middle without distracting dots near fixation'''
+# # get indices for dots within range -100 to 100 in x_array array and y_array array
+# x_in_range = np.where((x_array > -100) & (x_array < 100))
+# y_in_range = np.where((y_array > -100) & (y_array < 100))
+#
+# # combine these to get indices for dots within range -100 to 100 in both x_array and y_array
+# dots_in_range = np.intersect1d(x_in_range, y_in_range)
+#
+# # remove these dots from x_array and y_array arrays
+# x_array = np.delete(x_array, dots_in_range)
+# y_array = np.delete(y_array, dots_in_range)
+#
+# # get new n_dots value
+# n_dots = len(x_array)
+# print(f"n_dots: {n_dots}")
 
-# combine these to get indices for dots within range -100 to 100 in both x and y
-dots_in_range = np.intersect1d(x_in_range, y_in_range)
 
-# remove these dots from x and y arrays
-x = np.delete(x, dots_in_range)
-y = np.delete(y, dots_in_range)
 
-# get new n_dots value
-n_dots = len(x)
-print(f"n_dots: {n_dots}")
+
+'''Simon's polar co-ords version'''
+# remove 4 spokes so clear for probe to move
+orient = 45  # 0 gives horizontal/vertical, 45 gives diagonals
+spoke_width_angle = np.arcsin((mask_size / 2) / dist_from_fix) * 180 / np.pi
+
+# seems to wide, so making it smaler
+spoke_width_angle = spoke_width_angle * .8
+print(f"spoke_width_angle: {spoke_width_angle}")
+
+# convert to radial
+dot_rad_dist = np.sqrt(x_array * x_array + y_array * y_array)  # polar distance
+dot_direction = np.arctan2(x_array, y_array)  # polar direction
+dot_direction = np.degrees(dot_direction)  # convert to degrees so can use modulus
+
+# collapse the four quadrants on to one (mod 90deg) to make more efficient
+dot_direction_quad = dot_direction % 90
+
+# identify dots that are in the lower part of spokes
+dot_direction_low = (dot_direction_quad < spoke_width_angle)
+# first rotate them by to get them all out of the lower part of the spoke
+dot_direction_offsets = spoke_width_angle
+# now add some noise to evenly distribute them
+dot_direction_offsets += np.random.random_sample(n_dots) * (90 - 3 * spoke_width_angle)
+# add offset
+dot_direction[dot_direction_low] += dot_direction_offsets[dot_direction_low]
+
+# now identify dots that are in upper part of spoke (repeat of upper)
+dot_direction_high = (dot_direction_quad > (90 - spoke_width_angle))
+# rotate them by to get them all out of the lower part of the spoke
+dot_direction_offsets = spoke_width_angle
+# now add some noise to evenly distribute them
+dot_direction_offsets += np.random.random_sample(n_dots) * (90 - 3 * spoke_width_angle)
+# subtract offsets
+dot_direction[dot_direction_high] -= dot_direction_offsets[dot_direction_high]
+
+# now convert back to cartesian
+dot_direction -= orient  # first rotate for specified orientation
+dot_direction = np.radians(dot_direction)  # convert back to degrees
+x_array = dot_rad_dist * np.sin(dot_direction)
+y_array = dot_rad_dist * np.cos(dot_direction)
+
 
 
 # depth values for the dots
-z = np.random.rand(n_dots) * (dots_max_depth - dots_min_depth) + dots_min_depth
+z_array = np.random.rand(n_dots) * (dots_max_depth - dots_min_depth) + dots_min_depth
+
+# z_array = np.random.rand(n_dots) * (dots_max_depth - dots_min_depth) + dots_min_depth
 # if deep_with_sizes:
 #     # this is equivallent to above but easier read
-#     z = np.random.uniform(dots_min_depth, dots_max_depth, n_dots)
-#     # similarly, the below are identical to original x and y
-#     x = np.random.uniform(-dot_array_spread, dot_array_spread, n_dots)
-#     y = np.random.uniform(-dot_array_spread, dot_array_spread, n_dots)
+#     z_array = np.random.uniform(dots_min_depth, dots_max_depth, n_dots)
+#     # similarly, the below are identical to original x_array and y_array
+#     x_array = np.random.uniform(-dot_array_spread / 2, dot_array_spread / 2, n_dots)
+#     y_array = np.random.uniform(-dot_array_spread / 2, dot_array_spread / 2, n_dots)
 
-# x_flow and y_flow are the actual x and y positions of the dots, after being divided by their depth value.
-x_flow = x / z
-y_flow = y / z
+# x_flow and y_flow are the actual x_array and y_array positions of the dots, after being divided by their depth value.
+x_flow = x_array / z_array
+y_flow = y_array / z_array
 
-# array of x, y positions of dots to pass to ElementArrayStim
+
+# '''Provide space in middle without distracting dots near fixation - BARD1'''
+# dist_from_fix = 85
+# # Get the locations of the circles
+# circle_locations = [(dist_from_fix, dist_from_fix), (dist_from_fix, -dist_from_fix), (-dist_from_fix, dist_from_fix), (-dist_from_fix, -dist_from_fix)]
+# 
+# # Check if each dot is inside any of the circles
+# inside_circle = np.zeros(n_dots, dtype=bool)
+# for circle_location in circle_locations:
+#     print(f"\nChecking circle at {circle_location}")
+#     inside_circle = inside_circle | ((x_flow - circle_location[0])**2 +
+#                                     (y_flow - circle_location[1])**2 <= 150**2)
+#     print(f"x_flow - circle_location[0]: {x_flow - circle_location[0]}")
+#     print(f"(x_flow - circle_location[0])**2: {(x_flow - circle_location[0])**2}")
+#     print(f"(x_flow - circle_location[0])**2 + (y_flow - circle_location[1])**2: {(x_flow - circle_location[0])**2 + (y_flow - circle_location[1])**2}")
+#     print(f"((x_flow - circle_location[0])**2 + (y_flow - circle_location[1])**2 <= 150**2): {((x_flow - circle_location[0])**2 + (y_flow - circle_location[1])**2 <= 150**2)}")
+# 
+# 
+# # Remove any dots that are inside the circles
+# dots_to_remove = np.where(inside_circle)[0]
+# 
+# # Remove the dots from the x_array and y_array arrays
+# x_array = np.delete(x_array, dots_to_remove)
+# y_array = np.delete(y_array, dots_to_remove)
+# 
+# # get new n_dots value
+# n_dots = len(x_array)
+# print(f"n_dots: {n_dots}")
+# 
+# # make new z array with correct number of dots
+# # depth values for the dots
+# z_array = np.random.rand(n_dots) * (dots_max_depth - dots_min_depth) + dots_min_depth
+# 
+# # x_flow and y_flow are the actual x_array and y_array positions of the dots, after being divided by their depth value.
+# x_flow = x_array / z_array
+# y_flow = y_array / z_array
+
+
+
+# array of x_array, y_array positions of dots to pass to ElementArrayStim
 dots_xys_array = np.array([x_flow, y_flow]).T
 
 dot_sizes = 10
@@ -311,25 +433,27 @@ while not event.getKeys(keyList=["escape"]):
         ring_speed -= .01
         print(f"ring_speed: {ring_speed}")
 
-    # DOTS: get new depth_vals array (z) and dots_xys_array (x, y)
-    z, dots_xys_array = new_dots_depth_and_pos(x, y, z, dots_speed, flow_dir,
+    # DOTS: get new depth_vals array (z_array) and dots_xys_array (x_array, y_array)
+    z_array, dots_xys_array = new_dots_depth_and_pos(x_array, y_array, z_array, dots_speed, flow_dir,
                                                dots_min_depth, dots_max_depth)
     flow_dots.xys = dots_xys_array
     if deep_with_sizes:
-        flow_dots.sizes = dot_sizes / z  # dots are twice as big as their depth value
+        flow_dots.sizes = dot_sizes / z_array  # dots are twice as big as their depth value
 
-    # RINGS: update depth values and ring colours and get new ring_radii_array
-    ring_z_array, ring_radii_array, ring_colours = roll_rings_z_and_colours(ring_z_array, ring_colours,
-                                                                            rings_min_depth, rings_max_depth,
-                                                                            flow_dir, ring_speed, ring_size_list)
-    flow_rings.sizes = ring_radii_array
-    flow_rings.colors = ring_colours
+    # # RINGS: update depth values and ring colours and get new ring_radii_array
+    # ring_z_array, ring_radii_array, ring_colours = roll_rings_z_and_colours(ring_z_array, ring_colours,
+    #                                                                         rings_min_depth, rings_max_depth,
+    #                                                                         flow_dir, ring_speed, ring_size_list)
+    # flow_rings.sizes = ring_radii_array
+    # flow_rings.colors = ring_colours
 
     # draw components
-    flow_rings.draw()
+    # flow_rings.draw()
     flow_dots.draw()
     edge_mask.draw()
     fixation.draw()
+
+    probeMask1.draw()
 
     win.flip()
 

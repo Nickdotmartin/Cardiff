@@ -7,6 +7,7 @@ from python_tools import switch_path
 from rad_flow_psignifit_analysis import a_data_extraction, get_sorted_neg_sep_indices, sort_with_neg_sep_indices
 from rad_flow_psignifit_analysis import b3_plot_staircase, c_plots
 from rad_flow_psignifit_analysis import d_average_participant, make_average_plots, e_average_exp_data
+from rad_flow_psignifit_analysis import compare_prelim_plots
 from exp1a_psignifit_analysis import plt_heatmap_row_col
 
 # # loop through run folders with first 5 scripts (a, b1, b2, b3, c)
@@ -38,11 +39,17 @@ from exp1a_psignifit_analysis import plt_heatmap_row_col
 
 exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_UNCALIBRATED_MON\rad_flow_martin\rad_flow_6_rings'
 participant_list = [
-    'Nick_match_rf2_16082023',
-    'Nick_half_ring_spd_16082023', 'Nick_third_ring_spd_16082023', 'Nick_quarter_ring_spd_16082023',
-                    'Nick_orig_dots_17082023', 'Nick_deep_sized_dots_17082023', 'Nick_actual_new_dots_17082023'
+    # 'Nick_match_rf2_16082023',
+#                    'Nick_third_ring_spd_16082023',
+    #                 'Nick_half_ring_spd_16082023',
+    #                 'Nick_quarter_ring_spd_16082023',
+    #                 'Nick_orig_dots_17082023',
+    # 'Nick_deep_sized_dots_17082023',
+    # 'Nick_actual_new_dots_17082023',
+    #                 'Nick_act_new_dots_thrd_spd_17082023'
 ]
-
+exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_UNCALIBRATED_MON\rad_flow_martin\rad_flow_6_rings_OLED'
+participant_list = ['Nick_OLED_dots_normSpd_22082023']
 
 # todo: is this the right script or should I use rad_flow_convert_and_analyse?  For now, just use this for files in UNCALIBRATED dir.
 
@@ -368,6 +375,9 @@ for p_idx, participant_name in enumerate(participant_list):
     if trim_n is not None:
         p_master_err_name = os.path.join(p_compare_prelim_dir, f'{participant_name}_TM{trim_n}_ALLbg_thr_error_SE.csv')
     p_master_err_df.to_csv(p_master_err_name, index=False)
+
+    # make prelim plots for this participant
+    compare_prelim_plots(participant_name, exp_path)
 
 
 
