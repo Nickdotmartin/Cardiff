@@ -751,6 +751,7 @@ if background == 'flow_dots':
     deep_with_sizes = True  # False, True
 
     dots_speed = flow_speed
+    flow_speed = dots_speed
 
     # Changing dots_min_z from .5 to one means that the proportion of dots onscreen increases from ~42% to ~82%.
     # Therefore, I can half n_dots with little change in the number of dots onscreen, saving processing resources.
@@ -803,6 +804,7 @@ if background == 'flow_dots':
 elif background == 'flow_rings':
     # # # RINGS
     ring_speed = flow_speed / 4  # todo: this is a quarter the speed of the dots .02  # 48 / fps  # 0.2 at 240Hz
+    flow_speed = ring_speed
     n_rings = 100  # scale this to screen size?
     rings_min_z = .1  # A value < 1 of .1 means that the closest ring's radius is 10x the size of the screen.
     # print(f"ring_speed: {ring_speed}")

@@ -87,6 +87,7 @@ rad_flow_7_spokes.py
 - add in setting for OLED (bgLumProp, startLum etc) - DONE
 - add in spokes as option to compare with 4CircleMasks - Done
     Its a bit fudged at the moment, hard coded as 22.5 deg spokes.
+- add smaller probes on OLED?
 - set it for 'asus_cal', not uncalibrated monitor.
 
 """
@@ -486,7 +487,7 @@ expName = path.basename(__file__)[:-3]
 
 
 # dialogue box/drop-down option when exp starts (1st item is default val)
-expInfo = {'01. Participant': 'scriptTest_22082023',
+expInfo = {'01. Participant': 'scriptTest_11092023',
            '02. Run_number': '1',
            '03. Probe duration in frames': [2, 1, 50, 100],
            '04. fps': [60, 240, 120, 60],
@@ -561,7 +562,7 @@ if debug:
 # separations = [18, 6, 3, 2, 1, 0]
 separations = [6, 3, 1]
 if debug:
-    separations = [18, 1]
+    separations = [0, 1]
 
 # # main contrast is whether the background and target motion is in same or opposite direction.
 # congruence_vals: 1=congruent/same, -1=incongruent/different
@@ -690,6 +691,12 @@ fixation = visual.Circle(win, radius=2, units='pix', lineColor='white', fillColo
 # PROBEs
 probe_size = 1  # can make them larger for testing new configurations etc
 probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1), (1, -2), (-1, -2), (-1, -1), (0, -1)]  # 5 pixels
+
+if monitor_name == 'OLED':  # smaller, 3-pixel probes for OLED
+    probeVert = [(0, 0), (1, 0), (1, 1), (2, 1),
+                 (2, 0), (1, 0), (1, -1), (0, -1),
+                 (0, -2), (-1, -2), (-1, -1), (0, -1)]
+
 probe1 = visual.ShapeStim(win, vertices=probeVert, lineWidth=0, opacity=1, size=probe_size, interpolate=False,
                           colorSpace=this_colourSpace)
 probe2 = visual.ShapeStim(win, vertices=probeVert, lineWidth=0, opacity=1, size=probe_size, interpolate=False,
@@ -713,9 +720,10 @@ actual_prelim_bg_flow_ms = prelim_bg_flow_fr * 1000 / fps
 if background == 'flow_dots':
 
     # If False, use orginal settings, if True, increase dots depth and scale their size with depth
-    deep_with_sizes = False  # False, True
+    deep_with_sizes = True  # False, True
 
     dots_speed = flow_speed
+    flow_speed = dots_speed
 
     # Changing dots_min_z from .5 to one means that the proportion of dots onscreen increases from ~42% to ~82%.
     # Therefore, I can half n_dots with little change in the number of dots onscreen, saving processing resources.
@@ -778,6 +786,9 @@ if background == 'flow_dots':
 elif background == 'flow_rings':
     # # # RINGS
     ring_speed = flow_speed / 4  # todo: this is a quarter the speed of the dots .02  # 48 / fps  # 0.2 at 240Hz
+    flow_speed = ring_speed
+
+
     n_rings = 100  # scale this to screen size?
     rings_min_z = .1  # A value < 1 of .1 means that the closest ring's radius is 10x the size of the screen.
     # print(f"ring_speed: {ring_speed}")
@@ -1175,6 +1186,7 @@ for step in range(n_trials_per_stair):
 
             # PROBE POSITION (including shift around dist_from_fix)
             probe_pos_dict = get_probe_pos_dict(sep, target_jump, corner, dist_from_fix,
+                                                probe_size=probe_size,
                                                 probes_ori=orientation, verbose=debug)
 
             # loc_marker.setPos([loc_x, loc_y])

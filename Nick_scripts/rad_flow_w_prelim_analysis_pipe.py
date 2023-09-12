@@ -37,19 +37,24 @@ from exp1a_psignifit_analysis import plt_heatmap_row_col
 # participant_list = ['Nick_240Hz_uncal_bg200'] #  'Nick_240Hz_07062023_bg70', 'Nick_OLED_02062023_bg350', 'Nick_240Hz_02062023_bg350', Nick_240Hz_end_june23_bg350, Nick_240_uncal_bg200]
 
 
-exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_UNCALIBRATED_MON\rad_flow_martin\rad_flow_6_rings'
-participant_list = [
-    # 'Nick_match_rf2_16082023',
-#                    'Nick_third_ring_spd_16082023',
-    #                 'Nick_half_ring_spd_16082023',
-    #                 'Nick_quarter_ring_spd_16082023',
-    #                 'Nick_orig_dots_17082023',
-    # 'Nick_deep_sized_dots_17082023',
-    # 'Nick_actual_new_dots_17082023',
-    #                 'Nick_act_new_dots_thrd_spd_17082023'
-]
-exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_UNCALIBRATED_MON\rad_flow_martin\rad_flow_6_rings_OLED'
-participant_list = ['Nick_OLED_dots_normSpd_22082023']
+# exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_UNCALIBRATED_MON\rad_flow_martin\rad_flow_6_rings'
+# participant_list = [
+#     # 'Nick_match_rf2_16082023',
+# #                    'Nick_third_ring_spd_16082023',
+#                     'Nick_half_ring_spd_16082023',
+#                     # 'Nick_quarter_ring_spd_16082023',
+#     #                 'Nick_orig_dots_17082023',
+#     # 'Nick_deep_sized_dots_17082023',
+#     # 'Nick_actual_new_dots_17082023',
+#     #                 'Nick_act_new_dots_thrd_spd_17082023'
+# ]
+
+# exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_UNCALIBRATED_MON\rad_flow_martin\rad_flow_6_rings_OLED'
+# participant_list = []
+
+exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_UNCALIBRATED_MON\rad_flow_martin\rad_flow_7_spokes'
+participant_list = ['OLED_circles_rings_quartSpd_v2 ']  # '240_new_dots_spokes_31082023' '240_dots_spokes_23082023', '240_rings_halfSpd_spokes']
+
 
 # todo: is this the right script or should I use rad_flow_convert_and_analyse?  For now, just use this for files in UNCALIBRATED dir.
 
