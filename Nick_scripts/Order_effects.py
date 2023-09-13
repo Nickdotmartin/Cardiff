@@ -41,16 +41,20 @@ Scripts also look for practice effects - e.g., differences across runs
 
 
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_2"
-# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_UNCALIBRATED_MON\rad_flow_martin\rad_flow_6_rings"
-exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_UNCALIBRATED_MON\rad_flow_martin\rad_flow_7_spokes"
+# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_Sept23\rad_flow_6_rings"
+exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_Sept23\rad_flow_7_spokes"
 
 exp_path = os.path.normpath(exp_path)
 # participant_list = ['Nick_orig_dots_17082023', 'Nick_actual_new_dots_17082023',
 #                     'Nick_act_new_dots_thrd_spd_17082023', 'Nick_half_ring_spd_16082023',
 #                     'Nick_third_ring_spd_16082023', 'Nick_quarter_ring_spd_16082023']
 
-participant_list = ['240_dots_spokes_23082023', '240_new_dots_spokes_31082023',
-                    '240_rings_halfSpd_spokes']
+participant_list = [
+                    # '240_dots_spokes_23082023', '240_new_dots_spokes_31082023',
+                    # '240_rings_halfSpd_spokes',
+                    'asus_cal_circles_rings_HalfSpd', 'asus_cal_circles_rings_quartSpd',
+                    'OLED_circles_rings_quartSpd', 'OLED_circles_rings_quartSpd_v2'
+                    ]
 
 for p_name in participant_list:
     if os.path.isdir(os.path.join(exp_path, p_name)):

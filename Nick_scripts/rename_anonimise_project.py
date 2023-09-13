@@ -2,13 +2,21 @@ import os
 import pandas as pd
 
 # rename files and folders to anonimise.
-exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data'
-isi_list = [-1, 0, 2, 4, 6, 9, 12, 24]
-old_p_list = ['Tony', 'Simon', 'Maria', 'Kristian', 'Kim']
-participant_list = ['aa', 'bb', 'cc', 'dd', 'ee']
-new_p_list = ['aa', 'bb', 'cc', 'dd', 'ee']
+# exp_path = '/Users/nickmartin/Documents/PycharmProjects/Cardiff/exp1a_data'
+# isi_list = [-1, 0, 2, 4, 6, 9, 12, 24]
+# old_p_list = ['Tony', 'Simon', 'Maria', 'Kristian', 'Kim']
+# participant_list = ['aa', 'bb', 'cc', 'dd', 'ee']
+# new_p_list = ['aa', 'bb', 'cc', 'dd', 'ee']
 
-ready_to_rename = False
+# remane misnames file
+exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_Sept23\rad_flow_7_spokes"
+isi_list = [6]
+old_p_list = ['asus_cal_circles_rings_quartSpd']
+participant_list = ['asus_cal_circles_rings_quartSpd']
+new_p_list = ['asus_cal_circles_rings_HalfSpd']
+
+
+ready_to_rename = True
 
 p_idx_plus = 1
 
@@ -27,6 +35,20 @@ for p_idx, participant_name in enumerate(participant_list):
                         f'{participant_name}_3', f'{participant_name}_4',
                         f'{participant_name}_5', f'{participant_name}_6']
 
+    # '''this bit is just for fixing rad_flow_7_spokes names, although it only worked on bg70 and
+    # failed on bg350 as dir names had already changed.'''
+    # root_path = os.path.join(root_path, 'flow_rings')
+    #
+    # for prelim in ['bg350', 'bg70']:
+    #     root_path = os.path.join(root_path, prelim)
+    #
+    #     run_folder_names = [f'{participant_name}_1', f'{participant_name}_2',
+    #                         f'{participant_name}_3', f'{participant_name}_4',
+    #                         f'{participant_name}_5', f'{participant_name}_6',
+    #                         f'{participant_name}_7', f'{participant_name}_8',
+    #                         f'{participant_name}_9', f'{participant_name}_10',
+    #                         f'{participant_name}_11', f'{participant_name}_12']
+
     for run_idx, run_dir in enumerate(run_folder_names):
         # print(f'run_dir: {run_dir}')
 
@@ -34,6 +56,7 @@ for p_idx, participant_name in enumerate(participant_list):
             # print(isi)
 
             data_dir_name = f'ISI_{isi}_probeDur2'
+            # data_dir_name = f'ISI_{isi}'
 
             run_dir_path = os.path.join(root_path, run_dir)
             data_file_path = os.path.join(run_dir_path, data_dir_name)
@@ -52,6 +75,9 @@ for p_idx, participant_name in enumerate(participant_list):
             elif os.path.isfile(os.path.join(data_file_path, f'{participant_name}.csv')):
                 file_name = f'{participant_name}.csv'
                 # print(f'found file (isi={isi}): {file_name}')
+            elif os.path.isfile(os.path.join(data_file_path, f'{participant_name}_{run_idx+1}_output.csv')):
+                file_name = f'{participant_name}_{run_idx+1}_output.csv'
+                # print(f'found file: {file_name}')
             else:
                 raise FileNotFoundError(f'\n***FILE NOT FOUND: {file_name}')
                 # print(f'\n***FILE NOT FOUND: {file_name}')
@@ -65,10 +91,18 @@ for p_idx, participant_name in enumerate(participant_list):
                 print('unnamed columns removed')
 
             # get participant name as stored in csv
-            p_label = output_df["1. Participant"][0]
-            # print(f'p_label: {p_label}')
-            output_df["1. Participant"].replace({p_label: participant_name}, inplace=True)
-            print(f'output_df["1. Participant"]:\n{output_df["1. Participant"]}')
+            if '01. Participant' in output_df.columns:
+                p_label = output_df["01. Participant"][0]
+                # print(f'p_label: {p_label}')
+                output_df["01. Participant"].replace({p_label: participant_name}, inplace=True)
+                print(f'output_df["01. Participant"]:\n{output_df["01. Participant"]}')
+            elif '1. Participant' in output_df.columns:
+                p_label = output_df["1. Participant"][0]
+                # print(f'p_label: {p_label}')
+                output_df["1. Participant"].replace({p_label: participant_name}, inplace=True)
+                print(f'output_df["1. Participant"]:\n{output_df["1. Participant"]}')
+
+
             if ready_to_rename:
                 output_df.to_csv(file_name)
 

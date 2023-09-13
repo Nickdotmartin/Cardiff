@@ -37,7 +37,7 @@ from exp1a_psignifit_analysis import plt_heatmap_row_col
 # participant_list = ['Nick_240Hz_uncal_bg200'] #  'Nick_240Hz_07062023_bg70', 'Nick_OLED_02062023_bg350', 'Nick_240Hz_02062023_bg350', Nick_240Hz_end_june23_bg350, Nick_240_uncal_bg200]
 
 
-# exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_UNCALIBRATED_MON\rad_flow_martin\rad_flow_6_rings'
+# exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_Sept23\rad_flow_6_rings'
 # participant_list = [
 #     # 'Nick_match_rf2_16082023',
 # #                    'Nick_third_ring_spd_16082023',
@@ -49,10 +49,10 @@ from exp1a_psignifit_analysis import plt_heatmap_row_col
 #     #                 'Nick_act_new_dots_thrd_spd_17082023'
 # ]
 
-# exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_UNCALIBRATED_MON\rad_flow_martin\rad_flow_6_rings_OLED'
+# exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_Sept23\rad_flow_6_rings_OLED'
 # participant_list = []
 
-exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_UNCALIBRATED_MON\rad_flow_martin\rad_flow_7_spokes'
+exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_Sept23\rad_flow_7_spokes'
 participant_list = ['OLED_circles_rings_quartSpd_v2 ']  # '240_new_dots_spokes_31082023' '240_dots_spokes_23082023', '240_rings_halfSpd_spokes']
 
 
@@ -387,12 +387,16 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
 
-#
+'''
+Don't use this bottom bit as it isn't really set up for comparing prelims
+
+'''
 # print(f'exp_path: {exp_path}')
 # # participant_list = ['Nick_350', 'Simon']
+# participant_list = ['OLED_circles_rings_quartSpd', 'OLED_circles_rings_quartSpd_v2']
 # print('\nget exp_average_data')
 # # todo: check trim_n is correct
-# # trim_n = 2
+# trim_n = 12
 # # todo: sort script to automatically use trim=2 if its there, and not just use untrimmed#
 # # todo: make sure ISI cols are in the correct order
 # e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
