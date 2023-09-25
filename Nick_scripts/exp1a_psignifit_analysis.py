@@ -68,7 +68,6 @@ def conc_to_first_isi_col(df, col_to_change='ISI_-1'):
     :param df: dataframe to be tested and sorted if necessary.
     :return: dataframe - which has been sorted if needed"""
 
-
     if df.columns.tolist()[-1] == col_to_change:
         col_list = df.columns.tolist()
         other_cols = [i for i in col_list if 'ISI' not in i]
@@ -1335,7 +1334,7 @@ def make_diff_from_conc_df(MASTER_TM2_thr_df, root_path, error_type='SE',
     if type(exp_ave) == str:  # e.g. participant's name
         ave_over = exp_ave
         idx_col = 'stack'
-    elif exp_ave is True:
+    elif exp_ave == True:
         ave_over = 'Exp'
         idx_col = 'p_stack_sep'
     else:
@@ -1343,6 +1342,7 @@ def make_diff_from_conc_df(MASTER_TM2_thr_df, root_path, error_type='SE',
         idx_col = 'stack'
     print(f'ave_over: {ave_over}')
     print(f'exp_ave: {exp_ave}')
+    print(f"idx_col: {idx_col}")
 
     if isinstance(MASTER_TM2_thr_df, str):
         thr_df = pd.read_csv(MASTER_TM2_thr_df)
@@ -1409,8 +1409,9 @@ def make_diff_from_conc_df(MASTER_TM2_thr_df, root_path, error_type='SE',
 
     if not mean_and_err_df:  # just return all dfc values, not mean and error
 
-        all_dfc_df.insert(0, 'p_stack_sep', p_stack_sep_S)
-        all_dfc_df.insert(1, 'participant', participant_S)
+        if ave_over == 'Exp':
+            all_dfc_df.insert(0, 'p_stack_sep', p_stack_sep_S)
+            all_dfc_df.insert(1, 'participant', participant_S)
         if verbose:
             print(f'returning all_dfc_df:\n{all_dfc_df}')
 
@@ -3071,7 +3072,7 @@ def d_average_participant(root_path, run_dir_names_list,
                                        reference_col='separation',
                                        stack_col_id='stack',
                                        verbose=verbose)
-        trimmed_df.to_csv(os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv'))
+        trimmed_df.to_csv(os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv'), index=False)
 
         get_means_df = trimmed_df
     else:
@@ -3113,7 +3114,7 @@ def d_average_participant(root_path, run_dir_names_list,
     #        for item in list(ave_psignifit_thr_df.columns)):
     #     print("making difference from concurrent df")
     #     ave_DfC_df = make_diff_from_conc_df(ave_psignifit_thr_df)
-    #     ave_DfC_df.to_csv(os.path.join(root_path, 'MASTER_diff_from_conc.csv'))
+    #     ave_DfC_df.to_csv(os.path.join(root_path, 'MASTER_diff_from_conc.csv'), index=False)
 
     # else:
     #     print("concurrent not found, so not making a difference-from-concurrent plot.")
@@ -3239,6 +3240,7 @@ def e_average_exp_data(exp_path, p_names_list,
         print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
 
     # save csv with average values
+    # todo: should this be with index=False?
     exp_ave_thr_df.to_csv(os.path.join(exp_path, 'MASTER_exp_ave_thr.csv'))
     error_bars_df.to_csv(os.path.join(exp_path, f'MASTER_ave_thr_error_{error_type}.csv'))
 
@@ -3325,6 +3327,11 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         error_bars_df = pd.read_csv(error_bars_path)
     error_bars_df = conc_to_first_isi_col(error_bars_df)
     print(f'\nerror_bars_df:\n{error_bars_df}')
+
+    # remove any Unnamed columns
+    if any("Unnamed" in i for i in list(all_df.columns)):
+        unnamed_col = [i for i in list(all_df.columns) if "Unnamed" in i][0]
+        all_df.drop(unnamed_col, axis=1, inplace=True)
 
     all_df_headers = list(all_df.columns)
     print(f'all_df_headers: {all_df_headers}')
@@ -3908,8 +3915,9 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         error_DfC_df.columns = error_DfC_col_names
 
         # if '1Probe' in error_DfC_df index, change to '1pr'
-        error_DfC_df.index = [idx.replace('1Probe', '1pr') for idx in error_DfC_df.index]
-        print(f"error_DfC_df:\n{error_DfC_df}")
+        if '1Probe' in error_DfC_df.index:
+            error_DfC_df.index = [idx.replace('1Probe', '1pr') for idx in error_DfC_df.index]
+            print(f"error_DfC_df:\n{error_DfC_df}")
 
         # copy ave_DfC_df and edit column names
         my_ave_DfC_df = ave_DfC_df.copy()
@@ -3919,7 +3927,8 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         my_ave_DfC_df.columns = my_ave_DfC_col_names
 
         # if '1Probe' in my_ave_DfC_df index, change to '1pr'
-        my_ave_DfC_df.index = [idx.replace('1Probe', '1pr') for idx in my_ave_DfC_df.index]
+        if '1Probe' in my_ave_DfC_df.index:
+            my_ave_DfC_df.index = [idx.replace('1Probe', '1pr') for idx in my_ave_DfC_df.index]
         print(f"my_ave_DfC_df:\n{my_ave_DfC_df}")
 
 

@@ -493,7 +493,7 @@ expName = path.basename(__file__)[:-3]
 
 
 # dialogue box/drop-down option when exp starts (1st item is default val)
-expInfo = {'01. Participant': 'scriptTest_15092023',
+expInfo = {'01. Participant': 'scriptTest_25092023',
            '02. Run_number': '1',
            '03. Probe duration in frames': [2, 1, 50, 100],
            '04. fps': [60, 240, 120, 60],
@@ -502,7 +502,7 @@ expInfo = {'01. Participant': 'scriptTest_15092023',
            '07. Record_frame_durs': [True, False],
            '08. Background': ['flow_rings', 'flow_dots', 'no_bg'],
            # '09. prelim_bg_flow_ms': [70, 200, 350, 2000],
-           '10. monitor_name': ['Nick_work_laptop', 'ASUS_2_13_240Hz', 'asus_cal', 'OLED', 'Nick_work_laptop',
+           '10. monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'ASUS_2_13_240Hz',
                                 'Samsung', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
            '11. mask_type': ['4_circles', '2_spokes'],
            '12. debug': [False, True]

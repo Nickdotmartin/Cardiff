@@ -53,7 +53,7 @@ from exp1a_psignifit_analysis import plt_heatmap_row_col
 # participant_list = []
 
 exp_path = r'C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_Sept23\rad_flow_7_spokes'
-participant_list = ['OLED_circles_rings_quartSpd_v2 ']  # '240_new_dots_spokes_31082023' '240_dots_spokes_23082023', '240_rings_halfSpd_spokes']
+participant_list = ['OLED_circles_rings_quartSpd_KIM']  # 'OLED_circles_rings_quartSpd_v2', '240_new_dots_spokes_31082023' '240_dots_spokes_23082023', '240_rings_halfSpd_spokes']
 
 
 # todo: is this the right script or should I use rad_flow_convert_and_analyse?  For now, just use this for files in UNCALIBRATED dir.
