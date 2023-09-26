@@ -590,44 +590,45 @@ prelim_vals = [70, 350]
 flow_dir (expand/contract) x prelim (70, 350)
  e.g., if sep_vals = [6, 3, 1], sep_conds_list = [6, 6, 6, 6, 3, 3, 3, 3, 1, 1, 1, 1]
 '''
-
-sep_conds_list = list(np.repeat(sep_vals, len(congruence_vals) * len(prelim_vals)))
-cong_val_conds_list = list(np.tile(np.repeat(congruence_vals, len(prelim_vals)), len(sep_vals)))
-cong_name_conds_list = list(np.tile(np.repeat(congruence_names, len(prelim_vals)), len(sep_vals)))
-prelim_conds_list = list(np.tile(prelim_vals, len(sep_vals) * len(congruence_vals)))
-ISI_conds_list = list(np.repeat(ISI_vals, len(sep_vals) * len(congruence_vals) * len(prelim_vals)))
-
-# stair_names_list joins sep_conds_list, cong_name_conds_list and prelim_conds_list
-# e.g., ['sep_6_cong_1_prelim_70', 'sep_6_cong_1_prelim_350', 'sep_6_cong_-1_prelim_70'...]
-stair_names_list = [f"sep_{s}_cong_{c}_prelim_{p}" for s, c, p in zip(sep_conds_list, cong_val_conds_list, prelim_conds_list)]
-print("\n4")
-print(f'ISI_conds_list: {ISI_conds_list}')
-print(f'sep_conds_list: {sep_conds_list}')
-print(f'cong_val_conds_list: {cong_val_conds_list}')
-print(f'cong_name_conds_list: {cong_name_conds_list}')
-print(f'prelim_conds_list: {prelim_conds_list}')
-print(f'\nstair_names_list: {stair_names_list}')
-
-
-
-# '''New method'''
-# # get all possible combinations of these three lists
-# combined_conds = [(s, c, p) for s in sep_vals for c in congruence_vals for p in prelim_vals]
-# print(f"combined_conds: {combined_conds}")
 #
-# # split the combined_conds into separate lists
-# sep_conds_list = [i[0] for i in combined_conds]
-# cong_val_conds_list = [i[1] for i in combined_conds]
-# cong_name_conds_list = [congruence_names[0] if i[1] == 1 else congruence_names[1] for i in combined_conds]
-# prelim_conds_list = [i[2] for i in combined_conds]
-#
-# # ISI conds list is a bit redundant while there is only one ISI per run, but I'll keep it for now.
-# ISI_conds_list = [ISI_vals[0] for i in combined_conds]
+# sep_conds_list = list(np.repeat(sep_vals, len(congruence_vals) * len(prelim_vals)))
+# cong_val_conds_list = list(np.tile(np.repeat(congruence_vals, len(prelim_vals)), len(sep_vals)))
+# cong_name_conds_list = list(np.tile(np.repeat(congruence_names, len(prelim_vals)), len(sep_vals)))
+# prelim_conds_list = list(np.tile(prelim_vals, len(sep_vals) * len(congruence_vals)))
+# ISI_conds_list = list(np.repeat(ISI_vals, len(sep_vals) * len(congruence_vals) * len(prelim_vals)))
 #
 # # stair_names_list joins sep_conds_list, cong_name_conds_list and prelim_conds_list
 # # e.g., ['sep_6_cong_1_prelim_70', 'sep_6_cong_1_prelim_350', 'sep_6_cong_-1_prelim_70'...]
-# # make a list of the names of the conditions
-# stair_names_list = [f"sep_{s}_cong_{c}_prelim_{p}" for s, c, p in combined_conds]
+# stair_names_list = [f"sep_{s}_cong_{c}_prelim_{p}" for s, c, p in zip(sep_conds_list, cong_val_conds_list, prelim_conds_list)]
+# print("\n4")
+# print(f'ISI_conds_list: {ISI_conds_list}')
+# print(f'sep_conds_list: {sep_conds_list}')
+# print(f'cong_val_conds_list: {cong_val_conds_list}')
+# print(f'cong_name_conds_list: {cong_name_conds_list}')
+# print(f'prelim_conds_list: {prelim_conds_list}')
+# print(f'\nstair_names_list: {stair_names_list}')
+
+
+
+'''New method'''
+# get all possible combinations of these three lists
+combined_conds = [(s, c, p) for s in sep_vals for c in congruence_vals for p in prelim_vals]
+print(f"combined_conds: {combined_conds}")
+
+# split the combined_conds into separate lists
+sep_conds_list = [i[0] for i in combined_conds]
+cong_val_conds_list = [i[1] for i in combined_conds]
+cong_name_conds_list = [congruence_names[0] if i[1] == 1 else congruence_names[1] for i in combined_conds]
+prelim_conds_list = [i[2] for i in combined_conds]
+
+# ISI conds list is a bit redundant while there is only one ISI per run, but I'll keep it for now.
+ISI_conds_list = [ISI_vals[0] for i in combined_conds]
+
+# stair_names_list joins sep_conds_list, cong_name_conds_list and prelim_conds_list
+# e.g., ['sep_6_cong_1_prelim_70', 'sep_6_cong_1_prelim_350', 'sep_6_cong_-1_prelim_70'...]
+stair_names_list = [f"sep_{s}_cong_{c}_prelim_{p}" for s, c, p in combined_conds]
+
+
 # print("\n5. zip then unpack")
 # print(f'ISI_conds_list: {ISI_conds_list}')
 # print(f'sep_conds_list: {sep_conds_list}')
