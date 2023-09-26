@@ -586,40 +586,55 @@ if debug:
 prelim_vals = [70, 350]
 
 # lists of values for each condition (all list are same length = n_stairs)
-'''each separation value appears in 2 stairs, e.g.,
-stair1 will be sep=18, flow_dir=inwards; stair2 will be sep=18, flow_dir=outwards etc.
-e.g., sep_conds_list = [18, 18, 6, 6, 3, 3, 2, 2, 1, 1, 0, 0]
-this study does not include the two single probe conditions (labeled 99 in previous exp)
+'''each separation value appears in 4 stairs, e.g.,
+flow_dir (expand/contract) x prelim (70, 350)
+ e.g., if sep_vals = [6, 3, 1], sep_conds_list = [6, 6, 6, 6, 3, 3, 3, 3, 1, 1, 1, 1]
 '''
-# ISI_conds_list = list(np.repeat(ISI_vals, len(sep_vals))) * len(congruence_vals)
-# sep_conds_list = list(np.tile(sep_vals, len(ISI_vals) * len(congruence_vals)))
-# cong_val_conds_list = list(np.repeat(congruence_vals, len(sep_conds_list) / len(congruence_vals)))
-# cong_name_conds_list = list(np.repeat(congruence_names, len(sep_conds_list) / len(congruence_vals)))
 
-# sep_conds_list = list(np.tile(sep_vals, len(congruence_vals) * len(prelim_vals)))
-# cong_val_conds_list = list(np.tile(congruence_vals, len(sep_vals) * len(prelim_vals)))
-# cong_name_conds_list = list(np.tile(congruence_names, len(sep_vals) * len(prelim_vals)))
-# prelim_conds_list = list(np.repeat(prelim_vals, len(sep_vals) * len(congruence_vals)))
-# ISI_conds_list = list(np.repeat(ISI_vals, len(sep_vals) * len(congruence_vals) * len(prelim_vals)))
+sep_conds_list = list(np.repeat(sep_vals, len(congruence_vals) * len(prelim_vals)))
+cong_val_conds_list = list(np.tile(np.repeat(congruence_vals, len(prelim_vals)), len(sep_vals)))
+cong_name_conds_list = list(np.tile(np.repeat(congruence_names, len(prelim_vals)), len(sep_vals)))
+prelim_conds_list = list(np.tile(prelim_vals, len(sep_vals) * len(congruence_vals)))
+ISI_conds_list = list(np.repeat(ISI_vals, len(sep_vals) * len(congruence_vals) * len(prelim_vals)))
+
+# stair_names_list joins sep_conds_list, cong_name_conds_list and prelim_conds_list
+# e.g., ['sep_6_cong_1_prelim_70', 'sep_6_cong_1_prelim_350', 'sep_6_cong_-1_prelim_70'...]
+stair_names_list = [f"sep_{s}_cong_{c}_prelim_{p}" for s, c, p in zip(sep_conds_list, cong_val_conds_list, prelim_conds_list)]
+print("\n4")
+print(f'ISI_conds_list: {ISI_conds_list}')
+print(f'sep_conds_list: {sep_conds_list}')
+print(f'cong_val_conds_list: {cong_val_conds_list}')
+print(f'cong_name_conds_list: {cong_name_conds_list}')
+print(f'prelim_conds_list: {prelim_conds_list}')
+print(f'\nstair_names_list: {stair_names_list}')
+
+
+
+# '''New method'''
+# # get all possible combinations of these three lists
+# combined_conds = [(s, c, p) for s in sep_vals for c in congruence_vals for p in prelim_vals]
+# print(f"combined_conds: {combined_conds}")
 #
-# sep_conds_list = list(np.tile(sep_vals, len(congruence_vals) * len(prelim_vals)))
-# congruence_conds_list = list(np.tile(congruence_vals, len(sep_vals) * len(prelim_vals)))
-# prelim_conds_list = list(np.repeat(prelim_vals, len(sep_vals) * len(congruence_vals)))
-# ISI_conds_list = list(np.repeat(ISI_vals, len(sep_vals) * len(congruence_vals) * len(prelim_vals)))
-
-# get all possible combinations of these three lists
-combined_conds = [(s, c, p) for s in sep_vals for c in congruence_vals for p in prelim_vals]
-print(f"combined_conds: {combined_conds}")
-
-# split the combined_conds into separate lists
-sep_conds_list = [i[0] for i in combined_conds]
-cong_val_conds_list = [i[1] for i in combined_conds]
-cong_name_conds_list = [congruence_names[0] if i[1] == 1 else congruence_names[1] for i in combined_conds]
-prelim_conds_list = [i[2] for i in combined_conds]
-
-# ISI conds list is a bit redundant while there is only one ISI per run, but I'll keep it for now.
-ISI_conds_list = [ISI_vals[0] for i in combined_conds]
-
+# # split the combined_conds into separate lists
+# sep_conds_list = [i[0] for i in combined_conds]
+# cong_val_conds_list = [i[1] for i in combined_conds]
+# cong_name_conds_list = [congruence_names[0] if i[1] == 1 else congruence_names[1] for i in combined_conds]
+# prelim_conds_list = [i[2] for i in combined_conds]
+#
+# # ISI conds list is a bit redundant while there is only one ISI per run, but I'll keep it for now.
+# ISI_conds_list = [ISI_vals[0] for i in combined_conds]
+#
+# # stair_names_list joins sep_conds_list, cong_name_conds_list and prelim_conds_list
+# # e.g., ['sep_6_cong_1_prelim_70', 'sep_6_cong_1_prelim_350', 'sep_6_cong_-1_prelim_70'...]
+# # make a list of the names of the conditions
+# stair_names_list = [f"sep_{s}_cong_{c}_prelim_{p}" for s, c, p in combined_conds]
+# print("\n5. zip then unpack")
+# print(f'ISI_conds_list: {ISI_conds_list}')
+# print(f'sep_conds_list: {sep_conds_list}')
+# print(f'cong_val_conds_list: {cong_val_conds_list}')
+# print(f'cong_name_conds_list: {cong_name_conds_list}')
+# print(f'prelim_conds_list: {prelim_conds_list}')
+# print(f'\nstair_names_list: {stair_names_list}')
 
 
 
@@ -631,10 +646,7 @@ if debug:
     print(f'prelim_conds_list: {prelim_conds_list}')
 
 
-# stair_names_list joins sep_conds_list, cong_name_conds_list and prelim_conds_list
-# e.g., ['sep_6_cong_1_prelim_70', 'sep_6_cong_1_prelim_350', 'sep_6_cong_-1_prelim_70'...]
-# make a list of the names of the conditions
-stair_names_list = [f"sep_{s}_cong_{c}_prelim_{p}" for s, c, p in combined_conds]
+
 n_stairs = len(sep_conds_list)
 total_n_trials = int(n_trials_per_stair * n_stairs)
 print(f'\nstair_names_list: {stair_names_list}')
@@ -1126,6 +1138,12 @@ stairs = []
 for stair_idx in range(n_stairs):
     thisInfo = copy.copy(expInfo)
     thisInfo['stair_idx'] = stair_idx
+    thisInfo['ISI'] = ISI_conds_list[stair_idx]
+    thisInfo['sep'] = sep_conds_list[stair_idx]
+    thisInfo['cong_val'] = cong_val_conds_list[stair_idx]
+    thisInfo['cong_name'] = cong_name_conds_list[stair_idx]
+    thisInfo['prelim_bg_flow_ms'] = prelim_conds_list[stair_idx]
+
 
     thisStair = Staircase(name=stair_names_list[stair_idx],
                           type='simple',
@@ -1170,15 +1188,28 @@ for step in range(n_trials_per_stair):
                 print(f"\n({trial_num_inc_repeats}) trial_number: {trial_number}, "
                       f"stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
 
-            # conditions (ISI, congruence)
-            ISI = ISI_conds_list[stair_idx]
-            congruent = cong_val_conds_list[stair_idx]
-            cong_name = cong_name_conds_list[stair_idx]
-            if debug:
-                print(f"ISI: {ISI}, congruent: {congruent} ({cong_name})")
+            # # conditions (ISI, congruence)
+            # ISI = ISI_conds_list[stair_idx]
+            # congruent = cong_val_conds_list[stair_idx]
+            # cong_name = cong_name_conds_list[stair_idx]
+            # if debug:
+            #     print(f"ISI: {ISI}, congruent: {congruent} ({cong_name})")
+            #
+            # # conditions (sep, neg_sep)
+            # sep = sep_conds_list[stair_idx]
+            #
+            # # conditions - prelim
+            # prelim_bg_flow_ms = prelim_conds_list[stair_idx]
 
-            # conditions - prelim
-            prelim_bg_flow_ms = prelim_conds_list[stair_idx]
+
+            # conditions (ISI, congruence, sep, prelim)
+            ISI = thisStair.extraInfo['ISI']
+            sep = thisStair.extraInfo['sep']
+            congruent = thisStair.extraInfo['cong_val']
+            cong_name = thisStair.extraInfo['cong_name']
+            prelim_bg_flow_ms = thisStair.extraInfo['prelim_bg_flow_ms']
+
+
             # timing for background motion converted to frames (e.g., 70ms is 17frames at 240Hz).
             prelim_bg_flow_fr = int(prelim_bg_flow_ms * fps / 1000)
             actual_prelim_bg_flow_ms = prelim_bg_flow_fr * 1000 / fps
@@ -1187,8 +1218,7 @@ for step in range(n_trials_per_stair):
                 print(f'prelim_bg_flow_fr: {prelim_bg_flow_fr}')
                 print(f'actual_prelim_bg_flow_ms: {actual_prelim_bg_flow_ms}')
 
-            # conditions (sep, neg_sep)
-            sep = sep_conds_list[stair_idx]
+
 
             # negative separation for comparing conditions (e.g., cong sep = 5, incong sep = -5.
             if cong_name == 'incong':
@@ -1573,11 +1603,10 @@ for step in range(n_trials_per_stair):
                     # Timing is bad, this trial will be repeated (with new corner and target_jump)
                     if debug:
                         print(f"\n\toh no! A frame had bad timing! trial: {trial_number}, {thisStair.name} "
-                              f"{round(max(trial_fr_intervals), 2)} > {round(max_fr_dur_sec, 2)} or "
-                              f"{round(min(trial_fr_intervals), 2)} < {round(min_fr_dur_sec, 2)}")
+                              f"{round(max(trial_fr_intervals), 3)} > {round(max_fr_dur_sec, 2)} or "
+                              f"{round(min(trial_fr_intervals), 3)} < {round(min_fr_dur_sec, 2)}")
 
-                    print(f"Timing bad, trial {trial_number} repeated\n"
-                          f"repeat: {repeat}, continueRoutine: {continueRoutine}")
+                    print(f"Timing bad, repeating trial {trial_number}.")
 
                     # decrement trial and stair so that the correct values are used for the next trial
                     trial_number -= 1
@@ -1676,10 +1705,11 @@ for step in range(n_trials_per_stair):
         # update staircase based on whether response was correct or incorrect
         thisStair.newValue(resp.corr)
 
-print("\nend of experiment loop, saving data\n")
+
 # now exp is completed, save as '_output' rather than '_incomplete'
 thisExp.dataFileName = path.join(save_dir, f'{participant_name}_{run_number}_output')
 thisExp.close()
+print(f"\nend of experiment loop, saving data to:\n{thisExp.dataFileName}\n")
 
 
 # plot frame intervals

@@ -487,7 +487,7 @@ expName = path.basename(__file__)[:-3]
 
 
 # dialogue box/drop-down option when exp starts (1st item is default val)
-expInfo = {'01. Participant': 'scriptTest_11092023',
+expInfo = {'01. Participant': 'scriptTest_25092023',
            '02. Run_number': '1',
            '03. Probe duration in frames': [2, 1, 50, 100],
            '04. fps': [60, 240, 120, 60],
