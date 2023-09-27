@@ -714,10 +714,10 @@ mon_width_cm = mon.getWidth()  # monitor width in cm
 view_dist_cm = mon.getDistance()  # viewing distance in cm
 view_dist_pix = widthPix / mon_width_cm * view_dist_cm  # used for calculating visual angle (e.g., probe locations at 4dva)
 
-# set monitor values
-mon.setSizePix((widthPix, heightPix))
-mon.setDistance(view_dist_cm)
-mon.setWidth(mon_width_cm)
+# # set monitor values - why set them, I've just got them from the monitor centre?
+# mon.setSizePix((widthPix, heightPix))
+# mon.setDistance(view_dist_cm)
+# mon.setWidth(mon_width_cm)
 
 # screen number
 display_number = 1  # 0 indexed, 1 for external display, 0 for internal
@@ -846,6 +846,7 @@ elif background == 'flow_rings':
 
     # set the limits on ring size
     max_radius = heightPix  # Biggest ring is height of screen
+    # todo: on OLED, allow bigger lax radius to reduce flicker?  widthPix?
     min_radius = 10  # smallest ring is 10 pixels
 
     # If I want the smallest radius to be 10 pixels, then the max depth of 108 (1080/108=10)
@@ -1037,6 +1038,7 @@ else:
 raisedCosTexture2 = visual.filters.makeMask(heightPix, shape='raisedCosine', fringeWidth=0.6, radius=[1.0, 1.0])
 invRaisedCosTexture = -raisedCosTexture2  # inverts mask to blur edges instead of center
 slab_width = 420
+# todo: try without this on OLED to reduce flicker?
 if monitor_name == 'OLED':
     slab_width = 20
 
