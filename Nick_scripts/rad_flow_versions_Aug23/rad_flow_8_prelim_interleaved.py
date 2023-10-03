@@ -685,7 +685,7 @@ Color1LumFactor = 2.39538706913372  ###
 
 maxLum = 106  # 255 RGB
 # minLum = 0.12  # 0 RGB  # todo: this is currently unused
-bgLumProp = .45  # .2  # todo: use .45 to match radial_flow_NM_v2.py, or .2 to match exp1
+bgLumProp = .2  # .2  # todo: use .45 to match radial_flow_NM_v2.py, or .2 to match exp1
 if monitor_name == 'OLED':
     bgLumProp = .0
 bgLum = maxLum * bgLumProp
@@ -1308,7 +1308,6 @@ for step in range(n_trials_per_stair):
             end_p1_fr = end_bg_motion_fr + probe_duration
             end_ISI_fr = end_p1_fr + isi_dur_fr
             end_p2_fr = end_ISI_fr + p2_fr
-            end_response_fr = end_p2_fr + 10000 * fps  # ~40 seconds to respond
             if debug:
                 print(f"end_fix_fr: {end_fix_fr}, end_bg_motion_fr: {end_bg_motion_fr}, "
                       f"end_p1_fr: {end_p1_fr}, end_ISI_fr: {end_ISI_fr}, end_p2_fr: {end_p2_fr}\n")

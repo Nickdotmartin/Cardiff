@@ -1,312 +1,824 @@
 from __future__ import division
+from psychopy import gui, visual, core, data, event, monitors, logging
+from psychopy import __version__ as psychopy_version
+from datetime import datetime
+from os import path, chdir
 
 import copy
-import os
-from datetime import datetime
-from math import *
-
 import numpy as np
-from psychopy import __version__ as psychopy_version
-from psychopy import gui, visual, core, data, event, monitors
-
-from PsychoPy_tools import check_correct_monitor, get_pixel_mm_deg_values
+import matplotlib.pyplot as plt
+import matplotlib.lines as mlines
 from kestenSTmaxVal import Staircase
+
+print(f"PsychoPy_version: {psychopy_version}")
+
 
 """
 This script takes: 
-the background from radial_flow_v2_NM and the probes from 'from_Martin"FlowParsing' 
-and combines then so we can test that we do get flowParsing effects."""
-
-'''This script uses colorspace=rgb, but it should be rgb255.
-I'll keep it as is for now, but I need to use these vals below for bglum and deltaLum.
-flow_bgcolor = [-0.1, -0.1, -0.1]  # dark grey converts to:
-rgb: -0.1 = rgb1: .45 = rgb255: 114.75 = lum: 47.8.
-for future ref, to match exp1 it should be flow_bgcolor = [-0.6, -0.6, -0.6]  # dark grey'''
-
-# todo: this code generally works - but I need to find the right speeds for these conditions./stimuli
-
-# Ensure that relative paths start from the same directory as this script
-_thisDir = os.path.dirname(os.path.abspath(__file__))
-os.chdir(_thisDir)
-
-# Monitor config from monitor centre
-monitor_name = 'HP_24uh'  # 'NickMac' 'asus_cal' 'Asus_VG24' 'HP_24uh' 'ASUS_2_13_240Hz'
-display_number = 1  # 0 indexed, 1 for external display
-
-# Store info about the experiment session
-expName = 'flow_parsing_NM_v2'  # from the Builder filename that created this script
+the background from Evans et al., 2020, and moving probes from flow_parsing_NM
+to test that we do get flowParsing effects."""
 
 
-expInfo = {'1_Participant_name': 'Nicktest_26092023',
+def find_angle(adjacent, opposite):
+    """Finds the angle in a right triangle given the lengths of the adjacent and opposite sides.
+    e.g., for getting the visual angle of a square at a given distance, the adjacent side is the distance from the screen,
+    and the opposite side is the size of the square onscreen.
+
+    :param adjacent: A numpy array of the lengths of the adjacent sides (e.g., distance z_array).
+    :param opposite: The (scalar) length of the side opposite the angle you want to find.
+    :return: A numpy array of the angles in degrees.
+    """
+    radians = np.arctan(opposite / adjacent)  # radians
+    degrees = radians * 180 / np.pi  # degrees
+    return degrees
+
+
+def new_dots_z_and_pos(x_array, y_array, z_array, dots_speed, flow_dir, min_z, max_z,
+                       frame_size_cm, reference_angle):
+    """
+    This is a function to update flow_dots distance array and get new pixel co-ordinates
+    using the original x_array and y_array.
+
+    1. Update z_array by adding dots_speed * flow_dir to the current z values.
+    2. adjust any values below dots_min_z or above dots_max_z.
+    3. Convert distances (cm) to angles (degrees) using find_angle().
+    4. scale distances by dividing by reference angle (e.g., screen angle when z=view_dist).
+    5. scale x and y values by multiplying by scaled distances.
+    6. put the new x_pos and y_pos co-ordinates into an array and transposes it.
+
+    :param x_array: Original x_array positions for the dots (shape = (n_dots, 1))
+    :param y_array: Original y_array positions for the dots (shape = (n_dots, 1))
+    :param z_array: array of distance values for the dots (shape = (n_dots, 1))
+    :param dots_speed: speed of the dots (float, smaller = slower, larger = faster)
+    :param flow_dir: either 1 (contracting/inward/backwards) or -1 (expanding/outward/forwards)
+    :param min_z: default is .5, values below this are adjusted to dots_max_z
+    :param max_z: default is 5, values above this are adjusted to dots_min_z
+    :param frame_size_cm: onscreen size in cm of frame containing dots.
+    :param reference_angle: angle in degrees of the reference distance (57.3cm)
+    :return: updated_z_array, new dots_pos_array
+    """
+
+    # # 1. Update z (distance values): Add dots_speed * flow_dir to the current z values.
+    updated_z_array = z_array + dots_speed * flow_dir
+
+    # todo: make sure new distances and dot life work together so there is no flickering.
+    # 2. adjust any distance values below min_z or above max_z by z_adjust
+    z_adjust = max_z - min_z
+    # adjust updated_z_array values less than min_z by adding z_adjust
+    less_than_min = (updated_z_array < min_z)
+    updated_z_array[less_than_min] += z_adjust
+    # adjust updated_z_array values more than max_z by subtracting z_adjust
+    more_than_max = (updated_z_array > max_z)
+    updated_z_array[more_than_max] -= z_adjust
+
+    # 3. convert distances to angles
+    z_array_deg = find_angle(adjacent=updated_z_array, opposite=frame_size_cm)
+
+    # 4. scale distances by dividing by reference angle
+    scale_factor_array = z_array_deg / reference_angle
+
+    # 5. scale x and y values by multiplying by scaled distances
+    scaled_x = x_array * scale_factor_array
+    scaled_y = y_array * scale_factor_array
+
+    # 6. scale x and y values by multiplying by scaled distances
+    dots_pos_array = np.array([scaled_x, scaled_y]).T
+
+    return updated_z_array, dots_pos_array
+
+
+def update_dotlife(dotlife_array, dot_max_fr, x_array, y_array, dot_boundary):
+    """
+    This is a function to update the lifetime of the dots.
+
+    1. increment all dots by 1
+    2. make a mask of any to be replaced (life > max_life)
+    3. replace these with new x and y values
+    4. reset life of replaced dots to 0
+
+    :param dotlife_array: np.array of dot lifetimes (ints) between 0 and dot_max_fr.
+    :param dot_max_fr: maximum lifetime of a dot in frames.
+    :param x_array: np.array of x positions of dots.
+    :param y_array: np.array of y positions of dots.
+    :param dot_boundary: width of the frame in cm for drawing new x and y values from.
+    :return: updated dotlife_array, x_array, y_array
+    """
+
+    # increment all dots by 1
+    dotlife_array += 1
+
+    # make a mask of any to be replaced (life > max_life)
+    replace_mask = (dotlife_array > dot_max_fr)
+
+    # replace these with new x and y values (from same distribution as originals)
+    x_array[replace_mask] = np.random.uniform(-dot_boundary / 2, dot_boundary / 2, np.sum(replace_mask))
+    y_array[replace_mask] = np.random.uniform(-dot_boundary / 2, dot_boundary / 2, np.sum(replace_mask))
+
+    # reset life of replaced dots to 0
+    dotlife_array[replace_mask] = 0
+
+    return dotlife_array, x_array, y_array
+
+
+
+def plt_fr_ints(time_p_trial_nested_list, n_trials_w_dropped_fr,
+                expected_fr_dur_ms, allowed_err_ms,
+                all_cond_name_list, fr_nums_p_trial, dropped_trial_x_locs,
+                mon_name, date, frame_rate, participant, run_num,
+                save_path, incomplete=False):
+    """
+    This function takes in the frame intervals per trial and plots them.  Rather than a single line plot,
+    each trial has its own (discontinuous) line (since recording stops between trials), in a distinct colour.
+    The colours might make any systematic frame drops easier to spot.
+    Trials containing dropped frames are highlighted to make them easy to spot.
+    The expected frame rate and bounds of an error are also shown.
+
+    :param time_p_trial_nested_list: a list of lists, where each sublist contains the frame intervals for each trial.
+    :param n_trials_w_dropped_fr: int.  How many of the recorded dropped frames included dropped frames.
+    :param expected_fr_dur_ms: the expected duration of each frame in ms.
+    :param allowed_err_ms: The tolerance for variation in the frame duration in ms.
+    :param all_cond_name_list: a list of condition names for each trial (used to colour plots).
+    :param fr_nums_p_trial: a nested list of frame numbers for each trial, to use as x_axis.
+                Using a nexted list allows me to plot each condition separately.
+    :param dropped_trial_x_locs:
+    :param mon_name: name of monitor from psychopy monitor centre
+    :param date: date of experiment
+    :param frame_rate: Frames per second of monitor/experiment.
+    :param participant: name of participant
+    :param run_num: run number
+    :param incomplete: default=False.  Flag as True if the experiment quits early.
+    :param save_path: path to save plots to
+    """
+
+    total_recorded_trials = len(time_p_trial_nested_list)
+
+    # get unique conditions for selecting colours and plotting legend
+    unique_conds = sorted(list(set(all_cond_name_list)))
+
+    '''select colours for lines on plot (up to 20)'''
+    # select colour for each condition from tab20, using order shown colours_in_order
+    # this is because tab20 has 10 pairs of colours, with similarity between [0, 1], [2, 3], etc.
+    colours_in_order = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19]
+    if len(unique_conds) > 20:  # just use dark blue for all conds if more than 20
+        selected_colours = [0] * len(unique_conds)
+    else:
+        selected_colours = colours_in_order[:len(unique_conds)]
+    my_colours = iter([plt.cm.tab20(i) for i in selected_colours])
+    colour_dict = {k: v for (k, v) in zip(unique_conds, my_colours)}
+
+    '''plot frame intervals, one trial at a time'''
+    for trial_x_vals, trial_fr_durs, this_cond in zip(fr_nums_p_trial, time_p_trial_nested_list, all_cond_name_list):
+        plt.plot(trial_x_vals, trial_fr_durs, color=colour_dict[this_cond])
+
+    '''decorate plot'''
+    # add legend with colours per condition
+    legend_handles_list = []
+    if len(unique_conds) < 20:
+        for cond in unique_conds:
+            leg_handle = mlines.Line2D([], [], color=colour_dict[cond], label=cond,
+                                       marker='.', linewidth=.5, markersize=4)
+            legend_handles_list.append(leg_handle)
+
+    # add light-grey vertical lines between trials, ofset by -.5
+    trial_v_lines = [fr_nums_p_trial[i][0] - .5 for i in range(len(fr_nums_p_trial))]
+    for trial_line in trial_v_lines:
+        plt.axvline(x=trial_line, color='gainsboro', linestyle='dashed', zorder=0)
+
+    # add horizontal lines: green = expected frame duration, red = frame error tolerance
+    plt.axhline(y=expected_fr_dur_ms / 1000, color='green', linestyle='dotted', alpha=.5)
+    plt.axhline(y=(expected_fr_dur_ms - allowed_err_ms) / 1000, color='red', linestyle='dotted', alpha=.5)
+    plt.axhline(y=(expected_fr_dur_ms + allowed_err_ms) / 1000, color='red', linestyle='dotted', alpha=.5)
+    legend_handles_list.append(mlines.Line2D([], [], color='green', label='expected fr duration',
+                               linestyle='dotted', linewidth=.5, markersize=0))
+    legend_handles_list.append(mlines.Line2D([], [], color='red', label='bad timing boundary',
+                               linestyle='dotted', linewidth=.5, markersize=0))
+
+    # plot legend
+    plt.legend(handles=legend_handles_list, fontsize=6, title='conditions', framealpha=.5)
+
+    # shade trials red that had bad timing
+    for loc_pair in dropped_trial_x_locs:
+        x0, x1 = loc_pair[0] - .5, loc_pair[1] - .5
+        plt.axvspan(x0, x1, color='red', alpha=0.15, zorder=0, linewidth=None)
+
+    # axis labels and title
+    plt.xlabel('frame number')
+    plt.ylabel('frame duration (sec)')
+    plt.title(f"{mon_name}, {frame_rate}Hz, {date}\n{n_trials_w_dropped_fr}/{total_recorded_trials} trials."
+              f"dropped fr (expected: {round(expected_fr_dur_ms, 2)}ms, "
+              f"allowed_err_ms: +/- {round(allowed_err_ms, 2)})")
+
+    # save fig
+    fig_name = f'{participant}_{run_num}_frames.png'
+    if incomplete:
+        fig_name = f'{participant}_{run_num}_frames_incomplete.png'
+    plt.savefig(path.join(save_path, fig_name))
+    plt.close()
+
+
+# get filename and path for this experiment
+_thisDir = path.dirname(path.abspath(__file__))
+chdir(_thisDir)
+expName = path.basename(__file__)[:-3]
+
+
+expInfo = {'1_participant_name': 'Nicktest_28092023',
            '2_run_number': 1,
-           '3_fps': [60, 240, 144, 60],
-           # to compare with exp 1 ISIs use [1, 4, 6, 9]
-           # to compare with probes + ISIs use [5, 8, 10, 13],
-           '4_Probe duration in frames': [1, 4, 6, 9, 5, 8, 10, 13, 24],  # ['12', '3', '6', '12', '18', '24', '30', '36', '120'],
-           '5_prelim_bg_flow_ms': [0, 70],
-           '7_Trials_counter': [True, False],
-           '8_Background': ['flow_rad', 'None'],
-           '9_bg_speed_cond': ['Normal', 'Half-speed'],
+           '3_monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'ASUS_2_13_240Hz',
+                              'Samsung', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
+           '4_fps': [60, 240, 120, 60],
+           # todo: changed probe_dur to be in ms, to allow comparison between monitors.
+           '5_probe_dur_ms': [41.67, 8.33, 16.67, 25, 33.33, 41.67, 50, 58.38, 66.67, 500],
+           # '6_mask_type': ['4_circles', '2_spokes'],
+           '7_record_frame_durs': [True, False],
+           '8_debug': [False, True]
            }
 
-# GUI
+# run drop-down menu, OK continues, cancel quits
 dlg = gui.DlgFromDict(dictionary=expInfo, title=expName)
 if not dlg.OK:
     core.quit()  # user pressed cancel
 
+# Settings from dialogue box
+participant_name = expInfo['1_participant_name']
+run_number = expInfo['2_run_number']
+monitor_name = expInfo['3_monitor_name']
+fps = int(expInfo['4_fps'])
+probe_dur_ms = float(expInfo['5_probe_dur_ms'])
+# mask_type = expInfo['6_mask_type']
+record_fr_durs = eval(expInfo['7_record_frame_durs'])
+debug = eval(expInfo['8_debug'])
+
+# print settings from dlg
+print("\ndlg dict")
+for k, v in expInfo.items():
+    print(f'{k}: {v}')
+
+# Misc settings
+n_trials_per_stair = 25  # this is the number of trials per stair
+if debug:
+    n_trials_per_stair = 2
+probe_ecc = 4  # probe eccentricity in dva
 expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
 expInfo['time'] = datetime.now().strftime("%H:%M:%S")
 
-# GUI SETTINGS
-participant_name = expInfo['1_Participant_name']
-run_number = expInfo['2_run_number']
-fps = int(expInfo['3_fps'])
-trials_counter = eval(expInfo['7_Trials_counter'])
-background = expInfo['8_Background']
-bg_speed_cond = expInfo['9_bg_speed_cond']
 
-n_trials_per_stair = 25  # int((expInfo['2. Repetitions']))
-probe_duration = int(expInfo['4_Probe duration in frames'])
+# trials_counter = False  # eval(expInfo['7_Trials_counter'])
+# background = 'flow_rad'  # expInfo['8_Background'] # fix this to always be flow_rad
+# bg_speed_cond = 'Normal'  # expInfo['9_bg_speed_cond']  # fix this to be 1m/s
 
-# VARIABLES
-probe_ecc = 4
 
-# background motion to start 70ms before probe1 (e.g., 17frames at 240Hz).
-prelim_bg_flow_ms = int(expInfo['5_prelim_bg_flow_ms'])
-print(f'prelim_bg_flow_ms ({type(prelim_bg_flow_ms)}): {prelim_bg_flow_ms}')
-prelim_bg_flow_fr = int(prelim_bg_flow_ms * fps / 1000)
-
-# # ISI timing in ms and frames
-'''milliseconds: [100, 50, 41.66, 37.5, 33.34, 25, 16.67, 8.33, 0]
-   frames@240hz: [24,  12,  10,    9,    8,     6,  4,    2,    0]
+# Convert probe_dur_ms to probe_dur_fr
+# # probe_dur_ms and equivalent ISI_fr cond on 240Hz (total frames is ISI_fr plus 4 for probes)
+'''   
+dur_ms:       [8.34, 16.67, 25, 33.34, 41.67, 50, 58.38, 66.67]
+frames@240Hz: [   2,     4,  6,     8,    10, 12,    14,    16]
+ISI cond:     [conc,     0,  2,     4,     6,  8,    10,    12] 
 '''
-
-n_stairs = 2
-flow_directions = [1, -1]
-flow_dir_name = ['out' if i == -1 else 'in' for i in flow_directions]
-probe_directions = [-1, 1]  # -1=outward, 1=inwards
-probe_dir_name = ['out' if i == -1 else 'in' for i in probe_directions]
-
-print(f"\nflow_directions: {flow_directions}\n"
-      f"flow_dir_name: {flow_dir_name}\n"
-      f"probe_directions: {probe_directions}\n"
-      f"probe_dir_name: {probe_dir_name}\n")
-
-participant_run = f'{participant_name}_{run_number}'
+probe_dur_fr = int(probe_dur_ms * fps / 1000)
+probe_dur_actual_ms = (1 / fps) * probe_dur_fr * 1000
+print(f"\nprobe duration: {probe_dur_actual_ms}ms, or {probe_dur_fr} frames")
+if probe_dur_fr == 0:
+    raise ValueError(f"probe_dur_fr is 0 because probe_dur_ms ({probe_dur_ms}) is less than a frame on this monitor ({1000/fps})ms")
 
 
-# FILENAME
-filename = os.path.join(_thisDir, expName, participant_name, participant_run,
-                        f'probeDur{probe_duration}', f'{participant_run}_output')
-print(f'saving output to: {filename}')
+# # Conditions/staricases: flow_dir (exp, contract) x prelim motion (0, 70, 350)
+# 1 = inward/contracting, -1 = outward/expanding
+flow_dir_vals = [1, -1]
+
+# 'prelim' (preliminary motion) is how long (ms) the background motion starts before the probe appears
+prelim_vals = [0]  # , 70, 350]
+
+# get all possible combinations of these three lists
+combined_conds = [(f, p) for f in flow_dir_vals for p in prelim_vals]
+
+# lists of values for each condition (all list are same length = n_stairs)
+'''each flow_dir value appears in 3 stairs, e.g.,
+flow_dir (expand/contract) x prelim (0, 70, 350)'''
+# split the combined_conds into separate lists
+flow_dir_list = [i[0] for i in combined_conds]
+prelim_conds_list = [i[1] for i in combined_conds]
+
+# make flow name list to avoid confusion with 1s and -1 from flow_dir_list
+flow_name_list = ['exp' if i == -1 else 'cont' for i in flow_dir_list]
+
+# stair_names_list joins sep_conds_list, cong_name_conds_list and prelim_conds_list
+# e.g., ['sep_6_cong_1_prelim_70', 'sep_6_cong_1_prelim_350', 'sep_6_cong_-1_prelim_70'...]
+stair_names_list = [f"flow_{f}_{n}_prelim_{p}" for f, n, p in zip(flow_dir_list, flow_name_list, prelim_conds_list)]
+
+if debug:
+    print(f'flow_dir_list: {flow_dir_list}')
+    print(f"flow_name_list: {flow_name_list}")
+    print(f'prelim_conds_list: {prelim_conds_list}')
+
+
+n_stairs = len(flow_dir_list)
+total_n_trials = int(n_trials_per_stair * n_stairs)
+print(f'\nstair_names_list: {stair_names_list}')
+print(f'n_stairs: {n_stairs}, total_n_trials: {total_n_trials}')
+
+
+
+# participant_run = f'{participant_name}_{run_number}'
+#
+#
+# # FILENAME
+# filename = os.path.join(_thisDir, expName, participant_name, participant_run,
+#                         f'probeDur{probe_duration}', f'{participant_run}_output')
+# print(f'saving output to: {filename}')
+
+'''Experiment handling and saving'''
+# save each participant's files into separate dir for each ISI
+save_dir = path.join(_thisDir, expName, monitor_name,
+                     participant_name,
+                     f'{participant_name}_{run_number}',
+                     f'probeDur{int(probe_dur_ms)}')
+print(f"\nexperiment save_dir: {save_dir}")
+
+# files are labelled as '_incomplete' unless entire script runs.
+incomplete_output_filename = f'{participant_name}_{run_number}_incomplete'
+save_output_as = path.join(save_dir, incomplete_output_filename)
+
 # Experiment Handler
 thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
                                  extraInfo=expInfo, runtimeInfo=None,
                                  savePickle=None, saveWideText=True,
-                                 dataFileName=filename)
+                                 dataFileName=save_output_as)
 
-# COLORS AND LUMINANCE
-# Lum to Color255
-LumColor255Factor = 2.39538706913372
-# Color255 to Color1
-Color255Color1Factor = 1/127.5  # Color255 * Color255Color1Factor -1
-# Lum to Color1
-Color1LumFactor = 2.39538706913372
+# # COLORS AND LUMINANCE
+# # Lum to Color255
+# LumColor255Factor = 2.39538706913372
+# # Color255 to Color1
+# Color255Color1Factor = 1/127.5  # Color255 * Color255Color1Factor -1
+# # Lum to Color1
+# Color1LumFactor = 2.39538706913372
+#
+# maxLum = 106  # 255 RGB
+# minLum = 0.12  # 0 RGB
+# # bgLumP = 20
+# # bgLum = maxLum * bgLumP / 100
+# # bgColor255 = bgLum * LumColor255Factor  # I could switch to using this.
+#
+# #  rgb: -0.1 = rgb1: .45 = rgb255: 114.75 = lum: 47.8
+# flow_bgcolor = [-0.1, -0.1, -0.1]  # dark grey
+# # flow_bgcolor = [-0.6, -0.6, -0.6]  # these values would be equivalent to exp1a
+#
+# if background == 'flow_rad':
+#     # background colour: use darker grey.  set once here and use elsewhere
+#     bgcolor = flow_bgcolor
+# else:
+#     # bgcolor = bgColor255
+#     bgcolor = flow_bgcolor
+
+
+'''MONITOR/screen/window details: colour, luminance, pixel size and frame rate'''
+# # COLORS AND LUMINANCES
+# # Lum to Color255
+# LumColor255Factor = 2.39538706913372
+# # Color255 to Color1
+# Color255Color1Factor = 1 / 127.5  # Color255 * Color255Color1Factor -1
+# # Lum to Color1
+# Color1LumFactor = 2.39538706913372  ###
 
 maxLum = 106  # 255 RGB
-minLum = 0.12  # 0 RGB
-# bgLumP = 20
-# bgLum = maxLum * bgLumP / 100
-# bgColor255 = bgLum * LumColor255Factor  # I could switch to using this.
+# minLum = 0.12  # 0 RGB  # todo: this is currently unused
+bgLumProp = .2  # .2  # todo: use .45 to match radial_flow_NM_v2.py, or .2 to match exp1
+if monitor_name == 'OLED':
+    bgLumProp = .0
+bgLum = maxLum * bgLumProp
 
-#  rgb: -0.1 = rgb1: .45 = rgb255: 114.75 = lum: 47.8
-flow_bgcolor = [-0.1, -0.1, -0.1]  # dark grey
-# flow_bgcolor = [-0.6, -0.6, -0.6]  # these values would be equivalent to exp1a
+# colour space
+this_colourSpace = 'rgb1'  # values between 0 and 1
+bgColor_rgb1 = bgLum / maxLum
+this_bgColour = [bgColor_rgb1, bgColor_rgb1, bgColor_rgb1]
 
-if background == 'flow_rad':
-    # background colour: use darker grey.  set once here and use elsewhere
-    bgcolor = flow_bgcolor
-else:
-    # bgcolor = bgColor255
-    bgcolor = flow_bgcolor
+# Flow colours
+adj_flow_colour = .15
+# Give dots a pale green colour, which is adj_flow_colour different to the background
+flow_colour = [this_bgColour[0] - adj_flow_colour, this_bgColour[1], this_bgColour[2] - adj_flow_colour]
+if monitor_name == 'OLED':  # darker green for low contrast against black background
+    flow_colour = [this_bgColour[0], this_bgColour[1] + adj_flow_colour / 2, this_bgColour[2]]
+
 
 
 # MONITOR SPEC
-thisMon = monitors.Monitor(monitor_name)
-this_width = thisMon.getWidth()
-mon_dict = {'mon_name': monitor_name,
-            'width': thisMon.getWidth(),
-            'size': thisMon.getSizePix(),
-            'dist': thisMon.getDistance(),
-            'notes': thisMon.getNotes()}
-print(f"mon_dict: {mon_dict}")
+if debug:
+    print(f"\nmonitor_name: {monitor_name}")
+mon = monitors.Monitor(monitor_name)
 
-# double check using full screen in lab
-if monitor_name in  ['ASUS_2_13_240Hz', 'asus_cal']:
+widthPix = int(mon.getSizePix()[0])
+heightPix = int(mon.getSizePix()[1])
+mon_width_cm = mon.getWidth()  # monitor width in cm
+view_dist_cm = mon.getDistance()  # viewing distance in cm
+view_dist_pix = widthPix / mon_width_cm * view_dist_cm  # used for calculating visual angle (e.g., probe locations at 4dva)
+
+# screen number
+display_number = 1  # 0 indexed, 1 for external display, 0 for internal
+if monitor_name in ['asus_cal', 'Nick_work_laptop', 'NickMac', 'OLED', 'ASUS_2_13_240Hz']:
     display_number = 0
-use_full_screen = True
-if display_number > 0:
-    use_full_screen = False
-widthPix = mon_dict['size'][0]
-heightPix = mon_dict['size'][1]
-monitorwidth = mon_dict['width']  # monitor width in cm
-viewdist = mon_dict['dist']  # viewing distance in cm
-viewdistPix = widthPix/monitorwidth*viewdist
-mon = monitors.Monitor(monitor_name, width=monitorwidth, distance=viewdist)
-mon.setSizePix((widthPix, heightPix))
-mon.save()
-
 
 # WINDOW SPEC
-win = visual.Window(monitor=mon, size=(widthPix, heightPix),
-                    colorSpace='rgb',
-                    color=bgcolor,  # bgcolor from Martin's flow script, not bgColor255
-                    winType='pyglet',  # I've added pyglet to make it work on pycharm/mac
-                    pos=[1, -1],  # pos gives position of top-left of screen
-                    units='pix',
-                    screen=display_number,
-                    allowGUI=False,
-                    fullscr=use_full_screen,
-                    )
+win = visual.Window(monitor=mon, size=(widthPix, heightPix), colorSpace=this_colourSpace, color=this_bgColour,
+                    units='pix', screen=display_number, allowGUI=False, fullscr=True)
 
 
-# CLOCK
-trialClock = core.Clock()
+# # WINDOW SPEC
+# win = visual.Window(monitor=mon, size=(widthPix, heightPix),
+#                     colorSpace='rgb',
+#                     color=bgcolor,  # bgcolor from Martin's flow script, not bgColor255
+#                     winType='pyglet',  # I've added pyglet to make it work on pycharm/mac
+#                     pos=[1, -1],  # pos gives position of top-left of screen
+#                     units='pix',
+#                     screen=display_number,
+#                     allowGUI=False,
+#                     fullscr=use_full_screen,
+#                     )
 
 
-# ELEMENTS
-# fixation bull eye
-if background == 'flow_rad':
-    fixation = visual.Circle(win, radius=2, units='pix', lineColor='black', fillColor='black')
-else:
-    fixation = visual.Circle(win, radius=2, units='pix', lineColor='white', fillColor='black')
 
-
-# PROBEs
-# # Martin' probe for flow parsing
-# raisedCosTexture0 = visual.filters.makeMask(256, shape='raisedCosine',
-#                                             fringeWidth=0.8, radius=[1.0, 1.0])
-# probe = visual.GratingStim(win, mask=raisedCosTexture0, contrast=0.5,
-#                            size=(30, 30), units='pix', color='green',)
-
-# integration stimuli probe
-probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
-             (1, -2), (-1, -2), (-1, -1), (0, -1)]
-
-probe = visual.ShapeStim(win, vertices=probeVert,
-                         fillColor=(1.0, 1.0, 1.0),
-                         lineWidth=0, opacity=1, size=1, interpolate=False)
-
-
-# MASK BEHIND PROBES
-raisedCosTexture1 = visual.filters.makeMask(256, shape='raisedCosine',
-                                            fringeWidth=0.3, radius=[1.0, 1.0])
-mask_size = 150
-probeMask1 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
-                                size=(mask_size, mask_size), units='pix', color=bgcolor)
-probeMask2 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
-                                size=(mask_size, mask_size), units='pix', color=bgcolor)
-probeMask3 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
-                                size=(mask_size, mask_size), units='pix', color=bgcolor)
-probeMask4 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
-                                size=(mask_size, mask_size), units='pix', color=bgcolor)
-
-
-# BACKGROUND
-# flow_dots
-if bg_speed_cond == 'Normal':
-    flow_speed = 0.2
-elif bg_speed_cond == 'Half-speed':
-    flow_speed = 0.1
-else:
-    print(f"bg_speed_cond: {bg_speed_cond}")
-    raise ValueError(f'background speed should be selected from drop down menu: Normal or Half-speed')
-nDots = 10000
-flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
-                                    units='pix', nElements=nDots, sizes=10,
-                                    colors=[flow_bgcolor[0]-0.3,
-                                            flow_bgcolor[1],
-                                            flow_bgcolor[2]-0.3])
-
-# full screen mask to blend off edges and fade to black
-# Create a raisedCosine mask array and assign it to a Grating stimulus (grey outside, transparent inside)
-# this was useful http://www.cogsci.nl/blog/tutorials/211-a-bit-about-patches-textures-and-masks-in-psychopy
-raisedCosTexture2 = visual.filters.makeMask(1080, shape='raisedCosine', fringeWidth=0.6, radius=[1.0, 1.0])
-invRaisedCosTexture = -raisedCosTexture2  # inverts mask to blur edges instead of center
-blankslab = np.ones((1080, 420))  # create blank slabs to put to left and right of image
-mmask = np.append(blankslab, invRaisedCosTexture, axis=1)  # append blank slab to left
-mmask = np.append(mmask, blankslab, axis=1)  # and right
-dotsMask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
-                              size=(widthPix, heightPix), units='pix', color='black')
-# changed dotsmask color from grey
-# above fades to black round edges which makes screen edges less visible
-
-# function for wrapping flow_dots back into volume
-# its is used as WrapPoints(z, minDist, maxDist)
-# Any dots with a z (depth) value out of bounds are transformed to be in bounds
-# todo: Note - this function (wrapPoints) doesn't return anything so is functionally useless :(
-def WrapPoints(ii, imin, imax):
-    lessthanmin = (ii < imin)
-    ii[lessthanmin] = ii[lessthanmin] + (imax-imin)
-    morethanmax = (ii > imax)
-    ii[morethanmax] = ii[morethanmax] - (imax-imin)
-
-
-taille = 5000  # french for 'size', 'cut', 'trim', 'clip' etc
-minDist = 0.5
-maxDist = 5
-
-
-# MOUSE - Hide cursor
+'''ELEMENTS'''
+# MOUSE
 myMouse = event.Mouse(visible=False)
 
 # # KEYBOARD
 resp = event.BuilderKeyResponse()
 
-# INSTRUCTIONS
-instructions = visual.TextStim(win=win, name='instructions',
-                               text="Press [i] if you see the probe moving inward,\n"
-                                    "Press [o] if you see the probe moving outward.\n"
-                                    "\n\nPress [Space bar] to start",
-                               font='Arial', pos=[0, 0], height=20, wrapWidth=None,
-                               ori=0, color=[1, 1, 1], colorSpace='rgb',
-                               opacity=1, languageStyle='LTR', depth=0.0)
+# CLOCK
+# trialClock = core.Clock()
+
+
+# fixation bull eye
+fixation = visual.Circle(win, radius=2, units='pix', lineColor='white', fillColor='black', colorSpace=this_colourSpace)
+
+
+# PROBEs
+# # # Martin' probe for flow parsing
+# # raisedCosTexture0 = visual.filters.makeMask(256, shape='raisedCosine',
+# #                                             fringeWidth=0.8, radius=[1.0, 1.0])
+# # probe = visual.GratingStim(win, mask=raisedCosTexture0, contrast=0.5,
+# #                            size=(30, 30), units='pix', color='green',)
+#
+# # integration stimuli probe
+# probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
+#              (1, -2), (-1, -2), (-1, -1), (0, -1)]
+# PROBEs
+probe_size = 1  # can make them larger for testing new configurations etc
+probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1), (1, -2), (-1, -2), (-1, -1), (0, -1)]  # 5 pixels
+
+if monitor_name == 'OLED':  # smaller, 3-pixel probes for OLED
+    probeVert = [(0, 0), (1, 0), (1, 1), (2, 1),
+                 (2, 0), (1, 0), (1, -1), (0, -1),
+                 (0, -2), (-1, -2), (-1, -1), (0, -1)]
+
+# probe = visual.ShapeStim(win, vertices=probeVert,
+#                          fillColor=(1.0, 1.0, 1.0),
+#                          lineWidth=0, opacity=1, size=1, interpolate=False)
+probe = visual.ShapeStim(win, vertices=probeVert, lineWidth=0, opacity=1, size=probe_size, interpolate=False,
+                         fillColor=(1.0, 1.0, 1.0), colorSpace=this_colourSpace)
+
+# probes and probe_masks are at dist_from_fix pixels from middle of the screen
+dist_from_fix = int((np.tan(np.deg2rad(probe_ecc)) * view_dist_pix) / np.sqrt(2))
+
+'''FLOW DOT SETTINGS'''
+# # # # flow dots settings
+# fustrum dimensions (3d shape containing dots).  Plane distances take into accouunt view_dist,
+# so if the viewer is 50ms from screen, and the plane is at 100cm, the plane is 50cm 'behind' the screen.
+near_plane_cm = 107  # later use 107 to match studies (.3?)
+far_plane_cm = 207  # later use 207 to match studies (.3?)
+
+# frame dimensions (2d shape containing dots on screen, in real-world cm (measure with ruler)).
+# If dots are at a distance greater then view_dist, then they won't fill the frame, or if at a distance less than view_dist, they will extend beyond the frame.
+frame_size_cm = mon_width_cm  # size of square in cm
+'''To give the illusion of distance, all x and y co-ordinates are scaled by the distance of the dot.
+This scaling is done relative to the reference angle 
+(e.g., the angle of the screen/frame containing stimuli when it is at z=view_dist, typically 57.3cm).
+The reference angle has a scale factor of 1, and all other distances are scaled relative to this.
+x and y values are scaled by multiplying them by the scale factor.
+'''
+ref_angle = find_angle(adjacent=view_dist_cm, opposite=frame_size_cm)
+print(f"ref_angle: {ref_angle}")
+
+
+# motion speed in cm/s
+flow_speed_cm_p_sec = 100  # 1m/sec matches previous flow parsing study (Evans et al. 2020)
+flow_speed_cm_p_fr = flow_speed_cm_p_sec / fps  # 1.66 cm per frame = 1m per second
+
+
+# initialise dots
+n_dots = 300  # use 300 to match flow parsing studies, or 10000 to match our rad flow studies
+flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
+                                    units='cm', nElements=n_dots, sizes=.2,
+                                    colorSpace=this_colourSpace,
+                                    colors=flow_colour,
+                                    )
+# dot lifetime ms
+dot_life_max_ms = 166.67
+dot_life_max_fr = int(dot_life_max_ms / 1000 * fps)
+print(f"dot_life_max_fr: {dot_life_max_fr}")
+
+
+# initialize x and y positions of dots to fit in window (frame_size_cm) at distance 0
+x_array = np.random.uniform(-frame_size_cm/2, frame_size_cm/2, n_dots)  # x values in cm
+y_array = np.random.uniform(-frame_size_cm/2, frame_size_cm/2, n_dots)  # y values in cm
+
+# initialize z values (distance/distance from viewer) in cm
+z_array_cm = np.random.uniform(near_plane_cm, far_plane_cm, n_dots)    # distances in cm
+
+# initialize lifetime of each dot (in frames)
+dot_lifetime_array = np.random.randint(0, dot_life_max_fr, n_dots)
+
+# # MASK BEHIND PROBES
+# raisedCosTexture1 = visual.filters.makeMask(256, shape='raisedCosine',
+#                                             fringeWidth=0.3, radius=[1.0, 1.0])
+# mask_size = 150
+# probeMask1 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
+#                                 size=(mask_size, mask_size), units='pix', color=bgcolor)
+# probeMask2 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
+#                                 size=(mask_size, mask_size), units='pix', color=bgcolor)
+# probeMask3 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
+#                                 size=(mask_size, mask_size), units='pix', color=bgcolor)
+# probeMask4 = visual.GratingStim(win, mask=raisedCosTexture1, tex=None,
+#                                 size=(mask_size, mask_size), units='pix', color=bgcolor)
+# MASK BEHIND PROBES (infront of flow dots to keep probes and motion separate)
+mask_size = 150
+
+# if mask_type == '4_circles':
+# four circlular masks, at dist_from_fix pixels from middle of the screen, on in each corner.
+
+raisedCosTexture1 = visual.filters.makeMask(256, shape='raisedCosine', fringeWidth=0.3, radius=[1.0, 1.0])
+probeMask1 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size, mask_size),
+                                colorSpace=this_colourSpace, color=this_bgColour,
+                                tex=None, units='pix', pos=[dist_from_fix + 1, dist_from_fix + 1])
+probeMask2 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size, mask_size),
+                                colorSpace=this_colourSpace, color=this_bgColour,
+                                units='pix', tex=None, pos=[-dist_from_fix - 1, dist_from_fix + 1])
+probeMask3 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size, mask_size),
+                                colorSpace=this_colourSpace, color=this_bgColour,
+                                units='pix', tex=None, pos=[-dist_from_fix - 1, -dist_from_fix - 1])
+probeMask4 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size, mask_size),
+                                colorSpace=this_colourSpace, color=this_bgColour,
+                                units='pix', tex=None, pos=[dist_from_fix + 1, -dist_from_fix - 1])
+
+# else:
+#     # 2 spokes - wedges extending from the centre to the edges so that there is no motion directly behind probe locations.
+#
+#     # if background == 'flow_dots':
+#     # Remove any dots that would pass behind the probe locations
+#     print(f"\nRemoving dots that would pass behind the probe locations.")
+#     '''Simon's polar co-ords version'''
+#     # remove 4 spokes so clear for probe to move
+#     orient = 45  # 0 gives horizontal/vertical, 45 gives diagonals
+#     # spoke_width_angle = np.arcsin((mask_size / 2) / dist_from_fix) * 180 / np.pi
+#
+#     # seems to wide, so making it smaller
+#     spoke_width_angle = 22.5  # spoke_width_angle * .8
+#     print(f"dist_from_fix: {dist_from_fix}")
+#     print(f"mask_size: {mask_size}")
+#     print(f"spoke_width_angle: {spoke_width_angle}")
+#
+#     # convert to radial
+#     dot_rad_dist = np.sqrt(x_array * x_array + y_array * y_array)  # polar distance
+#     dot_direction = np.arctan2(x_array, y_array)  # polar direction
+#     dot_direction = np.degrees(dot_direction)  # convert to degrees so can use modulus
+#
+#     # collapse the four quadrants on to one (mod 90deg) to make more efficient
+#     dot_direction_quad = dot_direction % 90
+#
+#     # identify dots that are in the lower part of spokes
+#     dot_direction_low = (dot_direction_quad < spoke_width_angle)
+#     # first rotate them by to get them all out of the lower part of the spoke
+#     dot_direction_offsets = spoke_width_angle
+#     # now add some noise to evenly distribute them
+#     dot_direction_offsets += np.random.random_sample(n_dots) * (90 - 3 * spoke_width_angle)
+#     # add offset
+#     dot_direction[dot_direction_low] += dot_direction_offsets[dot_direction_low]
+#
+#     # now identify dots that are in upper part of spoke (repeat of upper)
+#     dot_direction_high = (dot_direction_quad > (90 - spoke_width_angle))
+#     # rotate them by to get them all out of the lower part of the spoke
+#     dot_direction_offsets = spoke_width_angle
+#     # now add some noise to evenly distribute them
+#     dot_direction_offsets += np.random.random_sample(n_dots) * (90 - 3 * spoke_width_angle)
+#     # subtract offsets
+#     dot_direction[dot_direction_high] -= dot_direction_offsets[dot_direction_high]
+#
+#     # now convert back to cartesian
+#     dot_direction -= orient  # first rotate for specified orientation
+#     dot_direction = np.radians(dot_direction)  # convert back to degrees
+#     x_array = dot_rad_dist * np.sin(dot_direction)
+#     y_array = dot_rad_dist * np.cos(dot_direction)
+#
+#     # # x_flow and y_flow are the actual x_array and y_array positions of the dots, after being divided by their distance value.
+#     # x_flow = x_array / z_array
+#     # y_flow = y_array / z_array
+#     #
+#     # # array of x_array, y_array positions of dots to pass to ElementArrayStim
+#     # dots_xys_array = np.array([x_flow, y_flow]).T
+
+# get starting distances and scale xys
+# update z and scale xys
+z_array_cm, scaled_xys = new_dots_z_and_pos(x_array=x_array, y_array=y_array, z_array=z_array_cm,
+                                            dots_speed=flow_speed_cm_p_fr, flow_dir=1,
+                                            min_z=near_plane_cm, max_z=far_plane_cm,
+                                            frame_size_cm=frame_size_cm,
+                                            reference_angle=ref_angle)
+flow_dots.xys = scaled_xys
+
+
+
+# BACKGROUND
+# # flow_dots
+# if bg_speed_cond == 'Normal':
+#     flow_speed = 0.2
+# elif bg_speed_cond == 'Half-speed':
+#     flow_speed = 0.1
+# else:
+#     print(f"bg_speed_cond: {bg_speed_cond}")
+#     raise ValueError(f'background speed should be selected from drop down menu: Normal or Half-speed')
+# nDots = 10000
+# flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
+#                                     units='pix', nElements=nDots, sizes=10,
+#                                     colors=[flow_bgcolor[0]-0.3,
+#                                             flow_bgcolor[1],
+#                                             flow_bgcolor[2]-0.3])
+
+# # full screen mask to blend off edges and fade to black
+# # Create a raisedCosine mask array and assign it to a Grating stimulus (grey outside, transparent inside)
+# # this was useful http://www.cogsci.nl/blog/tutorials/211-a-bit-about-patches-textures-and-masks-in-psychopy
+# raisedCosTexture2 = visual.filters.makeMask(1080, shape='raisedCosine', fringeWidth=0.6, radius=[1.0, 1.0])
+# invRaisedCosTexture = -raisedCosTexture2  # inverts mask to blur edges instead of center
+# blankslab = np.ones((1080, 420))  # create blank slabs to put to left and right of image
+# mmask = np.append(blankslab, invRaisedCosTexture, axis=1)  # append blank slab to left
+# mmask = np.append(mmask, blankslab, axis=1)  # and right
+# edge_mask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
+#                               size=(widthPix, heightPix), units='pix', color='black')
+# changed edge_mask color from grey
+# above fades to black round edges which makes screen edges less visible
+
+# full screen mask to blend off edges and fade to black
+# Create a raisedCosine mask array and assign it to a Grating stimulus (grey outside, transparent inside)
+# this was useful http://www.cogsci.nl/blog/tutorials/211-a-bit-about-patches-textures-and-masks-in-psychopy
+raisedCosTexture2 = visual.filters.makeMask(heightPix, shape='raisedCosine', fringeWidth=0.6, radius=[1.0, 1.0])
+invRaisedCosTexture = -raisedCosTexture2  # inverts mask to blur edges instead of center
+slab_width = 420
+# todo: try without this on OLED to reduce flicker?
+if monitor_name == 'OLED':
+    slab_width = 20
+
+blankslab = np.ones((heightPix, slab_width))  # create blank slabs to put to left and right of image
+mmask = np.append(blankslab, invRaisedCosTexture, axis=1)  # append blank slab to left
+mmask = np.append(mmask, blankslab, axis=1)  # and right
+# changed edge_mask color from grey, fades to black round edges which makes screen edges less visible
+edge_mask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
+                               size=(widthPix, heightPix), units='pix', color='black')
+
+
+#
+# # function for wrapping flow_dots back into volume
+# # its is used as WrapPoints(z, minDist, maxDist)
+# # Any dots with a z (distance) value out of bounds are transformed to be in bounds
+# # todo: Note - this function (wrapPoints) doesn't return anything so is functionally useless :(
+# def WrapPoints(ii, imin, imax):
+#     lessthanmin = (ii < imin)
+#     ii[lessthanmin] = ii[lessthanmin] + (imax-imin)
+#     morethanmax = (ii > imax)
+#     ii[morethanmax] = ii[morethanmax] - (imax-imin)
+#
+#
+# taille = 5000  # french for 'size', 'cut', 'trim', 'clip' etc
+# minDist = 0.5
+# maxDist = 5
+#
+#
+# # MOUSE - Hide cursor
+# myMouse = event.Mouse(visible=False)
+#
+# # # KEYBOARD
+# resp = event.BuilderKeyResponse()
+
+
+'''Timing: expected frame duration and tolerance
+with frame_tolerance_prop = .24, frame_tolerance_ms == 1ms at 240Hz, 2ms at 120Hz, 4ms at 60Hz
+For a constant frame_tolerance_ms of 1ms, regardless of fps, use frame_tolerance_prop = 1/expected_fr_sec
+Psychopy records frames in seconds, but I prefer to think in ms. So wo variables are labelled with _sec or _ms.
+'''
+expected_fr_sec = 1 / fps
+expected_fr_ms = expected_fr_sec * 1000
+frame_tolerance_prop = 1 / expected_fr_ms  # frame_tolerance_ms == 1ms, regardless of fps..
+max_fr_dur_sec = expected_fr_sec + (expected_fr_sec * frame_tolerance_prop)
+min_fr_dur_sec = expected_fr_sec - (expected_fr_sec * frame_tolerance_prop)
+frame_tolerance_ms = (max_fr_dur_sec - expected_fr_sec) * 1000
+max_dropped_fr_trials = 10  # number of trials with dropped frames to allow before experiment is aborted
+if debug:
+    print(f"\nexpected_fr_ms: {expected_fr_ms}")
+    print(f"frame_tolerance_prop: {frame_tolerance_prop}")
+    print(f"frame_tolerance_ms: {frame_tolerance_ms}")
+    print(f"max_dropped_fr_trials: {max_dropped_fr_trials}")
+
+
+# empty variable to store recorded frame durations
+fr_int_per_trial = []  # nested list of frame durations for each trial (y values)
+recorded_fr_counter = 0  # how many frames have been recorded
+fr_counter_per_trial = []  # nested list of recorded_fr_counter values for plotting frame intervals (x values)
+cond_list = []  # stores stair name for each trial, to colour code plot lines and legend
+dropped_fr_trial_counter = 0  # counter for how many trials have dropped frames
+dropped_fr_trial_x_locs = []  # nested list of [1st fr of dropped fr trial, 1st fr of next trial] for trials with dropped frames
+
+
+#
+# # INSTRUCTIONS
+# instructions = visual.TextStim(win=win, name='instructions',
+#                                text="Press [i] if you see the probe moving inward,\n"
+#                                     "Press [o] if you see the probe moving outward.\n"
+#                                     "\n\nPress [Space bar] to start",
+#                                font='Arial', pos=[0, 0], height=20, wrapWidth=None,
+#                                ori=0, color=[1, 1, 1], colorSpace='rgb',
+#                                opacity=1, languageStyle='LTR', distance=0.0)
+# while not event.getKeys():
+#     fixation.setRadius(3)
+#     fixation.draw()
+#     instructions.draw()
+#     win.flip()
+#
+# # Trial counter
+# trials_counter = visual.TextStim(win=win, name='trials_counter', text="???",
+#                                  font='Arial', height=20,
+#                                  # default set to black (e.g., invisible)
+#                                  color=[-1.0, -1.0, -1.0],
+#                                  pos=[-widthPix*.45, -heightPix*.45]
+#                                  )
+# if trials_counter:
+#     # if trials counter yes, change colour to white.
+#     trials_counter.color = [1, 1, 1]
+#
+# # BREAKS
+# total_n_trials = int(n_trials_per_stair * n_stairs)
+# take_break = int(total_n_trials/3)+1
+# print(f"take_break every {take_break} trials.")
+# breaks = visual.TextStim(win=win, name='breaks',
+#                          text="turn on the light and take at least 30-seconds break.\n\n"
+#                               "When you are ready to continue, press any key.",
+#                          font='Arial', height=20, colorSpace='rgb', color=[1, 1, 1])
+#
+# end_of_exp = visual.TextStim(win=win, name='end_of_exp',
+#                              text="You have completed this experiment.\n"
+#                                   "Thank you for your time.\n\n"
+#                                   "Press any key to return to the desktop.",
+#                              font='Arial', height=20)
+
+
+'''Messages to display on screen'''
+instructions = visual.TextStim(win=win, name='instructions', font='Arial', height=20,
+                               color='white', colorSpace=this_colourSpace,
+                               wrapWidth=widthPix / 2,
+                               text="\n\n\nFocus on the fixation circle at the centre of the screen.\n\n"
+                                    "A small white target will briefly appear on screen.\n\n"
+                                    "Press [i] if you see the probe moving inward (towards centre of screen),\n"
+                                    "Press [o] if you see the probe moving outward (towards edge of screen).\n\n"
+                                    "If you aren't sure, just guess!\n\n"
+                                    "Press [Space bar] to start")
+
+
+too_many_dropped_fr = visual.TextStim(win=win, name='too_many_dropped_fr',
+                                      text="The experiment had quit as the computer is dropping frames.\n"
+                                           "Sorry for the inconvenience.\n"
+                                           "Please contact the experimenter.\n\n"
+                                           "Press any key to return to the desktop.",
+                                      font='Arial', height=20, colorSpace=this_colourSpace)
+
+# BREAKS
+max_trials = total_n_trials + max_dropped_fr_trials  # expected trials plus repeats
+max_without_break = 120  # limit on number of trials without a break
+n_breaks = max_trials // max_without_break  # number of breaks
+if n_breaks > 0:
+    take_break = int(max_trials / (n_breaks + 1))
+else:
+    take_break = max_without_break
+break_dur = 30
+if debug:
+    print(f"\ntake a {break_dur} second break every {take_break} trials ({n_breaks} breaks in total).")
+break_text = f"Break\nTurn on the light and take at least {break_dur} seconds break.\n" \
+             "Keep focussed on the fixation circle in the middle of the screen.\n" \
+             "Remember, if you don't see the target, just guess!"
+breaks = visual.TextStim(win=win, name='breaks', text=break_text, font='Arial',
+                         pos=[0, 0], height=20, ori=0, color='white',
+                         colorSpace=this_colourSpace)
+
+end_of_exp_text = "You have completed this experiment.\nThank you for your time."
+end_of_exp = visual.TextStim(win=win, name='end_of_exp',
+                             text=end_of_exp_text, color='white',
+                             font='Arial', height=20, colorSpace=this_colourSpace)
+
+# show instructions screen
 while not event.getKeys():
-    fixation.setRadius(3)
     fixation.draw()
     instructions.draw()
     win.flip()
 
-# Trial counter
-trials_counter = visual.TextStim(win=win, name='trials_counter', text="???",
-                                 font='Arial', height=20,
-                                 # default set to black (e.g., invisible)
-                                 color=[-1.0, -1.0, -1.0],
-                                 pos=[-widthPix*.45, -heightPix*.45]
-                                 )
-if trials_counter:
-    # if trials counter yes, change colour to white.
-    trials_counter.color = [1, 1, 1]
-
-# BREAKS
-total_n_trials = int(n_trials_per_stair * n_stairs)
-take_break = int(total_n_trials/3)+1
-print(f"take_break every {take_break} trials.")
-breaks = visual.TextStim(win=win, name='breaks',
-                         text="turn on the light and take at least 30-seconds break.\n\n"
-                              "When you are ready to continue, press any key.",
-                         font='Arial', height=20, colorSpace='rgb', color=[1, 1, 1])
-
-end_of_exp = visual.TextStim(win=win, name='end_of_exp',
-                             text="You have completed this experiment.\n"
-                                  "Thank you for your time.\n\n"
-                                  "Press any key to return to the desktop.",
-                             font='Arial', height=20)
-
 
 # STAIRCASE
-expInfo['stair_list'] = list(range(n_stairs))
-expInfo['n_trials_per_stair'] = n_trials_per_stair
+# expInfo['stair_list'] = list(range(n_stairs))
+# expInfo['n_trials_per_stair'] = n_trials_per_stair
 
 probeSpd = 3  # starting value
 trial_number = 0
@@ -319,187 +831,328 @@ print('\nexpInfo (dict)')
 for k, v in expInfo.items():
     print(f"{k}: {v}")
 
+#
+# stairs = []
+# for stair_idx in expInfo['stair_list']:
+#     thisInfo = copy.copy(expInfo)
+#     thisInfo['stair_idx'] = stair_idx
+#
+#     stair_name = f'{stair_idx}_fl_{flow_dir_name[stair_idx]}_pr_{probe_dir_name[stair_idx]}'
+#     thisStair = Staircase(name=f'{stair_name}', type='simple', value=stairStart,
+#                           C=stairStart * 0.6,  # step_size, typically 60% of reference stimulus
+#                           minRevs=3, minTrials=n_trials_per_stair, minVal=miniVal,
+#                           maxVal=maxiVal,
+#                           targetThresh=0.5, extraInfo=thisInfo)
+#     stairs.append(thisStair)
+
+'''Construct staircases'''
+# start speed value
+# todo: check what units this is in, pixels per frame I assume?
+probeSpd = 3  # starting value
+miniVal = -10
+maxiVal = 10
+
+stairStart = probeSpd
+# if monitor_name == 'OLED':  # dimmer on OLED
+#     stairStart = maxLum * 0.3
 
 stairs = []
-for stair_idx in expInfo['stair_list']:
+for stair_idx in range(n_stairs):
     thisInfo = copy.copy(expInfo)
     thisInfo['stair_idx'] = stair_idx
+    thisInfo['stair_name'] = stair_names_list[stair_idx]
+    thisInfo['flow_dir'] = flow_dir_list[stair_idx]
+    thisInfo['flow_name'] = flow_name_list[stair_idx]
+    thisInfo['prelim_bg_flow_ms'] = prelim_conds_list[stair_idx]
 
-    stair_name = f'{stair_idx}_fl_{flow_dir_name[stair_idx]}_pr_{probe_dir_name[stair_idx]}'
-    thisStair = Staircase(name=f'{stair_name}', type='simple', value=stairStart,
-                          C=stairStart * 0.6,  # step_size, typically 60% of reference stimulus
-                          minRevs=3, minTrials=n_trials_per_stair, minVal=miniVal,
+
+    thisStair = Staircase(name=stair_names_list[stair_idx],
+                          type='simple',
+                          # value=stairStart,
+                          value=stairStart * flow_dir_list[stair_idx],  # start with motion opposite to bg
+                          C=stairStart * 0.6,  # initial step size, as prop of maxLum
+                          minRevs=3,
+                          minTrials=n_trials_per_stair,
+                          minVal=miniVal,
                           maxVal=maxiVal,
-                          targetThresh=0.5, extraInfo=thisInfo)
+                          targetThresh=0.5,
+                          extraInfo=thisInfo)
     stairs.append(thisStair)
 
 
 # EXPERIMENT
-trial_number = 0
-print('\n*** exp loop*** \n\n')
+# trial_number = 0
+# print('\n*** exp loop*** \n\n')
+
+'''Run experiment'''
+# counters
+trial_num_inc_repeats = 0  # number of trials including repeated trials
+trial_number = 0  # the number of the trial for the output file
+
+
+# # turn on high priority here. (and turn off garbage collection)
+import gc
+gc.disable()
+core.rush(True)
+if monitor_name == 'OLED':
+    core.rush(True, realtime=True)
+
 
 for step in range(n_trials_per_stair):
-    np.random.shuffle(stairs)
+    np.random.shuffle(stairs)  # shuffle order each time after they've all been run.
     for thisStair in stairs:
 
-        print(f"\nstep: {step}, thisStair: {thisStair}")
-
-        trial_number = trial_number + 1
-        trials_counter.text = f"{trial_number}/{total_n_trials}"
-
-        stair_idx = thisStair.extraInfo['stair_idx']
-        flow_dir = flow_directions[stair_idx]
-        probeDir = probe_directions[stair_idx]
-
-        abs_probeSpeed = thisStair.next()
-        probeSpeed = abs_probeSpeed * probeDir
-
-        contrastprobe = 0.5
-        probeLum = contrastprobe
-        probe.contrast = contrastprobe
-
-        # flow_dots
-        x = np.random.rand(nDots) * taille - taille / 2
-        y = np.random.rand(nDots) * taille - taille / 2
-        z = np.random.rand(nDots) * (maxDist - minDist) + minDist
-        # z was called z_flow but is actually z position like x and y
-        x_flow = x / z
-        y_flow = y / z
-
-
-        # PROBE LOCATIONS
-        # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
-        corner = np.random.choice([45, 135, 225, 315])
-
-        print(f'\tcorner: {corner}, flow_dir: {flow_dir}, probeSpeed: {probeSpeed}')
-        # dist_from_fix is a constant giving distance form fixation,
-        # dist_from_fix was previously 2 identical variables x_prob & y_prob.
-        dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
-        # x_prob = y_prob = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
-
-        # setting x and y positions depending on the side
-        # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
-        if corner == 45:
-            x_position = dist_from_fix
-            y_position = dist_from_fix
-        elif corner == 135:
-            x_position = -dist_from_fix
-            y_position = dist_from_fix
-        elif corner == 225:
-            x_position = -dist_from_fix
-            y_position = -dist_from_fix
-        elif corner == 315:
-            x_position = dist_from_fix
-            y_position = -dist_from_fix
-
-        # probe position reset
-        probe_x = 0
-        probe_y = 0
-
-        # probe mask locations
-        probeMask1.setPos([dist_from_fix+1, dist_from_fix+1])
-        probeMask2.setPos([-dist_from_fix-1, dist_from_fix+1])
-        probeMask3.setPos([-dist_from_fix-1, -dist_from_fix-1])
-        probeMask4.setPos([dist_from_fix+1, -dist_from_fix-1])
-
-
-        # timing in frames
-        # fixation time is now 70ms shorted than previously.
-        t_fixation = 1 * (fps - prelim_bg_flow_fr)  # 240 frames - 70ms for fixation, e.g., <1 second.
-        t_bg_motion = t_fixation + prelim_bg_flow_fr  # bg_motion prior to probe for 70ms
-        t_interval_1 = t_bg_motion + probe_duration  # probes appear during probe_duration (e.g., 240ms, 1 second).
-        t_response = t_interval_1 + 10000 * fps
-
-        # count frames
-        nb_frames_motion = 0
-
-        # repeat the trial if [r] has been pressed
+        # # Assume the trial needs to be repeated until I've confirmed that no frames were dropped
         repeat = True
         while repeat:
-            frameN = -1
 
-            # Break after trials 100 and 200, or whatever set in take_break
-            if (trial_number % take_break == 1) & (trial_number > 1):
-                continueRoutine = False
+            # Trial, stair and step
+            trial_number += 1
+            trial_num_inc_repeats += 1
+            stair_idx = thisStair.extraInfo['stair_idx']
+            if debug:
+                print(f"\n({trial_num_inc_repeats}) trial_number: {trial_number}, "
+                      f"stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
+
+            # flow_dir = flow_dir_vals[stair_idx]
+            #
+            # # todo: I don't think I need a separate variable for this, I can just
+            # #  start the stair with motion opposite to bg
+            # probe_direction = probe_directions[stair_idx]
+
+            # conditions (flow_dir, prelim)
+            flow_dir = thisStair.extraInfo['flow_dir']
+            flow_name = thisStair.extraInfo['flow_name']
+            prelim_bg_flow_ms = thisStair.extraInfo['prelim_bg_flow_ms']
+            if debug:
+                print(f"flow_dir: {flow_dir}, flow_name: {flow_name}, prelim_bg_flow_ms: {prelim_bg_flow_ms}")
+
+
+            # probe_direction starts in opposite direction to flow_dir
+            probe_direction = -flow_dir
+            probeSpeed = thisStair.next()
+            # todo: add variable, actural probe dir, if speed < 0, else ? (check in vs out)
+
+            if debug:
+                print(f"probeSpeed: {probeSpeed}, probeSpeed: {probeSpeed}")
+
+
+            # contrastprobe = 0.5
+            # probeLum = contrastprobe
+            # probe.contrast = contrastprobe
+
+            # # flow_dots
+            # x = np.random.rand(nDots) * taille - taille / 2
+            # y = np.random.rand(nDots) * taille - taille / 2
+            # z = np.random.rand(nDots) * (maxDist - minDist) + minDist
+            # # z was called z_flow but is actually z position like x and y
+            # x_flow = x / z
+            # y_flow = y / z
+
+
+
+
+            # timing for background motion converted to frames (e.g., 70ms is 17frames at 240Hz).
+            prelim_bg_flow_fr = int(prelim_bg_flow_ms * fps / 1000)
+            actual_prelim_bg_flow_ms = prelim_bg_flow_fr * 1000 / fps
+            if debug:
+                print(f'\nprelim_bg_flow_ms: {prelim_bg_flow_ms}')
+                print(f'prelim_bg_flow_fr: {prelim_bg_flow_fr}')
+                print(f'actual_prelim_bg_flow_ms: {actual_prelim_bg_flow_ms}')
+
+            # PROBE LOCATIONS
+            # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
+            corner = np.random.choice([45, 135, 225, 315])
+
+            print(f'\tcorner: {corner}, flow_dir: {flow_dir}, probeSpeed: {probeSpeed}')
+            # dist_from_fix is a constant giving distance form fixation,
+            # dist_from_fix was previously 2 identical variables x_prob & y_prob.
+            # dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
+            # x_prob = y_prob = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
+
+            # setting x and y positions depending on the side
+            # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
+            if corner == 45:
+                x_position = dist_from_fix
+                y_position = dist_from_fix
+            elif corner == 135:
+                x_position = -dist_from_fix
+                y_position = dist_from_fix
+            elif corner == 225:
+                x_position = -dist_from_fix
+                y_position = -dist_from_fix
+            elif corner == 315:
+                x_position = dist_from_fix
+                y_position = -dist_from_fix
+
+            # probe position reset
+            probe_x = 0
+            probe_y = 0
+
+            # # probe mask locations
+            # probeMask1.setPos([dist_from_fix+1, dist_from_fix+1])
+            # probeMask2.setPos([-dist_from_fix-1, dist_from_fix+1])
+            # probeMask3.setPos([-dist_from_fix-1, -dist_from_fix-1])
+            # probeMask4.setPos([dist_from_fix+1, -dist_from_fix-1])
+
+
+            # timing in frames
+            # fixation time is now 70ms shorted than previously.
+            end_fix_fr = 1 * (fps - prelim_bg_flow_fr)  # 240 frames - 70ms for fixation, e.g., <1 second.
+            end_bg_motion_fr = end_fix_fr + prelim_bg_flow_fr  # bg_motion prior to probe for 70ms
+            end_probe_fr = end_bg_motion_fr + probe_dur_fr  # probes appear during probe_duration (e.g., 240ms, 1 second).
+
+            # count frames
+            nb_frames_motion = 0
+
+            # take a break every ? trials
+            if (trial_num_inc_repeats % take_break == 1) & (trial_num_inc_repeats > 1):
+                if debug:
+                    print("\nTaking a break.\n")
+
+                breaks.text = break_text + f"\n{trial_number - 1}/{total_n_trials} trials completed."
+                breaks.draw()
+                win.flip()
+                event.clearEvents(eventType='keyboard')
+                core.wait(secs=break_dur)
+                event.clearEvents(eventType='keyboard')
+                # todo: turn off high priority here during enforced break?
+                breaks.text = break_text + "\n\nPress any key to continue."
                 breaks.draw()
                 win.flip()
                 while not event.getKeys():
+                    # continue the breaks routine until a key is pressed
                     continueRoutine = True
             else:
+                # else continue the trial routine (per frame section).
                 continueRoutine = True
 
+            # # repeat the trial if [r] has been pressed
+            # repeat = True
+            # while repeat:
+            #     frameN = -1
+
+                # # Break after trials 100 and 200, or whatever set in take_break
+                # if (trial_num_inc_repeats % take_break == 1) & (trial_num_inc_repeats > 1):
+                #     continueRoutine = False
+                #     breaks.draw()
+                #     win.flip()
+                #     while not event.getKeys():
+                #         continueRoutine = True
+                # else:
+                #     continueRoutine = True
+
+                # while continueRoutine:
+                #     frameN = frameN + 1
+
+            '''TRIAL ROUTINE (per frame)'''
+            frameN = -1
+            # continueRoutine = True
+            # # continueRoutine here runs the per-frame section of the trial
             while continueRoutine:
                 frameN = frameN + 1
 
+                # move record frames analysis to outside continue routine
+
+                '''Turn recording on and off from just before probe1 til just after probe2. '''
+                if frameN == end_bg_motion_fr:
+                    if record_fr_durs:  # start recording frames just before probe1 presentation
+                        win.recordFrameIntervals = True
+
+                    # clear any previous key presses
+                    event.clearEvents(eventType='keyboard')
+                    theseKeys = []
+
+                    # reset timer to start with probe1 presentation.
+                    resp.clock.reset()
+
+
+                # stop recording frame intervals
+                elif frameN == end_probe_fr + 1:
+                    if record_fr_durs:
+                        win.recordFrameIntervals = False
+
                 # FIXATION
-                if t_fixation >= frameN > 0:
+                if end_fix_fr >= frameN > 0:
                     # before fixation has finished
 
-                    if background == 'flow_rad':
-                        # draw flow_dots but with no motion
-                        flow_dots.xys = np.array([x_flow, y_flow]).transpose()
-                        flow_dots.draw()
-                        probeMask1.draw()
-                        probeMask2.draw()
-                        probeMask3.draw()
-                        probeMask4.draw()
-                        dotsMask.draw()
+                    # draw flow_dots but with no motion
+                    # flow_dots.xys = np.array([x_flow, y_flow]).transpose()
+                    flow_dots.draw()
+                    probeMask1.draw()
+                    probeMask2.draw()
+                    probeMask3.draw()
+                    probeMask4.draw()
+                    edge_mask.draw()
 
                     fixation.setRadius(3)
                     fixation.draw()
-                    trials_counter.draw()
+                    # trials_counter.draw()
 
                 # Background motion prior to probe1
-                if t_bg_motion >= frameN > t_fixation:
+                elif end_bg_motion_fr >= frameN > end_fix_fr:
                     # after fixation, before end of background motion
-                    if background == 'flow_rad':
-                        # radial flow_dots motion
-                        z = z + flow_speed * flow_dir
-                        WrapPoints(z, minDist, maxDist)
-                        x_flow = x / z
-                        y_flow = y / z
+                    # update dot lifetime + 1 and get  new x and y positions for dots that are re-born.
+                    dotlife_array, x_array, y_array = update_dotlife(dotlife_array=dot_lifetime_array,
+                                                                     dot_max_fr=dot_life_max_fr,
+                                                                     x_array=x_array, y_array=y_array,
+                                                                     dot_boundary=frame_size_cm)
 
-                        flow_dots.xys = np.array([x_flow, y_flow]).transpose()
-                        flow_dots.draw()
+                    # update z and scale xys
+                    z_array_cm, scaled_xys = new_dots_z_and_pos(x_array=x_array, y_array=y_array, z_array=z_array_cm,
+                                                                dots_speed=flow_speed_cm_p_fr, flow_dir=flow_dir,
+                                                                min_z=near_plane_cm, max_z=far_plane_cm,
+                                                                frame_size_cm=frame_size_cm,
+                                                                reference_angle=ref_angle)
+                    flow_dots.xys = scaled_xys
 
-                        probeMask1.draw()
-                        probeMask2.draw()
-                        probeMask3.draw()
-                        probeMask4.draw()
-                        dotsMask.draw()
+                    flow_dots.draw()
+
+                    probeMask1.draw()
+                    probeMask2.draw()
+                    probeMask3.draw()
+                    probeMask4.draw()
+                    edge_mask.draw()
 
                     fixation.setRadius(3)
                     fixation.draw()
                     # probe1.draw()
-                    trials_counter.draw()
+                    # trials_counter.draw()
 
                     # reset timer to start with probe1 presentation.
                     resp.clock.reset()
 
                 # PROBE 1
-                if t_interval_1 >= frameN > t_bg_motion:
+                elif end_probe_fr >= frameN > end_bg_motion_fr:
                     # after background motion, before end of probe1 interval
-                    if background == 'flow_rad':
-                        # radial flow_dots motion
-                        z = z + flow_speed * flow_dir
-                        WrapPoints(z, minDist, maxDist)
-                        x_flow = x / z
-                        y_flow = y / z
 
-                        flow_dots.xys = np.array([x_flow, y_flow]).transpose()
-                        flow_dots.draw()
+                    # update dot lifetime + 1 and get  new x and y positions for dots that are re-born.
+                    dotlife_array, x_array, y_array = update_dotlife(dotlife_array=dot_lifetime_array,
+                                                                     dot_max_fr=dot_life_max_fr,
+                                                                     x_array=x_array, y_array=y_array,
+                                                                     dot_boundary=frame_size_cm)
 
-                        probeMask1.draw()
-                        probeMask2.draw()
-                        probeMask3.draw()
-                        probeMask4.draw()
-                        dotsMask.draw()
+                    # update z and scale xys
+                    z_array_cm, scaled_xys = new_dots_z_and_pos(x_array=x_array, y_array=y_array, z_array=z_array_cm,
+                                                                dots_speed=flow_speed_cm_p_fr, flow_dir=flow_dir,
+                                                                min_z=near_plane_cm, max_z=far_plane_cm,
+                                                                frame_size_cm=frame_size_cm,
+                                                                reference_angle=ref_angle)
+                    flow_dots.xys = scaled_xys
+
+                    flow_dots.draw()
+
+                    probeMask1.draw()
+                    probeMask2.draw()
+                    probeMask3.draw()
+                    probeMask4.draw()
+                    edge_mask.draw()
 
                     fixation.setRadius(3)
                     fixation.draw()
                     # probe1.draw()
                     # probe.draw()
-                    trials_counter.draw()
+                    # trials_counter.draw()
 
 
                     # draw probe if 1st interval
@@ -523,20 +1176,19 @@ for step in range(n_trials_per_stair):
 
                 # ANSWER
                 # if frameN > t_interval_2:
-                if frameN > t_interval_1:
+                elif frameN > end_probe_fr:
                     # after probe 2 interval
-                    if background == 'flow_rad':
-                        # draw flow_dots but with no motion
-                        flow_dots.draw()
-                        probeMask1.draw()
-                        probeMask2.draw()
-                        probeMask3.draw()
-                        probeMask4.draw()
-                        dotsMask.draw()
+                    # draw flow_dots but with no motion
+                    flow_dots.draw()
+                    probeMask1.draw()
+                    probeMask2.draw()
+                    probeMask3.draw()
+                    probeMask4.draw()
+                    edge_mask.draw()
 
                     fixation.setRadius(2)
                     fixation.draw()
-                    trials_counter.draw()
+                    # trials_counter.draw()
 
                     # ANSWER
                     resp = event.BuilderKeyResponse()
@@ -545,10 +1197,12 @@ for step in range(n_trials_per_stair):
                         resp.keys = theseKeys[-1]  # just the last key pressed
                         resp.rt = resp.clock.getTime()
 
-                        # default assume response incorrect unless meets criteria below
-                        resp.corr = 0
+                        # a response ends the routine
+                        continueRoutine = False
 
-                        # # use this if all probeDir is 1
+
+
+                        # # use this if all probe_direction is 1
                         # if (resp.keys == str('i')) or (resp.keys == 'i'):
                         #     answer = 1
                         #     rel_answer = 1
@@ -562,30 +1216,8 @@ for step in range(n_trials_per_stair):
                         #         # if speed is less than 0, probe moves outward
                         #         resp.corr = 1
 
-                        # # use this if there are 1 and -1 probeDir
-                        # todo: explain what answer and rel answer are/do
-                        if probeDir == 1:
-                            if (resp.keys == str('i')) or (resp.keys == 'i'):
-                                # resp.corr = 1
-                                answer = 1
-                                rel_answer = 1
-                            else:
-                                # resp.corr = 0
-                                answer = 0
-                                rel_answer = 0
-                        elif probeDir == -1:
-                            if (resp.keys == str('i')) or (resp.keys == 'i'):
-                                # resp.corr = 0
-                                answer = 1
-                                rel_answer = 0
-                            else:
-                                # resp.corr = 1
-                                answer = 0
-                                rel_answer = 1
 
-                        repeat = False
-                        # a response ends the routine
-                        continueRoutine = False
+
 
                 # regardless of frameN
                 # check for quit
@@ -593,49 +1225,219 @@ for step in range(n_trials_per_stair):
                     thisExp.close()
                     core.quit()
 
-                # redo the trial if I think I made a mistake
-                if event.getKeys(keyList=["r"]) or event.getKeys(keyList=['num_9']):
-                    repeat = True
-                    continueRoutine = False
-                    continue
-
                 # refresh the screen
                 if continueRoutine:
                     win.flip()
 
-        # add to exp dict
+
+            '''End of per-frame section in continueRoutine = False"'''
+
+
+            # CHECK RESPONSES
+            # default assume response incorrect unless meets criteria below
+            resp.corr = 0
+
+            # # todo: update this - I think I need to use probe_speed not probe_direction, or maybe probeSpeed
+            # # if it actually moving in or out, because probeDir
+            #
+            # # # use this if there are 1 and -1 probe_direction
+            # # todo: explain what answer and rel answer are/do
+            # if probe_direction == 1:
+            #     if (resp.keys == str('i')) or (resp.keys == 'i'):
+            #         # resp.corr = 1
+            #         answer = 1
+            #         rel_answer = 1
+            #     else:
+            #         # resp.corr = 0
+            #         answer = 0
+            #         rel_answer = 0
+            # elif probe_direction == -1:
+            #     if (resp.keys == str('i')) or (resp.keys == 'i'):
+            #         # resp.corr = 0
+            #         answer = 1
+            #         rel_answer = 0
+            #     else:
+            #         # resp.corr = 1
+            #         answer = 0
+            #         rel_answer = 1
+
+            # todo: new response logic.  The staircase algorithm will aim for a response score of .5.
+            #  So if 'i' = 1 and 'o' = 0, then it will try to find the speed where they balance.
+            # regardless of background or probe direction, just use responses.
+            if (resp.keys == str('i')) or (resp.keys == 'i'):
+                response = 1
+            elif (resp.keys == str('o')) or (resp.keys == 'o'):
+                response = 0
+            else:
+                response = None
+            # resp.corr = response
+
+            '''sort frame interval times to use for plots later'''
+            if record_fr_durs:
+                # actual frame interval times (in seconds) for this trial
+                trial_fr_intervals = win.frameIntervals
+                fr_int_per_trial.append(trial_fr_intervals)
+
+                # add list of contiguous frame numbers for this trial
+                fr_counter_per_trial.append(list(range(recorded_fr_counter,
+                                                       recorded_fr_counter + len(trial_fr_intervals))))
+                recorded_fr_counter += len(trial_fr_intervals)
+
+                # add condition name for this staircase
+                cond_list.append(thisStair.name)
+
+                # empty frameIntervals cache
+                win.frameIntervals = []
+
+                # check for dropped frames (or frames that are too short)
+                if max(trial_fr_intervals) > max_fr_dur_sec or min(trial_fr_intervals) < min_fr_dur_sec:
+
+                    # Timing is bad, this trial will be repeated (with new corner and target_jump)
+                    if debug:
+                        print(f"\n\toh no! A frame had bad timing! trial: {trial_number}, {thisStair.name} "
+                              f"{round(max(trial_fr_intervals), 3)} > {round(max_fr_dur_sec, 2)} or "
+                              f"{round(min(trial_fr_intervals), 3)} < {round(min_fr_dur_sec, 2)}")
+
+                    print(f"Timing bad, repeating trial {trial_number}.")
+
+                    # decrement trial and stair so that the correct values are used for the next trial
+                    trial_number -= 1
+                    thisStair.trialCount = thisStair.trialCount - 1  # so Kesten doesn't count this trial
+
+                    # get first and last frame numbers for this trial
+                    trial_x_locs = [fr_counter_per_trial[-1][0],
+                                    fr_counter_per_trial[-1][-1] + 1]  # 1st fr of this trial to 1st of next trial
+                    dropped_fr_trial_x_locs.append(trial_x_locs)
+                    dropped_fr_trial_counter += 1
+                    continue
+                else:
+                    repeat = False  # breaks out of while repeat=True loop to progress to new trial
+                    # print(f"Timing good, trial {trial_number} not repeated\nrepeat: {repeat}, continueRoutine: {continueRoutine}")
+
+
+            # # # trial completed # # #
+
+
+            # If too many trials have had dropped frames, quit experiment
+            if dropped_fr_trial_counter > max_dropped_fr_trials:
+                while not event.getKeys():
+                    # display too_many_dropped_fr message until screen is pressed
+                    too_many_dropped_fr.draw()
+                    win.flip()
+                else:
+                    # print text to screen with dropped frames info and make plt_fr_ints()
+                    print(f"{dropped_fr_trial_counter}/{trial_num_inc_repeats} trials so far with bad timing "
+                          f"(expected: {round(expected_fr_ms, 2)}ms, "
+                          f"frame_tolerance_ms: +/- {round(frame_tolerance_ms, 2)})")
+                    plt_fr_ints(time_p_trial_nested_list=fr_int_per_trial,
+                                n_trials_w_dropped_fr=dropped_fr_trial_counter,
+                                expected_fr_dur_ms=expected_fr_ms, allowed_err_ms=frame_tolerance_ms,
+                                all_cond_name_list=cond_list, fr_nums_p_trial=fr_counter_per_trial,
+                                dropped_trial_x_locs=dropped_fr_trial_x_locs,
+                                mon_name=monitor_name, date=expInfo['date'], frame_rate=fps,
+                                participant=participant_name, run_num=run_number,
+                                save_path=save_dir, incomplete=True)
+
+
+                    # close and quit once a key is pressed
+                    thisExp.close()
+                    win.close()
+                    core.quit()
+
+
+        # add trial info to csv
         thisExp.addData('trial_number', trial_number)
         thisExp.addData('stair', stair_idx)
         thisExp.addData('stair_name', thisStair)
-        thisExp.addData('step', step)
-        thisExp.addData('probeLum', probeLum)
-        thisExp.addData('corner', corner)
-        thisExp.addData('probe_dur', probe_duration)
+
         thisExp.addData('flow_dir', flow_dir)
-        thisExp.addData('probeDir', probeDir)
-        # thisExp.addData('congruent', congruent)
-        thisExp.addData('answer', answer)
-        thisExp.addData('rel_answer', rel_answer)
-        # thisExp.addData('trial_response', resp.corr)
-        thisExp.addData('probeSpeed', probeSpeed)
-        thisExp.addData('abs_probeSpeed', abs_probeSpeed)
-        thisExp.addData('resp.rt', resp.rt)
-        thisExp.addData('BGspeed', flow_speed)
+        thisExp.addData('flow_name', flow_name)
         thisExp.addData('prelim_bg_flow_ms', prelim_bg_flow_ms)
+        thisExp.addData('prelim_bg_flow_fr', prelim_bg_flow_fr)
+        thisExp.addData('step', step)
+        thisExp.addData('probe_direction', probe_direction)
+        thisExp.addData('probeSpeed', probeSpeed)
+        thisExp.addData('response', response)
+        # thisExp.addData('rel_answer', rel_answer)
+        thisExp.addData('trial_response', resp.corr)
+        thisExp.addData('resp.rt', resp.rt)
+
+        thisExp.addData('corner', corner)
+        thisExp.addData('probe_dur_ms', probe_dur_ms)
+        thisExp.addData('probe_dur_actual_ms', probe_dur_actual_ms)
+        thisExp.addData('probe_dur_fr', probe_dur_fr)
+
+
+        thisExp.addData('flow_speed_cm_p_sec', flow_speed_cm_p_sec)
+        thisExp.addData('flow_speed_cm_p_fr', flow_speed_cm_p_fr)
+        thisExp.addData('n_dots', n_dots)
+        thisExp.addData('dot_life_max_ms', dot_life_max_ms)
+        # thisExp.addData('probeLum', probeLum)
+
         thisExp.addData('expName', expName)
 
+        # tell psychopy to move to next trial
         thisExp.nextEntry()
+        # update staircase based on whether response was correct or incorrect
+        thisStair.newValue(response)  # so that the staircase adjusts itself
 
-        thisStair.newValue(rel_answer)  # so that the staircase adjusts itself
+# print("end of exp loop, saving data")
+# thisExp.close()
 
-print("end of exp loop, saving data")
+
+# now exp is completed, save as '_output' rather than '_incomplete'
+thisExp.dataFileName = path.join(save_dir, f'{participant_name}_{run_number}_output')
 thisExp.close()
+print(f"\nend of experiment loop, saving data to:\n{thisExp.dataFileName}\n")
 
+
+
+# plot frame intervals
+if record_fr_durs:
+    print(f"{dropped_fr_trial_counter}/{trial_num_inc_repeats} trials with bad timing "
+          f"(expected: {round(expected_fr_ms, 2)}ms, "
+          f"frame_tolerance_ms: +/- {round(frame_tolerance_ms, 2)})")
+
+    plt_fr_ints(time_p_trial_nested_list=fr_int_per_trial, n_trials_w_dropped_fr=dropped_fr_trial_counter,
+                expected_fr_dur_ms=expected_fr_ms, allowed_err_ms=frame_tolerance_ms,
+                all_cond_name_list=cond_list, fr_nums_p_trial=fr_counter_per_trial,
+                dropped_trial_x_locs=dropped_fr_trial_x_locs,
+                mon_name=monitor_name, date=expInfo['date'], frame_rate=fps,
+                participant=participant_name, run_num=run_number,
+                save_path=save_dir, incomplete=False)
+
+
+# # turn off high priority mode and turn garbage collection back on
+gc.enable()
+core.rush(False)
+
+
+# display end of experiment screen with dropped_fr_trial_counter, then allow continue after 5 seconds (to allow for processes to finish)
+end_of_exp_text2 = end_of_exp_text + f"\n\n{dropped_fr_trial_counter}/{trial_num_inc_repeats} trials with bad timing."
+end_of_exp.text = end_of_exp_text2
+end_of_exp_text3 = end_of_exp_text2 + "\n\nPress any key to continue."
 while not event.getKeys():
-    # display end of experiment screen
+    end_of_exp.draw()
+    win.flip()
+    core.wait(secs=5)
+    end_of_exp.text = end_of_exp_text3
     end_of_exp.draw()
     win.flip()
 else:
+    logging.flush()  # write messages out to all targets
+    thisExp.abort()  # or data files will save again on exit
+
     # close and quit once a key is pressed
     win.close()
     core.quit()
+
+
+
+# while not event.getKeys():
+#     # display end of experiment screen
+#     end_of_exp.draw()
+#     win.flip()
+# else:
+#     # close and quit once a key is pressed
+#     win.close()
+#     core.quit()
