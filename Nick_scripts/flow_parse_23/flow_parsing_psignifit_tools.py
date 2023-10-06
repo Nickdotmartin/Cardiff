@@ -97,10 +97,19 @@ def results_csv_to_np_for_psignifit(csv_path, duration,
     if len(stair_name) != 1:
         raise ValueError(f'Number of stair_names ({len(stair_name)}) is not 1. ')
 
+    # idiot check - why isn't it working?
+    print(f"raw_data_df: {raw_data_df.shape}, {raw_data_df.columns}\n{raw_data_df.head()}")
+    print(f"thr_col: {thr_col}")
+    thr_s = raw_data_df[thr_col]
+    # todo: if it doesn't work (below), use thr_s instead of raw_data_df[thr_col]
+    print(f"thr_s: {thr_s.shape}, {thr_s.dtypes}\n{thr_s}")
+    # print(f"raw_data_df['thr_col']: {raw_data_df['thr_col'].shape}\n{raw_data_df['thr_col']}")
+
     # put responses into bins (e.g., 10)
     # # use pd.qcut for bins containing an equal number of items based on distribution.
     # # i.e., bins will not be of equal size but will have equal value count
     if quartile_bins:
+        # bin_col, bin_labels = pd.qcut(x=raw_data_df[thr_col], q=n_bins,
         bin_col, bin_labels = pd.qcut(x=raw_data_df[thr_col], q=n_bins,
                                       precision=3, retbins=True, duplicates='drop')
     # # use pd.cut for bins of equal size based on values, but value count may vary.
@@ -199,7 +208,18 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.5,
     options = dict()  # initialize as an empty dict
 
     options['sigmoidName'] = sig_name  # 'norm'  # 'logistic'
-    options['expType'] = '2AFC'
+
+    '''Exp1 and rad flow were 4afc exerpeiments, this is not.
+    Yes/No experiments: Intended for simple detection experiments asking subjects whether they perceived a single presented stimulus or not, 
+    or any other experiment which has two possible answers of which one is reached for "high" stimulus levels and the other for "low" stimulus levels. 
+    This sets both asymptotes free to vary and applies a prior to them favouring small values, e.g. asymptotes near 0 and 1 respectively.
+    Equal Asymptote Experiments: This setting is essentially a special case of Yes/No experiments. 
+    Here the asymptotes are "yoked", i. e. they are assumed to be equally far from 0 or 1. 
+    This corresponds to the assumption that stimulus independent errors are equally likely for clear "Yes" answers as for clear "No" answers.
+    
+    '''
+    # todo: perhaps I should try yes/no
+    options['expType'] = 'equalAsymptote'  #
     options['expN'] = 2
     options['estimateType'] = est_type  # 'mean'  # 'MAP'  'mean'
 
@@ -225,20 +245,25 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.5,
                 print(f"{k}: {v}")
 
     # get threshold
+    options['sigmoidName'] = 'norm'
+    # todo: this might need to be reversed now I've got +ive for out and -ive for in
+    print(f'options (dict): {options}')
+    res = ps.psignifit(data_np, options)
+    threshold = ps.getThreshold(res, target_threshold)
     # if threshold percent correct not reached, try different sigmoid
     # threshold = ps.getThreshold(res, target_threshold)
-    try:
-        threshold = ps.getThreshold(res, target_threshold)
-    except AssertionError:  # 'The threshold percent correct is not reached by the sigmoid!'
-        print('\nChanging sigmoid to overcome assertion error')
-        if sig_name == 'norm':
-            sig_name = 'neg_gauss'
-        else:
-            sig_name = 'norm'
-        options['sigmoidName'] = sig_name
-        print(f'options (dict): {options}')
-        res = ps.psignifit(data_np, options)
-        threshold = ps.getThreshold(res, target_threshold)
+    # try:
+    #     threshold = ps.getThreshold(res, target_threshold)
+    # except AssertionError:  # 'The threshold percent correct is not reached by the sigmoid!'
+    #     print('\nChanging sigmoid to overcome assertion error')
+    #     if sig_name == 'norm':
+    #         sig_name = 'neg_gauss'
+    #     else:
+    #         sig_name = 'norm'
+    #     options['sigmoidName'] = sig_name
+    #     print(f'options (dict): {options}')
+    #     res = ps.psignifit(data_np, options)
+    #     threshold = ps.getThreshold(res, target_threshold)
 
     if options['estimateType'] == 'mean':
         threshold = round(threshold[0][0], 2)
@@ -394,6 +419,7 @@ def results_to_psignifit(csv_path, save_path, duration,
 
 
 def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bins=True,
+                               thr_col='probeSpeed', resp_col='response',
                                stair_col='stair', 
                                dur_list=None, 
                                stair_list=None, 
@@ -506,7 +532,7 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
                                                                   # stair=stair, 
                                                                   p_run_name=p_run_name,
                                                                   stair_col=stair_col, stair_levels=[stair],
-                                                                  thr_col='probeSpeed', resp_col='response',
+                                                                  thr_col=thr_col, resp_col=resp_col,
                                                                   quartile_bins=q_bins, n_bins=n_bins,
                                                                   save_np=False, target_threshold=target_threshold,
                                                                   sig_name=sig_name, est_type='MAP',

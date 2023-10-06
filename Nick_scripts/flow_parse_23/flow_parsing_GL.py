@@ -83,6 +83,8 @@ def draw_flow_dots(x_array, y_array, z_array, flow_colour_rgb1):
     # All transformations in GL_PROJECTION and GL_MODELVIEW matrix stacks will be cleared (set to identity) prior to applying.
     win.applyEyeTransform()
 
+    # gl.glPushMatrix()
+
     # dot settings
     # gl.glColor3f(1.0, 1.0, 1.0)
     gl.glColor3f(flow_colour_rgb1[0], flow_colour_rgb1[1], flow_colour_rgb1[2])
@@ -92,7 +94,9 @@ def draw_flow_dots(x_array, y_array, z_array, flow_colour_rgb1):
     gl.glBegin(gl.GL_POINTS)
     for i in range(n_points):
         gl.glVertex3f(*dots_pos_array[i, :])
+
     gl.glEnd()
+    # gl.glPopMatrix()
 
 
 def check_z_start_bounds(z_array, closest_z, furthest_z, max_dot_life_fr, dot_life_array, flow_dir):
@@ -294,7 +298,7 @@ for k, v in expInfo.items():
     print(f'{k}: {v}')
 
 
-# # # MIST SETTINGS # # #
+# # # MISC SETTINGS # # #
 n_trials_per_stair = 25  # this is the number of trials per stair
 if debug:
     n_trials_per_stair = 2

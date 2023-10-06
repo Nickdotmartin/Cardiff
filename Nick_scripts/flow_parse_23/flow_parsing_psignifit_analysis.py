@@ -1538,7 +1538,6 @@ def b3_plot_staircase(all_data_path, thr_col='probeSpeed', resp_col='answer',
     b3_plot_staircase: staircases-durxxx.png: xxx corresponds to dur conditions.
     One plot for each dur condition.
 
-    # todo: don't need different plots for each sep cond - so just make one plot.
 
     Each figure has six panels (6 probes separation
     conditions) showing the Luminance value of two staircases as function of
@@ -1563,22 +1562,21 @@ def b3_plot_staircase(all_data_path, thr_col='probeSpeed', resp_col='answer',
 
     # open all_data file.  use engine='openpyxl' for xlsx files.
     # For other experiments it might be easier not to do use cols as they might be different.
+    cols_to_use = ["stair", "stair_name", "step", "probe_dur_ms", "flow_dir",
+                   "flow_name", 'prelim_ms', 'probe_cm_p_sec', "response"]
     if xlsx_name[-3:] == 'csv':
-        all_data_df = pd.read_csv(all_data_path)
+        all_data_df = pd.read_csv(all_data_path, usecols=cols_to_use)
     else:
         all_data_df = pd.read_excel(all_data_path, engine='openpyxl',
-                                    usecols=[
-                                        "trial_number", "srtd_trial_idx",
-                                        "stair", "stair_name", "step",
-                                        "probe_dur", "flow_dir", "probeDir",
-                                        "answer", "rel_answer",
-                                        "probeSpeed", "abs_probeSpeed"])
+                                    usecols=cols_to_use)
 
     # get list of dur and stair values to loop through
     stair_list = all_data_df['stair'].unique()
     dur_list = all_data_df['probe_dur_ms'].unique()
     # get dur string for column names
     dur_name_list = [f'dur_{i}' for i in dur_list]
+
+    prelim_list = all_data_df['prelim_ms'].unique()
 
     trials, columns = np.shape(all_data_df)
     trials_per_stair = int(trials / len(dur_list) / len(stair_list))
@@ -1588,6 +1586,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeSpeed', resp_col='answer',
         print(f"{len(dur_list)} dur values and {len(stair_list)} stair values")
         print(f"dur_list: {dur_list}")
         print(f"dur_name_list: {dur_name_list}")
+        print(f"prelim_list: {prelim_list}")
         print(f"stair_list: {stair_list}")
         print(f"trials_per_stair: {trials_per_stair}")
 
@@ -1598,140 +1597,172 @@ def b3_plot_staircase(all_data_path, thr_col='probeSpeed', resp_col='answer',
     if verbose:
         print(f'\npsignifit_thr_df:\n{psignifit_thr_df}')
 
-    # remove extra columns
-    if 'stair' in list(psignifit_thr_df.columns):
-        psignifit_thr_df = psignifit_thr_df.drop(['stair'], axis=1)
 
-    if 'stair_names' in list(psignifit_thr_df.columns):
-        stair_names_list = psignifit_thr_df.pop('stair_names').tolist()
-        print(f'stair_names_list: {stair_names_list}')
+    # # just do one prelim at a time
+    for prelim in prelim_list:
+        print(f"\n\nrunning analysis for prelim: {prelim}\n")
+
+        prelim_df = all_data_df[all_data_df['prelim_ms'] == prelim]
+        print(f"prelim_df:\n{prelim_df.head()}")
+
+        psig_prelim_df = psignifit_thr_df[psignifit_thr_df['prelim'] == prelim]
+        print(f"psig_prelim_df:\n{psig_prelim_df.head()}")
 
 
-    if 'congruent' in list(psignifit_thr_df.columns):
-        psignifit_thr_df = psignifit_thr_df.drop(['congruent'], axis=1)
+        # remove extra columns
+        if 'stair' in list(psig_prelim_df.columns):
+            psig_prelim_df = psig_prelim_df.drop(['stair'], axis=1)
 
-    if 'separation' in list(psignifit_thr_df.columns):
-        sep_list = psignifit_thr_df.pop('separation').tolist()
-        print(f'sep_list: {sep_list}')
+        # if 'stair_name' in list(psig_prelim_df.columns):
+        #     stair_names_list = psig_prelim_df.pop('stair_name').tolist()
+        #     print(f'stair_names_list: {stair_names_list}')
 
-    psignifit_thr_df.columns = dur_name_list
+        if 'flow_dir' in list(psig_prelim_df.columns):
+            psig_prelim_df = psig_prelim_df.drop(['flow_dir'], axis=1)
 
-    # split into pos_sep, neg_sep and mean of pos and neg.
-    psig_stair0_sep_df, psig_stair1_sep_df = split_df_alternate_rows(psignifit_thr_df)
-    psig_thr_mean_df = pd.concat([psig_stair0_sep_df, psig_stair1_sep_df]).groupby(level=0).mean()
+        if 'flow_name' in list(psig_prelim_df.columns):
+            psig_prelim_df = psig_prelim_df.drop(['flow_name'], axis=1)
 
-    # add stair_names column in
-    # rows, cols = psig_thr_mean_df.shape
+        if 'prelim' in list(psig_prelim_df.columns):
+            psig_prelim_df = psig_prelim_df.drop(['prelim'], axis=1)
 
-    psig_thr_mean_df.insert(0, 'stair_name', 'mean')
-    psig_stair0_sep_df.insert(0, 'stair_name', stair_names_list[0])
-    psig_stair1_sep_df.insert(0, 'stair_name', stair_names_list[1])
-    if verbose:
-        print(f'\npsig_stair0_sep_df:\n{psig_stair0_sep_df}')
-        print(f'\npsig_stair1_sep_df:\n{psig_stair1_sep_df}')
-        print(f'\npsig_thr_mean_df:\n{psig_thr_mean_df}')
+        if 'stair_names' in list(psig_prelim_df.columns):
+            stair_names_list = psig_prelim_df.pop('stair_names').tolist()
+            print(f'stair_names_list: {stair_names_list}')
 
-    # make empty arrays to save reversal n_reversals
-    n_reversals_np = np.zeros(shape=[len(stair_list), len(dur_list)])
-
-    # loop through dur values
-    for dur_idx, dur in enumerate(dur_list):
-
-        # get df for this dur only
-        dur_df = all_data_df[all_data_df['probe_dur_ms'] == dur]
-        dur_name = dur_name_list[dur_idx]
-        print(f"\n{dur_idx}. staircase for dur: {dur}, {dur_name}")
-
-        fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(12, 6))
-
-        # ax_counter = 0
-
-        # todo: don't need different plots for each sep cond - so just make one plot.
-
-                # # get pairs of stairs (e.g., [[18, -18], [6, -6], ...etc)
-        stair_even_cong = 0  # 0, 2, 4, 6, 8, 10
-        stair_even_stair0_df = dur_df[dur_df['stair'] == stair_even_cong]
-        final_lum_even_cong = \
-            stair_even_stair0_df.loc[stair_even_stair0_df['step'] == trials_per_stair - 1, thr_col].item()
-        n_reversals_even_cong = trials_per_stair - stair_even_stair0_df[resp_col].sum()
-
-        stair_odd_incong = 1  # 1, 3, 5, 7, 9, 11
-        stair_odd_stair1_df = dur_df[dur_df['stair'] == stair_odd_incong]
-        final_lum_odd_incong = \
-            stair_odd_stair1_df.loc[stair_odd_stair1_df['step'] == trials_per_stair - 1, thr_col].item()
-        n_reversals_odd_incong = trials_per_stair - stair_odd_stair1_df[resp_col].sum()
-
-        # append n_reversals to n_reversals_np to save later.
-        n_reversals_np[stair_even_cong - 1, dur_idx] = n_reversals_even_cong
-        n_reversals_np[stair_odd_incong - 1, dur_idx] = n_reversals_odd_incong
-
+        psig_prelim_df.columns = dur_name_list
         if verbose:
-            print(f'\nstair_even_stair0_df (stair={stair_even_cong}, '
-                  f'dur_name={dur_name}:\n{stair_even_stair0_df}')
-            print(f"final_lum_even_cong: {final_lum_even_cong}")
-            print(f"n_reversals_even_cong: {n_reversals_even_cong}")
-            print(f'\nstair_odd_stair1_df (stair={stair_odd_incong}, '
-                  f'dur_name={dur_name}:\n{stair_odd_stair1_df}')
-            print(f"final_lum_odd_incong: {final_lum_odd_incong}")
-            print(f"n_reversals_odd_incong: {n_reversals_odd_incong}")
+            print(f'\npsig_prelim_df:\n{psig_prelim_df}')
 
-        fig.suptitle(f'Staircases and reversals for {dur_name}')
+        # split into pos_sep, neg_sep and mean of pos and neg.
+        psig_stair0_sep_df, psig_stair1_sep_df = split_df_alternate_rows(psig_prelim_df)
+        psig_thr_mean_df = pd.concat([psig_stair0_sep_df, psig_stair1_sep_df]).groupby(level=0).mean()
 
-        # plot thr per step for even_cong numbered stair
-        # sns.lineplot(ax=axes[row_idx, col_idx], data=stair_even_stair0_df,
-        sns.lineplot(ax=axes, data=stair_even_stair0_df,
-                     x='step', y=thr_col, color='tab:blue',
-                     marker="o", markersize=4)
-        # line for final newLum
-        axes.axhline(y=final_lum_even_cong, linestyle="-.", color='tab:blue')
-        # text for n_reversals
-        axes.text(x=0.25, y=0.8, s=f'{n_reversals_even_cong} reversals',
-                  color='tab:blue',
-                  # needs transform to appear with rest of plot.
-                  transform=axes.transAxes, fontsize=12)
+        psig_thr_mean_df.insert(0, 'stair_name', 'mean')
+        psig_stair0_sep_df.insert(0, 'stair_name', stair_names_list[0])
+        psig_stair1_sep_df.insert(0, 'stair_name', stair_names_list[1])
+        if verbose:
+            print(f'\npsig_stair0_sep_df:\n{psig_stair0_sep_df}')
+            print(f'\npsig_stair1_sep_df:\n{psig_stair1_sep_df}')
+            print(f'\npsig_thr_mean_df:\n{psig_thr_mean_df}')
 
-        # plot thr per step for odd_incong numbered stair
-        # sns.lineplot(ax=axes[row_idx, col_idx], data=stair_odd_stair1_df,
-        sns.lineplot(ax=axes, data=stair_odd_stair1_df,
-                     x='step', y=thr_col, color='tab:red',
-                     marker="v", markersize=5)
-        axes.axhline(y=final_lum_odd_incong, linestyle="--", color='tab:red')
-        axes.text(x=0.25, y=0.9, s=f'{n_reversals_odd_incong} reversals',
-                  color='tab:red',
-                  # needs transform to appear with rest of plot.
-                  transform=axes.transAxes, fontsize=12)
+        # make empty arrays to save reversal n_reversals
+        n_reversals_np = np.zeros(shape=[len(stair_list), len(dur_list)])
 
-        axes.set_title(f'{dur_name}')
-        axes.set_xticks(np.arange(0, trials_per_stair, 5))
-        # axes.set_ylim([0, 110])
+        # loop through dur values
+        for dur_idx, dur in enumerate(dur_list):
 
-        # artist for legend
-        st1 = mlines.Line2D([], [], color='tab:blue',
-                            marker='v',
-                            markersize=5, label='0_fl_in_pr_out')
-        st1_last_val = mlines.Line2D([], [], color='tab:blue',
-                                     linestyle="--", marker=None,
-                                     label='0_fl_in_pr_out: last val')
-        st2 = mlines.Line2D([], [], color='tab:red',
-                            marker='o',
-                            markersize=5, label='1_fl_out_pr_in')
-        st2_last_val = mlines.Line2D([], [], color='tab:red',
-                                     linestyle="-.", marker=None,
-                                     label='1_fl_out_pr_in: last val')
-        axes.legend(handles=[st1, st1_last_val, st2, st2_last_val],
-                  fontsize=6, loc='lower right')
+            # get df for this dur only
+            dur_df = prelim_df[prelim_df['probe_dur_ms'] == dur]
+            dur_name = dur_name_list[dur_idx]
+            print(f"\n{dur_idx}. staircase for dur: {dur}, {dur_name}")
+            print(f"dur_df:\n{dur_df.head()}")
 
-        plt.tight_layout()
+            # get list of stair_numbers in this prelim and dur
+            these_stair_nums = dur_df['stair'].unique().tolist()
+            if len(these_stair_nums) > 2:
+                print(f"only expecting 2 stairs here, but I have {len(these_stair_nums)} ({these_stair_nums})")
+                raise ValueError
 
-        # show and close plots
-        if save_plots:
-            save_name = f'staircases_{dur_name}.png'
-            plt.savefig(os.path.join(save_path, save_name))
+            # get the stair number where flow_dir = 1 in dur_df
+            stair_flow_cont = dur_df.loc[dur_df['flow_dir'] == 1, 'stair'].unique().tolist()[0]  # even
+            stair_flow_exp = dur_df.loc[dur_df['flow_dir'] == -1, 'stair'].unique().tolist()[0]  # odd
+            print(f"stair_flow_cont: {stair_flow_cont}")
+            print(f"stair_flow_exp: {stair_flow_exp}")
 
-        if show_plots:
-            plt.show()
-        plt.close()
 
+            # get the even number from these_stair_nums
+            stair_flow_cont = [i for i in these_stair_nums if i % 2 == 0][0]
+
+            # stair_flow_cont = 0  # 0, 2, 4, 6, 8, 10
+            stair_flow_cont_df = dur_df[dur_df['stair'] == stair_flow_cont]
+            print(f"stair_flow_cont_dfL {stair_flow_cont_df.columns}\n{stair_flow_cont_df.head()}")
+            final_speed_flow_cont = \
+                stair_flow_cont_df.loc[stair_flow_cont_df['step'] == trials_per_stair - 1, 'probe_cm_p_sec'].item()
+            n_reversals_flow_cont = trials_per_stair - stair_flow_cont_df[resp_col].sum()
+
+            stair_flow_exp = [i for i in these_stair_nums if i % 2 != 0][0]
+            stair_flow_exp_df = dur_df[dur_df['stair'] == stair_flow_exp]
+            final_speed_flow_exp = \
+                stair_flow_exp_df.loc[stair_flow_exp_df['step'] == trials_per_stair - 1, 'probe_cm_p_sec'].item()
+            n_reversals_flow_exp = trials_per_stair - stair_flow_exp_df[resp_col].sum()
+
+            # append n_reversals to n_reversals_np to save later.
+            n_reversals_np[stair_flow_cont - 1, dur_idx] = n_reversals_flow_cont
+            n_reversals_np[stair_flow_exp - 1, dur_idx] = n_reversals_flow_exp
+
+            if verbose:
+                print(f'\nstair_flow_cont_df (stair={stair_flow_cont}, '
+                      f'dur_name={dur_name}:\n{stair_flow_cont_df}')
+                print(f"final_speed_flow_cont: {final_speed_flow_cont}")
+                print(f"n_reversals_flow_cont: {n_reversals_flow_cont}")
+                print(f'\nstair_flow_exp_df (stair={stair_flow_exp}, '
+                      f'dur_name={dur_name}:\n{stair_flow_exp_df}')
+                print(f"final_speed_flow_exp: {final_speed_flow_exp}")
+                print(f"n_reversals_flow_exp: {n_reversals_flow_exp}")
+
+
+            fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(12, 6))
+
+            fig.suptitle(f'Staircases and reversals for {dur_name}')
+
+            # plot thr per step for even_cong numbered stair
+            # sns.lineplot(ax=axes[row_idx, col_idx], data=stair_flow_cont_df,
+            sns.lineplot(ax=axes, data=stair_flow_cont_df,
+                         x='step', y=thr_col, color='tab:blue',
+                         marker="o", markersize=4)
+            # line for final newLum
+            axes.axhline(y=final_speed_flow_cont, linestyle="-.", color='tab:blue')
+            # text for n_reversals
+            axes.text(x=0.25, y=0.8, s=f'{n_reversals_flow_cont} reversals',
+                      color='tab:blue',
+                      # needs transform to appear with rest of plot.
+                      transform=axes.transAxes, fontsize=12)
+
+            # plot thr per step for odd_incong numbered stair
+            # sns.lineplot(ax=axes[row_idx, col_idx], data=stair_flow_exp_df,
+            sns.lineplot(ax=axes, data=stair_flow_exp_df,
+                         x='step', y=thr_col, color='tab:red',
+                         marker="v", markersize=5)
+            axes.axhline(y=final_speed_flow_exp, linestyle="--", color='tab:red')
+            axes.text(x=0.25, y=0.9, s=f'{n_reversals_flow_exp} reversals',
+                      color='tab:red',
+                      # needs transform to appear with rest of plot.
+                      transform=axes.transAxes, fontsize=12)
+
+            axes.set_title(f'{dur_name}')
+            axes.set_xticks(np.arange(0, trials_per_stair, 5))
+            # axes.set_ylim([0, 110])
+
+            # artist for legend
+            # todo: get condition names
+            st1 = mlines.Line2D([], [], color='tab:blue',
+                                marker='v',
+                                markersize=5, label='0_fl_in_pr_out')
+            st1_last_val = mlines.Line2D([], [], color='tab:blue',
+                                         linestyle="--", marker=None,
+                                         label='0_fl_in_pr_out: last val')
+            st2 = mlines.Line2D([], [], color='tab:red',
+                                marker='o',
+                                markersize=5, label='1_fl_out_pr_in')
+            st2_last_val = mlines.Line2D([], [], color='tab:red',
+                                         linestyle="-.", marker=None,
+                                         label='1_fl_out_pr_in: last val')
+            axes.legend(handles=[st1, st1_last_val, st2, st2_last_val],
+                      fontsize=6, loc='lower right')
+
+            plt.tight_layout()
+
+            # show and close plots
+            if save_plots:
+                save_name = f'staircases_{dur_name}.png'
+                plt.savefig(os.path.join(save_path, save_name))
+
+            if show_plots:
+                plt.show()
+            plt.close()
+
+    # todo: add prelim etc to this
     # save n_reversals to csv for use in script_c figure 5
     n_reversals_df = pd.DataFrame(n_reversals_np, columns=dur_name_list)
     n_reversals_df.insert(0, 'stair', stair_list)

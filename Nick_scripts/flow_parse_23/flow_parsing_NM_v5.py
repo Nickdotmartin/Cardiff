@@ -50,16 +50,15 @@ followed by 2-second presentation of the fixation cross together with the flow a
 
 def find_angle(adjacent, opposite):
     """Finds the angle in a right triangle given the lengths of the adjacent and opposite sides.
-    e.g., for getting the visual angle of a square at a given distance, the adjacent side is the distance from the screen,
+    e.g., for getting the visual angle of a square at a given distance,
+    the adjacent side is the distance from the screen,
     and the opposite side is the size of the square onscreen.
 
     :param adjacent: A numpy array of the lengths of the adjacent sides (e.g., distance z_array).
     :param opposite: The (scalar) length of the side opposite the angle you want to find.
     :return: A numpy array of the angles in degrees.
     """
-    radians = np.arctan(opposite / adjacent)  # radians
-    degrees = radians * 180 / np.pi  # degrees
-    return degrees
+    return np.rad2deg(np.arctan(opposite / adjacent))
 
 
 
@@ -145,20 +144,24 @@ def scaled_dots_pos_array(x_array, y_array, z_array, frame_size_cm, reference_an
     :return: new dots_pos_array
     """
 
-    # 1. convert distances to angles
-    z_array_deg = find_angle(adjacent=z_array, opposite=frame_size_cm)
+    # # 1. convert distances to angles
+    # z_array_deg = find_angle(adjacent=z_array, opposite=frame_size_cm)
+    #
+    # # 2. scale distances by dividing by reference angle
+    # scale_factor_array = z_array_deg / reference_angle
+    #
+    # # 3. scale x and y values by multiplying by scaled distances
+    # scaled_x = x_array * scale_factor_array
+    # scaled_y = y_array * scale_factor_array
+    #
+    # # 4. scale x and y values by multiplying by scaled distances
+    # dots_pos_array = np.array([scaled_x, scaled_y]).T
 
-    # 2. scale distances by dividing by reference angle
-    scale_factor_array = z_array_deg / reference_angle
+    # 1. convert distances to angles and scale distances by dividing by reference angle
+    scale_factor_array = find_angle(adjacent=z_array, opposite=frame_size_cm) / reference_angle
 
-    # 3. scale x and y values by multiplying by scaled distances
-    scaled_x = x_array * scale_factor_array
-    scaled_y = y_array * scale_factor_array
-
-    # 4. scale x and y values by multiplying by scaled distances
-    dots_pos_array = np.array([scaled_x, scaled_y]).T
-
-    return dots_pos_array
+    # 2. scale x and y values by multiplying by scaled distances
+    return np.array([x_array * scale_factor_array, y_array * scale_factor_array]).T
 
 
 
@@ -273,7 +276,7 @@ expInfo = {'1_participant_name': 'Nicktest_06102023',
            '3_monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'ASUS_2_13_240Hz',
                               'Samsung', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
            '4_fps': [60, 240, 120, 60],
-           '5_probe_dur_ms': [500, 41.67, 8.33, 16.67, 25, 33.33, 41.67, 50, 58.38, 66.67, 500],
+           '5_probe_dur_ms': [100, 41.67, 8.34, 16.67, 25, 33.34, 41.67, 50, 58.38, 66.67, 500],
            '6_debug': [False, True]
            }
 
@@ -324,12 +327,15 @@ if probe_dur_fr == 0:
 # save each participant's files into separate dir for each ISI
 save_dir = path.join(_thisDir, expName, monitor_name,
                      participant_name,
-                     f'{participant_name}_{run_number}',
+                     f'{participant_name}_{run_number}',  # don't use p_name_run here, as it's not a separate folder
                      f'probeDur{int(probe_dur_ms)}')
 print(f"\nexperiment save_dir: {save_dir}")
 
 # files are labelled as '_incomplete' unless entire script runs.
-incomplete_output_filename = f'{participant_name}_{run_number}_incomplete'
+p_name_run = f"{participant_name}_{run_number}"
+if debug:
+    p_name_run = f"{participant_name}_{run_number}_debug"
+incomplete_output_filename = f'{p_name_run}_incomplete'
 save_output_as = path.join(save_dir, incomplete_output_filename)
 
 # Experiment Handler
@@ -511,8 +517,15 @@ flow_speed_cm_p_sec = 120  # 1m/sec matches previous flow parsing study (Evans e
 flow_speed_cm_p_fr = flow_speed_cm_p_sec / fps  # 1.66 cm per frame = 1m per second
 
 
-# initialise dots
-n_dots = 300  # use 300 to match flow parsing studies, or 10000 to match our rad flow studies
+# initialise dots - 1 per sq cm
+dots_per_sq_cm = 1
+n_dots = int(dots_per_sq_cm * mon_width_cm * mon_height_cm)
+if debug:
+    print(f"n_dots: {n_dots}")
+
+
+
+
 flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
                                     units='cm', nElements=n_dots, sizes=.2,
                                     colorSpace=this_colourSpace,
@@ -625,19 +638,27 @@ if monitor_name == 'OLED':
 
 # # # PROBE STARTING SPEED # # #
 """
-In Evans et al, 2020, the probes moved at 0.8cm/s.
+In Evans et al, 2020, the probes moved at 0.8cm/s, but it was present for 2000ms (e.g., moved 1.6cm)
 This seems like a good starting value for our staircases.
+However, I will scale it with probe_dur_ms, so that the probe moves 1.6cm in probe_dur_ms.
+Otherwise the shortest durations are too hard.
 I need to convert it from cm/s to pixels/frame,
 which depends on the monitor's refresh rate.
 """
 start_cm_per_s = 0.8  # starting value in cm per second
+target_cm_in_dur = 1.6  # how far the probe moved in 2000ms in Evans et al, 2020
+
+# probe cm/sec needed to move 1.6cm in probe_dur_ms
+start_cm_per_s = target_cm_in_dur / (probe_dur_ms / 1000)
+print(f"\n probe starting speed: {start_cm_per_s}cm/s, so it moves {target_cm_in_dur}cm in {probe_dur_ms}ms.")
+
 start_pix_per_s = cm2pix(cm=start_cm_per_s, monitor=mon)  # convert to pixels per second
 start_pix_per_fr = start_pix_per_s / fps  # convert to pixels per frame
 if start_pix_per_fr < 1:
     start_pix_per_fr = 1
 if debug:
     print(f"\nstart_cm_per_s: {start_cm_per_s:.2f}cm/s, start_pix_per_s: {start_pix_per_s:.2f}pix/s, "
-          f"start_pix_per_fr: {start_pix_per_fr}pix/fr")
+          f"start_pix_per_fr: {start_pix_per_fr:.2f}pix/fr")
 
 
 # # # CONSTRUCT STAIRCASES # # #
@@ -656,7 +677,7 @@ for stair_idx in range(n_stairs):
 
     thisStair = Staircase(name=stair_names_list[stair_idx],
                           type='simple',
-                          value=stairStart * -flow_dir_list[stair_idx],  # each stair starts with motion opposite to bg
+                          value=stairStart * flow_dir_list[stair_idx],  # each stair starts with same probe dir as bg motion
                           C=stairStart * 0.6,  # initial step size, as prop of maxLum
                           minRevs=3,
                           minTrials=n_trials_per_stair,
@@ -716,12 +737,13 @@ for step in range(n_trials_per_stair):
                 print(f"z_start_bounds: {z_start_bounds}")
 
 
-            # get probe attributes
+            # get probe attricbutes
             probe_pix_p_fr = thisStair.next()  # in pixels per frame
             probe_cm_p_sec = pix2cm(pixels=probe_pix_p_fr * fps, monitor=mon)
-            probe_dir = 'out'
+
+            probe_dir = 'in'
             if probe_pix_p_fr > 0:
-                probe_dir = 'in'
+                probe_dir = 'out'
             # if debug:
             print(f"probe_dir: {probe_dir}, probe_pix_p_fr: {probe_pix_p_fr}, "
                   f"probe_cm_p_sec: {probe_cm_p_sec}")
@@ -739,24 +761,28 @@ for step in range(n_trials_per_stair):
                 print(f'\tcorner: {corner}')
 
 
-            # setting x and y positions depending on the side
-            # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
-            if corner == 45:
-                x_position = dist_from_fix
-                y_position = dist_from_fix
-            elif corner == 135:
-                x_position = -dist_from_fix
-                y_position = dist_from_fix
-            elif corner == 225:
-                x_position = -dist_from_fix
-                y_position = -dist_from_fix
-            elif corner == 315:
-                x_position = dist_from_fix
-                y_position = -dist_from_fix
+            # setting probe x and y starting positions
 
-            # probe position reset
-            probe_x = 0
-            probe_y = 0
+            # I want the starting position of the probe to take into account the direction it will travel.
+            # e.g., if it's moving inwards, it should start further out and vice versa.
+            # total distance travelled by the probe is probe_pix_p_fr * probe_dur_fr
+            probe_start_offset = probe_pix_p_fr * probe_dur_fr / 2
+            if corner == 45:
+                probe_start_x = dist_from_fix - probe_start_offset
+                probe_start_y = dist_from_fix - probe_start_offset
+            elif corner == 135:
+                probe_start_x = -dist_from_fix + probe_start_offset
+                probe_start_y = dist_from_fix - probe_start_offset
+            elif corner == 225:
+                probe_start_x = -dist_from_fix + probe_start_offset
+                probe_start_y = -dist_from_fix + probe_start_offset
+            elif corner == 315:
+                probe_start_x = dist_from_fix - probe_start_offset
+                probe_start_y = -dist_from_fix + probe_start_offset
+
+            # reset distrance travelled this trial
+            probe_moved_x = 0
+            probe_moved_y = 0
 
 
             # timing in frames
@@ -892,6 +918,8 @@ for step in range(n_trials_per_stair):
                     dots_pos_array = scaled_dots_pos_array(x_array, y_array, z_array, frame_size_cm, ref_angle)
                     flow_dots.xys = dots_pos_array
 
+
+
                     flow_dots.draw()
 
                     probeMask1.draw()
@@ -904,19 +932,20 @@ for step in range(n_trials_per_stair):
 
 
                     # draw probe if 1st interval
+                    # todo: I flipped all these so hopefully +ive is out and -ive is in.
                     if corner == 45:  # top-right
-                        probe_y = probe_y - probe_pix_p_fr
-                        probe_x = probe_x - probe_pix_p_fr
+                        probe_moved_y = probe_moved_y + probe_pix_p_fr
+                        probe_moved_x = probe_moved_x + probe_pix_p_fr
                     elif corner == 135:  # top-left
-                        probe_y = probe_y - probe_pix_p_fr
-                        probe_x = probe_x + probe_pix_p_fr
+                        probe_moved_y = probe_moved_y + probe_pix_p_fr
+                        probe_moved_x = probe_moved_x - probe_pix_p_fr
                     elif corner == 225:  # bottom-left
-                        probe_y = probe_y + probe_pix_p_fr
-                        probe_x = probe_x + probe_pix_p_fr
+                        probe_moved_y = probe_moved_y - probe_pix_p_fr
+                        probe_moved_x = probe_moved_x - probe_pix_p_fr
                     elif corner == 315:  # bottom-right
-                        probe_y = probe_y + probe_pix_p_fr
-                        probe_x = probe_x - probe_pix_p_fr
-                    probe.setPos([x_position + probe_x, y_position + probe_y])
+                        probe_moved_y = probe_moved_y - probe_pix_p_fr
+                        probe_moved_x = probe_moved_x + probe_pix_p_fr
+                    probe.setPos([probe_start_x + probe_moved_x, probe_start_y + probe_moved_y])
                     probe.draw()
 
 
@@ -1004,7 +1033,8 @@ for step in range(n_trials_per_stair):
                               f"{round(max(trial_fr_intervals), 3)} > {round(max_fr_dur_sec, 2)} or "
                               f"{round(min(trial_fr_intervals), 3)} < {round(min_fr_dur_sec, 2)}")
 
-                    print(f"Timing bad, repeating trial {trial_number}.")
+                    print(f"Timing bad, repeating trial {trial_number}. "
+                          f"repeated: {dropped_fr_trial_counter} / {max_dropped_fr_trials}")
 
                     # decrement trial and stair so that the correct values are used for the next trial
                     trial_number -= 1
@@ -1082,7 +1112,7 @@ for step in range(n_trials_per_stair):
 
 # # # END OF EXPERIMENT # # #
 # now exp is completed, save as '_output' rather than '_incomplete'
-thisExp.dataFileName = path.join(save_dir, f'{participant_name}_{run_number}_output')
+thisExp.dataFileName = path.join(save_dir, f'{p_name_run}_output')
 thisExp.close()
 print(f"\nend of experiment loop, saving data to:\n{thisExp.dataFileName}\n")
 
