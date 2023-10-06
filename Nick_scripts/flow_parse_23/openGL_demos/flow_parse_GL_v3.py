@@ -4,6 +4,7 @@ import psychopy.tools.mathtools as mt
 import numpy as np
 import psychopy
 from psychopy import visual, event, monitors
+from psychopy.tools.monitorunittools import cm2pix, pix2cm
 
 
 '''Demo adapted from  demo from: https://discourse.psychopy.org/t/draw-dots-in-3d-space/8918.  
@@ -29,7 +30,7 @@ def height_from_dist_and_deg(distance, visual_angle):
     return distance * np.tan(np.deg2rad(visual_angle))
 
 
-def draw_flow_dots(x_array, y_array, z_array):
+def draw_flow_dots(x_array, y_array, z_array, flow_colour_rgb1):
     """
     Function to draw flow dots in openGL.  All values are in meters.
 
@@ -49,13 +50,87 @@ def draw_flow_dots(x_array, y_array, z_array):
     # All transformations in GL_PROJECTION and GL_MODELVIEW matrix stacks will be cleared (set to identity) prior to applying.
     win.applyEyeTransform()
 
-    # draw 3D stuff here
-    gl.glColor3f(1.0, 1.0, 1.0)
+    # dot settings
+    # gl.glColor3f(1.0, 1.0, 1.0)
+    gl.glColor3f(flow_colour_rgb1[0], flow_colour_rgb1[1], flow_colour_rgb1[2])
     gl.glPointSize(5.0)
+
+    # draw the dots
     gl.glBegin(gl.GL_POINTS)
     for i in range(n_points):
         gl.glVertex3f(*dots_pos_array[i, :])
     gl.glEnd()
+
+
+def draw_filled_circle_gl(x, y, z, radius, n_points=100, fill_colour=[0.0, 0.0, 1.0]):
+    """
+    Function to draw a filled circle in openGL.  All values are in meters.
+
+    :param x: x position of the centre of the circle.
+    :param y: y position of the centre of the circle.
+    :param z: z position of the centre of the circle (distance).
+    :param radius: radius of the circle (in meters).
+    :param n_points: number of points to use to draw the circle.
+    :param fill_colour: colour of the circle (rgb1).
+    """
+
+    # --- render loop ---
+    # Apply the current view and projection matrices specified by ‘viewMatrix’ and ‘projectionMatrix’ using ‘immediate mode’ OpenGL.
+    # Subsequent drawing operations will be affected until ‘flip()’ is called.
+    # All transformations in GL_PROJECTION and GL_MODELVIEW matrix stacks will be cleared (set to identity) prior to applying.
+    win.applyEyeTransform()
+
+    # dot settings
+    # gl.glColor3f(1.0, 1.0, 1.0)
+    gl.glColor3f(fill_colour[0], fill_colour[1], fill_colour[2])
+    gl.glPointSize(5.0)
+
+    # draw the dots
+    gl.glBegin(gl.GL_POLYGON)
+    for i in range(n_points):
+        gl.glVertex3f(x + radius * np.cos(2 * np.pi * i / n_points), y + radius * np.sin(2 * np.pi * i / n_points), z)
+    gl.glEnd()
+
+
+
+def draw_2d_probe_gl(x, y, fill_colour=[1.0, 1.0, 1.0], n_pix=5):
+    """
+    Function to draw a 2d probe in openGL.  All values are in meters.
+    :param x: x position of probe
+    :param y: y position of probe
+    :param fill_colour: colour of the probe (rgb1).
+    :param n_pix: default is a 5 pixel probe, but can do 3pix probe for OLED
+    """
+
+
+    if n_pix == 5:  # default, 5-pixel probes
+        probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1), (1, -2), (-1, -2), (-1, -1), (0, -1)]  # 5 pixels
+    elif n_pix == 3:  # smaller, 3-pixel probes for OLED
+        probeVert = [(0, 0), (1, 0), (1, 1), (2, 1),
+                     (2, 0), (1, 0), (1, -1), (0, -1),
+                     (0, -2), (-1, -2), (-1, -1), (0, -1)]
+    else:
+        print(f"n_pix must be 3 or 5, not {n_pix}")
+        raise ValueError
+
+    # # Set your projection matrix
+    # gl.glMatrixMode(gl.GL_PROJECTION)
+    # gl.glOrtho(-1920/2, 1920/2, -1080/2, 1080/2, -1, 1);
+    # # Restore the default matrix mode
+    # gl.glMatrixMode(gl.GL_MODELVIEW)
+
+    gl.glDisable(gl.GL_TEXTURE_2D)
+
+    # --- render loop ---
+    gl.glBegin(gl.GL_LINE_LOOP)
+    for i in range(len(probeVert)):
+        gl.glVertex3f(x + probeVert[i][0], y + probeVert[i][1], 0.0)
+    gl.glEnd()
+
+
+
+
+
 
 
 def check_z_start_bounds(z_array, closest_z, furthest_z, dot_life_max_fr, dot_lifetime_array, flow_dir):
@@ -155,11 +230,31 @@ if monitor_name in ['asus_cal', 'Nick_work_laptop', 'NickMac', 'OLED', 'ASUS_2_1
 
 
 # Create a window
-this_colourSpace = 'rgb1'
+maxLum = 106  # 255 RGB
+bgLumProp = .2  # use .2 to match exp1 or .45 to match radial_flow_NM_v2.py
+if monitor_name == 'OLED':
+    bgLumProp = .0
+bgLum = maxLum * bgLumProp
+
+# colour space
+this_colourSpace = 'rgb1'  # values between 0 and 1
+bgColor_rgb1 = bgLum / maxLum
+this_bgColour = [bgColor_rgb1, bgColor_rgb1, bgColor_rgb1]
+
+# Flow colours
+adj_flow_colour = .15
+# Give dots a pale green colour, which is adj_flow_colour difference from the background
+flow_colour = [this_bgColour[0] - adj_flow_colour, this_bgColour[1], this_bgColour[2] - adj_flow_colour]
+if monitor_name == 'OLED':  # darker green for low contrast against black background
+    flow_colour = [this_bgColour[0], this_bgColour[1] + adj_flow_colour / 2, this_bgColour[2]]
+
+print(f"\nthis_bgColour: {this_bgColour}")
+print(f"flow_colour: {flow_colour}")
+
 win = psychopy.visual.Window(monitor=mon,
                              # size=(800, 800),  # check if aspect changes between sq and rect screen
                              size=(widthPix, heightPix),
-                             color='Black', colorSpace=this_colourSpace,
+                             color=this_bgColour, colorSpace=this_colourSpace,
                              units='pix',  # openGL is not impacted by psychopy units, so I'll stick with pix
                              screen=display_number,
                              allowGUI=True, fullscr=True)
@@ -182,6 +277,10 @@ MV = mt.translationMatrix((0.0, 0.0, -view_dist_m))  # X, Y, Z
 
 win.projectionMatrix = P
 win.viewMatrix = MV
+
+# set up for a different background colour in openGL
+gl.glClearColor(bgColor_rgb1, bgColor_rgb1, bgColor_rgb1, 0)  # final value is alpha (transparency)
+gl.glClear(gl.GL_COLOR_BUFFER_BIT)
 
 
 '''dots settings'''
@@ -265,7 +364,8 @@ print(f"flow_dir: {flow_dir}, z_start_bounds: {z_start_bounds}, flow_dir_name: {
 
 
 # add additional psychopy stimuli
-fixation = visual.Circle(win, radius=2, units='pix', lineColor='white', fillColor='black', colorSpace=this_colourSpace)
+fixation = visual.Circle(win, radius=2, units='pix', lineColor='white', fillColor='black', colorSpace=this_colourSpace,
+                            lineWidth=1, edges=32, interpolate=True, autoLog=False)
 
 # Create a raisedCosine mask array and assign it to a Grating stimulus (grey outside, transparent inside)
 mask_size = 150
@@ -290,13 +390,44 @@ probeMask4 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size
                                 colorSpace=this_colourSpace, color=this_bgColour,
                                 units='pix', tex=None, pos=[dist_from_fix + 1, -dist_from_fix - 1])
 
+# opengl probemask with draw circle
+# calculate radius in meters from mask_size diameter in pixels
+circle_cl_radius_m = pix2cm(mask_size / 2.7, mon) / 100  # radius in cm
+print(f"circle_cl_radius_m: {circle_cl_radius_m}m")
+
+# calculate dist_from_fix in meters from dist_from_fix in pixels
+dist_from_fix_m = pix2cm(dist_from_fix + 1, mon) / 100  # radius in cm
+print(f"dist_from_fix (pixels): {dist_from_fix + 1}, meters: {dist_from_fix_m}")
+
+
+
+# PROBEs
+probe_size = 10  # can make them larger for testing new configurations etc
+probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1), (1, -2), (-1, -2), (-1, -1), (0, -1)]  # 5 pixels
+
+
+probe = visual.ShapeStim(win, vertices=probeVert, lineWidth=0, opacity=1, size=probe_size, interpolate=False,
+                         # fillColor=(1.0, 1.0, 1.0),
+                         fillColor=(1.0, 0.0, 0.0),
+                         colorSpace=this_colourSpace)
+probe.pos = (dist_from_fix, dist_from_fix)
+
+
+
+
+
 while 1:
 
-    fixation.draw()
+    # win.applyEyeTransform(clearDepth=True)
+
     probeMask1.draw()
     probeMask2.draw()
     probeMask3.draw()
     probeMask4.draw()
+    fixation.draw()
+    probe.draw()
+    # win.applyEyeTransform(clearDepth=True)
+
 
     # update distance array: subtract as OpenGL distance is negative (psychopy was +ive).
     z_array -= flow_speed_m_p_fr * flow_dir  # distance to move the dots per frame towards/away from viewer
@@ -311,9 +442,23 @@ while 1:
                                                               x_bounds=dot_fr_width_m/2, y_bounds=dot_fr_height_m/2,
                                                               z_start_bounds=z_start_bounds)
     # draw stimuli
-    draw_flow_dots(x_array=x_array, y_array=y_array, z_array=z_array)
+    # draw_flow_dots(x_array=x_array, y_array=y_array, z_array=z_array,
+    #                                flow_colour_rgb1=flow_colour)
 
 
+    # draw filled circle
+    # draw_filled_circle_gl(x=dist_from_fix_m, y=dist_from_fix_m, z=0.0,
+    #                       radius=circle_cl_radius_m, n_points=100, fill_colour=[0.0, 0.0, 1.0])
+    # draw_filled_circle_gl(x=dist_from_fix_m, y=-dist_from_fix_m, z=0.0,
+    #                       radius=circle_cl_radius_m, n_points=100, fill_colour=[0.0, 0.0, 1.0])
+    # draw_filled_circle_gl(x=-dist_from_fix_m, y=-dist_from_fix_m, z=0.0,
+    #                       radius=circle_cl_radius_m, n_points=100, fill_colour=[0.0, 0.0, 1.0])
+    # draw_filled_circle_gl(x=-dist_from_fix_m, y=dist_from_fix_m, z=0.0,
+    #                       radius=circle_cl_radius_m, n_points=100, fill_colour=[0.0, 0.0, 1.0])
+
+    # draw 2d probe
+    gl.glEnable(gl.GL_TEXTURE_2D)
+    draw_2d_probe_gl(x=0, y=0, fill_colour=[1.0, 1.0, 1.0], n_pix=5)
 
     win.flip()
 

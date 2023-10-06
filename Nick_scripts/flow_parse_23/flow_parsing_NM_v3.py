@@ -4,159 +4,121 @@ from psychopy import __version__ as psychopy_version
 from psychopy.tools.monitorunittools import cm2pix, pix2cm
 from datetime import datetime
 from os import path, chdir
-from kestenSTmaxVal import Staircase
 
-import pyglet.gl as gl
-import psychopy.tools.viewtools as vt
-import psychopy.tools.mathtools as mt
-
+import copy
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
-
-import copy
-import gc
-
+from kestenSTmaxVal import Staircase
 
 print(f"PsychoPy_version: {psychopy_version}")
 
 
 """
 This script takes: 
-1. background settings from Evans et al., 2020, 
-2. flow dots with openGL
-3. moving probes from flow_parsing_NM
-to test that we do get flowParsing effects.
-
-1. Evans, L., Champion, R. A., Rushton, S. K., Montaldi, D., & Warren, P. A. (2020). 
-Detection of scene-relative object movement and optic flow parsing across the adult lifespan. 
-Journal of Vision, 20(9), 1–18. https://doi.org/10.1167/JOV.20.9.12
-
-2. openGL dots adapted demo from: https://discourse.psychopy.org/t/draw-dots-in-3d-space/8918.  
-    Kathia, Sep '19: "Awesome! thanks! I tried it out and it worked."
-"""
-
-# # # FUNCTIONS # # #
+the background from Evans et al., 2020, and moving probes from flow_parsing_NM
+to test that we do get flowParsing effects."""
 
 
-def angle_from_dist_and_height(height, distance):
+def find_angle(adjacent, opposite):
+    """Finds the angle in a right triangle given the lengths of the adjacent and opposite sides.
+    e.g., for getting the visual angle of a square at a given distance, the adjacent side is the distance from the screen,
+    and the opposite side is the size of the square onscreen.
+
+    :param adjacent: A numpy array of the lengths of the adjacent sides (e.g., distance z_array).
+    :param opposite: The (scalar) length of the side opposite the angle you want to find.
+    :return: A numpy array of the angles in degrees.
     """
-    Gives the visual angle of an object from its distance and height.
-    Used for calculating the size of the dot array at a given distance.
+    radians = np.arctan(opposite / adjacent)  # radians
+    degrees = radians * 180 / np.pi  # degrees
+    return degrees
 
-    :param height: Actual size of screen or size on screen in meters.
-    :param distance: from screen in meters (e.g., .573m) or from screen plus z_values (e.g., .573m + 1m)
-    :return: angle in degrees
+
+def new_dots_z_and_pos(x_array, y_array, z_array, dots_speed, flow_dir, min_z, max_z,
+                       frame_size_cm, reference_angle):
     """
-    return np.rad2deg(np.arctan(height / distance))
+    This is a function to update flow_dots distance array and get new pixel co-ordinates
+    using the original x_array and y_array.
 
+    1. Update z_array by adding dots_speed * flow_dir to the current z values.
+    2. adjust any values below dots_min_z or above dots_max_z.
+    3. Convert distances (cm) to angles (degrees) using find_angle().
+    4. scale distances by dividing by reference angle (e.g., screen angle when z=view_dist).
+    5. scale x and y values by multiplying by scaled distances.
+    6. put the new x_pos and y_pos co-ordinates into an array and transposes it.
 
-def height_from_dist_and_deg(distance, visual_angle):
-    """
-    Gives the height of an object from its distance and visual angle.
-    Used for calculating the size of the dot array at a given distance.
-
-    :param distance: from screen in meters (e.g., .573m) or from screen plus z_values (e.g., .573m + 1m)
-    :param visual_angle:
-    :return: height in meters
-    """
-    return distance * np.tan(np.deg2rad(visual_angle))
-
-
-def draw_flow_dots(x_array, y_array, z_array, flow_colour_rgb1):
-    """
-    Function to draw flow dots in openGL.  All values are in meters.
-
-    :param x_array: numpy array of x positions of dots
-    :param y_array: numpy array of y positions of dots
-    :param z_array: numpy array of z positions of dots (distance)
-    """
-    # join x, y, z into single 2d array (n, 3)
-    dots_pos_array = np.array([x_array, y_array, z_array]).T
-
-    # get number of dots
-    n_points, _ = np.shape(dots_pos_array)
-
-    # --- render loop ---
-    # Apply the current view and projection matrices specified by ‘viewMatrix’ and ‘projectionMatrix’ using ‘immediate mode’ OpenGL.
-    # Subsequent drawing operations will be affected until ‘flip()’ is called.
-    # All transformations in GL_PROJECTION and GL_MODELVIEW matrix stacks will be cleared (set to identity) prior to applying.
-    win.applyEyeTransform()
-
-    # dot settings
-    # gl.glColor3f(1.0, 1.0, 1.0)
-    gl.glColor3f(flow_colour_rgb1[0], flow_colour_rgb1[1], flow_colour_rgb1[2])
-    gl.glPointSize(5.0)
-
-    # draw the dots
-    gl.glBegin(gl.GL_POINTS)
-    for i in range(n_points):
-        gl.glVertex3f(*dots_pos_array[i, :])
-    gl.glEnd()
-
-
-def check_z_start_bounds(z_array, closest_z, furthest_z, max_dot_life_fr, dot_life_array, flow_dir):
-    """
-    check all z values.  If they are out of bounds (too close when expanding or too far when contracting), then
-    set their dot life to max, so they are redrawn with new x, y and z values.
-
-    :param z_array: array of current dot distances
-    :param closest_z: near boundary for z values (relevant when expanding)
-    :param furthest_z: far boundary for z values (relevant when contracting)
-    :param max_dot_life_fr: maximum lifetime of a dot in frames.
-    :param dot_life_array: array of dot lifetimes (ints) between 0 and dot_max_fr.
-    :param flow_dir: either 1 (contracting/inward/backwards) or -1 (expanding/outward/forwards):
-    :return: updated dot_life_array
+    :param x_array: Original x_array positions for the dots (shape = (n_dots, 1))
+    :param y_array: Original y_array positions for the dots (shape = (n_dots, 1))
+    :param z_array: array of distance values for the dots (shape = (n_dots, 1))
+    :param dots_speed: speed of the dots (float, smaller = slower, larger = faster)
+    :param flow_dir: either 1 (contracting/inward/backwards) or -1 (expanding/outward/forwards)
+    :param min_z: default is .5, values below this are adjusted to dots_max_z
+    :param max_z: default is 5, values above this are adjusted to dots_min_z
+    :param frame_size_cm: onscreen size in cm of frame containing dots.
+    :param reference_angle: angle in degrees of the reference distance (57.3cm)
+    :return: updated_z_array, new dots_pos_array
     """
 
-    # if expanding, check if any z values are too close or far, and if so, set their dot life to max
-    if flow_dir == -1:  # expanding
-        dot_life_array = np.where(z_array > closest_z, max_dot_life_fr, dot_life_array)
-    elif flow_dir == 1:  # contracting
-        dot_life_array = np.where(z_array < furthest_z, max_dot_life_fr, dot_life_array)
+    # # 1. Update z (distance values): Add dots_speed * flow_dir to the current z values.
+    updated_z_array = z_array + dots_speed * flow_dir
 
-    return dot_life_array
+    # todo: make sure new distances and dot life work together so there is no flickering.
+    # 2. adjust any distance values below min_z or above max_z by z_adjust
+    z_adjust = max_z - min_z
+    # adjust updated_z_array values less than min_z by adding z_adjust
+    less_than_min = (updated_z_array < min_z)
+    updated_z_array[less_than_min] += z_adjust
+    # adjust updated_z_array values more than max_z by subtracting z_adjust
+    more_than_max = (updated_z_array > max_z)
+    updated_z_array[more_than_max] -= z_adjust
+
+    # 3. convert distances to angles
+    z_array_deg = find_angle(adjacent=updated_z_array, opposite=frame_size_cm)
+
+    # 4. scale distances by dividing by reference angle
+    scale_factor_array = z_array_deg / reference_angle
+
+    # 5. scale x and y values by multiplying by scaled distances
+    scaled_x = x_array * scale_factor_array
+    scaled_y = y_array * scale_factor_array
+
+    # 6. scale x and y values by multiplying by scaled distances
+    dots_pos_array = np.array([scaled_x, scaled_y]).T
+
+    return updated_z_array, dots_pos_array
 
 
-def update_dotlife(dotlife_array, dot_max_fr,
-                   x_array, y_array, z_array,
-                   x_bounds, y_bounds, z_start_bounds):
+def update_dotlife(dotlife_array, dot_max_fr, x_array, y_array, dot_boundary):
     """
-    Function to update the lifetime of the dots.  Dots that have reached their maximum lifetime
-    have their life reset to zero and are redrawn with new x, y and z values.
+    This is a function to update the lifetime of the dots.
 
     1. increment all dots by 1
-    2. make a mask of any to be replaced (life >= max_life)
-    3. replace these with new x, y and z values
+    2. make a mask of any to be replaced (life > max_life)
+    3. replace these with new x and y values
     4. reset life of replaced dots to 0
 
     :param dotlife_array: np.array of dot lifetimes (ints) between 0 and dot_max_fr.
     :param dot_max_fr: maximum lifetime of a dot in frames.
-    :param x_array: np.array of x positions of dots (in meters).
-    :param y_array: np.array of y positions of dots (in meters).
-    :param z_array: np.array of z positions of dots (in meters).
-
-    :param x_bounds: value passed for distribution of x_values, from -x_bounds to x_bounds.  Half the width of the array.
-    :param y_bounds: value passed for distribution of y_values, from -y_bounds to y_bounds.  Half the height of the array.
-    :param z_start_bounds: tuple, values passed for distribution of z_values, from z_start_bounds[0] to z_start_bounds[1].
-    :return: updated dotlife_array, x_array, y_array, z_array
+    :param x_array: np.array of x positions of dots.
+    :param y_array: np.array of y positions of dots.
+    :param dot_boundary: width of the frame in cm for drawing new x and y values from.
+    :return: updated dotlife_array, x_array, y_array
     """
 
     # increment all dots by 1
     dotlife_array += 1
 
-    # make a mask of any to be replaced (life >= max_life)
-    replace_mask = (dotlife_array >= dot_max_fr)
+    # make a mask of any to be replaced (life > max_life)
+    replace_mask = (dotlife_array > dot_max_fr)
 
     # replace these with new x and y values (from same distribution as originals)
-    x_array[replace_mask] = np.random.uniform(low=-x_bounds, high=x_bounds, size=np.sum(replace_mask))
-    y_array[replace_mask] = np.random.uniform(low=-y_bounds, high=y_bounds, size=np.sum(replace_mask))
-    z_array[replace_mask] = np.random.uniform(low=z_start_bounds[0], high=z_start_bounds[1], size=np.sum(replace_mask))
+    x_array[replace_mask] = np.random.uniform(-dot_boundary / 2, dot_boundary / 2, np.sum(replace_mask))
+    y_array[replace_mask] = np.random.uniform(-dot_boundary / 2, dot_boundary / 2, np.sum(replace_mask))
 
     # reset life of replaced dots to 0
     dotlife_array[replace_mask] = 0
 
-    return dotlife_array, x_array, y_array, z_array
+    return dotlife_array, x_array, y_array
 
 
 
@@ -255,24 +217,22 @@ def plt_fr_ints(time_p_trial_nested_list, n_trials_w_dropped_fr,
     plt.close()
 
 
-#######################
-# # # MAIN SCRIPT # # #
-#######################
-
 # get filename and path for this experiment
 _thisDir = path.dirname(path.abspath(__file__))
 chdir(_thisDir)
 expName = path.basename(__file__)[:-3]
 
 
-# # # DIALOGUE BOX # # #
-expInfo = {'1_participant_name': 'Nicktest_03102023',
+expInfo = {'1_participant_name': 'Nicktest_28092023',
            '2_run_number': 1,
            '3_monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'ASUS_2_13_240Hz',
                               'Samsung', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
            '4_fps': [60, 240, 120, 60],
-           '5_probe_dur_ms': [5000, 41.67, 8.33, 16.67, 25, 33.33, 41.67, 50, 58.38, 66.67, 500],
-           '6_debug': [True, False, True]
+           # todo: changed probe_dur to be in ms, to allow comparison between monitors.
+           '5_probe_dur_ms': [41.67, 8.33, 16.67, 25, 33.33, 41.67, 50, 58.38, 66.67, 500],
+           # '6_mask_type': ['4_circles', '2_spokes'],
+           '7_record_frame_durs': [True, False],
+           '8_debug': [False, True]
            }
 
 # run drop-down menu, OK continues, cancel quits
@@ -286,15 +246,16 @@ run_number = expInfo['2_run_number']
 monitor_name = expInfo['3_monitor_name']
 fps = int(expInfo['4_fps'])
 probe_dur_ms = float(expInfo['5_probe_dur_ms'])
-debug = eval(expInfo['6_debug'])
+# mask_type = expInfo['6_mask_type']
+record_fr_durs = eval(expInfo['7_record_frame_durs'])
+debug = eval(expInfo['8_debug'])
 
 # print settings from dlg
 print("\ndlg dict")
 for k, v in expInfo.items():
     print(f'{k}: {v}')
 
-
-# # # MIST SETTINGS # # #
+# Misc settings
 n_trials_per_stair = 25  # this is the number of trials per stair
 if debug:
     n_trials_per_stair = 2
@@ -306,13 +267,8 @@ expInfo['time'] = datetime.now().strftime("%H:%M:%S")
 # trials_counter = False  # eval(expInfo['7_Trials_counter'])
 # background = 'flow_rad'  # expInfo['8_Background'] # fix this to always be flow_rad
 # bg_speed_cond = 'Normal'  # expInfo['9_bg_speed_cond']  # fix this to be 1m/s
-# mask_type = expInfo['6_mask_type']
-
-# todo: always record frame durs so get rid of this.
-record_fr_durs = True  # eval(expInfo['7_record_frame_durs'])
 
 
-# # # CONVERT TIMINGS TO USE IN SAVE PATH # # #
 # Convert probe_dur_ms to probe_dur_fr
 # # probe_dur_ms and equivalent ISI_fr cond on 240Hz (total frames is ISI_fr plus 4 for probes)
 '''   
@@ -324,37 +280,15 @@ probe_dur_fr = int(probe_dur_ms * fps / 1000)
 probe_dur_actual_ms = (1 / fps) * probe_dur_fr * 1000
 print(f"\nprobe duration: {probe_dur_actual_ms}ms, or {probe_dur_fr} frames")
 if probe_dur_fr == 0:
-    raise ValueError(f"probe_dur_fr is 0 because probe_dur_ms ({probe_dur_ms}) is less than "
-                     f"one frame on this monitor ({1000/fps})ms")
+    raise ValueError(f"probe_dur_fr is 0 because probe_dur_ms ({probe_dur_ms}) is less than a frame on this monitor ({1000/fps})ms")
 
 
-
-# # # EXPERIMENT HANDLING AND SAVING # # #
-# save each participant's files into separate dir for each ISI
-save_dir = path.join(_thisDir, expName, monitor_name,
-                     participant_name,
-                     f'{participant_name}_{run_number}',
-                     f'probeDur{int(probe_dur_ms)}')
-print(f"\nexperiment save_dir: {save_dir}")
-
-# files are labelled as '_incomplete' unless entire script runs.
-incomplete_output_filename = f'{participant_name}_{run_number}_incomplete'
-save_output_as = path.join(save_dir, incomplete_output_filename)
-
-# Experiment Handler
-thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
-                                 extraInfo=expInfo, runtimeInfo=None,
-                                 savePickle=None, saveWideText=True,
-                                 dataFileName=save_output_as)
-
-
-# # # CONDITIONS AND STAIRCASES # # #
-# # Conditions/staircases: flow_dir (exp, contract) x prelim motion (0, 70, 350)
+# # Conditions/staricases: flow_dir (exp, contract) x prelim motion (0, 70, 350)
 # 1 = inward/contracting, -1 = outward/expanding
 flow_dir_vals = [1, -1]
 
 # 'prelim' (preliminary motion) is how long (ms) the background motion starts before the probe appears
-prelim_vals = [0]  # [0, 70, 350]
+prelim_vals = [0]  # , 70, 350]
 
 # get all possible combinations of these three lists
 combined_conds = [(f, p) for f in flow_dir_vals for p in prelim_vals]
@@ -385,10 +319,35 @@ print(f'\nstair_names_list: {stair_names_list}')
 print(f'n_stairs: {n_stairs}, total_n_trials: {total_n_trials}')
 
 
-# # # MONITOR SETTINGS # # #
+
+
+'''Experiment handling and saving'''
+# save each participant's files into separate dir for each ISI
+save_dir = path.join(_thisDir, expName, monitor_name,
+                     participant_name,
+                     f'{participant_name}_{run_number}',
+                     f'probeDur{int(probe_dur_ms)}')
+print(f"\nexperiment save_dir: {save_dir}")
+
+# files are labelled as '_incomplete' unless entire script runs.
+incomplete_output_filename = f'{participant_name}_{run_number}_incomplete'
+save_output_as = path.join(save_dir, incomplete_output_filename)
+
+# Experiment Handler
+thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
+                                 extraInfo=expInfo, runtimeInfo=None,
+                                 savePickle=None, saveWideText=True,
+                                 dataFileName=save_output_as)
+
+# # COLORS AND LUMINANCE
+
+
+
 '''MONITOR/screen/window details: colour, luminance, pixel size and frame rate'''
+# # COLORS AND LUMINANCES
 maxLum = 106  # 255 RGB
-bgLumProp = .2  # use .2 to match exp1 or .45 to match radial_flow_NM_v2.py
+# minLum = 0.12  # 0 RGB  # todo: this is currently unused
+bgLumProp = .2  # .2  # todo: use .45 to match radial_flow_NM_v2.py, or .2 to match exp1
 if monitor_name == 'OLED':
     bgLumProp = .0
 bgLum = maxLum * bgLumProp
@@ -400,16 +359,14 @@ this_bgColour = [bgColor_rgb1, bgColor_rgb1, bgColor_rgb1]
 
 # Flow colours
 adj_flow_colour = .15
-# Give dots a pale green colour, which is adj_flow_colour difference from the background
+# Give dots a pale green colour, which is adj_flow_colour different to the background
 flow_colour = [this_bgColour[0] - adj_flow_colour, this_bgColour[1], this_bgColour[2] - adj_flow_colour]
 if monitor_name == 'OLED':  # darker green for low contrast against black background
     flow_colour = [this_bgColour[0], this_bgColour[1] + adj_flow_colour / 2, this_bgColour[2]]
 
-print(f"\nthis_bgColour: {this_bgColour}")
-print(f"flow_colour: {flow_colour}")
 
 
-# # # MONITOR DETAILS # # #
+# MONITOR SPEC
 if debug:
     print(f"\nmonitor_name: {monitor_name}")
 mon = monitors.Monitor(monitor_name)
@@ -418,17 +375,7 @@ widthPix = int(mon.getSizePix()[0])
 heightPix = int(mon.getSizePix()[1])
 mon_width_cm = mon.getWidth()  # monitor width in cm
 view_dist_cm = mon.getDistance()  # viewing distance in cm
-view_dist_pix = widthPix / mon_width_cm * view_dist_cm  # used for calculating dist_from_fix (probes at 4 degrees)
-
-
-# values in meters for openGl
-view_dist_m = view_dist_cm / 100  # original code had .50 commented as # 50cm
-mon_width_m = mon_width_cm / 100  # # original code had 0.53 commented as # 53cm
-scrAspect = widthPix / heightPix  # widthPix / heightPix
-mon_height_m = mon_width_m / scrAspect
-print(f"view_dist_m: {view_dist_m:.2f}m")
-print(f"scrAspect: {scrAspect:.2f}, screen size: {mon_width_m:.2f}m x {mon_height_m:.2f}m")
-
+view_dist_pix = widthPix / mon_width_cm * view_dist_cm  # used for calculating visual angle (e.g., probe locations at 4dva)
 
 # screen number
 display_number = 1  # 0 indexed, 1 for external display, 0 for internal
@@ -437,18 +384,13 @@ if monitor_name in ['asus_cal', 'Nick_work_laptop', 'NickMac', 'OLED', 'ASUS_2_1
 
 # WINDOW SPEC
 win = visual.Window(monitor=mon, size=(widthPix, heightPix), colorSpace=this_colourSpace, color=this_bgColour,
-                    units='pix',
-                    # units='cm',
-
-                    screen=display_number, allowGUI=False, fullscr=True,
-                    blendMode='avg',
-
-                    # winType='pyglet',  # might need this to get the openGL dots to work
-                    )
+                    units='pix', screen=display_number, allowGUI=False, fullscr=True)
 
 
 
-# # # PSYCHOPY COMPONENTS # # #
+
+
+'''ELEMENTS'''
 # MOUSE
 myMouse = event.Mouse(visible=False)
 
@@ -460,7 +402,9 @@ fixation = visual.Circle(win, radius=2, units='pix', lineColor='white', fillColo
 
 
 # PROBEs
-probe_size = 10  # can make them larger for testing new configurations etc
+
+# PROBEs
+probe_size = 1  # can make them larger for testing new configurations etc
 probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1), (1, -2), (-1, -2), (-1, -1), (0, -1)]  # 5 pixels
 
 if monitor_name == 'OLED':  # smaller, 3-pixel probes for OLED
@@ -468,36 +412,89 @@ if monitor_name == 'OLED':  # smaller, 3-pixel probes for OLED
                  (2, 0), (1, 0), (1, -1), (0, -1),
                  (0, -2), (-1, -2), (-1, -1), (0, -1)]
 
-
 probe = visual.ShapeStim(win, vertices=probeVert, lineWidth=0, opacity=1, size=probe_size, interpolate=False,
-                         # fillColor=(1.0, 1.0, 1.0),
-                         fillColor=(1.0, 0.0, 0.0),
-                         colorSpace=this_colourSpace)
+                         fillColor=(1.0, 1.0, 1.0), colorSpace=this_colourSpace)
 
-# probes and probe_masks are at dist_from_fix pixels from middle of the screen (converted from degrees)
+# probes and probe_masks are at dist_from_fix pixels from middle of the screen
 dist_from_fix = int((np.tan(np.deg2rad(probe_ecc)) * view_dist_pix) / np.sqrt(2))
 
+'''FLOW DOT SETTINGS'''
+# # # # flow dots settings
+# fustrum dimensions (3d shape containing dots).  Plane distances take into accouunt view_dist,
+# so if the viewer is 50ms from screen, and the plane is at 100cm, the plane is 50cm 'behind' the screen.
+near_plane_cm = 107  # later use 107 to match studies (.3?)
+far_plane_cm = 207  # later use 207 to match studies (.3?)
 
-# MASK BEHIND PROBES (in front of flow dots to keep probes and motion separate)
+# frame dimensions (2d shape containing dots on screen, in real-world cm (measure with ruler)).
+# If dots are at a distance greater then view_dist, then they won't fill the frame, or if at a distance less than view_dist, they will extend beyond the frame.
+frame_size_cm = mon_width_cm  # size of square in cm
+'''To give the illusion of distance, all x and y co-ordinates are scaled by the distance of the dot.
+This scaling is done relative to the reference angle 
+(e.g., the angle of the screen/frame containing stimuli when it is at z=view_dist, typically 57.3cm).
+The reference angle has a scale factor of 1, and all other distances are scaled relative to this.
+x and y values are scaled by multiplying them by the scale factor.
+'''
+ref_angle = find_angle(adjacent=view_dist_cm, opposite=frame_size_cm)
+print(f"ref_angle: {ref_angle}")
+
+
+# motion speed in cm/s
+flow_speed_cm_p_sec = 100  # 1m/sec matches previous flow parsing study (Evans et al. 2020)
+flow_speed_cm_p_fr = flow_speed_cm_p_sec / fps  # 1.66 cm per frame = 1m per second
+
+
+# initialise dots
+n_dots = 300  # use 300 to match flow parsing studies, or 10000 to match our rad flow studies
+flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
+                                    units='cm', nElements=n_dots, sizes=.2,
+                                    colorSpace=this_colourSpace,
+                                    colors=flow_colour,
+                                    )
+# dot lifetime ms
+dot_life_max_ms = 166.67
+dot_life_max_fr = int(dot_life_max_ms / 1000 * fps)
+print(f"dot_life_max_fr: {dot_life_max_fr}")
+
+
+# initialize x and y positions of dots to fit in window (frame_size_cm) at distance 0
+x_array = np.random.uniform(-frame_size_cm/2, frame_size_cm/2, n_dots)  # x values in cm
+y_array = np.random.uniform(-frame_size_cm/2, frame_size_cm/2, n_dots)  # y values in cm
+
+# initialize z values (distance/distance from viewer) in cm
+z_array_cm = np.random.uniform(near_plane_cm, far_plane_cm, n_dots)    # distances in cm
+
+# initialize lifetime of each dot (in frames)
+dot_lifetime_array = np.random.randint(0, dot_life_max_fr, n_dots)
+
+# # MASK BEHIND PROBES
+# MASK BEHIND PROBES (infront of flow dots to keep probes and motion separate)
 mask_size = 150
-probe_mask_colour = 'blue'  # this_bgColour
-# Create a raisedCosine mask array and assign it to a Grating stimulus (grey outside, transparent inside)
+
+
 raisedCosTexture1 = visual.filters.makeMask(256, shape='raisedCosine', fringeWidth=0.3, radius=[1.0, 1.0])
 probeMask1 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size, mask_size),
-                                colorSpace=this_colourSpace, color=probe_mask_colour,
-                                tex=None, units='pix', pos=[dist_from_fix + 1, dist_from_fix + 1],
-                                opacity=1
-                                )
+                                colorSpace=this_colourSpace, color=this_bgColour,
+                                tex=None, units='pix', pos=[dist_from_fix + 1, dist_from_fix + 1])
 probeMask2 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size, mask_size),
-                                colorSpace=this_colourSpace, color=probe_mask_colour,
-                                units='pix', tex=None, pos=[-dist_from_fix - 1, dist_from_fix + 1],
-                                opacity=.5)
+                                colorSpace=this_colourSpace, color=this_bgColour,
+                                units='pix', tex=None, pos=[-dist_from_fix - 1, dist_from_fix + 1])
 probeMask3 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size, mask_size),
                                 colorSpace=this_colourSpace, color=this_bgColour,
                                 units='pix', tex=None, pos=[-dist_from_fix - 1, -dist_from_fix - 1])
 probeMask4 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size, mask_size),
                                 colorSpace=this_colourSpace, color=this_bgColour,
                                 units='pix', tex=None, pos=[dist_from_fix + 1, -dist_from_fix - 1])
+
+
+# get starting distances and scale xys
+# update z and scale xys
+z_array_cm, scaled_xys = new_dots_z_and_pos(x_array=x_array, y_array=y_array, z_array=z_array_cm,
+                                            dots_speed=flow_speed_cm_p_fr, flow_dir=1,
+                                            min_z=near_plane_cm, max_z=far_plane_cm,
+                                            frame_size_cm=frame_size_cm,
+                                            reference_angle=ref_angle)
+flow_dots.xys = scaled_xys
+
 
 
 
@@ -507,6 +504,7 @@ probeMask4 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size
 raisedCosTexture2 = visual.filters.makeMask(heightPix, shape='raisedCosine', fringeWidth=0.6, radius=[1.0, 1.0])
 invRaisedCosTexture = -raisedCosTexture2  # inverts mask to blur edges instead of center
 slab_width = 420
+# todo: try without this on OLED to reduce flicker?
 if monitor_name == 'OLED':
     slab_width = 20
 
@@ -519,93 +517,14 @@ edge_mask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
 
 
 
-# # # OPENGL SETTINGS for 3d projection # # #
-
-# Set up the 3D projection matrix
-# Frustum - a cone (or pyramid with the top cut off) from viewer, to screen, to onscreen items at 'distance'.
-frustum = vt.computeFrustum(mon_width_m, scrAspect, view_dist_m, nearClip=0.01, farClip=10000.0)
-P = vt.perspectiveProjectionMatrix(*frustum)
-
-# Transformation for points (model/view matrix) - subtract view dist to place things in space
-MV = mt.translationMatrix((0.0, 0.0, -view_dist_m))  # X, Y, Z
-
-win.projectionMatrix = P
-win.viewMatrix = MV
-
-# set up for a different background colour in openGL
-gl.glClearColor(bgColor_rgb1, bgColor_rgb1, bgColor_rgb1, 0)  # final value is alpha (transparency)
-gl.glClear(gl.GL_COLOR_BUFFER_BIT)
-
-
-
-
-
-# # # FLOW DOT SETTINGS (for openGL) # # #
-n_dots = 300  # number of dots
-
-
-# dot distance settings - openGL uses negative values for z axis, so closest is smaller -ve, furthest is larger -ve
-closest_z = -.5  # .5m away, from Evals et al., 2020
-furthest_z = -1.5  # 1.5m away, from Evals et al., 2020
-closest_dist_m = closest_z - view_dist_m  # combines view_dist and z value
-furthest_dist_m = furthest_z - view_dist_m  # combines view_dist and z value
-if debug:
-    print(f"closes_dist_m: {closest_dist_m}m = closest_z: {closest_z}m - view_dist_m: {view_dist_m}m")
-    print(f"furthest_dist_m: {furthest_dist_m}m = furthest_z: {furthest_z}m - view_dist_m: {view_dist_m}m")
-
-# initialise z array with random distances (meters) based on values above.
-z_array = np.random.uniform(low=closest_z, high=furthest_z, size=n_dots)
-
-
-# dot height and width settings
-''' For the dots to fill the screen, but be a distance 'behind' the screen, 
-they should be be drawn in a space 'bigger' than the screen (which then appears smaller at distance).
-I first get the visual angle of the screen, using its size and the viewing distance.  
-(or I can scale it so the dots fit on the screen with small border, e.g., 90% of the screen size).
-I can then work out how big an object would be if it had the same visual angle, but was at a further distance.'''
-scale = .9  # use 1.0 for full screen
-
-# get the angle of the screen width and height
-dot_frame_angles = vt.visualAngle(size=[mon_width_m * scale, mon_height_m * scale], distance=view_dist_m, degrees=True)
-if debug:
-    print(f"dot_frame_angles (w, h): {dot_frame_angles} degrees")
-
-# use visual angle and distance (to screen, and then beyond) to get dot array size in meters
-dot_fr_width_m = height_from_dist_and_deg(distance=closest_dist_m, visual_angle=dot_frame_angles[0])
-dot_fr_height_m = height_from_dist_and_deg(distance=closest_dist_m, visual_angle=dot_frame_angles[1])
-if debug:
-    print(f"dot frame (meters): ({dot_fr_width_m:.2f}, {dot_fr_height_m:.2f})")
-
-# initialise dot arrays with random position (meters) based on size calculated above.
-x_array = np.random.uniform(low=-dot_fr_width_m/2, high=dot_fr_width_m/2, size=n_dots)
-y_array = np.random.uniform(low=-dot_fr_height_m/2, high=dot_fr_height_m/2, size=n_dots)
-
-
-# flow speed settings
-flow_speed_m_p_s = 1.2  # 1m/sec matches previous flow parsing study (Evans et al. 2020)
-flow_speed_m_p_fr = flow_speed_m_p_s / fps  # 1.66 cm per frame = 1m per second
-if debug:
-    print(f"flow_speed_m_p_fr: {flow_speed_m_p_fr:.3f}m per frame")
-
-
-# dot lifetime settings - dots disappear after a fixed time and are redrawn with new x, y and z values.
-dot_life_max_ms = 167  # maximum lifetime in ms, 167 to match Evans et al., 2020.
-dot_life_max_fr = int(dot_life_max_ms / 1000 * fps)  # max life in frames
-if debug:
-    print(f"dot_life_max_fr: {dot_life_max_fr}")
-
-# initialize lifetime of each dot (in frames)
-dot_lifetime_array = np.random.randint(0, dot_life_max_fr, n_dots)
-
-# when dots are redrawn with a new z value, they should be at least this far away the boundary
-# otherwise they might have to be re-drawn after a couple of frames, which could lead to flickering.
-max_dist_in_life = flow_speed_m_p_fr * dot_life_max_fr
-
-
-# # # TIMINGS - expected frame duration and tolerance # # #
+'''Timing: expected frame duration and tolerance
+with frame_tolerance_prop = .24, frame_tolerance_ms == 1ms at 240Hz, 2ms at 120Hz, 4ms at 60Hz
+For a constant frame_tolerance_ms of 1ms, regardless of fps, use frame_tolerance_prop = 1/expected_fr_sec
+Psychopy records frames in seconds, but I prefer to think in ms. So wo variables are labelled with _sec or _ms.
+'''
 expected_fr_sec = 1 / fps
 expected_fr_ms = expected_fr_sec * 1000
-frame_tolerance_prop = 1 / expected_fr_ms  # frame_tolerance_ms == 1ms, regardless of fps.
+frame_tolerance_prop = 1 / expected_fr_ms  # frame_tolerance_ms == 1ms, regardless of fps..
 max_fr_dur_sec = expected_fr_sec + (expected_fr_sec * frame_tolerance_prop)
 min_fr_dur_sec = expected_fr_sec - (expected_fr_sec * frame_tolerance_prop)
 frame_tolerance_ms = (max_fr_dur_sec - expected_fr_sec) * 1000
@@ -626,7 +545,27 @@ dropped_fr_trial_counter = 0  # counter for how many trials have dropped frames
 dropped_fr_trial_x_locs = []  # nested list of [1st fr of dropped fr trial, 1st fr of next trial] for trials with dropped frames
 
 
-# # # BREAKS  - every n trials # # #
+
+'''Messages to display on screen'''
+instructions = visual.TextStim(win=win, name='instructions', font='Arial', height=20,
+                               color='white', colorSpace=this_colourSpace,
+                               wrapWidth=widthPix / 2,
+                               text="\n\n\nFocus on the fixation circle at the centre of the screen.\n\n"
+                                    "A small white target will briefly appear on screen.\n\n"
+                                    "Press [i] if you see the probe moving inward (towards centre of screen),\n"
+                                    "Press [o] if you see the probe moving outward (towards edge of screen).\n\n"
+                                    "If you aren't sure, just guess!\n\n"
+                                    "Press [Space bar] to start")
+
+
+too_many_dropped_fr = visual.TextStim(win=win, name='too_many_dropped_fr',
+                                      text="The experiment had quit as the computer is dropping frames.\n"
+                                           "Sorry for the inconvenience.\n"
+                                           "Please contact the experimenter.\n\n"
+                                           "Press any key to return to the desktop.",
+                                      font='Arial', height=20, colorSpace=this_colourSpace)
+
+# BREAKS
 max_trials = total_n_trials + max_dropped_fr_trials  # expected trials plus repeats
 max_without_break = 120  # limit on number of trials without a break
 n_breaks = max_trials // max_without_break  # number of breaks
@@ -637,29 +576,6 @@ else:
 break_dur = 30
 if debug:
     print(f"\ntake a {break_dur} second break every {take_break} trials ({n_breaks} breaks in total).")
-
-
-# # # ON-SCREEN MESSAGES # # #
-instructions = visual.TextStim(win=win, name='instructions', font='Arial', height=20,
-                               color='white', colorSpace=this_colourSpace,
-                               wrapWidth=widthPix / 2,
-                               text="\n\n\nFocus on the fixation circle at the centre of the screen.\n\n"
-                                    "A small white target will briefly appear on screen.\n\n"
-                                    "Press 'I' or '1' if you see the probe moving inward (towards centre of screen),\n"
-                                    "Press 'O' or '0' if you see the probe moving outward (towards edge of screen).\n\n"
-                                    "If you aren't sure, just guess!\n\n"
-                                    "Press any key to start")
-
-
-too_many_dropped_fr = visual.TextStim(win=win, name='too_many_dropped_fr',
-                                      text="The experiment had quit as the computer is dropping frames.\n"
-                                           "Sorry for the inconvenience.\n"
-                                           "Please contact the experimenter.\n\n"
-                                           "Press any key to return to the desktop.",
-                                      font='Arial', height=20, colorSpace=this_colourSpace)
-
-
-
 break_text = f"Break\nTurn on the light and take at least {break_dur} seconds break.\n" \
              "Keep focussed on the fixation circle in the middle of the screen.\n" \
              "Remember, if you don't see the target, just guess!"
@@ -672,10 +588,15 @@ end_of_exp = visual.TextStim(win=win, name='end_of_exp',
                              text=end_of_exp_text, color='white',
                              font='Arial', height=20, colorSpace=this_colourSpace)
 
+# show instructions screen
+while not event.getKeys():
+    fixation.draw()
+    instructions.draw()
+    win.flip()
 
 
-# # # PRIORITY to increase speed # # #
 # # turn on high priority here. (and turn off garbage collection)
+import gc
 gc.disable()
 core.rush(True)
 if monitor_name == 'OLED':
@@ -690,7 +611,7 @@ I need to convert it from cm/s to pixels/frame, which depends on the monitor's r
 """
 start_cm_per_s = 0.8  # starting value in cm per second
 start_pix_per_s = cm2pix(cm=start_cm_per_s, monitor=mon)  # convert to pixels per second
-start_pix_per_fr = start_pix_per_s / fps  # convert to pixels per frame
+start_pix_per_fr = int(start_pix_per_s / fps)  # convert to pixels per frame
 if start_pix_per_fr < 1:
     start_pix_per_fr = 1
 if debug:
@@ -698,10 +619,8 @@ if debug:
           f"start_pix_per_fr: {start_pix_per_fr}pix/fr")
 
 
-
-
-stairStart = start_pix_per_fr  # 3  # starting value, for motion in pixels per frame
-miniVal = -10  # Do I need to adjust these for slower monitors?
+stairStart = start_pix_per_fr
+miniVal = -10
 maxiVal = 10
 
 
@@ -714,11 +633,11 @@ for stair_idx in range(n_stairs):
     thisInfo['flow_name'] = flow_name_list[stair_idx]
     thisInfo['prelim_bg_flow_ms'] = prelim_conds_list[stair_idx]
 
+
     thisStair = Staircase(name=stair_names_list[stair_idx],
                           type='simple',
                           # value=stairStart,
-                          # todo: put variable start dir back in
-                          value=stairStart * -flow_dir_list[stair_idx],  # each stair starts with motion opposite to bg flow
+                          value=stairStart * -flow_dir_list[stair_idx],  # start with motion opposite to bg
                           C=stairStart * 0.6,  # initial step size, as prop of maxLum
                           minRevs=3,
                           minTrials=n_trials_per_stair,
@@ -729,30 +648,16 @@ for stair_idx in range(n_stairs):
     stairs.append(thisStair)
 
 
-# # # SHOW INSTRUCTIONS # # #
-while not event.getKeys():
-    # fixation.draw()
+# EXPERIMENT
+# trial_number = 0
+# print('\n*** exp loop*** \n\n')
 
-    probeMask1.draw()
-    probeMask2.draw()
-    probeMask3.draw()
-    probeMask4.draw()
-    edge_mask.draw()
-
-    fixation.draw()
-
-
-    instructions.draw()
-    win.flip()
-
-
-# # # INITIALIZE COUNTERS # # #
+'''Run experiment'''
+# counters
 trial_num_inc_repeats = 0  # number of trials including repeated trials
-trial_number = 0  # the number of the trial for the output file (excluding repeats)
+trial_number = 0  # the number of the trial for the output file
 
 
-
-# # # RUN EXPERIMENT # # #
 for step in range(n_trials_per_stair):
     np.random.shuffle(stairs)  # shuffle order each time after they've all been run.
     for thisStair in stairs:
@@ -765,10 +670,9 @@ for step in range(n_trials_per_stair):
             trial_number += 1
             trial_num_inc_repeats += 1
             stair_idx = thisStair.extraInfo['stair_idx']
-            # if debug:
-            print(f"\n({trial_num_inc_repeats}) trial_number: {trial_number}, "
-                  f"stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
-
+            if debug:
+                print(f"\n({trial_num_inc_repeats}) trial_number: {trial_number}, "
+                      f"stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
 
 
             # conditions (flow_dir, prelim)
@@ -779,18 +683,14 @@ for step in range(n_trials_per_stair):
                 print(f"flow_dir: {flow_dir}, flow_name: {flow_name}, prelim_bg_flow_ms: {prelim_bg_flow_ms}")
 
 
-            # boundaries for z position (distance from screen)
-            if flow_dir == -1:  # expanding
-                z_start_bounds = [closest_z - max_dist_in_life, furthest_z]
-            else:  # contracting, flow_dir == 1
-                z_start_bounds = [closest_z, furthest_z + max_dist_in_life]
-
-
+            # probe_direction starts in opposite direction to flow_dir
+            # todo: change to probe_pix_per_fr
             probeSpeed = thisStair.next()
-            # todo: put prbeSpeed back in
-            # probeSpeed = 0.001
             if debug:
-                print(f"probeSpeed: {probeSpeed}")
+                print(f"probeSpeed: {probeSpeed}, probeSpeed: {probeSpeed}")
+
+
+
 
 
             # timing for background motion converted to frames (e.g., 70ms is 17frames at 240Hz).
@@ -803,11 +703,13 @@ for step in range(n_trials_per_stair):
 
             # PROBE LOCATIONS
             # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
-            # corner = np.random.choice([45, 135, 225, 315])
-            # todo: put corner back in
-            corner = 45
-            if debug:
-                print(f'corner: {corner}, flow_dir: {flow_dir}, probeSpeed: {probeSpeed}')
+            corner = np.random.choice([45, 135, 225, 315])
+
+            print(f'\tcorner: {corner}, flow_dir: {flow_dir}, probeSpeed: {probeSpeed}')
+            # dist_from_fix is a constant giving distance form fixation,
+            # dist_from_fix was previously 2 identical variables x_prob & y_prob.
+            # dist_from_fix = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
+            # x_prob = y_prob = round((tan(np.deg2rad(probe_ecc)) * viewdistPix) / sqrt(2))
 
             # setting x and y positions depending on the side
             # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
@@ -888,25 +790,38 @@ for step in range(n_trials_per_stair):
                     if record_fr_durs:
                         win.recordFrameIntervals = False
 
-                # FIXATION until end of fixation interval
+                # FIXATION
                 if end_fix_fr >= frameN > 0:
-
-                    probeMask1.draw()
-                    probeMask2.draw()
-                    probeMask3.draw()
-                    probeMask4.draw()
-                    edge_mask.draw()
-
-                    fixation.draw()
+                    # before fixation has finished
 
                     # draw flow_dots but with no motion
-                    draw_flow_dots(x_array=x_array, y_array=y_array, z_array=z_array,
-                                   flow_colour_rgb1=flow_colour)
+                    flow_dots.draw()
+                    probeMask1.draw()
+                    probeMask2.draw()
+                    probeMask3.draw()
+                    probeMask4.draw()
+                    edge_mask.draw()
 
-                # preliminary background motion between fixation and probe intervals
-                elif end_bg_motion_fr >= frameN > end_fix_fr:  
-                    
+                    fixation.draw()
 
+                # Background motion prior to probe1
+                elif end_bg_motion_fr >= frameN > end_fix_fr:
+                    # after fixation, before end of background motion
+                    # update dot lifetime + 1 and get  new x and y positions for dots that are re-born.
+                    dotlife_array, x_array, y_array = update_dotlife(dotlife_array=dot_lifetime_array,
+                                                                     dot_max_fr=dot_life_max_fr,
+                                                                     x_array=x_array, y_array=y_array,
+                                                                     dot_boundary=frame_size_cm)
+
+                    # update z and scale xys
+                    z_array_cm, scaled_xys = new_dots_z_and_pos(x_array=x_array, y_array=y_array, z_array=z_array_cm,
+                                                                dots_speed=flow_speed_cm_p_fr, flow_dir=flow_dir,
+                                                                min_z=near_plane_cm, max_z=far_plane_cm,
+                                                                frame_size_cm=frame_size_cm,
+                                                                reference_angle=ref_angle)
+                    flow_dots.xys = scaled_xys
+
+                    flow_dots.draw()
 
                     probeMask1.draw()
                     probeMask2.draw()
@@ -914,36 +829,30 @@ for step in range(n_trials_per_stair):
                     probeMask4.draw()
                     edge_mask.draw()
 
-                    # fixation.setRadius(3)
                     fixation.draw()
-
-                    # update distance array: subtract as OpenGL distance is negative (psychopy was +ive).
-                    z_array -= flow_speed_m_p_fr * flow_dir  # distance to move the dots per frame towards/away from viewer
-
-                    # check if any z values are out of bounds (too close when expanding or too far when contracting),
-                    # if so, set their dot life to max, so they are given new x, y and z values by update_dotlife() below.
-                    dot_lifetime_array = check_z_start_bounds(z_array, closest_z, furthest_z, dot_life_max_fr,
-                                                              dot_lifetime_array, flow_dir)
-
-                    # update dot lifetime, give new x, y, z coords to dots whose lifetime is max.
-                    dotlife_array, x_array, y_array, z_array = update_dotlife(dotlife_array=dot_lifetime_array,
-                                                                              dot_max_fr=dot_life_max_fr,
-                                                                              x_array=x_array, y_array=y_array,
-                                                                              z_array=z_array,
-                                                                              x_bounds=dot_fr_width_m / 2,
-                                                                              y_bounds=dot_fr_height_m / 2,
-                                                                              z_start_bounds=z_start_bounds)
-                    # draw stimuli
-                    draw_flow_dots(x_array=x_array, y_array=y_array, z_array=z_array,
-                                   flow_colour_rgb1=flow_colour)
-
-
 
                     # reset timer to start with probe1 presentation.
                     resp.clock.reset()
 
-                # PROBE interval (with background motion), after preliminary background motion, before response
+                # PROBE 1
                 elif end_probe_fr >= frameN > end_bg_motion_fr:
+                    # after background motion, before end of probe1 interval
+
+                    # update dot lifetime + 1 and get  new x and y positions for dots that are re-born.
+                    dotlife_array, x_array, y_array = update_dotlife(dotlife_array=dot_lifetime_array,
+                                                                     dot_max_fr=dot_life_max_fr,
+                                                                     x_array=x_array, y_array=y_array,
+                                                                     dot_boundary=frame_size_cm)
+
+                    # update z and scale xys
+                    z_array_cm, scaled_xys = new_dots_z_and_pos(x_array=x_array, y_array=y_array, z_array=z_array_cm,
+                                                                dots_speed=flow_speed_cm_p_fr, flow_dir=flow_dir,
+                                                                min_z=near_plane_cm, max_z=far_plane_cm,
+                                                                frame_size_cm=frame_size_cm,
+                                                                reference_angle=ref_angle)
+                    flow_dots.xys = scaled_xys
+
+                    flow_dots.draw()
 
                     probeMask1.draw()
                     probeMask2.draw()
@@ -951,10 +860,10 @@ for step in range(n_trials_per_stair):
                     probeMask4.draw()
                     edge_mask.draw()
 
-                    # fixation.setRadius(3)
                     fixation.draw()
 
-                    # draw moving probe
+
+                    # draw probe if 1st interval
                     if corner == 45:  # top-right
                         probe_y = probe_y - probeSpeed
                         probe_x = probe_x - probeSpeed
@@ -970,39 +879,14 @@ for step in range(n_trials_per_stair):
                     probe.setPos([x_position + probe_x, y_position + probe_y])
                     probe.draw()
 
-                    # update distance array: subtract as OpenGL distance is negative (psychopy was +ive).
-                    z_array -= flow_speed_m_p_fr * flow_dir  # distance to move the dots per frame towards/away from viewer
-
-                    # check if any z values are out of bounds (too close when expanding or too far when contracting),
-                    # if so, set their dot life to max, so they are given new x, y and z values by update_dotlife() below.
-                    dot_lifetime_array = check_z_start_bounds(z_array, closest_z, furthest_z, dot_life_max_fr,
-                                                              dot_lifetime_array, flow_dir)
-
-                    # update dot lifetime, give new x, y, z coords to dots whose lifetime is max.
-                    dotlife_array, x_array, y_array, z_array = update_dotlife(dotlife_array=dot_lifetime_array,
-                                                                              dot_max_fr=dot_life_max_fr,
-                                                                              x_array=x_array, y_array=y_array,
-                                                                              z_array=z_array,
-                                                                              x_bounds=dot_fr_width_m / 2,
-                                                                              y_bounds=dot_fr_height_m / 2,
-                                                                              z_start_bounds=z_start_bounds)
-                    # draw stimuli
-                    draw_flow_dots(x_array=x_array, y_array=y_array, z_array=z_array,
-                                   flow_colour_rgb1=flow_colour)
 
 
-
-                    # # idiot check
-                    # '''I want to know if the probe is moving towards or away from the centre of the screen. (0, 0)'''
-                    # # if debug:
-                    # print(f"\n{frameN}. probe_x: {probe_x}, probe_y: {probe_y}")
-
-
-                # ANSWER - after probe interval, before next trial
+                # ANSWER
+                # if frameN > t_interval_2:
                 elif frameN > end_probe_fr:
-
-
-
+                    # after probe 2 interval
+                    # draw flow_dots but with no motion
+                    flow_dots.draw()
                     probeMask1.draw()
                     probeMask2.draw()
                     probeMask3.draw()
@@ -1011,11 +895,6 @@ for step in range(n_trials_per_stair):
 
                     fixation.setRadius(2)
                     fixation.draw()
-
-                    # draw flow_dots but with no motion
-                    draw_flow_dots(x_array=x_array, y_array=y_array, z_array=z_array,
-                                   flow_colour_rgb1=flow_colour)
-
 
                     # ANSWER
                     resp = event.BuilderKeyResponse()
@@ -1027,7 +906,7 @@ for step in range(n_trials_per_stair):
                         # a response ends the routine
                         continueRoutine = False
 
-                        
+
 
 
                 # regardless of frameN
@@ -1064,9 +943,8 @@ for step in range(n_trials_per_stair):
             if probeSpeed > 0:
                 actual_probe_dir = 'in'
             print(f"\nprobeSpeed: {probeSpeed}, actual_probe_dir: {actual_probe_dir}")
-            
-            
-            # for output file, to allow comparison between monitors 
+
+            # for output file, to allow comparison between monitors
             probeSpeed_cm_per_s = pix2cm(pixels=probeSpeed * fps, monitor=mon)
 
             '''sort frame interval times to use for plots later'''
@@ -1154,7 +1032,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('probeSpeed', probeSpeed)
         thisExp.addData('actual_probe_dir', actual_probe_dir)
         thisExp.addData('probeSpeed_cm_per_s', probeSpeed_cm_per_s)
-        
+
         thisExp.addData('response', response)
         # thisExp.addData('rel_answer', rel_answer)
         thisExp.addData('trial_response', resp.corr)
@@ -1166,8 +1044,8 @@ for step in range(n_trials_per_stair):
         thisExp.addData('probe_dur_fr', probe_dur_fr)
 
 
-        thisExp.addData('flow_speed_m_p_s', flow_speed_m_p_s)
-        thisExp.addData('flow_speed_m_p_fr', flow_speed_m_p_fr)
+        thisExp.addData('flow_speed_cm_p_sec', flow_speed_cm_p_sec)
+        thisExp.addData('flow_speed_cm_p_fr', flow_speed_cm_p_fr)
         thisExp.addData('n_dots', n_dots)
         thisExp.addData('dot_life_max_ms', dot_life_max_ms)
         # thisExp.addData('probeLum', probeLum)
@@ -1228,5 +1106,3 @@ else:
     # close and quit once a key is pressed
     win.close()
     core.quit()
-
-

@@ -8,16 +8,17 @@ from flow_parsing_psignifit_analysis import d_average_participant, make_average_
 # # then run script d to get master lists and averages
 # exp_path = '/Users/nickmartin/Library/CloudStorage/OneDrive-CardiffUniversity/PycharmProjects/Cardiff/flow_parsing'
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing"
-exp_path = r"C:\Users\sapnm4\PycharmProjects\Cardiff\Nick_scripts\flow_parsing_NM_v2"
+exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing_NM_v3"
 print(f"exp_path: {exp_path}")
 convert_path1 = os.path.normpath(exp_path)
 print(f"convert_path1: {convert_path1}")
 exp_path = convert_path1
-stair_list = [0, 1]
-stair_names_list = ['0_fl_in_pr_out', '1_fl_out_pr_in']
-participant_list = ['Nicktest_26092023']
-# probe_dur_list = [4, 6, 9]
-all_probe_dur_list = [1, 4, 6, 9, 18]
+
+monitor = 'asus_cal'  # OLED, 'Nick_work_laptop'
+exp_path = os.path.join(exp_path, monitor)
+
+participant_list = ['Nick']
+all_probe_dur_list = [8, 16, 25, 33, 41, 50, 58, 66]
 
 
 verbose = True
@@ -54,19 +55,18 @@ for p_idx, participant_name in enumerate(participant_list):
         print(f'\nrun_idx {run_idx}: running analysis for '
               f'{participant_name}, {run_dir}, {participant_name}_{r_idx_plus}\n')
 
-        # for probe_dur in probe_dur_list:
-        #     probe_dur_dir = f'probeDur{probe_dur}'
+
         save_path = f'{root_path}{os.sep}{run_dir}'
 
-        # # search to automatically get updated isi_list
+        # # search to automatically get updated probe dur (int) list
         dir_list = os.listdir(save_path)
-        probe_dur_list = []
+        probe_dur_int_list = []
         for dur in all_probe_dur_list:
             check_dir = f'probeDur{dur}'
             if check_dir in dir_list:
-                probe_dur_list.append(dur)
-        print(f'probe_dur_list: {probe_dur_list}')
-        # run_isi_names_list = [f'ISI_{i}' for i in probe_dur_list]
+                probe_dur_int_list.append(dur)
+        print(f'probe_dur_int_list: {probe_dur_int_list}')
+        # run_isi_names_list = [f'ISI_{i}' for i in probe_dur_int_list]
 
         # don't delete this (p_name = participant_name),
         # needed to ensure names go name1, name2, name3 not name1, name12, name123
@@ -75,13 +75,21 @@ for p_idx, participant_name in enumerate(participant_list):
         '''a'''
         p_name = f'{participant_name}_{r_idx_plus}'
 
-        run_data_df = a_data_extraction(p_name=p_name, run_dir=save_path, dur_list=probe_dur_list, verbose=verbose)
+        run_data_df = a_data_extraction(p_name=p_name, run_dir=save_path, dur_list=probe_dur_int_list, verbose=verbose)
         print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}\n")
 
         run_data_path = os.path.join(save_path, 'ALL_durations_sorted.csv')
         print(f"run_data_path: {run_data_path}\n")
         run_data_df = pd.read_csv(run_data_path)
         print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}\n")
+
+
+        # get stairlist and stair_names_list from run_data_df
+        stair_list = run_data_df['stair'].unique().tolist()
+        stair_names_list = run_data_df['stair_name'].unique().tolist()
+
+        probe_dur_list = run_data_df['probe_dur_ms'].unique().tolist()
+
 
 
         '''get psignifit thresholds df'''
@@ -101,7 +109,7 @@ for p_idx, participant_name in enumerate(participant_list):
 
         '''b3'''
         run_data_path = os.path.join(save_path, 'ALL_durations_sorted.csv')
-        b3_plot_staircase(run_data_path, thr_col='probeSpeed', resp_col='rel_answer',  # 'answer'
+        b3_plot_staircase(run_data_path, thr_col='probeSpeed', resp_col='response',  # 'answer'
                           show_plots=show_plots, verbose=verbose)
 
     '''d participant averages'''

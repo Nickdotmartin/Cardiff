@@ -199,7 +199,7 @@ pd.options.display.float_format = "{:,.2f}".format
 #                  cols_to_keep=['congruent', 'separation'],
 #                  cols_to_change=['dur_1', 'dur_4', 'dur_6'],
 #                  cols_to_change_show='probeLum',
-#                  new_col_name='probe_dur', strip_from_cols='dur_', verbose=True):
+#                  new_col_name='probe_dur_ms', strip_from_cols='dur_', verbose=True):
 #     """
 #     Function to convert wide-form_df to long-form_df.  e.g., if there are several
 #     columns showing durs (cols_to_change), this puts them all into one column (new_col_name).
@@ -534,7 +534,7 @@ pd.options.display.float_format = "{:,.2f}".format
 #     ax.set_xlabel('Probe separation in diagonal pixels')
 #     ax.set_ylabel('Probe Luminance')
 #
-#     ax.legend(labels=dur_name_list, title='probe_dur',
+#     ax.legend(labels=dur_name_list, title='probe_dur_ms',
 #               shadow=True,
 #               # place lower left corner of legend at specified location.
 #               loc='lower left', bbox_to_anchor=(0.96, 0.5))
@@ -720,10 +720,10 @@ pd.options.display.float_format = "{:,.2f}".format
 #
 # def plot_w_errors_either_x_axis(wide_df, cols_to_keep=['congruent', 'separation'],
 #                                 cols_to_change=['dur_1', 'dur_4', 'dur_6'],
-#                                 cols_to_change_show='probeLum', new_col_name='probe_dur',
+#                                 cols_to_change_show='probeLum', new_col_name='probe_dur_ms',
 #                                 strip_from_cols='dur_',
 #                                 x_axis='separation', y_axis='probeLum',
-#                                 hue_var='probe_dur', style_var='congruent', style_order=[1, -1],
+#                                 hue_var='probe_dur_ms', style_var='congruent', style_order=[1, -1],
 #                                 error_bars=False,
 #                                 jitter=False,
 #                                 log_scale=False,
@@ -918,12 +918,12 @@ pd.options.display.float_format = "{:,.2f}".format
 #         diff_df.columns = pos_sep_list
 #         dur_names_list = list(diff_df.index)
 #         x_tick_labels = dur_names_list
-#         x_axis_label = 'probe_dur'
+#         x_axis_label = 'probe_dur_ms'
 #         legend_title = 'Separation'
 #     else:
 #         x_tick_labels = pos_sep_list
 #         x_axis_label = 'Separation'
-#         legend_title = 'probe_dur'
+#         legend_title = 'probe_dur_ms'
 #
 #     if verbose:
 #         print(f'\ndiff_df:\n{diff_df}')
@@ -1396,12 +1396,12 @@ pd.options.display.float_format = "{:,.2f}".format
 #     # add central mirror symmetry line
 #     plt.axvline(x=6, color='grey', linestyle='dashed')
 #
-#     if 'probe_dur' in str(x_tick_labels[0]).upper():
-#         heatmap.set_xlabel('probe_dur')
+#     if 'probe_dur_ms' in str(x_tick_labels[0]).upper():
+#         heatmap.set_xlabel('probe_dur_ms')
 #         heatmap.set_ylabel('Separation')
 #     else:
 #         heatmap.set_xlabel('Separation')
-#         heatmap.set_ylabel('probe_dur')
+#         heatmap.set_ylabel('probe_dur_ms')
 #
 #     if fig_title is not None:
 #         plt.title(fig_title)
@@ -1471,7 +1471,7 @@ def a_data_extraction(p_name, run_dir, dur_list, save_all_data=True, verbose=Tru
         this_dur_df = this_dur_df.sort_values(by=['stair', 'trial_number'])
 
         # add duration column for multi-indexing
-        # this_dur_df.insert(0, 'probe_dur', duration)
+        # this_dur_df.insert(0, 'probe_dur_ms', duration)
         this_dur_df.insert(1, 'srtd_trial_idx', trial_numbers)
         if verbose:
             print(f'df sorted by stair: {type(this_dur_df)}\n{this_dur_df}')
@@ -1576,7 +1576,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeSpeed', resp_col='answer',
 
     # get list of dur and stair values to loop through
     stair_list = all_data_df['stair'].unique()
-    dur_list = all_data_df['probe_dur'].unique()
+    dur_list = all_data_df['probe_dur_ms'].unique()
     # get dur string for column names
     dur_name_list = [f'dur_{i}' for i in dur_list]
 
@@ -1638,7 +1638,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeSpeed', resp_col='answer',
     for dur_idx, dur in enumerate(dur_list):
 
         # get df for this dur only
-        dur_df = all_data_df[all_data_df['probe_dur'] == dur]
+        dur_df = all_data_df[all_data_df['probe_dur_ms'] == dur]
         dur_name = dur_name_list[dur_idx]
         print(f"\n{dur_idx}. staircase for dur: {dur}, {dur_name}")
 
@@ -1913,10 +1913,10 @@ def b3_plot_staircase(all_data_path, thr_col='probeSpeed', resp_col='answer',
 #
 #     plot_w_errors_either_x_axis(wide_df=psig_thr_df, cols_to_keep=['congruent', 'separation'],
 #                                 cols_to_change=dur_name_list,
-#                                 cols_to_change_show='probeLum', new_col_name='probe_dur',
+#                                 cols_to_change_show='probeLum', new_col_name='probe_dur_ms',
 #                                 strip_from_cols='dur_',
 #                                 x_axis='separation', y_axis='probeLum', x_tick_vals=[0, 1, 2, 3, 6, 18],
-#                                 hue_var='probe_dur', style_var='congruent', style_order=[1, -1],
+#                                 hue_var='probe_dur_ms', style_var='congruent', style_order=[1, -1],
 #                                 error_bars=True, even_spaced_x=True, jitter=False,
 #                                 fig_title=fig4_title, fig_savename=fig4_savename,
 #                                 save_path=save_path, verbose=verbose)
@@ -1934,9 +1934,9 @@ def b3_plot_staircase(all_data_path, thr_col='probeSpeed', resp_col='answer',
 #
 #     plot_w_errors_either_x_axis(wide_df=psig_thr_df, cols_to_keep=['congruent', 'separation'],
 #                                 cols_to_change=dur_name_list,
-#                                 cols_to_change_show='probeLum', new_col_name='probe_dur',
+#                                 cols_to_change_show='probeLum', new_col_name='probe_dur_ms',
 #                                 strip_from_cols='dur_',
-#                                 x_axis='probe_dur', y_axis='probeLum',
+#                                 x_axis='probe_dur_ms', y_axis='probeLum',
 #                                 hue_var='separation', style_var='congruent', style_order=[1, -1],
 #                                 error_bars=True, even_spaced_x=True, jitter=False,
 #                                 fig_title=fig5_title, fig_savename=fig5_savename,
@@ -2370,8 +2370,8 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     plot_w_errors_either_x_axis(wide_df=all_df, cols_to_keep=['stair_names', 'stair'],
                                 cols_to_change=dur_values_list,
-                                cols_to_change_show='probeSpeed', new_col_name='probe_dur',
-                                strip_from_cols=None, x_axis='probe_dur', y_axis='probeSpeed',
+                                cols_to_change_show='probeSpeed', new_col_name='probe_dur_ms',
+                                strip_from_cols=None, x_axis='probe_dur_ms', y_axis='probeSpeed',
                                 hue_var='stair_names', style_var=None, style_order=None,
                                 error_bars=True, even_spaced_x=True,
                                 x_tick_vals=dur_values_list,

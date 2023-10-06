@@ -701,7 +701,8 @@ adj_flow_colour = .15
 flow_colour = [this_bgColour[0] - adj_flow_colour, this_bgColour[1], this_bgColour[2] - adj_flow_colour]
 if monitor_name == 'OLED':  # darker green for low contrast against black background
     flow_colour = [this_bgColour[0], this_bgColour[1] + adj_flow_colour / 2, this_bgColour[2]]
-
+print(f"\nthis_bgColour: {this_bgColour}")
+print(f"flow_colour: {flow_colour}")
 
 # MONITOR SPEC
 if debug:

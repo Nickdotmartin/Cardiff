@@ -21,7 +21,7 @@ def results_csv_to_np_for_psignifit(csv_path, duration,
                                     # sep, 
                                     p_run_name, stair_col='stair',
                                     stair_levels=None, 
-                                    thr_col='probeSpeed', resp_col='rel_answer',
+                                    thr_col='probeSpeed', resp_col='response',
                                     quartile_bins=True, n_bins=10, save_np_path=None,
                                     verbose=True):
 
@@ -86,11 +86,16 @@ def results_csv_to_np_for_psignifit(csv_path, duration,
         print(f"{thr_col} min: {thr_min}, max: {thr_max}")
 
     # check n_resp_in in raw_df
-    n_resp_in = sum(list(raw_data_df['rel_answer']))
-    n_resp_out = (raw_data_df['rel_answer'] == 0).sum()
+    n_resp_in = sum(list(raw_data_df['response']))
+    n_resp_out = (raw_data_df['response'] == 0).sum()
     if verbose:
         print(f'n_resp_in: {n_resp_in}')
         print(f'n_resp_out: {n_resp_out}')
+
+    # check stair_names
+    stair_name = sorted(list(raw_data_df['stair_name'].unique()))
+    if len(stair_name) != 1:
+        raise ValueError(f'Number of stair_names ({len(stair_name)}) is not 1. ')
 
     # put responses into bins (e.g., 10)
     # # use pd.qcut for bins containing an equal number of items based on distribution.
@@ -124,7 +129,7 @@ def results_csv_to_np_for_psignifit(csv_path, duration,
             data_arr.append([bin_interval.left, this_bin_vals, 0, 0])
         else:
             print(f'\nthis_bin_df: {this_bin_df.shape}\n{this_bin_df}')
-            resp_in_per_bin = this_bin_df['rel_answer'].sum()
+            resp_in_per_bin = this_bin_df['response'].sum()
             print(f'\tresp_in_per_bin: {resp_in_per_bin}/{this_bin_df.shape[0]}\n')
             data_arr.append([bin_interval.left, this_bin_vals, resp_in_per_bin, bin_count[bin_interval]])
             found_bins_left.append(round(bin_interval.left, 3))
@@ -146,6 +151,7 @@ def results_csv_to_np_for_psignifit(csv_path, duration,
                      # 'sep': sep, 
                      'p_run_name': p_run_name,
                      'stair_levels': stair_levels,
+                     'stair_name': stair_name,
                      'quartile_bins': quartile_bins, 'n_bins': n_bins,
                      'save_np_path': save_np_path}
 
@@ -253,13 +259,14 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.5,
         fit_curve_plot = None
     else:
         stair_level = bin_data_dict['stair_levels'][0]
-        if stair_level == 0:
-            stair_name = '0_fl_in_pr_out'
-        elif stair_level == 1:
-            stair_name = '1_fl_out_pr_in'
-        else:
-            raise ValueError(f'stair_level expected to be 0 or 1, not {stair_level}')
-        print(f"stair_level: {stair_level}; stair_name: {stair_name}")
+        stair_name = bin_data_dict['stair_name']
+        # if stair_level == 0:
+        #     stair_name = '0_fl_in_pr_out'
+        # elif stair_level == 1:
+        #     stair_name = '1_fl_out_pr_in'
+        # else:
+        #     raise ValueError(f'stair_level expected to be 0 or 1, not {stair_level}')
+        # print(f"stair_level: {stair_level}; stair_name: {stair_name}")
 
 
         plt.figure()
@@ -297,7 +304,7 @@ def results_to_psignifit(csv_path, save_path, duration,
                          # sep,
                          p_run_name,
                          stair_col='stair', stair_levels=None,
-                         thr_col='probeSpeed', resp_col='rel_answer',
+                         thr_col='probeSpeed', resp_col='response',
                          quartile_bins=True, n_bins=10, save_np=False,
                          target_threshold=.75,
                          sig_name='norm', est_type='MAP',
@@ -447,7 +454,7 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
             if 'Unnamed: 0' in list(dur_df):
                 dur_df.drop('Unnamed: 0', axis=1, inplace=True)
         else:
-            dur_df = csv_name[csv_name['probe_dur'] == duration]
+            dur_df = csv_name[csv_name['probe_dur_ms'] == duration]
 
         if verbose:
             print(f'\nrunning analysis for {p_run_name}\n')
@@ -469,7 +476,7 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
             if verbose:
                 print(f'\nstair_df ({stair_col}={stair}, duration={duration}):\n{stair_df}')
 
-                print(f'response "in" = {stair_df["rel_answer"].sum()}')
+                print(f'response "in" = {stair_df["response"].sum()}')
 
 
 
@@ -499,7 +506,7 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=10, q_bin
                                                                   # stair=stair, 
                                                                   p_run_name=p_run_name,
                                                                   stair_col=stair_col, stair_levels=[stair],
-                                                                  thr_col='probeSpeed', resp_col='rel_answer',
+                                                                  thr_col='probeSpeed', resp_col='response',
                                                                   quartile_bins=q_bins, n_bins=n_bins,
                                                                   save_np=False, target_threshold=target_threshold,
                                                                   sig_name=sig_name, est_type='MAP',
