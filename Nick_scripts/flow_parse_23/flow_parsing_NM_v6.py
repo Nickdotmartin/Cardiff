@@ -45,6 +45,11 @@ These angles were selected randomly on each trial so physical trajectories could
 Each 2.5-second trial consisted of 0.5-second presentation of the fixation cross alone, 
 followed by 2-second presentation of the fixation cross together with the flow and probe stimuli.
 
+
+- version 6 updates (10/10/2023:
+    - changes polarity so that +ive values are inward for Flow and probes, (probes used to be opposite): DONE
+        - check responses, probe start pos, probe position and probe start speeds: DONE
+    - set start distance to be no biggest than sep 18pixels  
 """
 
 
@@ -290,7 +295,7 @@ participant_name = str(expInfo['1_participant_name'])
 run_number = int(expInfo['2_run_number'])
 monitor_name = str(expInfo['3_monitor_name'])
 fps = int(expInfo['4_fps'])
-probe_dur_ms = float(expInfo['5_probe_dur_ms'])
+selected_probe_dur_ms = float(expInfo['5_probe_dur_ms'])
 debug = eval(expInfo['6_debug'])
 
 # print settings from dlg
@@ -316,11 +321,11 @@ dur_ms:       [8.34, 16.67, 25, 33.34, 41.67, 50, 58.38, 66.67]
 frames@240Hz: [   2,     4,  6,     8,    10, 12,    14,    16]
 ISI cond:     [conc,     0,  2,     4,     6,  8,    10,    12] 
 '''
-probe_dur_fr = int(probe_dur_ms * fps / 1000)
-probe_dur_actual_ms = (1 / fps) * probe_dur_fr * 1000
-print(f"\nprobe duration: {probe_dur_actual_ms}ms, or {probe_dur_fr} frames")
+probe_dur_fr = int(selected_probe_dur_ms * fps / 1000)
+probe_dur_ms = (1 / fps) * probe_dur_fr * 1000
+print(f"\nprobe duration: {probe_dur_ms}ms, or {probe_dur_fr} frames")
 if probe_dur_fr == 0:
-    raise ValueError(f"probe_dur_fr is 0 because probe_dur_ms ({probe_dur_ms}) is less than a frame on this monitor ({1000/fps})ms")
+    raise ValueError(f"probe_dur_fr is 0 because selected_probe_dur_ms ({selected_probe_dur_ms}) is less than a frame on this monitor ({1000/fps})ms")
 
 
 # # # EXPERIMENT HANDLING AND SAVING # # #
@@ -647,29 +652,27 @@ However, I will scale it with probe_dur_ms, so that the probe moves 1.6cm in pro
 Otherwise the shortest durations are too hard.
 I need to convert it from cm/s to pixels/frame,
 which depends on the monitor's refresh rate.
+I'm going to try starting with 18 pixels in dur.  Not sure what that is in cm.  
+I'm using this because we used 18 as our max value in previous study.
 """
-start_cm_per_s = 0.8  # starting value in cm per second
+start_dist_pix_in_dur = 18  # starting dist in pixels in probe_dur_ms
+start_dist_pix_per_fr = start_dist_pix_in_dur / probe_dur_fr  # starting dist in pixels per frame
+start_dist_pix_per_second = start_dist_pix_per_fr * fps  # starting dist in pixels per second
+start_dist_cm_per_second = pix2cm(pixels=start_dist_pix_per_second, monitor=mon)  # starting dist in cm per second
+print(f"\nstart_dist_pix_in_dur: {start_dist_pix_in_dur}pix\n"
+      f"start_dist_pix_per_fr: {start_dist_pix_per_fr:.2f}pix/fr\n"
+      f"start_dist_pix_per_second: {start_dist_pix_per_second:.2f}pix/s\n"
+      f"start_dist_cm_per_second: {start_dist_cm_per_second:.2f}cm/s")
 
-# target_cm_in_dur = 1.6  # how far the probe moved in 2000ms in Evans et al, 2020
-#
-# # set maximum distance for probe to travel, based on mask_size.
-# # mask_size is horizontal or vertical, I want the diagonal distance.
-# # max_horiz_dist_cm = pix2cm(pixels=mask_size, monitor=mon)
-# # max_diag_dist_cm = np.sqrt(2) * max_horiz_dist_cm
-#
-# # max_diag_dist_pix = np.sqrt(2) * mask_size
-#
-# # probe cm/sec needed to move 1.6cm in probe_dur_ms
-# start_cm_per_s = target_cm_in_dur / (probe_dur_ms / 1000)
-# print(f"\n probe starting speed: {start_cm_per_s}cm/s, so it moves {target_cm_in_dur}cm in {probe_dur_ms}ms.")
-#
+start_cm_per_s = start_dist_cm_per_second
+
 
 start_pix_per_s = cm2pix(cm=start_cm_per_s, monitor=mon)  # convert to pixels per second
 start_pix_per_fr = start_pix_per_s / fps  # convert to pixels per frame
 if start_pix_per_fr < 1:
     start_pix_per_fr = 1
 if debug:
-    print(f"\nstart_cm_per_s: {start_cm_per_s:.2f}cm/s, start_pix_per_s: {start_pix_per_s:.2f}pix/s, "
+    print(f"\nstart_cm_per_s: {start_cm_per_s:.2f}cm/s\nstart_pix_per_s: {start_pix_per_s:.2f}pix/s, "
           f"start_pix_per_fr: {start_pix_per_fr:.2f}pix/fr")
 
 
@@ -689,8 +692,8 @@ for stair_idx in stair_idx_list:
 
     thisStair = Staircase(name=stair_names_list[stair_idx],
                           type='simple',
-                          # todo: start in opposite direction (for flow 1=in, -1=out, for probe, +ive=out, -ive=in, so for opposite do probe speed * flow dir)
-                          value=stairStart * flow_dir_list[stair_idx],  # each stair starts with same probe dir as bg motion
+                          # todo: start in opposite direction for flow and probe, so use stairStart * -flow_dir_list[stair_idx]
+                          value=stairStart * -flow_dir_list[stair_idx],  # each stair starts with same probe dir as bg motion
                           C=stairStart * 0.6,  # initial step size, as prop of maxLum
                           minRevs=3,
                           minTrials=n_trials_per_stair,
@@ -751,12 +754,12 @@ for step in range(n_trials_per_stair):
 
 
             # get probe attricbutes
-            probe_pix_p_fr = thisStair.next()  # in pixels per frame, for this script
+            probe_pix_p_fr = thisStair.next()  # in pixels per frame, for thie script
             probe_cm_p_sec = pix2cm(pixels=probe_pix_p_fr * fps, monitor=mon)  # for analysis file
 
-            probe_dir = 'in'
+            probe_dir = 'out'
             if probe_pix_p_fr > 0:
-                probe_dir = 'out'
+                probe_dir = 'in'
             # if debug:
             print(f"probe_dir: {probe_dir}, probe_pix_p_fr: {probe_pix_p_fr}, "
                   f"probe_cm_p_sec: {probe_cm_p_sec}")
@@ -779,19 +782,20 @@ for step in range(n_trials_per_stair):
             # I want the starting position of the probe to take into account the direction it will travel.
             # e.g., if it's moving inwards, it should start further out and vice versa.
             # total distance travelled by the probe is probe_pix_p_fr * probe_dur_fr
+            # todo: I've reversed the polarities of the probe_start_x and probe_start_y variables.
             probe_start_offset = probe_pix_p_fr * probe_dur_fr / 2
             if corner == 45:
-                probe_start_x = dist_from_fix - probe_start_offset
-                probe_start_y = dist_from_fix - probe_start_offset
+                probe_start_x = dist_from_fix + probe_start_offset
+                probe_start_y = dist_from_fix + probe_start_offset
             elif corner == 135:
-                probe_start_x = -dist_from_fix + probe_start_offset
-                probe_start_y = dist_from_fix - probe_start_offset
+                probe_start_x = -dist_from_fix - probe_start_offset
+                probe_start_y = dist_from_fix + probe_start_offset
             elif corner == 225:
-                probe_start_x = -dist_from_fix + probe_start_offset
-                probe_start_y = -dist_from_fix + probe_start_offset
+                probe_start_x = -dist_from_fix - probe_start_offset
+                probe_start_y = -dist_from_fix - probe_start_offset
             elif corner == 315:
-                probe_start_x = dist_from_fix - probe_start_offset
-                probe_start_y = -dist_from_fix + probe_start_offset
+                probe_start_x = dist_from_fix + probe_start_offset
+                probe_start_y = -dist_from_fix - probe_start_offset
 
             # reset distrance travelled this trial
             probe_moved_x = 0
@@ -945,19 +949,19 @@ for step in range(n_trials_per_stair):
 
 
                     # draw probe if 1st interval
-                    # todo: I flipped all these so hopefully +ive is out and -ive is in.
+                    # todo: I flipped all these all back, so +ive is in and -ive is out.
                     if corner == 45:  # top-right
-                        probe_moved_y = probe_moved_y + probe_pix_p_fr
-                        probe_moved_x = probe_moved_x + probe_pix_p_fr
+                        probe_moved_y = probe_moved_y - probe_pix_p_fr
+                        probe_moved_x = probe_moved_x - probe_pix_p_fr
                     elif corner == 135:  # top-left
-                        probe_moved_y = probe_moved_y + probe_pix_p_fr
-                        probe_moved_x = probe_moved_x - probe_pix_p_fr
-                    elif corner == 225:  # bottom-left
-                        probe_moved_y = probe_moved_y - probe_pix_p_fr
-                        probe_moved_x = probe_moved_x - probe_pix_p_fr
-                    elif corner == 315:  # bottom-right
                         probe_moved_y = probe_moved_y - probe_pix_p_fr
                         probe_moved_x = probe_moved_x + probe_pix_p_fr
+                    elif corner == 225:  # bottom-left
+                        probe_moved_y = probe_moved_y + probe_pix_p_fr
+                        probe_moved_x = probe_moved_x + probe_pix_p_fr
+                    elif corner == 315:  # bottom-right
+                        probe_moved_y = probe_moved_y + probe_pix_p_fr
+                        probe_moved_x = probe_moved_x - probe_pix_p_fr
                     probe.setPos([probe_start_x + probe_moved_x, probe_start_y + probe_moved_y])
                     probe.draw()
 
@@ -1006,14 +1010,15 @@ for step in range(n_trials_per_stair):
             # Kesten updates using response (in/out) not resp.corr correct/incorrect.
             # Kesten will try to find the speed that get 50% in and out responses.
             # But storing resp.corrs in the output file anyway.
+            # todo: reversed these so 1=in and 0=out (to match flow_dir)
             if (resp.keys == str('i')) or (resp.keys == 'num_1'):
-                response = 0
+                response = 1
                 if probe_dir == 'in':
                     resp.corr = 1
                 else:
                     resp.corr = 0
             elif (resp.keys == str('o')) or (resp.keys == 'num_0'):
-                response = 1
+                response = 0
                 if probe_dir == 'out':
                     resp.corr = 1
                 else:
@@ -1108,8 +1113,8 @@ for step in range(n_trials_per_stair):
         thisExp.addData('resp.corr', resp.corr)
         thisExp.addData('resp.rt', resp.rt)
         thisExp.addData('corner', corner)
+        thisExp.addData('selected_probe_dur_ms', selected_probe_dur_ms)
         thisExp.addData('probe_dur_ms', probe_dur_ms)
-        thisExp.addData('probe_dur_actual_ms', probe_dur_actual_ms)
         thisExp.addData('probe_dur_fr', probe_dur_fr)
         thisExp.addData('flow_speed_cm_p_sec', flow_speed_cm_p_sec)
         thisExp.addData('flow_speed_cm_p_fr', flow_speed_cm_p_fr)

@@ -11,18 +11,19 @@ import matplotlib.pyplot as plt
 # # then run script d to get master lists and averages
 # exp_path = '/Users/nickmartin/Library/CloudStorage/OneDrive-CardiffUniversity/PycharmProjects/Cardiff/flow_parsing'
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing"
-exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing_NM_v4"
+# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing_NM_v4"
 # exp_path = r"C:\Users\sapnm4\PycharmProjects\Cardiff\Nick_scripts\flow_parse_23\flow_parsing_NM_v4"
+exp_path = r"C:\Users\sapnm4\PycharmProjects\Cardiff\Nick_scripts\flow_parse_23\flow_parsing_NM_v6"
 print(f"exp_path: {exp_path}")
 convert_path1 = os.path.normpath(exp_path)
 print(f"convert_path1: {convert_path1}")
 exp_path = convert_path1
 
-monitor = 'asus_cal'  # 'asus_cal' OLED, 'Nick_work_laptop'
+monitor = 'Nick_work_laptop'  # 'asus_cal' OLED, 'Nick_work_laptop'
 exp_path = os.path.join(exp_path, monitor)
 
 
-participant_list = ['Nick']  # ' Nicktest_06102023'
+participant_list = ['Nicktest_10102023']  # ' Nicktest_06102023'
 all_probe_dur_list = [8, 16, 25, 33, 41, 50, 58, 66, 100]
 
 
