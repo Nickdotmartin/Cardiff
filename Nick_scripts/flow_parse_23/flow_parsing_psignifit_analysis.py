@@ -1555,12 +1555,8 @@ def b3_plot_staircase(all_data_path, thr_col='probe_cm_p_sec', resp_col='respons
 
     # open all_data file.  use engine='openpyxl' for xlsx files.
     # For other experiments it might be easier not to do use cols as they might be different.
-    # cols_to_use = ["stair", "stair_name", "step", "probe_dur_ms", "flow_dir",
-    #                "flow_name", 'prelim_ms', 'probe_cm_p_sec', "response"]
-
-    # todo: return t cols above
     cols_to_use = ["stair", "stair_name", "step", "probe_dur_ms", "flow_dir",
-                   "flow_name", 'prelim_bg_flow_ms', 'probeSpeed_cm_per_s', "response"]
+                   "flow_name", 'prelim_ms', 'probe_cm_p_sec', "response"]
 
     if xlsx_name[-3:] == 'csv':
         all_data_df = pd.read_csv(all_data_path, usecols=cols_to_use)
@@ -1576,15 +1572,13 @@ def b3_plot_staircase(all_data_path, thr_col='probe_cm_p_sec', resp_col='respons
     # get dur string for column names
     dur_name_list = [f'dur_{i}' for i in dur_list]
 
-    # todo: replace this
-    # prelim_list = all_data_df['prelim_ms'].unique()
-    prelim_list = all_data_df['prelim_bg_flow_ms'].unique()
+    prelim_list = all_data_df['prelim_ms'].unique()
 
     trials, columns = np.shape(all_data_df)
     trials_per_stair = int(trials / len(dur_list) / len(stair_list))
 
     if verbose:
-        print(f"all_data_df:\n{all_data_df}")
+        print(f"all_data_df ({all_data_df.shape}):\n{all_data_df}")
         print(f"{len(dur_list)} dur values and {len(stair_list)} stair values")
         print(f"dur_list: {dur_list}")
         print(f"dur_name_list: {dur_name_list}")
@@ -1608,21 +1602,16 @@ def b3_plot_staircase(all_data_path, thr_col='probe_cm_p_sec', resp_col='respons
 
         dur_name = dur_name_list[dur_idx]
         print(f"\n{dur_idx}. staircases for dur: {dur}, {dur_name}")
-        print(f"dur_df:\n{dur_df.head()}")
+        print(f"dur_df  ({dur_df.shape}):\n{dur_df.head()}")
 
 
         # # just do one prelim at a time
         for prelim_idx, prelim in enumerate(prelim_list):
             print(f"\n\ndur: {dur}; prelim: {prelim}\n")
 
-            # todo: replace this
-            # prelim_df = all_data_df[all_data_df['prelim_ms'] == prelim]
-            prelim_df = dur_df[dur_df['prelim_bg_flow_ms'] == prelim]
-
-            # drop prelim column
-            prelim_df.drop(columns='prelim_bg_flow_ms', inplace=True)
-
-            print(f"prelim_df:\n{prelim_df.head()}")
+            prelim_df = dur_df[dur_df['prelim_ms'] == prelim]
+            prelim_df.drop(columns='prelim_ms', inplace=True)
+            print(f"prelim_df ({prelim_df.shape}):\n{prelim_df.head()}")
 
 
             # make empty arrays to save reversal n_reversals
@@ -1637,31 +1626,23 @@ def b3_plot_staircase(all_data_path, thr_col='probe_cm_p_sec', resp_col='respons
                 print(f"only expecting 2 stairs here, but I have {len(these_stair_nums)} ({these_stair_nums})")
                 raise ValueError
 
-            # get the stair number where flow_dir = 1 in prelim_df
+            # todo: check what these are for?
             stair_num_cont = prelim_df.loc[prelim_df['flow_dir'] == 1, 'stair'].unique().tolist()[0]  # even
             stair_num_exp = prelim_df.loc[prelim_df['flow_dir'] == -1, 'stair'].unique().tolist()[0]  # odd
             print(f"stair_num_cont: {stair_num_cont}")
             print(f"stair_num_exp: {stair_num_exp}")
 
 
-            # stair_num_cont = 0  # 0, 2, 4, 6, 8, 10
-            stair_flow_cont_df = prelim_df[prelim_df['stair'] == stair_num_cont]
-            print(f"stair_flow_cont_df: {list(stair_flow_cont_df.columns)}\n{stair_flow_cont_df.head()}")
-            #todo: repace this
-            # final_speed_flow_cont = \
-            #     stair_flow_cont_df.loc[stair_flow_cont_df['step'] == trials_per_stair - 1, 'probe_cm_p_sec'].item()
+            stair_flow_cont_df = prelim_df[prelim_df['flow_dir'] == 1]
+            print(f"stair_flow_cont_df ({stair_flow_cont_df.shape}): {list(stair_flow_cont_df.columns)}\n{stair_flow_cont_df.head()}")
             final_speed_flow_cont = \
-                stair_flow_cont_df.loc[stair_flow_cont_df['step'] == trials_per_stair - 1, 'probeSpeed_cm_per_s'].item()
+                stair_flow_cont_df.loc[stair_flow_cont_df['step'] == trials_per_stair - 1, 'probe_cm_p_sec'].item()
             n_reversals_flow_cont = trials_per_stair - stair_flow_cont_df[resp_col].sum()
             stair_name_cont = stair_flow_cont_df['stair_name'].unique().tolist()[0]
 
-            stair_flow_exp_df = prelim_df[prelim_df['stair'] == stair_num_exp]
-            #todo: repace this
-
-            # final_speed_flow_exp = \
-            #     stair_flow_exp_df.loc[stair_flow_exp_df['step'] == trials_per_stair - 1, 'probe_cm_p_sec'].item()
+            stair_flow_exp_df = prelim_df[prelim_df['flow_dir'] == -1]
             final_speed_flow_exp = \
-                stair_flow_exp_df.loc[stair_flow_exp_df['step'] == trials_per_stair - 1, 'probeSpeed_cm_per_s'].item()
+                stair_flow_exp_df.loc[stair_flow_exp_df['step'] == trials_per_stair - 1, 'probe_cm_p_sec'].item()
             n_reversals_flow_exp = trials_per_stair - stair_flow_exp_df[resp_col].sum()
             stair_name_exp = stair_flow_exp_df['stair_name'].unique().tolist()[0]
 
@@ -1682,7 +1663,7 @@ def b3_plot_staircase(all_data_path, thr_col='probe_cm_p_sec', resp_col='respons
 
             # check shape for acessing axes
             if len(dur_list) > 1:
-                this_ax = prelim_idx, dur_idx
+                this_ax = dur_idx, prelim_idx
             else:
                 this_ax = prelim_idx
             print(f"this_ax: {this_ax}")
