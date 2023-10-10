@@ -195,61 +195,61 @@ pd.options.display.float_format = "{:,.2f}".format
 #     return trimmed_df
 #
 #
-# def make_long_df(wide_df,
-#                  cols_to_keep=['congruent', 'separation'],
-#                  cols_to_change=['dur_1', 'dur_4', 'dur_6'],
-#                  cols_to_change_show='probeLum',
-#                  new_col_name='probe_dur_ms', strip_from_cols='dur_', verbose=True):
-#     """
-#     Function to convert wide-form_df to long-form_df.  e.g., if there are several
-#     columns showing durs (cols_to_change), this puts them all into one column (new_col_name).
-#
-#     :param wide_df: dataframe to be changed.
-#     :param cols_to_keep: Columns to use for indexing (e.g., ['congruent', 'separation'...etc]).
-#     :param cols_to_change: List of columns showing data at different levels e.g., [dur_1, dur_4, dur_6...etc].
-#     :param cols_to_change_show: What is being measured in repeated cols, e.g., probeLum.
-#     :param new_col_name: name for new col describing levels e.g. dur
-#     :param strip_from_cols: string to strip from col names when for new cols.
-#         e.g., if strip_from_cols='dur_', then [dur_1, dur_4, dur_6] becomes [1, 4, 6].
-#     :param verbose: if true, prints progress to screen.
-#
-#     :return: long_df
-#     """
-#     print("\n*** running make_long_df() ***\n")
-#
-#     new_col_names = cols_to_keep + [new_col_name] + [cols_to_change_show]
-#
-#     # make longform data
-#     if verbose:
-#         print(f"preparing to loop through: {cols_to_change}")
-#     long_list = []
-#     for this_col in cols_to_change:
-#         this_df_cols = cols_to_keep + [this_col]
-#         this_df = wide_df[this_df_cols]
-#
-#         # strip text from col names, try lower/upper case if strip_from_cols not found.
-#         if strip_from_cols not in [False, None]:
-#             if strip_from_cols in this_col:
-#                 this_col = this_col.strip(strip_from_cols)
-#             elif strip_from_cols.lower() in this_col:
-#                 this_col = this_col.strip(strip_from_cols.lower())
-#             elif strip_from_cols.upper() in this_col:
-#                 this_col = this_col.strip(strip_from_cols.upper())
-#             else:
-#                 raise ValueError(f"can't strip {strip_from_cols} from {this_col}")
-#
-#         this_df.insert(len(cols_to_keep), new_col_name, [this_col] * len(this_df.index))
-#         this_df.columns = new_col_names
-#         long_list.append(this_df)
-#
-#     long_df = pd.concat(long_list)
-#     long_df.reset_index(drop=True, inplace=True)
-#     if verbose:
-#         print(f'long_df:\n{long_df}')
-#
-#     print("\n*** finished make_long_df() ***\n")
-#
-#     return long_df
+def make_long_df(wide_df,
+                 cols_to_keep=['congruent', 'separation'],
+                 cols_to_change=['dur_1', 'dur_4', 'dur_6'],
+                 cols_to_change_show='probeLum',
+                 new_col_name='probe_dur_ms', strip_from_cols='dur_', verbose=True):
+    """
+    Function to convert wide-form_df to long-form_df.  e.g., if there are several
+    columns showing durs (cols_to_change), this puts them all into one column (new_col_name).
+
+    :param wide_df: dataframe to be changed.
+    :param cols_to_keep: Columns to use for indexing (e.g., ['congruent', 'separation'...etc]).
+    :param cols_to_change: List of columns showing data at different levels e.g., [dur_1, dur_4, dur_6...etc].
+    :param cols_to_change_show: What is being measured in repeated cols, e.g., probeLum.
+    :param new_col_name: name for new col describing levels e.g. dur
+    :param strip_from_cols: string to strip from col names when for new cols.
+        e.g., if strip_from_cols='dur_', then [dur_1, dur_4, dur_6] becomes [1, 4, 6].
+    :param verbose: if true, prints progress to screen.
+
+    :return: long_df
+    """
+    print("\n*** running make_long_df() ***\n")
+
+    new_col_names = cols_to_keep + [new_col_name] + [cols_to_change_show]
+
+    # make longform data
+    if verbose:
+        print(f"preparing to loop through: {cols_to_change}")
+    long_list = []
+    for this_col in cols_to_change:
+        this_df_cols = cols_to_keep + [this_col]
+        this_df = wide_df[this_df_cols]
+
+        # strip text from col names, try lower/upper case if strip_from_cols not found.
+        if strip_from_cols not in [False, None]:
+            if strip_from_cols in this_col:
+                this_col = this_col.strip(strip_from_cols)
+            elif strip_from_cols.lower() in this_col:
+                this_col = this_col.strip(strip_from_cols.lower())
+            elif strip_from_cols.upper() in this_col:
+                this_col = this_col.strip(strip_from_cols.upper())
+            else:
+                raise ValueError(f"can't strip {strip_from_cols} from {this_col}")
+
+        this_df.insert(len(cols_to_keep), new_col_name, [this_col] * len(this_df.index))
+        this_df.columns = new_col_names
+        long_list.append(this_df)
+
+    long_df = pd.concat(long_list)
+    long_df.reset_index(drop=True, inplace=True)
+    if verbose:
+        print(f'long_df:\n{long_df}')
+
+    print("\n*** finished make_long_df() ***\n")
+
+    return long_df
 #
 #
 # def fig_colours(n_conditions, alternative_colours=False):
@@ -323,7 +323,7 @@ pd.options.display.float_format = "{:,.2f}".format
 #                      save_as=None):
 #     """
 #     Function to plot a simple line plot.  No error bars.
-#     :param indexed_df: DF where index col is 'separation' or 'stair_names' etc.
+#     :param indexed_df: DF where index col is 'separation' or 'stair_name' etc.
 #     :param fig_title: Title for figure
 #     :param legend_title: Title for legend
 #     :param x_tick_vals: Values for x-ticks
@@ -454,12 +454,12 @@ pd.options.display.float_format = "{:,.2f}".format
 #     # add guideline with slope of -1 which crosses through the circles 1probe weber_thr value.
 #     if show_neg1slope:
 #         if x_col == 'area_deg':
-#             if '-1_circles' in thr_df['stair_names'].unique():
+#             if '-1_circles' in thr_df['stair_name'].unique():
 #                 start_point = '-1_circles'
-#             elif '-1_lines' in thr_df['stair_names'].unique():
+#             elif '-1_lines' in thr_df['stair_name'].unique():
 #                 start_point = '-1_lines'
-#             slope_start_x = thr_df.loc[thr_df['stair_names'] == start_point, x_col].item()
-#             slope_start_y = thr_df.loc[thr_df['stair_names'] == start_point, y_col].item()
+#             slope_start_x = thr_df.loc[thr_df['stair_name'] == start_point, x_col].item()
+#             slope_start_y = thr_df.loc[thr_df['stair_name'] == start_point, y_col].item()
 #         elif x_col == 'dur_ms':
 #             slope_start_x = thr_df.iloc[0]['dur_ms']
 #             slope_start_y = thr_df.iloc[0]['weber_thr']
@@ -864,7 +864,7 @@ pd.options.display.float_format = "{:,.2f}".format
 #     return fig
 #
 #
-# def plot_diff(ave_thr_df, stair_names_col='stair_names', fig_title=None, save_path=None, save_name=None,
+# def plot_diff(ave_thr_df, stair_names_col='stair_name', fig_title=None, save_path=None, save_name=None,
 #               x_axis_dur=False, verbose=True):
 #     """
 #     Function to plot the difference between congruent and incongruent conditions.
@@ -888,8 +888,8 @@ pd.options.display.float_format = "{:,.2f}".format
 #
 #     # get rows to slice for each df to be in ascending order
 #     # if stair_names_col in list(ave_thr_df.columns):
-#     stair0_rows = sorted(ave_thr_df.index[ave_thr_df['stair_names'] >= 0].tolist(), reverse=True)
-#     stair1_rows = sorted(ave_thr_df.index[ave_thr_df['stair_names'] < 0].tolist(), reverse=True)
+#     stair0_rows = sorted(ave_thr_df.index[ave_thr_df['stair_name'] >= 0].tolist(), reverse=True)
+#     stair1_rows = sorted(ave_thr_df.index[ave_thr_df['stair_name'] < 0].tolist(), reverse=True)
 #     # else:
 #     #     stair0_rows = sorted(ave_thr_df.index[ave_thr_df.index >= 0].tolist())
 #     #     stair1_rows = sorted(ave_thr_df.index[ave_thr_df.index < 0].tolist(), reverse=True)
@@ -901,7 +901,7 @@ pd.options.display.float_format = "{:,.2f}".format
 #     stair0_df = ave_thr_df.iloc[stair0_rows, :]
 #     stair1_df = ave_thr_df.iloc[stair1_rows, :]
 #
-#     pos_sep_list = [int(i) for i in list(sorted(stair0_df['stair_names'].tolist()))]
+#     pos_sep_list = [int(i) for i in list(sorted(stair0_df['stair_name'].tolist()))]
 #     stair0_df.reset_index(drop=True, inplace=True)
 #     stair1_df.reset_index(drop=True, inplace=True)
 #     if verbose:
@@ -911,7 +911,7 @@ pd.options.display.float_format = "{:,.2f}".format
 #
 #     # subtract one from the other
 #     diff_df = stair0_df - stair1_df
-#     diff_df.drop('stair_names', inplace=True, axis=1)
+#     diff_df.drop('stair_name', inplace=True, axis=1)
 #
 #     if x_axis_dur:
 #         diff_df = diff_df.T
@@ -1143,7 +1143,7 @@ pd.options.display.float_format = "{:,.2f}".format
 #
 #
 # def multi_pos_sep_per_dur(ave_thr_df, error_df,
-#                           stair_names_col='stair_names',
+#                           stair_names_col='stair_name',
 #                           even_spaced_x=True, error_caps=True,
 #                           fig_title=None,
 #                           save_path=None, save_name=None,
@@ -1532,16 +1532,10 @@ def a_data_extraction(p_name, run_dir, dur_list, save_all_data=True, verbose=Tru
     return all_data_df
 
 
-def b3_plot_staircase(all_data_path, thr_col='probeSpeed', resp_col='answer',
+def b3_plot_staircase(all_data_path, thr_col='probe_cm_p_sec', resp_col='response',
                       show_plots=True, save_plots=True, verbose=True):
     """
-    b3_plot_staircase: staircases-durxxx.png: xxx corresponds to dur conditions.
-    One plot for each dur condition.
-
-
-    Each figure has six panels (6 probes separation
-    conditions) showing the Luminance value of two staircases as function of
-    trial number. Last panel shows last thr per sep condition.
+    b3_plot_staircase: Multiple panels showing staircases for each duration and prelim condition.
 
     :param all_data_path: path to the all_data xlsx file.
     :param thr_col: (default newLum) name of the column showing the threshold
@@ -1552,8 +1546,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeSpeed', resp_col='answer',
     :param save_plots: whether to save the plots.
     :param verbose: If True, will print progress to screen.
 
-    :return:
-    one figure per dur value - saved as Staircases_{dur_name}
+    :return: multi-ax figure
     n_reversals.csv - number of reversals per stair - used in c_plots
     """
     print("\n*** running b3_plot_staircase() ***\n")
@@ -1562,8 +1555,13 @@ def b3_plot_staircase(all_data_path, thr_col='probeSpeed', resp_col='answer',
 
     # open all_data file.  use engine='openpyxl' for xlsx files.
     # For other experiments it might be easier not to do use cols as they might be different.
+    # cols_to_use = ["stair", "stair_name", "step", "probe_dur_ms", "flow_dir",
+    #                "flow_name", 'prelim_ms', 'probe_cm_p_sec', "response"]
+
+    # todo: return t cols above
     cols_to_use = ["stair", "stair_name", "step", "probe_dur_ms", "flow_dir",
-                   "flow_name", 'prelim_ms', 'probe_cm_p_sec', "response"]
+                   "flow_name", 'prelim_bg_flow_ms', 'probeSpeed_cm_per_s', "response"]
+
     if xlsx_name[-3:] == 'csv':
         all_data_df = pd.read_csv(all_data_path, usecols=cols_to_use)
     else:
@@ -1572,11 +1570,15 @@ def b3_plot_staircase(all_data_path, thr_col='probeSpeed', resp_col='answer',
 
     # get list of dur and stair values to loop through
     stair_list = all_data_df['stair'].unique()
+
+    stair_names_list = all_data_df['stair_name'].unique()
     dur_list = all_data_df['probe_dur_ms'].unique()
     # get dur string for column names
     dur_name_list = [f'dur_{i}' for i in dur_list]
 
-    prelim_list = all_data_df['prelim_ms'].unique()
+    # todo: replace this
+    # prelim_list = all_data_df['prelim_ms'].unique()
+    prelim_list = all_data_df['prelim_bg_flow_ms'].unique()
 
     trials, columns = np.shape(all_data_df)
     trials_per_stair = int(trials / len(dur_list) / len(stair_list))
@@ -1590,183 +1592,166 @@ def b3_plot_staircase(all_data_path, thr_col='probeSpeed', resp_col='answer',
         print(f"stair_list: {stair_list}")
         print(f"trials_per_stair: {trials_per_stair}")
 
-    '''the eighth plot is the last thr for each sep (+sep, -sep and mean).  
-    get data from psignifit_thresholds.csv and reshape here'''
-    thr_csv_name = os.path.join(save_path, 'psignifit_thresholds.csv')
-    psignifit_thr_df = pd.read_csv(thr_csv_name)
-    if verbose:
-        print(f'\npsignifit_thr_df:\n{psignifit_thr_df}')
+    # make subplots with prelims on rows and durations on columns
+    fig, axes = plt.subplots(nrows=len(dur_list), ncols=len(prelim_list),
+                             figsize=(len(prelim_list)*6, len(dur_list)*6)
+                             )
+    print(f'\nplotting {len(prelim_list)} rows and {len(dur_list)} cols (axes: {axes})')
+
+    # loop through dur values
+    for dur_idx, dur in enumerate(dur_list):
+        # get df for this dur only
+        dur_df = all_data_df[all_data_df['probe_dur_ms'] == dur]
+
+        # drop dur column
+        dur_df.drop(columns='probe_dur_ms', inplace=True)
+
+        dur_name = dur_name_list[dur_idx]
+        print(f"\n{dur_idx}. staircases for dur: {dur}, {dur_name}")
+        print(f"dur_df:\n{dur_df.head()}")
 
 
-    # # just do one prelim at a time
-    for prelim in prelim_list:
-        print(f"\n\nrunning analysis for prelim: {prelim}\n")
+        # # just do one prelim at a time
+        for prelim_idx, prelim in enumerate(prelim_list):
+            print(f"\n\ndur: {dur}; prelim: {prelim}\n")
 
-        prelim_df = all_data_df[all_data_df['prelim_ms'] == prelim]
-        print(f"prelim_df:\n{prelim_df.head()}")
+            # todo: replace this
+            # prelim_df = all_data_df[all_data_df['prelim_ms'] == prelim]
+            prelim_df = dur_df[dur_df['prelim_bg_flow_ms'] == prelim]
 
-        psig_prelim_df = psignifit_thr_df[psignifit_thr_df['prelim'] == prelim]
-        print(f"psig_prelim_df:\n{psig_prelim_df.head()}")
+            # drop prelim column
+            prelim_df.drop(columns='prelim_bg_flow_ms', inplace=True)
+
+            print(f"prelim_df:\n{prelim_df.head()}")
 
 
-        # remove extra columns
-        if 'stair' in list(psig_prelim_df.columns):
-            psig_prelim_df = psig_prelim_df.drop(['stair'], axis=1)
+            # make empty arrays to save reversal n_reversals
+            n_reversals_np = np.zeros(shape=[len(stair_list), len(dur_list)])
 
-        # if 'stair_name' in list(psig_prelim_df.columns):
-        #     stair_names_list = psig_prelim_df.pop('stair_name').tolist()
-        #     print(f'stair_names_list: {stair_names_list}')
 
-        if 'flow_dir' in list(psig_prelim_df.columns):
-            psig_prelim_df = psig_prelim_df.drop(['flow_dir'], axis=1)
-
-        if 'flow_name' in list(psig_prelim_df.columns):
-            psig_prelim_df = psig_prelim_df.drop(['flow_name'], axis=1)
-
-        if 'prelim' in list(psig_prelim_df.columns):
-            psig_prelim_df = psig_prelim_df.drop(['prelim'], axis=1)
-
-        if 'stair_names' in list(psig_prelim_df.columns):
-            stair_names_list = psig_prelim_df.pop('stair_names').tolist()
-            print(f'stair_names_list: {stair_names_list}')
-
-        psig_prelim_df.columns = dur_name_list
-        if verbose:
-            print(f'\npsig_prelim_df:\n{psig_prelim_df}')
-
-        # split into pos_sep, neg_sep and mean of pos and neg.
-        psig_stair0_sep_df, psig_stair1_sep_df = split_df_alternate_rows(psig_prelim_df)
-        psig_thr_mean_df = pd.concat([psig_stair0_sep_df, psig_stair1_sep_df]).groupby(level=0).mean()
-
-        psig_thr_mean_df.insert(0, 'stair_name', 'mean')
-        psig_stair0_sep_df.insert(0, 'stair_name', stair_names_list[0])
-        psig_stair1_sep_df.insert(0, 'stair_name', stair_names_list[1])
-        if verbose:
-            print(f'\npsig_stair0_sep_df:\n{psig_stair0_sep_df}')
-            print(f'\npsig_stair1_sep_df:\n{psig_stair1_sep_df}')
-            print(f'\npsig_thr_mean_df:\n{psig_thr_mean_df}')
-
-        # make empty arrays to save reversal n_reversals
-        n_reversals_np = np.zeros(shape=[len(stair_list), len(dur_list)])
-
-        # loop through dur values
-        for dur_idx, dur in enumerate(dur_list):
-
-            # get df for this dur only
-            dur_df = prelim_df[prelim_df['probe_dur_ms'] == dur]
-            dur_name = dur_name_list[dur_idx]
-            print(f"\n{dur_idx}. staircase for dur: {dur}, {dur_name}")
-            print(f"dur_df:\n{dur_df.head()}")
 
             # get list of stair_numbers in this prelim and dur
-            these_stair_nums = dur_df['stair'].unique().tolist()
+            these_stair_nums = prelim_df['stair'].unique().tolist()
+            print(f"these_stair_nums: {these_stair_nums}")
             if len(these_stair_nums) > 2:
                 print(f"only expecting 2 stairs here, but I have {len(these_stair_nums)} ({these_stair_nums})")
                 raise ValueError
 
-            # get the stair number where flow_dir = 1 in dur_df
-            stair_flow_cont = dur_df.loc[dur_df['flow_dir'] == 1, 'stair'].unique().tolist()[0]  # even
-            stair_flow_exp = dur_df.loc[dur_df['flow_dir'] == -1, 'stair'].unique().tolist()[0]  # odd
-            print(f"stair_flow_cont: {stair_flow_cont}")
-            print(f"stair_flow_exp: {stair_flow_exp}")
+            # get the stair number where flow_dir = 1 in prelim_df
+            stair_num_cont = prelim_df.loc[prelim_df['flow_dir'] == 1, 'stair'].unique().tolist()[0]  # even
+            stair_num_exp = prelim_df.loc[prelim_df['flow_dir'] == -1, 'stair'].unique().tolist()[0]  # odd
+            print(f"stair_num_cont: {stair_num_cont}")
+            print(f"stair_num_exp: {stair_num_exp}")
 
 
-            # get the even number from these_stair_nums
-            stair_flow_cont = [i for i in these_stair_nums if i % 2 == 0][0]
-
-            # stair_flow_cont = 0  # 0, 2, 4, 6, 8, 10
-            stair_flow_cont_df = dur_df[dur_df['stair'] == stair_flow_cont]
-            print(f"stair_flow_cont_dfL {stair_flow_cont_df.columns}\n{stair_flow_cont_df.head()}")
+            # stair_num_cont = 0  # 0, 2, 4, 6, 8, 10
+            stair_flow_cont_df = prelim_df[prelim_df['stair'] == stair_num_cont]
+            print(f"stair_flow_cont_df: {list(stair_flow_cont_df.columns)}\n{stair_flow_cont_df.head()}")
+            #todo: repace this
+            # final_speed_flow_cont = \
+            #     stair_flow_cont_df.loc[stair_flow_cont_df['step'] == trials_per_stair - 1, 'probe_cm_p_sec'].item()
             final_speed_flow_cont = \
-                stair_flow_cont_df.loc[stair_flow_cont_df['step'] == trials_per_stair - 1, 'probe_cm_p_sec'].item()
+                stair_flow_cont_df.loc[stair_flow_cont_df['step'] == trials_per_stair - 1, 'probeSpeed_cm_per_s'].item()
             n_reversals_flow_cont = trials_per_stair - stair_flow_cont_df[resp_col].sum()
+            stair_name_cont = stair_flow_cont_df['stair_name'].unique().tolist()[0]
 
-            stair_flow_exp = [i for i in these_stair_nums if i % 2 != 0][0]
-            stair_flow_exp_df = dur_df[dur_df['stair'] == stair_flow_exp]
+            stair_flow_exp_df = prelim_df[prelim_df['stair'] == stair_num_exp]
+            #todo: repace this
+
+            # final_speed_flow_exp = \
+            #     stair_flow_exp_df.loc[stair_flow_exp_df['step'] == trials_per_stair - 1, 'probe_cm_p_sec'].item()
             final_speed_flow_exp = \
-                stair_flow_exp_df.loc[stair_flow_exp_df['step'] == trials_per_stair - 1, 'probe_cm_p_sec'].item()
+                stair_flow_exp_df.loc[stair_flow_exp_df['step'] == trials_per_stair - 1, 'probeSpeed_cm_per_s'].item()
             n_reversals_flow_exp = trials_per_stair - stair_flow_exp_df[resp_col].sum()
+            stair_name_exp = stair_flow_exp_df['stair_name'].unique().tolist()[0]
 
             # append n_reversals to n_reversals_np to save later.
-            n_reversals_np[stair_flow_cont - 1, dur_idx] = n_reversals_flow_cont
-            n_reversals_np[stair_flow_exp - 1, dur_idx] = n_reversals_flow_exp
+            n_reversals_np[stair_num_cont - 1, dur_idx] = n_reversals_flow_cont
+            n_reversals_np[stair_num_exp - 1, dur_idx] = n_reversals_flow_exp
 
             if verbose:
-                print(f'\nstair_flow_cont_df (stair={stair_flow_cont}, '
+                print(f'\nstair_flow_cont_df (stair={stair_num_cont}, {stair_name_cont})'
                       f'dur_name={dur_name}:\n{stair_flow_cont_df}')
                 print(f"final_speed_flow_cont: {final_speed_flow_cont}")
                 print(f"n_reversals_flow_cont: {n_reversals_flow_cont}")
-                print(f'\nstair_flow_exp_df (stair={stair_flow_exp}, '
+                print(f'\nstair_flow_exp_df (stair={stair_num_exp}, {stair_name_exp})'
                       f'dur_name={dur_name}:\n{stair_flow_exp_df}')
                 print(f"final_speed_flow_exp: {final_speed_flow_exp}")
                 print(f"n_reversals_flow_exp: {n_reversals_flow_exp}")
 
 
-            fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(12, 6))
+            # check shape for acessing axes
+            if len(dur_list) > 1:
+                this_ax = prelim_idx, dur_idx
+            else:
+                this_ax = prelim_idx
+            print(f"this_ax: {this_ax}")
 
-            fig.suptitle(f'Staircases and reversals for {dur_name}')
 
-            # plot thr per step for even_cong numbered stair
-            # sns.lineplot(ax=axes[row_idx, col_idx], data=stair_flow_cont_df,
-            sns.lineplot(ax=axes, data=stair_flow_cont_df,
+            # # # make plots
+            fig.suptitle(f'Staircases and reversals', fontsize=18)
+
+            # plot thr per step for contracting flow
+            sns.lineplot(ax=axes[this_ax], data=stair_flow_cont_df,
                          x='step', y=thr_col, color='tab:blue',
                          marker="o", markersize=4)
-            # line for final newLum
-            axes.axhline(y=final_speed_flow_cont, linestyle="-.", color='tab:blue')
-            # text for n_reversals
-            axes.text(x=0.25, y=0.8, s=f'{n_reversals_flow_cont} reversals',
+
+            # draw horizontal line for final_speed_flow_cont on this ax
+            axes[this_ax].axhline(y=final_speed_flow_cont, linestyle="-.", color='tab:blue')
+
+            # # text for n_reversals
+            axes[this_ax].text(x=0.25, y=0.8, s=f'flow contracts: {n_reversals_flow_cont} reversals',
                       color='tab:blue',
                       # needs transform to appear with rest of plot.
-                      transform=axes.transAxes, fontsize=12)
+                      transform=axes[this_ax].transAxes, fontsize=12)
 
-            # plot thr per step for odd_incong numbered stair
-            # sns.lineplot(ax=axes[row_idx, col_idx], data=stair_flow_exp_df,
-            sns.lineplot(ax=axes, data=stair_flow_exp_df,
+
+            # plot thr per step for expanding flow numbered stair
+            sns.lineplot(ax=axes[this_ax], data=stair_flow_exp_df,
                          x='step', y=thr_col, color='tab:red',
                          marker="v", markersize=5)
-            axes.axhline(y=final_speed_flow_exp, linestyle="--", color='tab:red')
-            axes.text(x=0.25, y=0.9, s=f'{n_reversals_flow_exp} reversals',
+            axes[this_ax].axhline(y=final_speed_flow_exp, linestyle="--", color='tab:red')
+            axes[this_ax].text(x=0.25, y=0.9, s=f'flow expands: {n_reversals_flow_exp} reversals',
                       color='tab:red',
                       # needs transform to appear with rest of plot.
-                      transform=axes.transAxes, fontsize=12)
+                      transform=axes[this_ax].transAxes, fontsize=12)
 
-            axes.set_title(f'{dur_name}')
-            axes.set_xticks(np.arange(0, trials_per_stair, 5))
-            # axes.set_ylim([0, 110])
 
-            # artist for legend
-            # todo: get condition names
-            st1 = mlines.Line2D([], [], color='tab:blue',
-                                marker='v',
-                                markersize=5, label='0_fl_in_pr_out')
-            st1_last_val = mlines.Line2D([], [], color='tab:blue',
-                                         linestyle="--", marker=None,
-                                         label='0_fl_in_pr_out: last val')
-            st2 = mlines.Line2D([], [], color='tab:red',
-                                marker='o',
-                                markersize=5, label='1_fl_out_pr_in')
-            st2_last_val = mlines.Line2D([], [], color='tab:red',
-                                         linestyle="-.", marker=None,
-                                         label='1_fl_out_pr_in: last val')
-            axes.legend(handles=[st1, st1_last_val, st2, st2_last_val],
-                      fontsize=6, loc='lower right')
+            # add zero line, fig title and x_ticks
+            axes[this_ax].axhline(y=0, linestyle="--", color='grey')
+            axes[this_ax].set_title(f'{dur_name}ms, prelim {prelim}ms', fontsize=12)
+            axes[this_ax].set_xticks(np.arange(0, trials_per_stair, 5))
 
-            plt.tight_layout()
+    # artist for legend
+    cont_marker = mlines.Line2D([], [], color='tab:blue',
+                        marker='v',
+                        markersize=5, label='flow contracts')
 
-            # show and close plots
-            if save_plots:
-                save_name = f'staircases_{dur_name}.png'
-                plt.savefig(os.path.join(save_path, save_name))
+    exp_marker = mlines.Line2D([], [], color='tab:red',
+                        marker='o',
+                        markersize=5, label='flow expands')
+    handles_list = [cont_marker, exp_marker]
+    fig.legend(handles=handles_list, fontsize=16, loc='lower right')
 
-            if show_plots:
-                plt.show()
-            plt.close()
+    plt.tight_layout()
 
-    # todo: add prelim etc to this
+    # show and close plots
+    if save_plots:
+        save_name = f'staircases.png'
+        plt.savefig(os.path.join(save_path, save_name))
+
+    if show_plots:
+        plt.show()
+    plt.close()
+
+    # todo: add prelim, duration etc to this
     # save n_reversals to csv for use in script_c figure 5
     n_reversals_df = pd.DataFrame(n_reversals_np, columns=dur_name_list)
     n_reversals_df.insert(0, 'stair', stair_list)
+    n_reversals_df.insert(1, 'stair_name', stair_names_list)
+
     n_reversals_df.set_index('stair', inplace=True)
+
     if verbose:
         print(f'n_reversals_df:\n{n_reversals_df}')
     n_reversals_df.to_csv(os.path.join(save_path, 'n_reversals.csv'))
@@ -1819,14 +1804,14 @@ def b3_plot_staircase(all_data_path, thr_col='probeSpeed', resp_col='answer',
 #     psig_thr_df = psig_thr_df.drop(['stair'], axis=1)
 #     if 'separation' in list(psig_thr_df.columns):
 #         sep_col_s = psig_thr_df.pop('separation')
-#     if 'stair_names' in list(psig_thr_df.columns):
-#         stair_names_list = list(psig_thr_df['stair_names'])
+#     if 'stair_name' in list(psig_thr_df.columns):
+#         stair_names_list = list(psig_thr_df['stair_name'])
 #         print(f'stair_names_list: {stair_names_list}')
 #
 #     if 'congruent' in list(psig_thr_df.columns):
 #         stair0_col_s = psig_thr_df.pop('congruent')
 #
-#     psig_thr_df.columns = ['stair_names'] + dur_name_list
+#     psig_thr_df.columns = ['stair_name'] + dur_name_list
 #     if verbose:
 #         # psig_thr_df still in stair order  (e.g., sep: 18, -18, 6, -6 etc)
 #         print(f'\npsig_thr_df:\n{psig_thr_df}')
@@ -1838,11 +1823,11 @@ def b3_plot_staircase(all_data_path, thr_col='probeSpeed', resp_col='answer',
 #     symm_sep_indices = [0, 1, 2, 3, 4, 5, 4, 3, 2, 1, 0]
 #     sym_sep_list = [-18, -6, -3, -2, -1, 0, 1, 2, 3, 6, 18]
 #
-#     psig_stair0_sep_df = psig_thr_df[psig_thr_df['stair_names'] >= 0]
+#     psig_stair0_sep_df = psig_thr_df[psig_thr_df['stair_name'] >= 0]
 #     psig_stair0_sym_df = psig_stair0_sep_df.iloc[symm_sep_indices]
 #     psig_stair0_sym_df.reset_index(drop=True, inplace=True)
 #
-#     psig_stair1_sep_df = psig_thr_df[psig_thr_df['stair_names'] < 0]
+#     psig_stair1_sep_df = psig_thr_df[psig_thr_df['stair_name'] < 0]
 #     psig_stair1_sym_df = psig_stair1_sep_df.iloc[symm_sep_indices]
 #     psig_stair1_sym_df.reset_index(drop=True, inplace=True)
 #
@@ -1851,7 +1836,7 @@ def b3_plot_staircase(all_data_path, thr_col='probeSpeed', resp_col='answer',
 #
 #     # subtract the dfs from each other, then for each column get the sum of abs values
 #     diff_val = np.sum(abs(psig_stair0_sym_df - psig_stair1_sym_df), axis=0)
-#     diff_val.drop(index='stair_names', inplace=True)
+#     diff_val.drop(index='stair_name', inplace=True)
 #
 #     # take the mean of these across all durs to get single value
 #     mean_diff_val = float(np.mean(diff_val))
@@ -1899,8 +1884,8 @@ def b3_plot_staircase(all_data_path, thr_col='probeSpeed', resp_col='answer',
 #                   '(positive values for congruent probe/flow motion, ' \
 #                   'negative for incongruent).'
 #
-#     psig_sorted_df = psig_thr_df.sort_values(by=['stair_names'])
-#     psig_sorted_df.drop('stair_names', axis=1, inplace=True)
+#     psig_sorted_df = psig_thr_df.sort_values(by=['stair_name'])
+#     psig_sorted_df.drop('stair_name', axis=1, inplace=True)
 #     psig_sorted_df.reset_index(drop=True, inplace=True)
 #     psig_thr_idx_list = list(psig_sorted_df.index)
 #     stair_names_list = sorted(stair_names_list)
@@ -1931,8 +1916,8 @@ def b3_plot_staircase(all_data_path, thr_col='probeSpeed', resp_col='answer',
 #         psig_thr_df.insert(0, 'congruent', stair0_col_s)
 #     if 'separation' not in list(psig_thr_df.columns):
 #         psig_thr_df.insert(1, 'separation', sep_col_s)
-#     if 'stair_names' in list(psig_thr_df.columns):
-#         psig_thr_df.drop('stair_names', axis=1, inplace=True)
+#     if 'stair_name' in list(psig_thr_df.columns):
+#         psig_thr_df.drop('stair_name', axis=1, inplace=True)
 #
 #     dur_cols_list = list(psig_thr_df.columns)[-len(dur_name_list):]
 #     if verbose:
@@ -2053,31 +2038,63 @@ def d_average_participant(root_path, run_dir_names_list,
     print(f'\nget_means_df:\n{get_means_df}')
 
     # # get means and errors
-    groupby_sep_df = get_means_df.drop('stack', axis=1)
-    ave_psignifit_thr_df = groupby_sep_df.groupby(['stair'], sort=False).mean()
+    get_means_df = get_means_df.drop('stack', axis=1)
+
+    # loop through stair_list and add corresponding stair_name and flow_name to list
+    stair_list = get_means_df['stair'].unique().tolist()
+    stair_names_list = []
+    prelim_list = []
+    flow_dir_list = []
+    flow_names_list = []
+    for stair in stair_list:
+        stair_names_list.append(get_means_df.loc[get_means_df['stair'] == stair, 'stair_name'].unique().tolist()[0])
+        prelim_list.append(get_means_df.loc[get_means_df['stair'] == stair, 'prelim'].unique().tolist()[0])
+        flow_dir_list.append(get_means_df.loc[get_means_df['stair'] == stair, 'flow_dir'].unique().tolist()[0])
+        flow_names_list.append(get_means_df.loc[get_means_df['stair'] == stair, 'flow_name'].unique().tolist()[0])
+
+    get_means_df = get_means_df.drop('prelim', axis=1)
+    get_means_df = get_means_df.drop('flow_dir', axis=1)
+
+
+    # get average values (from numeric columns)
+    ave_psignifit_thr_df = get_means_df.groupby(['stair'], sort=False).mean()
+    # add stair_names and flow_name back in
+    ave_psignifit_thr_df.insert(0, 'stair_name', stair_names_list)
+    ave_psignifit_thr_df.insert(1, 'prelim', prelim_list)
+    ave_psignifit_thr_df.insert(2, 'flow_dir', flow_dir_list)
+    ave_psignifit_thr_df.insert(3, 'flow_name', flow_names_list)
     if verbose:
-        print(f'\ngroupby_sep_df:\n{groupby_sep_df}')
+        print(f'\nget_means_df:\n{get_means_df}')
         print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
 
     if error_type in [False, None]:
         error_bars_df = None
     elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
-        error_bars_df = groupby_sep_df.groupby('stair', sort=False).sem()
+        error_bars_df = get_means_df.groupby('stair', sort=False).sem()
     elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
-        error_bars_df = groupby_sep_df.groupby('stair', sort=False).std()
+        error_bars_df = get_means_df.groupby('stair', sort=False).std()
     else:
         raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
                          f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standard_error']\n"
                          f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
                          f"'deviation', 'standard_deviation']")
+
+    # replace NaNs with 0
+    error_bars_df.fillna(0, inplace=True)
+
+    # add stair_names and flow_name back in
+    error_bars_df.insert(0, 'stair_name', stair_names_list)
+    error_bars_df.insert(1, 'prelim', prelim_list)
+    error_bars_df.insert(2, 'flow_dir', flow_dir_list)
+    error_bars_df.insert(3, 'flow_name', flow_names_list)
     print(f'\nerror_bars_df:\n{error_bars_df}')
 
     # save csv with average values
     # todo: since I added extra dur conditions, dur conds are not in ascending order.
     #  Perhaps re-order columns before saving?
     if trim_n is not None:
-        ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM_thresh.csv')
-        error_bars_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM_thr_error_{error_type}.csv')
+        ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM{trim_n}_thresh.csv')
+        error_bars_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM{trim_n}_thr_error_{error_type}.csv')
     else:
         ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_thresh.csv')
         error_bars_df.to_csv(f'{root_path}{os.sep}MASTER_ave_thr_error_{error_type}.csv')
@@ -2130,15 +2147,22 @@ def e_average_exp_data(exp_path, p_names_list,
         ave_df_name = 'MASTER_ave_thresh'
         if use_trimmed:
             ave_df_name = 'MASTER_ave_TM_thresh'
+            if not os.path.isfile(os.path.join(exp_path, p_name, f'{ave_df_name}.csv')):
+                ave_df_name = 'MASTER_ave_TM1_thresh'
+                if not os.path.isfile(os.path.join(exp_path, p_name, f'{ave_df_name}.csv')):
+                    ave_df_name = 'MASTER_ave_TM2_thresh'
+                    print("can't find trimmed ave thr csv")
+                    raise ValueError
+
 
         this_p_ave_df = pd.read_csv(f'{exp_path}{os.sep}{p_name}{os.sep}{ave_df_name}.csv')
 
-        ave_df_name = 'MASTER_ave_thresh'
-        if n_trimmed is not None:
-            ave_df_name = f'MASTER_ave_TM{n_trimmed}_thresh'
+        # ave_df_name = 'MASTER_ave_thresh'
+        # if n_trimmed is not None:
+        #     ave_df_name = f'MASTER_ave_TM{n_trimmed}_thresh'
 
         this_ave_df_path = os.path.join(exp_path, p_name, f'{ave_df_name}.csv')
-        # # if trimmed mean doesn't exists (e.g., because participant hasn't done 12 runs)
+        # # if trimmed mean doesn't exist (e.g., because participant hasn't done 12 runs)
         # if not os.path.isfile(this_ave_df_path):
         #     print(f"Couldn't find trimmed mean data for {p_name}\nUsing untrimmed instead.")
         #     this_ave_df_path = os.path.join(exp_path, p_name, 'MASTER_ave_thresh.csv')
@@ -2155,7 +2179,7 @@ def e_average_exp_data(exp_path, p_names_list,
 
         rows, cols = this_p_ave_df.shape
         this_p_ave_df.insert(0, 'participant', [p_name] * rows)
-        this_p_ave_df.insert(2, 'stair_names', stair_names_list)
+        this_p_ave_df.insert(2, 'stair_name', stair_names_list)
         # this_p_ave_df.insert(3, 'separation', sep_list)
 
         all_p_ave_list.append(this_p_ave_df)
@@ -2175,23 +2199,23 @@ def e_average_exp_data(exp_path, p_names_list,
     all_exp_thr_df.to_csv(f'{exp_path}{os.sep}MASTER_exp_all_thr.csv', index=False)
 
     # # get means and errors
-    groupby_sep_df = all_exp_thr_df.drop('participant', axis=1)
-    # groupby_sep_df = groupby_sep_df.drop('separation', axis=1)
-    # groupby_sep_df = groupby_sep_df.drop('congruent', axis=1)
+    get_means_df = all_exp_thr_df.drop('participant', axis=1)
+    # get_means_df = get_means_df.drop('separation', axis=1)
+    # get_means_df = get_means_df.drop('congruent', axis=1)
 
     # todo: should I change sort to False for groupby?  Cause probelems in
     #  d_average_participants for error_df if there was only a single run of a
     #  condition so error was NaN and somehow order changed.
-    exp_ave_thr_df = groupby_sep_df.groupby('stair', sort=True).mean()
+    exp_ave_thr_df = get_means_df.groupby('stair', sort=True).mean()
     if verbose:
         print(f'\nexp_ave_thr_df:\n{exp_ave_thr_df}')
 
     if error_type in [False, None]:
         error_bars_df = None
     elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
-        error_bars_df = groupby_sep_df.groupby('stair', sort=True).sem()
+        error_bars_df = get_means_df.groupby('stair', sort=True).sem()
     elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
-        error_bars_df = groupby_sep_df.groupby('stair', sort=True).std()
+        error_bars_df = get_means_df.groupby('stair', sort=True).std()
     else:
         raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
                          f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standrad_error']\n"
@@ -2278,182 +2302,319 @@ def plot_diff(ave_thr_df, stair_names_col='stair', fig_title=None,
     return fig
 
 
-def make_average_plots(all_df_path, ave_df_path, error_bars_path,
-                       n_trimmed=False,
-                       exp_ave=False,
-                       dur_values_list=None,
-                       show_plots=True, verbose=True):
+# def make_average_plots(all_df_path, ave_df_path, error_bars_path,
+#                        n_trimmed=False,
+#                        exp_ave=False,
+#                        dur_values_list=None,
+#                        show_plots=True, verbose=True):
+# 
+#     # todo: if necessary, have a separate function to transform data before feeding it into here.
+# 
+#     """Plots:
+#     MASTER_ave_thresh saved as ave_thr_all_runs.png
+#     MASTER_ave_thresh two-probe/one-probe saved as ave_thr_div_1probe.png
+#     these both have two versions:
+#     a. x-axis is separation, dur as different lines
+#     b. x-axis is dur, separation as different lines
+#     Heatmap: with average probe lum for dur and separation.
+# 
+#     :param all_df_path: Path to df with all participant/stack data.
+#     :param ave_df_path: Path to df with average across all stacks/participants
+#     :param error_bars_path: Path to df for errors bars with SE/SD associated with averages.
+#     :param n_trimmed: Whether averages data has been trimmed.
+#     :param exp_ave: If False, this script is for participant averages over runs.
+#                     If True, the script if for experiment averages over participants.
+#     :param show_plots:
+#     :param verbose:
+#     :return: """
+# 
+#     print("\n*** running make_average_plots()***\n")
+# 
+#     # todo: check why plots have changed order - since I added extra dur conditions.
+# 
+#     save_path, df_name = os.path.split(ave_df_path)
+# 
+#     if exp_ave:
+#         ave_over = 'Exp'
+#     else:
+#         ave_over = 'P'
+# 
+#     # if type(all_df_path) is 'pandas.core.frame.DataFrame':
+#     if isinstance(all_df_path, pd.DataFrame):
+#         all_df = all_df_path
+#     else:
+#         all_df = pd.read_csv(all_df_path)
+# 
+#     # if type(ave_df_path) is 'pandas.core.frame.DataFrame':
+#     if isinstance(ave_df_path, pd.DataFrame):
+#         ave_df = ave_df_path
+#     else:
+#         ave_df = pd.read_csv(ave_df_path)
+# 
+#     # if type(error_bars_path) is 'pandas.core.frame.DataFrame':
+#     if isinstance(error_bars_path, pd.DataFrame):
+#         error_bars_df = error_bars_path
+#     else:
+#         error_bars_df = pd.read_csv(error_bars_path)
+# 
+#     if dur_values_list is None:
+#         dur_values_list = list(all_df.columns[3:])
+#     dur_name_list = [f'dur_{i}' for i in dur_values_list]
+# 
+#     if verbose:
+#         print(f'\nall_df:\n{all_df}')
+#         print(f'\nave_df:\n{ave_df}')
+#         print(f'\nerror_bars_df:\n{error_bars_df}')
+#         print(f'\ndur_name_list; {dur_name_list}')
+#         print(f'\ndur_values_list; {dur_values_list}')
+# 
+#     stair_names_list = sorted(list(all_df['stair_name'].unique()))
+#     if verbose:
+#         print(f"\nstair_names_list: {stair_names_list}")
+# 
+# 
+#     """part 3. main Figures (these are the ones saved in the matlab script)
+#     Fig1: plot average threshold for each dur and sep.
+#     Fig2: divide all 2probe conds (pos_sep) by one_probe condition for each participant.
+#     For both figures there are 2 versions:
+#         a) Sep on x-axis, different line for each dur
+#         b) dur on x-axis, different line for each Sep"""
+# 
+#     print(f"\nfig_1a")
+#     if n_trimmed is not None:
+#         fig_1a_title = f'{ave_over} average thresholds per dur across all runs (trim={n_trimmed}).\n' \
+#                        f'Bars=SE.'
+#         fig_1a_savename = f'ave_TM_thr_pos_and_neg.png'
+#     else:
+#         fig_1a_title = f'{ave_over} average threshold per dur across all runs.\n' \
+#                        f'Bars=SE.'
+#         fig_1a_savename = f'ave_thr_pos_and_neg.png'
+# 
+#     # use ave_w_stairname_idx_df for fig 1a and heatmap
+#     ave_w_stairname_idx_df = ave_df.copy()
+#     if 'stair_name' not in ave_w_stairname_idx_df.columns.to_list():
+#         ave_w_stairname_idx_df.insert(0, 'stair_name', stair_names_list)
+#     ave_w_stairname_idx_df.drop('stair', inplace=True, axis=1)
+#     ave_w_stairname_idx_df = ave_w_stairname_idx_df.set_index('stair_name')
+# 
+#     print(f"ave_w_stairname_idx_df:\n{ave_w_stairname_idx_df}")
+# 
+#     # if I delete this messy plot, I can also delete the function that made it.
+#     plot_runs_ave_w_errors(fig_df=ave_w_stairname_idx_df, error_df=error_bars_df,
+#                            jitter=False, error_caps=True, alt_colours=False,
+#                            legend_names=dur_values_list,
+#                            x_tick_vals=stair_names_list,
+#                            x_tick_labels=stair_names_list,
+#                            even_spaced_x=True, fixed_y_range=False,
+#                            x_axis_label='Condition ("fl"=background motion, "pr"=probe)',
+#                            y_axis_label='Probe Speed (pixels per frame)',
+#                            fig_title=fig_1a_title, save_name=fig_1a_savename,
+#                            save_path=save_path, verbose=verbose)
+#     if show_plots:
+#         plt.show()
+#     plt.close()
+# 
+#     print(f"\nfig_1b")
+#     if n_trimmed is not None:
+#         fig_1b_title = f'{ave_over} average thresholds per stair across all runs (trim={n_trimmed}).\n' \
+#                        f'Bars=.68 CI'
+#         fig_1b_savename = f'ave_TM_thr_all_runs.png'
+#     else:
+#         fig_1b_title = f'{ave_over} average threshold per stair across all runs\n' \
+#                        f'Bars=.68 CI'
+#         fig_1b_savename = f'ave_thr_all_runs.png'
+# 
+#     plot_w_errors_either_x_axis(wide_df=all_df, cols_to_keep=['stair_name', 'stair'],
+#                                 cols_to_change=dur_values_list,
+#                                 cols_to_change_show='probeSpeed', new_col_name='probe_dur_ms',
+#                                 strip_from_cols=None, x_axis='probe_dur_ms', y_axis='probeSpeed',
+#                                 hue_var='stair_name', style_var=None, style_order=None,
+#                                 error_bars=True, even_spaced_x=True,
+#                                 x_tick_vals=dur_values_list,
+#                                 jitter=False,   # .01,
+#                                 fig_title=fig_1b_title, fig_savename=fig_1b_savename,
+#                                 save_path=save_path, verbose=verbose)
+#     if show_plots:
+#         plt.show()
+#     plt.close()
+# 
+# 
+# 
+#     print('\nfig2a: Mean participant difference between congruent and incongruent conditions (x-axis=Sep)')
+#     diff_description = "Difference: 0_fl_in_pr_out - 1_fl_out_pr_in"
+# 
+#     if n_trimmed is not None:
+#         fig_2a_title = f'{ave_over} Mean {diff_description}.\n' \
+#                        f'trim={n_trimmed}.'
+#         fig_2a_savename = f'ave_TM_diff.png'
+#     else:
+#         fig_2a_title = f'{ave_over} Mean {diff_description}.'
+#         fig_2a_savename = f'ave_diff.png'
+# 
+#     plot_diff(ave_df, stair_names_col='stair',
+#               fig_title=fig_2a_title, save_path=save_path, save_name=fig_2a_savename,
+#               x_axis_label='Probe Durations',
+#               difference_description=diff_description,
+#               verbose=verbose)
+#     if show_plots:
+#         plt.show()
+#     plt.close()
+# 
+#     print('\nfig2b: Mean participant difference between congruent and incongruent conditions (x-axis=dur)')
+# 
+# 
+#     print(f"\nHeatmap")
+#     if n_trimmed is not None:
+#         heatmap_title = f'{ave_over} mean Threshold for each dur and separation (trim={n_trimmed}).'
+#         heatmap_savename = 'mean_TM_thr_heatmap'
+#     else:
+#         heatmap_title = f'{ave_over} mean Threshold for each dur and separation'
+#         heatmap_savename = 'mean_thr_heatmap'
+# 
+#     plot_thr_heatmap(heatmap_df=ave_w_stairname_idx_df.T,
+#                      heatmap_midpoint=0.0,
+#                      fig_title=heatmap_title,
+#                      save_name=heatmap_savename,
+#                      save_path=save_path,
+#                      verbose=verbose)
+#     if show_plots:
+#         plt.show()
+#     plt.close()
+    
+def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed):
+    """
+    Make plots showing probe speed or speed difference (exp-cont) for all prelims and probe_durs
 
-    # todo: if necessary, have a separate function to transform data before feeding it into here.
-
-    """Plots:
-    MASTER_ave_thresh saved as ave_thr_all_runs.png
-    MASTER_ave_thresh two-probe/one-probe saved as ave_thr_div_1probe.png
-    these both have two versions:
-    a. x-axis is separation, dur as different lines
-    b. x-axis is dur, separation as different lines
-    Heatmap: with average probe lum for dur and separation.
-
-    :param all_df_path: Path to df with all participant/stack data.
-    :param ave_df_path: Path to df with average across all stacks/participants
-    :param error_bars_path: Path to df for errors bars with SE/SD associated with averages.
-    :param n_trimmed: Whether averages data has been trimmed.
-    :param exp_ave: If False, this script is for participant averages over runs.
-                    If True, the script if for experiment averages over participants.
-    :param show_plots:
-    :param verbose:
-    :return: """
-
-    print("\n*** running make_average_plots()***\n")
-
-    # todo: check why plots have changed order - since I added extra dur conditions.
-
-    save_path, df_name = os.path.split(ave_df_path)
-
-    if exp_ave:
-        ave_over = 'Exp'
-    else:
-        ave_over = 'P'
-
-    # if type(all_df_path) is 'pandas.core.frame.DataFrame':
+    :param all_df_path: dataframe or path to dataframe with stack column (e.g.all runs, not means)
+    :param root_path: path to save to
+    :param participant_name: name of participant (or 'exp_means)
+    :param n_trimmed: none, or number of vals trimmed from each end
+    :return:   plots
+    """
+    
+    
     if isinstance(all_df_path, pd.DataFrame):
         all_df = all_df_path
     else:
         all_df = pd.read_csv(all_df_path)
 
-    # if type(ave_df_path) is 'pandas.core.frame.DataFrame':
-    if isinstance(ave_df_path, pd.DataFrame):
-        ave_df = ave_df_path
-    else:
-        ave_df = pd.read_csv(ave_df_path)
+    n_to_ave_over = len(all_df['stack'].unique().tolist())
 
-    # if type(error_bars_path) is 'pandas.core.frame.DataFrame':
-    if isinstance(error_bars_path, pd.DataFrame):
-        error_bars_df = error_bars_path
-    else:
-        error_bars_df = pd.read_csv(error_bars_path)
+    # make long df with all probe_durs in one column (threshold) with probe_dur_ms as another column
+    print(f"all_df: {all_df.columns.tolist()}\n: {all_df}\n")
+    cols_to_keep = all_df.columns.tolist()[:6]
+    cols_to_change = all_df.columns.tolist()[6:]
+    strip_this = ''
+    # if 'dur_' in any of the cols_to_change, change strip_this to 'dur_'
+    for col in cols_to_change:
+        if 'dur_' in col:
+            strip_this = 'dur_'
+            break
+    print(f"strip_this: {strip_this}")
+    print(f"cols_to_keep: {cols_to_keep}")
+    print(f"cols_to_change: {cols_to_change}")
+    all_long_df = make_long_df(wide_df=all_df,
+                               cols_to_keep=cols_to_keep,
+                               cols_to_change=cols_to_change,
+                               cols_to_change_show='probe_speed_cm_per_s',
+                               new_col_name='probe_dur_ms', strip_from_cols=strip_this, verbose=True)
 
-    if dur_values_list is None:
-        dur_values_list = list(all_df.columns[3:])
-    dur_name_list = [f'dur_{i}' for i in dur_values_list]
+    print(f"all_long_df: {all_long_df.columns.tolist()}\n: {all_long_df}\n")
 
-    if verbose:
-        print(f'\nall_df:\n{all_df}')
-        print(f'\nave_df:\n{ave_df}')
-        print(f'\nerror_bars_df:\n{error_bars_df}')
-        print(f'\ndur_name_list; {dur_name_list}')
-        print(f'\ndur_values_list; {dur_values_list}')
+    # simple_all_long_df is the same as all_long_df but without the columns 'stair' and 'flow_dir'
+    simple_all_long_df = all_long_df.drop(columns=['stair', 'flow_dir'])
+    print(f"simple_all_long_df: {simple_all_long_df.columns.tolist()}\n: {simple_all_long_df}\n")
 
-    stair_names_list = sorted(list(all_df['stair_names'].unique()))
-    if verbose:
-        print(f"\nstair_names_list: {stair_names_list}")
+    # lineplot showing flow_dir_name on x_axis vs mean threshold on Y-axis, for all prelim and probe_dur.
+    line_plot = sns.lineplot(x='flow_name', y='probe_speed_cm_per_s', data=simple_all_long_df,
+                             hue='prelim', style='probe_dur_ms',
+                             errorbar='se')
+    # insert horizontal line at 0.0
+    plt.axhline(y=0.0, color='grey', linestyle='--')
+    plt.title(f"{participant_name}, n={n_to_ave_over},  TM={n_trimmed}")
+    plt.savefig(os.path.join(root_path, f"{participant_name}_TM{n_trimmed}_line_all.png"))
+    plt.show()
 
-
-    """part 3. main Figures (these are the ones saved in the matlab script)
-    Fig1: plot average threshold for each dur and sep.
-    Fig2: divide all 2probe conds (pos_sep) by one_probe condition for each participant.
-    For both figures there are 2 versions:
-        a) Sep on x-axis, different line for each dur
-        b) dur on x-axis, different line for each Sep"""
-
-    print(f"\nfig_1a")
-    if n_trimmed is not None:
-        fig_1a_title = f'{ave_over} average thresholds per dur across all runs (trim={n_trimmed}).\n' \
-                       f'Bars=SE.'
-        fig_1a_savename = f'ave_TM_thr_pos_and_neg.png'
-    else:
-        fig_1a_title = f'{ave_over} average threshold per dur across all runs.\n' \
-                       f'Bars=SE.'
-        fig_1a_savename = f'ave_thr_pos_and_neg.png'
-
-    # use ave_w_stairname_idx_df for fig 1a and heatmap
-    ave_w_stairname_idx_df = ave_df.copy()
-    ave_w_stairname_idx_df.insert(0, 'stair_names', stair_names_list)
-    ave_w_stairname_idx_df.drop('stair', inplace=True, axis=1)
-    ave_w_stairname_idx_df = ave_w_stairname_idx_df.set_index('stair_names')
-
-    print(f"ave_w_stairname_idx_df:\n{ave_w_stairname_idx_df}")
-
-    # if I delete this messy plot, I can also delete the function that made it.
-    plot_runs_ave_w_errors(fig_df=ave_w_stairname_idx_df, error_df=error_bars_df,
-                           jitter=False, error_caps=True, alt_colours=False,
-                           legend_names=dur_values_list,
-                           x_tick_vals=stair_names_list,
-                           x_tick_labels=stair_names_list,
-                           even_spaced_x=True, fixed_y_range=False,
-                           x_axis_label='Condition ("fl"=background motion, "pr"=probe)',
-                           y_axis_label='Probe Speed (pixels per frame)',
-                           fig_title=fig_1a_title, save_name=fig_1a_savename,
-                           save_path=save_path, verbose=verbose)
-    if show_plots:
+    # make a catplot for each probe_dur_ms
+    for dur in simple_all_long_df['probe_dur_ms'].unique().tolist():
+        dur_df = simple_all_long_df[simple_all_long_df['probe_dur_ms'] == dur]
+        cat_plot = sns.catplot(x='flow_name', y='probe_speed_cm_per_s', data=dur_df,
+                               hue='prelim',
+                               kind='bar', errorbar='se')
+        plt.axhline(y=0.0, color='grey', linestyle='--')
+        # insert vertical line between exp and cont
+        plt.axvline(x=0.5, color='grey', linestyle='--')
+        plt.suptitle(f"{participant_name}, n={n_to_ave_over},  TM={n_trimmed}, probe_dur={dur}")
+        plt.savefig(os.path.join(root_path, f"{participant_name}_TM{n_trimmed}_cat_bar_{dur}.png"))
         plt.show()
-    plt.close()
 
-    print(f"\nfig_1b")
-    if n_trimmed is not None:
-        fig_1b_title = f'{ave_over} average thresholds per stair across all runs (trim={n_trimmed}).\n' \
-                       f'Bars=.68 CI'
-        fig_1b_savename = f'ave_TM_thr_all_runs.png'
-    else:
-        fig_1b_title = f'{ave_over} average threshold per stair across all runs\n' \
-                       f'Bars=.68 CI'
-        fig_1b_savename = f'ave_thr_all_runs.png'
-
-    plot_w_errors_either_x_axis(wide_df=all_df, cols_to_keep=['stair_names', 'stair'],
-                                cols_to_change=dur_values_list,
-                                cols_to_change_show='probeSpeed', new_col_name='probe_dur_ms',
-                                strip_from_cols=None, x_axis='probe_dur_ms', y_axis='probeSpeed',
-                                hue_var='stair_names', style_var=None, style_order=None,
-                                error_bars=True, even_spaced_x=True,
-                                x_tick_vals=dur_values_list,
-                                jitter=False,   # .01,
-                                fig_title=fig_1b_title, fig_savename=fig_1b_savename,
-                                save_path=save_path, verbose=verbose)
-    if show_plots:
+        # side by side plots for each prelim
+        g = sns.catplot(
+            data=dur_df, x="flow_name", y="probe_speed_cm_per_s", col="prelim",
+            kind="bar", height=4, aspect=.6)
+        g.set_axis_labels("flow direction", "probe_speed_cm_per_s Rate")
+        prelim_list = simple_all_long_df['prelim'].unique().tolist()
+        g.despine(left=True)
+        plt.suptitle(f"{participant_name}, n={n_to_ave_over},  TM={n_trimmed}, probe_dur={dur}")
+        # increase space below suptitle
+        plt.subplots_adjust(top=0.9)
+        plt.savefig(os.path.join(root_path, f"{participant_name}_TM{n_trimmed}_facet_bar_{dur}.png"))
         plt.show()
-    plt.close()
 
+    # make diff_df: for each stack, prelim and probe_dur_ms, get the difference between exp and cont
+    diff_list = []
+    for probe_dur_ms in all_long_df['probe_dur_ms'].unique().tolist():
+        dur_df = all_long_df[all_long_df['probe_dur_ms'] == probe_dur_ms]
 
+        for prelim in dur_df['prelim'].unique().tolist():
+            prelim_df = dur_df[dur_df['prelim'] == prelim]
 
-    print('\nfig2a: Mean participant difference between congruent and incongruent conditions (x-axis=Sep)')
-    diff_description = "Difference: 0_fl_in_pr_out - 1_fl_out_pr_in"
+            for stack in prelim_df['stack'].unique().tolist():
+                stack_df = prelim_df[prelim_df['stack'] == stack]
 
-    if n_trimmed is not None:
-        fig_2a_title = f'{ave_over} Mean {diff_description}.\n' \
-                       f'trim={n_trimmed}.'
-        fig_2a_savename = f'ave_TM_diff.png'
-    else:
-        fig_2a_title = f'{ave_over} Mean {diff_description}.'
-        fig_2a_savename = f'ave_diff.png'
+                print(f"\nstack: {stack}, probe_dur_ms: {probe_dur_ms}, prelim: {prelim}\n"
+                      f"stack_df: {stack_df.columns.tolist()}\n:"
+                      # f"{stack_df}\n"
+                      f"")
+                exp_speed = stack_df[stack_df['flow_name'] == 'exp']['probe_speed_cm_per_s'].values[0]
+                cont_speed = stack_df[stack_df['flow_name'] == 'cont']['probe_speed_cm_per_s'].values[0]
+                print(f"exp_speed: {exp_speed}\ncont_speed: {cont_speed}\n")
+                diff = exp_speed - cont_speed
+                diff_list.append([probe_dur_ms, prelim, stack, exp_speed, cont_speed, diff])
 
-    plot_diff(ave_df, stair_names_col='stair',
-              fig_title=fig_2a_title, save_path=save_path, save_name=fig_2a_savename,
-              x_axis_label='Probe Durations',
-              difference_description=diff_description,
-              verbose=verbose)
-    if show_plots:
+    print(f"diff_list: {diff_list}\n")
+
+    # make diff_df from diff_list
+    diff_df = pd.DataFrame(diff_list, columns=['probe_dur_ms', 'prelim', 'stack', 'exp_speed', 'cont_speed', 'diff'])
+    print(f"diff_df: {diff_df.columns.tolist()}\n:{diff_df}\n")
+
+    # drop exp_speed and cont_speed columns
+    diff_df = diff_df.drop(columns=['exp_speed', 'cont_speed'])
+
+    # plot diff_df with prelim on x-axis, diff on y-axis, probe_dur_ms as hue
+    sns.lineplot(x='prelim', y='diff', data=diff_df,
+                 hue='probe_dur_ms',
+                 errorbar='se')
+    plt.xticks(list(diff_df['prelim'].unique()))
+    plt.axhline(y=0.0, color='grey', linestyle='--')
+
+    plt.suptitle(f"{participant_name}, n={n_to_ave_over},  TM={n_trimmed}")
+    plt.title(f"probe_speed different (flow exp - cont)")
+
+    plt.savefig(os.path.join(root_path, f"{participant_name}_TM{n_trimmed}_diff_bar.png"))
+    plt.show()
+
+    # if there are multiple probe_dur_ms, make a lineplot with probe_dur_ms on x-axis, diff on y-axis, prelim as hue
+    if len(diff_df['probe_dur_ms'].unique().tolist()) > 1:
+        sns.lineplot(x='probe_dur_ms', y='diff', data=diff_df,
+                     hue='prelim',
+                     errorbar='se')
+        plt.axhline(y=0.0, color='grey', linestyle='--')
+
+        plt.suptitle(f"{participant_name}, n={n_to_ave_over},  TM={n_trimmed}")
+        plt.title(f"probe_speed different (flow exp - cont)")
+
+        plt.savefig(os.path.join(root_path, f"{participant_name}_TM{n_trimmed}_diff_line.png"))
         plt.show()
-    plt.close()
-
-    print('\nfig2b: Mean participant difference between congruent and incongruent conditions (x-axis=dur)')
-
-
-    print(f"\nHeatmap")
-    if n_trimmed is not None:
-        heatmap_title = f'{ave_over} mean Threshold for each dur and separation (trim={n_trimmed}).'
-        heatmap_savename = 'mean_TM_thr_heatmap'
-    else:
-        heatmap_title = f'{ave_over} mean Threshold for each dur and separation'
-        heatmap_savename = 'mean_thr_heatmap'
-
-    plot_thr_heatmap(heatmap_df=ave_w_stairname_idx_df.T,
-                     heatmap_midpoint=0.0,
-                     fig_title=heatmap_title,
-                     save_name=heatmap_savename,
-                     save_path=save_path,
-                     verbose=verbose)
-    if show_plots:
-        plt.show()
-    plt.close()
 
     print("\n*** finished make_average_plots()***\n")

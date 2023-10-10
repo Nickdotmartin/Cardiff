@@ -271,7 +271,7 @@ expName = path.basename(__file__)[:-3]
 
 
 # # # DIALOGUE BOX # # #
-expInfo = {'1_participant_name': 'Nicktest_06102023',
+expInfo = {'1_participant_name': 'Nicktest_10102023',
            '2_run_number': 1,
            '3_monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'ASUS_2_13_240Hz',
                               'Samsung', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
@@ -358,6 +358,9 @@ if debug:
 # get all possible combinations of these three lists
 combined_conds = [(f, p) for f in flow_dir_vals for p in prelim_vals]
 
+print(f"\ncombined_conds ({len(combined_conds)}: {combined_conds}")
+stair_idx_list = list(range(len(combined_conds)))
+
 # lists of values for each condition (all list are same length = n_stairs)
 '''each flow_dir value appears in 3 stairs, e.g.,
 flow_dir (expand/contract) x prelim (0, 70, 350)'''
@@ -370,7 +373,7 @@ flow_name_list = ['exp' if i == -1 else 'cont' for i in flow_dir_list]
 
 # stair_names_list joins sep_conds_list, cong_name_conds_list and prelim_conds_list
 # e.g., ['sep_6_cong_1_prelim_70', 'sep_6_cong_1_prelim_350', 'sep_6_cong_-1_prelim_70'...]
-stair_names_list = [f"flow_{f}_{n}_prelim_{p}" for f, n, p in zip(flow_dir_list, flow_name_list, prelim_conds_list)]
+stair_names_list = [f"{i}_flow_{f}_{n}_prelim_{p}" for i, f, n, p in zip(stair_idx_list, flow_dir_list, flow_name_list, prelim_conds_list)]
 
 if debug:
     print(f'flow_dir_list: {flow_dir_list}')
@@ -378,7 +381,7 @@ if debug:
     print(f'prelim_conds_list: {prelim_conds_list}')
 
 
-n_stairs = len(flow_dir_list)
+n_stairs = len(stair_idx_list)
 total_n_trials = int(n_trials_per_stair * n_stairs)
 print(f'\nstair_names_list: {stair_names_list}')
 print(f'n_stairs: {n_stairs}, total_n_trials: {total_n_trials}')
@@ -645,7 +648,7 @@ Otherwise the shortest durations are too hard.
 I need to convert it from cm/s to pixels/frame,
 which depends on the monitor's refresh rate.
 """
-start_cm_per_s = 0.8  # starting value in cm per second
+# start_cm_per_s = 0.8  # starting value in cm per second
 target_cm_in_dur = 1.6  # how far the probe moved in 2000ms in Evans et al, 2020
 
 # probe cm/sec needed to move 1.6cm in probe_dur_ms
@@ -667,7 +670,7 @@ miniVal = -10
 maxiVal = 10
 
 stairs = []
-for stair_idx in range(n_stairs):
+for stair_idx in stair_idx_list:
     thisInfo = copy.copy(expInfo)
     thisInfo['stair_idx'] = stair_idx
     thisInfo['stair_name'] = stair_names_list[stair_idx]
@@ -677,6 +680,7 @@ for stair_idx in range(n_stairs):
 
     thisStair = Staircase(name=stair_names_list[stair_idx],
                           type='simple',
+                          # todo: start in opposite direction
                           value=stairStart * flow_dir_list[stair_idx],  # each stair starts with same probe dir as bg motion
                           C=stairStart * 0.6,  # initial step size, as prop of maxLum
                           minRevs=3,

@@ -2,32 +2,34 @@ import os
 import pandas as pd
 from flow_parsing_psignifit_tools import get_psignifit_threshold_df, run_psignifit, results_to_psignifit, results_csv_to_np_for_psignifit
 from flow_parsing_psignifit_analysis import a_data_extraction, b3_plot_staircase
-from flow_parsing_psignifit_analysis import d_average_participant, make_average_plots, e_average_exp_data
+from flow_parsing_psignifit_analysis import d_average_participant, make_flow_parse_plots
+# from flow_parsing_psignifit_analysis import make_average_plots, e_average_exp_data
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 # # loop through run folders with first 5 scripts (a, b1, b2, b3, c)
 # # then run script d to get master lists and averages
 # exp_path = '/Users/nickmartin/Library/CloudStorage/OneDrive-CardiffUniversity/PycharmProjects/Cardiff/flow_parsing'
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing"
 exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing_NM_v4"
-exp_path = r"C:\Users\sapnm4\PycharmProjects\Cardiff\Nick_scripts\flow_parse_23\flow_parsing_NM_v4"
+# exp_path = r"C:\Users\sapnm4\PycharmProjects\Cardiff\Nick_scripts\flow_parse_23\flow_parsing_NM_v4"
 print(f"exp_path: {exp_path}")
 convert_path1 = os.path.normpath(exp_path)
 print(f"convert_path1: {convert_path1}")
 exp_path = convert_path1
 
-monitor = 'Nick_work_laptop'  # 'asus_cal' OLED, 'Nick_work_laptop'
+monitor = 'asus_cal'  # 'asus_cal' OLED, 'Nick_work_laptop'
 exp_path = os.path.join(exp_path, monitor)
 
 
-participant_list = ['Nicktest_06102023']  # ' Nick'
+participant_list = ['Nick']  # ' Nicktest_06102023'
 all_probe_dur_list = [8, 16, 25, 33, 41, 50, 58, 66, 100]
 
 
 verbose = True
 show_plots = True
 
-# n_runs = 3
-n_runs = 12
+
 # if the first folder to analyse is 1, p_idx_plus = 1.  If the first folder is 5, use 5 etc.
 # p_idx_plus = 4
 p_idx_plus = 1
@@ -83,12 +85,26 @@ for p_idx, participant_name in enumerate(participant_list):
         run_data_path = os.path.join(save_path, 'ALL_durations_sorted.csv')
         print(f"run_data_path: {run_data_path}\n")
 
+        run_data_df = pd.read_csv(run_data_path)
+
+        '''sort col names'''
+        if 'probe_cm_p_sec' in run_data_df.columns.tolist():
+            probe_speed_col = 'probe_cm_p_sec'
+        elif 'probeSpeed_cm_per_s' in run_data_df.columns.tolist():
+            probe_speed_col = 'probeSpeed_cm_per_s'
+
+        if 'prelim_ms' in run_data_df.columns.tolist():
+            prelim_col = 'prelim_ms'
+        elif 'prelim_bg_flow_ms' in run_data_df.columns.tolist():
+            prelim_col = 'prelim_bg_flow_ms'
+
+
         '''not sure why these columns are appearing as objects, not floats???'''
         # if any of those columns are 'object' dtype, change to float
         if run_data_df['probe_dur_ms'].dtype == 'object':
             run_data_df['probe_dur_ms'] = run_data_df['probe_dur_ms'].astype(float)
-        if run_data_df['probe_cm_p_sec'].dtype == 'object':
-            run_data_df['probe_cm_p_sec'] = run_data_df['probe_cm_p_sec'].astype(float)
+        if run_data_df[probe_speed_col].dtype == 'object':
+            run_data_df[probe_speed_col] = run_data_df[probe_speed_col].astype(float)
 
         # get list of all probe durs for this run
         probe_dur_list = run_data_df['probe_dur_ms'].unique().tolist()
@@ -106,7 +122,7 @@ for p_idx, participant_name in enumerate(participant_list):
             stair_df = run_data_df[run_data_df['stair'] == stair]
 
             stair_name = stair_df['stair_name'].unique().tolist()
-            prelim = stair_df['prelim_ms'].unique().tolist()
+            prelim = stair_df[prelim_col].unique().tolist()
             flow_dir = stair_df['flow_dir'].unique().tolist()
             flow_name = stair_df['flow_name'].unique().tolist()
 
@@ -124,6 +140,7 @@ for p_idx, participant_name in enumerate(participant_list):
             flow_dir_list.append(flow_dir[0])
             flow_name_list.append(flow_name[0])
 
+        print(f'stair_list: {stair_list}')
         print(f'stair_names_list: {stair_names_list}')
         print(f'prelim_list: {prelim_list}')
         print(f'flow_dir_list: {flow_dir_list}')
@@ -132,21 +149,22 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
         # for psignifit just use a reduced df with only the columns needed
-        psig_df = run_data_df[['probe_dur_ms', 'stair', 'response', 'probe_cm_p_sec']].copy()
+        psig_df = run_data_df[['probe_dur_ms', 'stair', 'response', probe_speed_col]].copy()
         # todo: changed variable name to probe_speed_cm_sec
 
 
         '''get psignifit thresholds df'''
-        cols_to_add_dict = {'stair_names': stair_names_list,
+        cols_to_add_dict = {'stair_name': stair_names_list,
                             'prelim': prelim_list,
                             'flow_dir': flow_dir_list,
                             'flow_name': flow_name_list
                             }
+        # todo: on curve plot, change y axis to proportion responsed 'out' (not 'correct').  Add prelim and flow_dir to plot title
         thr_df = get_psignifit_threshold_df(root_path=root_path,
                                             p_run_name=run_dir,
                                             csv_name=run_data_df,
                                             n_bins=9, q_bins=True,
-                                            thr_col='probe_cm_p_sec',
+                                            thr_col=probe_speed_col,
                                             resp_col='response',
                                             stair_col='stair',
                                             dur_list=probe_dur_list,
@@ -158,9 +176,8 @@ for p_idx, participant_name in enumerate(participant_list):
         print(f'thr_df:\n{thr_df}')
 
 
-
         '''b3'''
-        b3_plot_staircase(run_data_path, thr_col='probe_cm_p_sec', resp_col='response',  # 'answer'
+        b3_plot_staircase(run_data_path, thr_col=probe_speed_col, resp_col='response',  # 'answer'
                           show_plots=show_plots, verbose=verbose)
 
 
@@ -182,68 +199,13 @@ for p_idx, participant_name in enumerate(participant_list):
         err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
     exp_ave = False
 
-    make_average_plots(all_df_path=all_df_path,
-                       ave_df_path=p_ave_path,
-                       error_bars_path=err_path,
-                       n_trimmed=trim_n,
-                       # ave_over_n=len(run_folder_names),
-                       exp_ave=False,
-                       show_plots=True, verbose=True)
 
-    '''copied from rad_flow_w_prelim_analysis_pipe.py
-    Used to make plots comparing different prelims.
-    E.g., compare flow_dir (exp vs cont) for each prelim, side-by-side or on same axis.    
-    '''
-#     # add columns (background, prelim_ms) to all_df (and ave_df and err_df if needed)
-#     all_df = pd.read_csv(all_df_path)
-#     if 'background' not in all_df.columns.tolist():
-#         all_df.insert(0, 'background', bg_type)
-#     if 'prelim_ms' not in all_df.columns.tolist():
-#         all_df.insert(1, 'prelim_ms', prelim_flow_dur)
-#     p_master_all_dfs_list.append(all_df)
-#
-#     ave_df = pd.read_csv(p_ave_path)
-#     if 'background' not in ave_df.columns.tolist():
-#         ave_df.insert(0, 'background', bg_type)
-#     if 'prelim_ms' not in ave_df.columns.tolist():
-#         ave_df.insert(1, 'prelim_ms', prelim_flow_dur)
-#     p_master_ave_dfs_list.append(ave_df)
-#
-#     err_df = pd.read_csv(err_path)
-#     if 'background' not in err_df.columns.tolist():
-#         err_df.insert(0, 'background', bg_type)
-#     if 'prelim_ms' not in err_df.columns.tolist():
-#         err_df.insert(1
-#                       , 'prelim_ms', prelim_flow_dur)
-#     p_master_err_dfs_list.append(err_df)
-#
-#
-#     # make master list for each participant with their average threshold for each background type and prelim flow dur
-# p_compare_prelim_dir = os.path.join(exp_path, participant_name, 'compare_prelims')
-# if not os.path.exists(p_compare_prelim_dir):
-#     os.mkdir(p_compare_prelim_dir)
-#
-# p_master_all_df = pd.concat(p_master_all_dfs_list)
-# p_master_all_name = os.path.join(p_compare_prelim_dir, f'{participant_name}_ALLbg_thresholds.csv')
-# if trim_n is not None:
-#     p_master_all_name = os.path.join(p_compare_prelim_dir, f'{participant_name}_TM{trim_n}_ALLbg_thresholds.csv')
-# p_master_all_df.to_csv(p_master_all_name, index=False)
-#
-# # p_root_path = os.path.join(exp_path, participant_name)
-# p_master_ave_df = pd.concat(p_master_ave_dfs_list)
-# p_master_ave_name = os.path.join(p_compare_prelim_dir, f'{participant_name}_ALLbg_ave_thresh.csv')
-# if trim_n is not None:
-#     p_master_ave_name = os.path.join(p_compare_prelim_dir, f'{participant_name}_TM{trim_n}_ALLbg_ave_thresh.csv')
-# p_master_ave_df.to_csv(p_master_ave_name, index=False)
-#
-# p_master_err_df = pd.concat(p_master_err_dfs_list)
-# p_master_err_name = os.path.join(p_compare_prelim_dir, f'{participant_name}_ALLbg_thr_error_SE.csv')
-# if trim_n is not None:
-#     p_master_err_name = os.path.join(p_compare_prelim_dir, f'{participant_name}_TM{trim_n}_ALLbg_thr_error_SE.csv')
-# p_master_err_df.to_csv(p_master_err_name, index=False)
-#
-# # make prelim plots for this participant
-# compare_prelim_plots(participant_name, exp_path)
+
+    # make plots
+    make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed=trim_n)
+
+
+
 
 
 

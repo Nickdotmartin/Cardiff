@@ -1123,6 +1123,16 @@ def plot_runs_ave_w_errors(fig_df, error_df,
     # get names for legend (e.g., different lines)
     column_names = fig_df.columns.to_list()
 
+    # # remove 'prelim', 'flow_dir', 'flow_name' from column_names, if present
+    # if 'prelim' in column_names:
+    #     column_names.remove('prelim')
+    # if 'flow_dir' in column_names:
+    #     column_names.remove('flow_dir')
+    # if 'flow_name' in column_names:
+    #     column_names.remove('flow_name')
+    # print(f"column_names: {column_names}")
+
+
     if legend_names is None:
         legend_names = column_names
     if verbose:
@@ -1174,10 +1184,16 @@ def plot_runs_ave_w_errors(fig_df, error_df,
 
         if verbose:
             print(f"{idx}. name: {name}")
+
         # get rand float to add to x-axis for jitter
         # jitter_list = np.random.uniform(size=n_pos_sep, low=-jit_max, high=jit_max)
         jitter_list = np.random.uniform(size=len(x_tick_vals), low=-jit_max, high=jit_max)
         x_values = x_tick_vals + jitter_list
+
+        # print(f"idiot check\n"
+        #       f"x_values: {x_values}\n"
+        #       f"fig_df[name]: {fig_df[name]}\n"
+        #       f"error_df[name]: {error_df[name]}")
 
         ax.errorbar(x=x_values, y=fig_df[name],
                     yerr=error_df[name],
