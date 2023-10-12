@@ -284,7 +284,7 @@ expName = path.basename(__file__)[:-3]
 
 
 # # # DIALOGUE BOX # # #
-expInfo = {'1_participant_name': 'Nicktest_10102023',
+expInfo = {'1_participant_name': 'Nicktest_12102023',
            '2_run_number': 1,
            '3_monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'ASUS_2_13_240Hz',
                               'Samsung', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
@@ -630,7 +630,7 @@ too_many_dropped_fr = visual.TextStim(win=win, name='too_many_dropped_fr',
                                            "Press any key to return to the desktop.",
                                       font='Arial', height=20, colorSpace=this_colourSpace)
 
-# todo: add accuracy so far: {accuracy_so_far}% correct to break text
+resp_corr_list = []  # accuracy feedback during breaks
 break_text = f"Break\nTurn on the light and take at least {break_dur} seconds break.\n" \
              "Keep focussed on the fixation circle in the middle of the screen.\n" \
              "Remember, if you don't see the target, just guess!"
@@ -824,7 +824,9 @@ for step in range(n_trials_per_stair):
                 if debug:
                     print("\nTaking a break.\n")
 
-                breaks.text = break_text + f"\n{trial_number - 1}/{total_n_trials} trials completed."
+                prop_correct = np.mean(resp_corr_list)
+                breaks.text = break_text + (f"\n{trial_number - 1}/{total_n_trials} trials completed.\n"
+                                            f"{prop_correct * 100:.2f}% correct.\n\n")
                 breaks.draw()
                 win.flip()
                 event.clearEvents(eventType='keyboard')
@@ -869,8 +871,30 @@ for step in range(n_trials_per_stair):
 
                 # FIXATION until end of fixation interval
                 if end_fix_fr >= frameN > 0:
+                    # 1. Update z (distance values): Add dots_speed * flow_dir to the current z values.
+                    # create random_z_dir array, which is either 1 or -1, to add to z_array
+                    random_z_dir = np.random.choice([-1, 1], size=n_dots)
+                    random_speed_array = flow_speed_cm_p_fr * random_z_dir
+                    z_array = z_array + random_speed_array
 
-                    # draw flow_dots but with no motion
+                    # 2. check if any z values are out of bounds (too close when expanding or too far when contracting),
+                    # if so, set their dot life to max, so they are given new x, y and z values by update_dotlife() below.
+                    dot_lifetime_array = check_z_start_bounds(z_array, near_plane_cm, far_plane_cm, dot_life_max_fr,
+                                                              dot_lifetime_array, flow_dir)
+
+                    # 3. update dot lifetime, give new x, y, z coords to dots whose lifetime is max.
+                    dotlife_array, x_array, y_array, z_array = update_dotlife(dotlife_array=dot_lifetime_array,
+                                                                              dot_max_fr=dot_life_max_fr,
+                                                                              x_array=x_array, y_array=y_array,
+                                                                              z_array=z_array,
+                                                                              x_bounds=frame_size_cm / 2,
+                                                                              y_bounds=frame_size_cm / 2,
+                                                                              z_start_bounds=z_start_bounds)
+
+                    # 4. scale x and y positions by distance
+                    dots_pos_array = scaled_dots_pos_array(x_array, y_array, z_array, frame_size_cm, ref_angle)
+                    flow_dots.xys = dots_pos_array
+
                     flow_dots.draw()
                     probeMask1.draw()
                     probeMask2.draw()
@@ -978,7 +1002,30 @@ for step in range(n_trials_per_stair):
                 # ANSWER - after probe interval, before next trial
                 elif frameN > end_probe_fr:
 
-                    # draw flow_dots but with no motion
+                    # 1. Update z (distance values): Add dots_speed * flow_dir to the current z values.
+                    # create random_z_dir array, which is either 1 or -1, to add to z_array
+                    random_z_dir = np.random.choice([-1, 1], size=n_dots)
+                    random_speed_array = flow_speed_cm_p_fr * random_z_dir
+                    z_array = z_array + random_speed_array
+
+                    # 2. check if any z values are out of bounds (too close when expanding or too far when contracting),
+                    # if so, set their dot life to max, so they are given new x, y and z values by update_dotlife() below.
+                    dot_lifetime_array = check_z_start_bounds(z_array, near_plane_cm, far_plane_cm, dot_life_max_fr,
+                                                              dot_lifetime_array, flow_dir)
+
+                    # 3. update dot lifetime, give new x, y, z coords to dots whose lifetime is max.
+                    dotlife_array, x_array, y_array, z_array = update_dotlife(dotlife_array=dot_lifetime_array,
+                                                                              dot_max_fr=dot_life_max_fr,
+                                                                              x_array=x_array, y_array=y_array,
+                                                                              z_array=z_array,
+                                                                              x_bounds=frame_size_cm / 2,
+                                                                              y_bounds=frame_size_cm / 2,
+                                                                              z_start_bounds=z_start_bounds)
+
+                    # 4. scale x and y positions by distance
+                    dots_pos_array = scaled_dots_pos_array(x_array, y_array, z_array, frame_size_cm, ref_angle)
+                    flow_dots.xys = dots_pos_array
+
                     flow_dots.draw()
                     probeMask1.draw()
                     probeMask2.draw()
@@ -1031,6 +1078,7 @@ for step in range(n_trials_per_stair):
                     resp.corr = 1
                 else:
                     resp.corr = 0
+            resp_corr_list.append(resp.corr)
 
 
             '''sort frame interval times to use for plots later'''
