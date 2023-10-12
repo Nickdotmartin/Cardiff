@@ -60,7 +60,7 @@ def results_csv_to_np_for_psignifit(csv_path, duration,
     else:
         raw_data_df = pd.read_csv(csv_path, usecols=[stair_col, thr_col, resp_col])
     if verbose:
-        print(f"raw_data:\n{raw_data_df}")
+        print(f"raw_data ({list(raw_data_df.columns)}):\n{raw_data_df}")
 
     # access separation either through separation column or stair column
     if stair_levels is None:
@@ -74,8 +74,6 @@ def results_csv_to_np_for_psignifit(csv_path, duration,
     raw_data_df = raw_data_df[raw_data_df[stair_col].isin(stair_levels)]
     if verbose:
         print(f"raw_data, stair_levels:{stair_levels}:\n{raw_data_df}")
-
-    dataset_name = f'{p_run_name}_dur{duration}_stair{stair_levels[0]}'
 
     # get useful info
     n_rows, n_cols = raw_data_df.shape
@@ -93,9 +91,30 @@ def results_csv_to_np_for_psignifit(csv_path, duration,
         print(f'n_resp_out: {n_resp_out}')
 
     # check stair_names
-    stair_name = sorted(list(raw_data_df['stair_name'].unique()))
+    stair_name = list(raw_data_df['stair_name'].unique())
     if len(stair_name) != 1:
+        print(f"stair_name: {stair_name}")
         raise ValueError(f'Number of stair_names ({len(stair_name)}) is not 1. ')
+    else:
+        stair_name = stair_name[0]
+        print(f"stair_name: {stair_name}")
+
+
+    # get prelim name
+    if 'prelim_ms' in list(raw_data_df):
+        prelim = sorted(list(raw_data_df['prelim_ms'].unique()))
+        if len(prelim) != 1:
+            raise ValueError(f'Number of prelim ({len(prelim)}) is not 1. ')
+
+    # get flow_name
+    if 'flow_name' in list(raw_data_df):
+        flow_name = sorted(list(raw_data_df['flow_name'].unique()))
+        if len(flow_name) != 1:
+            raise ValueError(f'Number of flow_name ({len(flow_name)}) is not 1. ')
+
+    # dataset_name = f'{p_run_name}_dur{round(duration, 2)}_stair{stair_levels[0]}'
+    dataset_name = f'{p_run_name}_dur{round(duration, 2)}_stair{stair_name}'
+
 
     # idiot check - why isn't it working?
     print(f"raw_data_df: {raw_data_df.shape}, {raw_data_df.columns}\n{raw_data_df.head()}")
@@ -156,7 +175,8 @@ def results_csv_to_np_for_psignifit(csv_path, duration,
     # print(f"data:\n{data}")
 
     bin_data_dict = {'csv_path': csv_path, 'dset_name': dataset_name,
-                     'duration': duration, 
+                     'duration': duration,
+                     'prelim': prelim, 'flow_name': flow_name,
                      # 'sep': sep, 
                      'p_run_name': p_run_name,
                      'stair_levels': stair_levels,
@@ -295,7 +315,8 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.5,
 
 
         plt.figure()
-        plt.title(f"{dset_name}: stair: ({stair_level}) {stair_name}\n"
+        plt.title(f"{dset_name}\n"
+                  # f": stair: ({stair_level}) {stair_name}\n"
                   f"threshPC: {target_threshold}, threshold: {threshold}, "
                   f"sig: {sig_name}, "
                   f"est: {est_type}")

@@ -9,22 +9,19 @@ import matplotlib.pyplot as plt
 
 # # loop through run folders with first 5 scripts (a, b1, b2, b3, c)
 # # then run script d to get master lists and averages
-# exp_path = '/Users/nickmartin/Library/CloudStorage/OneDrive-CardiffUniversity/PycharmProjects/Cardiff/flow_parsing'
-# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing"
-# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing_NM_v4"
-# exp_path = r"C:\Users\sapnm4\PycharmProjects\Cardiff\Nick_scripts\flow_parse_23\flow_parsing_NM_v4"
-exp_path = r"C:\Users\sapnm4\PycharmProjects\Cardiff\Nick_scripts\flow_parse_23\flow_parsing_NM_v6"
+# exp_path = r"C:\Users\sapnm4\PycharmProjects\Cardiff\Nick_scripts\flow_parse_23\flow_parsing_NM_v6"
+exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing_NM_v6"
 print(f"exp_path: {exp_path}")
 convert_path1 = os.path.normpath(exp_path)
 print(f"convert_path1: {convert_path1}")
 exp_path = convert_path1
 
-monitor = 'Nick_work_laptop'  # 'asus_cal' OLED, 'Nick_work_laptop'
+monitor = 'OLED'  # 'asus_cal' OLED, 'Nick_work_laptop'
 exp_path = os.path.join(exp_path, monitor)
 
 
-participant_list = ['Nicktest_10102023']  # ' Nicktest_06102023'
-all_probe_dur_list = [8, 16, 25, 33, 41, 50, 58, 66, 100]
+participant_list = ['Nick']  # ' Nicktest_06102023'
+all_probe_dur_list = [8, 16, 25, 33, 41, 50, 54, 58, 66, 116]
 
 
 verbose = True
@@ -34,6 +31,9 @@ show_plots = True
 # if the first folder to analyse is 1, p_idx_plus = 1.  If the first folder is 5, use 5 etc.
 # p_idx_plus = 4
 p_idx_plus = 1
+
+# append each run's data to these lists
+MASTER_p_trial_data_list = []
 
 
 for p_idx, participant_name in enumerate(participant_list):
@@ -88,24 +88,40 @@ for p_idx, participant_name in enumerate(participant_list):
 
         run_data_df = pd.read_csv(run_data_path)
 
-        '''sort col names'''
-        if 'probe_cm_p_sec' in run_data_df.columns.tolist():
-            probe_speed_col = 'probe_cm_p_sec'
-        elif 'probeSpeed_cm_per_s' in run_data_df.columns.tolist():
-            probe_speed_col = 'probeSpeed_cm_per_s'
-
-        if 'prelim_ms' in run_data_df.columns.tolist():
-            prelim_col = 'prelim_ms'
-        elif 'prelim_bg_flow_ms' in run_data_df.columns.tolist():
-            prelim_col = 'prelim_bg_flow_ms'
+        # '''sort col names'''
+        # if 'probe_cm_p_sec' in run_data_df.columns.tolist():
+        #     probe_speed_col = 'probe_cm_p_sec'
+        # elif 'probeSpeed_cm_per_s' in run_data_df.columns.tolist():
+        #     probe_speed_col = 'probeSpeed_cm_per_s'
+        #
+        # if 'prelim_ms' in run_data_df.columns.tolist():
+        #     prelim_col = 'prelim_ms'
+        # elif 'prelim_bg_flow_ms' in run_data_df.columns.tolist():
+        #     prelim_col = 'prelim_bg_flow_ms'
 
 
         '''not sure why these columns are appearing as objects, not floats???'''
         # if any of those columns are 'object' dtype, change to float
         if run_data_df['probe_dur_ms'].dtype == 'object':
             run_data_df['probe_dur_ms'] = run_data_df['probe_dur_ms'].astype(float)
-        if run_data_df[probe_speed_col].dtype == 'object':
-            run_data_df[probe_speed_col] = run_data_df[probe_speed_col].astype(float)
+        if run_data_df['probeSpeed_cm_per_s'].dtype == 'object':
+            run_data_df['probeSpeed_cm_per_s'] = run_data_df['probeSpeed_cm_per_s'].astype(float)
+
+
+        '''b3'''
+        # todo: add 'OUT' and 'IN' to y axis labels
+        b3_plot_staircase(run_data_path, thr_col='probeSpeed_cm_per_s', resp_col='response',  # 'answer'
+                          save_name=f"{participant_name}_{r_idx_plus}_staircase.png",
+                          show_plots=show_plots, verbose=verbose)
+
+        # todo: append run_data_df to MASTER_p_trial_data_list
+
+        # check participant name and run name are present, if not, add them
+
+        # just select columns I need for master df
+
+        # append to MASTER_p_trial_data_list
+
 
         # get list of all probe durs for this run
         probe_dur_list = run_data_df['probe_dur_ms'].unique().tolist()
@@ -123,7 +139,7 @@ for p_idx, participant_name in enumerate(participant_list):
             stair_df = run_data_df[run_data_df['stair'] == stair]
 
             stair_name = stair_df['stair_name'].unique().tolist()
-            prelim = stair_df[prelim_col].unique().tolist()
+            prelim = stair_df['prelim_ms'].unique().tolist()
             flow_dir = stair_df['flow_dir'].unique().tolist()
             flow_name = stair_df['flow_name'].unique().tolist()
 
@@ -150,7 +166,7 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
         # for psignifit just use a reduced df with only the columns needed
-        psig_df = run_data_df[['probe_dur_ms', 'stair', 'response', probe_speed_col]].copy()
+        psig_df = run_data_df[['probe_dur_ms', 'stair', 'response', 'probeSpeed_cm_per_s']].copy()
         # todo: changed variable name to probe_speed_cm_sec
 
 
@@ -165,7 +181,7 @@ for p_idx, participant_name in enumerate(participant_list):
                                             p_run_name=run_dir,
                                             csv_name=run_data_df,
                                             n_bins=9, q_bins=True,
-                                            thr_col=probe_speed_col,
+                                            thr_col='probeSpeed_cm_per_s',
                                             resp_col='response',
                                             stair_col='stair',
                                             dur_list=probe_dur_list,
@@ -177,16 +193,18 @@ for p_idx, participant_name in enumerate(participant_list):
         print(f'thr_df:\n{thr_df}')
 
 
-        '''b3'''
-        b3_plot_staircase(run_data_path, thr_col=probe_speed_col, resp_col='response',  # 'answer'
-                          show_plots=show_plots, verbose=verbose)
+
+
+    # todo: make mean staircase plot for each participant - see order effects script
+    # 1. make
 
 
     '''d participant averages'''
     trim_n = None
-    if len(run_folder_names) == 12:
-        trim_n = 2
-
+    # # todo: for now, don't trim any runs
+    # if len(run_folder_names) == 12:
+    #     trim_n = 2
+    #
     d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
                           trim_n=trim_n, error_type='SE', verbose=verbose)
 

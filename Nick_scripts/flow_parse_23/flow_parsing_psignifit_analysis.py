@@ -1466,6 +1466,12 @@ def a_data_extraction(p_name, run_dir, dur_list, save_all_data=True, verbose=Tru
             unnamed_col = [i for i in list(this_dur_df.columns) if "Unnamed" in i][0]
             this_dur_df.drop(unnamed_col, axis=1, inplace=True)
 
+        # OLED windows machine sometimes adds extra columns, remove: ['thisRow.t', 'notes']
+        if 'thisRow.t' in list(this_dur_df.columns):
+            this_dur_df.drop('thisRow.t', axis=1, inplace=True)
+        if 'notes' in list(this_dur_df.columns):
+            this_dur_df.drop('notes', axis=1, inplace=True)
+
         # sort by staircase
         trial_numbers = list(this_dur_df['trial_number'])
         this_dur_df = this_dur_df.sort_values(by=['stair', 'trial_number'])
@@ -1533,6 +1539,7 @@ def a_data_extraction(p_name, run_dir, dur_list, save_all_data=True, verbose=Tru
 
 
 def b3_plot_staircase(all_data_path, thr_col='probe_cm_p_sec', resp_col='response',
+                      save_name='staircase.png',
                       show_plots=True, save_plots=True, verbose=True):
     """
     b3_plot_staircase: Multiple panels showing staircases for each duration and prelim condition.
@@ -1569,8 +1576,10 @@ def b3_plot_staircase(all_data_path, thr_col='probe_cm_p_sec', resp_col='respons
 
     stair_names_list = all_data_df['stair_name'].unique()
     dur_list = all_data_df['probe_dur_ms'].unique()
+
     # get dur string for column names
     dur_name_list = [f'dur_{i}' for i in dur_list]
+    dur_name_list = [i[:9] for i in dur_name_list]
 
     prelim_list = all_data_df['prelim_ms'].unique()
 
@@ -1601,6 +1610,7 @@ def b3_plot_staircase(all_data_path, thr_col='probe_cm_p_sec', resp_col='respons
         dur_df.drop(columns='probe_dur_ms', inplace=True)
 
         dur_name = dur_name_list[dur_idx]
+
         print(f"\n{dur_idx}. staircases for dur: {dur}, {dur_name}")
         print(f"dur_df  ({dur_df.shape}):\n{dur_df.head()}")
 
@@ -1718,7 +1728,6 @@ def b3_plot_staircase(all_data_path, thr_col='probe_cm_p_sec', resp_col='respons
 
     # show and close plots
     if save_plots:
-        save_name = f'staircases.png'
         plt.savefig(os.path.join(save_path, save_name))
 
     if show_plots:
@@ -2035,6 +2044,10 @@ def d_average_participant(root_path, run_dir_names_list,
 
     get_means_df = get_means_df.drop('prelim', axis=1)
     get_means_df = get_means_df.drop('flow_dir', axis=1)
+
+    get_means_df = get_means_df.drop('stair_name', axis=1)
+    get_means_df = get_means_df.drop('flow_name', axis=1)
+
 
 
     # get average values (from numeric columns)
@@ -2481,6 +2494,11 @@ def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed):
 
     n_to_ave_over = len(all_df['stack'].unique().tolist())
 
+    # rename columns with long float names - if col name contains '.', only have two characters after it
+    all_df.columns = [i[:i.find('.') + 3] if '.' in i else i for i in all_df.columns.tolist()]
+    print(f"all_df columns: {list(all_df.columns)}")
+
+    # # # make long df # # #
     # make long df with all probe_durs in one column (threshold) with probe_dur_ms as another column
     print(f"all_df: {all_df.columns.tolist()}\n: {all_df}\n")
     cols_to_keep = all_df.columns.tolist()[:6]
@@ -2506,27 +2524,48 @@ def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed):
     simple_all_long_df = all_long_df.drop(columns=['stair', 'flow_dir'])
     print(f"simple_all_long_df: {simple_all_long_df.columns.tolist()}\n: {simple_all_long_df}\n")
 
+
+
+    # # # MAKE PLOTS # # #
+
+
     # lineplot showing flow_dir_name on x_axis vs mean threshold on Y-axis, for all prelim and probe_dur.
-    line_plot = sns.lineplot(x='flow_name', y='probe_speed_cm_per_s', data=simple_all_long_df,
+    sns.lineplot(x='flow_name', y='probe_speed_cm_per_s', data=simple_all_long_df,
                              hue='prelim', style='probe_dur_ms',
                              errorbar='se')
     # insert horizontal line at 0.0
     plt.axhline(y=0.0, color='grey', linestyle='--')
-    plt.title(f"{participant_name}, n={n_to_ave_over},  TM={n_trimmed}")
-    plt.savefig(os.path.join(root_path, f"{participant_name}_TM{n_trimmed}_line_all.png"))
+
+    plt.title(f"{participant_name}, n={n_to_ave_over},  TM={n_trimmed}\n"
+              f"-ive = outward, +ive = inward")
+    plt.subplots_adjust(top=0.85)  # add space below suptitle
+
+    if n_trimmed:  # (e.g., not None, False or 0)
+        plt.savefig(os.path.join(root_path, f"{participant_name}_TM{n_trimmed}_line_all.png"))
+    else:
+        plt.savefig(os.path.join(root_path, f"{participant_name}_line_all.png"))
     plt.show()
+
 
     # make a catplot for each probe_dur_ms
     for dur in simple_all_long_df['probe_dur_ms'].unique().tolist():
         dur_df = simple_all_long_df[simple_all_long_df['probe_dur_ms'] == dur]
-        cat_plot = sns.catplot(x='flow_name', y='probe_speed_cm_per_s', data=dur_df,
+
+        sns.catplot(x='flow_name', y='probe_speed_cm_per_s', data=dur_df,
                                hue='prelim',
                                kind='bar', errorbar='se')
         plt.axhline(y=0.0, color='grey', linestyle='--')
         # insert vertical line between exp and cont
         plt.axvline(x=0.5, color='grey', linestyle='--')
-        plt.suptitle(f"{participant_name}, n={n_to_ave_over},  TM={n_trimmed}, probe_dur={dur}")
-        plt.savefig(os.path.join(root_path, f"{participant_name}_TM{n_trimmed}_cat_bar_{dur}.png"))
+        plt.suptitle(f"{participant_name}, n={n_to_ave_over},  TM={n_trimmed}, probe_dur={dur[:5]}\n"
+                     f"-ive = outward, +ive = inward")
+        plt.subplots_adjust(top=0.85)  # add space below suptitle
+
+        if n_trimmed:
+            plt.savefig(os.path.join(root_path, f"{participant_name}_TM{n_trimmed}_cat_bar_{dur[:5]}.png"))
+        else:
+            plt.savefig(os.path.join(root_path, f"{participant_name}_cat_bar_{dur[:5]}.png"))
+
         plt.show()
 
         # side by side plots for each prelim
@@ -2534,12 +2573,77 @@ def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed):
             data=dur_df, x="flow_name", y="probe_speed_cm_per_s", col="prelim",
             kind="bar", height=4, aspect=.6)
         g.set_axis_labels("flow direction", "probe_speed_cm_per_s Rate")
-        prelim_list = simple_all_long_df['prelim'].unique().tolist()
         g.despine(left=True)
-        plt.suptitle(f"{participant_name}, n={n_to_ave_over},  TM={n_trimmed}, probe_dur={dur}")
+        plt.suptitle(f"{participant_name}, n={n_to_ave_over},  TM={n_trimmed}, probe_dur={dur[:5]}\n"
+                     f"-ive = outward, +ive = inward")
+        plt.subplots_adjust(top=0.85)  # add space below suptitle
+
+
         # increase space below suptitle
         plt.subplots_adjust(top=0.9)
-        plt.savefig(os.path.join(root_path, f"{participant_name}_TM{n_trimmed}_facet_bar_{dur}.png"))
+        if n_trimmed:
+            plt.savefig(os.path.join(root_path, f"{participant_name}_TM{n_trimmed}_facet_bar_{dur[:5]}.png"))
+        else:
+            plt.savefig(os.path.join(root_path, f"{participant_name}_facet_bar_{dur[:5]}.png"))
+
+        plt.show()
+
+        # # side by side plots for each prelim showing all datapoints and standard error
+        prelim_list = dur_df['prelim'].unique().tolist()
+        fig, axes = plt.subplots(nrows=1, ncols=len(prelim_list),
+                                 sharey=True, figsize=(10, 5))
+
+
+        for row_idx, row in enumerate(axes):
+            this_prelim = prelim_list[row_idx]
+            prelim_df = dur_df[dur_df['prelim'] == this_prelim]
+
+            # add plot joining means
+            sns.pointplot(x='flow_name', y='probe_speed_cm_per_s', data=prelim_df,
+                          color='lightgrey', errorbar=None, join=True,
+                          ax=axes[row_idx])
+
+            # add plot showing mean with error bars showing standard error
+            sns.pointplot(x='flow_name', y='probe_speed_cm_per_s', data=prelim_df,
+                          color='darkgrey', join=False,
+                          markers='D', capsize=.2, errorbar="se",
+                          ax=axes[row_idx])
+
+            sns.stripplot(x='flow_name', y='probe_speed_cm_per_s', data=prelim_df,
+                          hue='flow_name', jitter=True,
+                          ax=axes[row_idx])
+
+
+            # add horizonal line at zero
+            axes[row_idx].axhline(y=0.0, color='grey', linestyle='--',
+                                  linewidth=.7
+                                  )
+
+            # set the y-axis label for the first plot, only show legend on last plot
+            if row_idx == 0:  # first plot
+                axes[row_idx].get_legend().remove()  # hide legend
+            elif row_idx != len(prelim_list):
+                axes[row_idx].get_legend().remove()  # hide legend
+                axes[row_idx].set_ylabel('')  # remove y axis title
+            else:
+                axes[row_idx].set_ylabel('')  # remove y axis title
+
+            # add title to each subplot
+            axes[row_idx].set_title(f"prelim: {this_prelim}")
+
+        # add main title and legeng
+        plt.suptitle(f"{participant_name}, n={n_to_ave_over},  TM={n_trimmed}, probe_dur={dur[:5]}\n"
+                     f"-ive = outward, +ive = inward")
+        plt.subplots_adjust(top=0.85)  # add space below suptitle
+
+        plt.legend(loc='upper right', title='flow direction', bbox_to_anchor=(1.25, .9))
+
+        # sva fifure
+        if n_trimmed:
+            plt.savefig(os.path.join(root_path, f"{participant_name}_TM{n_trimmed}_dpoints_{dur[:5]}.png"))
+        else:
+            plt.savefig(os.path.join(root_path, f"{participant_name}_dpoints_{dur[:5]}.png"))
+
         plt.show()
 
     # make diff_df: for each stack, prelim and probe_dur_ms, get the difference between exp and cont
@@ -2572,17 +2676,21 @@ def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed):
     # drop exp_speed and cont_speed columns
     diff_df = diff_df.drop(columns=['exp_speed', 'cont_speed'])
 
-    # plot diff_df with prelim on x-axis, diff on y-axis, probe_dur_ms as hue
     sns.lineplot(x='prelim', y='diff', data=diff_df,
                  hue='probe_dur_ms',
                  errorbar='se')
     plt.xticks(list(diff_df['prelim'].unique()))
     plt.axhline(y=0.0, color='grey', linestyle='--')
 
-    plt.suptitle(f"{participant_name}, n={n_to_ave_over},  TM={n_trimmed}")
-    plt.title(f"probe_speed different (flow exp - cont)")
+    plt.suptitle(f"{participant_name}, n={n_to_ave_over},  TM={n_trimmed}\n"
+                 f"-ive = outward advantage, +ive = inward advantage")
+    plt.subplots_adjust(top=0.85)  # add space below suptitle
+    plt.title(f"probe_speed difference (flow exp - cont)")
 
-    plt.savefig(os.path.join(root_path, f"{participant_name}_TM{n_trimmed}_diff_bar.png"))
+    if n_trimmed:
+        plt.savefig(os.path.join(root_path, f"{participant_name}_TM{n_trimmed}_diff_bar.png"))
+    else:
+        plt.savefig(os.path.join(root_path, f"{participant_name}_diff_bar.png"))
     plt.show()
 
     # if there are multiple probe_dur_ms, make a lineplot with probe_dur_ms on x-axis, diff on y-axis, prelim as hue
@@ -2592,10 +2700,19 @@ def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed):
                      errorbar='se')
         plt.axhline(y=0.0, color='grey', linestyle='--')
 
-        plt.suptitle(f"{participant_name}, n={n_to_ave_over},  TM={n_trimmed}")
-        plt.title(f"probe_speed different (flow exp - cont)")
+        # get x-axis tick labels and round them
+        x_tick_labels = list(diff_df['probe_dur_ms'].unique())
+        plt.xticks(ticks=list(diff_df['probe_dur_ms'].unique()), labels=x_tick_labels)
 
-        plt.savefig(os.path.join(root_path, f"{participant_name}_TM{n_trimmed}_diff_line.png"))
+        plt.suptitle(f"{participant_name}, n={n_to_ave_over},  TM={n_trimmed}\n"
+                     f"-ive = outward advantage, +ive = inward advantage")
+        plt.subplots_adjust(top=0.85)  # add space below suptitle
+        plt.title(f"probe_speed difference (flow exp - cont)")
+
+        if n_trimmed:
+            plt.savefig(os.path.join(root_path, f"{participant_name}_TM{n_trimmed}_diff_line.png"))
+        else:
+            plt.savefig(os.path.join(root_path, f"{participant_name}_diff_line.png"))
         plt.show()
 
     print("\n*** finished make_average_plots()***\n")

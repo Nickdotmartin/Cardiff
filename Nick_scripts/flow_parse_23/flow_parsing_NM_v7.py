@@ -50,6 +50,14 @@ followed by 2-second presentation of the fixation cross together with the flow a
     - changes polarity so that +ive values are inward for Flow and probes, (probes used to be opposite): DONE
         - check responses, probe start pos, probe position and probe start speeds: DONE
     - set start distance to be no biggest than sep 18pixels  
+    
+- version 7 12/10/2023
+    - random dot motion when not in prelim or probe presentation part of exp
+        - random z dir
+        - random z speed
+        - random x and y directions
+        - random x and y speeds
+    - accuracy feedback during break
 """
 
 
@@ -281,7 +289,7 @@ expInfo = {'1_participant_name': 'Nicktest_10102023',
            '3_monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'ASUS_2_13_240Hz',
                               'Samsung', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
            '4_fps': [60, 240, 120, 60],
-           '5_probe_dur_ms': [116.67, 66.67, 58.38, 50, 41.67, 33.34, 25,  500],
+           '5_probe_dur_ms': [116.67, 66.67, 54.17, 50, 41.67, 33.34, 25,  500],
            '6_debug': [False, True]
            }
 
