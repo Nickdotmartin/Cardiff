@@ -418,7 +418,8 @@ adj_flow_colour = .15
 # Give dots a pale green colour, which is adj_flow_colour different to the background
 flow_colour = [this_bgColour[0] - adj_flow_colour, this_bgColour[1], this_bgColour[2] - adj_flow_colour]
 if monitor_name == 'OLED':  # darker green for low contrast against black background
-    flow_colour = [this_bgColour[0], this_bgColour[1] + adj_flow_colour / 2, this_bgColour[2]]
+    # flow_colour = [this_bgColour[0], this_bgColour[1] + adj_flow_colour / 2, this_bgColour[2]]
+    flow_colour = [this_bgColour[0], this_bgColour[1] + adj_flow_colour / 3, this_bgColour[2]]  # even dimmer 12/10/2023
 
 
 # # # MONITOR DETAILS # # #
@@ -442,13 +443,12 @@ if monitor_name in ['asus_cal', 'Nick_work_laptop', 'NickMac', 'OLED', 'ASUS_2_1
 win = visual.Window(monitor=mon, size=(widthPix, heightPix), colorSpace=this_colourSpace, color=this_bgColour,
                     units='pix', screen=display_number, allowGUI=False, fullscr=True, useFBO=False)
 
-
-
-
+# todo: check forum for other ideas if mouse is still there
+win.mouseVisible = False
 
 # # # PSYCHOPY COMPONENTS # # #
 # MOUSE
-myMouse = event.Mouse(visible=False)
+# myMouse = event.Mouse(visible=False)
 
 # # KEYBOARD
 resp = event.BuilderKeyResponse()
@@ -529,7 +529,7 @@ print(f"ref_angle: {ref_angle}")
 
 
 # motion speed in cm/s
-flow_speed_cm_p_sec = 120  # 1m/sec matches previous flow parsing study (Evans et al. 2020)
+flow_speed_cm_p_sec = 150  # 1.2m/sec matches previous flow parsing study (Evans et al. 2020)
 flow_speed_cm_p_fr = flow_speed_cm_p_sec / fps  # 1.66 cm per frame = 1m per second
 
 
@@ -662,8 +662,9 @@ I need to convert it from cm/s to pixels/frame,
 which depends on the monitor's refresh rate.
 I'm going to try starting with 18 pixels in dur.  Not sure what that is in cm.  
 I'm using this because we used 18 as our max value in previous study.
+18 pixels starts too fast, so now trying 12
 """
-start_dist_pix_in_dur = 18  # starting dist in pixels in probe_dur_ms
+start_dist_pix_in_dur = 8  # 12  # starting dist in pixels in probe_dur_ms
 start_dist_pix_per_fr = start_dist_pix_in_dur / probe_dur_fr  # starting dist in pixels per frame
 start_dist_pix_per_second = start_dist_pix_per_fr * fps  # starting dist in pixels per second
 start_dist_cm_per_second = pix2cm(pixels=start_dist_pix_per_second, monitor=mon)  # starting dist in cm per second
@@ -871,11 +872,13 @@ for step in range(n_trials_per_stair):
 
                 # FIXATION until end of fixation interval
                 if end_fix_fr >= frameN > 0:
-                    # 1. Update z (distance values): Add dots_speed * flow_dir to the current z values.
-                    # create random_z_dir array, which is either 1 or -1, to add to z_array
-                    random_z_dir = np.random.choice([-1, 1], size=n_dots)
-                    random_speed_array = flow_speed_cm_p_fr * random_z_dir
-                    z_array = z_array + random_speed_array
+
+                    '''comment out random_z_dir, random_speed_array and z_array to just have incoherent motion from re-spawning dots'''
+                    # # 1. Update z (distance values): Add dots_speed * flow_dir to the current z values.
+                    # # create random_z_dir array, which is either 1 or -1, to add to z_array
+                    # random_z_dir = np.random.choice([-1, 1], size=n_dots)
+                    # random_speed_array = flow_speed_cm_p_fr * random_z_dir
+                    # z_array = z_array + random_speed_array
 
                     # 2. check if any z values are out of bounds (too close when expanding or too far when contracting),
                     # if so, set their dot life to max, so they are given new x, y and z values by update_dotlife() below.
@@ -1002,11 +1005,12 @@ for step in range(n_trials_per_stair):
                 # ANSWER - after probe interval, before next trial
                 elif frameN > end_probe_fr:
 
-                    # 1. Update z (distance values): Add dots_speed * flow_dir to the current z values.
-                    # create random_z_dir array, which is either 1 or -1, to add to z_array
-                    random_z_dir = np.random.choice([-1, 1], size=n_dots)
-                    random_speed_array = flow_speed_cm_p_fr * random_z_dir
-                    z_array = z_array + random_speed_array
+                    '''comment out random_z_dir, random_speed_array and z_array to just have incoherent motion from re-spawning dots'''
+                    # # 1. Update z (distance values): Add dots_speed * flow_dir to the current z values.
+                    # # create random_z_dir array, which is either 1 or -1, to add to z_array
+                    # random_z_dir = np.random.choice([-1, 1], size=n_dots)
+                    # random_speed_array = flow_speed_cm_p_fr * random_z_dir
+                    # z_array = z_array + random_speed_array
 
                     # 2. check if any z values are out of bounds (too close when expanding or too far when contracting),
                     # if so, set their dot life to max, so they are given new x, y and z values by update_dotlife() below.
