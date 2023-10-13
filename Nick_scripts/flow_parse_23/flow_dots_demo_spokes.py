@@ -98,41 +98,89 @@ def update_dotlife(dotlife_array, dot_max_fr,
     return dotlife_array, x_array, y_array, z_array
 
 
+
+def make_xy_spokes(x_array, y_array, rotation_constant=22.5):
+    """
+    Function to take dots evenly spaced across screen, and make it so that they appear in
+    4 'spokes' (top, bottom, left and right).  That is, wedge shaped regions, with the point of the
+    wedge at the centre of the screen, and the wide end at the edge of the screen.
+    There are four blank regions with no dots between each spoke, extending to the four corners of the screen.
+    Probes are presented in the four corners, so using spokes means that the probes are never presented
+    on top of dots.
+
+    1. convert cartesian (x, y) co-ordinates to polar co-ordinates (e.g., distance and angle (radians) from centre).
+    2. converts radians to degrees.
+    3. get octants (like quadrants, but eight of them) and add rotation_constant to them.
+        e.g., if rotation_constant is 0, octants are 0 to 45, 90 to 135, 180 to 225, 270 to 315.
+    4. rotate values between pairs of octants by -45 degrees.
+    5. With rotation _constant of 22.5 degrees (default), so dot spokes are
+        centred at top, right, bottom, middle; and blank wedges are centred at four corners.
+    6. convert back to radians, then to cartesian co-ordinates.
+
+    :param x_array: numpy array of x values with shape (n_dots, 1), 0 as middle of screen.
+    :param y_array: numpy array of y values with shape (n_dots, 1), 0 as middle of screen.
+    :param rotation_constant: A constant value to rotate all dots by.
+    :return: new x_array and y_array
+    """
+
+    # Convert Cartesian coordinates to polar coordinates.
+    # r is distance, theta is angle in radians (+/- pi)
+    r_array, theta_array = np.hypot(x_array, y_array), np.arctan2(y_array, x_array)
+
+    # convert theta_array to degrees
+    degrees_array = np.degrees(theta_array)
+
+    # if any values are negative, add 360 to make them positive
+    degrees_array = np.where(degrees_array < 0, degrees_array + 360, degrees_array)
+
+    # get list of 8 angles between 0 and 360 (e.g., 0, 45, 90, 135, 180, 225, 270, 315)
+    octants = [i * 360 / 8 for i in range(8)]
+
+    # add rotation_constant to each octant
+    # (e.g., if rotation_constant is 22.5, octants are 22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5)
+    octants = [i + rotation_constant for i in octants]
+
+    # # # rotate values between some octants by 45 to give 8 spokes, alternating [dots, no dots]
+    degrees_array = np.where((degrees_array >= octants[0]) & (degrees_array < octants[1]), degrees_array - 45, degrees_array)
+    degrees_array = np.where((degrees_array >= octants[2]) & (degrees_array < octants[3]), degrees_array - 45, degrees_array)
+    degrees_array = np.where((degrees_array >= octants[4]) & (degrees_array < octants[5]), degrees_array - 45, degrees_array)
+    degrees_array = np.where((degrees_array >= octants[6]) & (degrees_array < octants[7]), degrees_array - 45, degrees_array)
+
+    # if any values are negative, add 360 to make them positive
+    degrees_array = np.where(degrees_array < 0, degrees_array + 360, degrees_array)
+
+    # if any values are greater than 360, subtract 360 to put them in correct range
+    degrees_array = np.where(degrees_array > 360, degrees_array - 360, degrees_array)
+
+    # convert back to cartesian
+    theta_array = np.radians(degrees_array)
+    x_array = r_array * np.cos(theta_array)
+    y_array = r_array * np.sin(theta_array)
+
+    return x_array, y_array
+
+
+
+
 def scaled_dots_pos_array(x_array, y_array, z_array, frame_size_cm, reference_angle):
     """
     This is a function to get new pixel x, y co-ordinates for the flow dots using the x, y and z arrays.
     Use this after updating z_array and dot_life_array.
 
-    1. Convert distances (cm) to angles (degrees) using find_angle().
-    2. scale distances by dividing by reference angle (e.g., screen angle when z=view_dist).
-    3. scale x and y values by multiplying by scaled distances.
-    4. put the new x_pos and y_pos co-ordinates into an array and transposes it.
-
     :param x_array: Original x_array positions for the dots (shape = (n_dots, 1))
     :param y_array: Original y_array positions for the dots (shape = (n_dots, 1))
     :param z_array: array of distance values for the dots (shape = (n_dots, 1))
     :param frame_size_cm: onscreen size in cm of frame containing dots.
-    :param reference_angle: angle in degrees of the reference distance (57.3cm)
+    :param reference_angle: angle in degrees of the reference distance (e.g., screen size angle at 57.3cm)
     :return: new dots_pos_array
     """
 
-    # # 1. convert distances to angles
-    # z_array_deg = find_angle(adjacent=z_array, opposite=frame_size_cm)
-    #
-    # # 2. scale distances by dividing by reference angle
-    # scale_factor_array = z_array_deg / reference_angle
-    #
-    # # 3. scale x and y values by multiplying by scaled distances
-    # scaled_x = x_array * scale_factor_array
-    # scaled_y = y_array * scale_factor_array
-    #
-    # # 4. scale x and y values by multiplying by scaled distances
-    # dots_pos_array = np.array([scaled_x, scaled_y]).T
-
-    # 1. convert distances to angles and scale distances by dividing by reference angle
+    # 1. convert frame size at z distances to angles and
+    # 2. scale these by dividing by reference angle (e.g., screen size at view dist)
     scale_factor_array = find_angle(adjacent=z_array, opposite=frame_size_cm) / reference_angle
 
-    # 2. scale x and y values by multiplying by scaled distances
+    # 3. scale x and y values by multiplying by scaled distances and
+    # 4. put scaled x and y values into an array and transpose it.
     return np.array([x_array * scale_factor_array, y_array * scale_factor_array]).T
 
 
@@ -234,7 +282,7 @@ def plt_fr_ints(time_p_trial_nested_list, n_trials_w_dropped_fr,
 
 
 # initialize window
-monitor_name = 'HP_24uh'  # Nick_work_laptop, HP_24uh
+monitor_name = 'Nick_work_laptop'  # Nick_work_laptop, HP_24uh
 fps = 60
 
 mon = monitors.Monitor(monitor_name)
@@ -270,7 +318,6 @@ display_number = 1  # 0 indexed, 1 for external display, 0 for internal
 if monitor_name in ['asus_cal', 'Nick_work_laptop', 'NickMac', 'OLED', 'ASUS_2_13_240Hz']:
     display_number = 0
 
-# WINDOW SPEC
 # WINDOW SPEC
 win = visual.Window(monitor=mon, size=(widthPix, heightPix), colorSpace=this_colourSpace, color=this_bgColour,
                     units='pix', screen=display_number, allowGUI=False, fullscr=True, useFBO=False)
@@ -316,8 +363,11 @@ flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
 x_array = np.random.uniform(-frame_size_cm/2, frame_size_cm/2, n_dots)  # x values in cm
 y_array = np.random.uniform(-frame_size_cm/2, frame_size_cm/2, n_dots)  # y values in cm
 
+
 # initialize z values (distance/distance from viewer) in cm
 z_array = np.random.uniform(low=near_plane_cm, high=far_plane_cm, size=n_dots)    # distances in cm
+
+x_array, y_array = make_xy_spokes(x_array, y_array)
 
 # get starting distances and scale xys
 dots_pos_array = scaled_dots_pos_array(x_array, y_array, z_array, frame_size_cm, ref_angle)
@@ -325,7 +375,7 @@ dots_pos_array = scaled_dots_pos_array(x_array, y_array, z_array, frame_size_cm,
 flow_dots.xys = dots_pos_array
 
 # dot lifetime ms
-dot_life_max_ms = 166.67
+dot_life_max_ms = 800  # 166.67
 dot_life_max_fr = int(dot_life_max_ms / 1000 * fps)
 print(f"dot_life_max_fr: {dot_life_max_fr}")
 
@@ -335,23 +385,40 @@ dot_lifetime_array = np.random.randint(0, dot_life_max_fr, n_dots)
 # when dots are redrawn with a new z value, they should be at least this far away the boundary
 # otherwise they might have to be re-drawn after a couple of frames, which could lead to flickering.
 # this is the max z_distance in meters they can travel in n frames
-max_dist_in_life = flow_speed_cm_p_fr * dot_life_max_fr
-print(f"max_dist_in_life: {max_dist_in_life}")
+max_z_cm_in_life = flow_speed_cm_p_fr * dot_life_max_fr
+print(f"max_z_cm_in_life: {max_z_cm_in_life}")
 
-contracting = False
+if max_z_cm_in_life > (far_plane_cm - near_plane_cm):
+    print(f"max_z_cm_in_life ({max_z_cm_in_life}) is greater than the distance between the near and far planes ({far_plane_cm - near_plane_cm}).")
+    max_possible_dot_life_fr = (far_plane_cm - near_plane_cm) / flow_speed_cm_p_fr
+    max_possible_dot_life_ms = max_possible_dot_life_fr / fps * 1000
+    print(f"max_possible_dot_life_ms: {max_possible_dot_life_ms}")
+
+
+    raise ValueError(f"dot_life_max_ms ({dot_life_max_ms}) is set too high, dots will travel the full distance in "
+                     f"max_possible_dot_life_ms ({max_possible_dot_life_ms}), please select a lower value.  ")
+
+
+
+
+contracting = True
 if contracting:
     flow_dir = 1
 else:  # expanding
     flow_dir = -1
 
-# boundaries for z position (distance from screen)
+# boundaries for z position (distance from screen), taking dot_life and flow_dir into account
 if flow_dir == -1:  # expanding
-    z_start_bounds = [near_plane_cm + max_dist_in_life, far_plane_cm]
+    z_start_bounds = [near_plane_cm + max_z_cm_in_life, far_plane_cm]
 else:  # contracting, flow_dir == 1
-    z_start_bounds = [near_plane_cm, far_plane_cm - max_dist_in_life]
-print(f"z_start_bounds: {z_start_bounds}")
+    z_start_bounds = [near_plane_cm, far_plane_cm - max_z_cm_in_life]
 
-trial_sigment = 'flow_motion'  # press 1
+
+# initial motion type when demo starts
+motion_type = 'flow_motion'  # press 1
+
+# random z array
+random_z_dir = np.random.choice([-1, 1], size=n_dots)
 
 # PRESENT STIMULI
 while not event.getKeys(keyList=["escape"]):
@@ -359,32 +426,46 @@ while not event.getKeys(keyList=["escape"]):
 
     # present radial flow until another option is selected (1 or 2), can go back to radial flow by pressing 0.
     if event.getKeys(keyList=["0"]):
-        trial_sigment = 'flow_motion'
+        motion_type = 'flow_motion'
     elif event.getKeys(keyList=["1"]):
-        trial_sigment = 'rand_z_dir'
+        motion_type = 'rand_z_dir'
     elif event.getKeys(keyList=["2"]):
-        trial_sigment = 'new_xy_when_born'
+        motion_type = 'new_xy_when_born'
 
-    if trial_sigment == 'flow_motion':  # pressed 0
+
+
+
+    if motion_type == 'flow_motion':  # pressed 0
+        # boundaries for z position (distance from screen), taking dot_life and flow_dir into account
+        if flow_dir == -1:  # expanding
+            z_start_bounds = [near_plane_cm + max_z_cm_in_life, far_plane_cm]
+        else:  # contracting, flow_dir == 1
+            z_start_bounds = [near_plane_cm, far_plane_cm - max_z_cm_in_life]
+
         # 1. Update z (distance values): Add dots_speed * flow_dir to the current z values.
         z_array = z_array + flow_speed_cm_p_fr * flow_dir
 
 
-    elif trial_sigment == 'rand_z_dir':  # pressed 1
+    elif motion_type == 'rand_z_dir':  # pressed 1
         # 1. Update z (distance values): Add dots_speed * flow_dir to the current z values.
         # create random_z_dir array, which is either 1 or -1, to add to z_array
-        random_z_dir = np.random.choice([-1, 1], size=n_dots)
+        # random_z_dir = np.random.choice([-1, 1], size=n_dots)  # moved higher up
         random_speed_array = flow_speed_cm_p_fr * random_z_dir
         z_array = z_array + random_speed_array
 
+        # don't need to take dot_life into account for this version.
+        z_start_bounds = [near_plane_cm, far_plane_cm]
 
-    elif trial_sigment == 'new_xy_when_born':  # pressed 2
+
+    elif motion_type == 'new_xy_when_born':  # pressed 2
         # dots only change as a result of getting new x & ys at the end of their life, no continuous motion in x, y or z directions.
-        z_array = z_array  
+        # z_array = z_array
+
+        # don't need to take dot_life into account for this version.
+        z_start_bounds = [near_plane_cm, far_plane_cm]
 
 
-
-    # # # all methods use the code below # # # 
+    # all methods use the code below # # #
 
     # 2. check if any z values are out of bounds (too close when expanding or too far when contracting),
     # if so, set their dot life to max, so they are given new x, y and z values by update_dotlife() below.
@@ -400,12 +481,15 @@ while not event.getKeys(keyList=["escape"]):
                                                               y_bounds=frame_size_cm / 2,
                                                               z_start_bounds=z_start_bounds)
 
-    # 4. scale x and y positions by distance
+    # # 4. put new x and y values into spokes
+    x_array, y_array = make_xy_spokes(x_array, y_array)
+
+    # 5. scale x and y positions by distance
     dots_pos_array = scaled_dots_pos_array(x_array, y_array, z_array, frame_size_cm, ref_angle)
     flow_dots.xys = dots_pos_array
 
 
-
+    # draw dots
     flow_dots.draw()
     win.flip()
 

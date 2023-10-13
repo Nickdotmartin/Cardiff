@@ -139,41 +139,88 @@ def update_dotlife(dotlife_array, dot_max_fr,
     return dotlife_array, x_array, y_array, z_array
 
 
+
+def make_xy_spokes(x_array, y_array, rotation_constant=22.5):
+    """
+    Function to take dots evenly spaced across screen, and make it so that they appear in
+    4 'spokes' (top, bottom, left and right).  That is, wedge shaped regions, with the point of the
+    wedge at the centre of the screen, and the wide end at the edge of the screen.
+    There are four blank regions with no dots between each spoke, extending to the four corners of the screen.
+    Probes are presented in the four corners, so using spokes means that the probes are never presented
+    on top of dots.
+
+    1. convert cartesian (x, y) co-ordinates to polar co-ordinates (e.g., distance and angle (radians) from centre).
+    2. converts radians to degrees.
+    3. get octants (like quadrants, but eight of them) and add rotation_constant to them.
+        e.g., if rotation_constant is 0, octants are 0 to 45, 90 to 135, 180 to 225, 270 to 315.
+    4. rotate values between pairs of octants by -45 degrees.
+    5. With rotation _constant of 22.5 degrees (default), so dot spokes are
+        centred at top, right, bottom, middle; and blank wedges are centred at four corners.
+    6. convert back to radians, then to cartesian co-ordinates.
+
+    :param x_array: numpy array of x values with shape (n_dots, 1), 0 as middle of screen.
+    :param y_array: numpy array of y values with shape (n_dots, 1), 0 as middle of screen.
+    :param rotation_constant: A constant value to rotate all dots by.
+    :return: new x_array and y_array
+    """
+
+    # Convert Cartesian coordinates to polar coordinates.
+    # r is distance, theta is angle in radians (+/- pi)
+    r_array, theta_array = np.hypot(x_array, y_array), np.arctan2(y_array, x_array)
+
+    # convert theta_array to degrees
+    degrees_array = np.degrees(theta_array)
+
+    # if any values are negative, add 360 to make them positive
+    degrees_array = np.where(degrees_array < 0, degrees_array + 360, degrees_array)
+
+    # get list of 8 angles between 0 and 360 (e.g., 0, 45, 90, 135, 180, 225, 270, 315)
+    octants = [i * 360 / 8 for i in range(8)]
+
+    # add rotation_constant to each octant
+    # (e.g., if rotation_constant is 22.5, octants are 22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5)
+    octants = [i + rotation_constant for i in octants]
+
+    # # # rotate values between some octants by 45 to give 8 spokes, alternating [dots, no dots]
+    degrees_array = np.where((degrees_array >= octants[0]) & (degrees_array < octants[1]), degrees_array - 45, degrees_array)
+    degrees_array = np.where((degrees_array >= octants[2]) & (degrees_array < octants[3]), degrees_array - 45, degrees_array)
+    degrees_array = np.where((degrees_array >= octants[4]) & (degrees_array < octants[5]), degrees_array - 45, degrees_array)
+    degrees_array = np.where((degrees_array >= octants[6]) & (degrees_array < octants[7]), degrees_array - 45, degrees_array)
+
+    # if any values are negative, add 360 to make them positive
+    degrees_array = np.where(degrees_array < 0, degrees_array + 360, degrees_array)
+
+    # if any values are greater than 360, subtract 360 to put them in correct range
+    degrees_array = np.where(degrees_array > 360, degrees_array - 360, degrees_array)
+
+    # convert back to cartesian
+    theta_array = np.radians(degrees_array)
+    x_array = r_array * np.cos(theta_array)
+    y_array = r_array * np.sin(theta_array)
+
+    return x_array, y_array
+
+
+
 def scaled_dots_pos_array(x_array, y_array, z_array, frame_size_cm, reference_angle):
     """
     This is a function to get new pixel x, y co-ordinates for the flow dots using the x, y and z arrays.
     Use this after updating z_array and dot_life_array.
 
-    1. Convert distances (cm) to angles (degrees) using find_angle().
-    2. scale distances by dividing by reference angle (e.g., screen angle when z=view_dist).
-    3. scale x and y values by multiplying by scaled distances.
-    4. put the new x_pos and y_pos co-ordinates into an array and transposes it.
-
     :param x_array: Original x_array positions for the dots (shape = (n_dots, 1))
     :param y_array: Original y_array positions for the dots (shape = (n_dots, 1))
     :param z_array: array of distance values for the dots (shape = (n_dots, 1))
     :param frame_size_cm: onscreen size in cm of frame containing dots.
-    :param reference_angle: angle in degrees of the reference distance (57.3cm)
+    :param reference_angle: angle in degrees of the reference distance (e.g., screen size angle at 57.3cm)
     :return: new dots_pos_array
     """
 
-    # # 1. convert distances to angles
-    # z_array_deg = find_angle(adjacent=z_array, opposite=frame_size_cm)
-    #
-    # # 2. scale distances by dividing by reference angle
-    # scale_factor_array = z_array_deg / reference_angle
-    #
-    # # 3. scale x and y values by multiplying by scaled distances
-    # scaled_x = x_array * scale_factor_array
-    # scaled_y = y_array * scale_factor_array
-    #
-    # # 4. scale x and y values by multiplying by scaled distances
-    # dots_pos_array = np.array([scaled_x, scaled_y]).T
-
-    # 1. convert distances to angles and scale distances by dividing by reference angle
+    # 1. convert frame size at z distances to angles and
+    # 2. scale these by dividing by reference angle (e.g., screen size at view dist)
     scale_factor_array = find_angle(adjacent=z_array, opposite=frame_size_cm) / reference_angle
 
-    # 2. scale x and y values by multiplying by scaled distances
+    # 3. scale x and y values by multiplying by scaled distances and
+    # 4. put scaled x and y values into an array and transpose it.
     return np.array([x_array * scale_factor_array, y_array * scale_factor_array]).T
 
 
@@ -473,22 +520,22 @@ probe = visual.ShapeStim(win, vertices=probeVert, lineWidth=0, opacity=1, size=p
 dist_from_fix = int((np.tan(np.deg2rad(probe_ecc)) * view_dist_pix) / np.sqrt(2))
 
 
-# MASK BEHIND PROBES (infront of flow dots to keep probes and motion separate)
-mask_size = 150
-# Create a raisedCosine mask array and assign it to a Grating stimulus (grey outside, transparent inside)
-raisedCosTexture1 = visual.filters.makeMask(256, shape='raisedCosine', fringeWidth=0.3, radius=[1.0, 1.0])
-probeMask1 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size, mask_size),
-                                colorSpace=this_colourSpace, color=this_bgColour,
-                                tex=None, units='pix', pos=[dist_from_fix + 1, dist_from_fix + 1])
-probeMask2 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size, mask_size),
-                                colorSpace=this_colourSpace, color=this_bgColour,
-                                units='pix', tex=None, pos=[-dist_from_fix - 1, dist_from_fix + 1])
-probeMask3 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size, mask_size),
-                                colorSpace=this_colourSpace, color=this_bgColour,
-                                units='pix', tex=None, pos=[-dist_from_fix - 1, -dist_from_fix - 1])
-probeMask4 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size, mask_size),
-                                colorSpace=this_colourSpace, color=this_bgColour,
-                                units='pix', tex=None, pos=[dist_from_fix + 1, -dist_from_fix - 1])
+# # MASK BEHIND PROBES (infront of flow dots to keep probes and motion separate)
+# mask_size = 150
+# # Create a raisedCosine mask array and assign it to a Grating stimulus (grey outside, transparent inside)
+# raisedCosTexture1 = visual.filters.makeMask(256, shape='raisedCosine', fringeWidth=0.3, radius=[1.0, 1.0])
+# probeMask1 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size, mask_size),
+#                                 colorSpace=this_colourSpace, color=this_bgColour,
+#                                 tex=None, units='pix', pos=[dist_from_fix + 1, dist_from_fix + 1])
+# probeMask2 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size, mask_size),
+#                                 colorSpace=this_colourSpace, color=this_bgColour,
+#                                 units='pix', tex=None, pos=[-dist_from_fix - 1, dist_from_fix + 1])
+# probeMask3 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size, mask_size),
+#                                 colorSpace=this_colourSpace, color=this_bgColour,
+#                                 units='pix', tex=None, pos=[-dist_from_fix - 1, -dist_from_fix - 1])
+# probeMask4 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size, mask_size),
+#                                 colorSpace=this_colourSpace, color=this_bgColour,
+#                                 units='pix', tex=None, pos=[dist_from_fix + 1, -dist_from_fix - 1])
 
 
 # full screen mask to blend off edges and fade to black
@@ -533,8 +580,8 @@ flow_speed_cm_p_sec = 150  # 1.2m/sec matches previous flow parsing study (Evans
 flow_speed_cm_p_fr = flow_speed_cm_p_sec / fps  # 1.66 cm per frame = 1m per second
 
 
-# initialise dots - 1 per sq cm
-dots_per_sq_cm = 1
+# initialise dots - for 1 per sq cm, divide by 2 because make_xy_spokes doubles the density
+dots_per_sq_cm = 1 / 2
 n_dots = int(dots_per_sq_cm * mon_width_cm * mon_height_cm)
 if debug:
     print(f"n_dots: {n_dots}")
@@ -554,6 +601,11 @@ y_array = np.random.uniform(-frame_size_cm/2, frame_size_cm/2, n_dots)  # y valu
 # initialize z values (distance/distance from viewer) in cm
 z_array = np.random.uniform(low=near_plane_cm, high=far_plane_cm, size=n_dots)    # distances in cm
 
+# convert x and y into spokes
+x_array, y_array = make_xy_spokes(x_array, y_array)
+
+
+
 # get starting distances and scale xys
 dots_pos_array = scaled_dots_pos_array(x_array, y_array, z_array, frame_size_cm, ref_angle)
 
@@ -570,8 +622,8 @@ dot_lifetime_array = np.random.randint(0, dot_life_max_fr, n_dots)
 # when dots are redrawn with a new z value, they should be at least this far away the boundary
 # otherwise they might have to be re-drawn after a couple of frames, which could lead to flickering.
 # this is the max z_distance in meters they can travel in n frames
-max_dist_in_life = flow_speed_cm_p_fr * dot_life_max_fr
-print(f"max_dist_in_life: {max_dist_in_life}")
+max_z_cm_in_life = flow_speed_cm_p_fr * dot_life_max_fr
+print(f"max_z_cm_in_life: {max_z_cm_in_life}")
 
 
 # # # TIMINGS - expected frame duration and tolerance # # #
@@ -753,11 +805,11 @@ for step in range(n_trials_per_stair):
                 print(f"flow_dir: {flow_dir}, flow_name: {flow_name}, prelim_ms: {prelim_ms}")
 
 
-            # boundaries for z position (distance from screen)
+            # boundaries for z position (distance from screen) during radial flow
             if flow_dir == -1:  # expanding
-                z_start_bounds = [near_plane_cm + max_dist_in_life, far_plane_cm]
+                z_start_bounds = [near_plane_cm + max_z_cm_in_life, far_plane_cm]
             else:  # contracting, flow_dir == 1
-                z_start_bounds = [near_plane_cm, far_plane_cm - max_dist_in_life]
+                z_start_bounds = [near_plane_cm, far_plane_cm - max_z_cm_in_life]
             if debug:
                 print(f"z_start_bounds: {z_start_bounds}")
 
@@ -873,13 +925,8 @@ for step in range(n_trials_per_stair):
                 # FIXATION until end of fixation interval
                 if end_fix_fr >= frameN > 0:
 
-                    '''comment out random_z_dir, random_speed_array and z_array to just have incoherent motion from re-spawning dots'''
-                    # # 1. Update z (distance values): Add dots_speed * flow_dir to the current z values.
-                    # # create random_z_dir array, which is either 1 or -1, to add to z_array
-                    # random_z_dir = np.random.choice([-1, 1], size=n_dots)
-                    # random_speed_array = flow_speed_cm_p_fr * random_z_dir
-                    # z_array = z_array + random_speed_array
-
+                    '''just have incoherent motion from re-spawning dots, z bounds as full z range'''
+                    # 1. don't update z values
                     # 2. check if any z values are out of bounds (too close when expanding or too far when contracting),
                     # if so, set their dot life to max, so they are given new x, y and z values by update_dotlife() below.
                     dot_lifetime_array = check_z_start_bounds(z_array, near_plane_cm, far_plane_cm, dot_life_max_fr,
@@ -892,24 +939,26 @@ for step in range(n_trials_per_stair):
                                                                               z_array=z_array,
                                                                               x_bounds=frame_size_cm / 2,
                                                                               y_bounds=frame_size_cm / 2,
-                                                                              z_start_bounds=z_start_bounds)
+                                                                              z_start_bounds=[near_plane_cm, far_plane_cm])
 
-                    # 4. scale x and y positions by distance
+                    # 4. put new x and y values into spokes
+                    x_array, y_array = make_xy_spokes(x_array, y_array)
+
+                    # 5. scale x and y positions by distance
                     dots_pos_array = scaled_dots_pos_array(x_array, y_array, z_array, frame_size_cm, ref_angle)
                     flow_dots.xys = dots_pos_array
-
                     flow_dots.draw()
-                    probeMask1.draw()
-                    probeMask2.draw()
-                    probeMask3.draw()
-                    probeMask4.draw()
+
+                    # probeMask1.draw()
+                    # probeMask2.draw()
+                    # probeMask3.draw()
+                    # probeMask4.draw()
                     edge_mask.draw()
 
                     fixation.draw()
 
                 # Background motion prior to probe1
                 elif end_bg_motion_fr >= frameN > end_fix_fr:
-                    # after fixation, before end of background motion
 
                     # 1. Update z (distance values): Add dots_speed * flow_dir to the current z values.
                     z_array = z_array + flow_speed_cm_p_fr * flow_dir
@@ -927,18 +976,18 @@ for step in range(n_trials_per_stair):
                                                                               x_bounds=frame_size_cm / 2,
                                                                               y_bounds=frame_size_cm / 2,
                                                                               z_start_bounds=z_start_bounds)
-                    # print(f"{frameN}. z_array: {z_array}, dotlife_array: {dotlife_array}")
-                    # 4. scale x and y positions by distance
-                    dots_pos_array = scaled_dots_pos_array(x_array, y_array, z_array, frame_size_cm, ref_angle)
-                    # print(f"dots_pos_array: {dots_pos_array}")
-                    flow_dots.xys = dots_pos_array
+                    # 4. put new x and y values into spokes
+                    x_array, y_array = make_xy_spokes(x_array, y_array)
 
+                    # 5. scale x and y positions by distance
+                    dots_pos_array = scaled_dots_pos_array(x_array, y_array, z_array, frame_size_cm, ref_angle)
+                    flow_dots.xys = dots_pos_array
                     flow_dots.draw()
 
-                    probeMask1.draw()
-                    probeMask2.draw()
-                    probeMask3.draw()
-                    probeMask4.draw()
+                    # probeMask1.draw()
+                    # probeMask2.draw()
+                    # probeMask3.draw()
+                    # probeMask4.draw()
                     edge_mask.draw()
 
                     fixation.draw()
@@ -966,25 +1015,24 @@ for step in range(n_trials_per_stair):
                                                                               y_bounds=frame_size_cm / 2,
                                                                               z_start_bounds=z_start_bounds)
 
-                    # 4. scale x and y positions by distance
+                    # 4. put new x and y values into spokes
+                    x_array, y_array = make_xy_spokes(x_array, y_array)
+
+                    # 5. scale x and y positions by distance
                     dots_pos_array = scaled_dots_pos_array(x_array, y_array, z_array, frame_size_cm, ref_angle)
                     flow_dots.xys = dots_pos_array
-
-
-
                     flow_dots.draw()
 
-                    probeMask1.draw()
-                    probeMask2.draw()
-                    probeMask3.draw()
-                    probeMask4.draw()
+                    # probeMask1.draw()
+                    # probeMask2.draw()
+                    # probeMask3.draw()
+                    # probeMask4.draw()
                     edge_mask.draw()
 
                     fixation.draw()
 
 
                     # draw probe if 1st interval
-                    # todo: I flipped all these all back, so +ive is in and -ive is out.
                     if corner == 45:  # top-right
                         probe_moved_y = probe_moved_y - probe_pix_p_fr
                         probe_moved_x = probe_moved_x - probe_pix_p_fr
@@ -1005,13 +1053,8 @@ for step in range(n_trials_per_stair):
                 # ANSWER - after probe interval, before next trial
                 elif frameN > end_probe_fr:
 
-                    '''comment out random_z_dir, random_speed_array and z_array to just have incoherent motion from re-spawning dots'''
-                    # # 1. Update z (distance values): Add dots_speed * flow_dir to the current z values.
-                    # # create random_z_dir array, which is either 1 or -1, to add to z_array
-                    # random_z_dir = np.random.choice([-1, 1], size=n_dots)
-                    # random_speed_array = flow_speed_cm_p_fr * random_z_dir
-                    # z_array = z_array + random_speed_array
-
+                    '''just have incoherent motion from re-spawning dots, z bounds as full z range'''
+                    # 1. don't update z values
                     # 2. check if any z values are out of bounds (too close when expanding or too far when contracting),
                     # if so, set their dot life to max, so they are given new x, y and z values by update_dotlife() below.
                     dot_lifetime_array = check_z_start_bounds(z_array, near_plane_cm, far_plane_cm, dot_life_max_fr,
@@ -1024,17 +1067,20 @@ for step in range(n_trials_per_stair):
                                                                               z_array=z_array,
                                                                               x_bounds=frame_size_cm / 2,
                                                                               y_bounds=frame_size_cm / 2,
-                                                                              z_start_bounds=z_start_bounds)
+                                                                              z_start_bounds=[near_plane_cm, far_plane_cm])
 
-                    # 4. scale x and y positions by distance
+                    # 4. put new x and y values into spokes
+                    x_array, y_array = make_xy_spokes(x_array, y_array)
+
+                    # 5. scale x and y positions by distance
                     dots_pos_array = scaled_dots_pos_array(x_array, y_array, z_array, frame_size_cm, ref_angle)
                     flow_dots.xys = dots_pos_array
-
                     flow_dots.draw()
-                    probeMask1.draw()
-                    probeMask2.draw()
-                    probeMask3.draw()
-                    probeMask4.draw()
+
+                    # probeMask1.draw()
+                    # probeMask2.draw()
+                    # probeMask3.draw()
+                    # probeMask4.draw()
                     edge_mask.draw()
 
                     fixation.setRadius(2)

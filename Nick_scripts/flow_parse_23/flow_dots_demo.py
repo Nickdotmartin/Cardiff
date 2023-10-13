@@ -351,7 +351,7 @@ else:  # contracting, flow_dir == 1
     z_start_bounds = [near_plane_cm, far_plane_cm - max_dist_in_life]
 print(f"z_start_bounds: {z_start_bounds}")
 
-trial_sigment = 'flow_motion'  # press 1
+motion_type = 'flow_motion'  # press 1
 
 # PRESENT STIMULI
 while not event.getKeys(keyList=["escape"]):
@@ -359,18 +359,18 @@ while not event.getKeys(keyList=["escape"]):
 
     # present radial flow until another option is selected (1 or 2), can go back to radial flow by pressing 0.
     if event.getKeys(keyList=["0"]):
-        trial_sigment = 'flow_motion'
+        motion_type = 'flow_motion'
     elif event.getKeys(keyList=["1"]):
-        trial_sigment = 'rand_z_dir'
+        motion_type = 'rand_z_dir'
     elif event.getKeys(keyList=["2"]):
-        trial_sigment = 'new_xy_when_born'
+        motion_type = 'new_xy_when_born'
 
-    if trial_sigment == 'flow_motion':  # pressed 0
+    if motion_type == 'flow_motion':  # pressed 0
         # 1. Update z (distance values): Add dots_speed * flow_dir to the current z values.
         z_array = z_array + flow_speed_cm_p_fr * flow_dir
 
 
-    elif trial_sigment == 'rand_z_dir':  # pressed 1
+    elif motion_type == 'rand_z_dir':  # pressed 1
         # 1. Update z (distance values): Add dots_speed * flow_dir to the current z values.
         # create random_z_dir array, which is either 1 or -1, to add to z_array
         random_z_dir = np.random.choice([-1, 1], size=n_dots)
@@ -378,7 +378,7 @@ while not event.getKeys(keyList=["escape"]):
         z_array = z_array + random_speed_array
 
 
-    elif trial_sigment == 'new_xy_when_born':  # pressed 2
+    elif motion_type == 'new_xy_when_born':  # pressed 2
         # dots only change as a result of getting new x & ys at the end of their life, no continuous motion in x, y or z directions.
         z_array = z_array  
 
