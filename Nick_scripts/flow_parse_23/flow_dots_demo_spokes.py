@@ -7,8 +7,23 @@ from os import path, chdir
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 import numpy as np
+from numpy import array, random, where, sum, linspace, pi, rad2deg, arctan, arctan2, tan, cos, sin, hypot
 
 import copy
+
+'''
+Selectively eliminate attribute access – Every use of the dot (.) operator to access attributes comes with a cost. 
+One can often avoid attribute lookups by using the 'from module import name' form of import statement,
+and accessing the name directly (e.g.., name() instead of module.name()).
+However, it must be emphasized that these changes only make sense in frequently executed code, such as loops. 
+So, this optimization really only makes sense in carefully selected places.
+https://www.geeksforgeeks.org/python-making-program-run-faster/
+
+Similarly, putting things inside functions (rather than in main code) can make them run faster, 
+because they are only compiled once, rather than each time the code is run.
+It has something to do with local variables being faster to access than global variables.
+
+'''
 
 
 '''
@@ -30,7 +45,7 @@ def find_angle(adjacent, opposite):
     :param opposite: The (scalar) length of the side opposite the angle you want to find.
     :return: A numpy array of the angles in degrees.
     """
-    return np.rad2deg(np.arctan(opposite / adjacent))
+    return rad2deg(arctan(opposite / adjacent))
 
 
 
@@ -50,9 +65,9 @@ def check_z_start_bounds(z_array, closest_z, furthest_z, max_dot_life_fr, dot_li
 
     # if expanding, check if any z values are too close or far, and if so, set their dot life to max
     if flow_dir == -1:  # expanding
-        dot_life_array = np.where(z_array > furthest_z, max_dot_life_fr, dot_life_array)
+        dot_life_array = where(z_array > furthest_z, max_dot_life_fr, dot_life_array)
     elif flow_dir == 1:  # contracting
-        dot_life_array = np.where(z_array < closest_z, max_dot_life_fr, dot_life_array)
+        dot_life_array = where(z_array < closest_z, max_dot_life_fr, dot_life_array)
 
     return dot_life_array
 
@@ -88,9 +103,9 @@ def update_dotlife(dotlife_array, dot_max_fr,
     replace_mask = (dotlife_array >= dot_max_fr)
 
     # replace these with new x and y values (from same distribution as originals)
-    x_array[replace_mask] = np.random.uniform(low=-x_bounds, high=x_bounds, size=np.sum(replace_mask))
-    y_array[replace_mask] = np.random.uniform(low=-y_bounds, high=y_bounds, size=np.sum(replace_mask))
-    z_array[replace_mask] = np.random.uniform(low=z_start_bounds[0], high=z_start_bounds[1], size=np.sum(replace_mask))
+    x_array[replace_mask] = random.uniform(low=-x_bounds, high=x_bounds, size=sum(replace_mask))
+    y_array[replace_mask] = random.uniform(low=-y_bounds, high=y_bounds, size=sum(replace_mask))
+    z_array[replace_mask] = random.uniform(low=z_start_bounds[0], high=z_start_bounds[1], size=sum(replace_mask))
 
     # reset life of replaced dots to 0
     dotlife_array[replace_mask] = 0
@@ -99,65 +114,64 @@ def update_dotlife(dotlife_array, dot_max_fr,
 
 
 
-def make_xy_spokes(x_array, y_array, rotation_constant=22.5):
+def make_xy_spokes(x_array, y_array):
     """
     Function to take dots evenly spaced across screen, and make it so that they appear in
     4 'spokes' (top, bottom, left and right).  That is, wedge shaped regions, with the point of the
     wedge at the centre of the screen, and the wide end at the edge of the screen.
     There are four blank regions with no dots between each spoke, extending to the four corners of the screen.
-    Probes are presented in the four corners, so using spokes means that the probes are never presented
+    Probes are presented in the four corners, so using make_xy_spokes means that the probes are never presented
     on top of dots.
 
-    1. convert cartesian (x, y) co-ordinates to polar co-ordinates (e.g., distance and angle (radians) from centre).
-    2. converts radians to degrees.
-    3. get octants (like quadrants, but eight of them) and add rotation_constant to them.
-        e.g., if rotation_constant is 0, octants are 0 to 45, 90 to 135, 180 to 225, 270 to 315.
-    4. rotate values between pairs of octants by -45 degrees.
-    5. With rotation _constant of 22.5 degrees (default), so dot spokes are
-        centred at top, right, bottom, middle; and blank wedges are centred at four corners.
-    6. convert back to radians, then to cartesian co-ordinates.
+    1. get constants to use:
+        rad_eighth_slice is the wedge width in radians (e.g., 45 degrees)
+        rad_octants is list of 8 equally spaced values between -pi and pi, ofset by rad_sixteenth_slice (e.g., -22.5 degrees)
+
+
+    rad_octants (like quadrants, but eight of them, e.g., 45 degrees)
+        ofset them by adding rad_eighth_slice / 2 to them  (e.g., equivillent to 22.5 degrees).
+        I've hard coded these, so they don't need to be calculated each frame.
+    2. convert cartesian (x, y) co-ordinates to polar co-ordinates (e.g., distance and angle (radians) from centre).
+    3. rotate values between pairs of rad_octants by rad_sixteenth_slice (e.g., -45 degrees).
+    4. add 2*pi to any values less than -pi, to make them positive, but similarly rotated (360 degrees is 2*pi radians).
+    5. convert back to cartesian co-ordinates.
 
     :param x_array: numpy array of x values with shape (n_dots, 1), 0 as middle of screen.
     :param y_array: numpy array of y values with shape (n_dots, 1), 0 as middle of screen.
-    :param rotation_constant: A constant value to rotate all dots by.
     :return: new x_array and y_array
     """
 
+
+    # # # CONSTANT VALUES TO USE # # #
+    # # spokes/wedges width is: degrees = 360 / 8 = 45; radians = 2*pi / 8 = pi / 4 = 0.7853981633974483
+    rad_eighth_slice = 0.7853981633974483
+
+    # # rad_octants is list of 8 equally spaced values between -pi and pi, ofset by rad_sixteenth_slice (e.g., -22.5 degrees)
+    # # in degrees this would be [22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5]
+    # rad_octants = [i + rad_eighth_slice / 2 for i in linspace(-pi, pi, 8, endpoint=False)]
+    rad_octants = [-2.748893571891069, -1.9634954084936207, -1.1780972450961724, -0.39269908169872414,
+                   0.39269908169872414, 1.1780972450961724, 1.9634954084936207, 2.748893571891069]
+
+
+    # # # RUN FUNCTION USING CONSTANTS # # #
     # Convert Cartesian coordinates to polar coordinates.
-    # r is distance, theta is angle in radians (+/- pi)
-    r_array, theta_array = np.hypot(x_array, y_array), np.arctan2(y_array, x_array)
+    # r is distance, theta is angle in radians (from -pi to pi)
+    r_array, theta_array = hypot(x_array, y_array), arctan2(y_array, x_array)
 
-    # convert theta_array to degrees
-    degrees_array = np.degrees(theta_array)
+    # # make a mask for values between pairs of rad_octants in theta_array
+    mask = ((theta_array >= rad_octants[0]) & (theta_array < rad_octants[1])) | \
+                ((theta_array >= rad_octants[2]) & (theta_array < rad_octants[3])) | \
+                    ((theta_array >= rad_octants[4]) & (theta_array < rad_octants[5])) | \
+                        ((theta_array >= rad_octants[6]) & (theta_array < rad_octants[7]))
 
-    # if any values are negative, add 360 to make them positive
-    degrees_array = np.where(degrees_array < 0, degrees_array + 360, degrees_array)
+    # rotate values specified by mask by rad_eighth_slice (e.g., -45 degrees)
+    theta_array[mask] -= rad_eighth_slice
 
-    # get list of 8 angles between 0 and 360 (e.g., 0, 45, 90, 135, 180, 225, 270, 315)
-    octants = [i * 360 / 8 for i in range(8)]
+    # if any values are less than -pi, add 2*pi to make them positive, but similarly rotated (360 degrees is 2*pi radians)
+    theta_array = where(theta_array < -pi, theta_array + 2*pi, theta_array)
 
-    # add rotation_constant to each octant
-    # (e.g., if rotation_constant is 22.5, octants are 22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5)
-    octants = [i + rotation_constant for i in octants]
-
-    # # # rotate values between some octants by 45 to give 8 spokes, alternating [dots, no dots]
-    degrees_array = np.where((degrees_array >= octants[0]) & (degrees_array < octants[1]), degrees_array - 45, degrees_array)
-    degrees_array = np.where((degrees_array >= octants[2]) & (degrees_array < octants[3]), degrees_array - 45, degrees_array)
-    degrees_array = np.where((degrees_array >= octants[4]) & (degrees_array < octants[5]), degrees_array - 45, degrees_array)
-    degrees_array = np.where((degrees_array >= octants[6]) & (degrees_array < octants[7]), degrees_array - 45, degrees_array)
-
-    # if any values are negative, add 360 to make them positive
-    degrees_array = np.where(degrees_array < 0, degrees_array + 360, degrees_array)
-
-    # if any values are greater than 360, subtract 360 to put them in correct range
-    degrees_array = np.where(degrees_array > 360, degrees_array - 360, degrees_array)
-
-    # convert back to cartesian
-    theta_array = np.radians(degrees_array)
-    x_array = r_array * np.cos(theta_array)
-    y_array = r_array * np.sin(theta_array)
-
-    return x_array, y_array
+    # convert r and theta arrays back to x and y arrays (e.g., radians to cartesian)
+    return r_array * cos(theta_array), r_array * sin(theta_array)  # x_array, y_array
 
 
 
@@ -181,7 +195,7 @@ def scaled_dots_pos_array(x_array, y_array, z_array, frame_size_cm, reference_an
 
     # 3. scale x and y values by multiplying by scaled distances and
     # 4. put scaled x and y values into an array and transpose it.
-    return np.array([x_array * scale_factor_array, y_array * scale_factor_array]).T
+    return array([x_array * scale_factor_array, y_array * scale_factor_array]).T
 
 
 
@@ -360,12 +374,12 @@ flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
                                     colors=flow_colour)
 
 # initialize x and y positions of dots to fit in window (frame_size_cm) at distance 0
-x_array = np.random.uniform(-frame_size_cm/2, frame_size_cm/2, n_dots)  # x values in cm
-y_array = np.random.uniform(-frame_size_cm/2, frame_size_cm/2, n_dots)  # y values in cm
+x_array = random.uniform(-frame_size_cm/2, frame_size_cm/2, n_dots)  # x values in cm
+y_array = random.uniform(-frame_size_cm/2, frame_size_cm/2, n_dots)  # y values in cm
 
 
 # initialize z values (distance/distance from viewer) in cm
-z_array = np.random.uniform(low=near_plane_cm, high=far_plane_cm, size=n_dots)    # distances in cm
+z_array = random.uniform(low=near_plane_cm, high=far_plane_cm, size=n_dots)    # distances in cm
 
 x_array, y_array = make_xy_spokes(x_array, y_array)
 
@@ -380,7 +394,7 @@ dot_life_max_fr = int(dot_life_max_ms / 1000 * fps)
 print(f"dot_life_max_fr: {dot_life_max_fr}")
 
 # initialize lifetime of each dot (in frames)
-dot_lifetime_array = np.random.randint(0, dot_life_max_fr, n_dots)
+dot_lifetime_array = random.randint(0, dot_life_max_fr, n_dots)
 
 # when dots are redrawn with a new z value, they should be at least this far away the boundary
 # otherwise they might have to be re-drawn after a couple of frames, which could lead to flickering.
@@ -418,7 +432,7 @@ else:  # contracting, flow_dir == 1
 motion_type = 'flow_motion'  # press 1
 
 # random z array
-random_z_dir = np.random.choice([-1, 1], size=n_dots)
+random_z_dir = random.choice([-1, 1], size=n_dots)
 
 # PRESENT STIMULI
 while not event.getKeys(keyList=["escape"]):
@@ -449,7 +463,7 @@ while not event.getKeys(keyList=["escape"]):
     elif motion_type == 'rand_z_dir':  # pressed 1
         # 1. Update z (distance values): Add dots_speed * flow_dir to the current z values.
         # create random_z_dir array, which is either 1 or -1, to add to z_array
-        # random_z_dir = np.random.choice([-1, 1], size=n_dots)  # moved higher up
+        # random_z_dir = random.choice([-1, 1], size=n_dots)  # moved higher up
         random_speed_array = flow_speed_cm_p_fr * random_z_dir
         z_array = z_array + random_speed_array
 

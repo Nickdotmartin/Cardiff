@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 # # loop through run folders with first 5 scripts (a, b1, b2, b3, c)
 # # then run script d to get master lists and averages
 # exp_path = r"C:\Users\sapnm4\PycharmProjects\Cardiff\Nick_scripts\flow_parse_23\flow_parsing_NM_v6"
-exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing_NM_v6"
+# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing_NM_v6"
+exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing_NM_v7"
 print(f"exp_path: {exp_path}")
 convert_path1 = os.path.normpath(exp_path)
 print(f"convert_path1: {convert_path1}")
@@ -20,7 +21,7 @@ monitor = 'OLED'  # 'asus_cal' OLED, 'Nick_work_laptop'
 exp_path = os.path.join(exp_path, monitor)
 
 
-participant_list = ['Nick']  # ' Nicktest_06102023'
+participant_list = ['Nicktest_13102023']  # ' Nicktest_06102023'
 all_probe_dur_list = [8, 16, 25, 33, 41, 50, 54, 58, 66, 116]
 
 
@@ -104,13 +105,15 @@ for p_idx, participant_name in enumerate(participant_list):
         # if any of those columns are 'object' dtype, change to float
         if run_data_df['probe_dur_ms'].dtype == 'object':
             run_data_df['probe_dur_ms'] = run_data_df['probe_dur_ms'].astype(float)
-        if run_data_df['probeSpeed_cm_per_s'].dtype == 'object':
-            run_data_df['probeSpeed_cm_per_s'] = run_data_df['probeSpeed_cm_per_s'].astype(float)
+        # if run_data_df['probeSpeed_cm_per_s'].dtype == 'object':
+        #     run_data_df['probeSpeed_cm_per_s'] = run_data_df['probeSpeed_cm_per_s'].astype(float)
+        if run_data_df['probe_cm_p_sec'].dtype == 'object':
+            run_data_df['probe_cm_p_sec'] = run_data_df['probe_cm_p_sec'].astype(float)
 
 
         '''b3'''
         # todo: add 'OUT' and 'IN' to y axis labels
-        b3_plot_staircase(run_data_path, thr_col='probeSpeed_cm_per_s', resp_col='response',  # 'answer'
+        b3_plot_staircase(run_data_path, thr_col='probe_cm_p_sec', resp_col='response',  # 'answer'
                           save_name=f"{participant_name}_{r_idx_plus}_staircase.png",
                           show_plots=show_plots, verbose=verbose)
 
@@ -166,7 +169,7 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
         # for psignifit just use a reduced df with only the columns needed
-        psig_df = run_data_df[['probe_dur_ms', 'stair', 'response', 'probeSpeed_cm_per_s']].copy()
+        psig_df = run_data_df[['probe_dur_ms', 'stair', 'response', 'probe_cm_p_sec']].copy()
         # todo: changed variable name to probe_speed_cm_sec
 
 
@@ -181,7 +184,7 @@ for p_idx, participant_name in enumerate(participant_list):
                                             p_run_name=run_dir,
                                             csv_name=run_data_df,
                                             n_bins=9, q_bins=True,
-                                            thr_col='probeSpeed_cm_per_s',
+                                            thr_col='probe_cm_p_sec',
                                             resp_col='response',
                                             stair_col='stair',
                                             dur_list=probe_dur_list,

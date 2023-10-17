@@ -8,12 +8,30 @@ from kestenSTmaxVal import Staircase
 
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
+
 import numpy as np
+# for numpy attributes access by per-frame functions, acceess them with name instead of np.name.
+from numpy import array, random, where, sum, linspace, pi, rad2deg, arctan, arctan2, cos, sin, hypot
+
+
 
 import copy
 import gc
 
 
+'''
+Selectively eliminate attribute access – Every use of the dot (.) operator to access attributes comes with a cost. 
+One can often avoid attribute lookups by using the 'from module import name' form of import statement,
+and accessing the name directly (e.g.., name() instead of module.name()).
+However, it must be emphasized that these changes only make sense in frequently executed code, such as loops. 
+So, this optimization really only makes sense in carefully selected places.
+https://www.geeksforgeeks.org/python-making-program-run-faster/
+
+Similarly, putting things inside functions (rather than in main code) can make them run faster, 
+because they are only compiled once, rather than each time the code is run.
+It has something to do with local variables being faster to access than global variables.
+
+'''
 
 print(f"PsychoPy_version: {psychopy_version}")
 
@@ -56,7 +74,11 @@ followed by 2-second presentation of the fixation cross together with the flow a
         - no change in z, just new x and y positions when dots respawn.  DONE
     - accuracy feedback during break  DONE
     - added function to put dots into spoke formation  DONE
+    
+version 8 17/10/2023
     - Flip polarity of fixation on OLED
+    - add small mask behine fixation so dots don't distract too much
+    - add variable fixation time
 """
 
 
@@ -70,7 +92,7 @@ def find_angle(adjacent, opposite):
     :param opposite: The (scalar) length of the side opposite the angle you want to find.
     :return: A numpy array of the angles in degrees.
     """
-    return np.rad2deg(np.arctan(opposite / adjacent))
+    return rad2deg(arctan(opposite / adjacent))
 
 
 
@@ -90,9 +112,9 @@ def check_z_start_bounds(z_array, closest_z, furthest_z, max_dot_life_fr, dot_li
 
     # if expanding, check if any z values are too close or far, and if so, set their dot life to max
     if flow_dir == -1:  # expanding
-        dot_life_array = np.where(z_array > furthest_z, max_dot_life_fr, dot_life_array)
+        dot_life_array = where(z_array > furthest_z, max_dot_life_fr, dot_life_array)
     elif flow_dir == 1:  # contracting
-        dot_life_array = np.where(z_array < closest_z, max_dot_life_fr, dot_life_array)
+        dot_life_array = where(z_array < closest_z, max_dot_life_fr, dot_life_array)
 
     return dot_life_array
 
@@ -128,9 +150,9 @@ def update_dotlife(dotlife_array, dot_max_fr,
     replace_mask = (dotlife_array >= dot_max_fr)
 
     # replace these with new x and y values (from same distribution as originals)
-    x_array[replace_mask] = np.random.uniform(low=-x_bounds, high=x_bounds, size=np.sum(replace_mask))
-    y_array[replace_mask] = np.random.uniform(low=-y_bounds, high=y_bounds, size=np.sum(replace_mask))
-    z_array[replace_mask] = np.random.uniform(low=z_start_bounds[0], high=z_start_bounds[1], size=np.sum(replace_mask))
+    x_array[replace_mask] = random.uniform(low=-x_bounds, high=x_bounds, size=sum(replace_mask))
+    y_array[replace_mask] = random.uniform(low=-y_bounds, high=y_bounds, size=sum(replace_mask))
+    z_array[replace_mask] = random.uniform(low=z_start_bounds[0], high=z_start_bounds[1], size=sum(replace_mask))
 
     # reset life of replaced dots to 0
     dotlife_array[replace_mask] = 0
@@ -138,85 +160,65 @@ def update_dotlife(dotlife_array, dot_max_fr,
     return dotlife_array, x_array, y_array, z_array
 
 
-def make_xy_spokes(x_array, y_array, rotation_constant=22.5):
+
+def make_xy_spokes(x_array, y_array):
     """
     Function to take dots evenly spaced across screen, and make it so that they appear in
     4 'spokes' (top, bottom, left and right).  That is, wedge shaped regions, with the point of the
     wedge at the centre of the screen, and the wide end at the edge of the screen.
     There are four blank regions with no dots between each spoke, extending to the four corners of the screen.
-    Probes are presented in the four corners, so using spokes means that the probes are never presented
+    Probes are presented in the four corners, so using make_xy_spokes means that the probes are never presented
     on top of dots.
 
-    1. convert cartesian (x, y) co-ordinates to polar co-ordinates (e.g., distance and angle (radians) from centre).
-    2. converts radians to degrees.
-    3. get octants (like quadrants, but eight of them) and add rotation_constant to them.
-        e.g., if rotation_constant is 0, octants are 0 to 45, 90 to 135, 180 to 225, 270 to 315.
-    4. rotate values between pairs of octants by -45 degrees.
-    5. With rotation _constant of 22.5 degrees (default), so dot spokes are
-        centred at top, right, bottom, middle; and blank wedges are centred at four corners.
-    6. convert back to radians, then to cartesian co-ordinates.
+    1. get constants to use:
+        rad_eighth_slice is the wedge width in radians (e.g., 45 degrees)
+        rad_octants is list of 8 equally spaced values between -pi and pi, ofset by rad_sixteenth_slice (e.g., -22.5 degrees)
+
+
+    rad_octants (like quadrants, but eight of them, e.g., 45 degrees)
+        ofset them by adding rad_eighth_slice / 2 to them  (e.g., equivillent to 22.5 degrees).
+        I've hard coded these, so they don't need to be calculated each frame.
+    2. convert cartesian (x, y) co-ordinates to polar co-ordinates (e.g., distance and angle (radians) from centre).
+    3. rotate values between pairs of rad_octants by rad_sixteenth_slice (e.g., -45 degrees).
+    4. add 2*pi to any values less than -pi, to make them positive, but similarly rotated (360 degrees is 2*pi radians).
+    5. convert back to cartesian co-ordinates.
 
     :param x_array: numpy array of x values with shape (n_dots, 1), 0 as middle of screen.
     :param y_array: numpy array of y values with shape (n_dots, 1), 0 as middle of screen.
-    :param rotation_constant: A constant value to rotate all dots by.
     :return: new x_array and y_array
     """
 
+
+    # # # CONSTANT VALUES TO USE # # #
+    # # spokes/wedges width is: degrees = 360 / 8 = 45; radians = 2*pi / 8 = pi / 4 = 0.7853981633974483
+    rad_eighth_slice = 0.7853981633974483
+
+    # # rad_octants is list of 8 equally spaced values between -pi and pi, ofset by rad_sixteenth_slice (e.g., -22.5 degrees)
+    # # in degrees this would be [22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5]
+    # rad_octants = [i + rad_eighth_slice / 2 for i in linspace(-pi, pi, 8, endpoint=False)]
+    rad_octants = [-2.748893571891069, -1.9634954084936207, -1.1780972450961724, -0.39269908169872414,
+                   0.39269908169872414, 1.1780972450961724, 1.9634954084936207, 2.748893571891069]
+
+
+    # # # RUN FUNCTION USING CONSTANTS # # #
     # Convert Cartesian coordinates to polar coordinates.
-    # r is distance, theta is angle in radians (+/- pi)
-    r_array, theta_array = np.hypot(x_array, y_array), np.arctan2(y_array, x_array)
+    # r is distance, theta is angle in radians (from -pi to pi)
+    r_array, theta_array = hypot(x_array, y_array), arctan2(y_array, x_array)
 
-    # convert theta_array to degrees
-    degrees_array = np.degrees(theta_array)
+    # # make a mask for values between pairs of rad_octants in theta_array
+    mask = ((theta_array >= rad_octants[0]) & (theta_array < rad_octants[1])) | \
+                ((theta_array >= rad_octants[2]) & (theta_array < rad_octants[3])) | \
+                    ((theta_array >= rad_octants[4]) & (theta_array < rad_octants[5])) | \
+                        ((theta_array >= rad_octants[6]) & (theta_array < rad_octants[7]))
 
-    # if any values are negative, add 360 to make them positive
-    degrees_array = np.where(degrees_array < 0, degrees_array + 360, degrees_array)
+    # rotate values specified by mask by rad_eighth_slice (e.g., -45 degrees)
+    theta_array[mask] -= rad_eighth_slice
 
-    # # get list of 8 angles between 0 and 360 (e.g., 0, 45, 90, 135, 180, 225, 270, 315)
-    # octants = [i * 360 / 8 for i in range(8)]
-    #
-    # # add rotation_constant to each octant
-    # # (e.g., if rotation_constant is 22.5, octants are 22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5)
-    # octants = [i + rotation_constant for i in octants]
-    octants = [22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5]
+    # if any values are less than -pi, add 2*pi to make them positive, but similarly rotated (360 degrees is 2*pi radians)
+    theta_array = where(theta_array < -pi, theta_array + 2*pi, theta_array)
 
-    # # # # rotate values between some octants by 45 to give 8 spokes, alternating [dots, no dots]
-    # degrees_array = np.where((degrees_array >= octants[0]) & (degrees_array < octants[1]), degrees_array - 45, degrees_array)
-    # degrees_array = np.where((degrees_array >= octants[2]) & (degrees_array < octants[3]), degrees_array - 45, degrees_array)
-    # degrees_array = np.where((degrees_array >= octants[4]) & (degrees_array < octants[5]), degrees_array - 45, degrees_array)
-    # degrees_array = np.where((degrees_array >= octants[6]) & (degrees_array < octants[7]), degrees_array - 45, degrees_array)
-
-    # # make a mask for values between octants[0] and octants[1]
-    # mask = (degrees_array >= octants[0]) & (degrees_array < octants[1])
-    # # add values between ocatants[2] and octants[3] to mask
-    # mask = mask | ((degrees_array >= octants[2]) & (degrees_array < octants[3]))
-    # # add values between ocatants[4] and octants[5] to mask
-    # mask = mask | ((degrees_array >= octants[4]) & (degrees_array < octants[5]))
-    # # add values between ocatants[6] and octants[7] to mask
-    # mask = mask | ((degrees_array >= octants[6]) & (degrees_array < octants[7]))
-
-    # make a mask for values between pairs of octants
-    mask = ((degrees_array >= octants[0]) & (degrees_array < octants[1])) | \
-              ((degrees_array >= octants[2]) & (degrees_array < octants[3])) | \
-                ((degrees_array >= octants[4]) & (degrees_array < octants[5])) | \
-                    ((degrees_array >= octants[6]) & (degrees_array < octants[7]))
-
-    # rotate values specified by mask by -45 degrees
-    degrees_array[mask] -= 45
-
-
-    # if any values are negative, add 360 to make them positive
-    degrees_array = np.where(degrees_array < 0, degrees_array + 360, degrees_array)
-
-    # if any values are greater than 360, subtract 360 to put them in correct range
-    # degrees_array = np.where(degrees_array > 360, degrees_array - 360, degrees_array)
-
-    # convert back to cartesian
-    theta_array = np.radians(degrees_array)
-    x_array = r_array * np.cos(theta_array)
-    y_array = r_array * np.sin(theta_array)
-
-    return x_array, y_array
+    # convert r and theta arrays back to x and y arrays (e.g., radians to cartesian)
+    return r_array * cos(theta_array), r_array * sin(theta_array)  # x_array, y_array
 
 
 
@@ -239,7 +241,7 @@ def scaled_dots_pos_array(x_array, y_array, z_array, frame_size_cm, reference_an
 
     # 3. scale x and y values by multiplying by scaled distances and
     # 4. put scaled x and y values into an array and transpose it.
-    return np.array([x_array * scale_factor_array, y_array * scale_factor_array]).T
+    return array([x_array * scale_factor_array, y_array * scale_factor_array]).T
 
 
 
@@ -354,8 +356,9 @@ expInfo = {'1_participant_name': 'Nicktest_12102023',
            '3_monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'ASUS_2_13_240Hz',
                               'Samsung', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
            '4_fps': [60, 240, 120, 60],
-           '5_probe_dur_ms': [116.67, 66.67, 54.17, 50, 41.67, 33.34, 25,  500],
-           '6_debug': [False, True]
+           '5_probe_dur_ms': [41.67, 116.67, 66.67, 54.17, 50, 41.67, 33.34, 25,  500],
+           '6_probe_start_dist_pix': [6, 2, 4, 6, 8, 10],
+           '7_debug': [False, True]
            }
 
 # run drop-down menu, OK continues, cancel quits
@@ -369,7 +372,8 @@ run_number = int(expInfo['2_run_number'])
 monitor_name = str(expInfo['3_monitor_name'])
 fps = int(expInfo['4_fps'])
 selected_probe_dur_ms = float(expInfo['5_probe_dur_ms'])
-debug = eval(expInfo['6_debug'])
+probe_start_dist_pix = int(expInfo['6_probe_start_dist_pix'])  #
+debug = eval(expInfo['7_debug'])
 
 # print settings from dlg
 print("\ndlg dict")
@@ -385,7 +389,7 @@ probe_ecc = 4  # probe eccentricity in dva
 expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
 expInfo['time'] = datetime.now().strftime("%H:%M:%S")
 record_fr_durs = True  # eval(expInfo['7_record_frame_durs'])  # always record frame durs
-
+vary_fixation = True  # vary fixation time between trials to reduce anticipatory effects
 
 # # # CONVERT TIMINGS TO USE IN SAVE PATH # # #
 # # probe_dur_ms and equivalent ISI_fr cond on 240Hz (total frames is ISI_fr plus 4 for probes)
@@ -513,7 +517,7 @@ win.mouseVisible = False
 
 # # # PSYCHOPY COMPONENTS # # #
 # MOUSE
-# myMouse = event.Mouse(visible=False)
+myMouse = event.Mouse(visible=False)
 
 # # KEYBOARD
 resp = event.BuilderKeyResponse()
@@ -521,6 +525,20 @@ resp = event.BuilderKeyResponse()
 # fixation bull eye
 fixation = visual.Circle(win, radius=2, units='pix', lineColor='white', fillColor='black', colorSpace=this_colourSpace)
 
+# add a small blurred mask behind fixation so dots are separated from fxation and less dirstracting
+fix_mask_size = 50
+# Create a raisedCosine mask array and assign it to a Grating stimulus (grey outside, transparent inside)
+raisedCosTexture1 = visual.filters.makeMask(256, shape='raisedCosine',
+                                            # fringeWidth=0.3,
+                                            fringeWidth=0.9,  # proportion of mask that is blured (0 to 1)
+                                            radius=[1.0, 1.0])
+fix_mask = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(fix_mask_size, fix_mask_size),
+                                colorSpace=this_colourSpace,
+                                color=this_bgColour,
+                                # color='red', # for testing
+                                tex=None, units='pix',
+                                # pos=[0, 0]
+                                )
 
 # PROBEs
 probe_size = 1  # can make them larger for testing new configurations etc
@@ -537,23 +555,6 @@ probe = visual.ShapeStim(win, vertices=probeVert, lineWidth=0, opacity=1, size=p
 # probes and probe_masks are at dist_from_fix pixels from middle of the screen
 dist_from_fix = int((np.tan(np.deg2rad(probe_ecc)) * view_dist_pix) / np.sqrt(2))
 
-
-# # MASK BEHIND PROBES (infront of flow dots to keep probes and motion separate)
-# mask_size = 150
-# # Create a raisedCosine mask array and assign it to a Grating stimulus (grey outside, transparent inside)
-# raisedCosTexture1 = visual.filters.makeMask(256, shape='raisedCosine', fringeWidth=0.3, radius=[1.0, 1.0])
-# probeMask1 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size, mask_size),
-#                                 colorSpace=this_colourSpace, color=this_bgColour,
-#                                 tex=None, units='pix', pos=[dist_from_fix + 1, dist_from_fix + 1])
-# probeMask2 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size, mask_size),
-#                                 colorSpace=this_colourSpace, color=this_bgColour,
-#                                 units='pix', tex=None, pos=[-dist_from_fix - 1, dist_from_fix + 1])
-# probeMask3 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size, mask_size),
-#                                 colorSpace=this_colourSpace, color=this_bgColour,
-#                                 units='pix', tex=None, pos=[-dist_from_fix - 1, -dist_from_fix - 1])
-# probeMask4 = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(mask_size, mask_size),
-#                                 colorSpace=this_colourSpace, color=this_bgColour,
-#                                 units='pix', tex=None, pos=[dist_from_fix + 1, -dist_from_fix - 1])
 
 
 # full screen mask to blend off edges and fade to black
@@ -669,6 +670,13 @@ if debug:
     print(f"max_dropped_fr_trials: {max_dropped_fr_trials}")
 
 
+# # # ACCURACY # # #
+'''If accuracy is bad after first n trials, suggest updating starting distance'''
+resp_corr_list = []  # accuracy feedback during breaks
+check_start_acc_after = 10  # check accuracy after 10 trials.
+initial_acc_thresh = .7  # initial accuracy threshold from first n trials to continue experiment
+
+
 # empty variable to store recorded frame durations
 fr_int_per_trial = []  # nested list of frame durations for each trial (y values)
 recorded_fr_counter = 0  # how many frames have been recorded
@@ -710,13 +718,24 @@ too_many_dropped_fr = visual.TextStim(win=win, name='too_many_dropped_fr',
                                            "Press any key to return to the desktop.",
                                       font='Arial', height=20, colorSpace=this_colourSpace)
 
-resp_corr_list = []  # accuracy feedback during breaks
 break_text = f"Break\nTurn on the light and take at least {break_dur} seconds break.\n" \
              "Keep focussed on the fixation circle in the middle of the screen.\n" \
              "Remember, if you don't see the target, just guess!"
 breaks = visual.TextStim(win=win, name='breaks', text=break_text, font='Arial',
                          pos=[0, 0], height=20, ori=0, color='white',
                          colorSpace=this_colourSpace)
+
+acc_warning_text = "The experiment had quit as your score is low.\n\n" \
+                   "The first few trials should be relatively easy, this doesn't seem to the be the case.\n\n" \
+                   "Try selecting a different 6_probe_start_dist_pix value from the drop down menu:\n" \
+                   f"If you were finding that the probe looked like a static point," \
+                   f"try selecting a higher starting distance (> {probe_start_dist_pix});\n" \
+                   f"if it looked like a line or streak, try decreasing the starting distance (> {probe_start_dist_pix}).\n\n"
+
+acc_warning = visual.TextStim(win=win, name='acc_warning', text=acc_warning_text, font='Arial',
+                         pos=[0, 0], height=20, ori=0, color='white',
+                         colorSpace=this_colourSpace)
+
 
 end_of_exp_text = "You have completed this experiment.\nThank you for your time."
 end_of_exp = visual.TextStim(win=win, name='end_of_exp',
@@ -744,7 +763,7 @@ I'm going to try starting with 18 pixels in dur.  Not sure what that is in cm.
 I'm using this because we used 18 as our max value in previous study.
 18 pixels starts too fast, so now trying 12
 """
-start_dist_pix_in_dur = 8  # 12  # starting dist in pixels in probe_dur_ms
+start_dist_pix_in_dur = 0  # 8  # 12  # starting dist in pixels in probe_dur_ms
 start_dist_pix_per_fr = start_dist_pix_in_dur / probe_dur_fr  # starting dist in pixels per frame
 start_dist_pix_per_second = start_dist_pix_per_fr * fps  # starting dist in pixels per second
 start_dist_cm_per_second = pix2cm(pixels=start_dist_pix_per_second, monitor=mon)  # starting dist in cm per second
@@ -781,8 +800,7 @@ for stair_idx in stair_idx_list:
 
     thisStair = Staircase(name=stair_names_list[stair_idx],
                           type='simple',
-                          # todo: start in opposite direction for flow and probe, so use stairStart * -flow_dir_list[stair_idx]
-                          value=stairStart * -flow_dir_list[stair_idx],  # each stair starts with same probe dir as bg motion
+                          value=stairStart * -flow_dir_list[stair_idx],  # each stair starts with opposite probe dir as bg motion
                           C=stairStart * 0.6,  # initial step size, as prop of maxLum
                           minRevs=3,
                           minTrials=n_trials_per_stair,
@@ -871,7 +889,6 @@ for step in range(n_trials_per_stair):
             # I want the starting position of the probe to take into account the direction it will travel.
             # e.g., if it's moving inwards, it should start further out and vice versa.
             # total distance travelled by the probe is probe_pix_p_fr * probe_dur_fr
-            # todo: I've reversed the polarities of the probe_start_x and probe_start_y variables.
             probe_start_offset = probe_pix_p_fr * probe_dur_fr / 2
             if corner == 45:
                 probe_start_x = dist_from_fix + probe_start_offset
@@ -890,19 +907,54 @@ for step in range(n_trials_per_stair):
             probe_moved_x = 0
             probe_moved_y = 0
 
+            # vary fixation polarity to reduce risk of screen burn.
+            # if monitor_name == 'OLED':
+            if trial_number % 2 == 0:
+                fixation.lineColor = 'grey'
+                fixation.fillColor = 'black'
+            else:
+                fixation.lineColor = 'black'
+                fixation.fillColor = 'grey'
 
-
+            # VARIABLE FIXATION TIME
+            '''to reduce anticipatory effects that might arise from fixation always being same length.
+            if False, vary_fix == .5 seconds, so end_fix_fr is 1 second.
+            if Ture, vary_fix is between 0 and 1 second, so end_fix_fr is between .5 and 1.5 seconds.'''
+            vary_fix = int(fps / 2)
+            if vary_fixation:
+                vary_fix = np.random.randint(0, fps)
 
 
 
             # timing in frames
             # fixation time is now 70ms shorted than previously.
-            end_fix_fr = 1 * (fps - prelim_fr)  # 240 frames - 70ms for fixation, e.g., <1 second.
+            # end_fix_fr = 1 * (fps - prelim_fr)  # 240 frames - 70ms for fixation, e.g., <1 second.
+            end_fix_fr = int(fps / 2) + vary_fix - prelim_fr
+            if end_fix_fr < 0:  # if prelim_fr is longer than 500ms, then end_fix_fr might be negative
+                end_fix_fr = int(fps / 2)
+
             end_bg_motion_fr = end_fix_fr + prelim_fr  # bg_motion prior to probe for 70ms
             end_probe_fr = end_bg_motion_fr + probe_dur_fr  # probes appear during probe_duration (e.g., 240ms, 1 second).
 
             # reset fixation radius
             fixation.setRadius(3)
+
+
+
+            # show accuracy warning after first n trials
+            if trial_num_inc_repeats == check_start_acc_after:
+                prop_correct = np.mean(resp_corr_list)
+                acc_warning_text = acc_warning_text + (f"{prop_correct * 100:.2f}% correct.\n\n"
+                                                       f"Press any key to return to the desktop.")
+                acc_warning.text = acc_warning_text
+
+                if prop_correct < initial_acc_thresh:
+                    acc_warning.draw()
+                    win.flip()
+                    event.waitKeys()
+                    core.quit()
+
+
 
             # take a break every ? trials
             if (trial_num_inc_repeats % take_break == 1) & (trial_num_inc_repeats > 1):
@@ -987,6 +1039,7 @@ for step in range(n_trials_per_stair):
                     # probeMask4.draw()
                     edge_mask.draw()
 
+                    fix_mask.draw()
                     fixation.draw()
 
                 # Background motion prior to probe1
@@ -1022,6 +1075,7 @@ for step in range(n_trials_per_stair):
                     # probeMask4.draw()
                     edge_mask.draw()
 
+                    fix_mask.draw()
                     fixation.draw()
 
                     # reset timer to start with probe1 presentation.
@@ -1061,6 +1115,7 @@ for step in range(n_trials_per_stair):
                     # probeMask4.draw()
                     edge_mask.draw()
 
+                    fix_mask.draw()
                     fixation.draw()
 
 
@@ -1115,6 +1170,7 @@ for step in range(n_trials_per_stair):
                     # probeMask4.draw()
                     edge_mask.draw()
 
+                    fix_mask.draw()
                     fixation.setRadius(2)
                     fixation.draw()
 
@@ -1147,7 +1203,6 @@ for step in range(n_trials_per_stair):
             # Kesten updates using response (in/out) not resp.corr correct/incorrect.
             # Kesten will try to find the speed that get 50% in and out responses.
             # But storing resp.corrs in the output file anyway.
-            # todo: reversed these so 1=in and 0=out (to match flow_dir)
             if (resp.keys == str('i')) or (resp.keys == 'num_1'):
                 response = 1
                 if probe_dir == 'in':
@@ -1195,6 +1250,9 @@ for step in range(n_trials_per_stair):
                     # decrement trial and stair so that the correct values are used for the next trial
                     trial_number -= 1
                     thisStair.trialCount = thisStair.trialCount - 1  # so Kesten doesn't count this trial
+
+                    # remove last response from resp_corr_list
+                    resp_corr_list.pop()
 
                     # get first and last frame numbers for this trial
                     trial_x_locs = [fr_counter_per_trial[-1][0],
