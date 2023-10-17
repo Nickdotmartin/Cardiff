@@ -350,6 +350,8 @@ chdir(_thisDir)
 expName = path.basename(__file__)[:-3]
 
 
+# # #todo: Nick, try prelim durations of 210 and 490, to give 0, 70, 210, 350, 490
+
 # # # DIALOGUE BOX # # #
 expInfo = {'1_participant_name': 'Nicktest_12102023',
            '2_run_number': 1,
