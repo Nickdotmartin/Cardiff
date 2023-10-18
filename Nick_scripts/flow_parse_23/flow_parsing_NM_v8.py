@@ -5,18 +5,15 @@ from psychopy.tools.monitorunittools import cm2pix, pix2cm
 from datetime import datetime
 from os import path, chdir
 from kestenSTmaxVal import Staircase
-
+from copy import copy
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
-
+import gc
 import numpy as np
 # for numpy attributes access by per-frame functions, acceess them with name instead of np.name.
 from numpy import array, random, where, sum, linspace, pi, rad2deg, arctan, arctan2, cos, sin, hypot
 
-
-
-import copy
-import gc
+print(f"PsychoPy_version: {psychopy_version}")
 
 
 '''
@@ -32,8 +29,6 @@ because they are only compiled once, rather than each time the code is run.
 It has something to do with local variables being faster to access than global variables.
 
 '''
-
-print(f"PsychoPy_version: {psychopy_version}")
 
 
 """
@@ -340,6 +335,8 @@ def plt_fr_ints(time_p_trial_nested_list, n_trials_w_dropped_fr,
     plt.close()
 
 
+################################################################################
+
 #######################
 # # # MAIN SCRIPT # # #
 #######################
@@ -388,10 +385,11 @@ n_trials_per_stair = 25  # this is the number of trials per stair
 if debug:
     n_trials_per_stair = 2
 probe_ecc = 4  # probe eccentricity in dva
-expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
-expInfo['time'] = datetime.now().strftime("%H:%M:%S")
 record_fr_durs = True  # eval(expInfo['7_record_frame_durs'])  # always record frame durs
 vary_fixation = True  # vary fixation time between trials to reduce anticipatory effects
+expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
+expInfo['time'] = datetime.now().strftime("%H:%M:%S")
+
 
 # # # CONVERT TIMINGS TO USE IN SAVE PATH # # #
 # # probe_dur_ms and equivalent ISI_fr cond on 240Hz (total frames is ISI_fr plus 4 for probes)
@@ -503,7 +501,7 @@ heightPix = int(mon.getSizePix()[1])
 mon_width_cm = mon.getWidth()  # monitor width in cm
 view_dist_cm = mon.getDistance()  # viewing distance in cm
 view_dist_pix = widthPix / mon_width_cm * view_dist_cm  # used for calculating visual angle (e.g., probe locations at 4dva)
-mon_height_cm = mon_width_cm / (widthPix/heightPix)
+mon_height_cm = mon_width_cm / (widthPix/heightPix)  # used for calculating visual angle of dots
 
 # screen number
 display_number = 1  # 0 indexed, 1 for external display, 0 for internal
@@ -793,7 +791,7 @@ maxiVal = 10
 
 stairs = []
 for stair_idx in stair_idx_list:
-    thisInfo = copy.copy(expInfo)
+    thisInfo = copy(expInfo)
     thisInfo['stair_idx'] = stair_idx
     thisInfo['stair_name'] = stair_names_list[stair_idx]
     thisInfo['flow_dir'] = flow_dir_list[stair_idx]
@@ -801,7 +799,7 @@ for stair_idx in stair_idx_list:
     thisInfo['prelim_ms'] = prelim_conds_list[stair_idx]
 
     thisStair = Staircase(name=stair_names_list[stair_idx],
-                          type='simple',
+                          type='simple',  # step size changes after each reversal only
                           value=stairStart * -flow_dir_list[stair_idx],  # each stair starts with opposite probe dir as bg motion
                           C=stairStart * 0.6,  # initial step size, as prop of maxLum
                           minRevs=3,
@@ -827,7 +825,7 @@ trial_number = 0  # the number of the trial for the output file
 
 # # # RUN EXPERIMENT # # #
 for step in range(n_trials_per_stair):
-    np.random.shuffle(stairs)  # shuffle order each time after they've all been run.
+    np.random.shuffle(stairs)  # shuffle order for each step (e.g., shuffle, run all stairs, shuffle again etc)
     for thisStair in stairs:
 
         # # # PER-TRIAL VARIABLES # # #
@@ -862,7 +860,7 @@ for step in range(n_trials_per_stair):
                 print(f"z_start_bounds: {z_start_bounds}")
 
 
-            # get probe attricbutes
+            # # # GET PROBE ATTRIBUTES # # #
             probe_pix_p_fr = thisStair.next()  # in pixels per frame, for thie script
             probe_cm_p_sec = pix2cm(pixels=probe_pix_p_fr * fps, monitor=mon)  # for analysis file
 
@@ -911,12 +909,13 @@ for step in range(n_trials_per_stair):
 
             # vary fixation polarity to reduce risk of screen burn.
             # if monitor_name == 'OLED':
-            if trial_number % 2 == 0:
+            if trial_num_inc_repeats % 2 == 0:
                 fixation.lineColor = 'grey'
                 fixation.fillColor = 'black'
             else:
                 fixation.lineColor = 'black'
                 fixation.fillColor = 'grey'
+
 
             # VARIABLE FIXATION TIME
             '''to reduce anticipatory effects that might arise from fixation always being same length.
@@ -937,6 +936,7 @@ for step in range(n_trials_per_stair):
 
             end_bg_motion_fr = end_fix_fr + prelim_fr  # bg_motion prior to probe for 70ms
             end_probe_fr = end_bg_motion_fr + probe_dur_fr  # probes appear during probe_duration (e.g., 240ms, 1 second).
+
 
             # reset fixation radius
             fixation.setRadius(3)
@@ -983,7 +983,6 @@ for step in range(n_trials_per_stair):
                 continueRoutine = True
 
 
-
             # # # PER_FRAME VARIABLES # # #
             frameN = -1
             # # continueRoutine here runs the per-frame section of the trial
@@ -1007,6 +1006,7 @@ for step in range(n_trials_per_stair):
                 elif frameN == end_probe_fr + 1:
                     if record_fr_durs:
                         win.recordFrameIntervals = False
+
 
                 # FIXATION until end of fixation interval
                 if end_fix_fr >= frameN > 0:
@@ -1044,7 +1044,7 @@ for step in range(n_trials_per_stair):
                     fix_mask.draw()
                     fixation.draw()
 
-                # Background motion prior to probe1
+                # Background motion after fixation, but before probe
                 elif end_bg_motion_fr >= frameN > end_fix_fr:
 
                     # 1. Update z (distance values): Add dots_speed * flow_dir to the current z values.
@@ -1176,20 +1176,18 @@ for step in range(n_trials_per_stair):
                     fixation.setRadius(2)
                     fixation.draw()
 
-                    # ANSWER
-                    resp = event.BuilderKeyResponse()
+                    # RESPONSE HANDLING
+                    # resp = event.BuilderKeyResponse()
                     theseKeys = event.getKeys(keyList=['i', 'o', 'num_1', 'num_0'])
                     if len(theseKeys) > 0:  # at least one key was pressed
                         resp.keys = theseKeys[-1]  # just the last key pressed
                         resp.rt = resp.clock.getTime()
 
-                        # a response ends the routine
+                        # a response ends the per-frame_section
                         continueRoutine = False
 
 
-
-
-                # regardless of frameN
+                # # # REGARDLESS OF FRAME NUMBER # # #
                 # check for quit
                 if event.getKeys(keyList=["escape"]):
                     thisExp.close()
@@ -1200,7 +1198,7 @@ for step in range(n_trials_per_stair):
                     win.flip()
 
 
-            # # # End of per-frame section in continueRoutine = False # # #
+            # # # END OF PER-FRAME SECTION if continueRoutine = False # # #
             # CHECK RESPONSES
             # Kesten updates using response (in/out) not resp.corr correct/incorrect.
             # Kesten will try to find the speed that get 50% in and out responses.
@@ -1220,7 +1218,7 @@ for step in range(n_trials_per_stair):
             resp_corr_list.append(resp.corr)
 
 
-            '''sort frame interval times to use for plots later'''
+            # # # SORT FRAME INTERVALS TO USE FOR PLOTS LATER # # #
             if record_fr_durs:
                 # actual frame interval times (in seconds) for this trial
                 trial_fr_intervals = win.frameIntervals
@@ -1267,7 +1265,6 @@ for step in range(n_trials_per_stair):
 
 
             # # # TRIAL COMPLETED # # #
-
             # If too many trials have had dropped frames, quit experiment
             if dropped_fr_trial_counter > max_dropped_fr_trials:
                 while not event.getKeys():
@@ -1297,6 +1294,7 @@ for step in range(n_trials_per_stair):
 
         # # # ADD TRIAL INFO TO OUTPUT CSV # # #
         thisExp.addData('trial_number', trial_number)
+        thisExp.addData('trial_n_inc_rpt', trial_num_inc_repeats)
         thisExp.addData('stair', stair_idx)
         thisExp.addData('stair_name', thisStair)
         thisExp.addData('step', step)
@@ -1304,12 +1302,13 @@ for step in range(n_trials_per_stair):
         thisExp.addData('flow_name', flow_name)
         thisExp.addData('prelim_ms', prelim_ms)
         thisExp.addData('prelim_fr', prelim_fr)
+        thisExp.addData('actual_prelim_ms', actual_prelim_ms)
         thisExp.addData('probe_dir', probe_dir)
         thisExp.addData('probe_pix_p_fr', probe_pix_p_fr)
         thisExp.addData('probe_cm_p_sec', probe_cm_p_sec)
         thisExp.addData('response', response)
-        thisExp.addData('resp.corr', resp.corr)
-        thisExp.addData('resp.rt', resp.rt)
+        thisExp.addData('resp_corr', resp.corr)
+        thisExp.addData('resp_rt', resp.rt)
         thisExp.addData('corner', corner)
         thisExp.addData('selected_probe_dur_ms', selected_probe_dur_ms)
         thisExp.addData('probe_dur_ms', probe_dur_ms)
@@ -1319,10 +1318,13 @@ for step in range(n_trials_per_stair):
         thisExp.addData('n_dots', n_dots)
         thisExp.addData('dot_life_max_ms', dot_life_max_ms)
         thisExp.addData('expName', expName)
+        thisExp.addData('psychopy_version', psychopy_version)
+        thisExp.addData('date', expInfo['date'])
+        thisExp.addData('time', expInfo['time'])
 
         # tell psychopy to move to next trial
         thisExp.nextEntry()
-        # update staircase based on whether response was correct or incorrect
+        # update staircase based on whether response was inward or outward
         thisStair.newValue(response)  # so that the staircase adjusts itself
 
 
@@ -1331,7 +1333,6 @@ for step in range(n_trials_per_stair):
 thisExp.dataFileName = path.join(save_dir, f'{p_name_run}_output')
 thisExp.close()
 print(f"\nend of experiment loop, saving data to:\n{thisExp.dataFileName}\n")
-
 
 
 # # # PLOT FRAME INTERVALS # # #
