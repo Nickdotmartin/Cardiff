@@ -517,6 +517,7 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix), colorSpace=this_col
 # todo: check forum for other ideas if mouse is still there
 win.mouseVisible = False
 
+
 # # # PSYCHOPY COMPONENTS # # #
 # MOUSE
 myMouse = event.Mouse(visible=False)
@@ -538,9 +539,7 @@ fix_mask = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(fix_mask_si
                                 colorSpace=this_colourSpace,
                                 color=this_bgColour,
                                 # color='red',  # for testing
-                                tex=None, units='pix',
-                                # pos=[0, 0]
-                                )
+                                tex=None, units='pix')
 
 # PROBEs
 probe_size = 1  # can make them larger for testing new configurations etc

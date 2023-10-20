@@ -557,6 +557,7 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix), colorSpace=this_col
 # todo: check forum for other ideas if mouse is still there
 win.mouseVisible = False
 
+
 # # # PSYCHOPY COMPONENTS # # #
 # MOUSE
 myMouse = event.Mouse(visible=False)

@@ -115,7 +115,7 @@ rad_flow_8_prelim_interleaved.py
 - add in interleaved prelim period (with bg motion)  - DONE
 - changed prelim_dir to 'interleaved' - DONE
 
-rad_flow_9_new_spokes.py
+rad_flow_new_spokes.py
 - added in new function for dots with spokes from flow_parse exp scripts DONE
 - changed imports to minimise attribute access DONE
 - removed variables from dlg - now all hard coded values DONE
@@ -886,16 +886,6 @@ print(f'total_n_trials: {total_n_trials}')
 
 
 
-# files are labelled as '_incomplete' unless entire script runs.
-incomplete_output_filename = f'{participant_name}_{run_number}_incomplete'
-save_output_as = path.join(save_dir, incomplete_output_filename)
-
-# Experiment Handler
-thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
-                                 extraInfo=expInfo, runtimeInfo=None,
-                                 savePickle=None, saveWideText=True,
-                                 dataFileName=save_output_as)
-
 
 # # # MONITOR SETTINGS # # #
 # # COLORS AND LUMINANCES
@@ -975,6 +965,7 @@ win.mouseVisible = False
 pixel_mm_deg_dict = get_pixel_mm_deg_values(monitor_name=monitor_name)
 if debug:
     print(f"diagonal pixel size: {pixel_mm_deg_dict['diag_mm']} mm, or {pixel_mm_deg_dict['diag_deg']} dva")
+
 
 # # # PSYCHOPY COMPONENTS # # #
 # MOUSE
