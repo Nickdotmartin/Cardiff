@@ -74,6 +74,9 @@ version 8 17/10/2023
     - Flip polarity of fixation on OLED
     - add small mask behine fixation so dots don't distract too much
     - add variable fixation time
+    
+version 8 interleaved probe durations
+    - add multiple probe durations to interleave
 """
 
 
@@ -350,12 +353,12 @@ expName = path.basename(__file__)[:-3]
 # # #todo: Nick, try prelim durations of 210 and 490, to give 0, 70, 210, 350, 490
 
 # # # DIALOGUE BOX # # #
-expInfo = {'1_participant_name': 'Nicktest_12102023',
+expInfo = {'1_participant_name': 'Nicktest',
            '2_run_number': 1,
            '3_monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'ASUS_2_13_240Hz',
                               'Samsung', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
            '4_fps': [60, 240, 120, 60],
-           '5_probe_dur_ms': [41.67, 116.67, 66.67, 54.17, 50, 41.67, 33.34, 25,  500],
+           # '5_probe_dur_ms': [41.67, 116.67, 66.67, 54.17, 50, 41.67, 33.34, 25,  500],
            '6_probe_start_dist_pix': [6, 2, 4, 6, 8, 10],
            '7_debug': [False, True]
            }
@@ -370,7 +373,8 @@ participant_name = str(expInfo['1_participant_name'])
 run_number = int(expInfo['2_run_number'])
 monitor_name = str(expInfo['3_monitor_name'])
 fps = int(expInfo['4_fps'])
-selected_probe_dur_ms = float(expInfo['5_probe_dur_ms'])
+# selected_probe_dur_ms = float(expInfo['5_probe_dur_ms'])  # interleave probe durs on this script
+selected_probe_dur_ms = [41.67, 116.67]
 probe_start_dist_pix = int(expInfo['6_probe_start_dist_pix'])  #
 debug = eval(expInfo['7_debug'])
 
@@ -400,11 +404,11 @@ frames@240Hz: [   2,     4,  6,     8,    10, 12,    13,    14,    16,     28]
 frames@120hz: [   1,     2,  3,     4,     5,  6,      ,     7,     8,     14]
 frames@60hz:  [    ,     1,   ,     2,      ,  3,      ,      ,     4,      7]
 '''
-probe_dur_fr = int(selected_probe_dur_ms * fps / 1000)
-probe_dur_ms = (1 / fps) * probe_dur_fr * 1000
-print(f"\nprobe duration: {probe_dur_ms}ms, or {probe_dur_fr} frames")
-if probe_dur_fr == 0:
-    raise ValueError(f"probe_dur_fr is 0 because selected_probe_dur_ms ({selected_probe_dur_ms}) is less than a frame on this monitor ({1000/fps})ms")
+# probe_dur_fr = int(selected_probe_dur_ms * fps / 1000)
+# probe_dur_ms = (1 / fps) * probe_dur_fr * 1000
+# print(f"\nprobe duration: {probe_dur_ms}ms, or {probe_dur_fr} frames")
+# if probe_dur_fr == 0:
+#     raise ValueError(f"probe_dur_fr is 0 because selected_probe_dur_ms ({selected_probe_dur_ms}) is less than a frame on this monitor ({1000/fps})ms")
 
 
 # # # EXPERIMENT HANDLING AND SAVING # # #
@@ -412,7 +416,8 @@ if probe_dur_fr == 0:
 save_dir = path.join(_thisDir, expName, monitor_name,
                      participant_name,
                      f'{participant_name}_{run_number}',  # don't use p_name_run here, as it's not a separate folder
-                     f'probeDur{int(probe_dur_ms)}')
+                     # f'probeDur{int(probe_dur_ms)}')
+                     f'probeDur_41_116')
 print(f"\nexperiment save_dir: {save_dir}")
 
 # files are labelled as '_incomplete' unless entire script runs.
@@ -430,6 +435,30 @@ thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
 
 
 # # # CONDITIONS AND STAIRCASES # # #
+# probe_dur_selected_ms_vals = [int(i) for i in selected_probe_dur_ms]
+probe_dur_selected_ms_vals = selected_probe_dur_ms
+# probe_dur_fr = int(selected_probe_dur_ms * fps / 1000)
+probe_dur_fr_vals = [int(i * fps / 1000) for i in probe_dur_selected_ms_vals]
+# probe_dur_ms = (1 / fps) * probe_dur_fr * 1000
+probe_dur_ms_vals = [round((1 / fps) * i * 1000, 2) for i in probe_dur_fr_vals]
+
+probe_dur_all_vals = zip(probe_dur_selected_ms_vals, probe_dur_fr_vals, probe_dur_ms_vals)
+
+# check if any probe_dur_fr_vals are < 1
+if any([i < 1 for i in probe_dur_fr_vals]):
+    raise ValueError(f"probe_dur_fr is 0 because probe_dur_selected_ms_vals ({probe_dur_selected_ms_vals}) "
+                     f"contains values less than a frame on this monitor ({1000/fps})ms\n"
+                     f"probe_dur_fr_vals: {probe_dur_fr_vals}")
+
+print(f"probe_dur_selected_ms_vals: {probe_dur_selected_ms_vals}")
+print(f"probe_dur_fr_vals: {probe_dur_fr_vals}")
+print(f"probe_dur_ms_vals: {probe_dur_ms_vals}")
+print(f"probe_dur_all_vals: {list(probe_dur_all_vals)}")
+
+# print(f"\nprobe duration: {probe_dur_ms}ms, or {probe_dur_fr} frames")
+# if probe_dur_fr == 0:
+#     raise ValueError(f"probe_dur_fr is 0 because selected_probe_dur_ms ({selected_probe_dur_ms}) is less than a frame on this monitor ({1000/fps})ms")
+
 # # Conditions/staricases: flow_dir (exp, contract) x prelim motion (0, 70, 350)
 # 1 = inward/contracting, -1 = outward/expanding
 flow_dir_vals = [1, -1]
@@ -437,10 +466,12 @@ flow_dir_vals = [1, -1]
 # 'prelim' (preliminary motion) is how long (ms) the background motion starts before the probe appears
 prelim_vals = [0, 70, 350]
 if debug:
-    prelim_vals = [500]
+    prelim_vals = [70]
 
 # get all possible combinations of these three lists
-combined_conds = [(f, p) for f in flow_dir_vals for p in prelim_vals]
+# combined_conds = [(f, p) for f in flow_dir_vals for p in prelim_vals]
+combined_conds = [(f, p, d) for f in flow_dir_vals for p in prelim_vals for d in probe_dur_all_vals]
+
 
 print(f"\ncombined_conds ({len(combined_conds)}: {combined_conds}")
 stair_idx_list = list(range(len(combined_conds)))
@@ -452,17 +483,26 @@ flow_dir (expand/contract) x prelim (0, 70, 350)'''
 flow_dir_list = [i[0] for i in combined_conds]
 prelim_conds_list = [i[1] for i in combined_conds]
 
+probe_dur_selected_ms_list = [i[2][0] for i in combined_conds]
+probe_dur_fr_list = [i[2][1] for i in combined_conds]
+probe_dur_ms_list = [i[2][2] for i in combined_conds]
+
+
 # make flow name list to avoid confusion with 1s and -1 from flow_dir_list
 flow_name_list = ['exp' if i == -1 else 'cont' for i in flow_dir_list]
 
 # stair_names_list joins sep_conds_list, cong_name_conds_list and prelim_conds_list
 # e.g., ['sep_6_cong_1_prelim_70', 'sep_6_cong_1_prelim_350', 'sep_6_cong_-1_prelim_70'...]
-stair_names_list = [f"{i}_flow_{f}_{n}_prelim_{p}" for i, f, n, p in zip(stair_idx_list, flow_dir_list, flow_name_list, prelim_conds_list)]
+stair_names_list = [f"{i}_flow_{f}_{n}_prelim_{p}_probeDur_{int(d)}" for i, f, n, p, d in
+                    zip(stair_idx_list, flow_dir_list, flow_name_list, prelim_conds_list, probe_dur_ms_list)]
 
 if debug:
     print(f'flow_dir_list: {flow_dir_list}')
     print(f"flow_name_list: {flow_name_list}")
     print(f'prelim_conds_list: {prelim_conds_list}')
+    print(f'probe_dur_fr_list: {probe_dur_fr_list}')
+    print(f'probe_dur_ms_list: {probe_dur_ms_list}')
+    print(f'probe_dur_selected_ms_list: {probe_dur_selected_ms_list}')
 
 
 n_stairs = len(stair_idx_list)
@@ -785,10 +825,10 @@ if monitor_name == 'OLED':
 '''
 New method - set probe_start_dist_pix from dlg, then convert to cm/s and pix/fr'''
 start_dist_pix_in_dur = probe_start_dist_pix  # 8  # 12  # starting dist in pixels in probe_dur_ms
-start_pix_per_fr = start_dist_pix_in_dur / probe_dur_fr  # starting dist in pixels per frame
+# start_pix_per_fr = start_dist_pix_in_dur / probe_dur_fr  # starting dist in pixels per frame
+start_pix_per_fr = start_dist_pix_in_dur / min(probe_dur_fr_list)  # starting dist in pixels per frame
 start_pix_per_s = start_pix_per_fr * fps  # starting dist in pixels per second
 start_cm_per_s = pix2cm(pixels=start_pix_per_s, monitor=mon)  # starting dist in cm per second
-
 if debug:
     print(f"\nstart_cm_per_s: {start_cm_per_s:.2f}cm/s\nstart_pix_per_s: {start_pix_per_s:.2f}pix/s, "
           f"start_pix_per_fr: {start_pix_per_fr:.2f}pix/fr")
@@ -807,6 +847,9 @@ for stair_idx in stair_idx_list:
     thisInfo['flow_dir'] = flow_dir_list[stair_idx]
     thisInfo['flow_name'] = flow_name_list[stair_idx]
     thisInfo['prelim_ms'] = prelim_conds_list[stair_idx]
+    thisInfo['probe_dur_ms'] = probe_dur_ms_list[stair_idx]
+    thisInfo['probe_dur_fr'] = probe_dur_fr_list[stair_idx]
+    thisInfo['probe_dur_selected_ms'] = probe_dur_selected_ms_list[stair_idx]
 
     thisStair = Staircase(name=stair_names_list[stair_idx],
                           type='simple',  # step size changes after each reversal only
@@ -857,8 +900,23 @@ for step in range(n_trials_per_stair):
             flow_dir = thisStair.extraInfo['flow_dir']
             flow_name = thisStair.extraInfo['flow_name']
             prelim_ms = thisStair.extraInfo['prelim_ms']
+
+            # probe duration
+            # selected_probe_dur_ms = thisStair.extraInfo['probe_dur_ms']
+            # probe_dur_fr = int(selected_probe_dur_ms * fps / 1000)
+            # probe_dur_ms = (1 / fps) * probe_dur_fr * 1000
+            # # print(f"\nprobe duration: {probe_dur_ms}ms, or {probe_dur_fr} frames")
+            # if probe_dur_fr == 0:
+            #     raise ValueError(
+            #         f"probe_dur_fr is 0 because selected_probe_dur_ms ({selected_probe_dur_ms}) is less than a frame on this monitor ({1000 / fps})ms")
+
+            probe_dur_selected_ms = thisStair.extraInfo['probe_dur_selected_ms']
+            probe_dur_fr = thisStair.extraInfo['probe_dur_fr']
+            probe_dur_ms = thisStair.extraInfo['probe_dur_ms']
+
             if debug:
-                print(f"flow_dir: {flow_dir}, flow_name: {flow_name}, prelim_ms: {prelim_ms}")
+                print(f"flow_dir: {flow_dir}, flow_name: {flow_name}, prelim_ms: {prelim_ms} "
+                      f"probe_dur_ms: {probe_dur_ms}, probe_dur_fr: {probe_dur_fr}")
 
 
             # boundaries for z position (distance from screen) during radial flow
@@ -1313,6 +1371,9 @@ for step in range(n_trials_per_stair):
         thisExp.addData('prelim_ms', prelim_ms)
         thisExp.addData('prelim_fr', prelim_fr)
         thisExp.addData('actual_prelim_ms', actual_prelim_ms)
+        thisExp.addData('probe_dur_selected_ms', probe_dur_selected_ms)
+        thisExp.addData('probe_dur_ms', probe_dur_ms)
+        thisExp.addData('probe_dur_fr', probe_dur_fr)
         thisExp.addData('probe_dir', probe_dir)
         thisExp.addData('probe_pix_p_fr', probe_pix_p_fr)
         thisExp.addData('probe_cm_p_sec', probe_cm_p_sec)
@@ -1320,9 +1381,6 @@ for step in range(n_trials_per_stair):
         thisExp.addData('resp_corr', resp.corr)
         thisExp.addData('resp_rt', resp.rt)
         thisExp.addData('corner', corner)
-        thisExp.addData('selected_probe_dur_ms', selected_probe_dur_ms)
-        thisExp.addData('probe_dur_ms', probe_dur_ms)
-        thisExp.addData('probe_dur_fr', probe_dur_fr)
         thisExp.addData('flow_speed_cm_p_sec', flow_speed_cm_p_sec)
         thisExp.addData('flow_speed_cm_p_fr', flow_speed_cm_p_fr)
         thisExp.addData('n_dots', n_dots)

@@ -67,9 +67,21 @@ for p_idx, participant_name in enumerate(participant_list):
         # # search automatically for probeDur folders to add to probe_dur_int_list
         probe_dur_int_list = []
         dir_list = os.listdir(save_path)
-        for folder in dir_list:
-            if 'probeDur' in folder:
-                probe_dur_int_list.append(int(folder[8:]))
+        for folder_name in dir_list:
+            if 'probeDur' in folder_name:
+                # probe_dur_int_list.append(int(folder[8:]))
+                # 1. strip probeDur_ from folder name
+                remainder = folder_name.strip('probeDur')
+                # 2. if '_' in remainder, split on '_' to get multiple dur vals
+                if '_' in remainder:
+                    remainder_list = remainder.split('_')
+                    for dur in remainder_list:
+                        probe_dur_int_list.append(int(dur))
+                else:  # 3. else just add the remainder to probe_dur_int_list
+                    probe_dur_int_list.append(int(remainder))
+
+
+
         print(f'probe_dur_int_list: {probe_dur_int_list}')
 
         # run_isi_names_list = [f'ISI_{i}' for i in probe_dur_int_list]
