@@ -296,7 +296,7 @@ def plt_fr_ints(time_p_trial_nested_list, n_trials_w_dropped_fr,
 
 
 # initialize window
-monitor_name = 'Nick_work_laptop'  # Nick_work_laptop, HP_24uh
+monitor_name = 'HP_24uh'  # Nick_work_laptop, HP_24uh
 fps = 60
 
 mon = monitors.Monitor(monitor_name)
@@ -336,6 +336,25 @@ if monitor_name in ['asus_cal', 'Nick_work_laptop', 'NickMac', 'OLED', 'ASUS_2_1
 win = visual.Window(monitor=mon, size=(widthPix, heightPix), colorSpace=this_colourSpace, color=this_bgColour,
                     units='pix', screen=display_number, allowGUI=False, fullscr=True, useFBO=False)
 
+
+'''fixation dot and mask (to separate dots from fixation)'''
+# fixation bull eye
+fixation = visual.Circle(win, radius=2, units='pix', lineColor='white', fillColor='black', colorSpace=this_colourSpace)
+
+# add a small blurred mask behind fixation so dots are separated from fxation and less dirstracting
+fix_mask_size = 75
+# Create a raisedCosine mask array and assign it to a Grating stimulus (grey outside, transparent inside)
+raisedCosTexture1 = visual.filters.makeMask(256, shape='raisedCosine',
+                                            # fringeWidth=0.3,
+                                            fringeWidth=0.8,  # proportion of mask that is blured (0 to 1)
+                                            radius=[1.0, 1.0])
+fix_mask = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(fix_mask_size, fix_mask_size),
+                                colorSpace=this_colourSpace,
+                                color=this_bgColour,
+                                # color='red',  # for testing
+                                tex=None, units='pix',
+                                # pos=[0, 0]
+                                )
 
 '''FLOW DOT SETTINGS'''
 # # # # flow dots settings
@@ -415,7 +434,7 @@ if max_z_cm_in_life > (far_plane_cm - near_plane_cm):
 
 
 
-contracting = True
+contracting = False
 if contracting:
     flow_dir = 1
 else:  # expanding
@@ -505,6 +524,11 @@ while not event.getKeys(keyList=["escape"]):
 
     # draw dots
     flow_dots.draw()
+
+    # draw fixation
+    fix_mask.draw()
+    fixation.draw()
+
     win.flip()
 
 win.close()

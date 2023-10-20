@@ -2173,7 +2173,8 @@ def e_average_exp_data(exp_path, p_names_list,
 
         rows, cols = this_p_ave_df.shape
         this_p_ave_df.insert(0, 'participant', [p_name] * rows)
-        this_p_ave_df.insert(2, 'stair_name', stair_names_list)
+        if 'stair_name' not in this_p_ave_df.columns.to_list():
+            this_p_ave_df.insert(2, 'stair_name', stair_names_list)
         # this_p_ave_df.insert(3, 'separation', sep_list)
 
         all_p_ave_list.append(this_p_ave_df)
@@ -2475,7 +2476,7 @@ def plot_diff(ave_thr_df, stair_names_col='stair', fig_title=None,
 #         plt.show()
 #     plt.close()
     
-def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed):
+def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed, exp_ave=False):
     """
     Make plots showing probe speed or speed difference (exp-cont) for all prelims and probe_durs
 
@@ -2492,7 +2493,12 @@ def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed):
     else:
         all_df = pd.read_csv(all_df_path)
 
-    n_to_ave_over = len(all_df['stack'].unique().tolist())
+    if exp_ave:
+        # todo: check this, it gave wierd values last time
+        n_to_ave_over = len(all_df['participant'].unique().tolist())
+        all_df.drop(columns=['participant'], inplace=True)
+    else:
+        n_to_ave_over = len(all_df['stack'].unique().tolist())
 
     # rename columns with long float names - if col name contains '.', only have two characters after it
     all_df.columns = [i[:i.find('.') + 3] if '.' in i else i for i in all_df.columns.tolist()]
@@ -2524,7 +2530,8 @@ def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed):
     simple_all_long_df = all_long_df.drop(columns=['stair', 'flow_dir'])
     print(f"simple_all_long_df: {simple_all_long_df.columns.tolist()}\n: {simple_all_long_df}\n")
 
-
+    # sort simple_all_long_df by probe_dur_ms and prelim
+    simple_all_long_df.sort_values(by=['probe_dur_ms', 'prelim'], inplace=True)
 
     # # # MAKE PLOTS # # #
 
@@ -2608,6 +2615,9 @@ def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed):
                           color='darkgrey', join=False,
                           markers='D', capsize=.2, errorbar="se",
                           ax=axes[row_idx])
+
+            # todo: can I join all pairs of points from same run?  (e.g., exp and cont)
+            #  So behind stripplot, have individual pointplot per run with very thin lines
 
             sns.stripplot(x='flow_name', y='probe_speed_cm_per_s', data=prelim_df,
                           hue='flow_name', jitter=True,

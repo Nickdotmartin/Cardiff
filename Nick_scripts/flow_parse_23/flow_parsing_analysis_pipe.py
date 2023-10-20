@@ -3,7 +3,7 @@ import pandas as pd
 from flow_parsing_psignifit_tools import get_psignifit_threshold_df, run_psignifit, results_to_psignifit, results_csv_to_np_for_psignifit
 from flow_parsing_psignifit_analysis import a_data_extraction, b3_plot_staircase
 from flow_parsing_psignifit_analysis import d_average_participant, make_flow_parse_plots
-# from flow_parsing_psignifit_analysis import make_average_plots, e_average_exp_data
+from flow_parsing_psignifit_analysis import e_average_exp_data
 import seaborn as sns
 import matplotlib.pyplot as plt
 
@@ -11,7 +11,8 @@ import matplotlib.pyplot as plt
 # # then run script d to get master lists and averages
 # exp_path = r"C:\Users\sapnm4\PycharmProjects\Cardiff\Nick_scripts\flow_parse_23\flow_parsing_NM_v6"
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing_NM_v6"
-exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing_NM_v7"
+# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing_NM_v7"
+exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing_NM_v8"
 print(f"exp_path: {exp_path}")
 convert_path1 = os.path.normpath(exp_path)
 print(f"convert_path1: {convert_path1}")
@@ -21,8 +22,7 @@ monitor = 'OLED'  # 'asus_cal' OLED, 'Nick_work_laptop'
 exp_path = os.path.join(exp_path, monitor)
 
 
-participant_list = ['Nicktest_13102023']  # ' Nicktest_06102023'
-all_probe_dur_list = [8, 16, 25, 33, 41, 50, 54, 58, 66, 116]
+participant_list = ['Nick']  # ' Nicktest_06102023' Nick_extra_prelims
 
 
 verbose = True
@@ -64,14 +64,14 @@ for p_idx, participant_name in enumerate(participant_list):
 
         save_path = f'{root_path}{os.sep}{run_dir}'
 
-        # # search to automatically get updated probe dur (int) list
-        dir_list = os.listdir(save_path)
+        # # search automatically for probeDur folders to add to probe_dur_int_list
         probe_dur_int_list = []
-        for dur in all_probe_dur_list:
-            check_dir = f'probeDur{dur}'
-            if check_dir in dir_list:
-                probe_dur_int_list.append(dur)
+        dir_list = os.listdir(save_path)
+        for folder in dir_list:
+            if 'probeDur' in folder:
+                probe_dur_int_list.append(int(folder[8:]))
         print(f'probe_dur_int_list: {probe_dur_int_list}')
+
         # run_isi_names_list = [f'ISI_{i}' for i in probe_dur_int_list]
 
         # don't delete this (p_name = participant_name),
@@ -231,15 +231,15 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
 
-
-
+#
+#
 # print(f'exp_path: {exp_path}')
 # print('\nget exp_average_data')
-# participant_list = ['Simon', 'Nick']
+# participant_list = ['Nicktest_13102023', 'Nick_extra_prelims']
 # n_trimmed = None
 # use_trimmed = False
-# e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
-#                    error_type='SE', use_trimmed=use_trimmed, verbose=True)
+# # e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
+# #                    error_type='SE', use_trimmed=use_trimmed, verbose=True)
 #
 #
 # all_df_path = f'{exp_path}/MASTER_exp_all_thr.csv'
@@ -248,6 +248,11 @@ for p_idx, participant_name in enumerate(participant_list):
 # n_trimmed = None
 # exp_ave = True
 #
+#
+# all_df_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing_NM_v7\OLED\MASTER_exp_all_thr.csv"
+# make_flow_parse_plots(all_df_path, exp_path, 'exp_ave', n_trimmed=None, exp_ave=True)
+
+
 # make_average_plots(all_df_path=all_df_path,
 #                    ave_df_path=exp_ave_path,
 #                    error_bars_path=err_path,

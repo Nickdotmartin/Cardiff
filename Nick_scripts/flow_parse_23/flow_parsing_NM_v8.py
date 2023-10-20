@@ -395,8 +395,10 @@ expInfo['time'] = datetime.now().strftime("%H:%M:%S")
 # # probe_dur_ms and equivalent ISI_fr cond on 240Hz (total frames is ISI_fr plus 4 for probes)
 '''   
 dur_ms:       [8.34, 16.67, 25, 33.34, 41.67, 50, 54.17, 58.38, 66.67, 116.67]
-frames@240Hz: [   2,     4,  6,     8,    10, 12,    13,    14,    16,     28]
 ISI cond:     [conc,     0,  2,     4,     6,  8,     9,    10,    12,     24] 
+frames@240Hz: [   2,     4,  6,     8,    10, 12,    13,    14,    16,     28]
+frames@120hz: [   1,     2,  3,     4,     5,  6,      ,     7,     8,     14]
+frames@60hz:  [    ,     1,   ,     2,      ,  3,      ,      ,     4,      7]
 '''
 probe_dur_fr = int(selected_probe_dur_ms * fps / 1000)
 probe_dur_ms = (1 / fps) * probe_dur_fr * 1000
@@ -526,16 +528,16 @@ resp = event.BuilderKeyResponse()
 fixation = visual.Circle(win, radius=2, units='pix', lineColor='white', fillColor='black', colorSpace=this_colourSpace)
 
 # add a small blurred mask behind fixation so dots are separated from fxation and less dirstracting
-fix_mask_size = 50
+fix_mask_size = 75
 # Create a raisedCosine mask array and assign it to a Grating stimulus (grey outside, transparent inside)
 raisedCosTexture1 = visual.filters.makeMask(256, shape='raisedCosine',
                                             # fringeWidth=0.3,
-                                            fringeWidth=0.9,  # proportion of mask that is blured (0 to 1)
+                                            fringeWidth=0.8,  # proportion of mask that is blured (0 to 1)
                                             radius=[1.0, 1.0])
 fix_mask = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(fix_mask_size, fix_mask_size),
                                 colorSpace=this_colourSpace,
                                 color=this_bgColour,
-                                # color='red', # for testing
+                                # color='red',  # for testing
                                 tex=None, units='pix',
                                 # pos=[0, 0]
                                 )
