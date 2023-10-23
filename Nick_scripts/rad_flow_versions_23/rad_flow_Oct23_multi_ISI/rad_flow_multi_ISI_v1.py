@@ -5,17 +5,13 @@ from psychopy.tools.monitorunittools import cm2pix, pix2cm
 from datetime import datetime
 from os import path, chdir
 from copy import copy
+from kestenSTmaxVal import Staircase
+from PsychoPy_tools import get_pixel_mm_deg_values
+from numpy import array, random, where, sum, linspace, pi, rad2deg, arctan, arctan2, cos, sin, hypot
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 import numpy as np
 # for numpy attributes access by per-frame functions, acceess them with name instead of np.name.
-from numpy import array, random, where, sum, linspace, pi, rad2deg, arctan, arctan2, cos, sin, hypot
-
-from kestenSTmaxVal import Staircase
-from PsychoPy_tools import get_pixel_mm_deg_values
-
-
-# import copy
 import gc
 print(f"PsychoPy_version: {psychopy_version}")
 
@@ -84,8 +80,8 @@ rad_flow_new_spokes.py - OCT 23
 - removed 'interleaved' dir from file structure and added monitor DONE
 
 rad_flow_multi_ISI_v1.py - 20th Oct 23
-- switch exp logic around, select one separation value and run a range of interleaved ISIs
-- put no bg option back in.
+- switch exp logic around, select one separation value and run a range of interleaved ISIs DONE
+- put no bg option back in.  DONE
 - instead of a fixed prelim motion variable, there is a motion window, and the probes are presented in the middle.
     e.g., if the window is 10 frames and the ISI and probes are each 2 frames, then the probes are presented in frames 3 and 7. 
 
@@ -546,10 +542,10 @@ expInfo = {'01. Participant': 'Nicktest',
            '04. fps': [60, 240, 120, 60],
            # '05. ISI_dur_in_ms': [33.34, 100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0, -1],
            '05. Separation': [4, 2, 4, 6, 8, 0, 10],
-           '08. Background': ['no_bg', 'flow_dots', 'no_bg'],  # no 'flow_rings', as it's not implemented here
+           '08. Background': ['flow_dots', 'no_bg'],  # no 'flow_rings', as it's not implemented here
            '10. monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'ASUS_2_13_240Hz',
                                 'Samsung', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
-           '12. debug': [False, True]
+           '12. debug': [True, False, True]
            }
 
 # run drop-down menu, OK continues, cancel quits
@@ -578,9 +574,9 @@ for k, v in expInfo.items():
 n_trials_per_stair = 25  # this is the number of trials per stair
 if debug:
     n_trials_per_stair = 2
-probe_ecc = 4  # int((expInfo['6. Probe eccentricity in deg']))1
-vary_fixation = True  # vary fixation period between .5 and 1.5 seconds.
-record_fr_durs = True  # eval(expInfo['07. Record_frame_durs'])
+probe_ecc = 4  # probe eccentricity in dva
+vary_fixation = True  # vary fixation time between trials to reduce anticipatory effects
+record_fr_durs = True  # eval(expInfo['7_record_frame_durs'])  # always record frame durs
 orientation = 'radial'  # expInfo['06. Probe_orientation']  # could add tangent back in
 expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
 expInfo['time'] = datetime.now().strftime("%H:%M:%S")
@@ -597,7 +593,6 @@ save_dir = path.join(_thisDir, expName, monitor_name,  # added monitor name to a
                      f'sep_{separation}')  # I've changed this to int(ms) not frames, for easier comparision of monitors
 print(f"\nexperiment save_dir: {save_dir}")
 
-
 # files are labelled as '_incomplete' unless entire script runs.
 p_name_run = f"{participant_name}_{run_number}"
 if debug:
@@ -613,18 +608,6 @@ thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
 
 
 # # # CONDITIONS AND STAIRCASES # # #
-# todo, switch ISI and separation here. One sep, many ISIs
-# ISI timing in ms and frames - only one per run, so not included in staircases
-# if ISI_selected_ms == -1:  # concurrent/simultaneous probes
-#     isi_cond_fr = -1
-#     ISI_actual_ms = -1
-# else:
-#     isi_cond_fr = int(ISI_selected_ms * fps / 1000)
-#     ISI_actual_ms = (1 / fps) * isi_cond_fr * 1000
-# if debug:
-#     print(f"\nSelected {ISI_selected_ms}ms ISI.\n"
-#           f"At {fps}Hz this is {isi_cond_fr} frames, which each take {round(1000 / fps, 2)} ms.\n"
-#           f"isi_cond_fr: {isi_cond_fr}")
 '''ISI can be given (roughly) in ms, for any monitor it will try to match that value in frames.
 The script uses on frames so ISI will be used in that format.
 The actual ms timing is given for record.
@@ -637,6 +620,8 @@ frames@60hz:  [ 6,   3,    ,     ,    2,      ,  1,     ,    0]
 isi_ms_vals = [100, 50, 41.66, 33.34, 25, 16.67, 8.33, 0, -1]  # dropped 37.5 / ISI 9 as it won't run on OLED
 isi_fr_vals = [-1 if i == -1 else int(i * fps / 1000) for i in isi_ms_vals]
 isi_actual_ms_vals = [-1 if i == -1 else (1 / fps) * i * 1000 for i in isi_fr_vals]
+
+# # keep isi_name in to use for checking conditions against frame rate
 isi_name_vals = ['conc' if i == -1 else f'{i}ms' for i in isi_ms_vals]
 isi_selected_zip = list(zip(isi_actual_ms_vals, isi_fr_vals, isi_name_vals))
 
@@ -691,13 +676,13 @@ if background == 'no_bg':
 # get all possible combinations of these three lists
 # combined_conds = [(s, cz, p) for s in sep_vals for cz in cong_zip for p in prelim_vals]
 combined_conds = [(i, cz, p) for i in isi_zip for cz in cong_zip for p in prelim_vals]
-# print(f"combined_conds: {combined_conds}")
+print(f"combined_conds: {combined_conds}")
 
 # split the combined_conds into separate lists
 # sep_conds_list = [i[0] for i in combined_conds]
 
-isi_ms_conds_list = [i[0] for i in combined_conds]
-isi_fr_conds_list = [i[1] for i in combined_conds]
+isi_ms_conds_list = [i[0][0] for i in combined_conds]
+isi_fr_conds_list = [i[0][1] for i in combined_conds]
 
 cong_name_conds_list = [i[1][0] for i in combined_conds]
 cong_val_conds_list = [i[1][1] for i in combined_conds]
@@ -718,10 +703,7 @@ if background == 'no_bg':
 n_stairs = len(combined_conds)
 total_n_trials = int(n_trials_per_stair * n_stairs)
 print(f'\nstair_names_list: {stair_names_list}')
-print(f'n_stairs: {n_stairs}')
-print(f'total_n_trials: {total_n_trials}')
-
-
+print(f'n_stairs: {n_stairs}, total_n_trials: {total_n_trials}')
 
 
 # # # MONITOR SETTINGS # # #
@@ -746,8 +728,9 @@ if monitor_name == 'OLED':  # darker green for low contrast against black backgr
     flow_colour = [this_bgColour[0], this_bgColour[1] + adj_flow_colour / 3, this_bgColour[2]]  # even dimmer 12/10/2023
 
 
-# monitor settings
-print(f"\nmonitor_name: {monitor_name}")
+# # # MONITOR DETAILS # # #
+if debug:
+    print(f"\nmonitor_name: {monitor_name}")
 mon = monitors.Monitor(monitor_name)
 
 widthPix = int(mon.getSizePix()[0])
@@ -785,11 +768,11 @@ resp = event.BuilderKeyResponse()
 fixation = visual.Circle(win, radius=2, units='pix', lineColor='white', fillColor='black', colorSpace=this_colourSpace)
 
 # add a small blurred mask behind fixation so dots are separated from fxation and less dirstracting
-fix_mask_size = 50
+fix_mask_size = 75
 # Create a raisedCosine mask array and assign it to a Grating stimulus (grey outside, transparent inside)
 raisedCosTexture1 = visual.filters.makeMask(256, shape='raisedCosine',
                                             # fringeWidth=0.3,
-                                            fringeWidth=0.9,  # proportion of mask that is blured (0 to 1)
+                                            fringeWidth=0.8,  # proportion of mask that is blured (0 to 1)
                                             radius=[1.0, 1.0])
 fix_mask = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(fix_mask_size, fix_mask_size),
                                 colorSpace=this_colourSpace,
@@ -884,7 +867,7 @@ if background == 'flow_dots':
     flow_dots.xys = dots_pos_array
 
     # dot lifetime ms
-    dot_life_max_ms = 666  # Simon says longer dot life than on original exp which used 166.67
+    dot_life_max_ms = 666  # Simon says use longer dot life than on original exp which used 166.67
     dot_life_max_fr = int(dot_life_max_ms / 1000 * fps)
     print(f"dot_life_max_fr: {dot_life_max_fr}")
 
@@ -903,9 +886,15 @@ if background == 'flow_dots':
         max_possible_dot_life_ms = max_possible_dot_life_fr / fps * 1000
         print(f"max_possible_dot_life_ms: {max_possible_dot_life_ms}")
 
-
         raise ValueError(f"dot_life_max_ms ({dot_life_max_ms}) is set too high, dots will travel the full distance in "
                          f"max_possible_dot_life_ms ({max_possible_dot_life_ms}), please select a lower value.  ")
+
+else:  # if background  == 'no_bg'
+    flow_dots = None
+    flow_speed_cm_p_sec = None
+    flow_speed_cm_p_fr = None
+    n_dots = None
+    dot_life_max_ms = None
 
 
 
@@ -922,7 +911,6 @@ if debug:
     print(f"frame_tolerance_prop: {frame_tolerance_prop}")
     print(f"frame_tolerance_ms: {frame_tolerance_ms}")
     print(f"max_dropped_fr_trials: {max_dropped_fr_trials}")
-
 
 
 # # # ACCURACY # # #
@@ -951,6 +939,7 @@ else:
     take_break = max_without_break
 break_dur = 30
 if debug:
+    break_dur = 5
     print(f"\ntake a {break_dur} second break every {take_break} trials ({n_breaks} breaks in total).")
 
 
@@ -974,7 +963,6 @@ too_many_dropped_fr = visual.TextStim(win=win, name='too_many_dropped_fr',
                                            "Please contact the experimenter.\n\n"
                                            "Press any key to return to the desktop.",
                                       font='Arial', height=20, colorSpace=this_colourSpace)
-
 
 break_text = f"Break\nTurn on the light and take at least {break_dur} seconds break.\n" \
              "Keep focussed on the fixation circle in the middle of the screen.\n" \
@@ -1073,22 +1061,26 @@ for step in range(n_trials_per_stair):
 
 
             # # # SEP COND variables # # #
-            # negative separation for comparing conditions (e.g., cong sep = 5, incong sep = -5.
-            if cong_name == 'incong':
-                neg_sep = 0 - sep
-                if sep == 0:
-                    neg_sep = -.1
-            else:
-                neg_sep = sep
-            if debug:
-                print(f"sep: {sep}, neg_sep: {neg_sep}")
-
             # separation expressed as degrees.
-            # todo: add neg_sep_deg?
             if -1 < sep < 99:
                 sep_deg = sep * pixel_mm_deg_dict['diag_deg']
             else:
-                sep_deg = 0
+                sep_deg = None
+
+            # negative separation for comparing conditions (e.g., cong sep = 5, incong sep = -5.
+            if cong_name == 'incong':
+                neg_sep = 0 - sep
+                neg_sep_deg = 0 - sep_deg
+                if sep == 0:
+                    neg_sep = -.1
+                    neg_sep_deg = -pixel_mm_deg_dict['diag_deg'] / 10
+            else:
+                neg_sep = sep
+                neg_sep_deg = sep_deg
+            if debug:
+                print(f"sep: {sep}, neg_sep: {neg_sep}; sep_deg: {sep_deg}, neg_sep_deg: {neg_sep_deg}")
+
+
 
 
             # # # GET BACKGROUND ATTRIBUTES # # #
@@ -1102,13 +1094,14 @@ for step in range(n_trials_per_stair):
 
             target_jump = congruent * flow_dir
 
-            # boundaries for z position (distance from screen) during radial flow
-            if flow_dir == -1:  # expanding
-                z_start_bounds = [near_plane_cm + max_z_cm_in_life, far_plane_cm]
-            else:  # contracting, flow_dir == 1
-                z_start_bounds = [near_plane_cm, far_plane_cm - max_z_cm_in_life]
-            if debug:
-                print(f"z_start_bounds: {z_start_bounds}")
+            if background == 'flow_dots':
+                # boundaries for z position (distance from screen) during radial flow
+                if flow_dir == -1:  # expanding
+                    z_start_bounds = [near_plane_cm + max_z_cm_in_life, far_plane_cm]
+                else:  # contracting, flow_dir == 1
+                    z_start_bounds = [near_plane_cm, far_plane_cm - max_z_cm_in_life]
+                if debug:
+                    print(f"z_start_bounds: {z_start_bounds}")
 
             # vary fixation polarity to reduce risk of screen burn.
             # if monitor_name == 'OLED':  # same for all moniotrs for consistency
@@ -1119,7 +1112,7 @@ for step in range(n_trials_per_stair):
                 fixation.lineColor = 'black'
                 fixation.fillColor = 'grey'
 
-            # reset fixation radius - reduces in size after probe 2
+            # reset fixation radius - reduces in size at response segment of each trial
             fixation.setRadius(3)
 
 
@@ -1201,8 +1194,15 @@ for step in range(n_trials_per_stair):
                 breaks.draw()
                 win.flip()
                 event.clearEvents(eventType='keyboard')
-                # todo: turn off high priority here during enforced break, turn back on after wait?
-                core.wait(secs=break_dur)
+                # # turn off high priority mode and turn garbage collection back on
+                gc.enable()
+                core.rush(False)
+                core.wait(secs=break_dur)  # enforced 30-second break
+                # # turn on high priority here. (and turn off garbage collection)
+                gc.disable()
+                core.rush(True)
+                if monitor_name == 'OLED':
+                    core.rush(True, realtime=True)
                 event.clearEvents(eventType='keyboard')
                 breaks.text = break_text + "\n\nPress any key to continue."
                 breaks.draw()
@@ -1542,15 +1542,11 @@ for step in range(n_trials_per_stair):
             # # # TRIAL COMPLETED # # #
             # If too many trials have had dropped frames, quit experiment
             if dropped_fr_trial_counter > max_dropped_fr_trials:
-                print(f"checking: dropped_fr_trial_counter {dropped_fr_trial_counter} > "
-                      f"1max_dropped_fr_trials: {max_dropped_fr_trials} = {dropped_fr_trial_counter > max_dropped_fr_trials}")
                 event.clearEvents(eventType='keyboard')
                 while not event.getKeys():
                     # display too_many_dropped_fr message until screen is pressed
                     too_many_dropped_fr.draw()
                     win.flip()
-                    core.wait(secs=5)
-
                 else:
                     # print text to screen with dropped frames info and make plt_fr_ints()
                     print(f"{dropped_fr_trial_counter}/{trial_num_inc_repeats} trials so far with bad timing "
@@ -1581,6 +1577,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('separation', sep)
         thisExp.addData('sep_deg', sep_deg)
         thisExp.addData('neg_sep', neg_sep)
+        thisExp.addData('neg_sep_deg', neg_sep_deg)
         # thisExp.addData('ISI_selected_ms', ISI_selected_ms)
         # thisExp.addData('ISI_actual_ms', ISI_actual_ms)
         thisExp.addData('isi_ms', isi_ms)

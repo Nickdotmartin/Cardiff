@@ -5,6 +5,7 @@ from psychopy.tools.monitorunittools import cm2pix, pix2cm
 from datetime import datetime
 from os import path, chdir
 from kestenSTmaxVal import Staircase
+from PsychoPy_tools import get_pixel_mm_deg_values
 from copy import copy
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
@@ -350,8 +351,6 @@ chdir(_thisDir)
 expName = path.basename(__file__)[:-3]
 
 
-# # #todo: Nick, try prelim durations of 210 and 490, to give 0, 70, 210, 350, 490
-
 # # # DIALOGUE BOX # # #
 expInfo = {'1_participant_name': 'Nicktest',
            '2_run_number': 1,
@@ -554,12 +553,16 @@ if monitor_name in ['asus_cal', 'Nick_work_laptop', 'NickMac', 'OLED', 'ASUS_2_1
 win = visual.Window(monitor=mon, size=(widthPix, heightPix), colorSpace=this_colourSpace, color=this_bgColour,
                     units='pix', screen=display_number, allowGUI=False, fullscr=True, useFBO=False)
 
-# todo: check forum for other ideas if mouse is still there
-win.mouseVisible = False
+# pixel size
+pixel_mm_deg_dict = get_pixel_mm_deg_values(monitor_name=monitor_name)
+if debug:
+    print(f"diagonal pixel size: {pixel_mm_deg_dict['diag_mm']} mm, or {pixel_mm_deg_dict['diag_deg']} dva")
 
 
 # # # PSYCHOPY COMPONENTS # # #
 # MOUSE
+# todo: check forum for other ideas if mouse is still there
+win.mouseVisible = False
 myMouse = event.Mouse(visible=False)
 
 # # KEYBOARD
@@ -579,9 +582,7 @@ fix_mask = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(fix_mask_si
                                 colorSpace=this_colourSpace,
                                 color=this_bgColour,
                                 # color='red',  # for testing
-                                tex=None, units='pix',
-                                # pos=[0, 0]
-                                )
+                                tex=None, units='pix')
 
 # PROBEs
 probe_size = 1  # can make them larger for testing new configurations etc
@@ -597,7 +598,6 @@ probe = visual.ShapeStim(win, vertices=probeVert, lineWidth=0, opacity=1, size=p
 
 # probes and probe_masks are at dist_from_fix pixels from middle of the screen
 dist_from_fix = int((np.tan(np.deg2rad(probe_ecc)) * view_dist_pix) / np.sqrt(2))
-
 
 
 # full screen mask to blend off edges and fade to black
@@ -649,8 +649,6 @@ if debug:
     print(f"n_dots: {n_dots}")
 
 
-
-
 flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
                                     units='cm', nElements=n_dots, sizes=.2,
                                     colorSpace=this_colourSpace,
@@ -666,15 +664,12 @@ z_array = np.random.uniform(low=near_plane_cm, high=far_plane_cm, size=n_dots)  
 # convert x and y into spokes
 x_array, y_array = make_xy_spokes(x_array, y_array)
 
-
-
 # get starting distances and scale xys
 dots_pos_array = scaled_dots_pos_array(x_array, y_array, z_array, frame_size_cm, ref_angle)
-
 flow_dots.xys = dots_pos_array
 
 # dot lifetime ms
-dot_life_max_ms = 666  # Simon says longer dot life than on original exp which used 166.67
+dot_life_max_ms = 666  # Simon says use longer dot life than on original exp which used 166.67
 dot_life_max_fr = int(dot_life_max_ms / 1000 * fps)
 print(f"dot_life_max_fr: {dot_life_max_fr}")
 
@@ -692,8 +687,6 @@ if max_z_cm_in_life > (far_plane_cm - near_plane_cm):
     max_possible_dot_life_fr = (far_plane_cm - near_plane_cm) / flow_speed_cm_p_fr
     max_possible_dot_life_ms = max_possible_dot_life_fr / fps * 1000
     print(f"max_possible_dot_life_ms: {max_possible_dot_life_ms}")
-
-
     raise ValueError(f"dot_life_max_ms ({dot_life_max_ms}) is set too high, dots will travel the full distance in "
                      f"max_possible_dot_life_ms ({max_possible_dot_life_ms}), please select a lower value.  ")
 
@@ -739,6 +732,7 @@ else:
     take_break = max_without_break
 break_dur = 30
 if debug:
+    break_dur = 5
     print(f"\ntake a {break_dur} second break every {take_break} trials ({n_breaks} breaks in total).")
 
 
@@ -896,7 +890,6 @@ for step in range(n_trials_per_stair):
             print(f"\n({trial_num_inc_repeats}) trial_number: {trial_number}, "
                   f"stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
 
-
             # conditions (flow_dir, prelim)
             flow_dir = thisStair.extraInfo['flow_dir']
             flow_name = thisStair.extraInfo['flow_name']
@@ -995,7 +988,6 @@ for step in range(n_trials_per_stair):
                 vary_fix = np.random.randint(0, fps)
 
 
-
             # timing in frames
             # fixation time is now 70ms shorted than previously.
             # end_fix_fr = 1 * (fps - prelim_fr)  # 240 frames - 70ms for fixation, e.g., <1 second.
@@ -1007,9 +999,8 @@ for step in range(n_trials_per_stair):
             end_probe_fr = end_bg_motion_fr + probe_dur_fr  # probes appear during probe_duration (e.g., 240ms, 1 second).
 
 
-            # reset fixation radius
+            # reset fixation radius - reduces in size at response segment of each trial
             fixation.setRadius(3)
-
 
 
             # show accuracy warning after first n trials
@@ -1038,9 +1029,16 @@ for step in range(n_trials_per_stair):
                 breaks.draw()
                 win.flip()
                 event.clearEvents(eventType='keyboard')
-                core.wait(secs=break_dur)
+                # # turn off high priority mode and turn garbage collection back on
+                gc.enable()
+                core.rush(False)
+                core.wait(secs=break_dur)  # enforced 30-second break
+                # # turn on high priority here. (and turn off garbage collection)
+                gc.disable()
+                core.rush(True)
+                if monitor_name == 'OLED':
+                    core.rush(True, realtime=True)
                 event.clearEvents(eventType='keyboard')
-                # todo: turn off high priority here during enforced break?
                 breaks.text = break_text + "\n\nPress any key to continue."
                 breaks.draw()
                 win.flip()
@@ -1058,7 +1056,8 @@ for step in range(n_trials_per_stair):
             while continueRoutine:
                 frameN = frameN + 1
 
-                '''Turn recording on and off from just before probe1 til just after probe2. '''
+                # # # RECORD FRAME DURATIONS # # #
+                # Turn recording on and off from just before probe1 til just after probe2.
                 if frameN == end_bg_motion_fr:
                     if record_fr_durs:  # start recording frames just before probe1 presentation
                         win.recordFrameIntervals = True
@@ -1171,7 +1170,6 @@ for step in range(n_trials_per_stair):
                                                                               x_bounds=frame_size_cm / 2,
                                                                               y_bounds=frame_size_cm / 2,
                                                                               z_start_bounds=z_start_bounds)
-
                     # 4. put new x and y values into spokes
                     x_array, y_array = make_xy_spokes(x_array, y_array)
 
