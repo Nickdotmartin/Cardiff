@@ -2845,10 +2845,14 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
                 filepath = f'{run_dir}{os.path.sep}ISI_{isi}{os.path.sep}' \
                            f'{p_name}_output.csv'
 
-                if not os.path.isfile(filepath):
-                    # raise FileNotFoundError(filepath)
-                    print(f"File not found: {filepath}")
-                    continue
+                if not os.path.isfile(filepath):  # try searching through sep folders
+                    filepath = f'{run_dir}{os.path.sep}sep_{isi}{os.path.sep}' \
+                               f'{p_name}_output.csv'
+
+                    if not os.path.isfile(filepath):
+                        # raise FileNotFoundError(filepath)
+                        print(f"File not found: {filepath}")
+                        continue
 
         # load data
         this_isi_df = pd.read_csv(filepath)
@@ -4231,8 +4235,13 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         # get a list of all column names containing 'isi' or 'ISI'
         isi_name_list = [i for i in list(all_df.columns) if 'isi' in i.lower()]
     if isi_vals_list is None:
-        isi_vals_list = [int(i[4:]) for i in isi_name_list]
-
+        # isi_vals_list = [int(i[4:]) for i in isi_name_list]
+        isi_vals_list = []
+        for i in isi_name_list:
+            if '.' in i:  # remove any characters after the '.'
+                i = i[:i.index('.')]
+            i = ''.join([j for j in i if j.isdigit()])  # remove any non-numeric characters
+            isi_vals_list.append(int(i))
 
     if verbose:
         print(f'\nisi_name_list: {isi_name_list}')

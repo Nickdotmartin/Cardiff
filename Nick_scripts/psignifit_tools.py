@@ -96,8 +96,8 @@ def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='sta
         print(f"{thr_col} min, max: {thr_min}, {thr_max}")
 
     # check total_n_correct in raw_df
-    total_n_correct = sum(list(raw_data_df['trial_response']))
-    total_errors = (raw_data_df['trial_response'] == 0).sum()
+    total_n_correct = sum(list(raw_data_df[resp_col]))
+    total_errors = (raw_data_df[resp_col] == 0).sum()
     if verbose:
         print(f'total_n_correct: {total_n_correct}')
         print(f'total_errors: {total_errors}')
@@ -134,7 +134,7 @@ def results_csv_to_np_for_psignifit(csv_path, isi, sep, p_run_name, sep_col='sta
             data_arr.append([bin_interval.left, this_bin_vals, 0, 0])
         else:
             # print(f'this_bin_df: {this_bin_df.shape}\n{this_bin_df}')
-            correct_per_bin = this_bin_df['trial_response'].sum()
+            correct_per_bin = this_bin_df[resp_col].sum()
             # print(f'\tcorrect_per_bin: {correct_per_bin}/{this_bin_df.shape[0]}\n')
             data_arr.append([bin_interval.left, this_bin_vals, correct_per_bin, bin_count[bin_interval]])
             # found_bins_left.append(round(bin_interval.left, 3))
@@ -516,6 +516,7 @@ def results_to_psignifit(csv_path, save_path, isi, sep, p_run_name,
 
 def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=9, q_bins=True,
                                thr_col='probeLum',
+                               resp_col='trial_response',
                                sep_col='separation', sep_list=None,
                                isi_col=None, isi_list=None, group=None,
                                conf_int=True, thr_type='Bayes',
@@ -531,6 +532,8 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=9, q_bins
     :param csv_name: Dataframe to analyse or Name of results csv to load (e.g., Kim1, Kim2 etc)
     :param n_bins: Default=10. Number of bins to use.
     :param q_bins: Default=True. If True, uses quartile bins, if false will use equally space bins.
+    :param thr_col: name of column containing thresholds.
+    :param resp_col: name of column containing responses that update the staircase (1, 0, not key pressed).
     :param sep_col: name of column containing separations: use 'stair' if there
         is no separation column.
     :param thr_col: name of column containing DV: e.g., 'probeLum' or 'NEW_probeLum'.
@@ -620,11 +623,11 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=9, q_bins
             if verbose:
                 print(f'\nsep_df ({sep_col}={sep}, isi={isi}:\n{sep_df.head()}')
 
-                print(f'n correct = {sep_df["trial_response"].sum()}')
+                print(f'n correct = {sep_df[resp_col].sum()}')
 
 
 
-            if sep_df["trial_response"].sum() > 0:
+            if sep_df[resp_col].sum() > 0:
                 # if there is at least one correct response, run psignifit
 
                 print("\n\nidiot check")
@@ -652,7 +655,7 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=9, q_bins
                                                                       save_path=save_path,
                                                                       isi=isi, sep=sep, p_run_name=p_run_name,
                                                                       sep_col=sep_col, stair_levels=[sep],
-                                                                      thr_col=thr_col, resp_col='trial_response',
+                                                                      thr_col=thr_col, resp_col=resp_col,
                                                                       quartile_bins=q_bins, n_bins=n_bins,
                                                                       save_np=False, target_threshold=.75,
                                                                       sig_name='norm', est_type='MAP',
@@ -729,12 +732,13 @@ def get_psignifit_threshold_df(root_path, p_run_name, csv_name, n_bins=9, q_bins
 
     if cols_to_add_dict is not None:
         for idx, (header, col_vals) in enumerate(cols_to_add_dict.items()):
-            print(f"idx: {idx}, header: {header}, col_vals: {col_vals}")
-            thr_df.insert(idx+1, header, col_vals)
-            if conf_int:
-                CI_limits_df.insert(idx+1, header, col_vals)
-                CI_width_df.insert(idx+1, header, col_vals)
-                eta_df.insert(idx+1, header, col_vals)
+            if header not in list(thr_df.columns):
+                print(f"idx: {idx}, header: {header}, col_vals: {col_vals}")
+                thr_df.insert(idx+1, header, col_vals)
+                if conf_int:
+                    CI_limits_df.insert(idx+1, header, col_vals)
+                    CI_width_df.insert(idx+1, header, col_vals)
+                    eta_df.insert(idx+1, header, col_vals)
 
     if verbose:
         print(f"thr_df:\n{thr_df}")
@@ -793,7 +797,7 @@ def get_psig_thr_w_hue(root_path, p_run_name, output_df, n_bins=9, q_bins=True,
                        sep_col='separation', sep_list=None,
                        isi_col=None, isi_list=None,
                        hue_col=None, hue_list=None,
-                       trial_correct_col='trial_response',
+                       resp_col='trial_response',
                        conf_int=True, thr_type='Bayes',
                        plot_both_curves=False,
                        cols_to_add_dict=None, save_name=None,
@@ -809,7 +813,6 @@ def get_psig_thr_w_hue(root_path, p_run_name, output_df, n_bins=9, q_bins=True,
     :param q_bins: Default=True. If True, uses quartile bins, if false will use equally space bins.
     :param thr_col: name of column containing DV: e.g., 'probeLum' or 'NEW_probeLum'.
     :param sep_col: name of column containing separations.
-    :param sep_list: list of separation values.
     :param isi_list: Default=None. list of ISI values.  If None passed will use default values.
     :param sep_list: Default=None.  List of separation values.  If None passed will use defualts.
     :param hue_col: name of column containing third variable (e.g., probe_types, coherence etc).
@@ -889,7 +892,7 @@ def get_psig_thr_w_hue(root_path, p_run_name, output_df, n_bins=9, q_bins=True,
 
                 if verbose:
                     print(f'\nsep_df (isi={isi}, hue={hue}, {sep_col}={sep}):\n{sep_df}')
-                    print(f'n correct = {sep_df[trial_correct_col].sum()}')
+                    print(f'n correct = {sep_df[resp_col].sum()}')
 
                 # todo: note, keep stairlevels set to None so it uses separation.  Stair_levels needs refactoring.
                 fit_curve_plot, psignifit_dict = results_to_psignifit(csv_path=sep_df,
@@ -897,7 +900,7 @@ def get_psig_thr_w_hue(root_path, p_run_name, output_df, n_bins=9, q_bins=True,
                                                                       isi=isi, sep=sep, p_run_name=p_run_name,
                                                                       sep_col=sep_col, stair_levels=None,
                                                                       hue_name=hue_col, hue_level=hue,
-                                                                      thr_col=thr_col, resp_col=trial_correct_col,
+                                                                      thr_col=thr_col, resp_col=resp_col,
                                                                       quartile_bins=q_bins, n_bins=n_bins,
                                                                       save_np=False, target_threshold=.75,
                                                                       sig_name='norm', est_type='MAP',

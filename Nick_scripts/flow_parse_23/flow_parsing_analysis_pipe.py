@@ -33,7 +33,7 @@ show_plots = True
 # p_idx_plus = 4
 p_idx_plus = 1
 
-# append each run's data to these lists
+# append each run's data to these lists for mean staircases
 MASTER_p_trial_data_list = []
 
 

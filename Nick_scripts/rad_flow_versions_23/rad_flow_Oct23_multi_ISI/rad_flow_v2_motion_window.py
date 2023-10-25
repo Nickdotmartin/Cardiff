@@ -83,7 +83,7 @@ rad_flow_multi_ISI_v1.py - 20th Oct 23
 - switch exp logic around, select one separation value and run a range of interleaved ISIs DONE
 - put no bg option back in.  DONE
 
-
+rad_flow_v2_motion_window.py - 23rd Oct 23
 - instead of a fixed prelim motion variable, there is a motion window, and the probes are presented in the middle.
     e.g., if the window is 10 frames and the ISI and probes are each 2 frames, then the probes are presented in frames 3 and 7. 
 
@@ -545,9 +545,10 @@ expInfo = {'01. Participant': 'Nicktest',
            # '05. ISI_dur_in_ms': [33.34, 100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0, -1],
            '05. Separation': [4, 2, 4, 6, 8, 0, 10],
            '08. Background': ['flow_dots', 'no_bg'],  # no 'flow_rings', as it's not implemented here
+           '09. Motion duration': [1000, 0, 35, 70, 105, 140, 175, 210, 240, 280, 320, 360, 400, 440, 480, 520, 560, 600],
            '10. monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'ASUS_2_13_240Hz',
                                 'Samsung', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
-           '12. debug': [False, True]
+           '12. debug': [True, False, True]
            }
 
 # run drop-down menu, OK continues, cancel quits
@@ -563,6 +564,7 @@ fps = int(expInfo['04. fps'])
 # ISI_selected_ms = float(expInfo['05. ISI_dur_in_ms'])
 separation = int(expInfo['05. Separation'])
 background = expInfo['08. Background']
+motion_dur_ms = int(expInfo['09. Motion duration'])  # motion before and after stim, which is in the middle
 monitor_name = expInfo['10. monitor_name']
 debug = eval(expInfo['12. debug'])
 
@@ -590,8 +592,8 @@ save_dir = path.join(_thisDir, expName, monitor_name,  # added monitor name to a
                      participant_name,
                      background,
                      # 'interleaved',  # always use dots background and interleave prelims
-                     f'{participant_name}_{run_number}',  # don't use p_name_run here, as it's not a separate folder
-                     # f'ISI_{int(ISI_selected_ms)}')  # I've changed this to int(ms) not frames, for easier comparision of monitors
+                     f'{participant_name}_{run_number}',
+                     f'motion_{motion_dur_ms}ms',  # motion dur in ms as folder
                      f'sep_{separation}')  # I've changed this to int(ms) not frames, for easier comparision of monitors
 print(f"\nexperiment save_dir: {save_dir}")
 
@@ -671,17 +673,18 @@ if debug:
     print(f"cong_zip: {cong_zip}")
 
 
-# 'prelim' (preliminary motion) is how long (ms) the background motion starts before the probe appears
-prelim_vals = [0, 140]  # [0, 70, 350]  # I shoud,best effects at 0, 140, 560
-if debug:
-    prelim_vals = [500]
-if background == 'no_bg':
-    prelim_vals = [0]
+# # 'prelim' (preliminary motion) is how long (ms) the background motion starts before the probe appears
+# prelim_vals = [0, 140]  # [0, 70, 350]  # I shoud,best effects at 0, 140, 560
+# if debug:
+#     prelim_vals = [500]
+# if background == 'no_bg':
+#     prelim_vals = [0]
 
 
 # get all possible combinations of these three lists
 # combined_conds = [(s, cz, p) for s in sep_vals for cz in cong_zip for p in prelim_vals]
-combined_conds = [(i, cz, p) for i in isi_zip for cz in cong_zip for p in prelim_vals]
+# combined_conds = [(i, cz, p) for i in isi_zip for cz in cong_zip for p in prelim_vals]
+combined_conds = [(i, cz) for i in isi_zip for cz in cong_zip]
 print(f"combined_conds: {combined_conds}")
 
 # split the combined_conds into separate lists
@@ -692,19 +695,22 @@ isi_fr_conds_list = [i[0][1] for i in combined_conds]
 
 cong_name_conds_list = [i[1][0] for i in combined_conds]
 cong_val_conds_list = [i[1][1] for i in combined_conds]
-prelim_conds_list = [i[2] for i in combined_conds]
+# prelim_conds_list = [i[2] for i in combined_conds]
 
 if debug:
     print(f'isi_ms_conds_list: {isi_ms_conds_list}')
     print(f'isi_fr_conds_list: {isi_fr_conds_list}')
     print(f'cong_val_conds_list: {cong_val_conds_list}')
     print(f'cong_name_conds_list: {cong_name_conds_list}')
-    print(f'prelim_conds_list: {prelim_conds_list}')
+    # print(f'prelim_conds_list: {prelim_conds_list}')
 
 
-stair_names_list = [f"ISI_{iz[2]}_{cz[0]}_{cz[1]}_prelim_{p}" for iz, cz, p in combined_conds]
+# stair_names_list = [f"ISI_{iz[2]}_{cz[0]}_{cz[1]}_prelim_{p}" for iz, cz, p in combined_conds]
+stair_names_list = [f"ISI_{iz[2]}_{cz[0]}_{cz[1]}" for iz, cz in combined_conds]
+
 if background == 'no_bg':
-    stair_names_list = [f"ISI_{iz[2]}_{cz[0]}_prelim_{p}" for iz, cz, p in combined_conds]
+    # stair_names_list = [f"ISI_{iz[2]}_{cz[0]}_prelim_{p}" for iz, cz, p in combined_conds]
+    stair_names_list = [f"ISI_{iz[2]}_{cz[0]}" for iz, cz in combined_conds]
 
 n_stairs = len(combined_conds)
 total_n_trials = int(n_trials_per_stair * n_stairs)
@@ -1006,7 +1012,7 @@ for stair_idx in range(n_stairs):
     thisInfo['sep'] = separation  # sep_conds_list[stair_idx]
     thisInfo['cong_val'] = cong_val_conds_list[stair_idx]
     thisInfo['cong_name'] = cong_name_conds_list[stair_idx]
-    thisInfo['prelim_ms'] = prelim_conds_list[stair_idx]
+    # thisInfo['prelim_ms'] = prelim_conds_list[stair_idx]
 
 
     thisStair = Staircase(name=stair_names_list[stair_idx],
@@ -1061,9 +1067,11 @@ for step in range(n_trials_per_stair):
             isi_cond_fr = thisStair.extraInfo['ISI_fr']  # shows number of frames or -1 for concurrent
             congruent = thisStair.extraInfo['cong_val']
             cong_name = thisStair.extraInfo['cong_name']
-            prelim_ms = thisStair.extraInfo['prelim_ms']
+            # prelim_ms = thisStair.extraInfo['prelim_ms']
             if debug:
-                print(f"isi_ms: {isi_ms}, isi_cond_fr: {isi_cond_fr}, congruent: {congruent}, cong_name: {cong_name}, prelim_ms: {prelim_ms}")
+                print(f"isi_ms: {isi_ms}, isi_cond_fr: {isi_cond_fr}, congruent: {congruent}, cong_name: {cong_name}"
+                      # f", prelim_ms: {prelim_ms}"
+                      )
 
 
             # # # SEP COND variables # # #
@@ -1154,12 +1162,52 @@ for step in range(n_trials_per_stair):
 
             # # # GET TIMINGS in frames # # #
             # timing for background motion converted to frames (e.g., 70ms is 17frames at 240Hz).
-            prelim_fr = int(prelim_ms * fps / 1000)
-            actual_prelim_ms = prelim_fr * 1000 / fps
+            # prelim_dur_fr = int(prelim_ms * fps / 1000)
+            # actual_prelim_ms = prelim_dur_fr * 1000 / fps
+            # if debug:
+            #     print(f'\nprelim_ms: {prelim_ms}')
+            #     print(f'prelim_dur_fr: {prelim_dur_fr}')
+            #     print(f'actual_prelim_ms: {actual_prelim_ms}')
+
+            # # # MOTION WINDOW # # #
+            '''Rather than just having preliminary motin (before probe1), we now have a motion window of a fixed duration.
+            The stimuli (probe1, ISI, probe2) occur in the middle of this window.  
+            e.g., if the window is 10 frames, and the ISI is 4 frames, then the total stimulus duration is 8 frames, 
+            so there will be one frame of motion before probe1 and one frame of motion after probe2.
+            if the window was 100 frames then there would be 46 frames of motion before probe1 and 46 frames after probe2.'''
+            
+            # get number of frames for motion duration
+            motion_dur_fr = int(motion_dur_ms * fps / 1000)
+            print(f"motion_dur_fr: {motion_dur_fr}")
+            actual_motion_ms = motion_dur_fr * 1000 / fps
             if debug:
-                print(f'\nprelim_ms: {prelim_ms}')
-                print(f'prelim_fr: {prelim_fr}')
-                print(f'actual_prelim_ms: {actual_prelim_ms}')
+                print(f'\nmotion_dur_ms: {motion_dur_ms}')
+                print(f'motion_dur_fr: {motion_dur_fr}')
+                print(f'actual_motion_ms: {actual_motion_ms}')
+                
+            # Get the number of frames for probes and ISI
+            # If probes are presented concurrently, set isi_dur_fr and p2_dur_fr to last for 0 frames.
+            isi_dur_fr = isi_cond_fr
+            p1_dur_fr = p2_dur_fr = probe_duration
+            if isi_cond_fr < 0:
+                isi_dur_fr = p2_dur_fr = 0
+                
+            # get number of frames for the total stimulus duration
+            stim_dur_fr = p1_dur_fr + isi_dur_fr + p2_dur_fr
+            if isi_dur_fr == -1:
+                stim_dur_fr = p1_dur_fr
+                
+            # get duration of preliminary motion (before probe1) and post-probe2 motion
+            # if these number are not equal, prelim should be 1 frame longer than post
+            pre_and_post_fr = int(motion_dur_fr - stim_dur_fr)  # remaining frames not including stim_dur_fr
+            post_dur_fr = int(pre_and_post_fr / 2)  # number of frames after stim_dur_fr
+            if pre_and_post_fr % 2 == 0:  # if there is an odd number of frames, make prelim one frame longer than post
+                prelim_dur_fr = post_dur_fr
+            else:
+                prelim_dur_fr = post_dur_fr + 1
+                
+                
+            ''''''
 
             # variable fixation time
             '''to reduce anticipatory effects that might arise from fixation always being same length.
@@ -1169,24 +1217,20 @@ for step in range(n_trials_per_stair):
             if vary_fixation:
                 vary_fix = np.random.randint(0, fps)
 
-            # timing in frames for ISI and probe2
-            # If probes are presented concurrently, set isi_dur_fr and p2_segment_fr to last for 0 frames.
-            isi_dur_fr = isi_cond_fr
-            p2_segment_fr = probe_duration
-            if isi_cond_fr < 0:
-                isi_dur_fr = p2_segment_fr = 0
+
 
             # cumulative timing in frames for each segment of a trial
-            end_fix_fr = int(fps / 2) + vary_fix - prelim_fr
+            end_fix_fr = int(fps / 2) + vary_fix - prelim_dur_fr
             if end_fix_fr < 0:
                 end_fix_fr = int(fps / 2)
-            end_bg_motion_fr = end_fix_fr + prelim_fr
-            end_p1_fr = end_bg_motion_fr + probe_duration
+            end_prelim_fr = end_fix_fr + prelim_dur_fr
+            end_p1_fr = end_prelim_fr + probe_duration
             end_ISI_fr = end_p1_fr + isi_dur_fr
-            end_p2_fr = end_ISI_fr + p2_segment_fr
+            end_p2_fr = end_ISI_fr + p2_dur_fr
+            end_post_fr = end_p2_fr + post_dur_fr
             if debug:
-                print(f"end_fix_fr: {end_fix_fr}, end_bg_motion_fr: {end_bg_motion_fr}, "
-                      f"end_p1_fr: {end_p1_fr}, end_ISI_fr: {end_ISI_fr}, end_p2_fr: {end_p2_fr}\n")
+                print(f"end_fix_fr: {end_fix_fr}, end_prelim_fr: {end_prelim_fr}, end_p1_fr: {end_p1_fr}, \n"
+                      f"end_ISI_fr: {end_ISI_fr}, end_p2_fr: {end_p2_fr}, end_post_fr: {end_post_fr}\n")
 
 
             # # # SHOW BREAKS SCREEN EVERY N TRIALS # # #
@@ -1229,7 +1273,7 @@ for step in range(n_trials_per_stair):
 
                 # # # RECORD FRAME DURATIONS # # #
                 # Turn recording on and off from just before probe1 til just after probe2.
-                if frameN == end_bg_motion_fr:
+                if frameN == end_prelim_fr:
                     if record_fr_durs:  # start recording frames just before probe1 presentation
                         win.recordFrameIntervals = True
 
@@ -1282,7 +1326,7 @@ for step in range(n_trials_per_stair):
 
 
                 # # # PRELIM BACKGROUND MOTION prior to probe1 - after fixation, but before probe 1 # # #
-                elif end_bg_motion_fr >= frameN > end_fix_fr:
+                elif end_prelim_fr >= frameN > end_fix_fr:
                     if background == 'flow_dots':
 
                         # 1. Update z (distance values): Add dots_speed * flow_dir to the current z values.
@@ -1315,7 +1359,7 @@ for step in range(n_trials_per_stair):
                     fixation.draw()
 
                 # # # PROBE 1 - after prelim bg motion, before ISI # # #
-                elif end_p1_fr >= frameN > end_bg_motion_fr:
+                elif end_p1_fr >= frameN > end_prelim_fr:
                     if background == 'flow_dots':
 
                         # 1. Update z (distance values): Add dots_speed * flow_dir to the current z values.
@@ -1426,8 +1470,55 @@ for step in range(n_trials_per_stair):
                             probe2.draw()
 
 
-                # # # ANSWER - after probe 2, before end of trial # # #
-                elif frameN > end_p2_fr:
+                # # # POST STIMULUS MOTION - after probe 2 (unless isi_cond_fr < 1) # # #
+                elif end_post_fr >= frameN > end_p2_fr:
+                    if background == 'flow_dots':
+                        # 1. Update z (distance values): Add dots_speed * flow_dir to the current z values.
+                        z_array = z_array + flow_speed_cm_p_fr * flow_dir
+
+                        # 2. check if any z values are out of bounds (too close when expanding or too far when contracting),
+                        # if so, set their dot life to max, so they are given new x, y and z values by update_dotlife() below.
+                        dot_lifetime_array = check_z_start_bounds(z_array, near_plane_cm, far_plane_cm,
+                                                                  dot_life_max_fr,
+                                                                  dot_lifetime_array, flow_dir)
+
+                        # 3. update dot lifetime, give new x, y, z coords to dots whose lifetime is max.
+                        dotlife_array, x_array, y_array, z_array = update_dotlife(
+                            dotlife_array=dot_lifetime_array,
+                            dot_max_fr=dot_life_max_fr,
+                            x_array=x_array, y_array=y_array,
+                            z_array=z_array,
+                            x_bounds=frame_size_cm / 2,
+                            y_bounds=frame_size_cm / 2,
+                            z_start_bounds=z_start_bounds)
+
+                        # 4. put new x and y values into spokes
+                        x_array, y_array = make_xy_spokes(x_array, y_array)
+
+                        # 5. scale x and y positions by distance
+                        dots_pos_array = scaled_dots_pos_array(x_array, y_array, z_array, frame_size_cm,
+                                                               ref_angle)
+                        flow_dots.xys = dots_pos_array
+                        flow_dots.draw()
+
+                    edge_mask.draw()
+
+                    fix_mask.draw()
+                    fixation.draw()
+
+
+                    # '''ALLOW RESPONSES DURING POST-STIM MOTION'''
+                    # # RESPONSE HANDLING
+                    # theseKeys = event.getKeys(keyList=['num_5', 'num_4', 'num_1', 'num_2', 'w', 'q', 'a', 's'])
+                    # if len(theseKeys) > 0:  # at least one key was pressed
+                    #     resp.keys = theseKeys[-1]  # just the last key pressed
+                    #     resp.rt = resp.clock.getTime()
+                    #
+                    #     # a response ends the per-frame_section
+                    #     continueRoutine = False
+
+                # # # ANSWER - after post_stim-motion, before end of trial # # #
+                elif frameN > end_post_fr:
                     if background == 'flow_dots':
 
                         '''just have incoherent motion from re-spawning dots, z bounds as full z range'''
@@ -1589,9 +1680,13 @@ for step in range(n_trials_per_stair):
         thisExp.addData('isi_ms', isi_ms)
         thisExp.addData('isi_cond_fr', isi_cond_fr)
         thisExp.addData('isi_dur_fr', isi_dur_fr)
-        thisExp.addData('prelim_ms', prelim_ms)
-        thisExp.addData('prelim_fr', prelim_fr)
-        thisExp.addData('actual_prelim_ms', actual_prelim_ms)
+        thisExp.addData('motion_dur_ms', motion_dur_ms)
+        thisExp.addData('motion_dur_fr', motion_dur_fr)
+        thisExp.addData('actual_motion_ms', actual_motion_ms)
+        # thisExp.addData('prelim_ms', prelim_ms)
+        thisExp.addData('prelim_dur_fr', prelim_dur_fr)
+        thisExp.addData('post_dur_fr', post_dur_fr)
+        # thisExp.addData('actual_prelim_ms', actual_prelim_ms)
         thisExp.addData('congruent', congruent)
         thisExp.addData('flow_dir', flow_dir)
         thisExp.addData('flow_name', flow_name)

@@ -358,8 +358,8 @@ expInfo = {'1_participant_name': 'Nicktest',
                               'Samsung', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
            '4_fps': [60, 240, 120, 60],
            # '5_probe_dur_ms': [41.67, 116.67, 66.67, 54.17, 50, 41.67, 33.34, 25,  500],
-           '6_probe_start_dist_pix': [6, 2, 4, 6, 8, 10],
-           '7_debug': [False, True]
+           '6_probe_start_dist_pix': [10, 2, 4, 6, 8, 10],
+           '7_debug': [True, False, True]
            }
 
 # run drop-down menu, OK continues, cancel quits
@@ -441,7 +441,7 @@ probe_dur_fr_vals = [int(i * fps / 1000) for i in probe_dur_selected_ms_vals]
 # probe_dur_ms = (1 / fps) * probe_dur_fr * 1000
 probe_dur_ms_vals = [round((1 / fps) * i * 1000, 2) for i in probe_dur_fr_vals]
 
-probe_dur_all_vals = zip(probe_dur_selected_ms_vals, probe_dur_fr_vals, probe_dur_ms_vals)
+probe_dur_all_vals = list(zip(probe_dur_selected_ms_vals, probe_dur_fr_vals, probe_dur_ms_vals))
 
 # check if any probe_dur_fr_vals are < 1
 if any([i < 1 for i in probe_dur_fr_vals]):
@@ -470,7 +470,6 @@ if debug:
 # get all possible combinations of these three lists
 # combined_conds = [(f, p) for f in flow_dir_vals for p in prelim_vals]
 combined_conds = [(f, p, d) for f in flow_dir_vals for p in prelim_vals for d in probe_dur_all_vals]
-
 
 print(f"\ncombined_conds ({len(combined_conds)}: {combined_conds}")
 stair_idx_list = list(range(len(combined_conds)))
