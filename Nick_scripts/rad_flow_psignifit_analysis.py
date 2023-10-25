@@ -2938,6 +2938,102 @@ def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=Tru
     return all_data_df
 
 
+def a_data_extraction_Oct23(p_name, run_dir, save_all_data=True, verbose=True):
+    """
+    This script is a python version of Martin's first MATLAB analysis scripts, described below.
+
+    a_data_extraction.m: Once a participant has completed a run of all ISIs,
+        this script gets all their data into one file, and sorts each isi by stair.
+
+    :param p_name: participant's name as used to save csv files.  e.g., if the
+            file is .../nick1.csv, participant name is 'nick1'.
+    :param run_dir: directory where isi folders are stored.
+    :param save_all_data: If True, will save all_data_df as a xlsx.
+    :param verbose: If True, will print progress to screen.
+
+    :return: ALL_ISIs_sorted.xlsx: A pandas DataFrame with n xlsx file of all
+        data for one run of all ISIs.
+    """
+    print("\n***running a_data_extraction()***\n")
+
+    # get run name/number
+    path, run = os.path.split(run_dir)
+    if verbose:
+        print(f"run: {run}")
+
+    all_data_list = []  # list to append each output file to
+
+    '''search for output files and get sub_dir names'''
+    # get the names of all subdirectories in run_dir that contain a file with '_output.csv' in the name
+    for root, dirs, files in os.walk(run_dir):
+        if len(files) > 0:  # if there are files in the directory, check for '_output.csv' in the filename
+            for filename in files:
+                if '_output.csv' in filename:
+
+                    # check that this is a proper run (e.g., not 'debug' or 'incomplete')
+                    if 'debug' not in filename and 'incomplete' not in filename:
+                        filepath = os.path.join(root, filename)
+
+                        # # if I need to add columns to the output dir, this might help...
+                        # sub_dir_list = root  # get the full file path
+                        # sub_dir_list = sub_dir_list.replace(run_dir, '')  # strip run_dir from the path
+                        # sub_dir_list = sub_dir_list.split('\\')  # separate the path into a list of directories
+                        # sub_dir_list.pop(
+                        #     0)  # remove the first element of the list (which is an empty string)
+                        # print(f"sub_dir_list: {sub_dir_list}")  # print the list
+
+                        # load data
+                        this_isi_df = pd.read_csv(filepath)
+                        if verbose:
+                            print(f"loaded csv:\n{this_isi_df.head()}")
+
+                        # remove any Unnamed columns
+                        if any("Unnamed" in i for i in list(this_isi_df.columns)):
+                            unnamed_col = [i for i in list(this_isi_df.columns) if "Unnamed" in i][0]
+                            this_isi_df.drop(unnamed_col, axis=1, inplace=True)
+
+                        # OLED adds extra cols that I don't need
+                        if any("thisRow.t" in i for i in list(this_isi_df.columns)):
+                            this_row_col = [i for i in list(this_isi_df.columns) if "thisRow.t" in i][0]
+                            this_isi_df.drop(this_row_col, axis=1, inplace=True)
+                        if any("notes" in i for i in list(this_isi_df.columns)):
+                            notes_col = [i for i in list(this_isi_df.columns) if "notes" in i][0]
+                            this_isi_df.drop(notes_col, axis=1, inplace=True)
+
+                        # sort by staircase
+                        trial_numbers = list(this_isi_df['trial_number'])
+                        this_isi_df = this_isi_df.sort_values(by=['stair', 'trial_number'])
+
+                        this_isi_df.insert(1, 'srtd_trial_idx', trial_numbers)
+                        if verbose:
+                            print(f'df sorted by stair: {type(this_isi_df)}\n{this_isi_df}')
+
+                        # get column names to use on all_data_df
+                        column_names = list(this_isi_df)
+                        if verbose:
+                            print(f'column_names: {len(column_names)}\n{column_names}')
+
+                        # add to all_data_list
+                        all_data_list.append(this_isi_df)
+
+    all_data_df = pd.concat(all_data_list)
+
+    if verbose:
+        print(f"all_data_df:\n{all_data_df}")
+
+    if save_all_data:
+        save_name = 'RUNDATA-sorted.xlsx'
+
+        save_excel_path = os.path.join(run_dir, save_name)
+        if verbose:
+            print(f"\nsaving all_data_df to save_excel_path:\n{save_excel_path}")
+        all_data_df.to_excel(save_excel_path, index=False)
+
+    print("\n***finished a_data_extraction()***\n")
+
+    return all_data_df
+
+
 def b3_plot_staircase(all_data_path, thr_col='newLum', resp_col='trial_response',
                       show_plots=True, save_plots=True, verbose=True):
     """
@@ -3672,6 +3768,8 @@ def d_average_participant(root_path, run_dir_names_list,
             ref_col = 'stair_names'
         elif 'cond_type' in list(all_data_psignifit_df.columns):
             ref_col = 'cond_type'
+        elif 'neg_sep' in list(all_data_psignifit_df.columns):
+            ref_col = 'neg_sep'
         trimmed_df = trim_n_high_n_low(all_data_psignifit_df, trim_from_ends=trim_n,
                                        reference_col=ref_col,
                                        stack_col_id='stack',
@@ -3704,9 +3802,14 @@ def d_average_participant(root_path, run_dir_names_list,
             # first create a dictionary where the keys are the unique values from the neg_sep column and the
             # keys are the corresponding values in the 'cond_type' and 'separation' columns
             cols_to_replace_dict = {}
-            for neg_sep_val in list(groupby_sep_df['neg_sep'].unique()):
-                cols_to_replace_dict[neg_sep_val] = {'cond_type': groupby_sep_df[groupby_sep_df['neg_sep'] == neg_sep_val]['cond_type'].unique()[0],
-                                                     'separation': groupby_sep_df[groupby_sep_df['neg_sep'] == neg_sep_val]['separation'].unique()[0]}
+
+            if 'neg_sep' in groupby_col:
+                for neg_sep_val in list(groupby_sep_df['neg_sep'].unique()):
+                    # cols_to_replace_dict[neg_sep_val] = {'cond_type': groupby_sep_df[groupby_sep_df['neg_sep'] == neg_sep_val]['cond_type'].unique()[0],
+                    #                                      'separation': groupby_sep_df[groupby_sep_df['neg_sep'] == neg_sep_val]['separation'].unique()[0]}
+                    cols_to_replace_dict[neg_sep_val] = {}
+                    for col_name in cols_to_replace:
+                        cols_to_replace_dict[neg_sep_val][col_name] = groupby_sep_df[groupby_sep_df['neg_sep'] == neg_sep_val][col_name].unique()[0]
             print(f"cols_to_replace_dict: {cols_to_replace_dict}")
 
 
@@ -3748,9 +3851,12 @@ def d_average_participant(root_path, run_dir_names_list,
             # print(f"cond_type_list: {cond_type_list}")
 
             # insert cond_type and separation columns to ave_psignifit_thr_df from cols_to_replace_dict
-            ave_psignifit_thr_df.insert(1, 'cond_type', [cols_to_replace_dict[x]['cond_type'] for x in ave_psignifit_thr_df['neg_sep'].to_list()])
-            ave_psignifit_thr_df.insert(2, 'separation', [cols_to_replace_dict[x]['separation'] for x in ave_psignifit_thr_df['neg_sep'].to_list()])
+            # ave_psignifit_thr_df.insert(1, 'cond_type', [cols_to_replace_dict[x]['cond_type'] for x in ave_psignifit_thr_df['neg_sep'].to_list()])
+            # ave_psignifit_thr_df.insert(2, 'separation', [cols_to_replace_dict[x]['separation'] for x in ave_psignifit_thr_df['neg_sep'].to_list()])
 
+            if 'neg_sep' in groupby_col:
+                for col_name in cols_to_replace:
+                    ave_psignifit_thr_df.insert(1, col_name, [cols_to_replace_dict[x][col_name] for x in ave_psignifit_thr_df['neg_sep'].to_list()])
 
 
 
@@ -3780,8 +3886,13 @@ def d_average_participant(root_path, run_dir_names_list,
             # error_bars_df.fillna(0)
 
             # insert cond_type and separation columns to error_bars_df from cols_to_replace_dict
-            error_bars_df.insert(0, 'cond_type', [cols_to_replace_dict[x]['cond_type'] for x in error_bars_df['neg_sep'].to_list()])
-            error_bars_df.insert(1, 'separation', [cols_to_replace_dict[x]['separation'] for x in error_bars_df['neg_sep'].to_list()])
+            # error_bars_df.insert(0, 'cond_type', [cols_to_replace_dict[x]['cond_type'] for x in error_bars_df['neg_sep'].to_list()])
+            # error_bars_df.insert(1, 'separation', [cols_to_replace_dict[x]['separation'] for x in error_bars_df['neg_sep'].to_list()])
+
+            if 'neg_sep' in groupby_col:
+                for col_name in cols_to_replace:
+                    error_bars_df.insert(1, col_name, [cols_to_replace_dict[x][col_name] for x in error_bars_df['neg_sep'].to_list()])
+
         if verbose:
             print(f'\nerror_bars_df:\n{error_bars_df}')
 
@@ -4224,6 +4335,14 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         error_bars_df = error_bars_path
     else:
         error_bars_df = pd.read_csv(error_bars_path)
+
+    # remove 'index' column if it exists
+    if 'index' in list(all_df.columns):
+        all_df.drop('index', axis=1, inplace=True)
+    if 'index' in list(ave_df.columns):
+        ave_df.drop('index', axis=1, inplace=True)
+    if 'index' in list(error_bars_df.columns):
+        error_bars_df.drop('index', axis=1, inplace=True)
 
     if verbose:
         print(f'\nall_df:\n{all_df}')

@@ -2,21 +2,21 @@ import os
 import pandas as pd
 import numpy as np
 from operator import itemgetter
-from psignifit_tools import get_psignifit_threshold_df, get_psig_thr_w_hue
+from psignifit_tools import psignifit_thr_df_Oct23, get_psignifit_threshold_df, get_psig_thr_w_hue
 from python_tools import switch_path
-from rad_flow_psignifit_analysis import a_data_extraction, get_sorted_neg_sep_indices, sort_with_neg_sep_indices
+from rad_flow_psignifit_analysis import a_data_extraction_Oct23, get_sorted_neg_sep_indices, sort_with_neg_sep_indices
 from rad_flow_psignifit_analysis import b3_plot_staircase, c_plots
 from rad_flow_psignifit_analysis import d_average_participant, make_average_plots, e_average_exp_data
-from rad_flow_psignifit_analysis import compare_prelim_plots
+from rad_flow_psignifit_analysis import compare_prelim_plots, make_long_df
 from exp1a_psignifit_analysis import plt_heatmap_row_col
 import seaborn as sns
 import matplotlib.pyplot as plt
 
 
 
-exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_multi_ISI_v1"
-participant_list = ['Nicktest']  # ' Nicktest_06102023' Nick_extra_prelims
-monitor = 'HP_24uh'  # 'asus_cal' OLED, 'Nick_work_laptop'
+exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_v2_motion_window"
+participant_list = ['Nick']  # ' Nicktest_06102023' Nick_extra_prelims
+monitor = 'OLED'  # 'asus_cal' OLED, 'Nick_work_laptop'
 background_type = 'flow_dots'  # 'flow_dots', 'no_bg'
 
 exp_path = os.path.normpath(exp_path)
@@ -36,8 +36,10 @@ cong_col_name = 'congruent'
 isi_col_name = 'isi_ms'
 sep_col_name = 'separation'
 neg_sep_col_name = 'neg_sep'
-bg_dur_name = 'prelim_ms'
+bg_dur_name = 'motion_dur_ms'  # prelim_ms
 resp_col_name = 'resp_corr'
+run_dir_prefixes = ['motion_', 'sep_']  # within each run dir, look for these prefixes to get the run data
+var_cols_list = [stair_names_col_name, isi_col_name, sep_col_name, neg_sep_col_name, cong_col_name, bg_dur_name]
 
 # append each run's data to these lists for mean staircases
 MASTER_p_trial_data_list = []
@@ -52,6 +54,7 @@ for p_idx, participant_name in enumerate(participant_list):
     print(f"\n\n{p_idx}. participant_name: {participant_name}")
 
     root_path = os.path.join(exp_path, participant_name)
+    print(f"root_path: {root_path}")
 
     p_master_all_dfs_list = []
     p_master_ave_dfs_list = []
@@ -73,28 +76,7 @@ for p_idx, participant_name in enumerate(participant_list):
         print(f"\nbg_type: {bg_type}")
         if bg_type != 'No_background_type_found':
             root_path = os.path.join(exp_path, participant_name, bg_type)
-
-            # '''Check for prelim flow dur folders, if they exist, loop through them, else continue'''
-            # dir_list = os.listdir(root_path)
-            # prelim_flow_dur_list = []
-            #
-            # # look for dirs beginning with 'bg' followed by ints
-            # for dir_name in dir_list:
-            #     if dir_name[:2] == 'bg':
-            #         try:
-            #             int(dir_name[2:])
-            #             prelim_flow_dur_list.append(dir_name)
-            #         except ValueError:
-            #             pass
-            # if len(prelim_flow_dur_list) == 0:
-            #     prelim_flow_dur_list.append('No_prelim_flow_dur_found')
-            # # print(f'prelim_flow_dur_list: {prelim_flow_dur_list}')
-            #
-            # for prelim_flow_dur in prelim_flow_dur_list:
-            #     print(f"\nprelim_flow_dur: {prelim_flow_dur}")
-            #     if prelim_flow_dur != 'No_prelim_flow_dur_found':
-            #         root_path = os.path.join(exp_path, participant_name, bg_type, prelim_flow_dur)
-
+            print(f"root_path: {root_path}")
 
             # # search to automatically get run_folder_names
             dir_list = os.listdir(root_path)
@@ -125,196 +107,49 @@ for p_idx, participant_name in enumerate(participant_list):
 
                 print(f'\nrun_idx {run_idx + 1}: running analysis for '
                       f'{participant_name}, {run_dir}, {participant_name}_{r_idx_plus}')
-                save_path = f'{root_path}{os.sep}{run_dir}'
+                # save_path = f'{root_path}{os.sep}{run_dir}'
+                save_path = os.path.join(root_path, run_dir)
+                print(f"save_path: {save_path}")
 
-                # # # search to automatically get updated isi_list
-                # dir_list = os.listdir(save_path)
-                # run_isi_list = []
-                # # for isi in isi_vals_list:
-                # for isi in list(range(-2, 18, 1)):
-                #     check_dir = f'ISI_{isi}_probeDur2'
-                #     if check_dir in dir_list:
-                #         run_isi_list.append(isi)
-                #     check_dir = f'ISI_{isi}'
-                #     if check_dir in dir_list:
-                #         run_isi_list.append(isi)
-                # run_isi_names_list = [f'ISI_{i}' for i in run_isi_list]
-                #
-                # print(f'run_isi_list: {run_isi_list}')
 
-                # # search to automatically get updated sep_list
-                dir_list = os.listdir(save_path)
-                run_sep_list = []
-                # for isi in isi_vals_list:
-                for sep in list(range(-2, 20, 1)):
-                    check_dir = f'sep_{sep}'
-                    if check_dir in dir_list:
-                        run_sep_list.append(sep)
-                    check_dir = f'sep_{sep}'
-                    if check_dir in dir_list:
-                        run_sep_list.append(sep)
-                run_sep_names_list = [f'sep_{i}' for i in run_sep_list]
-
-                print(f'run_sep_list: {run_sep_list}')
-                print(f'run_sep_names_list: {run_sep_names_list}')
-
-                # don't delete this (p_name = participant_name),
+                # don't delete this (p_run_name = participant_name),
                 # needed to ensure names go name1, name2, name3 not name1, name12, name123
-                p_name = participant_name
+                p_run_name = participant_name
 
                 '''a'''
-                p_name = f'{participant_name}_{r_idx_plus}'
+                p_run_name = f'{participant_name}_{r_idx_plus}'
 
-                a_data_extraction(p_name=p_name, run_dir=save_path, isi_list=run_sep_list, verbose=verbose)
+                a_data_extraction_Oct23(p_name=p_run_name, run_dir=save_path,
+                                        verbose=verbose)
 
-                run_data_path = f'{save_path}{os.sep}RUNDATA-sorted.xlsx'
+                # run_data_path = f'{save_path}{os.sep}RUNDATA-sorted.xlsx'
+                run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
                 run_data_df = pd.read_excel(run_data_path, engine='openpyxl')
                 print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
 
-                # add neg sep column to make batman plots
-                if 'neg_sep' not in list(run_data_df.columns):
-                    def make_neg_sep(df):
-                        if (df.congruent == -1) and (df.separation == 0.0):
-                            return -.1
-                        elif df.congruent == -1:
-                            return 0 - df.separation
-                        else:
-                            return df.separation
 
+                # run psignifit on run_data_df using var_cols_list to loop through the variables
+                thr_df = psignifit_thr_df_Oct23(
+                    save_path=save_path,
+                    p_run_name=p_run_name,
+                    run_df=run_data_df,
+                    cond_cols_list=var_cols_list,
+                    thr_col='probeLum',
+                    resp_col='resp_corr',
+                    wide_df_cols='isi_ms',
+                    n_bins=9, q_bins=True,
+                    conf_int=True, thr_type='Bayes',
+                    plot_both_curves=False,
+                    save_name=None,
+                    show_plots=False, save_plots=True,
+                    verbose=True)
 
-                    run_data_df.insert(7, 'neg_sep', run_data_df.apply(make_neg_sep, axis=1))
-                    print('\nadded neg_sep col')
-                    print(run_data_df['neg_sep'].to_list())
+                # append to master list for mean staircase
+                # add 'run' to run_data_df if not already there
+                if 'run' not in run_data_df.columns.tolist():
+                    run_data_df.insert(0, 'run', run_idx + 1)
+                MASTER_p_trial_data_list.append(run_data_df)
 
-                # # if prelim_ms isn't in the df, add it
-                # if 'prelim_ms' not in list(run_data_df.columns):
-                #     prelim_int = int(prelim_flow_dur[2:])
-                #     run_data_df.insert(8, 'prelim_ms', prelim_int)
-                #     print('\nadded prelim_ms col')
-                #     print(run_data_df['prelim_ms'].to_list())
-
-                '''
-                Data should be analysed in a particular order to ensure correct order on plots etc.
-                The order will be (neg_sep) [18, -18, 6, -6, 3, -3, 2, -2, 1, -1, 0, -.1]
-                first get values in stair name order, then get indices to put neg_sep in the correct order.
-                Use these indices to sort the lists to feed into psignifit.
-                '''
-
-                # get a list of all unique values in the 'stair' column, in the order they appear
-                stair_num_list = run_data_df['stair'].unique().tolist()
-
-                # check that there is just one unique value associated with each stair for separation, neg_sep, ISI and congruent.
-                # append the unique values to sep_vals_list, neg_sep_vals_list, and cong_vals_list.
-                isi_ms_vals_list = []
-                neg_sep_vals_list = []
-                cong_vals_list = []
-                stair_name_vals_list = []
-                prelim_vals_list = []
-
-                for stair in stair_num_list:
-                    stair_df = run_data_df[run_data_df['stair'] == stair]
-                    stair_name = stair_df[stair_names_col_name].unique().tolist()
-                    # separation = stair_df['separation'].unique().tolist()
-                    isi_ms = stair_df[isi_col_name].unique().tolist()
-                    neg_sep = stair_df[neg_sep_col_name].unique().tolist()
-                    congruent = stair_df[cong_col_name].unique().tolist()
-                    prelim = stair_df[bg_dur_name].unique().tolist()
-                    # if len(stair_name) > 1:
-                    #     raise ValueError(f"More than one unique stair name: {stair_name}")
-                    if len(isi_ms) > 1:
-                        raise ValueError(f"More than one unique isi_ms: {isi_ms}")
-                    if len(neg_sep) > 1:
-                        raise ValueError(f"More than one unique neg_sep: {neg_sep}")
-                    if len(congruent) > 1:
-                        raise ValueError(f"More than one unique congruent: {congruent}")
-                    if len(prelim) > 1:
-                        raise ValueError(f"More than one unique prelim: {prelim}")
-                    if len(stair_name) > 1:
-                        raise ValueError(f"More than one unique stair_name: {stair_name}")
-
-                    isi_ms_vals_list.append(isi_ms[0])
-                    neg_sep_vals_list.append(neg_sep[0])
-                    cong_vals_list.append(congruent[0])
-                    prelim_vals_list.append(prelim[0])
-                    stair_name_vals_list.append(stair_name[0])
-
-                print(f"\nisi_ms_vals_list: {isi_ms_vals_list}")
-                print(f"neg_sep_vals_list: {neg_sep_vals_list}")
-                # print(f"ISI_vals_list: {ISI_vals_list}")
-                print(f"cong_vals_list: {cong_vals_list}")
-                print("stair_name_vals_list: ", stair_name_vals_list)
-                print(f"prelim_vals_list: {prelim_vals_list}")
-
-                # # sort lists so that neg_sep_vals is in order [18, -18, 6, -6,...1, -1, 0, -.1]
-                # print(f"\nneg_sep_vals_list: {neg_sep_vals_list}")
-                # sorted_neg_sep_indices = get_sorted_neg_sep_indices(neg_sep_vals_list)
-                #
-                # # sort stair_num_list, sep_vals_list, neg_sep_vals_list and cong_vals_list using sorted_neg_sep_indices
-                # stair_num_list_sorted = sort_with_neg_sep_indices(stair_num_list, sorted_neg_sep_indices)
-                # print(f"stair_num_list_sorted: {stair_num_list_sorted}")
-                #
-                # isi_ms_list_sorted = sort_with_neg_sep_indices(isi_ms_vals_list, sorted_neg_sep_indices)
-                # print(f"isi_ms_list_sorted: {isi_ms_list_sorted}")
-                #
-                # neg_sep_vals_list_sorted = sort_with_neg_sep_indices(neg_sep_vals_list, sorted_neg_sep_indices)
-                # print(f"neg_sep_vals_list_sorted: {neg_sep_vals_list_sorted}")
-                #
-                # cong_vals_list_sorted = sort_with_neg_sep_indices(cong_vals_list, sorted_neg_sep_indices)
-                # print(f"cong_vals_list_sorted: {cong_vals_list_sorted}")
-                #
-                # prelim_vals_list_sorted = sort_with_neg_sep_indices(prelim_vals_list, sorted_neg_sep_indices)
-                # print(f"prelim_vals_list_sorted: {prelim_vals_list_sorted}")
-                #
-                # stair_name_vals_sorted = sort_with_neg_sep_indices(stair_name_vals_list, sorted_neg_sep_indices)
-                # print(f"stair_name_vals_sorted: {stair_name_vals_sorted}")
-                #
-                # '''get psignifit thresholds df'''
-                # cols_to_add_dict = {'stair_names': stair_name_vals_sorted,
-                #                     'congruent': cong_vals_list_sorted,
-                #                     'neg_sep': neg_sep_vals_list_sorted,
-                #                     'prelim_ms': prelim_vals_list_sorted,
-                #                     # 'separation': sep_vals_list_sorted,
-                #                     'isi_ms': isi_ms_list_sorted,}
-
-                '''get psignifit thresholds df'''
-                cols_to_add_dict = {'stair_names': stair_name_vals_list,
-                                    'congruent': cong_vals_list,
-                                    'neg_sep': neg_sep_vals_list,
-                                    'prelim_ms': prelim_vals_list,
-                                    # 'separation': sep_vals_list,
-                                    'isi_ms': isi_ms_vals_list}
-                print('\ncols_to_add_dict:')
-                for k, v in cols_to_add_dict.items():
-                    print(f'{k}: {v}')
-
-                # thr_df = get_psignifit_threshold_df(root_path=root_path,
-                #                                     p_run_name=run_dir,
-                #                                     csv_name=run_data_df,
-                #                                     n_bins=9, q_bins=True,
-                #                                     sep_col='neg_sep',
-                #                                     thr_col='probeLum',
-                #                                     resp_col='resp_corr',
-                #                                     isi_list=isi_ms_list_sorted,
-                #                                     sep_list=neg_sep_vals_list_sorted,
-                #                                     conf_int=True,
-                #                                     thr_type='Bayes',
-                #                                     plot_both_curves=False,
-                #                                     cols_to_add_dict=cols_to_add_dict,
-                #                                     show_plots=False,
-                #                                     verbose=verbose)
-                thr_df = get_psig_thr_w_hue(root_path, p_name, run_data_df, n_bins=9, q_bins=True,
-                                            thr_col=thr_col_name,
-                                            # there is only one sep, so putting prelim here in its place
-                                            sep_col=bg_dur_name, sep_list=prelim_vals_list,
-                                            isi_col=isi_col_name, isi_list=isi_ms_vals_list,
-                                            hue_col=cong_col_name, hue_list=cong_vals_list,
-                                            resp_col=resp_col_name,
-                                            conf_int=True, thr_type='Bayes',
-                                            plot_both_curves=False,
-                                            cols_to_add_dict=None, save_name=None,
-                                            show_plots=False, save_plots=True,
-                                            verbose=True)
-                print(f'thr_df:\n{thr_df}')
 #
 #
 # #         '''b3'''
@@ -324,61 +159,116 @@ for p_idx, participant_name in enumerate(participant_list):
 # #         c_plots(save_path=save_path, thr_col='probeLum', isi_name_list=run_isi_names_list, show_plots=show_plots, verbose=verbose)
 
 
-    #             '''d participant averages'''
-    #             trim_n = None
-    #             if len(run_folder_names) == 12:
-    #                 trim_n = 2
-    #             print(f'\ntrim_n: {trim_n}')
+            '''d participant averages'''
+            trim_n = None
+            if len(run_folder_names) == 12:
+                trim_n = 2
+            print(f'\ntrim_n: {trim_n}')
+
+            cols_to_drop = ['stack']
+            cols_to_replace = ['congruent', 'separation', 'motion_dur_ms']
+            groupby_cols = ['neg_sep']
+
+            d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
+                                  trim_n=trim_n,
+                                  groupby_col=groupby_cols,
+                                  cols_to_drop=cols_to_drop,
+                                  cols_to_replace=cols_to_replace,
+                                  error_type='SE', verbose=verbose)
+
+
+            # making average plot
+            all_df_path = os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv')
+            p_ave_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv')
+            err_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thr_error_SE.csv')
+            if trim_n is None:
+                all_df_path = os.path.join(root_path, f'MASTER_psignifit_thresholds.csv')
+                p_ave_path = os.path.join(root_path, 'MASTER_ave_thresh.csv')
+                err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
+            exp_ave = False
+
+
+            # make a lineplot showing congruent and incongruent thresholds for each ISI
+            all_df = pd.read_csv(all_df_path)
+            cols_to_change = ['isi_ms_-1', 'isi_ms_0', 'isi_ms_16.67', 'isi_ms_25', 'isi_ms_33.33', 'isi_ms_50',
+                              'isi_ms_100']
+
+            long_df = make_long_df(wide_df=all_df,
+                                   cols_to_keep=['congruent'],
+                                   cols_to_change=cols_to_change,
+                                   cols_to_change_show='probeLum',
+                                   new_col_name='ISI', strip_from_cols='isi_ms_', verbose=True)
+            print(f"long_df: {long_df.shape}\ncolumns: {list(long_df.columns)}\n{long_df.head()}\n")
+
+            # make line plot with error bars for congruent and incongruent with isi on x axis
+            sns.lineplot(data=long_df, x='ISI', y='probeLum', hue='congruent', errorbar='se', err_style='bars',
+                         err_kws={'capsize': 5})
+            plt.title("separation = 4; motion window = 200ms")
+            save_path, df_name = os.path.split(all_df_path)
+            plt.savefig(os.path.join(save_path, f"{df_name[:-4]}_lineplot.png"))
+            plt.show()
+
+            # # decorate plot
+            # if x_tick_values is not None:
+            #     ax.set_xticks(x_tick_values)
+            # if x_tick_labels is not None:
+            #     ax.set_xticks(x_tick_values)
+            #     ax.set_xticklabels(x_tick_labels)
+            # ax.set_xlabel('Probe separation in diagonal pixels')
+            # ax.set_ylabel('Probe Luminance')
+            #
+            # ax.legend(labels=isi_name_list, title='ISI',
+            #           shadow=True,
+            #           # place lower left corner of legend at specified location.
+            #           loc='lower left', bbox_to_anchor=(0.96, 0.5))
+            #
+            # if fig_title is not None:
+            #     plt.title(fig_title)
+            #
+            # # save plot
+            # if save_path is not None:
+            #     if save_name is not None:
+            #         plt.savefig(os.path.join(save_path, save_name))
+            #
+            # if verbose:
+            #     print("\n*** finished plot_data_unsym_batman() ***\n")
+            plt.show()
+
+
+    #         make_average_plots(all_df_path=all_df_path,
+    #                            ave_df_path=p_ave_path,
+    #                            error_bars_path=err_path,
+    #                            thr_col='probeLum',
+    #                            stair_names_col='neg_sep',
+    #                            cond_type_order=[1, -1],
+    #                            pos_neg_labels=['Congruent', 'Incongruent'],
+    #                            n_trimmed=trim_n,
+    #                            ave_over_n=len(run_folder_names),
+    #                            exp_ave=participant_name,
+    #                            show_plots=True, verbose=True)
     #
-    #             d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-    #                                   trim_n=trim_n, error_type='SE', verbose=verbose)
+    #         # add columns (background, prelim_ms) to all_df (and ave_df and err_df if needed)
+    #         all_df = pd.read_csv(all_df_path)
+    #         if 'background' not in all_df.columns.tolist():
+    #             all_df.insert(0, 'background', bg_type)
+    #         # if 'prelim_ms' not in all_df.columns.tolist():
+    #         #     all_df.insert(1, 'prelim_ms', prelim_flow_dur)
+    #         p_master_all_dfs_list.append(all_df)
     #
+    #         ave_df = pd.read_csv(p_ave_path)
+    #         if 'background' not in ave_df.columns.tolist():
+    #             ave_df.insert(0, 'background', bg_type)
+    #         # if 'prelim_ms' not in ave_df.columns.tolist():
+    #         #     ave_df.insert(1, 'prelim_ms', prelim_flow_dur)
+    #         p_master_ave_dfs_list.append(ave_df)
     #
-    #             # making average plot
-    #             all_df_path = os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv')
-    #             p_ave_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv')
-    #             err_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thr_error_SE.csv')
-    #             if trim_n is None:
-    #                 all_df_path = os.path.join(root_path, f'MASTER_psignifit_thresholds.csv')
-    #                 p_ave_path = os.path.join(root_path, 'MASTER_ave_thresh.csv')
-    #                 err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
-    #             exp_ave = False
-    #
-    #
-    #             make_average_plots(all_df_path=all_df_path,
-    #                                ave_df_path=p_ave_path,
-    #                                error_bars_path=err_path,
-    #                                thr_col='probeLum',
-    #                                stair_names_col='neg_sep',
-    #                                cond_type_order=[1, -1],
-    #                                pos_neg_labels=['Congruent', 'Incongruent'],
-    #                                n_trimmed=trim_n,
-    #                                ave_over_n=len(run_folder_names),
-    #                                exp_ave=participant_name,
-    #                                show_plots=True, verbose=True)
-    #
-    #             # add columns (background, prelim_ms) to all_df (and ave_df and err_df if needed)
-    #             all_df = pd.read_csv(all_df_path)
-    #             if 'background' not in all_df.columns.tolist():
-    #                 all_df.insert(0, 'background', bg_type)
-    #             if 'prelim_ms' not in all_df.columns.tolist():
-    #                 all_df.insert(1, 'prelim_ms', prelim_flow_dur)
-    #             p_master_all_dfs_list.append(all_df)
-    #
-    #             ave_df = pd.read_csv(p_ave_path)
-    #             if 'background' not in ave_df.columns.tolist():
-    #                 ave_df.insert(0, 'background', bg_type)
-    #             if 'prelim_ms' not in ave_df.columns.tolist():
-    #                 ave_df.insert(1, 'prelim_ms', prelim_flow_dur)
-    #             p_master_ave_dfs_list.append(ave_df)
-    #
-    #             err_df = pd.read_csv(err_path)
-    #             if 'background' not in err_df.columns.tolist():
-    #                 err_df.insert(0, 'background', bg_type)
-    #             if 'prelim_ms' not in err_df.columns.tolist():
-    #                 err_df.insert(1
-    #                               , 'prelim_ms', prelim_flow_dur)
-    #             p_master_err_dfs_list.append(err_df)
+    #         err_df = pd.read_csv(err_path)
+    #         if 'background' not in err_df.columns.tolist():
+    #             err_df.insert(0, 'background', bg_type)
+    #         # if 'prelim_ms' not in err_df.columns.tolist():
+    #         #     err_df.insert(1
+    #         #                   , 'prelim_ms', prelim_flow_dur)
+    #         p_master_err_dfs_list.append(err_df)
     #
     #
     # # make master list for each participant with their average threshold for each background type and prelim flow dur
