@@ -2537,9 +2537,8 @@ def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed, e
 
 
     # lineplot showing flow_dir_name on x_axis vs mean threshold on Y-axis, for all prelim and probe_dur.
-    sns.lineplot(x='flow_name', y='probe_speed_cm_per_s', data=simple_all_long_df,
-                             hue='prelim', style='probe_dur_ms',
-                             errorbar='se')
+    sns.lineplot(data=simple_all_long_df, x='flow_name', y='probe_speed_cm_per_s',
+                 hue='prelim', style='probe_dur_ms', errorbar='se')
     # insert horizontal line at 0.0
     plt.axhline(y=0.0, color='grey', linestyle='--')
 
@@ -2558,9 +2557,8 @@ def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed, e
     for dur in simple_all_long_df['probe_dur_ms'].unique().tolist():
         dur_df = simple_all_long_df[simple_all_long_df['probe_dur_ms'] == dur]
 
-        sns.catplot(x='flow_name', y='probe_speed_cm_per_s', data=dur_df,
-                               hue='prelim',
-                               kind='bar', errorbar='se')
+        sns.catplot(data=dur_df, x='flow_name', y='probe_speed_cm_per_s',
+                    hue='prelim', kind='bar', errorbar='se')
         plt.axhline(y=0.0, color='grey', linestyle='--')
         # insert vertical line between exp and cont
         plt.axvline(x=0.5, color='grey', linestyle='--')
@@ -2576,9 +2574,8 @@ def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed, e
         plt.show()
 
         # side by side plots for each prelim
-        g = sns.catplot(
-            data=dur_df, x="flow_name", y="probe_speed_cm_per_s", col="prelim",
-            kind="bar", height=4, aspect=.6)
+        g = sns.catplot(data=dur_df, x="flow_name", y="probe_speed_cm_per_s", col="prelim",
+                        kind="bar", height=4, aspect=.6)
         g.set_axis_labels("flow direction", "probe_speed_cm_per_s Rate")
         g.despine(left=True)
         plt.suptitle(f"{participant_name}, n={n_to_ave_over},  TM={n_trimmed}, probe_dur={dur[:5]}\n"
@@ -2606,12 +2603,12 @@ def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed, e
             prelim_df = dur_df[dur_df['prelim'] == this_prelim]
 
             # add plot joining means
-            sns.pointplot(x='flow_name', y='probe_speed_cm_per_s', data=prelim_df,
+            sns.pointplot(data=prelim_df, x='flow_name', y='probe_speed_cm_per_s',
                           color='lightgrey', errorbar=None, join=True,
                           ax=axes[row_idx])
 
             # add plot showing mean with error bars showing standard error
-            sns.pointplot(x='flow_name', y='probe_speed_cm_per_s', data=prelim_df,
+            sns.pointplot(data=prelim_df, x='flow_name', y='probe_speed_cm_per_s',
                           color='darkgrey', join=False,
                           markers='D', capsize=.2, errorbar="se",
                           ax=axes[row_idx])
@@ -2619,15 +2616,12 @@ def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed, e
             # todo: can I join all pairs of points from same run?  (e.g., exp and cont)
             #  So behind stripplot, have individual pointplot per run with very thin lines
 
-            sns.stripplot(x='flow_name', y='probe_speed_cm_per_s', data=prelim_df,
-                          hue='flow_name', jitter=True,
-                          ax=axes[row_idx])
+            sns.stripplot(data=prelim_df, x='flow_name', y='probe_speed_cm_per_s',
+                          hue='flow_name', jitter=True, ax=axes[row_idx])
 
 
             # add horizonal line at zero
-            axes[row_idx].axhline(y=0.0, color='grey', linestyle='--',
-                                  linewidth=.7
-                                  )
+            axes[row_idx].axhline(y=0.0, color='grey', linestyle='--', linewidth=.7)
 
             # set the y-axis label for the first plot, only show legend on last plot
             if row_idx == 0:  # first plot
@@ -2686,9 +2680,8 @@ def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed, e
     # drop exp_speed and cont_speed columns
     diff_df = diff_df.drop(columns=['exp_speed', 'cont_speed'])
 
-    sns.lineplot(x='prelim', y='diff', data=diff_df,
-                 hue='probe_dur_ms',
-                 errorbar='se')
+    sns.lineplot(data=diff_df, x='prelim', y='diff',
+                 hue='probe_dur_ms', errorbar='se')
     plt.xticks(list(diff_df['prelim'].unique()))
     plt.axhline(y=0.0, color='grey', linestyle='--')
 
@@ -2705,9 +2698,8 @@ def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed, e
 
     # if there are multiple probe_dur_ms, make a lineplot with probe_dur_ms on x-axis, diff on y-axis, prelim as hue
     if len(diff_df['probe_dur_ms'].unique().tolist()) > 1:
-        sns.lineplot(x='probe_dur_ms', y='diff', data=diff_df,
-                     hue='prelim',
-                     errorbar='se')
+        sns.lineplot(data=diff_df, x='probe_dur_ms', y='diff',
+                     hue='prelim', errorbar='se')
         plt.axhline(y=0.0, color='grey', linestyle='--')
 
         # get x-axis tick labels and round them

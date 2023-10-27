@@ -86,6 +86,10 @@ rad_flow_multi_ISI_v1.py - 20th Oct 23
 rad_flow_v2_motion_window.py - 23rd Oct 23
 - instead of a fixed prelim motion variable, there is a motion window, and the probes are presented in the middle.
     e.g., if the window is 10 frames and the ISI and probes are each 2 frames, then the probes are presented in frames 3 and 7. DONE
+    
+rad_flow_v2_missing_probe.py - 26th Oct 23
+- same as rad_flow_v2_motion_window.py, but with three probes presented (and one missing probe).  
+    It takes elements from Exp4b_missing_probe_3.py, but uses the same logic as rad_flow_v2_motion_window.py.
 
 """
 
@@ -524,6 +528,110 @@ def plt_fr_ints(time_p_trial_nested_list, n_trials_w_dropped_fr,
 
 
 ################################################################################
+'''
+Dictionary of co-ordinated probe motion.  There are 3 coherent types:
+rotational, radial and translational.
+There are two rotational (CW and ACW), two radial (in/out) and four translational (4 corners).
+There are eight types of incoherent motion.
+Note, rotation and radial and in a different order to previous versions with ACW/CW and exp/cont swapped order.
+'''
+# todo: turn this into a function?
+probes_dict = {'type': {'rotation': {'n_examples': 2, 'names': ['ACW', 'CW'],
+                                     'examples':
+                                         {'ACW':
+                                               {'tr': {'orientation': 'tangent', 'jump': -1, 'direction': 'ACW'},
+                                                'tl': {'orientation': 'tangent', 'jump': -1, 'direction': 'ACW'},
+                                                'bl': {'orientation': 'tangent', 'jump': -1, 'direction': 'ACW'},
+                                                'br': {'orientation': 'tangent', 'jump': -1, 'direction': 'ACW'}},
+                                          'CW':
+                                               {'tr': {'orientation': 'tangent', 'jump': 1, 'direction': 'CW'},
+                                                'tl': {'orientation': 'tangent', 'jump': 1, 'direction': 'CW'},
+                                                'bl': {'orientation': 'tangent', 'jump': 1, 'direction': 'CW'},
+                                                'br': {'orientation': 'tangent', 'jump': 1, 'direction': 'CW'}}}},
+                        'radial': {'n_examples': 2, 'names': ['exp', 'cont'],
+                                    'examples':
+                                        {'exp':
+                                             {'tr': {'orientation': 'radial', 'jump': -1, 'direction': 'exp'},
+                                              'tl': {'orientation': 'radial', 'jump': -1, 'direction': 'exp'},
+                                              'bl': {'orientation': 'radial', 'jump': -1, 'direction': 'exp'},
+                                              'br': {'orientation': 'radial', 'jump': -1, 'direction': 'exp'}},
+                                         'cont':
+                                             {'tr': {'orientation': 'radial', 'jump': 1, 'direction': 'cont'},
+                                              'tl': {'orientation': 'radial', 'jump': 1, 'direction': 'cont'},
+                                              'bl': {'orientation': 'radial', 'jump': 1, 'direction': 'cont'},
+                                              'br': {'orientation': 'radial', 'jump': 1, 'direction': 'cont'}}}},
+                        'translation': {'n_examples': 4, 'names': ['to_tr', 'to_tl', 'to_bl', 'to_br'],
+                                        'examples':
+                                            {'to_tr':
+                                                 {'tr': {'orientation': 'radial', 'jump': -1, 'direction': 'exp'},
+                                                  'tl': {'orientation': 'tangent', 'jump': 1, 'direction': 'CW'},
+                                                  'bl': {'orientation': 'radial', 'jump': 1, 'direction': 'cont'},
+                                                  'br': {'orientation': 'tangent', 'jump': -1, 'direction': 'ACW'}},
+                                             'to_tl':
+                                                 {'tr': {'orientation': 'tangent', 'jump': -1, 'direction': 'ACW'},
+                                                  'tl': {'orientation': 'radial', 'jump': -1, 'direction': 'exp'},
+                                                  'bl': {'orientation': 'tangent', 'jump': 1, 'direction': 'CW'},
+                                                  'br': {'orientation': 'radial', 'jump': 1, 'direction': 'cont'}},
+                                             'to_bl':
+                                                 {'tr': {'orientation': 'radial', 'jump': 1, 'direction': 'cont'},
+                                                  'tl': {'orientation': 'tangent', 'jump': -1, 'direction': 'ACW'},
+                                                  'bl': {'orientation': 'radial', 'jump': -1, 'direction': 'exp'},
+                                                  'br': {'orientation': 'tangent', 'jump': 1, 'direction': 'CW'}},
+                                             'to_br':
+                                                 {'tr': {'orientation': 'tangent', 'jump': 1, 'direction': 'CW'},
+                                                  'tl': {'orientation': 'radial', 'jump': 1, 'direction': 'cont'},
+                                                  'bl': {'orientation': 'tangent', 'jump': -1, 'direction': 'ACW'},
+                                                  'br': {'orientation': 'radial', 'jump': -1, 'direction': 'exp'}}}},
+                        'incoherent': {'n_examples': 8, 'names': ['inc0', 'inc1', 'inc2', 'inc3',
+                                                                  'inc4', 'inc5', 'inc6', 'inc7'],
+                                       'examples':
+                                           {'inc0':
+                                                {'tr': {'orientation': 'radial', 'jump': -1, 'direction': 'exp'},
+                                                 'tl': {'orientation': 'tangent', 'jump': -1, 'direction': 'ACW'},
+                                                 'bl': {'orientation': 'tangent', 'jump': -1, 'direction': 'ACW'},
+                                                 'br': {'orientation': 'radial', 'jump': 1, 'direction': 'cont'}},
+                                            'inc1':
+                                                {'tr': {'orientation': 'radial', 'jump': 1, 'direction': 'cont'},
+                                                 'tl': {'orientation': 'radial', 'jump': -1, 'direction': 'exp'},
+                                                 'bl': {'orientation': 'tangent', 'jump': -1, 'direction': 'ACW'},
+                                                 'br': {'orientation': 'tangent', 'jump': -1, 'direction': 'ACW'}},
+                                            'inc2':
+                                                {'tr': {'orientation': 'tangent', 'jump': -1, 'direction': 'ACW'},
+                                                 'tl': {'orientation': 'radial', 'jump': 1, 'direction': 'cont'},
+                                                 'bl': {'orientation': 'radial', 'jump': -1, 'direction': 'exp'},
+                                                 'br': {'orientation': 'tangent', 'jump': -1, 'direction': 'ACW'}},
+                                            'inc3':
+                                                {'tr': {'orientation': 'tangent', 'jump': -1, 'direction': 'ACW'},
+                                                 'tl': {'orientation': 'tangent', 'jump': -1, 'direction': 'ACW'},
+                                                 'bl': {'orientation': 'radial', 'jump': 1, 'direction': 'cont'},
+                                                 'br': {'orientation': 'radial', 'jump': -1, 'direction': 'exp'}},
+                                            'inc4':
+                                                {'tr': {'orientation': 'radial', 'jump': 1, 'direction': 'cont'},
+                                                 'tl': {'orientation': 'tangent', 'jump': 1, 'direction': 'CW'},
+                                                 'bl': {'orientation': 'tangent', 'jump': 1, 'direction': 'CW'},
+                                                 'br': {'orientation': 'radial', 'jump': -1, 'direction': 'exp'}},
+                                            'inc5':
+                                                {'tr': {'orientation': 'radial', 'jump': -1, 'direction': 'exp'},
+                                                 'tl': {'orientation': 'radial', 'jump': 1, 'direction': 'cont'},
+                                                 'bl': {'orientation': 'tangent', 'jump': 1, 'direction': 'CW'},
+                                                 'br': {'orientation': 'tangent', 'jump': 1, 'direction': 'CW'}},
+                                            'inc6':
+                                                {'tr': {'orientation': 'tangent', 'jump': 1, 'direction': 'CW'},
+                                                 'tl': {'orientation': 'radial', 'jump': -1, 'direction': 'exp'},
+                                                 'bl': {'orientation': 'radial', 'jump': 1, 'direction': 'cont'},
+                                                 'br': {'orientation': 'tangent', 'jump': 1, 'direction': 'CW'}},
+                                            'inc7':
+                                                {'tr': {'orientation': 'tangent', 'jump': 1, 'direction': 'CW'},
+                                                 'tl': {'orientation': 'tangent', 'jump': 1, 'direction': 'CW'},
+                                                 'bl': {'orientation': 'radial', 'jump': -1, 'direction': 'exp'},
+                                                 'br': {'orientation': 'radial', 'jump': 1, 'direction': 'cont'}}}}
+                        }
+               }
+
+# print('dict test')
+# # print(probes_dict['type'][probe_coherence]['examples']['CW'])
+# print_nested_round_floats(probes_dict, dict_title='focussed_dict_print')
+
 
 #######################
 # # # MAIN SCRIPT # # #
@@ -544,6 +652,9 @@ expInfo = {'01. Participant': 'Nicktest',
            '04. fps': [60, 240, 120, 60],
            # '05. ISI_dur_in_ms': [33.34, 100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0, -1],
            '05. Separation': [4, 2, 4, 6, 8, 0, 10],
+           '06. probe coherence': ['radial', 'incoherent', 'rotation', 'radial', 'translation'],
+           '07. exp type': ['bg_congruence', 'mixed_dir', 'stair_per_dir'],
+
            '08. Background': ['flow_dots', 'no_bg'],  # no 'flow_rings', as it's not implemented here
            '09. Motion duration': [1000, 0, 35, 70, 105, 140, 175, 210, 240, 280, 320, 360, 400, 440, 480, 520, 560, 600],
            '10. monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'ASUS_2_13_240Hz',
@@ -563,6 +674,8 @@ probe_duration = int(expInfo['03. Probe duration in frames'])
 fps = int(expInfo['04. fps'])
 # ISI_selected_ms = float(expInfo['05. ISI_dur_in_ms'])
 separation = int(expInfo['05. Separation'])
+probe_coherence = expInfo['06. probe coherence']
+exp_type = expInfo['07. exp type']
 background = expInfo['08. Background']
 selected_motion_dur_ms = int(expInfo['09. Motion duration'])  # motion before and after stim, which is in the middle
 monitor_name = expInfo['10. monitor_name']
@@ -586,11 +699,29 @@ expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
 expInfo['time'] = datetime.now().strftime("%H:%M:%S")
 
 
+stair_per_dir = True
+if exp_type == 'stair_per_dir':
+    print('different staircases for each motion direction')
+    if probe_coherence == 'rotation':
+        target_jump_vals = ['CW', 'ACW']
+    elif probe_coherence == 'radial':
+        target_jump_vals = ['exp', 'cont']
+    else:
+        raise ValueError('Can only have different motion stairs if probe_coherence is radial or rotational.')
+elif exp_type == 'bg_congruence':
+    print('background congruence staircases')
+    target_jump_vals = ['mixed']
+else:
+    stair_per_dir = False
+    print('each stair will have a mixture of motion directions.')
+    target_jump_vals = ['mixed']
+
+
 # # # EXPERIMENT HANDLING AND SAVING # # #
 # save each participant's files into separate dir for each ISI
 save_dir = path.join(_thisDir, expName, monitor_name,  # added monitor name to analysis structure
                      participant_name,
-                     background,
+                     background, exp_type, probe_coherence,
                      # 'interleaved',  # always use dots background and interleave prelims
                      f'{participant_name}_{run_number}',
                      f'motion_{selected_motion_dur_ms}ms',  # motion dur in ms as folder
@@ -660,14 +791,25 @@ if debug:
 
 # # main contrast is whether the background and target motion is in same or opposite direction.
 # congruence_vals: 1=congruent/same, -1=incongruent/different
+congruence_contrast = True  # if True, congruence is a contrast, if False, congruence is a single value
 congruence_vals = [1, -1]
 congruence_names = ['cong', 'incong']
 if background == 'no_bg':
     congruence_vals = [1]
     congruence_names = ['no_bg']
+    congruence_contrast = False
+if probe_coherence != 'radial':
+    congruence_vals = [1]
+    congruence_names = ['no_congruence_possible']
+    congruence_contrast = False
 cong_zip = list(zip(congruence_names, congruence_vals))
 
+
+# todo: add other probe_coherence options for staircases
+
+
 if debug:
+    print(f'congruence_contrast: {congruence_contrast}')
     print(f'congruence_vals: {congruence_vals}')
     print(f'congruence_names: {congruence_names}')
     print(f"cong_zip: {cong_zip}")
@@ -706,9 +848,10 @@ if debug:
 
 
 # stair_names_list = [f"ISI_{iz[2]}_{cz[0]}_{cz[1]}_prelim_{p}" for iz, cz, p in combined_conds]
-stair_names_list = [f"ISI_{iz[2]}_{cz[0]}_{cz[1]}" for iz, cz in combined_conds]
-
-if background == 'no_bg':
+if congruence_contrast:  # include congruence in stair name
+    stair_names_list = [f"ISI_{iz[2]}_{cz[0]}_{cz[1]}" for iz, cz in combined_conds]
+else:  # don't include congruence
+# if background == 'no_bg':
     # stair_names_list = [f"ISI_{iz[2]}_{cz[0]}_prelim_{p}" for iz, cz, p in combined_conds]
     stair_names_list = [f"ISI_{iz[2]}_{cz[0]}" for iz, cz in combined_conds]
 
@@ -716,6 +859,9 @@ n_stairs = len(combined_conds)
 total_n_trials = int(n_trials_per_stair * n_stairs)
 print(f'\nstair_names_list: {stair_names_list}')
 print(f'n_stairs: {n_stairs}, total_n_trials: {total_n_trials}')
+
+# todo: get rid Of this or at least integrate it to have functionality if needed
+target_jump_list = ['NaN'] * n_stairs  # this is just a placeholder for now
 
 
 # # # MONITOR SETTINGS # # #
@@ -801,10 +947,26 @@ if monitor_name == 'OLED':  # smaller, 3-pixel probes for OLED
                  (2, 0), (1, 0), (1, -1), (0, -1),
                  (0, -2), (-1, -2), (-1, -1), (0, -1)]
 
-probe1 = visual.ShapeStim(win, vertices=probeVert, lineWidth=0, opacity=1, size=probe_size, interpolate=False,
-                          colorSpace=this_colourSpace)
-probe2 = visual.ShapeStim(win, vertices=probeVert, lineWidth=0, opacity=1, size=probe_size, interpolate=False,
-                          colorSpace=this_colourSpace)
+# probe1 = visual.ShapeStim(win, vertices=probeVert, lineWidth=0, opacity=1, size=probe_size, interpolate=False,
+#                           colorSpace=this_colourSpace)
+# probe2 = visual.ShapeStim(win, vertices=probeVert, lineWidth=0, opacity=1, size=probe_size, interpolate=False,
+#                           colorSpace=this_colourSpace)
+probe1_tr = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, -1.0, 1.0), colorSpace=this_colourSpace,
+                             lineWidth=0, opacity=1, size=probe_size, interpolate=False)
+probe2_tr = visual.ShapeStim(win, vertices=probeVert, fillColor=[-1.0, 1.0, -1.0], colorSpace=this_colourSpace,
+                             lineWidth=0, opacity=1, size=probe_size, interpolate=False)
+probe1_tl = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, -1.0, 1.0), colorSpace=this_colourSpace,
+                             lineWidth=0, opacity=1, size=probe_size, interpolate=False)
+probe2_tl = visual.ShapeStim(win, vertices=probeVert, fillColor=[-1.0, 1.0, -1.0], colorSpace=this_colourSpace,
+                             lineWidth=0, opacity=1, size=probe_size, interpolate=False)
+probe1_bl = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, -1.0, 1.0), colorSpace=this_colourSpace,
+                             lineWidth=0, opacity=1, size=probe_size, interpolate=False)
+probe2_bl = visual.ShapeStim(win, vertices=probeVert, fillColor=[-1.0, 1.0, -1.0], colorSpace=this_colourSpace,
+                             lineWidth=0, opacity=1, size=probe_size, interpolate=False)
+probe1_br = visual.ShapeStim(win, vertices=probeVert, fillColor=(1.0, -1.0, 1.0), colorSpace=this_colourSpace,
+                             lineWidth=0, opacity=1, size=probe_size, interpolate=False)
+probe2_br = visual.ShapeStim(win, vertices=probeVert, fillColor=[-1.0, 1.0, -1.0], colorSpace=this_colourSpace,
+                             lineWidth=0, opacity=1, size=probe_size, interpolate=False)
 
 # probes and probe_masks are at dist_from_fix pixels from middle of the screen
 dist_from_fix = int((np.tan(np.deg2rad(probe_ecc)) * view_dist_pix) / np.sqrt(2))
@@ -959,9 +1121,17 @@ if debug:
 instructions = visual.TextStim(win=win, name='instructions', font='Arial', height=20,
                                color='white', colorSpace=this_colourSpace,
                                wrapWidth=widthPix / 2,
-                               text="\n\nFocus on the fixation circle at the centre of the screen.\n\n"
-                                    "A small white target will briefly appear on screen,\n"
-                                    "press the key related to the location of the probe:\n\n"
+                               # text="\n\nFocus on the fixation circle at the centre of the screen.\n\n"
+                               #      "A small white target will briefly appear on screen,\n"
+                               #      "press the key related to the location of the probe:\n\n"
+                               #      "[4]/[Q] top-left\t\t\t[5]/[W] top-right\n\n\n\n"
+                               #      "[1]/[A] bottom-left\t\t\t[2]/[S] bottom-right.\n\n\n"
+                               #      "Some targets will be easy to see, others will be hard to spot.\n"
+                               #      "If you aren't sure, just guess!\n\n"
+                               #      "Press any key to start"
+                               text="\n\nFocus on the small circle at the centre of the screen.\n\n"
+                                    "Small white probes will briefly flash in three corners,\n"
+                                    "press the key related to the direction which did NOT contain a probe:\n\n"
                                     "[4]/[Q] top-left\t\t\t[5]/[W] top-right\n\n\n\n"
                                     "[1]/[A] bottom-left\t\t\t[2]/[S] bottom-right.\n\n\n"
                                     "Some targets will be easy to see, others will be hard to spot.\n"
@@ -1105,10 +1275,10 @@ for step in range(n_trials_per_stair):
             flow_name = 'cont'
             if flow_dir == -1:
                 flow_name = 'exp'
-
-            target_jump = congruent * flow_dir
             if debug:
-                print(f"flow_dir: {flow_dir}, flow_name: {flow_name}, target_jump: {target_jump}")
+                print(f"flow_dir: {flow_dir}, flow_name: {flow_name}")
+
+            # target_jump = congruent * flow_dir
 
             if background == 'flow_dots':
                 # boundaries for z position (distance from screen) during radial flow
@@ -1137,29 +1307,150 @@ for step in range(n_trials_per_stair):
             probeLum = thisStair.next()
             probeColor1 = probeLum / maxLum
             this_probeColor = probeColor1
-            probe1.fillColor = [this_probeColor, this_probeColor, this_probeColor]
-            probe2.fillColor = [this_probeColor, this_probeColor, this_probeColor]
+            # probe1.fillColor = [this_probeColor, this_probeColor, this_probeColor]
+            # probe2.fillColor = [this_probeColor, this_probeColor, this_probeColor]
+            probe1_tr.fillColor = [this_probeColor, this_probeColor, this_probeColor]
+            probe2_tr.fillColor = [this_probeColor, this_probeColor, this_probeColor]
+            probe1_tl.fillColor = [this_probeColor, this_probeColor, this_probeColor]
+            probe2_tl.fillColor = [this_probeColor, this_probeColor, this_probeColor]
+            probe1_bl.fillColor = [this_probeColor, this_probeColor, this_probeColor]
+            probe2_bl.fillColor = [this_probeColor, this_probeColor, this_probeColor]
+            probe1_br.fillColor = [this_probeColor, this_probeColor, this_probeColor]
+            probe2_br.fillColor = [this_probeColor, this_probeColor, this_probeColor]
             if debug:
                 print(f"probeLum: {probeLum}, this_probeColor: {this_probeColor}, "
                       f"probeColor1: {probeColor1}")
 
             # PROBE LOCATION - 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
-            corner = np.random.choice([45, 135, 225, 315])
+            # corner = np.random.choice([45, 135, 225, 315])
+            # which corner does not have a probe
+            missing_corner = random.choice(['tr', 'tl', 'bl', 'br'])
+            print(f"missing_corner: {missing_corner}")
 
-            # PROBE POSITION (including shift around dist_from_fix)
-            probe_pos_dict = get_probe_pos_dict(sep, target_jump, corner, dist_from_fix,
-                                                probe_size=probe_size,
-                                                probes_ori=orientation, verbose=debug)
+            # # # # direction in which the probe jumps : CW or CCW (tangent) or exp vs cont (radial)
+            if exp_type == 'mixed_dir':  # if mixed probe dirs per stair, randomly select example)
 
+                n_examples = int(probes_dict['type'][probe_coherence]['n_examples'])
+                this_example = random.choice(list(range(n_examples)))
+                # print(f'this_example: {this_example} from {list(range(n_examples))}')
+
+            else:  # if stair_per_dir or bg_conogruence, then use the same example for all trials in stair
+
+                # jump_dir is either from stair_idx for stair_per_dir, or infered from congruence for bg_congruence
+                if exp_type == 'stair_per_dir':  # separate staircases for CW vs ACW, or for in (cont) vs out (exp).
+                    # jump_dir and target_jump selected from target_jump_list
+                    jump_dir = target_jump_list[stair_idx]
+
+                else:  # bg_congruence, so jump_dir is inferred from congruence
+                    if congruent * flow_dir == 1:
+                        jump_dir = 'cont'
+                    else:  # if congruent * flow_dir == -1
+                        jump_dir = 'exp'
+
+                if probe_coherence == 'radial':
+                    target_jump = 1  # jump_dir is contract
+                    this_example = 1
+                    if jump_dir == 'exp':
+                        target_jump = -1
+                        this_example = 0
+
+                elif probe_coherence == 'rotation':
+                    target_jump = 1  # jump_dir is CW
+                    this_example = 1
+                    if jump_dir == 'ACW':
+                        target_jump = -1
+                        this_example = 0
+
+                else:
+                    raise ValueError(f'stair_per_dir only valid for rotation or radial, not {probe_coherence}')
+
+                print(f"target_jump: {target_jump}, jump_dir: {jump_dir}")
+
+            example_name = probes_dict['type'][probe_coherence]['names'][this_example]
+
+            print(f"this_example: {this_example}, example_name: {example_name}")
+
+
+            # # PROBE POSITION (including shift around dist_from_fix)
+            tr_ori = probes_dict['type'][probe_coherence]['examples'][example_name]['tr']['orientation']
+            tr_jump = probes_dict['type'][probe_coherence]['examples'][example_name]['tr']['jump']
+            tr_dir = probes_dict['type'][probe_coherence]['examples'][example_name]['tr']['direction']
+            tr_probe_pos_dict = get_probe_pos_dict(separation=sep, target_jump=tr_jump, corner=45, dist_from_fix=dist_from_fix,
+                                                   probe_size=probe_size, probes_ori=orientation, verbose=debug)
             # loc_marker.setPos([loc_x, loc_y])
-            probe1.setPos(probe_pos_dict['probe1_pos'])
-            probe1.setOri(probe_pos_dict['probe1_ori'])
-            probe2.setPos(probe_pos_dict['probe2_pos'])
-            probe2.setOri(probe_pos_dict['probe2_ori'])
+            probe1_tr.setPos(tr_probe_pos_dict['probe1_pos'])
+            probe1_tr.setOri(tr_probe_pos_dict['probe1_ori'])
+            probe2_tr.setPos(tr_probe_pos_dict['probe2_pos'])
+            probe2_tr.setOri(tr_probe_pos_dict['probe2_ori'])
+            # if debug:
+            #     print(f"loc_marker: {[tr_probe_pos_dict['loc_x'], tr_probe_pos_dict['loc_y']]}, "
+            #           f"probe1_pos: {tr_probe_pos_dict['probe1_pos']}, "
+            #           f"probe2_pos: {tr_probe_pos_dict['probe2_pos']}. dff: {dist_from_fix}")
+
+            tl_ori = probes_dict['type'][probe_coherence]['examples'][example_name]['tl']['orientation']
+            tl_jump = probes_dict['type'][probe_coherence]['examples'][example_name]['tl']['jump']
+            tl_dir = probes_dict['type'][probe_coherence]['examples'][example_name]['tl']['direction']
+            tl_probe_pos_dict = get_probe_pos_dict(separation=sep, target_jump=tl_jump, corner=135, dist_from_fix=dist_from_fix,
+                                                   probe_size=probe_size, probes_ori=orientation, verbose=debug)
+            # loc_marker.setPos([loc_x, loc_y])
+            probe1_tl.setPos(tl_probe_pos_dict['probe1_pos'])
+            probe1_tl.setOri(tl_probe_pos_dict['probe1_ori'])
+            probe2_tl.setPos(tl_probe_pos_dict['probe2_pos'])
+            probe2_tl.setOri(tl_probe_pos_dict['probe2_ori'])
+            # if debug:
+            #     print(f"loc_marker: {[tl_probe_pos_dict['loc_x'], tl_probe_pos_dict['loc_y']]}, "
+            #           f"probe1_pos: {tl_probe_pos_dict['probe1_pos']}, "
+            #           f"probe2_pos: {tl_probe_pos_dict['probe2_pos']}. dff: {dist_from_fix}")
+
+            bl_ori = probes_dict['type'][probe_coherence]['examples'][example_name]['bl']['orientation']
+            bl_jump = probes_dict['type'][probe_coherence]['examples'][example_name]['bl']['jump']
+            bl_dir = probes_dict['type'][probe_coherence]['examples'][example_name]['bl']['direction']
+            bl_probe_pos_dict = get_probe_pos_dict(separation=sep, target_jump=bl_jump, corner=225, dist_from_fix=dist_from_fix,
+                                                   probe_size=probe_size, probes_ori=orientation, verbose=debug)
+            # loc_marker.setPos([loc_x, loc_y])
+            probe1_bl.setPos(bl_probe_pos_dict['probe1_pos'])
+            probe1_bl.setOri(bl_probe_pos_dict['probe1_ori'])
+            probe2_bl.setPos(bl_probe_pos_dict['probe2_pos'])
+            probe2_bl.setOri(bl_probe_pos_dict['probe2_ori'])
+            # if debug:
+            #     print(f"loc_marker: {[bl_probe_pos_dict['loc_x'], bl_probe_pos_dict['loc_y']]}, "
+            #           f"probe1_pos: {bl_probe_pos_dict['probe1_pos']}, "
+            #           f"probe2_pos: {bl_probe_pos_dict['probe2_pos']}. dff: {dist_from_fix}")
+
+            br_ori = probes_dict['type'][probe_coherence]['examples'][example_name]['br']['orientation']
+            br_jump = probes_dict['type'][probe_coherence]['examples'][example_name]['br']['jump']
+            br_dir = probes_dict['type'][probe_coherence]['examples'][example_name]['br']['direction']
+            br_probe_pos_dict = get_probe_pos_dict(separation=sep, target_jump=br_jump, corner=315, dist_from_fix=dist_from_fix,
+                                                   probe_size=probe_size, probes_ori=orientation, verbose=debug)
+            # loc_marker.setPos([loc_x, loc_y])
+            probe1_br.setPos(br_probe_pos_dict['probe1_pos'])
+            probe1_br.setOri(br_probe_pos_dict['probe1_ori'])
+            probe2_br.setPos(br_probe_pos_dict['probe2_pos'])
+            probe2_br.setOri(br_probe_pos_dict['probe2_ori'])
+            # if debug:
+            #     print(f"loc_marker: {[br_probe_pos_dict['loc_x'], br_probe_pos_dict['loc_y']]}, "
+            #           f"probe1_pos: {br_probe_pos_dict['probe1_pos']}, "
+            #           f"probe2_pos: {br_probe_pos_dict['probe2_pos']}. dff: {dist_from_fix}")
             if debug:
-                print(f"loc_marker: {[probe_pos_dict['loc_x'], probe_pos_dict['loc_y']]}, "
-                      f"probe1_pos: {probe_pos_dict['probe1_pos']}, "
-                      f"probe2_pos: {probe_pos_dict['probe2_pos']}. dff: {dist_from_fix}")
+                print(f"tr: {tr_dir}, {tr_ori}, {tr_jump}\n"
+                      f"tl: {tl_dir}, {tl_ori}, {tl_jump}\n"
+                      f"bl: {bl_dir}, {bl_ori}, {bl_jump}\n"
+                      f"br: {br_dir}, {br_ori}, {br_jump}\n")
+
+            # # PROBE POSITION (including shift around dist_from_fix)
+            # probe_pos_dict = get_probe_pos_dict(sep, target_jump, corner, dist_from_fix,
+            #                                     probe_size=probe_size,
+            #                                     probes_ori=orientation, verbose=debug)
+
+            # # loc_marker.setPos([loc_x, loc_y])
+            # probe1.setPos(probe_pos_dict['probe1_pos'])
+            # probe1.setOri(probe_pos_dict['probe1_ori'])
+            # probe2.setPos(probe_pos_dict['probe2_pos'])
+            # probe2.setOri(probe_pos_dict['probe2_ori'])
+            # if debug:
+            #     print(f"loc_marker: {[probe_pos_dict['loc_x'], probe_pos_dict['loc_y']]}, "
+            #           f"probe1_pos: {probe_pos_dict['probe1_pos']}, "
+            #           f"probe2_pos: {probe_pos_dict['probe2_pos']}. dff: {dist_from_fix}")
 
 
             # # # GET TIMINGS in frames # # #
@@ -1173,11 +1464,11 @@ for step in range(n_trials_per_stair):
 
             # # # MOTION WINDOW # # #
             '''Rather than just having preliminary motin (before probe1), we now have a motion window of a fixed duration.
-            The stimuli (probe1, ISI, probe2) occur in the middle of this window.  
-            e.g., if the window is 10 frames, and the ISI is 4 frames, then the total stimulus duration is 8 frames, 
+            The stimuli (probe1, ISI, probe2) occur in the middle of this window.
+            e.g., if the window is 10 frames, and the ISI is 4 frames, then the total stimulus duration is 8 frames,
             so there will be one frame of motion before probe1 and one frame of motion after probe2.
             if the window was 100 frames then there would be 46 frames of motion before probe1 and 46 frames after probe2.'''
-            
+
             # get number of frames for motion duration
             motion_dur_fr = int(selected_motion_dur_ms * fps / 1000)
             print(f"motion_dur_fr: {motion_dur_fr}")
@@ -1186,19 +1477,19 @@ for step in range(n_trials_per_stair):
                 print(f'\nselected_motion_dur_ms: {selected_motion_dur_ms}')
                 print(f'motion_dur_fr: {motion_dur_fr}')
                 print(f'motion_dur_ms: {motion_dur_ms}')
-                
+
             # Get the number of frames for probes and ISI
             # If probes are presented concurrently, set isi_dur_fr and p2_dur_fr to last for 0 frames.
             isi_dur_fr = isi_cond_fr
             p1_dur_fr = p2_dur_fr = probe_duration
             if isi_cond_fr < 0:
                 isi_dur_fr = p2_dur_fr = 0
-                
+
             # get number of frames for the total stimulus duration
             stim_dur_fr = p1_dur_fr + isi_dur_fr + p2_dur_fr
             if isi_dur_fr == -1:
                 stim_dur_fr = p1_dur_fr
-                
+
             # get duration of preliminary motion (before probe1) and post-probe2 motion
             # if these number are not equal, prelim should be 1 frame longer than post
             pre_and_post_fr = int(motion_dur_fr - stim_dur_fr)  # remaining frames not including stim_dur_fr
@@ -1207,8 +1498,8 @@ for step in range(n_trials_per_stair):
                 prelim_dur_fr = post_dur_fr
             else:
                 prelim_dur_fr = post_dur_fr + 1
-                
-                
+
+
             ''''''
 
             # variable fixation time
@@ -1393,11 +1684,30 @@ for step in range(n_trials_per_stair):
 
                     fixation.draw()
 
-                    probe1.draw()
+                    # probe1.draw()
+                    # draw probe1 in each corner apart from missing corner
+                    if missing_corner != 'tr':
+                        probe1_tr.draw()
+                    if missing_corner != 'tl':
+                        probe1_tl.draw()
+                    if missing_corner != 'bl':
+                        probe1_bl.draw()
+                    if missing_corner != 'br':
+                        probe1_br.draw()
+
                     # SIMULTANEOUS CONDITION
                     if isi_cond_fr == -1:
                         if sep <= 18:
-                            probe2.draw()
+                            # probe2.draw()
+                            # draw probe2 in each corner apart from missing corner
+                            if missing_corner != 'tr':
+                                probe2_tr.draw()
+                            if missing_corner != 'tl':
+                                probe2_tl.draw()
+                            if missing_corner != 'bl':
+                                probe2_bl.draw()
+                            if missing_corner != 'br':
+                                probe2_br.draw()
 
 
 
@@ -1469,7 +1779,15 @@ for step in range(n_trials_per_stair):
                     fixation.draw()
                     if isi_cond_fr >= 0:  # if not concurrent condition (ISI=-1)
                         if sep != 99:  # If not 1probe condition (sep = 99)
-                            probe2.draw()
+                            # probe2.draw()
+                            if missing_corner != 'tr':
+                                probe2_tr.draw()
+                            if missing_corner != 'tl':
+                                probe2_tl.draw()
+                            if missing_corner != 'bl':
+                                probe2_bl.draw()
+                            if missing_corner != 'br':
+                                probe2_br.draw()
 
 
                 # # # POST STIMULUS MOTION - after probe 2 (unless isi_cond_fr < 1) # # #
@@ -1577,16 +1895,28 @@ for step in range(n_trials_per_stair):
             # CHECK RESPONSES
             # default assume response incorrect unless meets criteria below
             resp.corr = 0
-            if corner == 45:
+            # if corner == 45:
+            #     if (resp.keys == 'w') or (resp.keys == 'num_5'):
+            #         resp.corr = 1
+            # elif corner == 135:
+            #     if (resp.keys == 'q') or (resp.keys == 'num_4'):
+            #         resp.corr = 1
+            # elif corner == 225:
+            #     if (resp.keys == 'a') or (resp.keys == 'num_1'):
+            #         resp.corr = 1
+            # elif corner == 315:
+            #     if (resp.keys == 's') or (resp.keys == 'num_2'):
+            #         resp.corr = 1
+            if missing_corner == 'tr':
                 if (resp.keys == 'w') or (resp.keys == 'num_5'):
                     resp.corr = 1
-            elif corner == 135:
+            elif missing_corner == 'tl':
                 if (resp.keys == 'q') or (resp.keys == 'num_4'):
                     resp.corr = 1
-            elif corner == 225:
+            elif missing_corner == 'bl':
                 if (resp.keys == 'a') or (resp.keys == 'num_1'):
                     resp.corr = 1
-            elif corner == 315:
+            elif missing_corner == 'br':
                 if (resp.keys == 's') or (resp.keys == 'num_2'):
                     resp.corr = 1
             resp_corr_list.append(resp.corr)
@@ -1693,7 +2023,11 @@ for step in range(n_trials_per_stair):
         thisExp.addData('flow_dir', flow_dir)
         thisExp.addData('flow_name', flow_name)
         thisExp.addData('probe_jump', target_jump)
-        thisExp.addData('corner', corner)
+        # thisExp.addData('corner', corner)
+        thisExp.addData('cond_type', probe_coherence)
+        thisExp.addData('example_name', example_name)
+        thisExp.addData('missing_corner', missing_corner)
+
         thisExp.addData('probeLum', probeLum)
         thisExp.addData('probeColor1', probeColor1)
         thisExp.addData('resp_keys', resp.keys)

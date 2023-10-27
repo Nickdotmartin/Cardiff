@@ -3785,19 +3785,38 @@ def d_average_participant(root_path, run_dir_names_list,
 
     # # get means and errors
     # # If I have cols to groupby and drop then use those, if not use all that long code below.
-    # todo: update scripts to use groupby and cols_to_drop.
     # if cols_to_drop is not None & groupby_col is not None:
     print("\ngetting means and errors")
     print(f'cols_to_drop: {cols_to_drop}')
     print(f'groupby_col: {groupby_col}')
 
+
+
+
+
     if all(v is not None for v in [cols_to_drop, groupby_col]):
         print('yes running with groupby_col and cols_to_drop')
+
+
+        # check all col_names in cols_to_drop are actually in the df
+        for col_name in cols_to_drop:
+            if col_name not in list(get_means_df.columns):
+                cols_to_drop.remove(col_name)
+
+        # check all col_names in groupby_col are actually in the df
+        for col_name in groupby_col:
+            if col_name not in list(get_means_df.columns):
+                groupby_col.remove(col_name)
 
         groupby_sep_df = get_means_df.drop(cols_to_drop, axis=1)
         print(f"groupby_sep_df:\n{groupby_sep_df}")
 
         if cols_to_replace is not None:
+
+            # check all col_names in cols_to_replace are actually in the df
+            for col_name in cols_to_replace:
+                if col_name not in list(get_means_df.columns):
+                    cols_to_replace.remove(col_name)
 
             # first create a dictionary where the keys are the unique values from the neg_sep column and the
             # keys are the corresponding values in the 'cond_type' and 'separation' columns

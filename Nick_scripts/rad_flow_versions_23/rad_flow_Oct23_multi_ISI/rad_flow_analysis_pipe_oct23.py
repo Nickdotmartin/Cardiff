@@ -14,7 +14,8 @@ import matplotlib.pyplot as plt
 
 
 
-exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_v2_motion_window"
+# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_v2_motion_window"
+exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_v2_missing_probe"
 participant_list = ['Nick']  # ' Nicktest_06102023' Nick_extra_prelims
 monitor = 'OLED'  # 'asus_cal' OLED, 'Nick_work_laptop'
 background_type = 'flow_dots'  # 'flow_dots', 'no_bg'
@@ -53,102 +54,122 @@ for p_idx, participant_name in enumerate(participant_list):
 
     print(f"\n\n{p_idx}. participant_name: {participant_name}")
 
-    root_path = os.path.join(exp_path, participant_name)
-    print(f"root_path: {root_path}")
+    p_name_path = os.path.join(exp_path, participant_name)
+    print(f"p_name_path: {p_name_path}")
 
     p_master_all_dfs_list = []
     p_master_ave_dfs_list = []
     p_master_err_dfs_list = []
 
 
-    '''check for background_type in folder name, if 'flow_dots', 'flow_rings', 'no_bg', loop through those, else continue'''
-    # # search to automatically get run_folder_names
-    dir_list = os.listdir(root_path)
-    bg_dir_list = []
-    for bg_type in ['flow_dots', 'flow_rings', 'no_bg']:
-        if bg_type in dir_list:
-            bg_dir_list.append(bg_type)
-    if len(bg_dir_list) == 0:
-        bg_dir_list.append('No_background_type_found')
+    '''search to automatically get bg_cond_dirs containing run_folder_names (e.g., participant_name_1, participant_name_2, etc.).
+    There could be any number of bakground folders (flow_dots, no_bg), (motion_window_dur)(stair_per_dir, bg_congruence) etc'''
+    background_conds_to_analyse = []
+    for root, dirs, files in os.walk(p_name_path):
+        if f"{participant_name}_1" in dirs:
+            print(f"\nfound {participant_name}_1 in {root}\n")
+            # extract bg_cond_dirs from root (e.g., remove p_name_path from root) and leading slash
+            bg_cond_dirs = root.replace(p_name_path, '')[1:]
+            print(f"bg_cond_dirs: {bg_cond_dirs}")
+            background_conds_to_analyse.append(bg_cond_dirs)
+
+            # # split bg_cond_dirs into list of bg_cond_dirs
+            # bg_cond_dirs_list = bg_cond_dirs.split(os.sep)
+            # print(f"bg_cond_dirs_list: {bg_cond_dirs_list}")
+            # break
+
+    print(f"background_conds_to_analyse: {background_conds_to_analyse}")
+    # '''check for background_type in folder name, if 'flow_dots', 'flow_rings', 'no_bg', loop through those, else continue'''
+    # # # search to automatically get run_folder_names
+    # dir_list = os.listdir(p_name_path)
+    # bg_dir_list = []
+    # for bg_type in ['flow_dots', 'flow_rings', 'no_bg']:
+    #     if bg_type in dir_list:
+    #         bg_dir_list.append(bg_type)
+    # if len(bg_dir_list) == 0:
+    #     bg_dir_list.append('No_background_type_found')
     # print(f'bg_dir_list: {bg_dir_list}')
 
-    for bg_type in bg_dir_list:
-        print(f"\nbg_type: {bg_type}")
-        if bg_type != 'No_background_type_found':
-            root_path = os.path.join(exp_path, participant_name, bg_type)
-            print(f"root_path: {root_path}")
+    # for bg_type in bg_dir_list:
+    #     print(f"\nbg_type: {bg_type}")
+    #     if bg_type != 'No_background_type_found':
 
-            # # search to automatically get run_folder_names
-            dir_list = os.listdir(root_path)
-            run_folder_names = []
-            for i in range(12):  # numbers 0 to 11
-                check_dir = f'{participant_name}_{i + p_idx_plus}'  # numbers 1 to 12
-                # print(check_dir)
-                if check_dir in dir_list:
-                    run_folder_names.append(check_dir)
+    for bg_type in background_conds_to_analyse:
+        # root_path = os.path.join(exp_path, participant_name, bg_type)
+        bg_cond_path = os.path.join(p_name_path, bg_type)
+        print(f"bg_cond_path: {bg_cond_path}")
 
-            print(f'run_folder_names: {run_folder_names}')
+        # # search to automatically get run_folder_names
+        dir_list = os.listdir(bg_cond_path)
+        run_folder_names = []
+        for i in range(12):  # numbers 0 to 11
+            check_dir = f'{participant_name}_{i + p_idx_plus}'  # numbers 1 to 12
+            # print(check_dir)
+            if check_dir in dir_list:
+                run_folder_names.append(check_dir)
 
-            trim_n = None
-            if len(run_folder_names) == 12:
-                trim_n = 2
-            elif len(run_folder_names) > 12:
-                # trim_n = 2
-                if len(run_folder_names) % 2 == 0:  # if even
-                    trim_n = int((len(run_folder_names)-12)/2)
-                else:
-                    raise ValueError(f"for this exp you have {len(run_folder_names)} runs, set rules for trimming.")
-            trim_list.append(trim_n)
+        print(f'run_folder_names: {run_folder_names}')
 
-            for run_idx, run_dir in enumerate(run_folder_names):
+        trim_n = None
+        if len(run_folder_names) == 12:
+            trim_n = 2
+        elif len(run_folder_names) > 12:
+            # trim_n = 2
+            if len(run_folder_names) % 2 == 0:  # if even
+                trim_n = int((len(run_folder_names)-12)/2)
+            else:
+                raise ValueError(f"for this exp you have {len(run_folder_names)} runs, set rules for trimming.")
+        trim_list.append(trim_n)
 
-                # add run number , e.g., add five to access Nick_5 on the zeroth iteration
-                r_idx_plus = run_idx + p_idx_plus
+        # for run_idx, run_dir in enumerate(run_folder_names):
+        #
+        #     # add run number , e.g., add five to access Nick_5 on the zeroth iteration
+        #     r_idx_plus = run_idx + p_idx_plus
+        #
+        #     print(f'\nrun_idx {run_idx + 1}: running analysis for '
+        #           f'{participant_name}, {run_dir}, {participant_name}_{r_idx_plus}')
+        #     # run_path = f'{bg_cond_path}{os.sep}{run_dir}'
+        #     run_path = os.path.join(bg_cond_path, run_dir)
+        #     print(f"run_path: {run_path}")
+        #
+        #
+        #     # don't delete this (p_run_name = participant_name),
+        #     # needed to ensure names go name1, name2, name3 not name1, name12, name123
+        #     p_run_name = participant_name
+        #
+        #     '''a'''
+        #     p_run_name = f'{participant_name}_{r_idx_plus}'
+        #
+        #     a_data_extraction_Oct23(p_name=p_run_name, run_dir=run_path,
+        #                             verbose=verbose)
+        #
+        #     # run_data_path = f'{run_path}{os.sep}RUNDATA-sorted.xlsx'
+        #     run_data_path = os.path.join(run_path, 'RUNDATA-sorted.xlsx')
+        #     run_data_df = pd.read_excel(run_data_path, engine='openpyxl')
+        #     print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
+        #     # append to master list for mean staircase
+        #     # add 'run' to run_data_df if not already there
+        #     if 'run' not in run_data_df.columns.tolist():
+        #         run_data_df.insert(0, 'run', run_idx + 1)
+        #     MASTER_p_trial_data_list.append(run_data_df)
+        #
+        #
+        #     # run psignifit on run_data_df using var_cols_list to loop through the variables
+        #     thr_df = psignifit_thr_df_Oct23(save_path=run_path,
+        #                                     p_run_name=p_run_name,
+        #                                     run_df=run_data_df,
+        #                                     cond_cols_list=var_cols_list,
+        #                                     thr_col='probeLum',
+        #                                     resp_col='resp_corr',
+        #                                     wide_df_cols='isi_ms',
+        #                                     n_bins=9, q_bins=True,
+        #                                     conf_int=True, thr_type='Bayes',
+        #                                     plot_both_curves=False,
+        #                                     save_name=None,
+        #                                     show_plots=True, save_plots=True,
+        #                                     verbose=True)
+        #
 
-                print(f'\nrun_idx {run_idx + 1}: running analysis for '
-                      f'{participant_name}, {run_dir}, {participant_name}_{r_idx_plus}')
-                # save_path = f'{root_path}{os.sep}{run_dir}'
-                save_path = os.path.join(root_path, run_dir)
-                print(f"save_path: {save_path}")
-
-
-                # don't delete this (p_run_name = participant_name),
-                # needed to ensure names go name1, name2, name3 not name1, name12, name123
-                p_run_name = participant_name
-
-                '''a'''
-                p_run_name = f'{participant_name}_{r_idx_plus}'
-
-                a_data_extraction_Oct23(p_name=p_run_name, run_dir=save_path,
-                                        verbose=verbose)
-
-                # run_data_path = f'{save_path}{os.sep}RUNDATA-sorted.xlsx'
-                run_data_path = os.path.join(save_path, 'RUNDATA-sorted.xlsx')
-                run_data_df = pd.read_excel(run_data_path, engine='openpyxl')
-                print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
-
-
-                # run psignifit on run_data_df using var_cols_list to loop through the variables
-                thr_df = psignifit_thr_df_Oct23(
-                    save_path=save_path,
-                    p_run_name=p_run_name,
-                    run_df=run_data_df,
-                    cond_cols_list=var_cols_list,
-                    thr_col='probeLum',
-                    resp_col='resp_corr',
-                    wide_df_cols='isi_ms',
-                    n_bins=9, q_bins=True,
-                    conf_int=True, thr_type='Bayes',
-                    plot_both_curves=False,
-                    save_name=None,
-                    show_plots=False, save_plots=True,
-                    verbose=True)
-
-                # append to master list for mean staircase
-                # add 'run' to run_data_df if not already there
-                if 'run' not in run_data_df.columns.tolist():
-                    run_data_df.insert(0, 'run', run_idx + 1)
-                MASTER_p_trial_data_list.append(run_data_df)
 
 #
 #
@@ -156,57 +177,98 @@ for p_idx, participant_name in enumerate(participant_list):
 # #         b3_plot_staircase(run_data_path, thr_col='probeLum', show_plots=show_plots, verbose=verbose)
 # #
 # #         '''c I don't actually need any of these, instead sort get psignifit thr ands make plots from those.'''
-# #         c_plots(save_path=save_path, thr_col='probeLum', isi_name_list=run_isi_names_list, show_plots=show_plots, verbose=verbose)
+# #         c_plots(save_path=run_path, thr_col='probeLum', isi_name_list=run_isi_names_list, show_plots=show_plots, verbose=verbose)
 
 
-            '''d participant averages'''
-            trim_n = None
-            if len(run_folder_names) == 12:
-                trim_n = 2
-            print(f'\ntrim_n: {trim_n}')
+        '''d participant averages'''
+        trim_n = None
+        if len(run_folder_names) == 12:
+            trim_n = 2
+        print(f'\ntrim_n: {trim_n}')
 
-            cols_to_drop = ['stack']
-            cols_to_replace = ['congruent', 'separation', 'motion_dur_ms']
-            groupby_cols = ['neg_sep']
+        cols_to_drop = ['stack', 'stair_name']
+        cols_to_replace = ['congruent', 'separation', 'motion_dur_ms']
+        groupby_cols = ['neg_sep']
 
-            d_average_participant(root_path=root_path, run_dir_names_list=run_folder_names,
-                                  trim_n=trim_n,
-                                  groupby_col=groupby_cols,
-                                  cols_to_drop=cols_to_drop,
-                                  cols_to_replace=cols_to_replace,
-                                  error_type='SE', verbose=verbose)
-
-
-            # making average plot
-            all_df_path = os.path.join(root_path, f'MASTER_TM{trim_n}_thresholds.csv')
-            p_ave_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thresh.csv')
-            err_path = os.path.join(root_path, f'MASTER_ave_TM{trim_n}_thr_error_SE.csv')
-            if trim_n is None:
-                all_df_path = os.path.join(root_path, f'MASTER_psignifit_thresholds.csv')
-                p_ave_path = os.path.join(root_path, 'MASTER_ave_thresh.csv')
-                err_path = os.path.join(root_path, 'MASTER_ave_thr_error_SE.csv')
-            exp_ave = False
+        # d_average_participant(root_path=bg_cond_path, run_dir_names_list=run_folder_names,
+        #                       trim_n=trim_n,
+        #                       groupby_col=groupby_cols,
+        #                       cols_to_drop=cols_to_drop,
+        #                       cols_to_replace=cols_to_replace,
+        #                       error_type='SE', verbose=verbose)
 
 
-            # make a lineplot showing congruent and incongruent thresholds for each ISI
-            all_df = pd.read_csv(all_df_path)
-            cols_to_change = ['isi_ms_-1', 'isi_ms_0', 'isi_ms_16.67', 'isi_ms_25', 'isi_ms_33.33', 'isi_ms_50',
-                              'isi_ms_100']
+        # making average plot
+        all_df_path = os.path.join(bg_cond_path, f'MASTER_TM{trim_n}_thresholds.csv')
+        p_ave_path = os.path.join(bg_cond_path, f'MASTER_ave_TM{trim_n}_thresh.csv')
+        err_path = os.path.join(bg_cond_path, f'MASTER_ave_TM{trim_n}_thr_error_SE.csv')
+        if trim_n is None:
+            all_df_path = os.path.join(bg_cond_path, f'MASTER_psignifit_thresholds.csv')
+            p_ave_path = os.path.join(bg_cond_path, 'MASTER_ave_thresh.csv')
+            err_path = os.path.join(bg_cond_path, 'MASTER_ave_thr_error_SE.csv')
+        exp_ave = False
 
-            long_df = make_long_df(wide_df=all_df,
-                                   cols_to_keep=['congruent'],
-                                   cols_to_change=cols_to_change,
-                                   cols_to_change_show='probeLum',
-                                   new_col_name='ISI', strip_from_cols='isi_ms_', verbose=True)
-            print(f"long_df: {long_df.shape}\ncolumns: {list(long_df.columns)}\n{long_df.head()}\n")
+        # todo: turn into function?
+        # make a lineplot showing congruent and incongruent thresholds for each ISI
+        all_df = pd.read_csv(all_df_path)
+        # todo: automate this - any col_name containing 'isi_ms_' in df columns.
+        cols_to_change = ['isi_ms_-1', 'isi_ms_0', 'isi_ms_16.67', 'isi_ms_25', 'isi_ms_33.33', 'isi_ms_50',
+                          'isi_ms_100']
 
-            # make line plot with error bars for congruent and incongruent with isi on x axis
-            sns.lineplot(data=long_df, x='ISI', y='probeLum', hue='congruent', errorbar='se', err_style='bars',
-                         err_kws={'capsize': 5})
-            plt.title("separation = 4; motion window = 200ms")
-            save_path, df_name = os.path.split(all_df_path)
-            plt.savefig(os.path.join(save_path, f"{df_name[:-4]}_lineplot.png"))
-            plt.show()
+        long_df = make_long_df(wide_df=all_df,
+                               cols_to_keep=['congruent'],
+                               cols_to_change=cols_to_change,
+                               cols_to_change_show='probeLum',
+                               new_col_name='ISI', strip_from_cols='isi_ms_', verbose=True)
+        print(f"long_df: {long_df.shape}\ncolumns: {list(long_df.columns)}\n{long_df}\n")
+
+        # make line plot with error bars for congruent and incongruent with isi on x axis
+        # use the basic palette
+        sns.lineplot(data=long_df, x='ISI', y='probeLum', hue='congruent',
+                     errorbar='se', err_style='bars', err_kws={'capsize': 5},
+                     palette=sns.color_palette("tab10", n_colors=2))
+
+        # change legend labels such that they are 1=congruent and -1=incongruent
+        handles, labels = plt.gca().get_legend_handles_labels()
+        new_labels = []
+        for label in labels:
+            if label == '1':
+                new_labels.append('Congruent')
+            elif label == '-1':
+                new_labels.append('Incongruent')
+            else:
+                new_labels.append(label)
+        # make legend box 50% opaque
+        plt.legend(title='Probe & background', handles=handles, labels=new_labels,
+                   framealpha=0.5)
+
+        # for x-axis labels, if the isi is -1, change to 'Concurrent'
+        x_tick_values = sorted(long_df['ISI'].unique())
+        x_tick_labels = []
+        for label in x_tick_values:
+            if label in [-1, '-1']:
+                x_tick_labels.append('Concurrent')
+            else:
+                x_tick_labels.append(label)
+
+        # decorate plot
+        plt.xlabel('ISI (ms)')
+        plt.ylabel('Probe luminance')
+        plt.xticks(ticks=x_tick_values, labels=x_tick_labels)
+
+        suptitle_text = f"{participant_name} thresholds for each ISI"
+        if trim_n is not None:
+            suptitle_text = f"{participant_name} thresholds for each ISI, trimmed {trim_n}"
+        plt.suptitle(suptitle_text)
+        plt.title("separation = 4; motion window = 200ms")
+        run_path, df_name = os.path.split(all_df_path)
+        plt.savefig(os.path.join(run_path, f"{df_name[:-4]}_lineplot.png"))
+        plt.show()
+
+
+
+
+
 
             # # decorate plot
             # if x_tick_values is not None:
@@ -232,7 +294,6 @@ for p_idx, participant_name in enumerate(participant_list):
             #
             # if verbose:
             #     print("\n*** finished plot_data_unsym_batman() ***\n")
-            plt.show()
 
 
     #         make_average_plots(all_df_path=all_df_path,
