@@ -1351,7 +1351,6 @@ def csv_to_np_for_psignifit_Oct23(csv_path,
 #     return fit_curve_plot, psignifit_dict
 
 def psignifit_thr_df_Oct23(save_path, p_run_name, run_df, cond_cols_list,
-
                            thr_col='probeLum',
                            resp_col='trial_response',
                            wide_df_cols=None,

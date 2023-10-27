@@ -349,14 +349,14 @@ expName = path.basename(__file__)[:-3]
 
 
 # # # DIALOGUE BOX # # #
-expInfo = {'1_participant_name': 'Nicktest_12102023',
+expInfo = {'1_participant_name': 'Nicktest',
            '2_run_number': 1,
            '3_monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'ASUS_2_13_240Hz',
                               'Samsung', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
            '4_fps': [60, 240, 120, 60],
            '5_probe_dur_ms': [41.67, 116.67, 66.67, 54.17, 50, 41.67, 33.34, 25,  500],
-           '6_probe_start_dist_pix': [6, 2, 4, 6, 8, 10],
-           '7_debug': [False, True]
+           '6_probe_start_dist_pix': [8, 2, 4, 6, 8, 10],
+           '7_debug': [True, False, True]
            }
 
 # run drop-down menu, OK continues, cancel quits

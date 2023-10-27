@@ -39,7 +39,6 @@ sep_col_name = 'separation'
 neg_sep_col_name = 'neg_sep'
 bg_dur_name = 'motion_dur_ms'  # prelim_ms
 resp_col_name = 'resp_corr'
-run_dir_prefixes = ['motion_', 'sep_']  # within each run dir, look for these prefixes to get the run data
 var_cols_list = [stair_names_col_name, isi_col_name, sep_col_name, neg_sep_col_name, cong_col_name, bg_dur_name]
 
 # append each run's data to these lists for mean staircases
@@ -121,54 +120,54 @@ for p_idx, participant_name in enumerate(participant_list):
                 raise ValueError(f"for this exp you have {len(run_folder_names)} runs, set rules for trimming.")
         trim_list.append(trim_n)
 
-        # for run_idx, run_dir in enumerate(run_folder_names):
-        #
-        #     # add run number , e.g., add five to access Nick_5 on the zeroth iteration
-        #     r_idx_plus = run_idx + p_idx_plus
-        #
-        #     print(f'\nrun_idx {run_idx + 1}: running analysis for '
-        #           f'{participant_name}, {run_dir}, {participant_name}_{r_idx_plus}')
-        #     # run_path = f'{bg_cond_path}{os.sep}{run_dir}'
-        #     run_path = os.path.join(bg_cond_path, run_dir)
-        #     print(f"run_path: {run_path}")
-        #
-        #
-        #     # don't delete this (p_run_name = participant_name),
-        #     # needed to ensure names go name1, name2, name3 not name1, name12, name123
-        #     p_run_name = participant_name
-        #
-        #     '''a'''
-        #     p_run_name = f'{participant_name}_{r_idx_plus}'
-        #
-        #     a_data_extraction_Oct23(p_name=p_run_name, run_dir=run_path,
-        #                             verbose=verbose)
-        #
-        #     # run_data_path = f'{run_path}{os.sep}RUNDATA-sorted.xlsx'
-        #     run_data_path = os.path.join(run_path, 'RUNDATA-sorted.xlsx')
-        #     run_data_df = pd.read_excel(run_data_path, engine='openpyxl')
-        #     print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
-        #     # append to master list for mean staircase
-        #     # add 'run' to run_data_df if not already there
-        #     if 'run' not in run_data_df.columns.tolist():
-        #         run_data_df.insert(0, 'run', run_idx + 1)
-        #     MASTER_p_trial_data_list.append(run_data_df)
-        #
-        #
-        #     # run psignifit on run_data_df using var_cols_list to loop through the variables
-        #     thr_df = psignifit_thr_df_Oct23(save_path=run_path,
-        #                                     p_run_name=p_run_name,
-        #                                     run_df=run_data_df,
-        #                                     cond_cols_list=var_cols_list,
-        #                                     thr_col='probeLum',
-        #                                     resp_col='resp_corr',
-        #                                     wide_df_cols='isi_ms',
-        #                                     n_bins=9, q_bins=True,
-        #                                     conf_int=True, thr_type='Bayes',
-        #                                     plot_both_curves=False,
-        #                                     save_name=None,
-        #                                     show_plots=True, save_plots=True,
-        #                                     verbose=True)
-        #
+        for run_idx, run_dir in enumerate(run_folder_names):
+
+            # add run number , e.g., add five to access Nick_5 on the zeroth iteration
+            r_idx_plus = run_idx + p_idx_plus
+
+            print(f'\nrun_idx {run_idx + 1}: running analysis for '
+                  f'{participant_name}, {run_dir}, {participant_name}_{r_idx_plus}')
+            # run_path = f'{bg_cond_path}{os.sep}{run_dir}'
+            run_path = os.path.join(bg_cond_path, run_dir)
+            print(f"run_path: {run_path}")
+
+
+            # don't delete this (p_run_name = participant_name),
+            # needed to ensure names go name1, name2, name3 not name1, name12, name123
+            p_run_name = participant_name
+
+            '''a'''
+            p_run_name = f'{participant_name}_{r_idx_plus}'
+
+            a_data_extraction_Oct23(p_name=p_run_name, run_dir=run_path,
+                                    verbose=verbose)
+
+            # run_data_path = f'{run_path}{os.sep}RUNDATA-sorted.xlsx'
+            run_data_path = os.path.join(run_path, 'RUNDATA-sorted.xlsx')
+            run_data_df = pd.read_excel(run_data_path, engine='openpyxl')
+            print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
+            # append to master list for mean staircase
+            # add 'run' to run_data_df if not already there
+            if 'run' not in run_data_df.columns.tolist():
+                run_data_df.insert(0, 'run', run_idx + 1)
+            MASTER_p_trial_data_list.append(run_data_df)
+
+
+            # run psignifit on run_data_df using var_cols_list to loop through the variables
+            thr_df = psignifit_thr_df_Oct23(save_path=run_path,
+                                            p_run_name=p_run_name,
+                                            run_df=run_data_df,
+                                            cond_cols_list=var_cols_list,
+                                            thr_col='probeLum',
+                                            resp_col='resp_corr',
+                                            wide_df_cols='isi_ms',
+                                            n_bins=9, q_bins=True,
+                                            conf_int=True, thr_type='Bayes',
+                                            plot_both_curves=False,
+                                            save_name=None,
+                                            show_plots=True, save_plots=True,
+                                            verbose=True)
+
 
 
 #
