@@ -961,7 +961,7 @@ instructions = visual.TextStim(win=win, name='instructions', font='Arial', heigh
                                     "[1]/[A] bottom-left\t\t\t[2]/[S] bottom-right.\n\n\n"
                                     "Some targets will be easy to see, others will be hard to spot.\n"
                                     "If you aren't sure, just guess!\n\n"
-                                    "Press any key to start")
+                                    "Please move the mouse offscreen, then press any key to start")
 
 
 too_many_dropped_fr = visual.TextStim(win=win, name='too_many_dropped_fr',

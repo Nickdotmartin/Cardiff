@@ -747,7 +747,7 @@ instructions = visual.TextStim(win=win, name='instructions', font='Arial', heigh
                                     "Press 'I' or '1' if you see the probe moving inward (towards centre of screen),\n"
                                     "Press 'O' or '0' if you see the probe moving outward (towards edge of screen).\n\n"
                                     "If you aren't sure, just guess!\n\n"
-                                    "Press any key to start")
+                                    "Please move the mouse offscreen, then press any key to start")
 
 
 too_many_dropped_fr = visual.TextStim(win=win, name='too_many_dropped_fr',
