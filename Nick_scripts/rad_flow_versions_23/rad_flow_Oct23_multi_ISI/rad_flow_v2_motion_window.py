@@ -42,7 +42,7 @@ to make rad_flow_martin.py
 - my cleaned up version of Martin's script, import statments, record frame ints. DONE
 
 for rad_flow_Martin_1_names_no_rot.py
-- rename variables, removed rotating motin, added no motion option.  
+- rename variables, removed rotating motion, added no motion option.  
 
 for rad_flow_Martin_2_basic_funcs.py
 - changed dot motion from probe1 to end of probe2 (not added prelim yet), added fnction for probe locations.
@@ -84,13 +84,13 @@ rad_flow_multi_ISI_v1.py - 20th Oct 23
 - put no bg option back in.  DONE
 
 rad_flow_v2_motion_window.py - 23rd Oct 23
-- instead of a fixed prelim motion variable, there is a motion window, and the probes are presented in the middle.
+- instead of a fixed prelim motion variable, there is a background motion window (bg_motion), and the probes are presented in the middle.
     e.g., if the window is 10 frames and the ISI and probes are each 2 frames, then the probes are presented in frames 3 and 7. DONE
 
 """
 
 """
-To use this script you will need the width (cm), screen dims (pixels, width heght) and view dist for you
+To use this script you will need the width (cm), screen dims (pixels, width height) and view dist for you
 monitor into psychopy monitor centre.  Then select your monior.
 """
 
@@ -564,7 +564,7 @@ fps = int(expInfo['04. fps'])
 # ISI_selected_ms = float(expInfo['05. ISI_dur_in_ms'])
 separation = int(expInfo['05. Separation'])
 background = expInfo['08. Background']
-selected_motion_dur_ms = int(expInfo['09. Motion duration'])  # motion before and after stim, which is in the middle
+selected_bg_motion_ms = int(expInfo['09. Motion duration'])  # bg_motion before and after stim, which is in the middle
 monitor_name = expInfo['10. monitor_name']
 debug = eval(expInfo['12. debug'])
 
@@ -593,7 +593,7 @@ save_dir = path.join(_thisDir, expName, monitor_name,  # added monitor name to a
                      background,
                      # 'interleaved',  # always use dots background and interleave prelims
                      f'{participant_name}_{run_number}',
-                     f'motion_{selected_motion_dur_ms}ms',  # motion dur in ms as folder
+                     f'bg_motion_{selected_bg_motion_ms}ms',  # bg_motion dur in ms as folder
                      f'sep_{separation}')  # I've changed this to int(ms) not frames, for easier comparision of monitors
 print(f"\nexperiment save_dir: {save_dir}")
 
@@ -650,7 +650,7 @@ for this_zip in isi_selected_zip:
 if debug:
     print(f"isi_zip: {isi_zip}")
 
-# # Conditions/staricases: Separation, Congruence (cong, incong) x prelim motion (0, 70, 350)
+# # Conditions/staricases: ISI, Congruence (cong, incong)
 
 # # Separation values in pixels.  select from [18, 6, 3, 2, 1, 0] or 99 for 1probe
 # # sep_vals = [18, 6, 3, 2, 1, 0]
@@ -673,12 +673,6 @@ if debug:
     print(f"cong_zip: {cong_zip}")
 
 
-# # 'prelim' (preliminary motion) is how long (ms) the background motion starts before the probe appears
-# prelim_vals = [0, 140]  # [0, 70, 350]  # I shoud,best effects at 0, 140, 560
-# if debug:
-#     prelim_vals = [500]
-# if background == 'no_bg':
-#     prelim_vals = [0]
 
 
 # get all possible combinations of these three lists
@@ -809,6 +803,7 @@ probe2 = visual.ShapeStim(win, vertices=probeVert, lineWidth=0, opacity=1, size=
 # probes and probe_masks are at dist_from_fix pixels from middle of the screen
 dist_from_fix = int((np.tan(np.deg2rad(probe_ecc)) * view_dist_pix) / np.sqrt(2))
 
+
 # full screen mask to blend off edges and fade to black
 # Create a raisedCosine mask array and assign it to a Grating stimulus (grey outside, transparent inside)
 # this was useful http://www.cogsci.nl/blog/tutorials/211-a-bit-about-patches-textures-and-masks-in-psychopy
@@ -847,7 +842,7 @@ if background == 'flow_dots':
     print(f"ref_angle: {ref_angle}")
 
 
-    # motion speed in cm/s
+    # bg_motion speed in cm/s
     flow_speed_cm_p_sec = 150  # 1.2m/sec matches previous flow parsing study (Evans et al. 2020)
     flow_speed_cm_p_fr = flow_speed_cm_p_sec / fps  # 1.66 cm per frame = 1m per second
 
@@ -1172,20 +1167,20 @@ for step in range(n_trials_per_stair):
             #     print(f'actual_prelim_ms: {actual_prelim_ms}')
 
             # # # MOTION WINDOW # # #
-            '''Rather than just having preliminary motin (before probe1), we now have a motion window of a fixed duration.
+            '''Rather than just having preliminary motion (before probe1), we now have a background motion (bg_motion) window of a fixed duration.
             The stimuli (probe1, ISI, probe2) occur in the middle of this window.  
             e.g., if the window is 10 frames, and the ISI is 4 frames, then the total stimulus duration is 8 frames, 
-            so there will be one frame of motion before probe1 and one frame of motion after probe2.
-            if the window was 100 frames then there would be 46 frames of motion before probe1 and 46 frames after probe2.'''
+            so there will be one frame of bg_motion before probe1 and one frame of bg_motion after probe2.
+            if the window was 100 frames then there would be 46 frames of bg_motion before probe1 and 46 frames after probe2.'''
             
-            # get number of frames for motion duration
-            motion_dur_fr = int(selected_motion_dur_ms * fps / 1000)
-            print(f"motion_dur_fr: {motion_dur_fr}")
-            motion_dur_ms = motion_dur_fr * 1000 / fps
+            # get number of frames for bg_motion duration
+            bg_motion_fr = int(selected_bg_motion_ms * fps / 1000)
+            print(f"bg_motion_fr: {bg_motion_fr}")
+            bg_motion_ms = bg_motion_fr * 1000 / fps
             if debug:
-                print(f'\nselected_motion_dur_ms: {selected_motion_dur_ms}')
-                print(f'motion_dur_fr: {motion_dur_fr}')
-                print(f'motion_dur_ms: {motion_dur_ms}')
+                print(f'\nselected_bg_motion_ms: {selected_bg_motion_ms}')
+                print(f'bg_motion_fr: {bg_motion_fr}')
+                print(f'bg_motion_ms: {bg_motion_ms}')
                 
             # Get the number of frames for probes and ISI
             # If probes are presented concurrently, set isi_dur_fr and p2_dur_fr to last for 0 frames.
@@ -1199,9 +1194,9 @@ for step in range(n_trials_per_stair):
             if isi_dur_fr == -1:
                 stim_dur_fr = p1_dur_fr
                 
-            # get duration of preliminary motion (before probe1) and post-probe2 motion
+            # get duration of preliminary bg_motion (before probe1) and post-probe2 bg_motion
             # if these number are not equal, prelim should be 1 frame longer than post
-            pre_and_post_fr = int(motion_dur_fr - stim_dur_fr)  # remaining frames not including stim_dur_fr
+            pre_and_post_fr = int(bg_motion_fr - stim_dur_fr)  # remaining frames not including stim_dur_fr
             post_dur_fr = int(pre_and_post_fr / 2)  # number of frames after stim_dur_fr
             if pre_and_post_fr % 2 == 0:  # if there is an odd number of frames, make prelim one frame longer than post
                 prelim_dur_fr = post_dur_fr
@@ -1297,7 +1292,7 @@ for step in range(n_trials_per_stair):
                 if end_fix_fr >= frameN > 0:
                     if background == 'flow_dots':
 
-                        '''just have incoherent motion from re-spawning dots, z bounds as full z range'''
+                        '''just have incoherent bg_motion from re-spawning dots, z bounds as full z range'''
                         # 1. don't update z values
                         # 2. check if any z values are out of bounds (too close when expanding or too far when contracting),
                         # if so, set their dot life to max, so they are given new x, y and z values by update_dotlife() below.
@@ -1360,7 +1355,7 @@ for step in range(n_trials_per_stair):
                     fix_mask.draw()
                     fixation.draw()
 
-                # # # PROBE 1 - after prelim bg motion, before ISI # # #
+                # # # PROBE 1 - after prelim bg bg_motion, before ISI # # #
                 elif end_p1_fr >= frameN > end_prelim_fr:
                     if background == 'flow_dots':
 
@@ -1519,11 +1514,11 @@ for step in range(n_trials_per_stair):
                     #     # a response ends the per-frame_section
                     #     continueRoutine = False
 
-                # # # ANSWER - after post_stim-motion, before end of trial # # #
+                # # # ANSWER - after post_stim-bg_motion, before end of trial # # #
                 elif frameN > end_post_fr:
                     if background == 'flow_dots':
 
-                        '''just have incoherent motion from re-spawning dots, z bounds as full z range'''
+                        '''just have incoherent bg_motion from re-spawning dots, z bounds as full z range'''
                         # 1. don't update z values
                         # 2. check if any z values are out of bounds (too close when expanding or too far when contracting),
                         # if so, set their dot life to max, so they are given new x, y and z values by update_dotlife() below.
@@ -1682,9 +1677,9 @@ for step in range(n_trials_per_stair):
         thisExp.addData('isi_ms', isi_ms)
         thisExp.addData('isi_cond_fr', isi_cond_fr)
         thisExp.addData('isi_dur_fr', isi_dur_fr)
-        thisExp.addData('selected_motion_dur_ms', selected_motion_dur_ms)
-        thisExp.addData('motion_dur_fr', motion_dur_fr)
-        thisExp.addData('motion_dur_ms', motion_dur_ms)
+        thisExp.addData('selected_bg_motion_ms', selected_bg_motion_ms)
+        thisExp.addData('bg_motion_fr', bg_motion_fr)
+        thisExp.addData('bg_motion_ms', bg_motion_ms)
         # thisExp.addData('prelim_ms', prelim_ms)
         thisExp.addData('prelim_dur_fr', prelim_dur_fr)
         thisExp.addData('post_dur_fr', post_dur_fr)
