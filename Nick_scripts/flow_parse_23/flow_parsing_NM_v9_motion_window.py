@@ -946,9 +946,9 @@ for step in range(n_trials_per_stair):
 
             '''the default assumption is to have motion during probe, plus before and after.
             But if bg_motion_fr == 0, then have no motion during probe, or before and after'''
-            motion_during_probe = True
+            motion_during_stim = True
             if bg_motion_fr == 0:
-                motion_during_probe = False
+                motion_during_stim = False
                 prelim_dur_fr = post_dur_fr = 0
             else:
                 # get duration of preliminary motion (before probe1) and post-probe2 motion
@@ -1142,7 +1142,7 @@ for step in range(n_trials_per_stair):
                 # PROBE interval (with background motion), after preliminary background motion, before response
                 elif end_probe_fr >= frameN > end_prelim_fr:
 
-                    if motion_during_probe:  # anytime apart from when bg_motion == 0
+                    if motion_during_stim:  # anytime apart from when bg_motion == 0
                         # 1. Update z (distance values): Add dots_speed * flow_dir to the current z values.
                         z_array = z_array + flow_speed_cm_p_fr * flow_dir
 

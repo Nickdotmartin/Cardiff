@@ -693,6 +693,21 @@ def get_n_rows_n_cols(n_plots):
     return n_rows, n_cols
 
 
+def get_ax_idx(plot_idx, n_rows, n_cols):
+    """
+    Give a set of subplots with shape (n_rows, n_cols), and a plot number (zero indexed),
+    return the index of the subplot in the figure.
+    :param plot_idx: the number of the plot, starting at 0.
+    :param n_rows: number of rows in the figure
+    :param n_cols: number of columns in the figure
+    :return: tuple with the index of the subplot in the figure (row, col)
+    """
+    row_idx = plot_idx // n_cols
+    col_idx = plot_idx % n_cols
+    return row_idx, col_idx
+
+
+
 def simple_line_plot(indexed_df, fig_title=None, legend_title=None,
                      x_tick_vals=None, x_tick_labels=None,
                      x_axis=None, y_axis=None,
@@ -3481,6 +3496,242 @@ def b3_plot_stair_sep0(all_data_path, thr_col='newLum', resp_col='trial_response
     n_reversals_df.to_csv(os.path.join(save_path, 'n_reversals.csv'))
 
     print("\n***finished b3_plot_stair_sep0()***\n")
+
+
+def mean_staircase_plots(per_trial_df, save_path, participant_name,
+                         isi_col_name='isi_ms', sep_col_name='separation', run_col_name='run',
+                         thr_col_name='probeLum',
+                         hue_col_name='congruent', hue_names=['Incongruent', 'Congruent'],
+                         ave_type='mean',
+                         show_plots=True, save_plots=True, verbose=False):
+    """
+    Take a MASTER_p_trial_data.csv file and plot the staircases and mean for each ISI and separation.
+
+    :param per_trial_df: Dataframe, name or path to MASTER_p_trial_data.csv file.
+        Should have raw data for each trial, not averages or thresholds.
+    :param save_path: Path to save figure to.
+    :param participant_name: Name of participant (or other identifier) to use in figure title.
+    :param isi_col_name: Column name to use for ISI values (or other variable of interest).
+    :param sep_col_name: Columns name to use for separation values (or other variable of interest).
+    :param run_col_name: Column denoting separate runs of each conditions (e.g., 0, 1, 2, 3 etc)
+    :param thr_col_name: Column name to use for threshold values (thing being measured for y_axis).
+    :param hue_col_name: Column name to use for hue (e.g., congruent/incongruent).
+    :param hue_names: Names to use for hue_col_name (e.g., ['Incongruent', 'Congruent']).
+        Should be in same order as numerical values in hue column.
+    :param ave_type: 'mean' or 'median' - how to average across runs.
+    :param show_plots: Whether to show plots on screen.
+    :param save_plots: Whether to save plots to file.
+    :param verbose: Whether to print progress to screen.
+    """
+
+    print("\n***running mean_staircase()***")
+
+    # # mean staircase for this bg type will loop through ISI and separation,
+    # then plot staircases and mean (step v probeLum) for each run and congruenct/incongruent
+    '''
+    1. Calculate ave thr for each step for congruent and incongruent data.
+    2. loop through per_trial_df for each ISI/sep combination.
+    3. make plot showing all 12 congruent and incongruent staircases on the same plot (different colours)
+    and ave cong and incong ontop.
+    '''
+
+    # get_median = False
+    # ave_type = 'mean'
+    # # if get_median:
+    # #     ave_type = 'median'
+    # if ave_type == 'median':
+    #     get_median = True
+
+    # hue_names = ['Incongruent', 'Congruent']
+
+    run_colour_list = ['pink', 'lightblue']
+    ave_colour_list = ['red', 'blue']
+
+    # if file name or path is passed instead of dataframe, read in dataframe
+    if isinstance(per_trial_df, str):
+        if os.path.isfile(per_trial_df):
+            per_trial_df = pd.read_csv(per_trial_df)
+        elif os.path.isfile(os.path.join(save_path, per_trial_df)):
+            per_trial_df = pd.read_csv(os.path.join(save_path, per_trial_df))
+    elif isinstance(per_trial_df, pd.DataFrame):
+        pass
+    # per_trial_df = pd.read_csv(os.path.join(save_path, MASTER_p_trial_data_name))
+    print(f'\nper_trial_df ({per_trial_df.shape}):\n{per_trial_df}')
+
+    isi_list = per_trial_df[isi_col_name].unique()
+    if verbose:
+        print(f"isi_list: {isi_list}")
+
+    sep_list = per_trial_df[sep_col_name].unique()
+    if verbose:
+        print(f"sep_list: {sep_list}")
+
+    n_runs = len(per_trial_df[run_col_name].unique())
+
+    plot_idx = 'df_cols'
+    # check if there is only one condition (e.g., only one isi)
+    if len(sep_list) > 1 and len(isi_list) > 1:
+        n_rows = len(sep_list)
+        n_cols = len(isi_list)
+    elif len(isi_list) > 1:
+        n_rows, n_cols = get_n_rows_n_cols(len(isi_list))
+        plot_idx = 'len(isi_list)'
+        if verbose:
+            print(f"plot indices from get_n_rows_n_cols(len(isi_list) for {n_rows} rows and {n_cols} cols")
+    elif len(sep_list) > 1:
+        n_rows, n_cols = get_n_rows_n_cols(len(sep_list))
+        plot_idx = 'len(sep_list)'
+        if verbose:
+            print(f"plot indices from get_n_rows_n_cols(len(sep_list) for {n_rows} rows and {n_cols} cols")
+    else:
+        n_rows = len(sep_list)
+        n_cols = len(isi_list)
+
+    # initialise plot
+    fig, axes = plt.subplots(nrows=n_rows, ncols=n_cols,
+                             figsize=(n_cols * 6, n_rows * 6),
+                             sharex=True)
+    if verbose:
+        print(f'\nplotting {n_cols} rows and {n_rows} cols (axes: {axes})')
+
+    # if there is only a single condition, put axes into a list to allow indexing, consistent with
+    # analyses where there are multiple conditons (e.g., axes[0])
+    if n_cols == 1 and n_rows == 1:
+        axes = [axes]
+
+    # loop through isi values
+    for isi_idx, isi in enumerate(isi_list):
+        # get df for this isi only
+        isi_df = per_trial_df[per_trial_df[isi_col_name] == isi]
+        if verbose:
+            print(f"\n{isi_idx}. ISI: {isi} ({isi_df.shape})"
+                  # f"\n{isi_df}"
+                  )
+
+        # loop through sep values
+        for sep_idx, sep in enumerate(sep_list):
+            # get df for this sep only
+            sep_df = isi_df[isi_df[sep_col_name] == sep]
+            if verbose:
+                print(f"\n{sep_idx}. sep {sep} ({sep_df.shape}):"
+                      # f"\n{sep_df}"
+                      )
+
+            # # check shape for accessing axes
+            if plot_idx == 'df_cols':
+                if len(sep_list) > 1 and len(isi_list) > 1:
+                    this_ax = sep_idx, isi_idx
+                else:
+                    this_ax = 0
+            elif plot_idx == 'len(isi_list)':  # only one sep
+                this_ax = get_ax_idx(isi_idx, n_rows, n_cols)
+            elif plot_idx == 'len(sep_list)':  # only one isi
+                this_ax = get_ax_idx(sep_idx, n_rows, n_cols)
+
+            # # get ave values for each step
+            this_sep_df = sep_df[[run_col_name, 'step', hue_col_name, thr_col_name]]
+            if verbose:
+                print(f"this_sep_df ({this_sep_df.shape}):\n{this_sep_df}")
+            # if get_median:
+            if ave_type == 'median':
+                ave_step_thr_df = this_sep_df.groupby([hue_col_name, 'step'], sort=False).median()
+            else:
+                ave_step_thr_df = this_sep_df.groupby([hue_col_name, 'step'], sort=False).mean()
+            ave_step_thr_df.reset_index(drop=False, inplace=True)
+            ave_step_thr_df.drop(run_col_name, axis=1, inplace=True)
+            if verbose:
+                print(f"ave_step_thr_df ({ave_step_thr_df.shape}):\n{ave_step_thr_df}")
+            wide_ave_step_thr_df = ave_step_thr_df.pivot(index='step', columns=hue_col_name, values=thr_col_name)
+            wide_ave_step_thr_df.columns = hue_names
+            if verbose:
+                print(f"wide_ave_step_thr_df ({wide_ave_step_thr_df.shape}):\n{wide_ave_step_thr_df}")
+
+            stack_list = sep_df[run_col_name].unique()
+            if verbose:
+                print(f"stack_list: {sep_list}")
+
+            # loop through stack values
+            for stack_idx, stack in enumerate(stack_list):
+                # get df for this stack only
+                stack_df = sep_df[sep_df[run_col_name] == stack]
+                if verbose:
+                    print(f"\n{stack_idx}. stack {stack} ({stack_df.shape}):"
+                          # f"\n{stack_df}"
+                          )
+
+                this_stack_df = stack_df[['step', hue_col_name, thr_col_name]]
+                if verbose:
+                    print(f"this_stack_df ({this_stack_df.shape}):\n{this_stack_df}")
+
+                # I now have the data I need - reshape it so cong and incong are different columns
+                wide_df = this_stack_df.pivot(index='step', columns=hue_col_name, values=thr_col_name)
+                wide_df.columns = hue_names
+                if verbose:
+                    print(f"wide_df ({wide_df.shape}):\n{wide_df}")
+
+                for idx, name in enumerate(hue_names):
+                    axes[this_ax].errorbar(x=list(range(25)), y=wide_df[name],
+                                           color=run_colour_list[idx])
+
+            # add mean line
+            for idx, name in enumerate(hue_names):
+                axes[this_ax].errorbar(x=list(range(25)), y=wide_ave_step_thr_df[name],
+                                       color=ave_colour_list[idx])
+                # add scatter with small black dots
+                axes[this_ax].scatter(x=list(range(25)), y=wide_ave_step_thr_df[name],
+                                      color='black', s=10)
+
+            # decorate each subplot
+            axes[this_ax].set_title(f"{isi_col_name}{isi}, {sep_col_name}{sep}")
+            axes[this_ax].set_xlabel('step (25 per condition, per run)')
+            axes[this_ax].set_ylabel(thr_col_name)
+
+    # delete any unused axes
+    if plot_idx == 'df_cols':
+        if len(sep_list) > 1 and len(isi_list) > 1:
+            for ax in axes.flat[len(isi_list) * len(sep_list):]:
+                ax.remove()
+        elif len(isi_list) > 1:
+            for ax in axes.flat[len(isi_list):]:
+                ax.remove()
+        elif len(sep_list) > 1:
+            for ax in axes.flat[len(sep_list):]:
+                ax.remove()
+
+    # artist for legend
+    st0 = mlines.Line2D([], [], color=run_colour_list[0],
+                        markersize=4, label=hue_names[0])
+    st1 = mlines.Line2D([], [], color=run_colour_list[1],
+                        markersize=4, label=hue_names[1])
+    ave_line_0 = mlines.Line2D([], [], color=ave_colour_list[0],
+                               marker=None, linewidth=.5,
+                               label=f'{hue_names[0]} ({ave_type})')
+    ave_line_1 = mlines.Line2D([], [], color=ave_colour_list[1],
+                               marker=None, linewidth=.5,
+                               label=f'{hue_names[1]} ({ave_type})')
+
+    handles_list = [st0, ave_line_0, st1, ave_line_1]
+    fig.legend(handles=handles_list, fontsize=16, loc='lower right')
+
+    fig.suptitle(f"{participant_name}: {n_runs} staircases with {ave_type}", fontsize=20)
+
+    # if get_median:
+    if ave_type == 'median':
+        save_name = f"all_run_stairs_{participant_name}_{isi_col_name}{isi}_{sep_col_name[:3]}{sep}_median.png"
+    else:
+        save_name = f"all_run_stairs_{participant_name}_{isi_col_name}{isi}_{sep_col_name[:3]}{sep}_mean.png"
+
+    if save_plots:
+        print(f"save plot to: {os.path.join(save_path, save_name)}")
+        plt.savefig(os.path.join(save_path, save_name))
+
+    if show_plots:
+        plt.show()
+    plt.close()
+
+    print(f"\n*** finished mean_staircase() ***\n")
+
+
 
 
 def c_plots(save_path, thr_col='newLum', isi_name_list=None, show_plots=True, verbose=True):

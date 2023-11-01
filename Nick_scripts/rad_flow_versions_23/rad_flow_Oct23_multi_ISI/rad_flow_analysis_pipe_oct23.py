@@ -7,15 +7,17 @@ from python_tools import switch_path
 from rad_flow_psignifit_analysis import a_data_extraction_Oct23, get_sorted_neg_sep_indices, sort_with_neg_sep_indices
 from rad_flow_psignifit_analysis import b3_plot_staircase, c_plots
 from rad_flow_psignifit_analysis import d_average_participant, make_average_plots, e_average_exp_data
-from rad_flow_psignifit_analysis import compare_prelim_plots, make_long_df
+from rad_flow_psignifit_analysis import compare_prelim_plots, make_long_df, mean_staircase_plots
 from exp1a_psignifit_analysis import plt_heatmap_row_col
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+import matplotlib.lines as mlines
+from rad_flow_psignifit_analysis import get_n_rows_n_cols, get_ax_idx
 
 
-# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_v2_motion_window"
-exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_v2_missing_probe"
+exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_v2_motion_window"
+# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_v2_missing_probe"
 participant_list = ['Nick']  # ' Nicktest_06102023' Nick_extra_prelims
 monitor = 'OLED'  # 'asus_cal' OLED, 'Nick_work_laptop'
 background_type = 'flow_dots'  # 'flow_dots', 'no_bg'
@@ -41,8 +43,7 @@ bg_dur_name = 'motion_dur_ms'  # prelim_ms
 resp_col_name = 'resp_corr'
 var_cols_list = [stair_names_col_name, isi_col_name, sep_col_name, neg_sep_col_name, cong_col_name, bg_dur_name]
 
-# append each run's data to these lists for mean staircases
-MASTER_p_trial_data_list = []
+
 
 # n_runs = 12
 # if the first folder to analyse is 1, p_idx_plus = 1.  If the forst folder is 5, use 5 etc.
@@ -93,8 +94,10 @@ for p_idx, participant_name in enumerate(participant_list):
     #     print(f"\nbg_type: {bg_type}")
     #     if bg_type != 'No_background_type_found':
 
+    # append each run's data to these lists for mean staircases
+    MASTER_p_trial_data_list = []
+
     for bg_type in background_conds_to_analyse:
-        # root_path = os.path.join(exp_path, participant_name, bg_type)
         bg_cond_path = os.path.join(p_name_path, bg_type)
         print(f"bg_cond_path: {bg_cond_path}")
 
@@ -147,9 +150,16 @@ for p_idx, participant_name in enumerate(participant_list):
             run_data_df = pd.read_excel(run_data_path, engine='openpyxl')
             print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
             # append to master list for mean staircase
-            # add 'run' to run_data_df if not already there
-            if 'run' not in run_data_df.columns.tolist():
-                run_data_df.insert(0, 'run', run_idx + 1)
+
+            # search for 'Run_number' substring in column names
+            run_num_col = [col for col in run_data_df.columns if 'Run_number' in col]
+            if len(run_num_col) == 1:
+                run_col_name = run_num_col[0]
+            elif len(run_num_col) == 0:
+                run_col_name = 'run'
+                # add 'run' to run_data_df if not already there
+                if 'run' not in run_data_df.columns.tolist():
+                    run_data_df.insert(0, 'run', run_idx + 1)
             MASTER_p_trial_data_list.append(run_data_df)
 
 
@@ -170,14 +180,223 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
 
-#
-#
-# #         '''b3'''
-# #         b3_plot_staircase(run_data_path, thr_col='probeLum', show_plots=show_plots, verbose=verbose)
 # #
-# #         '''c I don't actually need any of these, instead sort get psignifit thr ands make plots from those.'''
-# #         c_plots(save_path=run_path, thr_col='probeLum', isi_name_list=run_isi_names_list, show_plots=show_plots, verbose=verbose)
+# #
+#             '''b3 - stair case per run'''
+#             b3_plot_staircase(run_data_path, thr_col='probeLum', show_plots=show_plots, verbose=verbose)
+# # #
+# # #         '''c I don't actually need any of these, instead sort get psignifit thr ands make plots from those.'''
+# # #         c_plots(save_path=run_path, thr_col='probeLum', isi_name_list=run_isi_names_list, show_plots=show_plots, verbose=verbose)
+#
 
+        '''mean staircase for each bg type'''
+        print("\n***running mean_staircase()***")
+        # join all stacks (runs/groups) data and save as master csv
+        MASTER_p_trial_data_df = pd.concat(MASTER_p_trial_data_list, ignore_index=True)
+
+        MASTER_p_trial_data_name = f'MASTER_{bg_type}_p_trial_data_df.csv'
+
+        MASTER_p_trial_data_df.to_csv(os.path.join(bg_cond_path, MASTER_p_trial_data_name), index=False)
+        if verbose:
+            print(f'\nMASTER_p_trial_data_df:\n{MASTER_p_trial_data_df}')
+
+        mean_staircase_plots(per_trial_df=MASTER_p_trial_data_df, save_path=bg_cond_path, participant_name=participant_name,
+                             isi_col_name=isi_col_name, sep_col_name=sep_col_name, run_col_name=run_col_name,
+                             thr_col_name=thr_col_name,
+                             hue_col_name=cong_col_name, hue_names=['Incongruent', 'Congruent'],
+                             ave_type='mean',
+                             show_plots=True, save_plots=True, verbose=False)
+
+        # # # mean staircase for this bg type will loop through ISI and separation,
+        # # then plot staircases and mean (step v probeLum) for each run and congruenct/incongruent
+        # '''
+        # 1. Calculate ave thr for each step for congruent and incongruent data.
+        # 2. loop through MASTER_p_trial_data_df for each ISI/sep combination.
+        # 3. make plot showing all 12 congruent and incongruent staircases on the same plot (different colours)
+        # and ave cong and incong ontop.
+        # '''
+        #
+        # get_median = False
+        # ave_type = 'mean'
+        # if get_median:
+        #     ave_type = 'median'
+        #
+        # hue_names = ['Incongruent', 'Congruent']
+        #
+        #
+        # run_colour_list = ['pink', 'lightblue']
+        # ave_colour_list = ['red', 'blue']
+        #
+        # MASTER_p_trial_data_df = pd.read_csv(os.path.join(bg_cond_path, MASTER_p_trial_data_name))
+        # print(f'\nMASTER_p_trial_data_df ({MASTER_p_trial_data_df.shape}):\n{MASTER_p_trial_data_df}')
+        #
+        #
+        # isi_list = MASTER_p_trial_data_df[isi_col_name].unique()
+        # if verbose:
+        #     print(f"isi_list: {isi_list}")
+        #
+        # sep_list = MASTER_p_trial_data_df[sep_col_name].unique()
+        # if verbose:
+        #     print(f"sep_list: {sep_list}")
+        #
+        # n_runs = len(MASTER_p_trial_data_df[run_col_name].unique())
+        #
+        # plot_idx = 'df_cols'
+        # # check if there is only one condition (e.g., only one isi)
+        # if len(sep_list) > 1 and len(isi_list) > 1:
+        #     n_rows = len(sep_list)
+        #     n_cols = len(isi_list)
+        # elif len(isi_list) > 1:
+        #     n_rows, n_cols = get_n_rows_n_cols(len(isi_list))
+        #     plot_idx = 'len(isi_list)'
+        #     if verbose:
+        #         print(f"plot indices from get_n_rows_n_cols(len(isi_list) for {n_rows} rows and {n_cols} cols")
+        # elif len(sep_list) > 1:
+        #     n_rows, n_cols = get_n_rows_n_cols(len(sep_list))
+        #     plot_idx = 'len(sep_list)'
+        #     if verbose:
+        #         print(f"plot indices from get_n_rows_n_cols(len(sep_list) for {n_rows} rows and {n_cols} cols")
+        # else:
+        #     n_rows = len(sep_list)
+        #     n_cols = len(isi_list)
+        #
+        # # initialise plot
+        # fig, axes = plt.subplots(nrows=n_rows, ncols=n_cols,
+        #                          figsize=(n_cols * 6, n_rows * 6),
+        #                          sharex=True)
+        # if verbose:
+        #     print(f'\nplotting {n_cols} rows and {n_rows} cols (axes: {axes})')
+        #
+        # # if there is only a single condition, put axes into a list to allow indexing, consistent with
+        # # analyses where there are multiple conditons (e.g., axes[0])
+        # if n_cols == 1 and n_rows == 1:
+        #     axes = [axes]
+        #
+        # # loop through isi values
+        # for isi_idx, isi in enumerate(isi_list):
+        #     # get df for this isi only
+        #     isi_df = MASTER_p_trial_data_df[MASTER_p_trial_data_df[isi_col_name] == isi]
+        #     if verbose:
+        #         print(f"\n{isi_idx}. ISI: {isi} ({isi_df.shape})"
+        #               f"\n{isi_df}"
+        #               )
+        #
+        #     # loop through sep values
+        #     for sep_idx, sep in enumerate(sep_list):
+        #         # get df for this sep only
+        #         sep_df = isi_df[isi_df[sep_col_name] == sep]
+        #         if verbose:
+        #             print(f"\n{sep_idx}. sep {sep} ({sep_df.shape}):"
+        #                   # f"\n{sep_df}"
+        #                   )
+        #
+        #         # # check shape for accessing axes
+        #         if plot_idx == 'df_cols':
+        #             if len(sep_list) > 1 and len(isi_list) > 1:
+        #                 this_ax = sep_idx, isi_idx
+        #             else:
+        #                 this_ax = 0
+        #         elif plot_idx == 'len(isi_list)':  # only one sep
+        #             this_ax = get_ax_idx(isi_idx, n_rows, n_cols)
+        #         elif plot_idx == 'len(sep_list)':  # only one isi
+        #             this_ax = get_ax_idx(sep_idx, n_rows, n_cols)
+        #
+        #
+        #         # # get ave values for each step
+        #         this_sep_df = sep_df[[run_col_name, 'step', cong_col_name, thr_col_name]]
+        #         if verbose:
+        #             print(f"this_sep_df ({this_sep_df.shape}):\n{this_sep_df}")
+        #         if get_median:
+        #             ave_step_thr_df = this_sep_df.groupby([cong_col_name, 'step'], sort=False).median()
+        #         else:
+        #             ave_step_thr_df = this_sep_df.groupby([cong_col_name, 'step'], sort=False).mean()
+        #         ave_step_thr_df.reset_index(drop=False, inplace=True)
+        #         ave_step_thr_df.drop(run_col_name, axis=1, inplace=True)
+        #         if verbose:
+        #             print(f"ave_step_thr_df ({ave_step_thr_df.shape}):\n{ave_step_thr_df}")
+        #         wide_ave_step_thr_df = ave_step_thr_df.pivot(index='step', columns=cong_col_name, values=thr_col_name)
+        #         wide_ave_step_thr_df.columns = hue_names
+        #         if verbose:
+        #             print(f"wide_ave_step_thr_df ({wide_ave_step_thr_df.shape}):\n{wide_ave_step_thr_df}")
+        #
+        #         stack_list = sep_df[run_col_name].unique()
+        #         if verbose:
+        #                 print(f"stack_list: {sep_list}")
+        #
+        #         # loop through stack values
+        #         for stack_idx, stack in enumerate(stack_list):
+        #             # get df for this stack only
+        #             stack_df = sep_df[sep_df[run_col_name] == stack]
+        #             if verbose:
+        #                 print(f"\n{stack_idx}. stack {stack} ({stack_df.shape}):"
+        #                       # f"\n{stack_df}"
+        #                       )
+        #
+        #             this_stack_df = stack_df[['step', cong_col_name, thr_col_name]]
+        #             if verbose:
+        #                 print(f"this_stack_df ({this_stack_df.shape}):\n{this_stack_df}")
+        #
+        #             # I now have the data I need - reshape it so cong and incong are different columns
+        #             wide_df = this_stack_df.pivot(index='step', columns=cong_col_name, values=thr_col_name)
+        #             wide_df.columns = hue_names
+        #             if verbose:
+        #                 print(f"wide_df ({wide_df.shape}):\n{wide_df}")
+        #
+        #
+        #             for idx, name in enumerate(hue_names):
+        #                 axes[this_ax].errorbar(x=list(range(25)), y=wide_df[name],
+        #                                        color=run_colour_list[idx])
+        #
+        #
+        #         # add mean line
+        #         for idx, name in enumerate(hue_names):
+        #             axes[this_ax].errorbar(x=list(range(25)), y=wide_ave_step_thr_df[name],
+        #                                    color=ave_colour_list[idx])
+        #
+        #         # decorate each subplot
+        #         axes[this_ax].set_title(f"{isi_col_name}{isi}, {sep_col_name}{sep}")
+        #         axes[this_ax].set_xlabel('step (25 per condition, per run)')
+        #         axes[this_ax].set_ylabel(thr_col_name)
+        #
+        # # delete any unused axes
+        # if plot_idx == 'df_cols':
+        #     if len(sep_list) > 1 and len(isi_list) > 1:
+        #         for ax in axes.flat[len(isi_list)*len(sep_list):]:
+        #             ax.remove()
+        #     elif len(isi_list) > 1:
+        #         for ax in axes.flat[len(isi_list):]:
+        #             ax.remove()
+        #     elif len(sep_list) > 1:
+        #         for ax in axes.flat[len(sep_list):]:
+        #             ax.remove()
+        #
+        #
+        # # artist for legend
+        # st0 = mlines.Line2D([], [], color=run_colour_list[0],
+        #                     markersize=4, label=hue_names[0])
+        # st1 = mlines.Line2D([], [], color=run_colour_list[1],
+        #                     markersize=4, label=hue_names[1])
+        # ave_line_0 = mlines.Line2D([], [], color=ave_colour_list[0],
+        #                            marker=None, linewidth=.5,
+        #                            label=f'{hue_names[0]} ({ave_type})')
+        # ave_line_1 = mlines.Line2D([], [], color=ave_colour_list[1],
+        #                            marker=None, linewidth=.5,
+        #                            label=f'{hue_names[1]} ({ave_type})')
+        #
+        # handles_list = [st0, ave_line_0, st1, ave_line_1]
+        # fig.legend(handles=handles_list, fontsize=16, loc='lower right')
+        #
+        # fig.suptitle(f"{participant_name}: {n_runs} staircases with {ave_type}")
+        #
+        # if get_median:
+        #     save_name = f"all_run_stairs_{participant_name}_{isi_col_name}{isi}_{sep_col_name[:3]}{sep}_median.png"
+        # else:
+        #     save_name = f"all_run_stairs_{participant_name}_{isi_col_name}{isi}_{sep_col_name[:3]}{sep}_mean.png"
+        #
+        # print(f"save plot to: {os.path.join(bg_cond_path, save_name)}")
+        # plt.savefig(os.path.join(bg_cond_path, save_name))
+        #
+        # plt.show()
 
         '''d participant averages'''
         trim_n = None
@@ -186,15 +405,15 @@ for p_idx, participant_name in enumerate(participant_list):
         print(f'\ntrim_n: {trim_n}')
 
         cols_to_drop = ['stack', 'stair_name']
-        cols_to_replace = ['congruent', 'separation', 'motion_dur_ms']
+        cols_to_replace = [cong_col_name, sep_col_name, 'motion_dur_ms']
         groupby_cols = ['neg_sep']
 
-        # d_average_participant(root_path=bg_cond_path, run_dir_names_list=run_folder_names,
-        #                       trim_n=trim_n,
-        #                       groupby_col=groupby_cols,
-        #                       cols_to_drop=cols_to_drop,
-        #                       cols_to_replace=cols_to_replace,
-        #                       error_type='SE', verbose=verbose)
+        d_average_participant(root_path=bg_cond_path, run_dir_names_list=run_folder_names,
+                              trim_n=trim_n,
+                              groupby_col=groupby_cols,
+                              cols_to_drop=cols_to_drop,
+                              cols_to_replace=cols_to_replace,
+                              error_type='SE', verbose=verbose)
 
 
         # making average plot
@@ -215,15 +434,15 @@ for p_idx, participant_name in enumerate(participant_list):
                           'isi_ms_100']
 
         long_df = make_long_df(wide_df=all_df,
-                               cols_to_keep=['congruent'],
+                               cols_to_keep=[cong_col_name],
                                cols_to_change=cols_to_change,
                                cols_to_change_show='probeLum',
-                               new_col_name='ISI', strip_from_cols='isi_ms_', verbose=True)
+                               new_col_name=isi_col_name, strip_from_cols='isi_ms_', verbose=True)
         print(f"long_df: {long_df.shape}\ncolumns: {list(long_df.columns)}\n{long_df}\n")
 
         # make line plot with error bars for congruent and incongruent with isi on x axis
         # use the basic palette
-        sns.lineplot(data=long_df, x='ISI', y='probeLum', hue='congruent',
+        sns.lineplot(data=long_df, x=isi_col_name, y='probeLum', hue=cong_col_name,
                      errorbar='se', err_style='bars', err_kws={'capsize': 5},
                      palette=sns.color_palette("tab10", n_colors=2))
 
@@ -242,7 +461,7 @@ for p_idx, participant_name in enumerate(participant_list):
                    framealpha=0.5)
 
         # for x-axis labels, if the isi is -1, change to 'Concurrent'
-        x_tick_values = sorted(long_df['ISI'].unique())
+        x_tick_values = sorted(long_df[isi_col_name].unique())
         x_tick_labels = []
         for label in x_tick_values:
             if label in [-1, '-1']:
@@ -278,7 +497,7 @@ for p_idx, participant_name in enumerate(participant_list):
             # ax.set_xlabel('Probe separation in diagonal pixels')
             # ax.set_ylabel('Probe Luminance')
             #
-            # ax.legend(labels=isi_name_list, title='ISI',
+            # ax.legend(labels=isi_name_list, title=isi_col_name,
             #           shadow=True,
             #           # place lower left corner of legend at specified location.
             #           loc='lower left', bbox_to_anchor=(0.96, 0.5))
@@ -389,7 +608,7 @@ Don't use this bottom bit as it isn't really set up for comparing prelims
 #     all_df.drop(unnamed_col, axis=1, inplace=True)
 # print(f"all_df:\n{all_df}")
 #
-# all_df_basic_cols = ['participant', 'stair_names', 'congruent', 'separation']
+# all_df_basic_cols = ['participant', 'stair_names', 'congruent', sep_col_name]
 #
 # # isi_names_list = list(all_df.columns[len(all_df_basic_cols):])
 # isi_names_list = [i for i in list(all_df.columns) if 'isi' in i.lower()]
