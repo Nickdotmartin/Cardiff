@@ -672,7 +672,11 @@ def get_n_rows_n_cols(n_plots):
         raise ValueError(f"\t\tToo many plots for this function: {n_plots}\n\n")
 
     # ideally have no more than 4 rows, unless more than 16 plots
-    if n_plots <= 16:
+    if n_plots == 4:
+        n_rows = n_cols = 2
+    elif n_plots == 9:
+        n_rows = n_cols = 3
+    elif n_plots <= 16:
         row_whole_divide = n_plots // 4  # how many times this number of plots goes into 4.
         row_remainder = n_plots % 4  # remainder after the above calculation.
         if row_remainder == 0:
@@ -2463,6 +2467,84 @@ def multi_plt_per_col_w_hue(ave_thr_df, error_df,
     return fig
 
 
+def rad_flow_line_plot(all_df, participant_name,
+                       isi_col_name='isi_ms', cong_col_name='congruent',
+                       trim_n=None,
+                       extra_text=None, save_path=None, show_plots=True,
+                       verbose=True):
+    # make a lineplot showing congruent and incongruent thresholds for each ISI
+    # if all_df is string, check it exists then open it as all_df
+    if isinstance(all_df, str):
+        if os.path.isfile(all_df):
+            all_df = pd.read_csv(all_df)
+
+    # make long_df, moving 'isi_' columns to single column 'isi_ms'
+    cols_to_change = [col for col in all_df.columns if 'isi_ms_' in col]
+    long_df = make_long_df(wide_df=all_df,
+                           cols_to_keep=[cong_col_name],
+                           cols_to_change=cols_to_change,
+                           cols_to_change_show='probeLum',
+                           new_col_name=isi_col_name, strip_from_cols='isi_ms_', verbose=verbose)
+    print(f"long_df: {long_df.shape}\ncolumns: {list(long_df.columns)}\n{long_df}\n")
+
+    # make line plot with error bars for congruent and incongruent with isi on x axis
+    # use the basic palette
+    sns.lineplot(data=long_df, x=isi_col_name, y='probeLum', hue=cong_col_name,
+                 errorbar='se', err_style='bars', err_kws={'capsize': 5},
+                 palette=sns.color_palette("tab10", n_colors=2))
+
+    # add small scatterplot points with same colours, with .5 alpha/opacity
+    sns.scatterplot(data=long_df, x=isi_col_name, y='probeLum', hue=cong_col_name,
+                    palette=sns.color_palette("tab10", n_colors=2),
+                    legend=False,
+                    alpha=.5)
+    # todo: split hue values and have faint lines joining them
+
+    # change legend labels such that they are 1=congruent and -1=incongruent
+    handles, labels = plt.gca().get_legend_handles_labels()
+    new_labels = []
+    for label in labels:
+        if label == '1':
+            new_labels.append('Congruent')
+        elif label == '-1':
+            new_labels.append('Incongruent')
+        else:
+            new_labels.append(label)
+    # make legend box 50% opaque
+    plt.legend(title='Probe & background', handles=handles, labels=new_labels,
+               framealpha=0.5)
+
+    # for x-axis labels, if the isi is -1, change to 'Concurrent'
+    x_tick_values = sorted(long_df[isi_col_name].unique())
+    x_tick_labels = []
+    for label in x_tick_values:
+        if label in [-1, '-1']:
+            x_tick_labels.append('Concurrent')
+        else:
+            x_tick_labels.append(label)
+
+    # decorate plot
+    plt.xlabel('ISI (ms)')
+    plt.ylabel('Probe luminance')
+    plt.xticks(ticks=x_tick_values, labels=x_tick_labels)
+
+    suptitle_text = f"{participant_name} thresholds for each ISI. {extra_text}"
+    if trim_n is not None:
+        suptitle_text = f"{participant_name} thresholds for each ISI, trimmed {trim_n}. {extra_text}"
+    plt.suptitle(suptitle_text)
+    plt.title("separation = 4; motion window = 200ms")
+    # if not save_path:
+    # save_path, df_name = os.path.split(all_df_path)
+    # plt.savefig(os.path.join(save_path, f"{df_name[:-4]}_lineplot.png"))
+    fig_name = f"{participant_name}_lineplot.png"
+    if extra_text is not None:
+        fig_name = f"{participant_name}_{extra_text}_lineplot.png"
+    if verbose:
+        print(f"\n***saving lineplot to {os.path.join(save_path, fig_name)}***")
+    plt.savefig(os.path.join(save_path, fig_name))
+    if show_plots:
+        plt.show()
+
 
 def plot_thr_heatmap(heatmap_df,
                      x_tick_labels=None,
@@ -3498,9 +3580,9 @@ def b3_plot_stair_sep0(all_data_path, thr_col='newLum', resp_col='trial_response
     print("\n***finished b3_plot_stair_sep0()***\n")
 
 
-def mean_staircase_plots(per_trial_df, save_path, participant_name,
-                         isi_col_name='isi_ms', sep_col_name='separation', run_col_name='run',
+def mean_staircase_plots(per_trial_df, save_path, participant_name, run_col_name='run',
                          thr_col_name='probeLum',
+                         isi_col_name='isi_ms', sep_col_name='separation',
                          hue_col_name='congruent', hue_names=['Incongruent', 'Congruent'],
                          ave_type='mean',
                          show_plots=True, save_plots=True, verbose=False):
@@ -3627,6 +3709,7 @@ def mean_staircase_plots(per_trial_df, save_path, participant_name,
                 this_ax = get_ax_idx(isi_idx, n_rows, n_cols)
             elif plot_idx == 'len(sep_list)':  # only one isi
                 this_ax = get_ax_idx(sep_idx, n_rows, n_cols)
+            print(f"this_ax: {this_ax}")
 
             # # get ave values for each step
             this_sep_df = sep_df[[run_col_name, 'step', hue_col_name, thr_col_name]]
@@ -3723,6 +3806,9 @@ def mean_staircase_plots(per_trial_df, save_path, participant_name,
 
     if save_plots:
         print(f"save plot to: {os.path.join(save_path, save_name)}")
+        # if save_path doesn't exist, make it
+        if not os.path.isdir(save_path):
+            os.makedirs(save_path)
         plt.savefig(os.path.join(save_path, save_name))
 
     if show_plots:

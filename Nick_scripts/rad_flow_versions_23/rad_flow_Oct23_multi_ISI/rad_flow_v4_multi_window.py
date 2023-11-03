@@ -632,7 +632,6 @@ frames@120hz: [12,   6,   5,     ,    4,     3,  2,    1,    0]
 frames@60hz:  [ 6,   3,    ,     ,    2,      ,  1,     ,    0]
 '''
 # selected_isi_ms_vals = [100, 50, 41.66, 33.34, 25, 16.67, 8.33, 0, -1]  # dropped 37.5 / ISI 9 as it won't run on OLED
-# selected_isi_ms_vals = [100, 50, 41.66, 33.34, 25, 16.67, 8.33, 0, -1]  # dropped 37.5 / ISI 9 as it won't run on OLED
 selected_isi_ms_vals = [33.34, 25, 16.67, 0]  # dropped 37.5 / ISI 9 as it won't run on OLED
 isi_fr_vals = [-1 if i == -1 else int(i * fps / 1000) for i in selected_isi_ms_vals]
 isi_ms_vals = [-1 if i == -1 else round((1 / fps) * i * 1000, 2) for i in isi_fr_vals]
@@ -666,7 +665,7 @@ if debug:
 # window values is the duration of background motion, with stimuli in the middle.
 selected_bg_motion_ms_vals = [0, 100, 200, 300]
 if debug:
-    selected_bg_motion_ms_vals = [0, 40, 100, 200, 300]
+    selected_bg_motion_ms_vals = [0, 1000]
 
 
 
@@ -828,7 +827,10 @@ if monitor_name in ['asus_cal', 'Nick_work_laptop', 'NickMac', 'OLED', 'ASUS_2_1
     display_number = 0
 
 # WINDOW SPEC
-win = visual.Window(monitor=mon, size=(widthPix, heightPix), colorSpace=this_colourSpace, color=this_bgColour,
+win = visual.Window(monitor=mon, size=(widthPix, heightPix),
+                    # winType='pyglet',
+                    bpc=[10, 10, 10],
+                    colorSpace=this_colourSpace, color=this_bgColour,
                     units='pix', screen=display_number, allowGUI=False, fullscr=True, useFBO=False)
 
 # pixel size
@@ -895,7 +897,8 @@ mmask = np.append(blankslab, invRaisedCosTexture, axis=1)  # append blank slab t
 mmask = np.append(mmask, blankslab, axis=1)  # and right
 # changed edge_mask color from grey, fades to black round edges which makes screen edges less visible
 edge_mask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
-                               size=(widthPix, heightPix), units='pix', color='black')
+                               size=(widthPix, heightPix), units='pix',
+                               color='black', colorSpace=this_colourSpace)
 
 
 '''FLOW DOT SETTINGS'''
@@ -1077,7 +1080,9 @@ if monitor_name in ['Nick_work_laptop', 'OLED']:  # e.g., windows machine
 start_lum_prop = .2  # previously was 0.3 until 01/11/2023
 if debug:
     start_lum_prop = .5
-stairStart = maxLum * start_lum_prop
+# stairStart = maxLum * start_lum_prop
+# just start at max lum for now.
+stairStart = maxLum  # * start_lum_prop
 
 # proportion of stairStart to use to get intial step size, but this is NOT the actual step size
 c_multiplier = 1.2  # previously was 0.6 until 01/11/2023
@@ -1098,7 +1103,7 @@ for stair_idx in range(n_stairs):
     thisInfo['cong_val'] = cong_val_conds_list[stair_idx]
     thisInfo['cong_name'] = cong_name_conds_list[stair_idx]
     thisInfo['bg_motion_ms'] = bg_motion_ms_conds_list[stair_idx]
-    thisInfo['bg_motion_fr'] = bg_motion_fr_vals[stair_idx]
+    thisInfo['bg_motion_fr'] = bg_motion_fr_conds_list[stair_idx]
     thisInfo['bg_motion_name'] = bg_motion_cond_names_list[stair_idx]
 
 

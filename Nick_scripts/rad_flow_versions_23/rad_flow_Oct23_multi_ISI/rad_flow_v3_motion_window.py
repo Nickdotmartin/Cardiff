@@ -762,7 +762,10 @@ if monitor_name in ['asus_cal', 'Nick_work_laptop', 'NickMac', 'OLED', 'ASUS_2_1
     display_number = 0
 
 # WINDOW SPEC
-win = visual.Window(monitor=mon, size=(widthPix, heightPix), colorSpace=this_colourSpace, color=this_bgColour,
+win = visual.Window(monitor=mon, size=(widthPix, heightPix),
+                    # winType='pyglet',
+                    bpc=[10, 10, 10],
+                    colorSpace=this_colourSpace, color=this_bgColour,
                     units='pix', screen=display_number, allowGUI=False, fullscr=True, useFBO=False)
 
 # pixel size
@@ -829,7 +832,8 @@ mmask = np.append(blankslab, invRaisedCosTexture, axis=1)  # append blank slab t
 mmask = np.append(mmask, blankslab, axis=1)  # and right
 # changed edge_mask color from grey, fades to black round edges which makes screen edges less visible
 edge_mask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
-                               size=(widthPix, heightPix), units='pix', color='black')
+                               size=(widthPix, heightPix), units='pix',
+                               color='black', colorSpace=this_colourSpace)
 
 
 '''FLOW DOT SETTINGS'''
@@ -1011,7 +1015,10 @@ if monitor_name in ['Nick_work_laptop', 'OLED']:  # e.g., windows machine
 start_lum_prop = .2  # previously was 0.3 until 01/11/2023
 if debug:
     start_lum_prop = .5
-stairStart = maxLum * start_lum_prop
+# stairStart = maxLum * start_lum_prop
+# just start at max lum for now.
+stairStart = maxLum  # * start_lum_prop
+
 
 # proportion of stairStart to use to get intial step size, but this is NOT the actual step size
 c_multiplier = 1.2  # previously was 0.6 until 01/11/2023
