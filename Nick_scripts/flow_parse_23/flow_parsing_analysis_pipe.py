@@ -13,29 +13,33 @@ import matplotlib.pyplot as plt
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing_NM_v6"
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing_NM_v7"
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing_NM_v8"
-exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing_NM_v8_interleave_dur"
+# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing_NM_v8_interleave_dur"
+# exp_path = r"C:\Users\sapnm4\PycharmProjects\Cardiff\Nick_scripts\flow_parse_23\flow_parsing_NM_v10_window_interleave_durs"
+exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing_NM_v10_window_interleave_durs"
 print(f"exp_path: {exp_path}")
 convert_path1 = os.path.normpath(exp_path)
 print(f"convert_path1: {convert_path1}")
 exp_path = convert_path1
 
-monitor = 'OLED'  # 'asus_cal' OLED, 'Nick_work_laptop'
+monitor = 'Nick_work_laptop'  # 'asus_cal' OLED, 'Nick_work_laptop'
 exp_path = os.path.join(exp_path, monitor)
+if not os.path.isdir(exp_path):
+    raise FileNotFoundError(f'exp_path: {exp_path} not found')
 
 
-participant_list = ['Nick']  # ' Nicktest_06102023' Nick_extra_prelims
+participant_list = ['Nicktest']  # ' Nicktest_06102023' Nick_extra_prelims
 
-thr_col_name = 'probe_cm_p_sec'
+thr_col_name = 'probe_deg_p_sec'  # probe_cm_p_sec
 stair_names_col_name = 'stair_name'
-bg_dur_name = 'prelim_ms'  # prelim_ms
+bg_dur_name = 'bg_motion_ms'  # prelim_ms
 flow_dir_col_name = 'flow_dir'
 flow_name_col_name = 'flow_name'
 probe_dur_col_name = 'probe_dur_ms'  # durations
 probe_dir_col_name = 'probe_dir'  # directions
 resp_col_name = 'response'  # NOT resp_corr
 var_cols_list = [stair_names_col_name, flow_dir_col_name, flow_name_col_name, probe_dur_col_name, bg_dur_name]
-if 'interleave_dur' in exp_path:
-    var_cols_list = [flow_dir_col_name, flow_name_col_name, probe_dur_col_name, bg_dur_name]  # don't include stair_names_col_name
+# if 'interleave_dur' in exp_path:  # don't include stair_names_col_name for v8
+#     var_cols_list = [flow_dir_col_name, flow_name_col_name, probe_dur_col_name, bg_dur_name]
 
 verbose = True
 show_plots = True
@@ -97,6 +101,7 @@ for p_idx, participant_name in enumerate(participant_list):
         p_name = f'{participant_name}_{r_idx_plus}'
 
         run_data_df = a_data_extraction(p_name=p_name, run_dir=run_path, dur_list=probe_durs_dir_list, verbose=verbose)
+
         print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}\n")
 
         run_data_path = os.path.join(run_path, 'ALL_durations_sorted.csv')
@@ -166,7 +171,8 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
     # make plots
-    make_flow_parse_plots(all_df_path, p_name_path, participant_name, n_trimmed=trim_n)
+    make_flow_parse_plots(all_df_path, p_name_path, participant_name, n_trimmed=trim_n,
+                          motion_col=bg_dur_name)
 
 
 

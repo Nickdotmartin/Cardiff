@@ -1444,9 +1444,80 @@ def a_data_extraction(p_name, run_dir, dur_list, save_all_data=True, verbose=Tru
 
     all_data = []
 
-    # loop through durations in each run.
-    for duration in dur_list:
-        filepath = os.path.join(run_dir, duration, f'{p_name}_output.csv')
+    # if dur list passed: loop through durations in each run.
+    if len(dur_list) > 0:
+        for duration in dur_list:
+            filepath = os.path.join(run_dir, duration, f'{p_name}_output.csv')
+            if verbose:
+                print(f"filepath: {filepath}")
+
+            if not os.path.isfile(filepath):
+                raise FileNotFoundError(filepath)
+                # print(f'\n\nFileNotFound: {filepath}.\n'
+                #       f'Continue looping through other files.\n')
+
+            # load data
+            this_dur_df = pd.read_csv(filepath)
+            if verbose:
+                print(f"loaded csv:\n{this_dur_df.head()}")
+
+            # remove any Unnamed columns
+            if any("Unnamed" in i for i in list(this_dur_df.columns)):
+                unnamed_col = [i for i in list(this_dur_df.columns) if "Unnamed" in i][0]
+                this_dur_df.drop(unnamed_col, axis=1, inplace=True)
+
+            # OLED windows machine sometimes adds extra columns, remove: ['thisRow.t', 'notes']
+            if 'thisRow.t' in list(this_dur_df.columns):
+                this_dur_df.drop('thisRow.t', axis=1, inplace=True)
+            if 'notes' in list(this_dur_df.columns):
+                this_dur_df.drop('notes', axis=1, inplace=True)
+
+            # sort by staircase
+            trial_numbers = list(this_dur_df['trial_number'])
+            this_dur_df = this_dur_df.sort_values(by=['stair', 'trial_number'])
+
+            # add duration column for multi-indexing
+            # this_dur_df.insert(0, 'probe_dur_ms', duration)
+            this_dur_df.insert(1, 'srtd_trial_idx', trial_numbers)
+            if verbose:
+                print(f'df sorted by stair: {type(this_dur_df)}\n{this_dur_df}')
+
+            # get column names to use on all_data_df
+            column_names = list(this_dur_df)
+            if verbose:
+                print(f'column_names: {len(column_names)}\n{column_names}')
+
+            # I've changed column names lately, so there are some extra ones.  In which case, just use old cols.
+            # if 'actual_bg_color' in column_names:
+            #     print("getting rid of extra columns (e.g., 'actual_bg_color', "
+            #           "'bgcolor_to_rgb1', 'bgLumP', 'bgLum', 'bgColor255')")
+            #     cols_to_use = ['duration', 'srtd_trial_idx', 'trial_number', 'stair',
+            #                    'stair_name', 'step', 'separation', 'congruent',
+            #                    'flow_dir', 'probe_jump', 'corner', 'probeLum',
+            #                    'trial_response', 'resp.rt', 'probeColor1', 'probeColor255',
+            #                    'probe_ecc', 'BGspeed', 'orientation', 'dur_actual_ms',
+            #                    'dur_frames', '1_Participant', '2_Probe_dur_in_frames_at_240hz',
+            #                    '3_fps', '4_dur_dur_in_ms', '5_Probe_orientation',
+            #                    '6_Probe_size', '7_Trials_counter', '8_Background',
+            #                    'date', 'time', 'stair_list', 'n_trials_per_stair']
+            #     this_dur_df = this_dur_df[cols_to_use]
+            #     column_names = cols_to_use
+
+            # add to all_data
+            all_data.append(this_dur_df)
+
+        # create all_data_df - reshape to 2d
+        if verbose:
+            print(f'all_data: {type(all_data)}\n{all_data}')
+        all_data_shape = np.shape(all_data)
+        sheets, rows, columns = np.shape(all_data)
+        all_data = np.reshape(all_data, newshape=(sheets * rows, columns))
+        if verbose:
+            print(f'all_data reshaped from {all_data_shape} to {np.shape(all_data)}')
+        all_data_df = pd.DataFrame(all_data, columns=column_names)
+
+    else:  # if no dur list passed
+        filepath = os.path.join(run_dir, f'{p_name}_output.csv')
         if verbose:
             print(f"filepath: {filepath}")
 
@@ -1481,39 +1552,9 @@ def a_data_extraction(p_name, run_dir, dur_list, save_all_data=True, verbose=Tru
         if verbose:
             print(f'df sorted by stair: {type(this_dur_df)}\n{this_dur_df}')
 
-        # get column names to use on all_data_df
-        column_names = list(this_dur_df)
-        if verbose:
-            print(f'column_names: {len(column_names)}\n{column_names}')
+        all_data_df = this_dur_df
 
-        # I've changed column names lately, so there are some extra ones.  In which case, just use old cols.
-        # if 'actual_bg_color' in column_names:
-        #     print("getting rid of extra columns (e.g., 'actual_bg_color', "
-        #           "'bgcolor_to_rgb1', 'bgLumP', 'bgLum', 'bgColor255')")
-        #     cols_to_use = ['duration', 'srtd_trial_idx', 'trial_number', 'stair',
-        #                    'stair_name', 'step', 'separation', 'congruent',
-        #                    'flow_dir', 'probe_jump', 'corner', 'probeLum',
-        #                    'trial_response', 'resp.rt', 'probeColor1', 'probeColor255',
-        #                    'probe_ecc', 'BGspeed', 'orientation', 'dur_actual_ms',
-        #                    'dur_frames', '1_Participant', '2_Probe_dur_in_frames_at_240hz',
-        #                    '3_fps', '4_dur_dur_in_ms', '5_Probe_orientation',
-        #                    '6_Probe_size', '7_Trials_counter', '8_Background',
-        #                    'date', 'time', 'stair_list', 'n_trials_per_stair']
-        #     this_dur_df = this_dur_df[cols_to_use]
-        #     column_names = cols_to_use
 
-        # add to all_data
-        all_data.append(this_dur_df)
-
-    # create all_data_df - reshape to 2d
-    if verbose:
-        print(f'all_data: {type(all_data)}\n{all_data}')
-    all_data_shape = np.shape(all_data)
-    sheets, rows, columns = np.shape(all_data)
-    all_data = np.reshape(all_data, newshape=(sheets * rows, columns))
-    if verbose:
-        print(f'all_data reshaped from {all_data_shape} to {np.shape(all_data)}')
-    all_data_df = pd.DataFrame(all_data, columns=column_names)
 
     if verbose:
         print(f"all_data_df:\n{all_data_df}")
@@ -2048,16 +2089,20 @@ def d_average_participant(root_path, run_dir_names_list,
     # loop through stair_list and add corresponding stair_name and flow_name to list
     stair_list = get_means_df['stair'].unique().tolist()
     stair_names_list = []
-    prelim_list = []
+    # prelim_list = []
+    bg_motion_ms_list = []
     flow_dir_list = []
     flow_names_list = []
     for stair in stair_list:
         stair_names_list.append(get_means_df.loc[get_means_df['stair'] == stair, 'stair_name'].unique().tolist()[0])
-        prelim_list.append(get_means_df.loc[get_means_df['stair'] == stair, 'prelim_ms'].unique().tolist()[0])
+        # prelim_list.append(get_means_df.loc[get_means_df['stair'] == stair, 'prelim_ms'].unique().tolist()[0])
+        bg_motion_ms_list.append(get_means_df.loc[get_means_df['stair'] == stair, 'bg_motion_ms'].unique().tolist()[0])
         flow_dir_list.append(get_means_df.loc[get_means_df['stair'] == stair, 'flow_dir'].unique().tolist()[0])
         flow_names_list.append(get_means_df.loc[get_means_df['stair'] == stair, 'flow_name'].unique().tolist()[0])
 
-    get_means_df = get_means_df.drop('prelim_ms', axis=1)
+    # get_means_df = get_means_df.drop('prelim_ms', axis=1)
+    get_means_df = get_means_df.drop('bg_motion_ms', axis=1)
+
     get_means_df = get_means_df.drop('flow_dir', axis=1)
 
     get_means_df = get_means_df.drop('stair_name', axis=1)
@@ -2069,7 +2114,8 @@ def d_average_participant(root_path, run_dir_names_list,
     ave_psignifit_thr_df = get_means_df.groupby(['stair'], sort=False).mean()
     # add stair_names and flow_name back in
     ave_psignifit_thr_df.insert(0, 'stair_name', stair_names_list)
-    ave_psignifit_thr_df.insert(1, 'prelim_ms', prelim_list)
+    # ave_psignifit_thr_df.insert(1, 'prelim_ms', prelim_list)
+    ave_psignifit_thr_df.insert(1, 'bg_motion_ms', bg_motion_ms_list)
     ave_psignifit_thr_df.insert(2, 'flow_dir', flow_dir_list)
     ave_psignifit_thr_df.insert(3, 'flow_name', flow_names_list)
     if verbose:
@@ -2093,7 +2139,8 @@ def d_average_participant(root_path, run_dir_names_list,
 
     # add stair_names and flow_name back in
     error_bars_df.insert(0, 'stair_name', stair_names_list)
-    error_bars_df.insert(1, 'prelim_ms', prelim_list)
+    # error_bars_df.insert(1, 'prelim_ms', prelim_list)
+    error_bars_df.insert(1, 'bg_motion_ms', bg_motion_ms_list)
     error_bars_df.insert(2, 'flow_dir', flow_dir_list)
     error_bars_df.insert(3, 'flow_name', flow_names_list)
     print(f'\nerror_bars_df:\n{error_bars_df}')
@@ -2491,7 +2538,8 @@ def plot_diff(ave_thr_df, stair_names_col='stair', fig_title=None,
 #         plt.show()
 #     plt.close()
     
-def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed, exp_ave=False):
+def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed,
+                          motion_col='bg_motion_ms', exp_ave=False):
     """
     Make plots showing probe speed or speed difference (exp-cont) for all prelims and probe_durs
 
@@ -2528,8 +2576,10 @@ def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed, e
     strip_this = ''
     # if 'dur_' in any of the cols_to_change, change strip_this to 'dur_'
     for col in cols_to_change:
-        if 'probe_dur_ms_' in col:
-            strip_this = 'probe_dur_ms_'
+        # if 'probe_dur_ms_' in col:
+        #     strip_this = 'probe_dur_ms_'
+        if f'{motion_col}_' in col:
+            strip_this = f'{motion_col}_'  # e.g., 'bg_motion_ms_'
             break
     print(f"strip_this: {strip_this}")
     print(f"cols_to_keep: {cols_to_keep}")
@@ -2546,7 +2596,7 @@ def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed, e
     simple_all_long_df = all_long_df.drop(columns=['stair', 'flow_dir'])
 
     # sort simple_all_long_df by probe_dur_ms and prelim
-    simple_all_long_df.sort_values(by=['probe_dur_ms', 'prelim_ms'], inplace=True)
+    simple_all_long_df.sort_values(by=['probe_dur_ms', motion_col], inplace=True)
 
     print(f"simple_all_long_df: {simple_all_long_df.columns.tolist()}\n: {simple_all_long_df}\n")
 
@@ -2555,7 +2605,7 @@ def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed, e
 
     # lineplot showing flow_dir_name on x_axis vs mean threshold on Y-axis, for all prelim and probe_dur.
     sns.lineplot(data=simple_all_long_df, x='flow_name', y='probe_speed_cm_per_s',
-                 hue='prelim_ms', style='probe_dur_ms', errorbar='se')
+                 hue=motion_col, style='probe_dur_ms', errorbar='se')
     # insert horizontal line at 0.0
     plt.axhline(y=0.0, color='grey', linestyle='--')
 
@@ -2575,7 +2625,7 @@ def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed, e
         dur_df = simple_all_long_df[simple_all_long_df['probe_dur_ms'] == dur]
 
         sns.catplot(data=dur_df, x='flow_name', y='probe_speed_cm_per_s',
-                    hue='prelim_ms', kind='bar', errorbar='se')
+                    hue=motion_col, kind='bar', errorbar='se')
         plt.axhline(y=0.0, color='grey', linestyle='--')
         # insert vertical line between exp and cont
         plt.axvline(x=0.5, color='grey', linestyle='--')
@@ -2591,7 +2641,7 @@ def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed, e
         plt.show()
 
         # side by side plots for each prelim
-        g = sns.catplot(data=dur_df, x="flow_name", y="probe_speed_cm_per_s", col='prelim_ms',
+        g = sns.catplot(data=dur_df, x="flow_name", y="probe_speed_cm_per_s", col=motion_col,
                         kind="bar", height=4, aspect=.6)
         g.set_axis_labels("flow direction", "probe_speed_cm_per_s Rate")
         g.despine(left=True)
@@ -2610,18 +2660,18 @@ def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed, e
         plt.show()
 
         # # side by side plots for each prelim showing all datapoints and standard error
-        prelim_list = dur_df['prelim_ms'].unique().tolist()
-        fig, axes = plt.subplots(nrows=1, ncols=len(prelim_list),
+        bg_motion_list = dur_df[motion_col].unique().tolist()
+        fig, axes = plt.subplots(nrows=1, ncols=len(bg_motion_list),
                                  sharey=True, figsize=(10, 5))
 
         # if there is only a single condition, put axes into a list to allow indexing, consistent with
         # analyses where there are multiple conditons (e.g., axes[0])
-        if len(prelim_list) == 1:
+        if len(bg_motion_list) == 1:
             axes = [axes]
 
         for row_idx, row in enumerate(axes):
-            this_prelim = prelim_list[row_idx]
-            prelim_df = dur_df[dur_df['prelim_ms'] == this_prelim]
+            this_prelim = bg_motion_list[row_idx]
+            prelim_df = dur_df[dur_df[motion_col] == this_prelim]
 
             # add plot joining means
             sns.pointplot(data=prelim_df, x='flow_name', y='probe_speed_cm_per_s',
@@ -2647,7 +2697,7 @@ def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed, e
             # set the y-axis label for the first plot, only show legend on last plot
             if row_idx == 0:  # first plot
                 axes[row_idx].get_legend().remove()  # hide legend
-            elif row_idx != len(prelim_list):
+            elif row_idx != len(bg_motion_list):
                 axes[row_idx].get_legend().remove()  # hide legend
                 axes[row_idx].set_ylabel('')  # remove y axis title
             else:
@@ -2676,13 +2726,13 @@ def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed, e
     for probe_dur_ms in all_long_df['probe_dur_ms'].unique().tolist():
         dur_df = all_long_df[all_long_df['probe_dur_ms'] == probe_dur_ms]
 
-        for prelim in dur_df['prelim_ms'].unique().tolist():
-            prelim_df = dur_df[dur_df['prelim_ms'] == prelim]
+        for bg_motion in dur_df[motion_col].unique().tolist():
+            bg_motion_df = dur_df[dur_df[motion_col] == bg_motion]
 
-            for stack in prelim_df['stack'].unique().tolist():
-                stack_df = prelim_df[prelim_df['stack'] == stack]
+            for stack in bg_motion_df['stack'].unique().tolist():
+                stack_df = bg_motion_df[bg_motion_df['stack'] == stack]
 
-                print(f"\nstack: {stack}, probe_dur_ms: {probe_dur_ms}, prelim: {prelim}\n"
+                print(f"\nstack: {stack}, probe_dur_ms: {probe_dur_ms}, bg_motion: {bg_motion}\n"
                       f"stack_df: {stack_df.columns.tolist()}\n:"
                       # f"{stack_df}\n"
                       f"")
@@ -2690,20 +2740,20 @@ def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed, e
                 cont_speed = stack_df[stack_df['flow_name'] == 'cont']['probe_speed_cm_per_s'].values[0]
                 print(f"exp_speed: {exp_speed}\ncont_speed: {cont_speed}\n")
                 diff = exp_speed - cont_speed
-                diff_list.append([probe_dur_ms, prelim, stack, exp_speed, cont_speed, diff])
+                diff_list.append([probe_dur_ms, bg_motion, stack, exp_speed, cont_speed, diff])
 
     print(f"diff_list: {diff_list}\n")
 
     # make diff_df from diff_list
-    diff_df = pd.DataFrame(diff_list, columns=['probe_dur_ms', 'prelim_ms', 'stack', 'exp_speed', 'cont_speed', 'diff'])
+    diff_df = pd.DataFrame(diff_list, columns=['probe_dur_ms', motion_col, 'stack', 'exp_speed', 'cont_speed', 'diff'])
     print(f"diff_df: {diff_df.columns.tolist()}\n:{diff_df}\n")
 
     # drop exp_speed and cont_speed columns
     diff_df = diff_df.drop(columns=['exp_speed', 'cont_speed'])
 
-    sns.lineplot(data=diff_df, x='prelim_ms', y='diff',
+    sns.lineplot(data=diff_df, x=motion_col, y='diff',
                  hue='probe_dur_ms', errorbar='se')
-    plt.xticks(list(diff_df['prelim_ms'].unique()))
+    plt.xticks(list(diff_df[motion_col].unique()))
     plt.axhline(y=0.0, color='grey', linestyle='--')
 
     plt.suptitle(f"{participant_name}, n={n_to_ave_over},  TM={n_trimmed}\n"
@@ -2717,10 +2767,10 @@ def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed, e
         plt.savefig(os.path.join(root_path, f"{participant_name}_diff_bar.png"))
     plt.show()
 
-    # if there are multiple probe_dur_ms, make a lineplot with probe_dur_ms on x-axis, diff on y-axis, prelim as hue
+    # if there are multiple probe_dur_ms, make a lineplot with probe_dur_ms on x-axis, diff on y-axis, bg_motion as hue
     if len(diff_df['probe_dur_ms'].unique().tolist()) > 1:
         sns.lineplot(data=diff_df, x='probe_dur_ms', y='diff',
-                     hue='prelim_ms', errorbar='se')
+                     hue=motion_col, errorbar='se')
         plt.axhline(y=0.0, color='grey', linestyle='--')
 
         # get x-axis tick labels and round them
