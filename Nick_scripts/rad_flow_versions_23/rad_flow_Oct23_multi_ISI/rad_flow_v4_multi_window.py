@@ -547,17 +547,17 @@ expName = path.basename(__file__)[:-3]
 # # # DIALOGUE BOX # # #
 
 # dialogue box/drop-down option when exp starts (1st item is default val)
-expInfo = {'01. Participant': 'Nicktest',
-           '02. Run_number': '1',
+expInfo = {'01. Participant': 'Nick',
+           '02. Run_number': 5,
            '03. Probe duration in frames': [1, 2, 50, 100],
-           '04. fps': [60, 240, 120, 60],
+           '04. fps': [120, 60, 240],
            # '05. ISI_dur_in_ms': [33.34, 100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0, -1],
            '05. Separation': [4, 2, 4, 6, 8, 0, 10],
            '08. Background': ['flow_dots', 'no_bg'],  # no 'flow_rings', as it's not implemented here
            # '09. Motion duration': [1000, 0, 35, 70, 105, 140, 175, 210, 240, 280, 320, 360, 400, 440, 480, 520, 560, 600],
-           '10. monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'ASUS_2_13_240Hz',
+           '10. monitor_name': ['OLED', 'Nick_work_laptop', 'asus_cal', 'ASUS_2_13_240Hz',
                                 'Samsung', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
-           '12. debug': [True, False, True]
+           '12. debug': [False, True]
            }
 
 # run drop-down menu, OK continues, cancel quits
@@ -665,7 +665,7 @@ if debug:
 # window values is the duration of background motion, with stimuli in the middle.
 selected_bg_motion_ms_vals = [0, 100, 200, 300]
 if debug:
-    selected_bg_motion_ms_vals = [0, 1000]
+    selected_bg_motion_ms_vals = [1000]
 
 
 
@@ -793,6 +793,7 @@ bgLum = maxLum * bgLumProp
 this_colourSpace = 'rgb1'  # values between 0 and 1
 bgColor_rgb1 = bgLum / maxLum
 this_bgColour = [bgColor_rgb1, bgColor_rgb1, bgColor_rgb1]
+print(f"\nbgLumProp: {bgLumProp}; bgLum: {bgLum}; bgColor_rgb1: {bgColor_rgb1}")
 
 # Flow colours
 # adj_flow_colour = .15
@@ -828,8 +829,7 @@ if monitor_name in ['asus_cal', 'Nick_work_laptop', 'NickMac', 'OLED', 'ASUS_2_1
 
 # WINDOW SPEC
 win = visual.Window(monitor=mon, size=(widthPix, heightPix),
-                    # winType='pyglet',
-                    bpc=[10, 10, 10],
+                    winType='pyglet', bpc=[10, 10, 10],  # pyglet should ow work for 10-bit
                     colorSpace=this_colourSpace, color=this_bgColour,
                     units='pix', screen=display_number, allowGUI=False, fullscr=True, useFBO=False)
 
@@ -1077,12 +1077,12 @@ if monitor_name in ['Nick_work_laptop', 'OLED']:  # e.g., windows machine
 # stairStart = maxLum  # start luminance value
 # if monitor_name == 'OLED':  # dimmer on OLED
 # now using same settings for all monitors
-start_lum_prop = .2  # previously was 0.3 until 01/11/2023
+start_lum_prop = .7  # previously was 0.3 until 01/11/2023
 if debug:
-    start_lum_prop = .5
-# stairStart = maxLum * start_lum_prop
+    start_lum_prop = .7
+stairStart = maxLum * start_lum_prop
 # just start at max lum for now.
-stairStart = maxLum  # * start_lum_prop
+#stairStart = maxLum  # * start_lum_prop
 
 # proportion of stairStart to use to get intial step size, but this is NOT the actual step size
 c_multiplier = 1.2  # previously was 0.6 until 01/11/2023

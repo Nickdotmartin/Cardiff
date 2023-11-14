@@ -2471,7 +2471,25 @@ def rad_flow_line_plot(all_df, participant_name,
                        isi_col_name='isi_ms', cong_col_name='congruent',
                        trim_n=None,
                        extra_text=None, save_path=None, show_plots=True,
+                       # todo: add title and save_name args
+                       title=None, save_name=None,
                        verbose=True):
+    """
+    Function for doing lineplot of radial flow data showing congruent vs incongruent.
+    :param all_df: Datafrrame containing all runs (or runs after trimming)
+    :param participant_name: Participant name (or Exp if exp data)
+    :param isi_col_name: name of column with ISI conditions.
+    :param cong_col_name: name of column with congruent/incongruent conditions.
+    :param trim_n: Number of datapoints trimmed if any.
+    :param extra_text: Extra text to add to title and save name.
+    :param save_path: Path to save plot to.
+    :param show_plots: Whether to show plots
+    :param title: Title to use (or none for default)
+    :param save_name: Save name to use (or none for default)
+    :param verbose: Whether to print progress to screen.
+    :return:
+    """
+
     # make a lineplot showing congruent and incongruent thresholds for each ISI
     # if all_df is string, check it exists then open it as all_df
     if isinstance(all_df, str):
@@ -2489,20 +2507,27 @@ def rad_flow_line_plot(all_df, participant_name,
 
     # make line plot with error bars for congruent and incongruent with isi on x axis
     # use the basic palette
-    sns.lineplot(data=long_df, x=isi_col_name, y='probeLum', hue=cong_col_name,
-                 errorbar='se', err_style='bars', err_kws={'capsize': 5},
-                 palette=sns.color_palette("tab10", n_colors=2))
-
-    # add small scatterplot points with same colours, with .5 alpha/opacity
-    sns.scatterplot(data=long_df, x=isi_col_name, y='probeLum', hue=cong_col_name,
-                    palette=sns.color_palette("tab10", n_colors=2),
-                    legend=False,
-                    alpha=.5)
+    sns.pointplot(data=long_df, x=isi_col_name, y='probeLum', hue=cong_col_name,
+                 errorbar='se',
+                 palette=sns.color_palette("tab10", n_colors=2),
+                  dodge=.1)  # float al;owed for dodge here
+    # # add small scatterplot points with same colours, with .5 alpha/opacity
+    # todo: manually edit position on x axis to match point plot?    OR better still..
     # todo: split hue values and have faint lines joining them
+    # add small scatterplot points with same colours, with .5 alpha/opacity
+    sns.stripplot(data=long_df, x=isi_col_name, y='probeLum', hue=cong_col_name,
+                  palette=sns.color_palette("tab10", n_colors=2),
+                  legend=False,
+                  alpha=.5,
+                  dodge=True,  # boolean only
+                  jitter=False
+                  )
 
     # change legend labels such that they are 1=congruent and -1=incongruent
     handles, labels = plt.gca().get_legend_handles_labels()
     new_labels = []
+    # todo: add code for updating title or save_name
+
     for label in labels:
         if label == '1':
             new_labels.append('Congruent')

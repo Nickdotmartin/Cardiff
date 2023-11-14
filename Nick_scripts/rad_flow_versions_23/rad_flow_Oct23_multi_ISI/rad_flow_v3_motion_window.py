@@ -545,14 +545,14 @@ expName = path.basename(__file__)[:-3]
 expInfo = {'01. Participant': 'Nicktest',
            '02. Run_number': '1',
            '03. Probe duration in frames': [2, 1, 50, 100],
-           '04. fps': [60, 240, 120, 60],
+           '04. fps': [120, 60, 240],
            # '05. ISI_dur_in_ms': [33.34, 100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0, -1],
            '05. Separation': [4, 2, 4, 6, 8, 0, 10],
            '08. Background': ['flow_dots', 'no_bg'],  # no 'flow_rings', as it's not implemented here
-           '09. Motion duration': [1000, 0, 35, 70, 105, 140, 175, 210, 240, 280, 320, 360, 400, 440, 480, 520, 560, 600],
-           '10. monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'ASUS_2_13_240Hz',
+           '09. Motion duration': [200, 0, 35, 70, 105, 140, 175, 210, 240, 280, 320, 360, 400, 440, 480, 520, 560, 600],
+           '10. monitor_name': ['OLED', 'Nick_work_laptop', 'asus_cal', 'ASUS_2_13_240Hz',
                                 'Samsung', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
-           '12. debug': [True, False, True]
+           '12. debug': [False, True]
            }
 
 # run drop-down menu, OK continues, cancel quits
@@ -727,7 +727,7 @@ bgLum = maxLum * bgLumProp
 this_colourSpace = 'rgb1'  # values between 0 and 1
 bgColor_rgb1 = bgLum / maxLum
 this_bgColour = [bgColor_rgb1, bgColor_rgb1, bgColor_rgb1]
-
+print(f"this_colourSpace: {this_colourSpace}, bgLumProp: {bgLumProp}; bgLum: {bgLum}; bgColor_rgb1: {bgColor_rgb1}")
 # Flow colours
 # adj_flow_colour = .15
 # Give dots a pale green colour, which is adj_flow_colour different to the background
@@ -740,7 +740,7 @@ this_bgColour = [bgColor_rgb1, bgColor_rgb1, bgColor_rgb1]
 adj_flow_colour = .05
 if debug:
     adj_flow_colour = .15
-flow_colour = [this_bgColour[0], this_bgColour[1] + adj_flow_colour, this_bgColour[2]]  #
+flow_colour = [this_bgColour[0], this_bgColour[1] + adj_flow_colour, this_bgColour[2]]
 
 
 
@@ -762,11 +762,17 @@ if monitor_name in ['asus_cal', 'Nick_work_laptop', 'NickMac', 'OLED', 'ASUS_2_1
     display_number = 0
 
 # WINDOW SPEC
+# if monitor_name == 'OLED':
+#     win = visual.Window(monitor=mon, size=(widthPix, heightPix),
+#                         winType='pyglet', bpc=[10, 10, 10],  # pyglet should ow work for 10-bit
+#                         colorSpace=this_colourSpace, color=this_bgColour,
+#                         units='pix', screen=display_number, allowGUI=False, fullscr=True, useFBO=False)
+# else:
 win = visual.Window(monitor=mon, size=(widthPix, heightPix),
-                    # winType='pyglet',
-                    bpc=[10, 10, 10],
+                    winType='pyglet', bpc=[10, 10, 10],  # pyglet should ow work for 10-bit
                     colorSpace=this_colourSpace, color=this_bgColour,
                     units='pix', screen=display_number, allowGUI=False, fullscr=True, useFBO=False)
+
 
 # pixel size
 pixel_mm_deg_dict = get_pixel_mm_deg_values(monitor_name=monitor_name)
@@ -796,12 +802,12 @@ raisedCosTexture1 = visual.filters.makeMask(256, shape='raisedCosine',
 fix_mask = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(fix_mask_size, fix_mask_size),
                                 colorSpace=this_colourSpace,
                                 color=this_bgColour,
-                                # color='red', # for testing
                                 tex=None, units='pix')
 
 # PROBEs
 probe_size = 1  # can make them larger for testing new configurations etc
-probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1), (1, -2), (-1, -2), (-1, -1), (0, -1)]  # 5 pixels
+probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
+             (1, -2), (-1, -2), (-1, -1), (0, -1)]  # 5 pixels
 
 if monitor_name == 'OLED':  # smaller, 3-pixel probes for OLED
     probeVert = [(0, 0), (1, 0), (1, 1), (2, 1),
@@ -1012,12 +1018,12 @@ if monitor_name in ['Nick_work_laptop', 'OLED']:  # e.g., windows machine
 # stairStart = maxLum  # start luminance value
 # if monitor_name == 'OLED':  # dimmer on OLED
 # now using same settings for all monitors
-start_lum_prop = .2  # previously was 0.3 until 01/11/2023
+start_lum_prop = .7  # previously was 0.3 until 01/11/2023
 if debug:
-    start_lum_prop = .5
-# stairStart = maxLum * start_lum_prop
+    start_lum_prop = .7
+stairStart = maxLum * start_lum_prop
 # just start at max lum for now.
-stairStart = maxLum  # * start_lum_prop
+# stairStart = maxLum  # * start_lum_prop
 
 
 # proportion of stairStart to use to get intial step size, but this is NOT the actual step size
@@ -1045,7 +1051,7 @@ for stair_idx in range(n_stairs):
                           type=k_type,
                           value=stairStart,
                           # C=stairStart * 0.6,  # used to calculate initial step size, as prop of maxLum
-                          C=stairStart * c_multiplier,  # used to calculate initial step size, as prop of maxLum
+                          C=stairStart * c_multiplier,  # used to calculate initial step size, as prop of stairStart
                           minRevs=3,
                           minTrials=n_trials_per_stair,
                           minVal=bgLum,
@@ -1593,6 +1599,7 @@ for step in range(n_trials_per_stair):
                 # # # REGARDLESS OF FRAME NUMBER # # #
                 # check for quit
                 if event.getKeys(keyList=["escape"]):
+                    thisExp.close()
                     core.quit()
 
                 # refresh the screen
@@ -1738,7 +1745,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('end_fix_fr', end_fix_fr)
         thisExp.addData('monitor_name', monitor_name)
         thisExp.addData('this_colourSpace', this_colourSpace)
-        thisExp.addData('this_bgColour', this_bgColour)
+        thisExp.addData('bgColor_rgb1', bgColor_rgb1)
         thisExp.addData('selected_fps', fps)
         thisExp.addData('frame_tolerance_prop', frame_tolerance_prop)
         thisExp.addData('expName', expName)

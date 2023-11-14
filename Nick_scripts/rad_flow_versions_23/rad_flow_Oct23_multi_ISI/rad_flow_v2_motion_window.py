@@ -752,7 +752,9 @@ if monitor_name in ['asus_cal', 'Nick_work_laptop', 'NickMac', 'OLED', 'ASUS_2_1
     display_number = 0
 
 # WINDOW SPEC
-win = visual.Window(monitor=mon, size=(widthPix, heightPix), colorSpace=this_colourSpace, color=this_bgColour,
+win = visual.Window(monitor=mon, size=(widthPix, heightPix),
+                    colorSpace=this_colourSpace, color=this_bgColour,
+                    winType='pyglet', bpc=[10, 10, 10],  # pyglet should ow work for 10-bit
                     units='pix', screen=display_number, allowGUI=False, fullscr=True, useFBO=False)
 
 # pixel size

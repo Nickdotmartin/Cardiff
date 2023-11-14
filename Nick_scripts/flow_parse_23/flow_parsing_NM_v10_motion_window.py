@@ -76,8 +76,14 @@ version 8 17/10/2023
     - add small mask behine fixation so dots don't distract too much
     - add variable fixation time
     
-version 8 interleaved probe durations
-    - add multiple probe durations to interleave
+version 9 - motion window
+- instead of a fixed prelim motion variable, there is a motion window, and the probes are presented in the middle.
+    e.g., if the window is 10 frames and the ISI and probes are each 2 frames, then the probes are presented in frames 3 and 7. DONE
+    - this version will allow multiple window durations to be compared (e.g., similar to prelims of 0, 70, 350; can have window of 0, 200, 400)
+    
+version 10 - motion window
+- instead of a fixed probe_dur, and various motion_durs, there will be a single motion_dur, and various probe_durs.
+    Similar to version 8, but with motion window, not just preliminary motion.
 """
 
 
@@ -358,7 +364,9 @@ expInfo = {'1_participant_name': 'Nicktest',
                               'Samsung', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
            '4_fps': [60, 240, 120, 60],
            # '5_probe_dur_ms': [41.67, 116.67, 66.67, 54.17, 50, 41.67, 33.34, 25,  500],
-           '6_probe_start_dist_pix': [10, 2, 4, 6, 8, 10],
+           '6_probe_start_dist_pix': [12, 2, 4, 6, 8, 10],
+           # '7_motion_duration': [200, 0, 35, 70, 105, 140, 175, 210, 240, 280, 320, 360, 400, 440, 480, 520, 560,
+           #                         600],
            '7_debug': [True, False, True]
            }
 
@@ -372,8 +380,7 @@ participant_name = str(expInfo['1_participant_name'])
 run_number = int(expInfo['2_run_number'])
 monitor_name = str(expInfo['3_monitor_name'])
 fps = int(expInfo['4_fps'])
-# selected_probe_dur_ms = float(expInfo['5_probe_dur_ms'])  # interleave probe durs on this script
-selected_probe_dur_ms = [41.67, 116.67]
+# probe_dur_selected_ms = float(expInfo['5_probe_dur_ms'])
 probe_start_dist_pix = int(expInfo['6_probe_start_dist_pix'])  #
 debug = eval(expInfo['7_debug'])
 
@@ -390,6 +397,8 @@ if debug:
 probe_ecc = 4  # probe eccentricity in dva
 record_fr_durs = True  # eval(expInfo['7_record_frame_durs'])  # always record frame durs
 vary_fixation = True  # vary fixation time between trials to reduce anticipatory effects
+selected_bg_motion_ms = 200  # int(expInfo['7_motion_duration'])  # motion before and after stim, which is in the middle
+
 expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
 expInfo['time'] = datetime.now().strftime("%H:%M:%S")
 
@@ -403,20 +412,32 @@ frames@240Hz: [   2,     4,  6,     8,    10, 12,    13,    14,    16,     28]
 frames@120hz: [   1,     2,  3,     4,     5,  6,      ,     7,     8,     14]
 frames@60hz:  [    ,     1,   ,     2,      ,  3,      ,      ,     4,      7]
 '''
-# probe_dur_fr = int(selected_probe_dur_ms * fps / 1000)
-# probe_dur_ms = (1 / fps) * probe_dur_fr * 1000
-# print(f"\nprobe duration: {probe_dur_ms}ms, or {probe_dur_fr} frames")
-# if probe_dur_fr == 0:
-#     raise ValueError(f"probe_dur_fr is 0 because selected_probe_dur_ms ({selected_probe_dur_ms}) is less than a frame on this monitor ({1000/fps})ms")
+# todo: I need to input probe durs equivilent to the ISI from rad_flow_v3_motion_window.
+#  ISI_ms =      [100,    50,    33.34, 25,    16.67,  0]
+#  ISI_fr 240hz: [24,     12,     8,     6,     4,     0]
+#  Probe_fr =    [28,     16,    12,    10,     8,     4]
+#  probe_ms =    [116.67, 66.67, 50,    41.67, 33.34, 16.67]
+probe_dur_selected_ms = [41.67, 116.67]
 
+probe_dur_fr = int(probe_dur_selected_ms * fps / 1000)
+probe_dur_ms = (1 / fps) * probe_dur_fr * 1000
+print(f"\nprobe duration: {round(probe_dur_ms, 2)}ms, or {probe_dur_fr} frames")
+# if probe_dur_ms is more than 2ms different to probe_dur_selected_ms, warn user
+if probe_dur_fr == 0:
+    raise ValueError(f"probe_dur_fr is 0 because probe_dur_selected_ms ({probe_dur_selected_ms}) is less than a frame on this monitor ({round(1000/fps, 2)})ms")
+if abs(probe_dur_ms - probe_dur_selected_ms) > 2:
+    print(f"\tWARNING!: The actual probe duration in ms ({round(probe_dur_ms, 2)}) "
+          f"is different to the selected probe duration ({probe_dur_selected_ms}) "
+          f"due to the frame rate of the monitor ({fps}Hz, {round(1000 / fps, 2)}ms per frame).")
 
 # # # EXPERIMENT HANDLING AND SAVING # # #
 # save each participant's files into separate dir for each ISI
 save_dir = path.join(_thisDir, expName, monitor_name,
                      participant_name,
                      f'{participant_name}_{run_number}',  # don't use p_name_run here, as it's not a separate folder
-                     # f'probeDur{int(probe_dur_ms)}')
-                     f'probeDur_41_116')
+                     # f'motion_{selected_bg_motion_ms}ms',  # motion dur in ms as folder
+                     # todo: update this
+                     f'probeDur{int(probe_dur_ms)}')
 print(f"\nexperiment save_dir: {save_dir}")
 
 # files are labelled as '_incomplete' unless entire script runs.
@@ -434,73 +455,74 @@ thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
 
 
 # # # CONDITIONS AND STAIRCASES # # #
-# probe_dur_selected_ms_vals = [int(i) for i in selected_probe_dur_ms]
-probe_dur_selected_ms_vals = selected_probe_dur_ms
-# probe_dur_fr = int(selected_probe_dur_ms * fps / 1000)
-probe_dur_fr_vals = [int(i * fps / 1000) for i in probe_dur_selected_ms_vals]
-# probe_dur_ms = (1 / fps) * probe_dur_fr * 1000
-probe_dur_ms_vals = [round((1 / fps) * i * 1000, 2) for i in probe_dur_fr_vals]
-
-probe_dur_all_vals = list(zip(probe_dur_selected_ms_vals, probe_dur_fr_vals, probe_dur_ms_vals))
-
-# check if any probe_dur_fr_vals are < 1
-if any([i < 1 for i in probe_dur_fr_vals]):
-    raise ValueError(f"probe_dur_fr is 0 because probe_dur_selected_ms_vals ({probe_dur_selected_ms_vals}) "
-                     f"contains values less than a frame on this monitor ({1000/fps})ms\n"
-                     f"probe_dur_fr_vals: {probe_dur_fr_vals}")
-
-print(f"probe_dur_selected_ms_vals: {probe_dur_selected_ms_vals}")
-print(f"probe_dur_fr_vals: {probe_dur_fr_vals}")
-print(f"probe_dur_ms_vals: {probe_dur_ms_vals}")
-print(f"probe_dur_all_vals: {list(probe_dur_all_vals)}")
-
-# print(f"\nprobe duration: {probe_dur_ms}ms, or {probe_dur_fr} frames")
-# if probe_dur_fr == 0:
-#     raise ValueError(f"probe_dur_fr is 0 because selected_probe_dur_ms ({selected_probe_dur_ms}) is less than a frame on this monitor ({1000/fps})ms")
-
-# # Conditions/staricases: flow_dir (exp, contract) x prelim motion (0, 70, 350)
+# # Conditions/staricases: flow_dir (exp, contract) x bg motion (0, 70, 350)
 # 1 = inward/contracting, -1 = outward/expanding
 flow_dir_vals = [1, -1]
 
-# 'prelim' (preliminary motion) is how long (ms) the background motion starts before the probe appears
-prelim_vals = [0, 70, 350]
+# window values is the duration of background motion, with stimuli in the middle.
+# todo: get rid of this, just have a single bg_motion_ms
+selected_bg_motion_ms_vals = [0, 100, 200, 400]
 if debug:
-    prelim_vals = [70]
+    selected_bg_motion_ms_vals = [0, 16.67, 34, 41, 67, 100]
+print(f"\nselected_bg_motion_ms_vals: {selected_bg_motion_ms_vals}")
+
+'''
+If bg_motion_ms_vals contains 0, there will be no background motion at all.
+If any values are greater than 0 but less than probe_dur_ms, then these values will either be removed or increased to
+match probe_dur_ms.  This is because there is no facility to have background motion for values less than the probe duration.
+'''
+# change any values less than probe_dur_ms (but greater than zero) to probe_dur_ms
+if any([i > 0 and i < probe_dur_ms for i in selected_bg_motion_ms_vals]):
+    print(f"\tWARNING!: bg_motion_ms_vals contains values that are greater than zero, but less than probe_dur_ms ({round(probe_dur_ms, 2)}ms):  "
+          f"{[i for i in selected_bg_motion_ms_vals if 0 < i < probe_dur_ms]}."  # show values between zero and probe_dur_ms
+          "\nthese values will be changed to match probe_dur_ms, so that the background motion is the same duration as the probe.")
+    selected_bg_motion_ms_vals = [probe_dur_ms if i > 0 and i < probe_dur_ms else i for i in selected_bg_motion_ms_vals]
+    # if this results in duplicate values, remove them
+    selected_bg_motion_ms_vals = list(set(selected_bg_motion_ms_vals))
+
+# check which selected_bg_motion_ms_vals are possible on this monitor, and remove any duplicates that arrise from converting them to nearest values.
+bg_motion_fr_vals = [-1 if i == -1 else int(i * fps / 1000) for i in selected_bg_motion_ms_vals]
+bg_motion_ms_vals = sorted(list(set([-1 if i == -1 else (1 / fps) * i * 1000 for i in bg_motion_fr_vals])))
+if len(bg_motion_ms_vals) < len(selected_bg_motion_ms_vals):
+    print(f"\tWARNING!: "
+          f"{len(selected_bg_motion_ms_vals) - len(bg_motion_ms_vals)} selected_bg_motion_ms_vals are not possible on this monitor ({monitor_name})"
+          f" and they have been dropped.")
+print(f"(actual) bg_motion_ms_vals: {bg_motion_ms_vals}")
+
+
 
 # get all possible combinations of these three lists
-# combined_conds = [(f, p) for f in flow_dir_vals for p in prelim_vals]
-combined_conds = [(f, p, d) for f in flow_dir_vals for p in prelim_vals for d in probe_dur_all_vals]
+combined_conds = [(f, b) for f in flow_dir_vals for b in bg_motion_ms_vals]
 
 print(f"\ncombined_conds ({len(combined_conds)}: {combined_conds}")
 stair_idx_list = list(range(len(combined_conds)))
 
 # lists of values for each condition (all list are same length = n_stairs)
 '''each flow_dir value appears in 3 stairs, e.g.,
-flow_dir (expand/contract) x prelim (0, 70, 350)'''
+flow_dir (expand/contract) x bg_motion (0, 70, 350)'''
 # split the combined_conds into separate lists
 flow_dir_list = [i[0] for i in combined_conds]
-prelim_conds_list = [i[1] for i in combined_conds]
+bg_motion_ms_conds_list = [i[1] for i in combined_conds]
 
-probe_dur_selected_ms_list = [i[2][0] for i in combined_conds]
-probe_dur_fr_list = [i[2][1] for i in combined_conds]
-probe_dur_ms_list = [i[2][2] for i in combined_conds]
-
+# for bg_motion names, use int if possible, else round to 2 decimal places
+bg_motion_cond_names_list = []
+for motion_ms in bg_motion_ms_conds_list:
+    if motion_ms.is_integer():
+        bg_motion_cond_names_list.append(str(int(motion_ms)))
+    else:
+        bg_motion_cond_names_list.append(str(round(motion_ms, 2)))
 
 # make flow name list to avoid confusion with 1s and -1 from flow_dir_list
 flow_name_list = ['exp' if i == -1 else 'cont' for i in flow_dir_list]
 
-# stair_names_list joins sep_conds_list, cong_name_conds_list and prelim_conds_list
-# e.g., ['sep_6_cong_1_prelim_70', 'sep_6_cong_1_prelim_350', 'sep_6_cong_-1_prelim_70'...]
-stair_names_list = [f"{i}_flow_{f}_{n}_prelim_{p}_probeDur_{int(d)}" for i, f, n, p, d in
-                    zip(stair_idx_list, flow_dir_list, flow_name_list, prelim_conds_list, probe_dur_ms_list)]
+# stair_names_list joins sep_conds_list, cong_name_conds_list and bg_motion_ms_conds_list
+# e.g., ['sep_6_cong_1_bg_motion_70', 'sep_6_cong_1_bg_motion_350', 'sep_6_cong_-1_bg_motion_70'...]
+stair_names_list = [f"{i}_flow_{f}_{n}_bg_motion_{b}" for i, f, n, b in zip(stair_idx_list, flow_dir_list, flow_name_list, bg_motion_cond_names_list)]
 
 if debug:
     print(f'flow_dir_list: {flow_dir_list}')
     print(f"flow_name_list: {flow_name_list}")
-    print(f'prelim_conds_list: {prelim_conds_list}')
-    print(f'probe_dur_fr_list: {probe_dur_fr_list}')
-    print(f'probe_dur_ms_list: {probe_dur_ms_list}')
-    print(f'probe_dur_selected_ms_list: {probe_dur_selected_ms_list}')
+    print(f'bg_motion_ms_conds_list: {bg_motion_ms_conds_list}')
 
 
 n_stairs = len(stair_idx_list)
@@ -512,23 +534,29 @@ print(f'n_stairs: {n_stairs}, total_n_trials: {total_n_trials}')
 # # # MONITOR SETTINGS # # #
 # # COLORS AND LUMINANCES
 maxLum = 106  # minLum = 0.12
-bgLumProp = .2  # use .2 to match exp1 or .45 to match radial_flow_NM_v2.py
-if monitor_name == 'OLED':
-    bgLumProp = .0
+# now using same settings for all monitors
+bgLumProp = .05  # use .2 to match exp1 or .45 to match radial_flow_NM_v2.py
 bgLum = maxLum * bgLumProp
 
 # colour space
 this_colourSpace = 'rgb1'  # values between 0 and 1
 bgColor_rgb1 = bgLum / maxLum
 this_bgColour = [bgColor_rgb1, bgColor_rgb1, bgColor_rgb1]
-
+print(f"this_colourSpace: {this_colourSpace}, bgLumProp: {bgLumProp}; bgLum: {bgLum}; bgColor_rgb1: {bgColor_rgb1}")
 # Flow colours
-adj_flow_colour = .15
+# adj_flow_colour = .15
 # Give dots a pale green colour, which is adj_flow_colour different to the background
-flow_colour = [this_bgColour[0] - adj_flow_colour, this_bgColour[1], this_bgColour[2] - adj_flow_colour]
-if monitor_name == 'OLED':  # darker green for low contrast against black background
+# flow_colour = [this_bgColour[0] - adj_flow_colour, this_bgColour[1], this_bgColour[2] - adj_flow_colour]
+# if monitor_name == 'OLED':  # darker green for low contrast against black background
     # flow_colour = [this_bgColour[0], this_bgColour[1] + adj_flow_colour / 2, this_bgColour[2]]
-    flow_colour = [this_bgColour[0], this_bgColour[1] + adj_flow_colour / 3, this_bgColour[2]]  # even dimmer 12/10/2023
+# flow_colour = [this_bgColour[0], this_bgColour[1] + adj_flow_colour / 3, this_bgColour[2]]  # even dimmer 12/10/2023
+
+# now using same settings for all monitors
+adj_flow_colour = .05
+if debug:
+    adj_flow_colour = .15
+flow_colour = [this_bgColour[0], this_bgColour[1] + adj_flow_colour, this_bgColour[2]]
+
 
 
 # # # MONITOR DETAILS # # #
@@ -549,15 +577,16 @@ if monitor_name in ['asus_cal', 'Nick_work_laptop', 'NickMac', 'OLED', 'ASUS_2_1
     display_number = 0
 
 # WINDOW SPEC
+# if monitor_name == 'OLED':
+#     win = visual.Window(monitor=mon, size=(widthPix, heightPix),
+#                         winType='pyglet', bpc=[10, 10, 10],  # pyglet should ow work for 10-bit
+#                         colorSpace=this_colourSpace, color=this_bgColour,
+#                         units='pix', screen=display_number, allowGUI=False, fullscr=True, useFBO=False)
+# else:
 win = visual.Window(monitor=mon, size=(widthPix, heightPix),
-                    colorSpace=this_colourSpace, color=this_bgColour,
                     winType='pyglet', bpc=[10, 10, 10],  # pyglet should ow work for 10-bit
+                    colorSpace=this_colourSpace, color=this_bgColour,
                     units='pix', screen=display_number, allowGUI=False, fullscr=True, useFBO=False)
-
-# pixel size
-pixel_mm_deg_dict = get_pixel_mm_deg_values(monitor_name=monitor_name)
-if debug:
-    print(f"diagonal pixel size: {pixel_mm_deg_dict['diag_mm']} mm, or {pixel_mm_deg_dict['diag_deg']} dva")
 
 
 # # # PSYCHOPY COMPONENTS # # #
@@ -582,12 +611,12 @@ raisedCosTexture1 = visual.filters.makeMask(256, shape='raisedCosine',
 fix_mask = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(fix_mask_size, fix_mask_size),
                                 colorSpace=this_colourSpace,
                                 color=this_bgColour,
-                                # color='red',  # for testing
                                 tex=None, units='pix')
 
 # PROBEs
 probe_size = 1  # can make them larger for testing new configurations etc
-probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1), (1, -2), (-1, -2), (-1, -1), (0, -1)]  # 5 pixels
+probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
+             (1, -2), (-1, -2), (-1, -1), (0, -1)]  # 5 pixels
 
 if monitor_name == 'OLED':  # smaller, 3-pixel probes for OLED
     probeVert = [(0, 0), (1, 0), (1, 1), (2, 1),
@@ -606,16 +635,18 @@ dist_from_fix = int((np.tan(np.deg2rad(probe_ecc)) * view_dist_pix) / np.sqrt(2)
 # this was useful http://www.cogsci.nl/blog/tutorials/211-a-bit-about-patches-textures-and-masks-in-psychopy
 raisedCosTexture2 = visual.filters.makeMask(heightPix, shape='raisedCosine', fringeWidth=0.6, radius=[1.0, 1.0])
 invRaisedCosTexture = -raisedCosTexture2  # inverts mask to blur edges instead of center
-slab_width = 420
-if monitor_name == 'OLED':
-    slab_width = 20
+# slab_width = 420
+# if monitor_name == 'OLED':
+# now using same settings for all monitors
+slab_width = 20
 
 blankslab = np.ones((heightPix, slab_width))  # create blank slabs to put to left and right of image
 mmask = np.append(blankslab, invRaisedCosTexture, axis=1)  # append blank slab to left
 mmask = np.append(mmask, blankslab, axis=1)  # and right
 # changed edge_mask color from grey, fades to black round edges which makes screen edges less visible
 edge_mask = visual.GratingStim(win, mask=mmask, tex=None, contrast=1.0,
-                               size=(widthPix, heightPix), units='pix', color='black')
+                               size=(widthPix, heightPix), units='pix',
+                               color='black', colorSpace=this_colourSpace)
 
 
 '''FLOW DOT SETTINGS'''
@@ -746,7 +777,7 @@ instructions = visual.TextStim(win=win, name='instructions', font='Arial', heigh
                                     "Press 'I' or '1' if you see the probe moving inward (towards centre of screen),\n"
                                     "Press 'O' or '0' if you see the probe moving outward (towards edge of screen).\n\n"
                                     "If you aren't sure, just guess!\n\n"
-                                    "Press any key to start")
+                                    "Please move the mouse offscreen, then press any key to start")
 
 
 too_many_dropped_fr = visual.TextStim(win=win, name='too_many_dropped_fr',
@@ -756,7 +787,7 @@ too_many_dropped_fr = visual.TextStim(win=win, name='too_many_dropped_fr',
                                            "Press any key to return to the desktop.",
                                       font='Arial', height=20, colorSpace=this_colourSpace)
 
-break_text = f"Break\nTurn on the light and take at least {break_dur} seconds break.\n" \
+break_text = f"Turn on the light and take at least {break_dur} seconds break.\n" \
              "Keep focussed on the fixation circle in the middle of the screen.\n" \
              "Remember, if you don't see the target, just guess!"
 breaks = visual.TextStim(win=win, name='breaks', text=break_text, font='Arial',
@@ -785,44 +816,14 @@ end_of_exp = visual.TextStim(win=win, name='end_of_exp',
 # # turn on high priority here. (and turn off garbage collection)
 gc.disable()
 core.rush(True)
-if monitor_name == 'OLED':
+if monitor_name in ['Nick_work_laptop', 'OLED']:  # e.g., windows machine
     core.rush(True, realtime=True)
 
 
 # # # PROBE STARTING SPEED # # #
-# """
-# In Evans et al, 2020, the probes moved at 0.8cm/s, but it was present for 2000ms (e.g., moved 1.6cm)
-# This seems like a good starting value for our staircases.
-# However, I will scale it with probe_dur_ms, so that the probe moves 1.6cm in probe_dur_ms.
-# Otherwise the shortest durations are too hard.
-# I need to convert it from cm/s to pixels/frame,
-# which depends on the monitor's refresh rate.
-# I'm going to try starting with 18 pixels in dur.  Not sure what that is in cm.
-# I'm using this because we used 18 as our max value in previous study.
-# 18 pixels starts too fast, so now trying 12
-# """
-# start_dist_pix_in_dur = 0  # 8  # 12  # starting dist in pixels in probe_dur_ms
-# start_dist_pix_per_fr = start_dist_pix_in_dur / probe_dur_fr  # starting dist in pixels per frame
-# start_dist_pix_per_second = start_dist_pix_per_fr * fps  # starting dist in pixels per second
-# start_dist_cm_per_second = pix2cm(pixels=start_dist_pix_per_second, monitor=mon)  # starting dist in cm per second
-# print(f"\nstart_dist_pix_in_dur: {start_dist_pix_in_dur}pix\n"
-#       f"start_dist_pix_per_fr: {start_dist_pix_per_fr:.2f}pix/fr\n"
-#       f"start_dist_pix_per_second: {start_dist_pix_per_second:.2f}pix/s\n"
-#       f"start_dist_cm_per_second: {start_dist_cm_per_second:.2f}cm/s")
-#
-# start_cm_per_s = start_dist_cm_per_second
-#
-#
-# start_pix_per_s = cm2pix(cm=start_cm_per_s, monitor=mon)  # convert to pixels per second
-# start_pix_per_fr = start_pix_per_s / fps  # convert to pixels per frame
-# if start_pix_per_fr < 1:
-#     start_pix_per_fr = 1
-
-'''
-New method - set probe_start_dist_pix from dlg, then convert to cm/s and pix/fr'''
+# set probe_start_dist_pix from dlg, then convert to cm/s and pix/fr
 start_dist_pix_in_dur = probe_start_dist_pix  # 8  # 12  # starting dist in pixels in probe_dur_ms
-# start_pix_per_fr = start_dist_pix_in_dur / probe_dur_fr  # starting dist in pixels per frame
-start_pix_per_fr = start_dist_pix_in_dur / min(probe_dur_fr_list)  # starting dist in pixels per frame
+start_pix_per_fr = start_dist_pix_in_dur / probe_dur_fr  # starting dist in pixels per frame
 start_pix_per_s = start_pix_per_fr * fps  # starting dist in pixels per second
 start_cm_per_s = pix2cm(pixels=start_pix_per_s, monitor=mon)  # starting dist in cm per second
 if debug:
@@ -842,15 +843,12 @@ for stair_idx in stair_idx_list:
     thisInfo['stair_name'] = stair_names_list[stair_idx]
     thisInfo['flow_dir'] = flow_dir_list[stair_idx]
     thisInfo['flow_name'] = flow_name_list[stair_idx]
-    thisInfo['prelim_ms'] = prelim_conds_list[stair_idx]
-    thisInfo['probe_dur_ms'] = probe_dur_ms_list[stair_idx]
-    thisInfo['probe_dur_fr'] = probe_dur_fr_list[stair_idx]
-    thisInfo['probe_dur_selected_ms'] = probe_dur_selected_ms_list[stair_idx]
+    thisInfo['bg_motion_ms'] = bg_motion_ms_conds_list[stair_idx]
 
     thisStair = Staircase(name=stair_names_list[stair_idx],
                           type='simple',  # step size changes after each reversal only
                           value=stairStart * -flow_dir_list[stair_idx],  # each stair starts with opposite probe dir as bg motion
-                          C=stairStart * 0.6,  # initial step size, as prop of maxLum
+                          C=stairStart * 0.6,  # used to calculate initial step size, as prop of stairStart
                           minRevs=3,
                           minTrials=n_trials_per_stair,
                           minVal=miniVal,
@@ -891,27 +889,15 @@ for step in range(n_trials_per_stair):
             print(f"\n({trial_num_inc_repeats}) trial_number: {trial_number}, "
                   f"stair_idx: {stair_idx}, thisStair: {thisStair}, step: {step}")
 
-            # conditions (flow_dir, prelim)
+
+            # conditions (flow_dir, bg_motion)
             flow_dir = thisStair.extraInfo['flow_dir']
             flow_name = thisStair.extraInfo['flow_name']
-            prelim_ms = thisStair.extraInfo['prelim_ms']
-
-            # probe duration
-            # selected_probe_dur_ms = thisStair.extraInfo['probe_dur_ms']
-            # probe_dur_fr = int(selected_probe_dur_ms * fps / 1000)
-            # probe_dur_ms = (1 / fps) * probe_dur_fr * 1000
-            # # print(f"\nprobe duration: {probe_dur_ms}ms, or {probe_dur_fr} frames")
-            # if probe_dur_fr == 0:
-            #     raise ValueError(
-            #         f"probe_dur_fr is 0 because selected_probe_dur_ms ({selected_probe_dur_ms}) is less than a frame on this monitor ({1000 / fps})ms")
-
-            probe_dur_selected_ms = thisStair.extraInfo['probe_dur_selected_ms']
-            probe_dur_fr = thisStair.extraInfo['probe_dur_fr']
-            probe_dur_ms = thisStair.extraInfo['probe_dur_ms']
-
+            bg_motion_ms = thisStair.extraInfo['bg_motion_ms']
             if debug:
-                print(f"flow_dir: {flow_dir}, flow_name: {flow_name}, prelim_ms: {prelim_ms} "
-                      f"probe_dur_ms: {probe_dur_ms}, probe_dur_fr: {probe_dur_fr}")
+                print(f"flow_dir: {flow_dir}, flow_name: {flow_name}"
+                      # f", bg_motion_ms: {bg_motion_ms}"
+                      )
 
 
             # boundaries for z position (distance from screen) during radial flow
@@ -930,15 +916,9 @@ for step in range(n_trials_per_stair):
             probe_dir = 'out'
             if probe_pix_p_fr > 0:
                 probe_dir = 'in'
-            # if debug:
-            print(f"probe_dir: {probe_dir}, probe_pix_p_fr: {probe_pix_p_fr}, "
-                  f"probe_cm_p_sec: {probe_cm_p_sec}")
-
-            # timing for background motion converted to frames (e.g., 70ms is 17frames at 240Hz).
-            prelim_fr = int(prelim_ms * fps / 1000)
-            actual_prelim_ms = prelim_fr * 1000 / fps
             if debug:
-                print(f'prelim_ms: {prelim_ms}, prelim_fr: {prelim_fr}, actual_prelim_ms: {actual_prelim_ms}')
+                print(f"probe_dir: {probe_dir}, probe_pix_p_fr: {probe_pix_p_fr}, "
+                      f"probe_cm_p_sec: {probe_cm_p_sec}")
 
             # PROBE LOCATIONS
             # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
@@ -979,6 +959,39 @@ for step in range(n_trials_per_stair):
                 fixation.lineColor = 'black'
                 fixation.fillColor = 'grey'
 
+            # # # MOTION WINDOW # # #
+            '''Rather than just having preliminary motion (before target stimulus), we now have a motion window of a fixed duration.
+            The probe is presented in the middle of this window.
+            e.g., if the window is 10 frames, and the probe duration is 8 frames,
+            so there will be one frame of motion before the probe and one frame of motion after the probe.
+            if the window was 100 frames then there would be 46 frames of motion before the probe and 46 frames after the probe.'''
+
+            # timing for background motion converted to frames (e.g., 70ms is 17frames at 240Hz).
+            # I don't need selected or actual ms here as I have already weeded out durations that can't be presented when sorting conditions.
+            bg_motion_fr = int(bg_motion_ms * fps / 1000)
+            print(f"bg_motion_fr: {bg_motion_fr}")
+            if debug:
+                print(f'bg_motion_ms: {bg_motion_ms}')
+
+
+            '''the default assumption is to have motion during probe, plus before and after.
+            But if bg_motion_fr == 0, then have no motion during probe, or before and after'''
+            motion_during_stim = True
+            if bg_motion_fr == 0:
+                motion_during_stim = False
+                prelim_dur_fr = post_dur_fr = 0
+            else:
+                # get duration of preliminary motion (before probe1) and post-probe2 motion
+                # if these number are not equal, prelim should be 1 frame longer than post
+                pre_and_post_fr = int(bg_motion_fr - probe_dur_fr)  # remaining frames not including probe_dur_fr
+                post_dur_fr = int(pre_and_post_fr / 2)  # number of frames after probe_dur_fr
+                if pre_and_post_fr % 2 == 0:  # if there is an odd number of frames, make prelim one frame longer than post
+                    prelim_dur_fr = post_dur_fr
+                else:
+                    prelim_dur_fr = post_dur_fr + 1
+            if debug:
+                print(f"prelim_dur_fr: {prelim_dur_fr}, probe_dur_fr: {probe_dur_fr}, post_dur_fr: {post_dur_fr}")
+
 
             # VARIABLE FIXATION TIME
             '''to reduce anticipatory effects that might arise from fixation always being same length.
@@ -991,13 +1004,17 @@ for step in range(n_trials_per_stair):
 
             # timing in frames
             # fixation time is now 70ms shorted than previously.
-            # end_fix_fr = 1 * (fps - prelim_fr)  # 240 frames - 70ms for fixation, e.g., <1 second.
-            end_fix_fr = int(fps / 2) + vary_fix - prelim_fr
-            if end_fix_fr < 0:  # if prelim_fr is longer than 500ms, then end_fix_fr might be negative
+            # end_fix_fr = 1 * (fps - prelim_dur_fr)  # 240 frames - 70ms for fixation, e.g., <1 second.
+            end_fix_fr = int(fps / 2) + vary_fix - prelim_dur_fr
+            if end_fix_fr < 0:  # if prelim_dur_fr is longer than 500ms, then end_fix_fr might be negative
                 end_fix_fr = int(fps / 2)
+            end_prelim_fr = end_fix_fr + prelim_dur_fr  # bg_motion prior to probe for 70ms
+            end_probe_fr = end_prelim_fr + probe_dur_fr  # probes appear during probe_duration (e.g., 240ms, 1 second).
+            end_post_fr = end_probe_fr + post_dur_fr
+            if debug:
+                print(f"end_fix_fr: {end_fix_fr}, end_prelim_fr: {end_prelim_fr}, "
+                      f"end_probe_fr: {end_probe_fr}, end_post_fr: {end_post_fr}\n")
 
-            end_bg_motion_fr = end_fix_fr + prelim_fr  # bg_motion prior to probe for 70ms
-            end_probe_fr = end_bg_motion_fr + probe_dur_fr  # probes appear during probe_duration (e.g., 240ms, 1 second).
 
 
             # reset fixation radius - reduces in size at response segment of each trial
@@ -1037,7 +1054,7 @@ for step in range(n_trials_per_stair):
                 # # turn on high priority here. (and turn off garbage collection)
                 gc.disable()
                 core.rush(True)
-                if monitor_name == 'OLED':
+                if monitor_name in ['Nick_work_laptop', 'OLED']:  # e.g., windows machine
                     core.rush(True, realtime=True)
                 event.clearEvents(eventType='keyboard')
                 breaks.text = break_text + "\n\nPress any key to continue."
@@ -1051,7 +1068,7 @@ for step in range(n_trials_per_stair):
                 continueRoutine = True
 
 
-            # # # PER_FRAME VARIABLES # # #
+            # # # PER_FRAME SEGMENTS # # #
             frameN = -1
             # # continueRoutine here runs the per-frame section of the trial
             while continueRoutine:
@@ -1059,7 +1076,7 @@ for step in range(n_trials_per_stair):
 
                 # # # RECORD FRAME DURATIONS # # #
                 # Turn recording on and off from just before probe1 til just after probe2.
-                if frameN == end_bg_motion_fr:
+                if frameN == end_prelim_fr:
                     if record_fr_durs:  # start recording frames just before probe1 presentation
                         win.recordFrameIntervals = True
 
@@ -1080,7 +1097,7 @@ for step in range(n_trials_per_stair):
                 # FIXATION until end of fixation interval
                 if end_fix_fr >= frameN > 0:
 
-                    '''just have incoherent motion from re-spawning dots, z bounds as full z range'''
+                    '''just have incoherent bg_motion from re-spawning dots, z bounds as full z range'''
                     # 1. don't update z values
                     # 2. check if any z values are out of bounds (too close when expanding or too far when contracting),
                     # if so, set their dot life to max, so they are given new x, y and z values by update_dotlife() below.
@@ -1104,17 +1121,12 @@ for step in range(n_trials_per_stair):
                     flow_dots.xys = dots_pos_array
                     flow_dots.draw()
 
-                    # probeMask1.draw()
-                    # probeMask2.draw()
-                    # probeMask3.draw()
-                    # probeMask4.draw()
                     edge_mask.draw()
-
                     fix_mask.draw()
                     fixation.draw()
 
                 # Background motion after fixation, but before probe
-                elif end_bg_motion_fr >= frameN > end_fix_fr:
+                elif end_prelim_fr >= frameN > end_fix_fr:
 
                     # 1. Update z (distance values): Add dots_speed * flow_dir to the current z values.
                     z_array = z_array + flow_speed_cm_p_fr * flow_dir
@@ -1140,10 +1152,6 @@ for step in range(n_trials_per_stair):
                     flow_dots.xys = dots_pos_array
                     flow_dots.draw()
 
-                    # probeMask1.draw()
-                    # probeMask2.draw()
-                    # probeMask3.draw()
-                    # probeMask4.draw()
                     edge_mask.draw()
 
                     fix_mask.draw()
@@ -1153,10 +1161,11 @@ for step in range(n_trials_per_stair):
                     resp.clock.reset()
 
                 # PROBE interval (with background motion), after preliminary background motion, before response
-                elif end_probe_fr >= frameN > end_bg_motion_fr:
+                elif end_probe_fr >= frameN > end_prelim_fr:
 
-                    # 1. Update z (distance values): Add dots_speed * flow_dir to the current z values.
-                    z_array = z_array + flow_speed_cm_p_fr * flow_dir
+                    if motion_during_stim:  # anytime apart from when bg_motion == 0
+                        # 1. Update z (distance values): Add dots_speed * flow_dir to the current z values.
+                        z_array = z_array + flow_speed_cm_p_fr * flow_dir
 
                     # 2. check if any z values are out of bounds (too close when expanding or too far when contracting),
                     # if so, set their dot life to max, so they are given new x, y and z values by update_dotlife() below.
@@ -1179,12 +1188,7 @@ for step in range(n_trials_per_stair):
                     flow_dots.xys = dots_pos_array
                     flow_dots.draw()
 
-                    # probeMask1.draw()
-                    # probeMask2.draw()
-                    # probeMask3.draw()
-                    # probeMask4.draw()
                     edge_mask.draw()
-
                     fix_mask.draw()
                     fixation.draw()
 
@@ -1206,9 +1210,41 @@ for step in range(n_trials_per_stair):
                     probe.draw()
 
 
+                # Background motion after probes, but before response
+                elif end_post_fr >= frameN > end_probe_fr:
 
-                # ANSWER - after probe interval, before next trial
-                elif frameN > end_probe_fr:
+                    # 1. Update z (distance values): Add dots_speed * flow_dir to the current z values.
+                    z_array = z_array + flow_speed_cm_p_fr * flow_dir
+
+                    # 2. check if any z values are out of bounds (too close when expanding or too far when contracting),
+                    # if so, set their dot life to max, so they are given new x, y and z values by update_dotlife() below.
+                    dot_lifetime_array = check_z_start_bounds(z_array, near_plane_cm, far_plane_cm, dot_life_max_fr,
+                                                              dot_lifetime_array, flow_dir)
+
+                    # 3. update dot lifetime, give new x, y, z coords to dots whose lifetime is max.
+                    dotlife_array, x_array, y_array, z_array = update_dotlife(dotlife_array=dot_lifetime_array,
+                                                                              dot_max_fr=dot_life_max_fr,
+                                                                              x_array=x_array, y_array=y_array,
+                                                                              z_array=z_array,
+                                                                              x_bounds=frame_size_cm / 2,
+                                                                              y_bounds=frame_size_cm / 2,
+                                                                              z_start_bounds=z_start_bounds)
+                    # 4. put new x and y values into spokes
+                    x_array, y_array = make_xy_spokes(x_array, y_array)
+
+                    # 5. scale x and y positions by distance
+                    dots_pos_array = scaled_dots_pos_array(x_array, y_array, z_array, frame_size_cm, ref_angle)
+                    flow_dots.xys = dots_pos_array
+                    flow_dots.draw()
+
+                    edge_mask.draw()
+
+                    fix_mask.draw()
+                    fixation.draw()
+
+
+                # # # ANSWER - after post_stim-motion, before end of trial # # #
+                elif frameN > end_post_fr:
 
                     '''just have incoherent motion from re-spawning dots, z bounds as full z range'''
                     # 1. don't update z values
@@ -1234,10 +1270,6 @@ for step in range(n_trials_per_stair):
                     flow_dots.xys = dots_pos_array
                     flow_dots.draw()
 
-                    # probeMask1.draw()
-                    # probeMask2.draw()
-                    # probeMask3.draw()
-                    # probeMask4.draw()
                     edge_mask.draw()
 
                     fix_mask.draw()
@@ -1245,7 +1277,6 @@ for step in range(n_trials_per_stair):
                     fixation.draw()
 
                     # RESPONSE HANDLING
-                    # resp = event.BuilderKeyResponse()
                     theseKeys = event.getKeys(keyList=['i', 'o', 'num_1', 'num_0'])
                     if len(theseKeys) > 0:  # at least one key was pressed
                         resp.keys = theseKeys[-1]  # just the last key pressed
@@ -1335,6 +1366,7 @@ for step in range(n_trials_per_stair):
             # # # TRIAL COMPLETED # # #
             # If too many trials have had dropped frames, quit experiment
             if dropped_fr_trial_counter > max_dropped_fr_trials:
+                event.clearEvents(eventType='keyboard')
                 while not event.getKeys():
                     # display too_many_dropped_fr message until screen is pressed
                     too_many_dropped_fr.draw()
@@ -1368,9 +1400,10 @@ for step in range(n_trials_per_stair):
         thisExp.addData('step', step)
         thisExp.addData('flow_dir', flow_dir)
         thisExp.addData('flow_name', flow_name)
-        thisExp.addData('prelim_ms', prelim_ms)
-        thisExp.addData('prelim_fr', prelim_fr)
-        thisExp.addData('actual_prelim_ms', actual_prelim_ms)
+        thisExp.addData('bg_motion_fr', bg_motion_fr)
+        thisExp.addData('bg_motion_ms', bg_motion_ms)
+        thisExp.addData('prelim_dur_fr', prelim_dur_fr)
+        thisExp.addData('post_dur_fr', post_dur_fr)
         thisExp.addData('probe_dur_selected_ms', probe_dur_selected_ms)
         thisExp.addData('probe_dur_ms', probe_dur_ms)
         thisExp.addData('probe_dur_fr', probe_dur_fr)
@@ -1385,6 +1418,15 @@ for step in range(n_trials_per_stair):
         thisExp.addData('flow_speed_cm_p_fr', flow_speed_cm_p_fr)
         thisExp.addData('n_dots', n_dots)
         thisExp.addData('dot_life_max_ms', dot_life_max_ms)
+        # thisExp.addData('background', background)
+        thisExp.addData('probe_ecc', probe_ecc)
+        thisExp.addData('vary_fix', vary_fix)
+        thisExp.addData('end_fix_fr', end_fix_fr)
+        thisExp.addData('monitor_name', monitor_name)
+        thisExp.addData('this_colourSpace', this_colourSpace)
+        thisExp.addData('bgColor_rgb1', bgColor_rgb1)
+        thisExp.addData('selected_fps', fps)
+        thisExp.addData('frame_tolerance_prop', frame_tolerance_prop)
         thisExp.addData('expName', expName)
         thisExp.addData('psychopy_version', psychopy_version)
         thisExp.addData('date', expInfo['date'])
