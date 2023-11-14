@@ -1,17 +1,16 @@
 from __future__ import division
 from psychopy import gui, visual, core, data, event, monitors, logging
 from psychopy import __version__ as psychopy_version
-from psychopy.tools.monitorunittools import cm2pix, pix2cm
 from datetime import datetime
 from os import path, chdir
 from copy import copy
 from kestenSTmaxVal import Staircase
 from PsychoPy_tools import get_pixel_mm_deg_values
-from numpy import array, random, where, sum, linspace, pi, rad2deg, arctan, arctan2, cos, sin, hypot
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
-import numpy as np
 # for numpy attributes access by per-frame functions, acceess them with name instead of np.name.
+import numpy as np
+from numpy import array, random, where, sum, linspace, pi, rad2deg, arctan, arctan2, cos, sin, hypot
 import gc
 print(f"PsychoPy_version: {psychopy_version}")
 
@@ -1153,7 +1152,7 @@ for step in range(n_trials_per_stair):
                     print(f"z_start_bounds: {z_start_bounds}")
 
             # vary fixation polarity to reduce risk of screen burn.
-            # if monitor_name == 'OLED':  # same for all moniotrs for consistency
+            # if monitor_name == 'OLED':  # same for all monitors for consistency
             if trial_num_inc_repeats % 2 == 0:
                 fixation.lineColor = 'grey'
                 fixation.fillColor = 'black'

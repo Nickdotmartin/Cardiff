@@ -1,17 +1,16 @@
 from __future__ import division
 from psychopy import gui, visual, core, data, event, monitors, logging
 from psychopy import __version__ as psychopy_version
-from psychopy.tools.monitorunittools import cm2pix, pix2cm
+from psychopy.tools.monitorunittools import cm2pix, pix2cm, pix2deg
 from datetime import datetime
 from os import path, chdir
 from kestenSTmaxVal import Staircase
-from PsychoPy_tools import get_pixel_mm_deg_values
 from copy import copy
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 import gc
-import numpy as np
 # for numpy attributes access by per-frame functions, acceess them with name instead of np.name.
+import numpy as np
 from numpy import array, random, where, sum, linspace, pi, rad2deg, arctan, arctan2, cos, sin, hypot
 
 print(f"PsychoPy_version: {psychopy_version}")
@@ -362,12 +361,12 @@ expInfo = {'1_participant_name': 'Nicktest',
            '2_run_number': 1,
            '3_monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'ASUS_2_13_240Hz',
                               'Samsung', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
-           '4_fps': [60, 240, 120, 60],
+           '4_fps': [60, 120, 240],
            # '5_probe_dur_ms': [41.67, 116.67, 66.67, 54.17, 50, 41.67, 33.34, 25,  500],
            '6_probe_start_dist_pix': [12, 2, 4, 6, 8, 10],
            # '7_motion_duration': [200, 0, 35, 70, 105, 140, 175, 210, 240, 280, 320, 360, 400, 440, 480, 520, 560,
            #                         600],
-           '7_debug': [True, False, True]
+           '7_debug': [False, True]
            }
 
 # run drop-down menu, OK continues, cancel quits
@@ -397,47 +396,19 @@ if debug:
 probe_ecc = 4  # probe eccentricity in dva
 record_fr_durs = True  # eval(expInfo['7_record_frame_durs'])  # always record frame durs
 vary_fixation = True  # vary fixation time between trials to reduce anticipatory effects
-selected_bg_motion_ms = 200  # int(expInfo['7_motion_duration'])  # motion before and after stim, which is in the middle
+selected_bg_motion_ms = 200  # motion before and after stim, which is in the middle
 
 expInfo['date'] = datetime.now().strftime("%d/%m/%Y")
 expInfo['time'] = datetime.now().strftime("%H:%M:%S")
 
 
-# # # CONVERT TIMINGS TO USE IN SAVE PATH # # #
-# # probe_dur_ms and equivalent ISI_fr cond on 240Hz (total frames is ISI_fr plus 4 for probes)
-'''   
-dur_ms:       [8.34, 16.67, 25, 33.34, 41.67, 50, 54.17, 58.38, 66.67, 116.67]
-ISI cond:     [conc,     0,  2,     4,     6,  8,     9,    10,    12,     24] 
-frames@240Hz: [   2,     4,  6,     8,    10, 12,    13,    14,    16,     28]
-frames@120hz: [   1,     2,  3,     4,     5,  6,      ,     7,     8,     14]
-frames@60hz:  [    ,     1,   ,     2,      ,  3,      ,      ,     4,      7]
-'''
-# todo: I need to input probe durs equivilent to the ISI from rad_flow_v3_motion_window.
-#  ISI_ms =      [100,    50,    33.34, 25,    16.67,  0]
-#  ISI_fr 240hz: [24,     12,     8,     6,     4,     0]
-#  Probe_fr =    [28,     16,    12,    10,     8,     4]
-#  probe_ms =    [116.67, 66.67, 50,    41.67, 33.34, 16.67]
-probe_dur_selected_ms = [41.67, 116.67]
-
-probe_dur_fr = int(probe_dur_selected_ms * fps / 1000)
-probe_dur_ms = (1 / fps) * probe_dur_fr * 1000
-print(f"\nprobe duration: {round(probe_dur_ms, 2)}ms, or {probe_dur_fr} frames")
-# if probe_dur_ms is more than 2ms different to probe_dur_selected_ms, warn user
-if probe_dur_fr == 0:
-    raise ValueError(f"probe_dur_fr is 0 because probe_dur_selected_ms ({probe_dur_selected_ms}) is less than a frame on this monitor ({round(1000/fps, 2)})ms")
-if abs(probe_dur_ms - probe_dur_selected_ms) > 2:
-    print(f"\tWARNING!: The actual probe duration in ms ({round(probe_dur_ms, 2)}) "
-          f"is different to the selected probe duration ({probe_dur_selected_ms}) "
-          f"due to the frame rate of the monitor ({fps}Hz, {round(1000 / fps, 2)}ms per frame).")
 
 # # # EXPERIMENT HANDLING AND SAVING # # #
 # save each participant's files into separate dir for each ISI
 save_dir = path.join(_thisDir, expName, monitor_name,
                      participant_name,
                      f'{participant_name}_{run_number}',  # don't use p_name_run here, as it's not a separate folder
-                     # f'motion_{selected_bg_motion_ms}ms',  # motion dur in ms as folder
-                     # todo: update this
-                     f'probeDur{int(probe_dur_ms)}')
+                     )
 print(f"\nexperiment save_dir: {save_dir}")
 
 # files are labelled as '_incomplete' unless entire script runs.
@@ -455,87 +426,101 @@ thisExp = data.ExperimentHandler(name=expName, version=psychopy_version,
 
 
 # # # CONDITIONS AND STAIRCASES # # #
-# # Conditions/staricases: flow_dir (exp, contract) x bg motion (0, 70, 350)
+print("\nConditions (values for staircases and other selected parameters)")
+fr_dur_ms = 1000 / fps  # duration of each frame in ms
+print(f"fps: {fps}, fr_dur_ms: {fr_dur_ms}")
+
+# convert selected bg_motion duration for this frame rate.
+bg_motion_fr = int(selected_bg_motion_ms / fr_dur_ms)
+bg_motion_ms = round(bg_motion_fr * fr_dur_ms, 2)
+# make int if possible
+if bg_motion_ms.is_integer():
+    bg_motion_ms = int(bg_motion_ms)
+else:
+    bg_motion_ms = round(bg_motion_ms, 2)
+print(f"selected_bg_motion_ms: {selected_bg_motion_ms}, bg_motion_fr: {bg_motion_fr}, bg_motion_ms: {bg_motion_ms}")
+
+
+# # Conditions/staricases: flow_dir (exp, contract) x probe_durs
 # 1 = inward/contracting, -1 = outward/expanding
 flow_dir_vals = [1, -1]
 
-# window values is the duration of background motion, with stimuli in the middle.
-# todo: get rid of this, just have a single bg_motion_ms
-selected_bg_motion_ms_vals = [0, 100, 200, 400]
-if debug:
-    selected_bg_motion_ms_vals = [0, 16.67, 34, 41, 67, 100]
-print(f"\nselected_bg_motion_ms_vals: {selected_bg_motion_ms_vals}")
-
+# # probe_dur_ms and equivalent ISI_fr cond on 240Hz (total frames is ISI_fr plus 4 for probes)
+'''   
+dur_ms:       [8.34, 16.67, 25   , 33.34, 41.67, 50  ,  54.17, 58.38, 66.67, 116.67]
+frames@240Hz: [   2,  4   ,  6   ,  8   , 10   , 12  ,  13   , 14   ,    16,  28]
+frames@120hz: [   1,  2   ,  3   ,  4   ,  5   ,  6  ,       ,  7   ,     8,  14]
+frames@60hz:  [ n/a,  1   ,  n/a ,  2   , n/a  ,  3  ,  n/a  , n/a  ,     4,   7]
+ISI cond:     [conc,  0   ,  2   ,  4   ,  6   ,  8  ,   9   , 10   ,    12,  24] 
+ISI_ms:      [ conc,  0   ,  8.34, 16.67, 25   , 33.34, 37.5 , 41.71,    50, 100]
 '''
-If bg_motion_ms_vals contains 0, there will be no background motion at all.
-If any values are greater than 0 but less than probe_dur_ms, then these values will either be removed or increased to
-match probe_dur_ms.  This is because there is no facility to have background motion for values less than the probe duration.
-'''
-# change any values less than probe_dur_ms (but greater than zero) to probe_dur_ms
-if any([i > 0 and i < probe_dur_ms for i in selected_bg_motion_ms_vals]):
-    print(f"\tWARNING!: bg_motion_ms_vals contains values that are greater than zero, but less than probe_dur_ms ({round(probe_dur_ms, 2)}ms):  "
-          f"{[i for i in selected_bg_motion_ms_vals if 0 < i < probe_dur_ms]}."  # show values between zero and probe_dur_ms
-          "\nthese values will be changed to match probe_dur_ms, so that the background motion is the same duration as the probe.")
-    selected_bg_motion_ms_vals = [probe_dur_ms if i > 0 and i < probe_dur_ms else i for i in selected_bg_motion_ms_vals]
-    # if this results in duplicate values, remove them
-    selected_bg_motion_ms_vals = list(set(selected_bg_motion_ms_vals))
+# selected_probe_dur_ms_vals = [16.67, 33.34, 41.67, 50, 66.67, 116.67]
+# todo: put all vals back in
+selected_probe_dur_ms_vals = [50, 116.67]
 
-# check which selected_bg_motion_ms_vals are possible on this monitor, and remove any duplicates that arrise from converting them to nearest values.
-bg_motion_fr_vals = [-1 if i == -1 else int(i * fps / 1000) for i in selected_bg_motion_ms_vals]
-bg_motion_ms_vals = sorted(list(set([-1 if i == -1 else (1 / fps) * i * 1000 for i in bg_motion_fr_vals])))
-if len(bg_motion_ms_vals) < len(selected_bg_motion_ms_vals):
-    print(f"\tWARNING!: "
-          f"{len(selected_bg_motion_ms_vals) - len(bg_motion_ms_vals)} selected_bg_motion_ms_vals are not possible on this monitor ({monitor_name})"
-          f" and they have been dropped.")
-print(f"(actual) bg_motion_ms_vals: {bg_motion_ms_vals}")
+# get number of frames on this monitor for each selected value
+probe_dur_fr_vals = [int(i / fr_dur_ms) for i in selected_probe_dur_ms_vals]
+# get the actual ms times on this monitor
+probe_dur_ms_vals = [round(i * fr_dur_ms, 2) for i in probe_dur_fr_vals]
+probe_dur_ms_vals = [int(i) if i.is_integer() else i for i in probe_dur_ms_vals]
+
+# get the equivalent ISI_ms condition for each probe_dur
+isi_ms_cond_vals = [round(i-16.67, 2) for i in probe_dur_ms_vals]
+isi_ms_cond_vals = [int(i) if i.is_integer() else i for i in isi_ms_cond_vals]
+
+# put all probe dur variables in zip
+selected_probe_dur_zip_zip = list(zip(selected_probe_dur_ms_vals,
+                                      probe_dur_fr_vals, probe_dur_ms_vals, isi_ms_cond_vals))
+
+# remove duplicate probe dur conditions at this frame rate
+probe_dur_zip = []
+for this_zip in selected_probe_dur_zip_zip:
+    accepted_fr = [i[1] for i in probe_dur_zip]  # get list of frame durs already in list
+    if this_zip[1] not in accepted_fr:  # ignore any duplicate values
+        probe_dur_zip.append(this_zip)
+print(f"probe_dur_zip: {probe_dur_zip}")
 
 
+# get all possible combinations of flow_dir and probe_dur
+'''each flow_dir value appears twice (expand/contract) in stairs, e.g., once for each probe_dur'''
+combined_conds = [(f, pz) for f in flow_dir_vals for pz in probe_dur_zip]
 
-# get all possible combinations of these three lists
-combined_conds = [(f, b) for f in flow_dir_vals for b in bg_motion_ms_vals]
-
-print(f"\ncombined_conds ({len(combined_conds)}: {combined_conds}")
+# get numbers for staircases
+print(f"\ncombined_conds (n={len(combined_conds)}): {combined_conds}")
 stair_idx_list = list(range(len(combined_conds)))
 
-# lists of values for each condition (all list are same length = n_stairs)
-'''each flow_dir value appears in 3 stairs, e.g.,
-flow_dir (expand/contract) x bg_motion (0, 70, 350)'''
-# split the combined_conds into separate lists
-flow_dir_list = [i[0] for i in combined_conds]
-bg_motion_ms_conds_list = [i[1] for i in combined_conds]
+# split the combined_conds into separate lists showing values for each staircase
+flow_dir_conds_list = [i[0] for i in combined_conds]
+# make flow name list to avoid confusion with 1s and -1 from flow_dir_conds_list
+flow_dir_names_list = ['exp' if i == -1 else 'cont' for i in flow_dir_conds_list]
 
-# for bg_motion names, use int if possible, else round to 2 decimal places
-bg_motion_cond_names_list = []
-for motion_ms in bg_motion_ms_conds_list:
-    if motion_ms.is_integer():
-        bg_motion_cond_names_list.append(str(int(motion_ms)))
-    else:
-        bg_motion_cond_names_list.append(str(round(motion_ms, 2)))
-
-# make flow name list to avoid confusion with 1s and -1 from flow_dir_list
-flow_name_list = ['exp' if i == -1 else 'cont' for i in flow_dir_list]
+probe_dur_ms_cond_names_list = [i[1][2] for i in combined_conds]
+probe_dur_fr_conds_list = [i[1][1] for i in combined_conds]
+isi_ms_cond_conds_list = [i[1][3] for i in combined_conds]
 
 # stair_names_list joins sep_conds_list, cong_name_conds_list and bg_motion_ms_conds_list
-# e.g., ['sep_6_cong_1_bg_motion_70', 'sep_6_cong_1_bg_motion_350', 'sep_6_cong_-1_bg_motion_70'...]
-stair_names_list = [f"{i}_flow_{f}_{n}_bg_motion_{b}" for i, f, n, b in zip(stair_idx_list, flow_dir_list, flow_name_list, bg_motion_cond_names_list)]
+# e.g., ['0_flow_1_cont_probe_dur_16', '1_flow_1_cont_probe_dur_33', '2_flow_1_cont_probe_dur_50'...]
+stair_names_list = [f"{i}_flow_{f}_{n}_probe_dur_{p}" for i, f, n, p in zip(stair_idx_list, flow_dir_conds_list, flow_dir_names_list, probe_dur_ms_cond_names_list)]
 
 if debug:
-    print(f'flow_dir_list: {flow_dir_list}')
-    print(f"flow_name_list: {flow_name_list}")
-    print(f'bg_motion_ms_conds_list: {bg_motion_ms_conds_list}')
-
+    print(f'flow_dir_conds_list: {flow_dir_conds_list}')
+    print(f"flow_dir_names_list: {flow_dir_names_list}")
+    print(f"probe_dur_ms_cond_names_list: {probe_dur_ms_cond_names_list}")
+    print(f"probe_dur_fr_conds_list: {probe_dur_fr_conds_list}")
+    print(f"isi_ms_cond_conds_list: {isi_ms_cond_conds_list}")
 
 n_stairs = len(stair_idx_list)
 total_n_trials = int(n_trials_per_stair * n_stairs)
 print(f'\nstair_names_list: {stair_names_list}')
-print(f'n_stairs: {n_stairs}, total_n_trials: {total_n_trials}')
+print(f'n_stairs: {n_stairs}, total_n_trials: {total_n_trials}\n')
 
 
 # # # MONITOR SETTINGS # # #
 # # COLORS AND LUMINANCES
-maxLum = 106  # minLum = 0.12
+# todo: update maxLum after spyder measurements
+maxLum = 1  # minLum = 0.12
 # now using same settings for all monitors
-bgLumProp = .05  # use .2 to match exp1 or .45 to match radial_flow_NM_v2.py
+bgLumProp = 0.0  # use .2 to match exp1 or .45 to match radial_flow_NM_v2.py
 bgLum = maxLum * bgLumProp
 
 # colour space
@@ -544,19 +529,20 @@ bgColor_rgb1 = bgLum / maxLum
 this_bgColour = [bgColor_rgb1, bgColor_rgb1, bgColor_rgb1]
 print(f"this_colourSpace: {this_colourSpace}, bgLumProp: {bgLumProp}; bgLum: {bgLum}; bgColor_rgb1: {bgColor_rgb1}")
 # Flow colours
-# adj_flow_colour = .15
 # Give dots a pale green colour, which is adj_flow_colour different to the background
-# flow_colour = [this_bgColour[0] - adj_flow_colour, this_bgColour[1], this_bgColour[2] - adj_flow_colour]
-# if monitor_name == 'OLED':  # darker green for low contrast against black background
-    # flow_colour = [this_bgColour[0], this_bgColour[1] + adj_flow_colour / 2, this_bgColour[2]]
-# flow_colour = [this_bgColour[0], this_bgColour[1] + adj_flow_colour / 3, this_bgColour[2]]  # even dimmer 12/10/2023
-
-# now using same settings for all monitors
-adj_flow_colour = .05
+# todo: check adj_flow_colour against Simon's code
+adj_flow_colour = .15
 if debug:
     adj_flow_colour = .15
 flow_colour = [this_bgColour[0], this_bgColour[1] + adj_flow_colour, this_bgColour[2]]
+print(f"adj_flow_colour: {adj_flow_colour}, flow_colour: {flow_colour}")
 
+# probe_colour, not too bright, use start val from rad_flow_exp
+probe_lum = maxLum * .7  # bgColor_rgb1 + (adj_flow_colour * 2)
+# probe_colour = [probe_lum, probe_lum, probe_lum]
+probe_rgb1 = probe_lum / maxLum
+probe_colour = [probe_rgb1, probe_rgb1, probe_rgb1]
+print(f"probe_lum: {probe_lum}, probe_colour: {probe_colour}")
 
 
 # # # MONITOR DETAILS # # #
@@ -577,12 +563,6 @@ if monitor_name in ['asus_cal', 'Nick_work_laptop', 'NickMac', 'OLED', 'ASUS_2_1
     display_number = 0
 
 # WINDOW SPEC
-# if monitor_name == 'OLED':
-#     win = visual.Window(monitor=mon, size=(widthPix, heightPix),
-#                         winType='pyglet', bpc=[10, 10, 10],  # pyglet should ow work for 10-bit
-#                         colorSpace=this_colourSpace, color=this_bgColour,
-#                         units='pix', screen=display_number, allowGUI=False, fullscr=True, useFBO=False)
-# else:
 win = visual.Window(monitor=mon, size=(widthPix, heightPix),
                     winType='pyglet', bpc=[10, 10, 10],  # pyglet should ow work for 10-bit
                     colorSpace=this_colourSpace, color=this_bgColour,
@@ -623,8 +603,11 @@ if monitor_name == 'OLED':  # smaller, 3-pixel probes for OLED
                  (2, 0), (1, 0), (1, -1), (0, -1),
                  (0, -2), (-1, -2), (-1, -1), (0, -1)]
 
-probe = visual.ShapeStim(win, vertices=probeVert, lineWidth=0, opacity=1, size=probe_size, interpolate=False,
-                         fillColor=(1.0, 1.0, 1.0), colorSpace=this_colourSpace)
+probe = visual.ShapeStim(win, vertices=probeVert, lineWidth=0, opacity=1,
+                         size=probe_size, interpolate=False,
+                         # fillColor=probe_colour,
+                         fillColor=probe_colour,
+                         colorSpace=this_colourSpace)
 
 # probes and probe_masks are at dist_from_fix pixels from middle of the screen
 dist_from_fix = int((np.tan(np.deg2rad(probe_ecc)) * view_dist_pix) / np.sqrt(2))
@@ -724,8 +707,8 @@ if max_z_cm_in_life > (far_plane_cm - near_plane_cm):
 
 
 # # # TIMINGS - expected frame duration and tolerance # # #
-expected_fr_sec = 1 / fps
-expected_fr_ms = expected_fr_sec * 1000
+expected_fr_ms = fr_dur_ms
+expected_fr_sec = expected_fr_ms / 1000
 frame_tolerance_prop = 1 / expected_fr_ms  # frame_tolerance_ms == 1ms, regardless of fps.
 max_fr_dur_sec = expected_fr_sec + (expected_fr_sec * frame_tolerance_prop)
 min_fr_dur_sec = expected_fr_sec - (expected_fr_sec * frame_tolerance_prop)
@@ -823,7 +806,8 @@ if monitor_name in ['Nick_work_laptop', 'OLED']:  # e.g., windows machine
 # # # PROBE STARTING SPEED # # #
 # set probe_start_dist_pix from dlg, then convert to cm/s and pix/fr
 start_dist_pix_in_dur = probe_start_dist_pix  # 8  # 12  # starting dist in pixels in probe_dur_ms
-start_pix_per_fr = start_dist_pix_in_dur / probe_dur_fr  # starting dist in pixels per frame
+# start_pix_per_fr = start_dist_pix_in_dur / probe_dur_fr  # starting dist in pixels per frame
+start_pix_per_fr = start_dist_pix_in_dur / min(probe_dur_fr_conds_list)  # starting dist in pixels per frame
 start_pix_per_s = start_pix_per_fr * fps  # starting dist in pixels per second
 start_cm_per_s = pix2cm(pixels=start_pix_per_s, monitor=mon)  # starting dist in cm per second
 if debug:
@@ -841,13 +825,17 @@ for stair_idx in stair_idx_list:
     thisInfo = copy(expInfo)
     thisInfo['stair_idx'] = stair_idx
     thisInfo['stair_name'] = stair_names_list[stair_idx]
-    thisInfo['flow_dir'] = flow_dir_list[stair_idx]
-    thisInfo['flow_name'] = flow_name_list[stair_idx]
-    thisInfo['bg_motion_ms'] = bg_motion_ms_conds_list[stair_idx]
+    thisInfo['flow_dir'] = flow_dir_conds_list[stair_idx]
+    thisInfo['flow_name'] = flow_dir_names_list[stair_idx]
+    # thisInfo['bg_motion_ms'] =
+    thisInfo['probe_dur_ms'] = probe_dur_ms_cond_names_list[stair_idx]
+    thisInfo['probe_dur_fr'] = probe_dur_fr_conds_list[stair_idx]
+    thisInfo['isi_ms'] = isi_ms_cond_conds_list[stair_idx]
+
 
     thisStair = Staircase(name=stair_names_list[stair_idx],
                           type='simple',  # step size changes after each reversal only
-                          value=stairStart * -flow_dir_list[stair_idx],  # each stair starts with opposite probe dir as bg motion
+                          value=stairStart * -flow_dir_conds_list[stair_idx],  # each stair starts with opposite probe dir as bg motion
                           C=stairStart * 0.6,  # used to calculate initial step size, as prop of stairStart
                           minRevs=3,
                           minTrials=n_trials_per_stair,
@@ -893,10 +881,14 @@ for step in range(n_trials_per_stair):
             # conditions (flow_dir, bg_motion)
             flow_dir = thisStair.extraInfo['flow_dir']
             flow_name = thisStair.extraInfo['flow_name']
-            bg_motion_ms = thisStair.extraInfo['bg_motion_ms']
+            # bg_motion_ms = thisStair.extraInfo['bg_motion_ms']
+            probe_dur_ms = thisStair.extraInfo['probe_dur_ms']
+            probe_dur_fr = thisStair.extraInfo['probe_dur_fr']
+            isi_ms_equiv_cond = thisStair.extraInfo['isi_ms']
             if debug:
                 print(f"flow_dir: {flow_dir}, flow_name: {flow_name}"
                       # f", bg_motion_ms: {bg_motion_ms}"
+                      f"\nprobe_dur_ms: {probe_dur_ms}, probe_dur_fr: {probe_dur_fr}, isi_ms_equiv_cond: {isi_ms_equiv_cond}"
                       )
 
 
@@ -905,20 +897,21 @@ for step in range(n_trials_per_stair):
                 z_start_bounds = [near_plane_cm + max_z_cm_in_life, far_plane_cm]
             else:  # contracting, flow_dir == 1
                 z_start_bounds = [near_plane_cm, far_plane_cm - max_z_cm_in_life]
-            if debug:
-                print(f"z_start_bounds: {z_start_bounds}")
+            # if debug:
+            #     print(f"z_start_bounds: {z_start_bounds}")
 
 
             # # # GET PROBE ATTRIBUTES # # #
             probe_pix_p_fr = thisStair.next()  # in pixels per frame, for thie script
             probe_cm_p_sec = pix2cm(pixels=probe_pix_p_fr * fps, monitor=mon)  # for analysis file
+            probe_deg_p_sec = pix2deg(pixels=probe_pix_p_fr * fps, monitor=mon)  # for analysis file
 
             probe_dir = 'out'
             if probe_pix_p_fr > 0:
                 probe_dir = 'in'
             if debug:
                 print(f"probe_dir: {probe_dir}, probe_pix_p_fr: {probe_pix_p_fr}, "
-                      f"probe_cm_p_sec: {probe_cm_p_sec}")
+                      f"probe_cm_p_sec: {probe_cm_p_sec}, probe_deg_p_sec: {probe_deg_p_sec}")
 
             # PROBE LOCATIONS
             # corners go CCW(!) 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
@@ -951,7 +944,6 @@ for step in range(n_trials_per_stair):
             probe_moved_y = 0
 
             # vary fixation polarity to reduce risk of screen burn.
-            # if monitor_name == 'OLED':
             if trial_num_inc_repeats % 2 == 0:
                 fixation.lineColor = 'grey'
                 fixation.fillColor = 'black'
@@ -968,10 +960,10 @@ for step in range(n_trials_per_stair):
 
             # timing for background motion converted to frames (e.g., 70ms is 17frames at 240Hz).
             # I don't need selected or actual ms here as I have already weeded out durations that can't be presented when sorting conditions.
-            bg_motion_fr = int(bg_motion_ms * fps / 1000)
-            print(f"bg_motion_fr: {bg_motion_fr}")
-            if debug:
-                print(f'bg_motion_ms: {bg_motion_ms}')
+            # bg_motion_fr = int(bg_motion_ms * fps / 1000)
+            # print(f"bg_motion_fr: {bg_motion_fr}")
+            # if debug:
+            #     print(f'bg_motion_ms: {bg_motion_ms}')
 
 
             '''the default assumption is to have motion during probe, plus before and after.
@@ -1016,7 +1008,6 @@ for step in range(n_trials_per_stair):
                       f"end_probe_fr: {end_probe_fr}, end_post_fr: {end_post_fr}\n")
 
 
-
             # reset fixation radius - reduces in size at response segment of each trial
             fixation.setRadius(3)
 
@@ -1036,7 +1027,7 @@ for step in range(n_trials_per_stair):
 
 
 
-            # take a break every ? trials
+            # # # SHOW BREAKS SCREEN EVERY N TRIALS # # #
             if (trial_num_inc_repeats % take_break == 1) & (trial_num_inc_repeats > 1):
                 if debug:
                     print("\nTaking a break.\n")
@@ -1404,11 +1395,12 @@ for step in range(n_trials_per_stair):
         thisExp.addData('bg_motion_ms', bg_motion_ms)
         thisExp.addData('prelim_dur_fr', prelim_dur_fr)
         thisExp.addData('post_dur_fr', post_dur_fr)
-        thisExp.addData('probe_dur_selected_ms', probe_dur_selected_ms)
+        # thisExp.addData('probe_dur_selected_ms', probe_dur_selected_ms)
         thisExp.addData('probe_dur_ms', probe_dur_ms)
         thisExp.addData('probe_dur_fr', probe_dur_fr)
         thisExp.addData('probe_dir', probe_dir)
         thisExp.addData('probe_pix_p_fr', probe_pix_p_fr)
+        thisExp.addData('probe_deg_p_sec', probe_deg_p_sec)
         thisExp.addData('probe_cm_p_sec', probe_cm_p_sec)
         thisExp.addData('response', response)
         thisExp.addData('resp_corr', resp.corr)
@@ -1427,6 +1419,8 @@ for step in range(n_trials_per_stair):
         thisExp.addData('bgColor_rgb1', bgColor_rgb1)
         thisExp.addData('selected_fps', fps)
         thisExp.addData('frame_tolerance_prop', frame_tolerance_prop)
+        thisExp.addData('isi_ms', isi_ms_equiv_cond)
+
         thisExp.addData('expName', expName)
         thisExp.addData('psychopy_version', psychopy_version)
         thisExp.addData('date', expInfo['date'])
