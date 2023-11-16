@@ -21,13 +21,13 @@ convert_path1 = os.path.normpath(exp_path)
 print(f"convert_path1: {convert_path1}")
 exp_path = convert_path1
 
-monitor = 'Nick_work_laptop'  # 'asus_cal' OLED, 'Nick_work_laptop'
+monitor = 'OLED'  # 'asus_cal' OLED, 'Nick_work_laptop'
 exp_path = os.path.join(exp_path, monitor)
 if not os.path.isdir(exp_path):
     raise FileNotFoundError(f'exp_path: {exp_path} not found')
 
 
-participant_list = ['Nicktest']  # ' Nicktest_06102023' Nick_extra_prelims
+participant_list = ['Nick_SiSettings']  # ' Nicktest_06102023' Nick_extra_prelims
 
 thr_col_name = 'probe_deg_p_sec'  # probe_cm_p_sec
 stair_names_col_name = 'stair_name'
@@ -37,9 +37,9 @@ flow_name_col_name = 'flow_name'
 probe_dur_col_name = 'probe_dur_ms'  # durations
 probe_dir_col_name = 'probe_dir'  # directions
 resp_col_name = 'response'  # NOT resp_corr
-var_cols_list = [stair_names_col_name, flow_dir_col_name, flow_name_col_name, probe_dur_col_name, bg_dur_name]
-# if 'interleave_dur' in exp_path:  # don't include stair_names_col_name for v8
-#     var_cols_list = [flow_dir_col_name, flow_name_col_name, probe_dur_col_name, bg_dur_name]
+# var_cols_list = [stair_names_col_name, flow_dir_col_name, flow_name_col_name, probe_dur_col_name, bg_dur_name]
+if 'interleave_dur' in exp_path:  # don't include stair_names_col_name for v8 or v10
+    var_cols_list = [flow_dir_col_name, flow_name_col_name, probe_dur_col_name, bg_dur_name]
 
 verbose = True
 show_plots = True

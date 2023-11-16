@@ -518,9 +518,9 @@ print(f'n_stairs: {n_stairs}, total_n_trials: {total_n_trials}\n')
 # # # MONITOR SETTINGS # # #
 # # COLORS AND LUMINANCES
 # todo: update maxLum after spyder measurements
-maxLum = 1  # minLum = 0.12
+maxLum = 1  # 1%106  # minLum = 0.12
 # now using same settings for all monitors
-bgLumProp = 0.0  # use .2 to match exp1 or .45 to match radial_flow_NM_v2.py
+bgLumProp = 0.0 / 1000  # use .2 to match exp1 or .45 to match radial_flow_NM_v2.py
 bgLum = maxLum * bgLumProp
 
 # colour space
@@ -528,14 +528,11 @@ this_colourSpace = 'rgb1'  # values between 0 and 1
 bgColor_rgb1 = bgLum / maxLum
 this_bgColour = [bgColor_rgb1, bgColor_rgb1, bgColor_rgb1]
 print(f"this_colourSpace: {this_colourSpace}, bgLumProp: {bgLumProp}; bgLum: {bgLum}; bgColor_rgb1: {bgColor_rgb1}")
+
 # Flow colours
 # Give dots a pale green colour, which is adj_flow_colour different to the background
-# todo: check adj_flow_colour against Simon's code
-adj_flow_colour = .15
-if debug:
-    adj_flow_colour = .15
+adj_flow_colour = .2
 flow_colour = [this_bgColour[0], this_bgColour[1] + adj_flow_colour, this_bgColour[2]]
-print(f"adj_flow_colour: {adj_flow_colour}, flow_colour: {flow_colour}")
 
 # probe_colour, not too bright, use start val from rad_flow_exp
 probe_lum = maxLum * .7  # bgColor_rgb1 + (adj_flow_colour * 2)
@@ -605,7 +602,6 @@ if monitor_name == 'OLED':  # smaller, 3-pixel probes for OLED
 
 probe = visual.ShapeStim(win, vertices=probeVert, lineWidth=0, opacity=1,
                          size=probe_size, interpolate=False,
-                         # fillColor=probe_colour,
                          fillColor=probe_colour,
                          colorSpace=this_colourSpace)
 

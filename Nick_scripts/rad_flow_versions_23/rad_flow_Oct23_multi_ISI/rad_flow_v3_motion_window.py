@@ -543,7 +543,7 @@ expName = path.basename(__file__)[:-3]
 # dialogue box/drop-down option when exp starts (1st item is default val)
 expInfo = {'01. Participant': 'Nicktest',
            '02. Run_number': '1',
-           '03. Probe duration in frames': [2, 1, 50, 100],
+           '03. Probe duration in frames': [1, 2, 50, 100],
            '04. fps': [120, 60, 240],
            # '05. ISI_dur_in_ms': [33.34, 100, 50, 41.67, 37.5, 33.34, 25, 16.67, 8.33, 0, -1],
            '05. Separation': [4, 2, 4, 6, 8, 0, 10],
@@ -716,10 +716,11 @@ print(f'n_stairs: {n_stairs}, total_n_trials: {total_n_trials}')
 
 
 # # # MONITOR SETTINGS # # #
-# # COLORS AND LUMINANCES
-maxLum = 106  # minLum = 0.12
+# # COLORS AND
+# todo: update maxLum after spyder measurements
+maxLum = 1  # 1%106  # minLum = 0.12
 # now using same settings for all monitors
-bgLumProp = .05  # use .2 to match exp1 or .45 to match radial_flow_NM_v2.py
+bgLumProp = 0.0 / 1000  # use .2 to match exp1 or .45 to match radial_flow_NM_v2.py
 bgLum = maxLum * bgLumProp
 
 # colour space
@@ -727,18 +728,10 @@ this_colourSpace = 'rgb1'  # values between 0 and 1
 bgColor_rgb1 = bgLum / maxLum
 this_bgColour = [bgColor_rgb1, bgColor_rgb1, bgColor_rgb1]
 print(f"this_colourSpace: {this_colourSpace}, bgLumProp: {bgLumProp}; bgLum: {bgLum}; bgColor_rgb1: {bgColor_rgb1}")
-# Flow colours
-# adj_flow_colour = .15
-# Give dots a pale green colour, which is adj_flow_colour different to the background
-# flow_colour = [this_bgColour[0] - adj_flow_colour, this_bgColour[1], this_bgColour[2] - adj_flow_colour]
-# if monitor_name == 'OLED':  # darker green for low contrast against black background
-    # flow_colour = [this_bgColour[0], this_bgColour[1] + adj_flow_colour / 2, this_bgColour[2]]
-# flow_colour = [this_bgColour[0], this_bgColour[1] + adj_flow_colour / 3, this_bgColour[2]]  # even dimmer 12/10/2023
 
-# now using same settings for all monitors
-adj_flow_colour = .05
-if debug:
-    adj_flow_colour = .15
+# Flow colours
+# Give dots a pale green colour, which is adj_flow_colour different to the background
+adj_flow_colour = .2
 flow_colour = [this_bgColour[0], this_bgColour[1] + adj_flow_colour, this_bgColour[2]]
 
 
@@ -1019,7 +1012,7 @@ if monitor_name in ['Nick_work_laptop', 'OLED']:  # e.g., windows machine
 # now using same settings for all monitors
 start_lum_prop = .7  # previously was 0.3 until 01/11/2023
 if debug:
-    start_lum_prop = .7
+    start_lum_prop = 1.0
 stairStart = maxLum * start_lum_prop
 # just start at max lum for now.
 # stairStart = maxLum  # * start_lum_prop
@@ -1212,7 +1205,6 @@ for step in range(n_trials_per_stair):
             
             # get number of frames for bg_motion duration
             bg_motion_fr = int(selected_bg_motion_ms * fps / 1000)
-            print(f"bg_motion_fr: {bg_motion_fr}")
             bg_motion_ms = bg_motion_fr * 1000 / fps
             if debug:
                 print(f'\nselected_bg_motion_ms: {selected_bg_motion_ms}')

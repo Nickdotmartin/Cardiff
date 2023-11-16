@@ -2042,10 +2042,14 @@ def d_average_participant(root_path, run_dir_names_list,
 
         if 'stair_name' not in list(this_psignifit_df.columns):
             # generate a stair_name from the columns preceeding probe_dur_ms columns (e.g., 'flow_{flow_dir}_{flow_name}_prelim_{prelim_ms}")
+            # this_psignifit_df.insert(0, 'stair_name', [f'flow_{flow_dir}_{flow_name}_prelim_{prelim_ms}'
+            #                                       for flow_dir, flow_name, prelim_ms in
+            #                                       zip(this_psignifit_df['flow_dir'], this_psignifit_df['flow_name'],
+            #                                           this_psignifit_df['prelim_ms'])])
             this_psignifit_df.insert(0, 'stair_name', [f'flow_{flow_dir}_{flow_name}_prelim_{prelim_ms}'
                                                   for flow_dir, flow_name, prelim_ms in
                                                   zip(this_psignifit_df['flow_dir'], this_psignifit_df['flow_name'],
-                                                      this_psignifit_df['prelim_ms'])])
+                                                      this_psignifit_df['bg_motion_ms'])])
             print(f'\nget_means_df:\n{this_psignifit_df}')
         if 'stair' not in list(this_psignifit_df.columns):
             # generate stair numbers from unique stair_names
@@ -2576,12 +2580,12 @@ def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed,
     strip_this = ''
     # if 'dur_' in any of the cols_to_change, change strip_this to 'dur_'
     for col in cols_to_change:
-        # if 'probe_dur_ms_' in col:
-        #     strip_this = 'probe_dur_ms_'
-        if f'{motion_col}_' in col:
-            strip_this = f'{motion_col}_'  # e.g., 'bg_motion_ms_'
+        if 'probe_dur_ms_' in col:
+            strip_this = 'probe_dur_ms_'
+        # if f'{motion_col}_' in col:
+        #     strip_this = f'{motion_col}_'  # e.g., 'bg_motion_ms_'
             break
-    print(f"strip_this: {strip_this}")
+    print(f"strip _this: {strip_this}")
     print(f"cols_to_keep: {cols_to_keep}")
     print(f"cols_to_change: {cols_to_change}")
     all_long_df = make_long_df(wide_df=all_df,
@@ -2720,6 +2724,72 @@ def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed,
             plt.savefig(os.path.join(root_path, f"{participant_name}_dpoints_{dur[:5]}.png"))
 
         plt.show()
+
+
+
+    # # side by side plots for each probe_dur showing all datapoints and standard error
+    probe_dur_list = simple_all_long_df['probe_dur_ms'].unique().tolist()
+    probe_dur_list = sorted([int(i) if i.is_digit() else round(float(i), 2) for i in probe_dur_list])
+    fig, axes = plt.subplots(nrows=1, ncols=len(probe_dur_list),
+                             sharey=True, figsize=(10, 5))
+
+    # if there is only a single condition, put axes into a list to allow indexing, consistent with
+    # analyses where there are multiple conditons (e.g., axes[0])
+    if len(probe_dur_list) == 1:
+        axes = [axes]
+
+    for row_idx, row in enumerate(axes):
+        this_dur = probe_dur_list[row_idx]
+        probe_dur_df = simple_all_long_df[simple_all_long_df['probe_dur_ms'] == this_dur]
+
+        # add plot joining means
+        sns.pointplot(data=probe_dur_df, x='flow_name', y='probe_speed_cm_per_s',
+                      color='lightgrey', errorbar=None, join=True,
+                      ax=axes[row_idx])
+
+        # add plot showing mean with error bars showing standard error
+        sns.pointplot(data=probe_dur_df, x='flow_name', y='probe_speed_cm_per_s',
+                      color='darkgrey', join=False,
+                      markers='D', capsize=.2, errorbar="se",
+                      ax=axes[row_idx])
+
+        # todo: can I join all pairs of points from same run?  (e.g., exp and cont)
+        #  So behind stripplot, have individual pointplot per run with very thin lines
+
+        sns.stripplot(data=probe_dur_df, x='flow_name', y='probe_speed_cm_per_s',
+                      hue='flow_name', jitter=True, ax=axes[row_idx])
+
+        # add horizonal line at zero
+        axes[row_idx].axhline(y=0.0, color='grey', linestyle='--', linewidth=.7)
+
+        # set the y-axis label for the first plot, only show legend on last plot
+        if row_idx == 0:  # first plot
+            axes[row_idx].get_legend().remove()  # hide legend
+        elif row_idx != len(probe_dur_list):
+            axes[row_idx].get_legend().remove()  # hide legend
+            axes[row_idx].set_ylabel('')  # remove y axis title
+        else:
+            axes[row_idx].set_ylabel('')  # remove y axis title
+
+        # add title to each subplot
+        axes[row_idx].set_title(f"prelim: {this_dur}")
+
+    # add main title and legeng
+    plt.suptitle(f"{participant_name}, n={n_to_ave_over},  TM={n_trimmed}\n"
+                 f"-ive = outward, +ive = inward")
+    plt.subplots_adjust(top=0.85)  # add space below suptitle
+
+    plt.legend(loc='upper right', title='flow direction', bbox_to_anchor=(1.25, .9))
+
+    # sva fifure
+    if n_trimmed:
+        plt.savefig(os.path.join(root_path, f"{participant_name}_TM{n_trimmed}_dpoints_2.png"))
+    else:
+        plt.savefig(os.path.join(root_path, f"{participant_name}_dpoints_2.png"))
+
+    plt.show()
+
+
 
     # make diff_df: for each stack, prelim and probe_dur_ms, get the difference between exp and cont
     diff_list = []

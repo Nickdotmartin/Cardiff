@@ -20,7 +20,7 @@ from rad_flow_psignifit_analysis import get_n_rows_n_cols, get_ax_idx
 exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_v3_motion_window"
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_v2_missing_probe"
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_v4_multi_window"
-participant_list = ['Nick_black_bg']  # ' Nicktest_06102023' Nick_extra_prelims
+participant_list = ['Nick_SiSettings']  # ' Nicktest_06102023' Nick_extra_prelims
 monitor = 'OLED'  # 'asus_cal' OLED, 'Nick_work_laptop'
 background_type = 'flow_dots'  # 'flow_dots', 'no_bg'
 
