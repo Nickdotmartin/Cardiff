@@ -2921,6 +2921,229 @@ def compare_prelim_plots(p_name, exp_path):
     print(f"\n\n\t***compare_prelim_plots() completed for {p_name}***")
 
 
+def joined_plot(untrimmed_df, x_cols_str='isi_ms', 
+                hue_col_name='congruent', hue_labels=['congruent', 'incongruent'],
+                participant_name='',
+                xlabel='ISI (ms)', ylabel='Probe Luminance',
+                extra_text=None,
+                save_path=None, save_name=None,
+                verbose=True):
+    """
+    y-axis is a continuous variable (e.g., probeLum, probeSpeed)
+    x_axis is a series of categorical variables (e.g., ISI or probe duration)
+    hue is a comparrison between two conditions (e.g., congruent vs incongruent, or inward vs outward)
+    This plot does a couple of things.
+    1. It has a line plot showing means for the hue variables at each x_axis value, with error bars.
+        The means are slightly offset so they error bars don't overlap.
+        Hue[0] values on left and hue[1] on right of x-axis labels.
+    2. There are scatter plots for each individual measurement,
+        with lines joining datapoints for hue variables from the the same experiental session.
+        These are offset to the left and right of the x-axis labels.
+
+    As such, the plot will have 5 positions for each x value (including spaces):
+    [space, hue[0] scatter, means, hue[1] scatter, space]
+
+    :param untrimmed_df: Dataframe containing values from All (e.g., not trimmed) runs (or participants).
+        There should be a column for a hue variable,
+        and separate columns for each condition, beginning with the same string (e.g., isi_ms_0, isi_ms_16 etc)
+    :param x_cols_str: string which identifies the columns relating to the x_axis (e.g., 'isi_ms' or 'probe_dur_ms')
+    :param hue_col_name: Name of column showing comparison variable (e.g., 'Congruent' or 'flow_dir')
+    :param hue_labals: Labels to attach to values in hue column
+        (e.g., ['Incongruent', 'Congruent'] or ['Inward', 'Outward'])
+    :param participant_name: Name of participant (or experiment if experiment averages)
+    :param extra_text: Extra text to add to title and save name (e.g., separation, bg motion duration etc)
+    :param save_path: Path to save figs to
+    :param save_name: name to save fig as
+    :param verbose: How much to print to screen
+    """
+    print("\n\n*** running joined_plot()***\n")
+
+    # copy dataframe so that changes to it don't impact original dataframe
+    all_df = untrimmed_df.copy()
+
+    # get list of all columns containing x_cols_str (e.g., 'isi_ms' or 'probe_dur_ms')
+    not_x_col_list = [col for col in all_df.columns if x_cols_str not in col]
+    x_col_list = [col for col in all_df.columns if x_cols_str in col]
+
+
+    '''Part 1.
+    get dataframe for scatterplots, with hue[0] and hue[1] (e.g., 'cong_' and 'incong_') columns 
+    for each x_cols_str (e.g., isi) column.
+    Instead of separate rows for each hue value with x_cols_str values in separate columns,
+    (e.g.,          x[0], x[1], x[2]
+            Hue[0]  val1, val3, val5
+            Hue[1]  val2, val4, val6)
+    
+    There is now twice the number of columns and half the number of rows.
+    e.g.,  x[0]_hue[0], x[0]_hue[1], x[1]_hue[0], x[1]_hue[1], x[2]_hue[0], x[2]_hue[1]
+            val1      , val2       , val3       , val4       , val5       , val6'''
+
+    # drop hue_col_name from not_x_col_list
+    not_x_col_list.remove(hue_col_name)
+    print(f"\nx_col_list: {x_col_list}")
+
+    # get shorter hue labels for renaming columns
+    if len(hue_labels[0]) > 4:
+        short_hue = [hue_labels[0][:4], hue_labels[1][:4]]
+        # if short labels are the same, use the full version of the second label
+        if short_hue[0] == short_hue[1]:
+            short_hue[1] = hue_labels[1]
+
+
+    # get dataframe just with hue_labels[0] values (e.g., incongruent or outward)
+    x_hue0_df = all_df.copy()
+    x_hue0_df = x_hue0_df[x_hue0_df[hue_col_name] == -1]
+    x_hue0_df = x_hue0_df.drop(columns=[hue_col_name])
+
+    # add hue[0] to each column name in x_col_list, then rename columns in x_hue0_df
+    x_hue0_col_list = [f"{short_hue[0]}_{col}" for col in x_col_list]
+    # rename columns in x_col_list as x_hue0_df
+    for idx, col_name in enumerate(x_col_list):
+        x_hue0_df.rename(columns={col_name: x_hue0_col_list[idx]}, inplace=True)
+    print(f"\nx_hue0_df: ({list(x_hue0_df.columns)})\n{x_hue0_df}")
+
+    # get dataframe just with hue_labels[1] values
+    x_hue1_df = all_df.copy()
+    x_hue1_df = x_hue1_df[x_hue1_df[hue_col_name] == 1]
+    x_hue1_df = x_hue1_df.drop(columns=[hue_col_name])
+    # add hue_labsls[1] to each column name in x_col_list
+    x_hue1_col_list = [f"{short_hue[1]}_{col}" for col in x_col_list]
+    # rename columns in x_col_list as x_hue1_col_list
+    for idx, col_name in enumerate(x_col_list):
+        x_hue1_df.rename(columns={col_name: x_hue1_col_list[idx]}, inplace=True)
+    print(f"\nx_hue1_df: ({list(x_hue1_df.columns)})\n{x_hue1_df}")
+
+
+    # alternate column names from x_and_hue_0_col_list and x_and_hue_1_col_list
+    all_x_col_list = []
+    for idx in range(len(x_col_list)):
+        all_x_col_list.append(x_hue0_col_list[idx])
+        all_x_col_list.append(x_hue1_col_list[idx])
+    print(f"\nall_x_col_list: {all_x_col_list}")
+
+    # prepare x_hue1_df and x_hue0_df to be joined
+    x_hue0_df.drop(columns=not_x_col_list, inplace=True)
+    x_hue1_df.drop(columns=not_x_col_list, inplace=True)
+    x_hue0_df.reset_index(drop=True, inplace=True)
+    x_hue1_df.reset_index(drop=True, inplace=True)
+
+    # just_hue_df is x_hue0_df and x_hue1_df joined, with columns for each x and hue combination.
+    just_hue_df = pd.concat([x_hue0_df, x_hue1_df], axis=1, join='inner')
+    print(f"\njust_hue_df: ({list(just_hue_df.columns)})\n{just_hue_df}")
+
+    # change order of columns in just_hue_df to match all_col_list
+    just_hue_df = just_hue_df[all_x_col_list]
+    print(f"\njust_hue_df: ({list(just_hue_df.columns)})\n{just_hue_df}")
+
+
+    '''Part 2
+    Make long_df for lineplot, with x_ms in one column, and hue_col_name in another column'''
+    # make long_df, moving x_cols_str_ to single x_cols_str column (e.g. all 'isi_ms_' columns moved to single column 'isi_ms')
+    cols_to_change = [col for col in all_df.columns if f'{x_cols_str}_' in col]
+    long_df = make_long_df(wide_df=all_df,
+                           cols_to_keep=[hue_col_name],
+                           cols_to_change=cols_to_change,
+                           cols_to_change_show='y_values',
+                           new_col_name=x_cols_str, strip_from_cols=f'{x_cols_str}_', verbose=verbose)
+
+    # get a list of isi values in long_df
+    x_vals_list = long_df[x_cols_str].unique().tolist()
+
+    # for each value in x_vals_list, make a new list which is i*5+3
+    x_mean_pos_list = [i * 5 + 2 for i in range(len(x_vals_list))]
+    print(f"\nx_mean_pos_list: {x_mean_pos_list}")
+    long_df['x_pos'] = long_df[x_cols_str].map(dict(zip(x_vals_list, x_mean_pos_list)))
+
+    # create a new column, 'x_dodge_pos', with values from x_pos column,
+    # but if hue_col_name is -1, subtract .1, if hue_col_name is 1, add .1
+    long_df['x_dodge_pos'] = long_df['x_pos']
+    long_df.loc[long_df[hue_col_name] == -1, 'x_dodge_pos'] = long_df['x_dodge_pos'] - .1
+    long_df.loc[long_df[hue_col_name] == 1, 'x_dodge_pos'] = long_df['x_dodge_pos'] + .1
+
+    print(f"\nlong_df:\n{long_df}")
+
+    '''part 3.
+    plot lineplot with error bars'''
+    fig, ax = plt.subplots()
+
+    # plot means with error bars
+    sns.lineplot(data=long_df,
+                 x='x_dodge_pos',
+                 y='y_values', hue=hue_col_name,
+                 palette=sns.color_palette("tab10", n_colors=2),
+                 linewidth=3,
+                 errorbar='se',
+                 err_style='bars',
+                 err_kws={'capsize': 5, 'elinewidth': 2, 'capthick': 2},
+                 ax=ax
+                 )
+
+    '''part 4.
+    plot scatter plot, with pairs of datapoints joined for hue variables from the same experimental session'''
+
+    print(f"\njust_hue_df:\n{just_hue_df}")
+
+    # create jitter for x positions
+    jitter = 0.0  # use 0.05 for jitter
+    df_x_jitter = pd.DataFrame(np.random.normal(loc=0, scale=jitter, size=just_hue_df.values.shape), columns=just_hue_df.columns)
+
+    # we are going to add to the jitter values to put them either side of the mean x pos
+    x_scatter_x_pos_list = []
+    for val in x_mean_pos_list:
+        x_scatter_x_pos_list.append(val - 1)
+        x_scatter_x_pos_list.append(val + 1)
+    df_x_jitter += x_scatter_x_pos_list
+
+    print(f"\nx_mean_pos_list: {x_mean_pos_list}")
+    print(f"\nnp.array(x_scatter_x_pos_list):\n{np.array(x_scatter_x_pos_list)}")
+    print(f"\ndf_x_jitter:\n{df_x_jitter}")
+
+    # plot scatter plot
+    palette_tab10 = sns.color_palette("tab10", 10)
+    for idx, col_name in enumerate(list(just_hue_df.columns)):
+        if idx % 2 == 0:
+            this_colour = palette_tab10[0]
+        else:
+            this_colour = palette_tab10[1]
+        ax.plot(df_x_jitter[col_name], just_hue_df[col_name], 'o', alpha=.40, zorder=1, ms=4, mew=1, color=this_colour)
+
+    # join scatter plot with lines
+    for idx in range(0, len(just_hue_df.columns), 2):
+        ax.plot(df_x_jitter.loc[:, just_hue_df.columns[idx:idx + 2]].T,
+                just_hue_df.loc[:, just_hue_df.columns[idx:idx + 2]].T,
+                color='grey', linewidth=0.5, linestyle='--', zorder=-1)
+
+    ax.set_xlim(0, max(x_mean_pos_list) + 2)
+    # set x tick labels to x_vals_str_list, which should start at 2, and go up in 5s
+    labels_go_here = list(range(2, max(x_mean_pos_list) + 2, 5))
+    ax.set_xticks(labels_go_here,
+                  labels=x_vals_list)
+
+    # decorate plot, x axis label, legend, suptitle and title
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.legend(labels=hue_labels, loc='upper right', framealpha=.3)
+    plt.suptitle(f"{participant_name} thresholds & means of each run.")  # big title
+    ax.set_title(extra_text)  # smaller title underneath
+
+    if save_name is None:
+        if extra_text is not None:
+            # remove any commas and replace any spaces in extra_text with underscores
+            extra_text = extra_text.replace(',', '')
+            extra_text = extra_text.replace(' ', '_')
+            fig_name = f"{participant_name}_{extra_text}_joinedplot.png"
+        else:
+            fig_name = f"{participant_name}_joinedplot.png"
+    else:
+        fig_name = f"{save_name}_joinedplot.png"
+    if verbose:
+        print(f"\n***saving joinedplot to {os.path.join(save_path, fig_name)}***")
+    plt.savefig(os.path.join(save_path, fig_name))
+
+    plt.show()
+
+
+
 def a_data_extraction(p_name, run_dir, isi_list, save_all_data=True, verbose=True):
     """
     This script is a python version of Martin's first MATLAB analysis scripts, described below.
