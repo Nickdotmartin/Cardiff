@@ -17,10 +17,10 @@ import matplotlib.lines as mlines
 from rad_flow_psignifit_analysis import get_n_rows_n_cols, get_ax_idx
 
 
-exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_v3_motion_window"
-# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_v2_missing_probe"
+# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_v3_motion_window"
+exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_v2_missing_probe"
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_v4_multi_window"
-participant_list = ['Nick_SiSettings']  # ' Nicktest_06102023' Nick_extra_prelims
+participant_list = ['Nick']  # ' Nicktest_06102023' Nick_extra_prelims, Nick_SiSettings
 monitor = 'OLED'  # 'asus_cal' OLED, 'Nick_work_laptop'
 background_type = 'flow_dots'  # 'flow_dots', 'no_bg'
 
@@ -130,78 +130,78 @@ for p_idx, participant_name in enumerate(participant_list):
             '''a'''
             p_run_name = f'{participant_name}_{r_idx_plus}'
 
-            a_data_extraction_Oct23(p_name=p_run_name, run_dir=run_path,
-                                    verbose=verbose)
-
-            # run_data_path = f'{run_path}{os.sep}RUNDATA-sorted.xlsx'
-            run_data_path = os.path.join(run_path, 'RUNDATA-sorted.xlsx')
-            run_data_df = pd.read_excel(run_data_path, engine='openpyxl')
-            print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
-            # append to master list for mean staircase
-
-            # search for 'Run_number' substring in column names
-            run_num_col = [col for col in run_data_df.columns if 'Run_number' in col]
-            if len(run_num_col) == 1:
-                run_col_name = run_num_col[0]
-            elif len(run_num_col) == 0:
-                run_col_name = 'run'
-                # add 'run' to run_data_df if not already there
-                if 'run' not in run_data_df.columns.tolist():
-                    run_data_df.insert(0, 'run', run_idx + 1)
-            print(f"run_col_name: {run_col_name}")
-            MASTER_p_trial_data_list.append(run_data_df)
-
-
-            # run psignifit on run_data_df using var_cols_list to loop through the variables
-            thr_df = psignifit_thr_df_Oct23(save_path=run_path,
-                                            p_run_name=p_run_name,
-                                            run_df=run_data_df,
-                                            cond_cols_list=var_cols_list,
-                                            thr_col='probeLum',
-                                            resp_col='resp_corr',
-                                            wide_df_cols='isi_ms',
-                                            n_bins=9, q_bins=True,
-                                            conf_int=True, thr_type='Bayes',
-                                            plot_both_curves=False,
-                                            save_name=None,
-                                            show_plots=False, save_plots=True,
-                                            verbose=True)
-
-
-
-        '''mean staircase for each bg type'''
-        print(f"\n***making master per-trial df (for this bg_type: {bg_type})***")
-        # join all output data from each run and save as master per-trial csv
-        MASTER_p_trial_data_df = pd.concat(MASTER_p_trial_data_list, ignore_index=True)
-        MASTER_p_trial_data_name = f'MASTER_{bg_type}_p_trial_data.csv'
-        MASTER_p_trial_data_df.to_csv(os.path.join(bg_cond_path, MASTER_p_trial_data_name), index=False)
-        if verbose:
-            print(f'\nMASTER_p_trial_data_df:\n{MASTER_p_trial_data_df}')
-
-        '''If there are interleaved conds (e.g., bg_motion_ms), do separate staircases for each of them'''
-        if not interleaved_col_list:  # do one staircase plt for all interleaved conditions
-            mean_staircase_plots(per_trial_df=MASTER_p_trial_data_df, save_path=bg_cond_path,
-                                 participant_name=participant_name, run_col_name=run_col_name,
-                                 thr_col_name=thr_col_name,
-                                 isi_col_name=isi_col_name, sep_col_name=sep_col_name,
-                                 hue_col_name=cong_col_name, hue_names=['Incongruent', 'Congruent'],
-                                 ave_type='mean',
-                                 show_plots=True, save_plots=True, verbose=True)
-        elif len(interleaved_col_list) == 1:  # do one staircase plt for each interleaved condition
-            interleaves_vals = MASTER_p_trial_data_df[interleaved_col_list[0]].unique().tolist()
-            print(f"\n\n***separate mean_stair for each condition in {interleaved_col_list}***")
-            for this_val in interleaves_vals:
-                print(f"\n\n{this_val}")
-                this_save_path = os.path.join(bg_cond_path, f"{interleaved_col_list[0]}_{this_val}")
-                this_df = MASTER_p_trial_data_df[MASTER_p_trial_data_df[interleaved_col_list[0]] == this_val]
-                print(f"this_df ({this_df.shape}):\n{this_df}")
-                mean_staircase_plots(per_trial_df=this_df, save_path=this_save_path,
-                                     participant_name=participant_name, run_col_name=run_col_name,
-                                     thr_col_name=thr_col_name,
-                                     isi_col_name=isi_col_name, sep_col_name=sep_col_name,
-                                     hue_col_name=cong_col_name, hue_names=['Incongruent', 'Congruent'],
-                                     ave_type='mean',
-                                     show_plots=True, save_plots=True, verbose=True)
+        #     a_data_extraction_Oct23(p_name=p_run_name, run_dir=run_path,
+        #                             verbose=verbose)
+        #
+        #     # run_data_path = f'{run_path}{os.sep}RUNDATA-sorted.xlsx'
+        #     run_data_path = os.path.join(run_path, 'RUNDATA-sorted.xlsx')
+        #     run_data_df = pd.read_excel(run_data_path, engine='openpyxl')
+        #     print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
+        #     # append to master list for mean staircase
+        #
+        #     # search for 'Run_number' substring in column names
+        #     run_num_col = [col for col in run_data_df.columns if 'Run_number' in col]
+        #     if len(run_num_col) == 1:
+        #         run_col_name = run_num_col[0]
+        #     elif len(run_num_col) == 0:
+        #         run_col_name = 'run'
+        #         # add 'run' to run_data_df if not already there
+        #         if 'run' not in run_data_df.columns.tolist():
+        #             run_data_df.insert(0, 'run', run_idx + 1)
+        #     print(f"run_col_name: {run_col_name}")
+        #     MASTER_p_trial_data_list.append(run_data_df)
+        #
+        #
+        #     # run psignifit on run_data_df using var_cols_list to loop through the variables
+        #     thr_df = psignifit_thr_df_Oct23(save_path=run_path,
+        #                                     p_run_name=p_run_name,
+        #                                     run_df=run_data_df,
+        #                                     cond_cols_list=var_cols_list,
+        #                                     thr_col='probeLum',
+        #                                     resp_col='resp_corr',
+        #                                     wide_df_cols='isi_ms',
+        #                                     n_bins=9, q_bins=True,
+        #                                     conf_int=True, thr_type='Bayes',
+        #                                     plot_both_curves=False,
+        #                                     save_name=None,
+        #                                     show_plots=False, save_plots=True,
+        #                                     verbose=True)
+        #
+        #
+        #
+        # '''mean staircase for each bg type'''
+        # print(f"\n***making master per-trial df (for this bg_type: {bg_type})***")
+        # # join all output data from each run and save as master per-trial csv
+        # MASTER_p_trial_data_df = pd.concat(MASTER_p_trial_data_list, ignore_index=True)
+        # MASTER_p_trial_data_name = f'MASTER_{bg_type}_p_trial_data.csv'
+        # MASTER_p_trial_data_df.to_csv(os.path.join(bg_cond_path, MASTER_p_trial_data_name), index=False)
+        # if verbose:
+        #     print(f'\nMASTER_p_trial_data_df:\n{MASTER_p_trial_data_df}')
+        #
+        # '''If there are interleaved conds (e.g., bg_motion_ms), do separate staircases for each of them'''
+        # if not interleaved_col_list:  # do one staircase plt for all interleaved conditions
+        #     mean_staircase_plots(per_trial_df=MASTER_p_trial_data_df, save_path=bg_cond_path,
+        #                          participant_name=participant_name, run_col_name=run_col_name,
+        #                          thr_col_name=thr_col_name,
+        #                          isi_col_name=isi_col_name, sep_col_name=sep_col_name,
+        #                          hue_col_name=cong_col_name, hue_names=['Incongruent', 'Congruent'],
+        #                          ave_type='mean',
+        #                          show_plots=True, save_plots=True, verbose=True)
+        # elif len(interleaved_col_list) == 1:  # do one staircase plt for each interleaved condition
+        #     interleaves_vals = MASTER_p_trial_data_df[interleaved_col_list[0]].unique().tolist()
+        #     print(f"\n\n***separate mean_stair for each condition in {interleaved_col_list}***")
+        #     for this_val in interleaves_vals:
+        #         print(f"\n\n{this_val}")
+        #         this_save_path = os.path.join(bg_cond_path, f"{interleaved_col_list[0]}_{this_val}")
+        #         this_df = MASTER_p_trial_data_df[MASTER_p_trial_data_df[interleaved_col_list[0]] == this_val]
+        #         print(f"this_df ({this_df.shape}):\n{this_df}")
+        #         mean_staircase_plots(per_trial_df=this_df, save_path=this_save_path,
+        #                              participant_name=participant_name, run_col_name=run_col_name,
+        #                              thr_col_name=thr_col_name,
+        #                              isi_col_name=isi_col_name, sep_col_name=sep_col_name,
+        #                              hue_col_name=cong_col_name, hue_names=['Incongruent', 'Congruent'],
+        #                              ave_type='mean',
+        #                              show_plots=True, save_plots=True, verbose=True)
 
         # else:  # if multiple interleaved conditions, separate staircases plot for each combination
         #     # make dict of all interleaved conditions
@@ -239,12 +239,12 @@ for p_idx, participant_name in enumerate(participant_list):
             groupby_cols = ['neg_sep']
 
 
-        d_average_participant(root_path=bg_cond_path, run_dir_names_list=run_folder_names,
-                              trim_n=trim_n,
-                              groupby_col=groupby_cols,
-                              cols_to_drop=cols_to_drop,
-                              cols_to_replace=cols_to_replace,
-                              error_type='SE', verbose=verbose)
+        # d_average_participant(root_path=bg_cond_path, run_dir_names_list=run_folder_names,
+        #                       trim_n=trim_n,
+        #                       groupby_col=groupby_cols,
+        #                       cols_to_drop=cols_to_drop,
+        #                       cols_to_replace=cols_to_replace,
+        #                       error_type='SE', verbose=verbose)
 
 
         # making average plot

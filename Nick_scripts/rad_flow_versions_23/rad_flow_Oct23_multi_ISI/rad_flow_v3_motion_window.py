@@ -274,8 +274,8 @@ def find_angle(adjacent, opposite):
     the adjacent side is the distance from the screen,
     and the opposite side is the size of the square onscreen.
 
-    :param adjacent: A numpy array of the lengths of the adjacent sides (e.g., distance z_array).
-    :param opposite: The (scalar) length of the side opposite the angle you want to find.
+    :param adjacent: A numpy array of the lengths (in cm) of the adjacent sides (e.g., distance z_array).
+    :param opposite: The (scalar) length (in cm) of the side opposite the angle you want to find.
     :return: A numpy array of the angles in degrees.
     """
     return rad2deg(arctan(opposite / adjacent))
