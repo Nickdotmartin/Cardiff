@@ -3892,7 +3892,10 @@ def mean_staircase_plots(per_trial_df, save_path, participant_name, run_col_name
     if verbose:
         print(f"isi_list: {isi_list}")
 
-    sep_list = per_trial_df[sep_col_name].unique()
+    if sep_col_name == None:
+        sep_list = [None]
+    else:
+        sep_list = per_trial_df[sep_col_name].unique()
     if verbose:
         print(f"sep_list: {sep_list}")
 
@@ -3940,8 +3943,12 @@ def mean_staircase_plots(per_trial_df, save_path, participant_name, run_col_name
 
         # loop through sep values
         for sep_idx, sep in enumerate(sep_list):
-            # get df for this sep only
-            sep_df = isi_df[isi_df[sep_col_name] == sep]
+
+            if sep == None:
+                sep_df = isi_df
+            else:
+                # get df for this sep only
+                sep_df = isi_df[isi_df[sep_col_name] == sep]
             if verbose:
                 print(f"\n{sep_idx}. sep {sep} ({sep_df.shape}):"
                       # f"\n{sep_df}"
@@ -4013,7 +4020,10 @@ def mean_staircase_plots(per_trial_df, save_path, participant_name, run_col_name
                                       color='black', s=10)
 
             # decorate each subplot
-            axes[this_ax].set_title(f"{isi_col_name}{isi}, {sep_col_name}{sep}")
+            if sep == None:
+                axes[this_ax].set_title(f"{isi_col_name}{isi}")
+            else:
+                axes[this_ax].set_title(f"{isi_col_name}{isi}, {sep_col_name}{sep}")
             axes[this_ax].set_xlabel('step (25 per condition, per run)')
             axes[this_ax].set_ylabel(thr_col_name)
 
@@ -4047,10 +4057,16 @@ def mean_staircase_plots(per_trial_df, save_path, participant_name, run_col_name
     fig.suptitle(f"{participant_name}: {n_runs} staircases with {ave_type}", fontsize=20)
 
     # if get_median:
-    if ave_type == 'median':
-        save_name = f"all_run_stairs_{participant_name}_{isi_col_name}{isi}_{sep_col_name[:3]}{sep}_median.png"
-    else:
-        save_name = f"all_run_stairs_{participant_name}_{isi_col_name}{isi}_{sep_col_name[:3]}{sep}_mean.png"
+    if sep_col_name == None:
+        if ave_type == 'median':
+            save_name = f"all_run_stairs_{participant_name}_{isi_col_name}{isi}_median.png"
+        else:
+            save_name = f"all_run_stairs_{participant_name}_{isi_col_name}{isi}_mean.png"
+    else:  # if there is a sep col
+        if ave_type == 'median':
+            save_name = f"all_run_stairs_{participant_name}_{isi_col_name}{isi}_{sep_col_name[:3]}{sep}_median.png"
+        else:
+            save_name = f"all_run_stairs_{participant_name}_{isi_col_name}{isi}_{sep_col_name[:3]}{sep}_mean.png"
 
     if save_plots:
         print(f"save plot to: {os.path.join(save_path, save_name)}")
@@ -4869,7 +4885,9 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
                        exp_ave=False,
                        isi_name_list=None,
                        isi_vals_list=None,
-                       show_plots=True, verbose=True):
+                       show_plots=True,
+                       save_path=None,
+                       verbose=True):
     """Plots:
     MASTER_ave_thresh saved as ave_thr_all_runs.png
     MASTER_ave_thresh two-probe/one-probe saved as ave_thr_div_1probe.png
@@ -4903,9 +4921,16 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
 
     # todo: check why plots have changed order - since I added extra ISI conditions.
 
-    save_path, df_name = os.path.split(ave_df_path)
-    print(f'save_path (ave_df_path): {save_path}')
-    print(f'df_name (ave_df_path): {df_name}')
+    if save_path is None:
+        # if ave_df_path is str (e.g. path to csv)
+        if isinstance(ave_df_path, str):
+            save_path, df_name = os.path.split(ave_df_path)
+            print(f'save_path (ave_df_path): {save_path}')
+            print(f'df_name (ave_df_path): {df_name}')
+        else:
+            raise ValueError(f"save_path must be specified if ave_df_path is not a path to a csv.")
+    else:
+        print(f'save_path: {save_path}')
 
     # if exp_ave:
     #     ave_over = 'Exp'

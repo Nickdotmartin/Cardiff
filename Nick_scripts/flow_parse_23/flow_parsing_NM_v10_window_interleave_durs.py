@@ -442,8 +442,8 @@ print(f"selected_bg_motion_ms: {selected_bg_motion_ms}, bg_motion_fr: {bg_motion
 
 
 # # Conditions/staricases: flow_dir (exp, contract) x probe_durs
-# 1 = inward/contracting, -1 = outward/expanding
-flow_dir_vals = [1, -1]
+# -1 = outward/expanding, 1 = inward/contracting
+flow_dir_vals = [-1, 1]
 
 # # probe_dur_ms and equivalent ISI_fr cond on 240Hz (total frames is ISI_fr plus 4 for probes)
 '''   

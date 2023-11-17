@@ -2729,7 +2729,7 @@ def make_flow_parse_plots(all_df_path, root_path, participant_name, n_trimmed,
 
     # # side by side plots for each probe_dur showing all datapoints and standard error
     probe_dur_list = simple_all_long_df['probe_dur_ms'].unique().tolist()
-    probe_dur_list = sorted([int(i) if i.is_digit() else round(float(i), 2) for i in probe_dur_list])
+    probe_dur_list = sorted([int(i) if i.isdigit() else round(float(i), 2) for i in probe_dur_list])
     fig, axes = plt.subplots(nrows=1, ncols=len(probe_dur_list),
                              sharey=True, figsize=(10, 5))
 
