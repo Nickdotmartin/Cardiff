@@ -84,7 +84,7 @@ version 10 - motion window
 - instead of a fixed probe_dur, and various motion_durs, there will be a single motion_dur, and various probe_durs.
     Similar to version 8, but with motion window, not just preliminary motion.
     
-flow_parsing_NM_Dec2023.py (version 11) version to use for experiment.
+Direction_detection_Dec23.py (version 11) version to use for experiment.
 - motion_duration (window) is set to 200ms, probe_dur is varied - Done
 - start values vary for each probe_dur - Done
 """
@@ -361,12 +361,12 @@ expName = path.basename(__file__)[:-3]
 
 
 # # # DIALOGUE BOX # # #
-expInfo = {'1_participant_name': 'Nicktest',
-           '2_run_number': 1,
-           '3_monitor_name': ['Nick_work_laptop', 'OLED', 'asus_cal', 'ASUS_2_13_240Hz',
+expInfo = {'01. Participant ID': '',
+           '02. Run_number': ['', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+           '03. monitor_name': ['OLED', 'Nick_work_laptop', 'asus_cal', 'ASUS_2_13_240Hz',
                               'Samsung', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
-           '4_probe_start_dist_pix': 14,
-           '5_debug': [True, False, True]
+           '04. Probe Start distance (pixels)': 14,
+           '05. debug': [True, False, True]
            }
 
 # run drop-down menu, OK continues, cancel quits
@@ -374,12 +374,17 @@ dlg = gui.DlgFromDict(dictionary=expInfo, title=expName)
 if not dlg.OK:
     core.quit()  # user pressed cancel
 
+# stop experiment if participant name or run number is missing
+if expInfo['01. Participant ID'] == '' or expInfo['02. Run_number'] == '':
+    raise ValueError('Participant name or run number is missing.')
+    core.quit()
+
 # Settings from dialogue box
-participant_name = str(expInfo['1_participant_name'])
-run_number = int(expInfo['2_run_number'])
-monitor_name = str(expInfo['3_monitor_name'])
-start_dist_pix_in_dur = int(expInfo['4_probe_start_dist_pix'])  # start distance (pixels) that probes travel
-debug = eval(expInfo['5_debug'])  # select this for testing/debugging (prints more info to screen, runs ferwer trials)
+participant_ID = str(expInfo['01. Participant ID'])
+run_number = int(expInfo['02. Run_number'])
+monitor_name = str(expInfo['03. monitor_name'])
+start_dist_pix_in_dur = int(expInfo['04. Probe Start distance (pixels)'])  # start distance (pixels) that probes travel
+debug = eval(expInfo['05. debug'])  # select this for testing/debugging (prints more info to screen, runs ferwer trials)
 
 # print settings from dlg
 print("\ndlg dict")
@@ -413,15 +418,15 @@ else:
 # # # EXPERIMENT HANDLING AND SAVING # # #
 # save each participant's files into separate dir for each ISI
 save_dir = path.join(_thisDir, expName, monitor_name,
-                     participant_name,
-                     f'{participant_name}_{run_number}',  # don't use p_name_run here, as it's not a separate folder
+                     participant_ID,
+                     f'{participant_ID}_{run_number}',  # don't use p_name_run here, as it's not a separate folder
                      )
 print(f"\nexperiment save_dir: {save_dir}")
 
 # files are labelled as '_incomplete' unless entire script runs.
-p_name_run = f"{participant_name}_{run_number}"
+p_name_run = f"{participant_ID}_{run_number}"
 if debug:
-    p_name_run = f"{participant_name}_{run_number}_debug"
+    p_name_run = f"{participant_ID}_{run_number}_debug"
 incomplete_output_filename = f'{p_name_run}_incomplete'
 save_output_as = path.join(save_dir, incomplete_output_filename)
 
@@ -795,7 +800,7 @@ breaks = visual.TextStim(win=win, name='breaks', text=break_text, font='Arial',
 
 acc_warning_text = "The experiment had quit as your score is low.\n\n" \
                    "The first few trials should be relatively easy, this doesn't seem to the be the case.\n\n" \
-                   "Try inputting a different 4_probe_start_dist_pix value from the drop down menu:\n" \
+                   "Try inputting a different 04. Probe Start distance (pixels) value from the drop down menu:\n" \
                    f"If you were finding that the probe looked like a static point," \
                    f"try inputting a value of {start_dist_pix_in_dur + 3};\n" \
                    f"if the probe looked like a line or streak, try inputting a value of {start_dist_pix_in_dur - 3}.\n\n"
@@ -1375,7 +1380,7 @@ for step in range(n_trials_per_stair):
                                 all_cond_name_list=cond_list, fr_nums_p_trial=fr_counter_per_trial,
                                 dropped_trial_x_locs=dropped_fr_trial_x_locs,
                                 mon_name=monitor_name, date=expInfo['date'], frame_rate=fps,
-                                participant=participant_name, run_num=run_number,
+                                participant=participant_ID, run_num=run_number,
                                 save_path=save_dir, incomplete=True)
 
 
@@ -1423,6 +1428,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('isi_ms', isi_ms_equiv_cond)
         thisExp.addData('expName', expName)
         thisExp.addData('psychopy_version', psychopy_version)
+        thisExp.addData('participant_ID', participant_ID)
         thisExp.addData('date', expInfo['date'])
         thisExp.addData('time', expInfo['time'])
 
@@ -1450,7 +1456,7 @@ if record_fr_durs:
                 all_cond_name_list=cond_list, fr_nums_p_trial=fr_counter_per_trial,
                 dropped_trial_x_locs=dropped_fr_trial_x_locs,
                 mon_name=monitor_name, date=expInfo['date'], frame_rate=fps,
-                participant=participant_name, run_num=run_number,
+                participant=participant_ID, run_num=run_number,
                 save_path=save_dir, incomplete=False)
 
 

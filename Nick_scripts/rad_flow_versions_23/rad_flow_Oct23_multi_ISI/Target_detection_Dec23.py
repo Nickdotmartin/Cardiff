@@ -91,7 +91,7 @@ rad_flow_v3_motion_window.py - 1st Nov 23
 - changed bg_lum to be 5%, not black  - DONE
 - same settings for all monitors as OLED (apart from probe verts and core.rush) - DONE
 
-rad_flow_NM_Dec23.py (version to use for experiment.)
+Target_detection_Dec23.py (version to use for experiment.)
 - motion_duration (window) is set to 200ms - Done
 - maxLum has been updated - Done
 """
@@ -545,8 +545,8 @@ expName = path.basename(__file__)[:-3]
 # # # DIALOGUE BOX # # #
 
 # dialogue box/drop-down option when exp starts (1st item is default val)
-expInfo = {'01. Participant': 'Nicktest',
-           '02. Run_number': 1,
+expInfo = {'01. Participant ID': '',
+           '02. Run_number': ['', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
            '03. Separation': [4, 6],   # [4, 2, 4, 6, 8, 0, 10],
            '04. monitor_name': ['OLED', 'Nick_work_laptop', 'asus_cal',
                                 'Asus_VG24', 'HP_24uh', 'NickMac'],
@@ -558,8 +558,13 @@ dlg = gui.DlgFromDict(dictionary=expInfo, title=expName)
 if not dlg.OK:
     core.quit()  # user pressed cancel
 
+# stop experiment if participant name or run number is missing
+if expInfo['01. Participant'] == '' or expInfo['02. Run_number'] == '':
+    raise ValueError('Participant name or run number is missing.')
+    core.quit()
+
 # Dialogue box settings
-participant_name = expInfo['01. Participant']
+participant_ID = expInfo['01. Participant ID']
 run_number = int(expInfo['02. Run_number'])
 separation = int(expInfo['03. Separation'])
 monitor_name = expInfo['04. monitor_name']
@@ -600,15 +605,15 @@ else:
 # # # EXPERIMENT HANDLING AND SAVING # # #
 # save each participant's files into separate dir for each ISI
 save_dir = path.join(_thisDir, expName, monitor_name,  # added monitor name to analysis structure
-                     participant_name,
-                     f'{participant_name}_{run_number}',
+                     participant_ID,
+                     f'{participant_ID}_{run_number}',
                      f'sep_{separation}')
 print(f"\nexperiment save_dir: {save_dir}")
 
 # files are labelled as '_incomplete' unless entire script runs.
-p_name_run = f"{participant_name}_{run_number}"
+p_name_run = f"{participant_ID}_{run_number}"
 if debug:
-    p_name_run = f"{participant_name}_{run_number}_debug"
+    p_name_run = f"{participant_ID}_{run_number}_debug"
 incomplete_output_filename = f'{p_name_run}_incomplete'
 save_output_as = path.join(save_dir, incomplete_output_filename)
 
@@ -1640,7 +1645,7 @@ for step in range(n_trials_per_stair):
                                 all_cond_name_list=cond_list, fr_nums_p_trial=fr_counter_per_trial,
                                 dropped_trial_x_locs=dropped_fr_trial_x_locs,
                                 mon_name=monitor_name, date=expInfo['date'], frame_rate=fps,
-                                participant=participant_name, run_num=run_number,
+                                participant=participant_ID, run_num=run_number,
                                 save_path=save_dir, incomplete=True)
 
 
@@ -1695,6 +1700,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('frame_tolerance_prop', frame_tolerance_prop)
         thisExp.addData('expName', expName)
         thisExp.addData('psychopy_version', psychopy_version)
+        thisExp.addData('participant_ID', participant_ID)
         thisExp.addData('date', expInfo['date'])
         thisExp.addData('time', expInfo['time'])
 
@@ -1723,7 +1729,7 @@ if record_fr_durs:
                 all_cond_name_list=cond_list, fr_nums_p_trial=fr_counter_per_trial,
                 dropped_trial_x_locs=dropped_fr_trial_x_locs,
                 mon_name=monitor_name, date=expInfo['date'], frame_rate=fps,
-                participant=participant_name, run_num=run_number,
+                participant=participant_ID, run_num=run_number,
                 save_path=save_dir, incomplete=False)
 
 
