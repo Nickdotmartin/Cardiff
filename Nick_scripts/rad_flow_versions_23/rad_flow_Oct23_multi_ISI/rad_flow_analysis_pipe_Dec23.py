@@ -16,10 +16,11 @@ import itertools
 import matplotlib.lines as mlines
 from rad_flow_psignifit_analysis import get_n_rows_n_cols, get_ax_idx
 
-
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_NM_Dec23"
-exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_NM_missing_probe_Dec23"
-participant_list = ['Nick']  # ' Nicktest_06102023' Nick_extra_prelims, Nick_SiSettings
+# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_NM_missing_probe_Dec23"
+# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Target_detection_Dec23"
+exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Missing_target_detection_Dec23"
+participant_list = ['pt3', 'pt1']  # ' Nicktest_06102023' Nick_extra_prelims, Nick_SiSettings
 monitor = 'OLED'  # 'asus_cal' OLED, 'Nick_work_laptop'
 background_type = 'flow_dots'  # 'flow_dots', 'no_bg'
 
@@ -40,7 +41,7 @@ cong_col_name = 'congruent'
 isi_col_name = 'isi_ms'
 sep_col_name = 'separation'
 neg_sep_col_name = 'neg_sep'
-bg_dur_name = 'motion_dur_ms'
+bg_dur_name = 'bg_motion_ms'  # 'motion_dur_ms'
 resp_col_name = 'resp_corr'
 var_cols_list = [stair_names_col_name, isi_col_name, sep_col_name, neg_sep_col_name, cong_col_name, bg_dur_name]
 

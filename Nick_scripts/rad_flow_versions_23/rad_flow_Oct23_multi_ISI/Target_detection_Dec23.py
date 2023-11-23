@@ -546,11 +546,10 @@ expName = path.basename(__file__)[:-3]
 
 # dialogue box/drop-down option when exp starts (1st item is default val)
 expInfo = {'01. Participant ID': '',
-           '02. Run_number': ['', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-           '03. Separation': [4, 6],   # [4, 2, 4, 6, 8, 0, 10],
-           '04. monitor_name': ['OLED', 'Nick_work_laptop', 'asus_cal',
+           '02. Separation': [4, 6],   # [4, 2, 4, 6, 8, 0, 10],
+           '03. monitor_name': ['OLED', 'Nick_work_laptop', 'asus_cal',
                                 'Asus_VG24', 'HP_24uh', 'NickMac'],
-           '05. debug': [False, True]
+           '04. debug': [False, True]
            }
 
 # run drop-down menu, OK continues, cancel quits
@@ -558,17 +557,34 @@ dlg = gui.DlgFromDict(dictionary=expInfo, title=expName)
 if not dlg.OK:
     core.quit()  # user pressed cancel
 
-# stop experiment if participant name or run number is missing
-if expInfo['01. Participant'] == '' or expInfo['02. Run_number'] == '':
-    raise ValueError('Participant name or run number is missing.')
+# stop experiment if participant name is missing
+if expInfo['01. Participant ID'] == '':
+    raise ValueError('Participant name is missing.')
     core.quit()
+
 
 # Dialogue box settings
 participant_ID = expInfo['01. Participant ID']
-run_number = int(expInfo['02. Run_number'])
-separation = int(expInfo['03. Separation'])
-monitor_name = expInfo['04. monitor_name']
-debug = eval(expInfo['05. debug'])
+separation = int(expInfo['02. Separation'])
+monitor_name = expInfo['03. monitor_name']
+debug = eval(expInfo['04. debug'])
+
+
+
+# check participant folder to find out which runs have already been completed
+check_run_path = path.join(_thisDir, expName, monitor_name, participant_ID)
+if not path.exists(check_run_path):
+    run_number = 1
+else:
+    for i in list(range(12)):
+        run_number = i + 1
+        check_run_path = path.join(_thisDir, expName, monitor_name, participant_ID,
+                                   f'{participant_ID}_{run_number}', f'sep_{separation}')
+        if not path.isfile(path.join(check_run_path, f'{participant_ID}_{run_number}_output.csv')):
+            break
+        elif run_number == 12:
+            raise ValueError(f"Participant {participant_ID} has already completed all {run_number} runs of {expName}")
+
 
 # print settings from dlg
 print("\ndlg dict")
@@ -767,7 +783,7 @@ if debug:
 # MOUSE
 # todo: check forum for other ideas if mouse is still there
 win.mouseVisible = False
-myMouse = event.Mouse(visible=False)
+# myMouse = event.Mouse(visible=False)
 
 # # KEYBOARD
 resp = event.BuilderKeyResponse()
@@ -987,7 +1003,7 @@ acc_warning = visual.TextStim(win=win, name='acc_warning', text=acc_warning_text
                          pos=[0, 0], height=20, ori=0, color='white',
                          colorSpace=this_colourSpace)
 
-end_of_exp_text = "You have completed this experiment.\nThank you for your time."
+end_of_exp_text = f"You have completed {run_number}/12 runs of this experiment.\nThank you for your time."
 end_of_exp = visual.TextStim(win=win, name='end_of_exp',
                              text=end_of_exp_text, color='white',
                              font='Arial', height=20, colorSpace=this_colourSpace)
@@ -1174,11 +1190,11 @@ for step in range(n_trials_per_stair):
             # # # GET TIMINGS in frames # # #
             # # # MOTION WINDOW # # #
             '''Rather than just having preliminary motion (before probe1), we now have a background motion (bg_motion) window of a fixed duration.
-            The stimuli (probe1, ISI, probe2) occur in the middle of this window.  
-            e.g., if the window is 10 frames, and the ISI is 4 frames, then the total stimulus duration is 8 frames, 
+            The stimuli (probe1, ISI, probe2) occur in the middle of this window.
+            e.g., if the window is 10 frames, and the ISI is 4 frames, then the total stimulus duration is 8 frames,
             so there will be one frame of bg_motion before probe1 and one frame of bg_motion after probe2.
             if the window was 100 frames then there would be 46 frames of bg_motion before probe1 and 46 frames after probe2.'''
-            
+
             # get number of frames for bg_motion duration
             bg_motion_fr = int(selected_bg_motion_ms * fps / 1000)
             bg_motion_ms = bg_motion_fr * 1000 / fps
@@ -1186,19 +1202,19 @@ for step in range(n_trials_per_stair):
                 print(f'\nselected_bg_motion_ms: {selected_bg_motion_ms}')
                 print(f'bg_motion_fr: {bg_motion_fr}')
                 print(f'bg_motion_ms: {bg_motion_ms}')
-                
+
             # Get the number of frames for probes and ISI
             # If probes are presented concurrently, set isi_dur_fr and p2_dur_fr to last for 0 frames.
             isi_dur_fr = isi_cond_fr
             p1_dur_fr = p2_dur_fr = probe_duration
             if isi_cond_fr < 0:
                 isi_dur_fr = p2_dur_fr = 0
-                
+
             # get number of frames for the total stimulus duration
             stim_dur_fr = p1_dur_fr + isi_dur_fr + p2_dur_fr
             if isi_dur_fr == -1:
                 stim_dur_fr = p1_dur_fr
-                
+
             # get duration of preliminary bg_motion (before probe1) and post-probe2 bg_motion
             # if these number are not equal, prelim should be 1 frame longer than post
             pre_and_post_fr = int(bg_motion_fr - stim_dur_fr)  # remaining frames not including stim_dur_fr
@@ -1207,8 +1223,8 @@ for step in range(n_trials_per_stair):
                 prelim_dur_fr = post_dur_fr
             else:
                 prelim_dur_fr = post_dur_fr + 1
-                
-                
+
+
             ''''''
 
             # variable fixation time
@@ -1701,6 +1717,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('expName', expName)
         thisExp.addData('psychopy_version', psychopy_version)
         thisExp.addData('participant_ID', participant_ID)
+        thisExp.addData('run_number', run_number)
         thisExp.addData('date', expInfo['date'])
         thisExp.addData('time', expInfo['time'])
 

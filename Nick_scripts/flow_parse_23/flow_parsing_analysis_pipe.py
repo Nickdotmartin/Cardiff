@@ -17,7 +17,9 @@ import matplotlib.pyplot as plt
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing_NM_v8"
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing_NM_v8_interleave_dur"
 # exp_path = r"C:\Users\sapnm4\PycharmProjects\Cardiff\Nick_scripts\flow_parse_23\flow_parsing_NM_v10_window_interleave_durs"
-exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing_NM_v10_window_interleave_durs"
+# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing_NM_v10_window_interleave_durs"
+# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing_NM_Dec2023"
+exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Direction_detection_Dec23"
 print(f"exp_path: {exp_path}")
 convert_path1 = os.path.normpath(exp_path)
 print(f"convert_path1: {convert_path1}")
@@ -29,7 +31,8 @@ if not os.path.isdir(exp_path):
     raise FileNotFoundError(f'exp_path: {exp_path} not found')
 
 
-participant_list = ['Nick_SiSettings']  # ' Nicktest_06102023' Nick_extra_prelims
+
+participant_list = ['pt3', 'pt1']  # ' Nicktest_06102023' Nick_extra_prelims
 
 thr_col_name = 'probe_deg_p_sec'  # probe_cm_p_sec
 stair_names_col_name = 'stair_name'
@@ -39,9 +42,9 @@ flow_name_col_name = 'flow_name'
 probe_dur_col_name = 'probe_dur_ms'  # durations
 probe_dir_col_name = 'probe_dir'  # directions
 resp_col_name = 'response'  # NOT resp_corr
-# var_cols_list = [stair_names_col_name, flow_dir_col_name, flow_name_col_name, probe_dur_col_name, bg_dur_name]
-if 'interleave_dur' in exp_path:  # don't include stair_names_col_name for v8 or v10
-    var_cols_list = [flow_dir_col_name, flow_name_col_name, probe_dur_col_name, bg_dur_name]
+var_cols_list = [stair_names_col_name, flow_dir_col_name, flow_name_col_name, probe_dur_col_name, bg_dur_name]
+# if 'interleave_dur' in exp_path:  # don't include stair_names_col_name for v8 or v10
+#     var_cols_list = [flow_dir_col_name, flow_name_col_name, probe_dur_col_name, bg_dur_name]
 
 verbose = True
 show_plots = True
@@ -106,8 +109,8 @@ for p_idx, participant_name in enumerate(participant_list):
         p_name = f'{participant_name}_{r_idx_plus}'
 
         # todo: change output from 'ALL_durations_sorted.csv' to 'RUNDATA-sorted.xlsx'???
-        # run_data_df = a_data_extraction(p_name=p_name, run_dir=run_path,
-        #                                 dur_list=probe_durs_dir_list, verbose=verbose)
+        run_data_df = a_data_extraction(p_name=p_name, run_dir=run_path,
+                                        dur_list=probe_durs_dir_list, verbose=verbose)
 
 
         # run_data_path = f'{run_path}{os.sep}RUNDATA-sorted.xlsx'
@@ -138,37 +141,37 @@ for p_idx, participant_name in enumerate(participant_list):
         MASTER_p_trial_data_list.append(run_data_df)
 
 
-        # # '''b3'''
-        # # # todo: add 'OUT' and 'IN' to y axis labels
-        # # # todo: why don't line plots match up with final value lines?
-        # # # todo: x axis tick labels are missing
-        # # b3_plot_staircase(run_data_path, thr_col='probe_cm_p_sec', resp_col='response',  # 'answer'
-        # #                   save_name=f"{participant_name}_{r_idx_plus}_staircase.png",
-        # #                   show_plots=show_plots, verbose=verbose)
-        #
-        # # todo: append run_data_df to MASTER_p_trial_data_list
-        #
-        # # check participant name and run name are present, if not, add them
-        #
-        # # just select columns I need for master df
-        #
-        # # append to MASTER_p_trial_data_list
-        #
-        #
-        #
-        # thr_df = psignifit_thr_df_Oct23(save_path=run_path, p_run_name=p_name,
-        #                                 run_df=run_data_df, cond_cols_list=var_cols_list,
-        #                                 thr_col=thr_col_name,
-        #                                 resp_col=resp_col_name,
-        #                                 wide_df_cols=probe_dur_col_name,
-        #                                 n_bins=9, q_bins=True,
-        #                                 conf_int=True, thr_type='Bayes',
-        #                                 plot_both_curves=False,
-        #                                 save_name=None,
-        #                                 show_plots=False, save_plots=True,
-        #                                 verbose=True)
-        #
-        # print(f'thr_df:\n{thr_df}')
+        # '''b3'''
+        # # todo: add 'OUT' and 'IN' to y axis labels
+        # # todo: why don't line plots match up with final value lines?
+        # # todo: x axis tick labels are missing
+        # b3_plot_staircase(run_data_path, thr_col='probe_cm_p_sec', resp_col='response',  # 'answer'
+        #                   save_name=f"{participant_name}_{r_idx_plus}_staircase.png",
+        #                   show_plots=show_plots, verbose=verbose)
+
+        # todo: append run_data_df to MASTER_p_trial_data_list
+
+        # check participant name and run name are present, if not, add them
+
+        # just select columns I need for master df
+
+        # append to MASTER_p_trial_data_list
+
+
+
+        thr_df = psignifit_thr_df_Oct23(save_path=run_path, p_run_name=p_name,
+                                        run_df=run_data_df, cond_cols_list=var_cols_list,
+                                        thr_col=thr_col_name,
+                                        resp_col=resp_col_name,
+                                        wide_df_cols=probe_dur_col_name,
+                                        n_bins=9, q_bins=True,
+                                        conf_int=True, thr_type='Bayes',
+                                        plot_both_curves=False,
+                                        save_name=None,
+                                        show_plots=False, save_plots=True,
+                                        verbose=True)
+
+        print(f'thr_df:\n{thr_df}')
 
 
 
@@ -231,8 +234,8 @@ for p_idx, participant_name in enumerate(participant_list):
     # if len(run_folder_names) == 12:
     #     trim_n = 2
     #
-    # d_average_participant(root_path=p_name_path, run_dir_names_list=run_folder_names,
-    #                       trim_n=trim_n, error_type='SE', verbose=verbose)
+    d_average_participant(root_path=p_name_path, run_dir_names_list=run_folder_names,
+                          trim_n=trim_n, error_type='SE', verbose=verbose)
 
     # making average plot
     all_df_path = os.path.join(p_name_path, f'MASTER_TM{trim_n}_thresholds.csv')
@@ -257,7 +260,7 @@ for p_idx, participant_name in enumerate(participant_list):
         raise ValueError(f"more than one bg_motion_dur value: {all_untrimmed_df[bg_motion_dur].unique()}")
 
     joined_plot(untrimmed_df=all_untrimmed_df, x_cols_str='probe_dur_ms',
-                hue_col_name='flow_dir', hue_labels=['congruent', 'incongruent'],
+                hue_col_name='flow_dir', hue_labels=['expanding flow', 'contracting flow'],
                 participant_name=participant_name,
                 xlabel='Probe Duration (ms)', ylabel='Probe Speed (deg per sec)',
                 extra_text=f'{bg_motion_dur}ms bg motion',

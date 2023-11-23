@@ -574,11 +574,10 @@ expName = path.basename(__file__)[:-3]
 # # # DIALOGUE BOX # # #
 # dialogue box/drop-down option when exp starts (1st item is default val)
 expInfo = {'01. Participant ID': '',
-           '02. Run_number': ['', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-           '03. Separation': [4, 6],   # [4, 2, 4, 6, 8, 0, 10],
-           '04. monitor_name': ['OLED', 'Nick_work_laptop', 'asus_cal',
+           '02. Separation': [4, 6],   # [4, 2, 4, 6, 8, 0, 10],
+           '03. monitor_name': ['OLED', 'Nick_work_laptop', 'asus_cal',
                                 'Asus_VG24', 'HP_24uh', 'NickMac'],
-           '05. debug': [False, True]
+           '04. debug': [False, True]
            }
 
 # run drop-down menu, OK continues, cancel quits
@@ -587,17 +586,31 @@ if not dlg.OK:
     core.quit()  # user pressed cancel
 
 
-# stop experiment if participant name or run number is missing
-if expInfo['01. Participant ID'] == '' or expInfo['02. Run_number'] == '':
-    raise ValueError('Participant name or run number is missing.')
+# stop experiment if participant name is missing
+if expInfo['01. Participant ID'] == '':
+    raise ValueError('Participant name is missing.')
     core.quit()
+
 
 # Dialogue box settings
 participant_ID = expInfo['01. Participant ID']
-run_number = int(expInfo['02. Run_number'])
-separation = int(expInfo['03. Separation'])
-monitor_name = expInfo['04. monitor_name']
-debug = eval(expInfo['05. debug'])
+separation = int(expInfo['02. Separation'])
+monitor_name = expInfo['03. monitor_name']
+debug = eval(expInfo['04. debug'])
+
+# check participant folder to find out which runs have already been completed
+check_run_path = path.join(_thisDir, expName, monitor_name, participant_ID)
+if not path.exists(check_run_path):
+    run_number = 1
+else:
+    for i in list(range(12)):
+        run_number = i + 1
+        check_run_path = path.join(_thisDir, expName, monitor_name, participant_ID,
+                                   f'{participant_ID}_{run_number}', f'sep_{separation}')
+        if not path.isfile(path.join(check_run_path, f'{participant_ID}_{run_number}_output.csv')):
+            break
+        elif run_number == 12:
+            raise ValueError(f"Participant {participant_ID} has already completed all {run_number} runs of {expName}")
 
 # print settings from dlg
 print("\ndlg dict")
@@ -811,7 +824,7 @@ if debug:
 # MOUSE
 # todo: check forum for other ideas if mouse is still there
 win.mouseVisible = False
-myMouse = event.Mouse(visible=False)
+# myMouse = event.Mouse(visible=False)
 
 # # KEYBOARD
 resp = event.BuilderKeyResponse()
@@ -1041,7 +1054,7 @@ acc_warning = visual.TextStim(win=win, name='acc_warning', text=acc_warning_text
                          pos=[0, 0], height=20, ori=0, color='white',
                          colorSpace=this_colourSpace)
 
-end_of_exp_text = "You have completed this experiment.\nThank you for your time."
+end_of_exp_text = f"You have completed {run_number}/12 runs of this experiment.\nThank you for your time."
 end_of_exp = visual.TextStim(win=win, name='end_of_exp',
                              text=end_of_exp_text, color='white',
                              font='Arial', height=20, colorSpace=this_colourSpace)
@@ -1211,7 +1224,8 @@ for step in range(n_trials_per_stair):
             # PROBE LOCATION - 45=top-right, 135=top-left, 225=bottom-left, 315=bottom-right
             # which corner does not have a probe
             missing_corner = random.choice(['tr', 'tl', 'bl', 'br'])
-            print(f"missing_corner: {missing_corner}")
+            if debug:
+                print(f"missing_corner: {missing_corner}")
 
             # direction (name and value) in which probes jump (radially), and corresponding example
             # bg_congruence, so jump_dir is inferred from congruence
@@ -1853,6 +1867,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('expName', expName)
         thisExp.addData('psychopy_version', psychopy_version)
         thisExp.addData('participant_ID', participant_ID)
+        thisExp.addData('run_number', run_number)
         thisExp.addData('date', expInfo['date'])
         thisExp.addData('time', expInfo['time'])
 

@@ -362,11 +362,10 @@ expName = path.basename(__file__)[:-3]
 
 # # # DIALOGUE BOX # # #
 expInfo = {'01. Participant ID': '',
-           '02. Run_number': ['', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+           '02. Probe Start distance (pixels)': 14,
            '03. monitor_name': ['OLED', 'Nick_work_laptop', 'asus_cal', 'ASUS_2_13_240Hz',
                               'Samsung', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
-           '04. Probe Start distance (pixels)': 14,
-           '05. debug': [True, False, True]
+           '04. debug': [False, True]
            }
 
 # run drop-down menu, OK continues, cancel quits
@@ -374,17 +373,32 @@ dlg = gui.DlgFromDict(dictionary=expInfo, title=expName)
 if not dlg.OK:
     core.quit()  # user pressed cancel
 
-# stop experiment if participant name or run number is missing
-if expInfo['01. Participant ID'] == '' or expInfo['02. Run_number'] == '':
-    raise ValueError('Participant name or run number is missing.')
+# stop experiment if participant name is missing
+if expInfo['01. Participant ID'] == '':
+    raise ValueError('Participant name is missing.')
     core.quit()
+
 
 # Settings from dialogue box
 participant_ID = str(expInfo['01. Participant ID'])
-run_number = int(expInfo['02. Run_number'])
 monitor_name = str(expInfo['03. monitor_name'])
-start_dist_pix_in_dur = int(expInfo['04. Probe Start distance (pixels)'])  # start distance (pixels) that probes travel
-debug = eval(expInfo['05. debug'])  # select this for testing/debugging (prints more info to screen, runs ferwer trials)
+start_dist_pix_in_dur = int(expInfo['02. Probe Start distance (pixels)'])  # start distance (pixels) that probes travel
+debug = eval(expInfo['04. debug'])  # select this for testing/debugging (prints more info to screen, runs ferwer trials)
+
+# check participant folder to find out which run number to use
+check_run_path = path.join(_thisDir, expName, monitor_name, participant_ID)
+if not path.exists(check_run_path):
+    run_number = 1
+else:
+    for i in list(range(12)):
+        run_number = i + 1
+        check_run_path = path.join(_thisDir, expName, monitor_name, participant_ID,
+                                   f'{participant_ID}_{run_number}')
+        if not path.isfile(path.join(check_run_path, f'{participant_ID}_{run_number}_output.csv')):
+            break
+        elif run_number == 12:  # and file exists
+            raise ValueError(f"Participant {participant_ID} has already completed all {run_number} runs of {expName}")
+
 
 # print settings from dlg
 print("\ndlg dict")
@@ -589,7 +603,7 @@ win = visual.Window(monitor=mon, size=(widthPix, heightPix),
 # MOUSE
 # todo: check forum for other ideas if mouse is still there
 win.mouseVisible = False
-myMouse = event.Mouse(visible=False)
+# myMouse = event.Mouse(visible=False)
 
 # # KEYBOARD
 resp = event.BuilderKeyResponse()
@@ -800,7 +814,7 @@ breaks = visual.TextStim(win=win, name='breaks', text=break_text, font='Arial',
 
 acc_warning_text = "The experiment had quit as your score is low.\n\n" \
                    "The first few trials should be relatively easy, this doesn't seem to the be the case.\n\n" \
-                   "Try inputting a different 04. Probe Start distance (pixels) value from the drop down menu:\n" \
+                   "Try inputting a different 02. Probe Start distance (pixels) value from the drop down menu:\n" \
                    f"If you were finding that the probe looked like a static point," \
                    f"try inputting a value of {start_dist_pix_in_dur + 3};\n" \
                    f"if the probe looked like a line or streak, try inputting a value of {start_dist_pix_in_dur - 3}.\n\n"
@@ -809,7 +823,7 @@ acc_warning = visual.TextStim(win=win, name='acc_warning', text=acc_warning_text
                          pos=[0, 0], height=20, ori=0, color='white',
                          colorSpace=this_colourSpace)
 
-end_of_exp_text = "You have completed this experiment.\nThank you for your time."
+end_of_exp_text = f"You have completed {run_number}/12 runs of this experiment.\nThank you for your time."
 end_of_exp = visual.TextStim(win=win, name='end_of_exp',
                              text=end_of_exp_text, color='white',
                              font='Arial', height=20, colorSpace=this_colourSpace)
@@ -861,8 +875,8 @@ for stair_idx in stair_idx_list:
                           C=stairStart * c_multiplier,  # used to calculate initial step size, as prop of maxLum
                           minRevs=3,
                           minTrials=n_trials_per_stair,
-                          minVal=-stairStart,  # start values are also max and min values
-                          maxVal=stairStart,  # start values are also max and min values
+                          minVal=-14,  # start values are also max and min values
+                          maxVal=14,  # start values are also max and min values
                           targetThresh=0.5,
                           extraInfo=thisInfo)
     stairs.append(thisStair)
@@ -1429,6 +1443,7 @@ for step in range(n_trials_per_stair):
         thisExp.addData('expName', expName)
         thisExp.addData('psychopy_version', psychopy_version)
         thisExp.addData('participant_ID', participant_ID)
+        thisExp.addData('run_number', run_number)
         thisExp.addData('date', expInfo['date'])
         thisExp.addData('time', expInfo['time'])
 
