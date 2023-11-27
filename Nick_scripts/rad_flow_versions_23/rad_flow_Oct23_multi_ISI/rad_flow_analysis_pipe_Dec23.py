@@ -8,6 +8,7 @@ from rad_flow_psignifit_analysis import a_data_extraction_Oct23, get_sorted_neg_
 from rad_flow_psignifit_analysis import b3_plot_staircase, c_plots, rad_flow_line_plot
 from rad_flow_psignifit_analysis import d_average_participant, make_average_plots, e_average_exp_data
 from rad_flow_psignifit_analysis import compare_prelim_plots, make_long_df, mean_staircase_plots, joined_plot
+from rad_flow_psignifit_analysis import get_OLED_luminance
 from exp1a_psignifit_analysis import plt_heatmap_row_col
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -20,9 +21,12 @@ from rad_flow_psignifit_analysis import get_n_rows_n_cols, get_ax_idx
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\rad_flow_NM_missing_probe_Dec23"
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Target_detection_Dec23"
 exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Missing_target_detection_Dec23"
-participant_list = ['pt3', 'pt1']  # ' Nicktest_06102023' Nick_extra_prelims, Nick_SiSettings
+participant_list = ['pt1', 'pt2', 'pt3', 'pt4']  # ' Nicktest_06102023' Nick_extra_prelims, Nick_SiSettings
 monitor = 'OLED'  # 'asus_cal' OLED, 'Nick_work_laptop'
 background_type = 'flow_dots'  # 'flow_dots', 'no_bg'
+
+# todo: just_new_data will need tweaking when I have more than one separation.
+analyse_what = 'all'  # 'update_plots', 'just_new_data', 'all'
 
 exp_path = os.path.normpath(exp_path)
 convert_path1 = os.path.normpath(exp_path)
@@ -65,28 +69,9 @@ for p_idx, participant_name in enumerate(participant_list):
     p_master_err_dfs_list = []
 
 
-    # '''search to automatically get bg_cond_dirs containing run_folder_names (e.g., participant_name_1, participant_name_2, etc.).
-    # There could be any number of bakground folders (flow_dots, no_bg), (motion_window_dur)(stair_per_dir, bg_congruence) etc'''
-    # background_conds_to_analyse = []
-    # for root, dirs, files in os.walk(p_name_path):
-    #     if f"{participant_name}_1" in dirs:
-    #         print(f"\nfound {participant_name}_1 in {root}\n")
-    #         # extract bg_cond_dirs from root (e.g., remove p_name_path from root) and leading slash
-    #         bg_cond_dirs = root.replace(p_name_path, '')[1:]
-    #         print(f"bg_cond_dirs: {bg_cond_dirs}")
-    #         background_conds_to_analyse.append(bg_cond_dirs)
-    #
-    #
-    # print(f"background_conds_to_analyse: {background_conds_to_analyse}")
-
-
     # append each run's data to these lists for mean staircases
     MASTER_p_trial_data_list = []
 
-    # for bg_type in background_conds_to_analyse:
-    #     print(f"bg_type: {bg_type}")
-    #     bg_cond_path = os.path.join(p_name_path, bg_type)
-    #     print(f"bg_cond_path: {bg_cond_path}")
 
     # # search to automatically get run_folder_names
     dir_list = os.listdir(p_name_path)
@@ -126,20 +111,46 @@ for p_idx, participant_name in enumerate(participant_list):
         # needed to ensure names go name1, name2, name3 not name1, name12, name123
         p_run_name = participant_name
 
-        '''a'''
+        '''a - data extraction'''
         p_run_name = f'{participant_name}_{r_idx_plus}'
 
-        a_data_extraction_Oct23(p_name=p_run_name, run_dir=run_path,
-                                verbose=verbose)
+        run_data_path = os.path.join(run_path, 'RUNDATA-sorted.xlsx')
+        analyse_this_run = True
+        if analyse_what == 'update_plots':
+            analyse_this_run = False
+        elif analyse_what == 'just_new_data':
+            if os.path.isfile(run_data_path):
+                analyse_this_run = False
+        print(f"\nanalyse_this_run: {analyse_this_run}\n")
+
+
+        if analyse_this_run:
+            run_data_df = a_data_extraction_Oct23(p_name=p_run_name, run_dir=run_path,
+                                                  verbose=verbose)
 
         # run_data_path = f'{run_path}{os.sep}RUNDATA-sorted.xlsx'
-        run_data_path = os.path.join(run_path, 'RUNDATA-sorted.xlsx')
         run_data_df = pd.read_excel(run_data_path, engine='openpyxl')
         print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
         # append to master list for mean staircase
 
+
+        '''check for OLED_lum column and add after probeLum if not there'''
+        if monitor == 'OLED':
+            thr_col_name = 'OLED_lum'
+            if 'OLED_lum' not in run_data_df.columns.tolist():
+                print(f"\nadding OLED_lum column to {run_data_path}")
+                # get probeLum column index
+                probeLum_idx = run_data_df.columns.get_loc('probeLum')
+                # insert OLED_lum column after probeLum
+                run_data_df.insert(probeLum_idx + 1, 'OLED_lum',
+                                   get_OLED_luminance(np.array(run_data_df['probeLum'].tolist())))
+            # save run_data_df with OLED_lum column
+            run_data_df.to_excel(run_data_path, index=False)
+
+
+
         # search for 'Run_number' substring in column names
-        run_num_col = [col for col in run_data_df.columns if 'Run_number' in col]
+        run_num_col = [col for col in run_data_df.columns if 'run_number' in col]
         if len(run_num_col) == 1:
             run_col_name = run_num_col[0]
         elif len(run_num_col) == 0:
@@ -151,20 +162,22 @@ for p_idx, participant_name in enumerate(participant_list):
         MASTER_p_trial_data_list.append(run_data_df)
 
 
-        # run psignifit on run_data_df using var_cols_list to loop through the variables
-        thr_df = psignifit_thr_df_Oct23(save_path=run_path,
-                                        p_run_name=p_run_name,
-                                        run_df=run_data_df,
-                                        cond_cols_list=var_cols_list,
-                                        thr_col='probeLum',
-                                        resp_col='resp_corr',
-                                        wide_df_cols='isi_ms',
-                                        n_bins=9, q_bins=True,
-                                        conf_int=True, thr_type='Bayes',
-                                        plot_both_curves=False,
-                                        save_name=None,
-                                        show_plots=False, save_plots=True,
-                                        verbose=True)
+
+        if analyse_this_run:
+            # run psignifit on run_data_df using var_cols_list to loop through the variables
+            thr_df = psignifit_thr_df_Oct23(save_path=run_path,
+                                            p_run_name=p_run_name,
+                                            run_df=run_data_df,
+                                            cond_cols_list=var_cols_list,
+                                            thr_col=thr_col_name,
+                                            resp_col=resp_col_name,
+                                            wide_df_cols=isi_col_name,
+                                            n_bins=9, q_bins=True,
+                                            conf_int=True, thr_type='Bayes',
+                                            plot_both_curves=False,
+                                            save_name=None,
+                                            show_plots=False, save_plots=True,
+                                            verbose=True)
 
 
 
@@ -197,7 +210,7 @@ for p_idx, participant_name in enumerate(participant_list):
         trim_n = 2
     print(f'\ntrim_n: {trim_n}')
 
-    cols_to_drop = ['stack', 'stair_name']
+    cols_to_drop = ['stack', stair_names_col_name]
     # cols_to_replace = [cong_col_name, sep_col_name, bg_dur_name]
     # groupby_cols = ['neg_sep']
     if interleaved_col_list is not None:
@@ -207,13 +220,13 @@ for p_idx, participant_name in enumerate(participant_list):
         cols_to_replace = [cong_col_name, sep_col_name, bg_dur_name]
         groupby_cols = ['neg_sep']
 
-
-    d_average_participant(root_path=p_name_path, run_dir_names_list=run_folder_names,
-                          trim_n=trim_n,
-                          groupby_col=groupby_cols,
-                          cols_to_drop=cols_to_drop,
-                          cols_to_replace=cols_to_replace,
-                          error_type='SE', verbose=verbose)
+    if analyse_this_run:  # e.g., it was True for last run/latest data
+        d_average_participant(root_path=p_name_path, run_dir_names_list=run_folder_names,
+                              trim_n=trim_n,
+                              groupby_col=groupby_cols,
+                              cols_to_drop=cols_to_drop,
+                              cols_to_replace=cols_to_replace,
+                              error_type='SE', verbose=verbose)
 
 
     # making average plot
@@ -235,7 +248,7 @@ for p_idx, participant_name in enumerate(participant_list):
         print(f"\nseparation: {separation}")
         sep_df = all_untrimmed_df[all_untrimmed_df[sep_col_name] == separation]
         print(f"sep_df:\n{sep_df}")
-        joined_plot(untrimmed_df=sep_df, x_cols_str='isi_ms',
+        joined_plot(untrimmed_df=sep_df, x_cols_str=isi_col_name,
                     hue_col_name='congruent', hue_labels=['Incongruent', 'Congruent'],
                     participant_name=participant_name, xlabel='ISI (ms)', ylabel='Probe Luminance',
                     extra_text=f'sep={separation}',
@@ -258,8 +271,8 @@ for p_idx, participant_name in enumerate(participant_list):
         make_average_plots(all_df_path=all_df,
                            ave_df_path=p_ave_df,
                            error_bars_path=err_df,
-                           thr_col='probeLum',
-                           stair_names_col='neg_sep',
+                           thr_col=thr_col_name,
+                           stair_names_col=neg_sep_col_name,
                            cond_type_order=[1, -1],
                            pos_neg_labels=['Incongruent', 'Congruent'],
                            n_trimmed=trim_n,

@@ -846,6 +846,9 @@ if debug:
     print(f"probe_dur_fr_conds_list: {probe_dur_fr_conds_list}")
     print(f"total pix in dur: {[a*b for a, b in zip(start_pix_per_fr_list, probe_dur_fr_conds_list)]}")
 
+min_max_dist = 14
+if start_dist_pix_in_dur > min_max_dist:
+    min_max_dist = start_dist_pix_in_dur
 
 # # # CONSTRUCT STAIRCASES # # #
 # proportion of stairStart to use to get intial step size, but this is NOT the actual step size
@@ -875,8 +878,8 @@ for stair_idx in stair_idx_list:
                           C=stairStart * c_multiplier,  # used to calculate initial step size, as prop of maxLum
                           minRevs=3,
                           minTrials=n_trials_per_stair,
-                          minVal=-14,  # start values are also max and min values
-                          maxVal=14,  # start values are also max and min values
+                          minVal=-min_max_dist,  # start values are also max and min values
+                          maxVal=min_max_dist,  # start values are also max and min values
                           targetThresh=0.5,
                           extraInfo=thisInfo)
     stairs.append(thisStair)

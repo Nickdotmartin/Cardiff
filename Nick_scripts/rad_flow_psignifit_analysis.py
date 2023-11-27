@@ -632,6 +632,44 @@ def transpose_df_w_cond_type(orig_df,
 
     return transposed_df
 
+
+def get_OLED_luminance(rgb1):
+    """
+    This function takes a list of rgb1 values and returns a list of luminance values.
+    New luminance values are calculated using a polynomial fit to the measured values.
+    Measurements were taken on 17/11/2023 by Nick with spyderX pro running DisplayCal on MacBook.
+    :param rgb1: value to be converted to luminance
+    :return: corresponding luminance value
+    """
+
+    '''data to use for fitting'''
+    # measurements were taken at 18 evenly spaced rgb1 points between 0 and 1
+    rbg1_values = [0, 0.058823529, 0.117647059, 0.176470588, 0.235294118, 0.294117647, 0.352941176,
+                   0.411764706, 0.470588235, 0.529411765, 0.588235294, 0.647058824, 0.705882353,
+                   0.764705882, 0.823529412, 0.882352941, 0.941176471, 1]
+
+    # measured luminance values for each of the rgb1 values
+    measured_lum = [0.01, 0.17, 0.48, 0.91, 1.55, 2.45, 3.58,
+                    4.91, 6.49, 8.4, 10.37, 12.77, 13.03,
+                    16.3, 19.61, 23.26, 24.78, 24.8]
+
+    # because of the kink in the data (after rgb1=.64) I'm just going to take the first 12 values
+    measured_lum = measured_lum[:12]
+    rbg1_values = rbg1_values[:12]
+
+    '''fitting the curve'''
+    # calculate polynomial to fit the leasured values.
+    z = np.polyfit(rbg1_values, measured_lum, 3)
+    f = np.poly1d(z)
+
+    '''getting correct luminance values'''
+    if type(rgb1) == list:
+        rgb1 = np.array(rgb1)
+    new_lum = f(rgb1)
+
+    return new_lum
+
+
 def fig_colours(n_conditions, alternative_colours=False):
     """
     Use this to always get the same colours in the same order with no fuss.
@@ -2995,6 +3033,9 @@ def joined_plot(untrimmed_df, x_cols_str='isi_ms',
     x_hue0_df = x_hue0_df[x_hue0_df[hue_col_name] == -1]
     x_hue0_df = x_hue0_df.drop(columns=[hue_col_name])
 
+    # get number of runs (stack)
+    n_runs = len(x_hue0_df['stack'].unique())
+
     # add hue[0] to each column name in x_col_list, then rename columns in x_hue0_df
     x_hue0_col_list = [f"{short_hue[0]}_{col}" for col in x_col_list]
     # rename columns in x_col_list as x_hue0_df
@@ -3123,7 +3164,7 @@ def joined_plot(untrimmed_df, x_cols_str='isi_ms',
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.legend(labels=hue_labels, loc='upper right', framealpha=.3)
-    plt.suptitle(f"{participant_name} thresholds & means of each run.")  # big title
+    plt.suptitle(f"{participant_name} thresholds & means of {n_runs} runs")  # big title
     ax.set_title(extra_text)  # smaller title underneath
 
     if save_name is None:
@@ -3910,7 +3951,7 @@ def mean_staircase_plots(per_trial_df, save_path, participant_name, run_col_name
         n_rows, n_cols = get_n_rows_n_cols(len(isi_list))
         plot_idx = 'len(isi_list)'
         if verbose:
-            print(f"plot indices from get_n_rows_n_cols(len(isi_list) for {n_rows} rows and {n_cols} cols")
+            print(f"plot indices from get_n_rows_n_cols(len(isi_list)) for {n_rows} rows and {n_cols} cols")
     elif len(sep_list) > 1:
         n_rows, n_cols = get_n_rows_n_cols(len(sep_list))
         plot_idx = 'len(sep_list)'
@@ -3951,7 +3992,8 @@ def mean_staircase_plots(per_trial_df, save_path, participant_name, run_col_name
                 sep_df = isi_df[isi_df[sep_col_name] == sep]
             if verbose:
                 print(f"\n{sep_idx}. sep {sep} ({sep_df.shape}):"
-                      # f"\n{sep_df}"
+                      f"\n{sep_df.columns}"
+                      f"\n{sep_df}"
                       )
 
             # # check shape for accessing axes
@@ -4026,6 +4068,10 @@ def mean_staircase_plots(per_trial_df, save_path, participant_name, run_col_name
                 axes[this_ax].set_title(f"{isi_col_name}{isi}, {sep_col_name}{sep}")
             axes[this_ax].set_xlabel('step (25 per condition, per run)')
             axes[this_ax].set_ylabel(thr_col_name)
+
+            # if y_axis crosses zero, add grey dashed line at zero (e.g., min value is less than zero and max is more than zero)
+            if wide_ave_step_thr_df.min().min() < 0 and wide_ave_step_thr_df.max().max() > 0:
+                axes[this_ax].axhline(y=0, linestyle="--", color='grey')
 
     # delete any unused axes
     if plot_idx == 'df_cols':
