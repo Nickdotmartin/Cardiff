@@ -569,7 +569,7 @@ adj_flow_colour = .2
 flow_colour = [this_bgColour[0], this_bgColour[1] + adj_flow_colour, this_bgColour[2]]
 
 # probe_colour, not too bright, use start val from rad_flow_exp
-probe_lum = maxLum * .7  # bgColor_rgb1 + (adj_flow_colour * 2)
+probe_lum = maxLum * .6  # bgColor_rgb1 + (adj_flow_colour * 2)
 probe_rgb1 = probe_lum / maxLum
 probe_colour = [probe_rgb1, probe_rgb1, probe_rgb1]
 print(f"probe_lum: {probe_lum}, probe_colour: {probe_colour}")

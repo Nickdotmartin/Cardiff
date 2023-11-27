@@ -283,8 +283,8 @@ def find_angle(adjacent, opposite):
     the adjacent side is the distance from the screen,
     and the opposite side is the size of the square onscreen.
 
-    :param adjacent: A numpy array of the lengths of the adjacent sides (e.g., distance z_array).
-    :param opposite: The (scalar) length of the side opposite the angle you want to find.
+    :param adjacent: A numpy array of the lengths (in cm) of the adjacent sides (e.g., distance z_array).
+    :param opposite: The (scalar) length (in cm) of the side opposite the angle you want to find.
     :return: A numpy array of the angles in degrees.
     """
     return rad2deg(arctan(opposite / adjacent))
@@ -585,7 +585,6 @@ dlg = gui.DlgFromDict(dictionary=expInfo, title=expName)
 if not dlg.OK:
     core.quit()  # user pressed cancel
 
-
 # stop experiment if participant name is missing
 if expInfo['01. Participant ID'] == '':
     raise ValueError('Participant name is missing.')
@@ -597,6 +596,7 @@ participant_ID = expInfo['01. Participant ID']
 separation = int(expInfo['02. Separation'])
 monitor_name = expInfo['03. monitor_name']
 debug = eval(expInfo['04. debug'])
+
 
 # check participant folder to find out which runs have already been completed
 check_run_path = path.join(_thisDir, expName, monitor_name, participant_ID)
@@ -711,8 +711,7 @@ for this_zip in isi_selected_zip:
 if debug:
     print(f"isi_zip: {isi_zip}")
 
-# # Conditions/staricases: Separation, Congruence (cong, incong) x prelim motion (0, 70, 350)
-
+# # Conditions/staricases: ISI, Congruence (cong, incong)
 # # main contrast is whether the background and target motion is in same or opposite direction.
 # congruence_vals: 1=congruent/same, -1=incongruent/different
 congruence_contrast = True  # if True, congruence is a contrast, if False, congruence is a single value
@@ -765,7 +764,7 @@ print(f'n_stairs: {n_stairs}, total_n_trials: {total_n_trials}')
 
 
 # # # MONITOR SETTINGS # # #
-# # COLORS AND LUMINANCES
+# # COLOURS AND LUMINANCE
 # updated maxLum values from spyder measurements
 maxLum = 120  # default value
 if monitor_name == 'OLED':
@@ -777,7 +776,7 @@ else:
 
 # now using same bg lum settings for all monitors
 bgLumProp = 0   # use .2 to match exp1 or .45 to match radial_flow_NM_v2.py
-bgLum =  0.0 / 1000  # hard coded to zero rather than maxLum * bgLumProp
+bgLum = 0.0 / 1000  # hard coded to zero rather than maxLum * bgLumProp
 
 # colour space
 this_colourSpace = 'rgb1'  # values between 0 and 1
@@ -846,7 +845,8 @@ fix_mask = visual.GratingStim(win=win, mask=raisedCosTexture1, size=(fix_mask_si
 
 # PROBEs
 probe_size = 1  # can make them larger for testing new configurations etc
-probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1), (1, -2), (-1, -2), (-1, -1), (0, -1)]  # 5 pixels
+probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
+             (1, -2), (-1, -2), (-1, -1), (0, -1)]  # 5 pixels
 
 if monitor_name == 'OLED':  # smaller, 3-pixel probes for OLED
     probeVert = [(0, 0), (1, 0), (1, 1), (2, 1),
@@ -1070,8 +1070,7 @@ if monitor_name in ['Nick_work_laptop', 'OLED']:  # e.g., windows machine
 
 
 # # # CONSTRUCT STAIRCASES # # #
-# stairStart = maxLum  # start luminance value, 70& of maximum luminance
-start_lum_prop = .7
+start_lum_prop = .6  # proportion of maxLum to start at, e.g., .6 = 60% of maxLum
 if debug:
     start_lum_prop = 1.0
 stairStart = maxLum * start_lum_prop
@@ -1098,7 +1097,7 @@ for stair_idx in range(n_stairs):
     thisStair = Staircase(name=stair_names_list[stair_idx],
                           type=k_type,
                           value=stairStart,
-                          C=stairStart * c_multiplier,  # used to calculate initial step size, as prop of maxLum
+                          C=stairStart * c_multiplier,  # used to calculate initial step size, as prop of stairStart
                           minRevs=3,
                           minTrials=n_trials_per_stair,
                           minVal=bgLum,

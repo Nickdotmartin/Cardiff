@@ -543,7 +543,6 @@ expName = path.basename(__file__)[:-3]
 
 
 # # # DIALOGUE BOX # # #
-
 # dialogue box/drop-down option when exp starts (1st item is default val)
 expInfo = {'01. Participant ID': '',
            '02. Separation': [4, 6],   # [4, 2, 4, 6, 8, 0, 10],
@@ -570,7 +569,6 @@ monitor_name = expInfo['03. monitor_name']
 debug = eval(expInfo['04. debug'])
 
 
-
 # check participant folder to find out which runs have already been completed
 check_run_path = path.join(_thisDir, expName, monitor_name, participant_ID)
 if not path.exists(check_run_path):
@@ -584,7 +582,6 @@ else:
             break
         elif run_number == 12:
             raise ValueError(f"Participant {participant_ID} has already completed all {run_number} runs of {expName}")
-
 
 # print settings from dlg
 print("\ndlg dict")
@@ -659,8 +656,6 @@ isi_ms_vals = [-1 if i == -1 else round((1 / fps) * i * 1000, 2) for i in isi_fr
 isi_name_vals = ['conc' if i == -1 else f'{int(i)}ms' for i in selected_isi_ms_vals]
 isi_selected_zip = list(zip(isi_ms_vals, isi_fr_vals, isi_name_vals))
 
-# print(f"isi_selected_zip: {isi_selected_zip}")
-
 # remove conditions that aren't possible at this frame rate
 isi_zip = []
 for this_zip in isi_selected_zip:
@@ -724,7 +719,7 @@ print(f'n_stairs: {n_stairs}, total_n_trials: {total_n_trials}')
 
 
 # # # MONITOR SETTINGS # # #
-# # COLORS AND LUMINANCE
+# # COLOURS AND LUMINANCE
 # updated maxLum values from spyder measurements
 maxLum = 120  # default value
 if monitor_name == 'OLED':
@@ -909,7 +904,6 @@ if background == 'flow_dots':
         max_possible_dot_life_fr = (far_plane_cm - near_plane_cm) / flow_speed_cm_p_fr
         max_possible_dot_life_ms = max_possible_dot_life_fr / fps * 1000
         print(f"max_possible_dot_life_ms: {max_possible_dot_life_ms}")
-
         raise ValueError(f"dot_life_max_ms ({dot_life_max_ms}) is set too high, dots will travel the full distance in "
                          f"max_possible_dot_life_ms ({max_possible_dot_life_ms}), please select a lower value.  ")
 
@@ -1019,8 +1013,7 @@ if monitor_name in ['Nick_work_laptop', 'OLED']:  # e.g., windows machine
 
 
 # # # CONSTRUCT STAIRCASES # # #
-# stairStart = maxLum  # start luminance value, 70& of maximum luminance
-start_lum_prop = .7
+start_lum_prop = .6  # proportion of maxLum to start at, e.g., .6 = 60% of maxLum
 if debug:
     start_lum_prop = 1.0
 stairStart = maxLum * start_lum_prop
@@ -1091,7 +1084,6 @@ for step in range(n_trials_per_stair):
             # conditions (ISI, congruence, sep, prelim)
             # sep = thisStair.extraInfo['sep']  # separation is already set at top of script
             sep = separation
-            # isi_cond_fr = thisStair.extraInfo['isi_cond_fr']
             isi_ms = thisStair.extraInfo['ISI_ms']
             isi_cond_fr = thisStair.extraInfo['ISI_fr']  # shows number of frames or -1 for concurrent
             congruent = thisStair.extraInfo['cong_val']
@@ -1119,7 +1111,6 @@ for step in range(n_trials_per_stair):
                 neg_sep_deg = sep_deg
             if debug:
                 print(f"sep: {sep}, neg_sep: {neg_sep}; sep_deg: {sep_deg}, neg_sep_deg: {neg_sep_deg}")
-
 
 
 
