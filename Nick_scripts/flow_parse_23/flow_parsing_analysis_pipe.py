@@ -33,7 +33,7 @@ if not os.path.isdir(exp_path):
     raise FileNotFoundError(f'exp_path: {exp_path} not found')
 
 # monitor dir contains a folder for each participant
-participant_list = ['pt1', 'pt2', 'pt3'] # , 'pt4']  # ' Nicktest_06102023' Nick_extra_prelims
+participant_list = ['pt1', 'pt2', 'pt3', 'pt4'] # , 'pt4']  # ' Nicktest_06102023' Nick_extra_prelims
 # participant_list = ['pt1']  # ' Nicktest_06102023' Nick_extra_prelims
 
 # if the first folder to analyse is 1, p_idx_plus = 1.  If the first folder is 5, use 5 etc.
@@ -169,23 +169,8 @@ for p_idx, participant_name in enumerate(participant_list):
         MASTER_p_trial_data_list.append(run_data_df)
 
 
-            # '''b3'''
-            # # todo: add 'OUT' and 'IN' to y axis labels
-            # # todo: why don't line plots match up with final value lines?
-            # # todo: x axis tick labels are missing
-            # b3_plot_staircase(run_data_path, thr_col='probe_cm_p_sec', resp_col='response',  # 'answer'
-            #                   save_name=f"{participant_name}_{r_idx_plus}_staircase.png",
-            #                   show_plots=show_plots, verbose=verbose)
 
-            # todo: append run_data_df to MASTER_p_trial_data_list
-
-            # check participant name and run name are present, if not, add them
-
-            # just select columns I need for master df
-
-            # append to MASTER_p_trial_data_list
-
-
+        '''Get thresholds for each condition'''
         if analyse_this_run:
             thr_df = psignifit_thr_df_Oct23(save_path=run_path, p_run_name=p_name,
                                             run_df=run_data_df, cond_cols_list=var_cols_list,
@@ -202,11 +187,9 @@ for p_idx, participant_name in enumerate(participant_list):
             print(f'thr_df:\n{thr_df}')
 
 
-
+    '''make mean staircase plot for each participant'''
     if analyse_what == 'update_plots' or analyse_this_run:  # e.g., it was True for last run/latest data
 
-        # todo: make mean staircase plot for each participant - see order effects script
-        '''mean staircase for each bg type'''
         print(f"\n***making master per-trial df***")
         # join all output data from each run and save as master per-trial csv
         MASTER_p_trial_data_df = pd.concat(MASTER_p_trial_data_list, ignore_index=True)
@@ -267,7 +250,7 @@ for p_idx, participant_name in enumerate(participant_list):
                     hue_col_name=flow_dir_col_name, hue_labels=['expanding flow', 'contracting flow'],
                     participant_name=participant_name,
                     xlabel='Probe Duration (ms)', ylabel='Probe Speed (deg per sec)',
-                    extra_text=f'{bg_motion_dur}ms bg motion',
+                    extra_text=f'All data (untrimmed)',
                     save_path=p_name_path, save_name=None,
                     verbose=True)
 
@@ -284,36 +267,28 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
 
-#
-#
-# print(f'exp_path: {exp_path}')
-# print('\nget exp_average_data')
-# participant_list = ['Nicktest_13102023', 'Nick_extra_prelims']
-# n_trimmed = None
-# use_trimmed = False
-# # e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
-# #                    error_type='SE', use_trimmed=use_trimmed, verbose=True)
-#
-#
-# all_df_path = f'{exp_path}/MASTER_exp_all_thr.csv'
-# exp_ave_path = f'{exp_path}/MASTER_exp_ave_thr.csv'
-# err_path = f'{exp_path}/MASTER_ave_thr_error_SE.csv'
-# n_trimmed = None
-# exp_ave = True
-#
-#
-# all_df_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\flow_parsing_NM_v7\OLED\MASTER_exp_all_thr.csv"
-# make_flow_parse_plots(all_df_path, exp_path, 'exp_ave', n_trimmed=None, exp_ave=True)
 
 
-# make_average_plots(all_df_path=all_df_path,
-#                    ave_df_path=exp_ave_path,
-#                    error_bars_path=err_path,
-#                    n_trimmed=n_trimmed,
-#                    ave_over_n=len(participant_list),
-#                    exp_ave=exp_ave,
-#                    show_plots=True, verbose=True)
+print(f'exp_path: {exp_path}')
+print('\nget exp_average_data')
+if analyse_this_run:  # e.g., it was True for last run/latest data
+    e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
+                       error_type='SE',
+                       verbose=True)
 
+if analyse_what == 'update_plots' or analyse_this_run:  # e.g., it was True for last run/latest data
+    all_df_path = f'{exp_path}/MASTER_exp_all_thr.csv'
+    # exp_ave_path = f'{exp_path}/MASTER_exp_ave_thr.csv'
+    # err_path = f'{exp_path}/MASTER_ave_thr_error_SE.csv'
+    exp_ave = True
+    n_trimmed = trim_list
+    # if all values in trim_list are the same, just use that value
+    if len(set(n_trimmed)) == 1:
+        n_trimmed = n_trimmed[0]
+
+
+
+    make_flow_parse_plots(all_df_path, exp_path, 'exp_ave', n_trimmed=None, exp_ave=True)
 
 
 print('\nflow_parsing_analysis_pipe finished')

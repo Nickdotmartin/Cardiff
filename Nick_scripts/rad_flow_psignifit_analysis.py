@@ -3160,11 +3160,16 @@ def joined_plot(untrimmed_df, x_cols_str='isi_ms',
     ax.set_xticks(labels_go_here,
                   labels=x_vals_list)
 
+    # if y_axis crosses zero, add grey dashed line at zero
+    # (e.g., min value is less than zero and max is more than zero)
+    if long_df['y_values'].min() < 0 and long_df['y_values'].max() > 0:
+        ax.axhline(y=0, linestyle="--", color='grey')
+
     # decorate plot, x axis label, legend, suptitle and title
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
-    ax.legend(labels=hue_labels, loc='upper right', framealpha=.3)
-    plt.suptitle(f"{participant_name} thresholds & means of {n_runs} runs")  # big title
+    ax.legend(labels=hue_labels, loc='best', framealpha=.3)
+    plt.suptitle(f"{participant_name} thresholds, means and SE of {n_runs} runs")  # big title
     ax.set_title(extra_text)  # smaller title underneath
 
     if save_name is None:
