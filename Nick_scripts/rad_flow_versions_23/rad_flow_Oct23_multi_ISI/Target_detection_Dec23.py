@@ -676,9 +676,9 @@ if debug:
 
 # # Conditions/staricases: ISI, Congruence (cong, incong)
 # # main contrast is whether the background and target motion is in same or opposite direction.
-# congruence_vals: 1=congruent/same, -1=incongruent/different
-congruence_vals = [1, -1]
-congruence_names = ['cong', 'incong']
+# congruence_vals: -1=incongruent/different; 1=congruent/same,
+congruence_vals = [-1, 1]
+congruence_names = ['incong', 'cong']
 if background == 'no_bg':
     congruence_vals = [1]
     congruence_names = ['no_bg']

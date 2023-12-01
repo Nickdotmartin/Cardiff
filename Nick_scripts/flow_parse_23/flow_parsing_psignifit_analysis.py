@@ -1463,8 +1463,6 @@ def a_data_extraction(p_name, run_dir, dur_list, save_all_data=True, verbose=Tru
 
             if not os.path.isfile(filepath):
                 raise FileNotFoundError(filepath)
-                # print(f'\n\nFileNotFound: {filepath}.\n'
-                #       f'Continue looping through other files.\n')
 
             # load data
             this_dur_df = pd.read_csv(filepath)
@@ -1487,7 +1485,6 @@ def a_data_extraction(p_name, run_dir, dur_list, save_all_data=True, verbose=Tru
             this_dur_df = this_dur_df.sort_values(by=['stair', 'trial_number'])
 
             # add duration column for multi-indexing
-            # this_dur_df.insert(0, 'probe_dur_ms', duration)
             this_dur_df.insert(1, 'srtd_trial_idx', trial_numbers)
             if verbose:
                 print(f'df sorted by stair: {type(this_dur_df)}\n{this_dur_df}')
@@ -1496,22 +1493,6 @@ def a_data_extraction(p_name, run_dir, dur_list, save_all_data=True, verbose=Tru
             column_names = list(this_dur_df)
             if verbose:
                 print(f'column_names: {len(column_names)}\n{column_names}')
-
-            # I've changed column names lately, so there are some extra ones.  In which case, just use old cols.
-            # if 'actual_bg_color' in column_names:
-            #     print("getting rid of extra columns (e.g., 'actual_bg_color', "
-            #           "'bgcolor_to_rgb1', 'bgLumP', 'bgLum', 'bgColor255')")
-            #     cols_to_use = ['duration', 'srtd_trial_idx', 'trial_number', 'stair',
-            #                    'stair_name', 'step', 'separation', 'congruent',
-            #                    'flow_dir', 'probe_jump', 'corner', 'probeLum',
-            #                    'trial_response', 'resp.rt', 'probeColor1', 'probeColor255',
-            #                    'probe_ecc', 'BGspeed', 'orientation', 'dur_actual_ms',
-            #                    'dur_frames', '1_Participant', '2_Probe_dur_in_frames_at_240hz',
-            #                    '3_fps', '4_dur_dur_in_ms', '5_Probe_orientation',
-            #                    '6_Probe_size', '7_Trials_counter', '8_Background',
-            #                    'date', 'time', 'stair_list', 'n_trials_per_stair']
-            #     this_dur_df = this_dur_df[cols_to_use]
-            #     column_names = cols_to_use
 
             # add to all_data
             all_data.append(this_dur_df)
@@ -1533,8 +1514,7 @@ def a_data_extraction(p_name, run_dir, dur_list, save_all_data=True, verbose=Tru
 
         if not os.path.isfile(filepath):
             raise FileNotFoundError(filepath)
-            # print(f'\n\nFileNotFound: {filepath}.\n'
-            #       f'Continue looping through other files.\n')
+
 
         # load data
         this_dur_df = pd.read_csv(filepath)
@@ -1546,7 +1526,7 @@ def a_data_extraction(p_name, run_dir, dur_list, save_all_data=True, verbose=Tru
             unnamed_col = [i for i in list(this_dur_df.columns) if "Unnamed" in i][0]
             this_dur_df.drop(unnamed_col, axis=1, inplace=True)
 
-        # OLED windows machine sometimes adds extra columns, remove: ['thisRow.t', 'notes']
+        # OLED Windows machine sometimes adds extra columns, remove: ['thisRow.t', 'notes']
         if 'thisRow.t' in list(this_dur_df.columns):
             this_dur_df.drop('thisRow.t', axis=1, inplace=True)
         if 'notes' in list(this_dur_df.columns):
@@ -1564,20 +1544,15 @@ def a_data_extraction(p_name, run_dir, dur_list, save_all_data=True, verbose=Tru
 
         all_data_df = this_dur_df
 
-
-
     if verbose:
         print(f"all_data_df:\n{all_data_df}")
 
     if save_all_data:
-        # save_name = 'ALL_durations_sorted.xlsx'
-        # save_excel_path = os.path.join(run_dir, save_name)
-        save_name = 'ALL_durations_sorted.csv'
+        save_name = 'RUNDATA_sorted.csv'
         save_csv_path = os.path.join(run_dir, save_name)
         if verbose:
             # print(f"\nsaving all_data_df to save_excel_path:\n{save_excel_path}")
             print(f"\nsaving all_data_df to save_csv_path:\n{save_csv_path}")
-        # all_data_df.to_excel(save_excel_path, index=False)
         convert_path1 = os.path.normpath(save_csv_path)
         print(f"convert_path1: {convert_path1}")
 
@@ -2046,17 +2021,8 @@ def d_average_participant(root_path, run_dir_names_list,
         if 'Unnamed: 0' in list(this_psignifit_df):
             this_psignifit_df.drop('Unnamed: 0', axis=1, inplace=True)
 
-        # if 'stair' in list(this_psignifit_df):
-        #     stair_list = this_psignifit_df['stair'].to_list
-        #     # this_psignifit_df.drop(columns='stair', inplace=True)
-
         if 'stair_name' not in list(this_psignifit_df.columns):
-            # generate a stair_name from the columns preceeding probe_dur_ms columns (e.g., 'flow_{flow_dir}_{flow_name}_prelim_{prelim_ms}")
-            # this_psignifit_df.insert(0, 'stair_name', [f'flow_{flow_dir}_{flow_name}_prelim_{prelim_ms}'
-            #                                       for flow_dir, flow_name, prelim_ms in
-            #                                       zip(this_psignifit_df['flow_dir'], this_psignifit_df['flow_name'],
-            #                                           this_psignifit_df['prelim_ms'])])
-            this_psignifit_df.insert(0, 'stair_name', [f'flow_{flow_dir}_{flow_name}_prelim_{prelim_ms}'
+            this_psignifit_df.insert(0, 'stair_name', [f'flow_{flow_dir}_{flow_name}_bg_motion_ms{prelim_ms}'
                                                   for flow_dir, flow_name, prelim_ms in
                                                   zip(this_psignifit_df['flow_dir'], this_psignifit_df['flow_name'],
                                                       this_psignifit_df['bg_motion_ms'])])
@@ -2075,10 +2041,8 @@ def d_average_participant(root_path, run_dir_names_list,
 
     # join all stacks (runs/groups) data and save as master csv
     all_data_psignifit_df = pd.concat(all_psignifit_list, ignore_index=True)
-    # todo: since I added extra dur conditions, dur conds are not in ascending order.
-    #  Perhaps re-order columns before saving?
 
-    all_data_psignifit_df.to_csv(f'{root_path}{os.sep}MASTER_{thr_df_name}.csv', index=False)
+    all_data_psignifit_df.to_csv(os.path.join(root_path, f"MASTER_{thr_df_name}.csv"), index=False)
     if verbose:
         print(f'\nall_data_psignifit_df:\n{all_data_psignifit_df}')
 
@@ -2103,22 +2067,18 @@ def d_average_participant(root_path, run_dir_names_list,
     # loop through stair_list and add corresponding stair_name and flow_name to list
     stair_list = get_means_df['stair'].unique().tolist()
     stair_names_list = []
-    # prelim_list = []
     bg_motion_ms_list = []
     flow_dir_list = []
     flow_names_list = []
     for stair in stair_list:
         stair_names_list.append(get_means_df.loc[get_means_df['stair'] == stair, 'stair_name'].unique().tolist()[0])
-        # prelim_list.append(get_means_df.loc[get_means_df['stair'] == stair, 'prelim_ms'].unique().tolist()[0])
         bg_motion_ms_list.append(get_means_df.loc[get_means_df['stair'] == stair, 'bg_motion_ms'].unique().tolist()[0])
         flow_dir_list.append(get_means_df.loc[get_means_df['stair'] == stair, 'flow_dir'].unique().tolist()[0])
         flow_names_list.append(get_means_df.loc[get_means_df['stair'] == stair, 'flow_name'].unique().tolist()[0])
 
     # get_means_df = get_means_df.drop('prelim_ms', axis=1)
     get_means_df = get_means_df.drop('bg_motion_ms', axis=1)
-
     get_means_df = get_means_df.drop('flow_dir', axis=1)
-
     get_means_df = get_means_df.drop('stair_name', axis=1)
     get_means_df = get_means_df.drop('flow_name', axis=1)
 
@@ -2128,7 +2088,6 @@ def d_average_participant(root_path, run_dir_names_list,
     ave_psignifit_thr_df = get_means_df.groupby(['stair'], sort=False).mean()
     # add stair_names and flow_name back in
     ave_psignifit_thr_df.insert(0, 'stair_name', stair_names_list)
-    # ave_psignifit_thr_df.insert(1, 'prelim_ms', prelim_list)
     ave_psignifit_thr_df.insert(1, 'bg_motion_ms', bg_motion_ms_list)
     ave_psignifit_thr_df.insert(2, 'flow_dir', flow_dir_list)
     ave_psignifit_thr_df.insert(3, 'flow_name', flow_names_list)
@@ -2153,15 +2112,12 @@ def d_average_participant(root_path, run_dir_names_list,
 
     # add stair_names and flow_name back in
     error_bars_df.insert(0, 'stair_name', stair_names_list)
-    # error_bars_df.insert(1, 'prelim_ms', prelim_list)
     error_bars_df.insert(1, 'bg_motion_ms', bg_motion_ms_list)
     error_bars_df.insert(2, 'flow_dir', flow_dir_list)
     error_bars_df.insert(3, 'flow_name', flow_names_list)
     print(f'\nerror_bars_df:\n{error_bars_df}')
 
     # save csv with average values
-    # todo: since I added extra dur conditions, dur conds are not in ascending order.
-    #  Perhaps re-order columns before saving?
     if trim_n is not None:
         ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM{trim_n}_thresh.csv')
         error_bars_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM{trim_n}_thr_error_{error_type}.csv')

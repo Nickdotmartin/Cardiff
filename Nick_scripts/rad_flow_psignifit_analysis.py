@@ -486,6 +486,12 @@ def make_long_df(wide_df,
             else:
                 raise ValueError(f"can't strip {strip_from_cols} from {this_col}")
 
+            # Dataframe should have one dtype so using float
+            try:
+                this_col = float(this_col)
+            except ValueError:
+                pass
+
         this_df.insert(len(cols_to_keep), new_col_name, [this_col] * len(this_df.index))
         this_df.columns = new_col_names
         long_list.append(this_df)
@@ -2962,7 +2968,7 @@ def compare_prelim_plots(p_name, exp_path):
 def joined_plot(untrimmed_df, x_cols_str='isi_ms', 
                 hue_col_name='congruent', hue_labels=['congruent', 'incongruent'],
                 participant_name='',
-                xlabel='ISI (ms)', ylabel='Probe Luminance',
+                x_label='ISI (ms)', y_label='Probe Luminance',
                 extra_text=None,
                 save_path=None, save_name=None,
                 verbose=True):
@@ -2995,6 +3001,12 @@ def joined_plot(untrimmed_df, x_cols_str='isi_ms',
     :param verbose: How much to print to screen
     """
     print("\n\n*** running joined_plot()***\n")
+
+    # if all_df is a string, this is the filepath to the df, open the file
+    if isinstance(untrimmed_df, pd.DataFrame):
+        pass
+    else:
+        untrimmed_df = pd.read_csv(untrimmed_df)
 
     # copy dataframe so that changes to it don't impact original dataframe
     all_df = untrimmed_df.copy()
@@ -3034,7 +3046,10 @@ def joined_plot(untrimmed_df, x_cols_str='isi_ms',
     x_hue0_df = x_hue0_df.drop(columns=[hue_col_name])
 
     # get number of runs (stack)
-    n_runs = len(x_hue0_df['stack'].unique())
+    if 'participant' in x_hue0_df.columns:
+        n_runs = len(x_hue0_df['participant'].unique())
+    else:
+        n_runs = len(x_hue0_df['stack'].unique())
 
     # add hue[0] to each column name in x_col_list, then rename columns in x_hue0_df
     x_hue0_col_list = [f"{short_hue[0]}_{col}" for col in x_col_list]
@@ -3109,12 +3124,10 @@ def joined_plot(untrimmed_df, x_cols_str='isi_ms',
 
     # plot means with error bars
     sns.lineplot(data=long_df,
-                 x='x_dodge_pos',
-                 y='y_values', hue=hue_col_name,
+                 x='x_dodge_pos', y='y_values', hue=hue_col_name,
                  palette=sns.color_palette("tab10", n_colors=2),
                  linewidth=3,
-                 errorbar='se',
-                 err_style='bars',
+                 errorbar='se', err_style='bars',
                  err_kws={'capsize': 5, 'elinewidth': 2, 'capthick': 2},
                  ax=ax
                  )
@@ -3166,8 +3179,8 @@ def joined_plot(untrimmed_df, x_cols_str='isi_ms',
         ax.axhline(y=0, linestyle="--", color='grey')
 
     # decorate plot, x axis label, legend, suptitle and title
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
     ax.legend(labels=hue_labels, loc='best', framealpha=.3)
     plt.suptitle(f"{participant_name} thresholds, means and SE of {n_runs} runs")  # big title
     ax.set_title(extra_text)  # smaller title underneath
@@ -3365,14 +3378,6 @@ def a_data_extraction_Oct23(p_name, run_dir, save_all_data=True, verbose=True):
                     if 'debug' not in filename and 'incomplete' not in filename:
                         filepath = os.path.join(root, filename)
 
-                        # # if I need to add columns to the output dir, this might help...
-                        # sub_dir_list = root  # get the full file path
-                        # sub_dir_list = sub_dir_list.replace(run_dir, '')  # strip run_dir from the path
-                        # sub_dir_list = sub_dir_list.split('\\')  # separate the path into a list of directories
-                        # sub_dir_list.pop(
-                        #     0)  # remove the first element of the list (which is an empty string)
-                        # print(f"sub_dir_list: {sub_dir_list}")  # print the list
-
                         # load data
                         this_isi_df = pd.read_csv(filepath)
                         if verbose:
@@ -3413,12 +3418,12 @@ def a_data_extraction_Oct23(p_name, run_dir, save_all_data=True, verbose=True):
         print(f"all_data_df:\n{all_data_df}")
 
     if save_all_data:
-        save_name = 'RUNDATA-sorted.xlsx'
+        save_name = 'RUNDATA_sorted.csv'
 
         save_excel_path = os.path.join(run_dir, save_name)
         if verbose:
             print(f"\nsaving all_data_df to save_excel_path:\n{save_excel_path}")
-        all_data_df.to_excel(save_excel_path, index=False)
+        all_data_df.to_csv(save_excel_path, index=False)
 
     print("\n***finished a_data_extraction()***\n")
 
@@ -3911,15 +3916,7 @@ def mean_staircase_plots(per_trial_df, save_path, participant_name, run_col_name
     and ave cong and incong ontop.
     '''
 
-    # get_median = False
-    # ave_type = 'mean'
-    # # if get_median:
-    # #     ave_type = 'median'
-    # if ave_type == 'median':
-    #     get_median = True
-
-    # hue_names = ['Incongruent', 'Congruent']
-
+    # # set up colours
     run_colour_list = ['pink', 'lightblue']
     ave_colour_list = ['red', 'blue']
 
@@ -3931,7 +3928,6 @@ def mean_staircase_plots(per_trial_df, save_path, participant_name, run_col_name
             per_trial_df = pd.read_csv(os.path.join(save_path, per_trial_df))
     elif isinstance(per_trial_df, pd.DataFrame):
         pass
-    # per_trial_df = pd.read_csv(os.path.join(save_path, MASTER_p_trial_data_name))
     print(f'\nper_trial_df ({per_trial_df.shape}):\n{per_trial_df}')
 
     isi_list = per_trial_df[isi_col_name].unique()
@@ -4114,6 +4110,9 @@ def mean_staircase_plots(per_trial_df, save_path, participant_name, run_col_name
         else:
             save_name = f"all_run_stairs_{participant_name}_{isi_col_name}{isi}_mean.png"
     else:  # if there is a sep col
+        # if there are multiple separation values
+        if len(sep_list) > 1:
+            sep = 'all'
         if ave_type == 'median':
             save_name = f"all_run_stairs_{participant_name}_{isi_col_name}{isi}_{sep_col_name[:3]}{sep}_median.png"
         else:
@@ -4722,6 +4721,8 @@ def d_average_participant(root_path, run_dir_names_list,
     return ave_psignifit_thr_df, error_bars_df
 
 
+
+
 def e_average_exp_data(exp_path, p_names_list,
                        # stair_names_col,
                        # groupby_col=None, cols_to_drop=None, cols_to_replace=None,
@@ -4730,8 +4731,7 @@ def e_average_exp_data(exp_path, p_names_list,
                        n_trimmed=None,
                        verbose=True):
 
-    # todo: if necessary, have a separate function to transform data before feeding it into here.
-    # todo: add col vars to docstring
+
     """
     e_average_over_participants: take MASTER_ave_TM_thresh.csv (or MASTER_ave_thresh.csv)
     in each participant folder and make master list
@@ -4784,8 +4784,11 @@ def e_average_exp_data(exp_path, p_names_list,
 
         # # if trimmed mean doesn't exists (e.g., because participant hasn't done 12 runs)
         if not os.path.isfile(this_ave_df_path):
-            print(f"Couldn't find trimmed mean data for {p_name}\nUsing untrimmed instead.")
-            this_ave_df_path = os.path.join(exp_path, p_name, 'MASTER_ave_thresh.csv')
+            ave_df_name = f'MASTER_ave_TM1_thresh'
+            this_ave_df_path = os.path.join(exp_path, p_name, f'{ave_df_name}.csv')
+            if not os.path.isfile(this_ave_df_path):
+                print(f"Couldn't find trimmed mean data for {p_name}\nUsing untrimmed instead.")
+                this_ave_df_path = os.path.join(exp_path, p_name, 'MASTER_ave_thresh.csv')
 
         this_p_ave_df = pd.read_csv(this_ave_df_path)
 
@@ -4798,7 +4801,9 @@ def e_average_exp_data(exp_path, p_names_list,
         rows, cols = this_p_ave_df.shape
         this_p_ave_df.insert(0, 'participant', [p_name] * rows)
 
-        if exp_type in ['Ricco', 'Bloch', 'speed_detection']:
+        if exp_type == 'Dec23':
+            pass
+        elif exp_type in ['Ricco', 'Bloch', 'speed_detection']:
             this_p_ave_df.rename(columns={'ISI_0': 'thr'}, inplace=True)
         elif exp_type in ['Bloch_v5']:
             if 'stair_name' in this_p_ave_df.columns.tolist():
@@ -4923,6 +4928,274 @@ def e_average_exp_data(exp_path, p_names_list,
     print("\n*** finished e_average_over_participants()***\n")
 
     return exp_ave_thr_df, error_bars_df
+
+
+# def d_average_participant_Dec23(root_path, run_dir_names_list,
+#                                 thr_df_name='psignifit_thresholds',
+#                                 error_type=None,
+#                                 trim_n=None,
+#                                 verbose=True):
+#     """
+#     d_average_participant: take psignifit_thresholds.csv
+#     in each participant run folder and make master lists
+#     MASTER_psignifit_thresholds.csv
+#
+#     Get mean threshold across 6 run conditions saved as
+#     MASTER_ave_thresh.csv
+#
+#     Save master lists to folder containing the six runs (root_path).
+#
+#     :param root_path: dir containing run folders
+#     :param run_dir_names_list: names of run folders
+#     :param thr_df_name: Name of threshold dataframe.  If no name is given it will use 'psignifit_thresholds'.
+#     :param error_type: Default: None. Can pass sd or se for standard deviation or error.
+#     :param trim_n: default None.  If int is passed, will call function trim_n_high_n_low(),
+#             which trims the n highest and lowest values.
+#     :param verbose: Default true, print progress to screen
+#
+#     :returns: ave_psignifit_thr_df: (trimmed?) mean threshold for each separation and dur.
+#     """
+#
+#     print("\n***running d_average_participant_Dec23()***")
+#
+#     all_psignifit_list = []
+#     for run_idx, run_name in enumerate(run_dir_names_list):
+#
+#         this_psignifit_df = pd.read_csv(f'{root_path}{os.sep}{run_name}{os.sep}{thr_df_name}.csv')
+#         print(f'\n{run_idx}. {run_name} - this_psignifit_df:\n{this_psignifit_df}')
+#
+#         if 'Unnamed: 0' in list(this_psignifit_df):
+#             this_psignifit_df.drop('Unnamed: 0', axis=1, inplace=True)
+#
+#         # if 'stair' in list(this_psignifit_df):
+#         #     stair_list = this_psignifit_df['stair'].to_list
+#         #     # this_psignifit_df.drop(columns='stair', inplace=True)
+#
+#         if 'stair_name' not in list(this_psignifit_df.columns):
+#             # generate a stair_name from the columns preceeding probe_dur_ms columns (e.g., 'flow_{flow_dir}_{flow_name}_prelim_{prelim_ms}")
+#             # this_psignifit_df.insert(0, 'stair_name', [f'flow_{flow_dir}_{flow_name}_prelim_{prelim_ms}'
+#             #                                       for flow_dir, flow_name, prelim_ms in
+#             #                                       zip(this_psignifit_df['flow_dir'], this_psignifit_df['flow_name'],
+#             #                                           this_psignifit_df['prelim_ms'])])
+#             this_psignifit_df.insert(0, 'stair_name', [f'flow_{flow_dir}_{flow_name}_bg_motion_ms{prelim_ms}'
+#                                                   for flow_dir, flow_name, prelim_ms in
+#                                                   zip(this_psignifit_df['flow_dir'], this_psignifit_df['flow_name'],
+#                                                       this_psignifit_df['bg_motion_ms'])])
+#             print(f'\nget_means_df:\n{this_psignifit_df}')
+#         if 'stair' not in list(this_psignifit_df.columns):
+#             # generate stair numbers from unique stair_names
+#             this_psignifit_df.insert(0, 'stair', [i for i in range(len(this_psignifit_df['stair_name'].unique()))])
+#
+#         rows, cols = this_psignifit_df.shape
+#         this_psignifit_df.insert(0, 'stack', [run_idx] * rows)
+#
+#         if verbose:
+#             print(f'\nthis_psignifit_df:\n{this_psignifit_df}')
+#
+#         all_psignifit_list.append(this_psignifit_df)
+#
+#     # join all stacks (runs/groups) data and save as master csv
+#     all_data_psignifit_df = pd.concat(all_psignifit_list, ignore_index=True)
+#     # todo: since I added extra dur conditions, dur conds are not in ascending order.
+#     #  Perhaps re-order columns before saving?
+#
+#     all_data_psignifit_df.to_csv(f'{root_path}{os.sep}MASTER_{thr_df_name}.csv', index=False)
+#     if verbose:
+#         print(f'\nall_data_psignifit_df:\n{all_data_psignifit_df}')
+#
+#     """Part 2: trim highest and lowest values is required and get average vals and errors"""
+#     # # trim highest and lowest values
+#     if trim_n is not None:
+#         trimmed_df = trim_n_high_n_low(all_data_psignifit_df, trim_from_ends=trim_n,
+#                                        reference_col='stair',
+#                                        stack_col_id='stack',
+#                                        verbose=verbose)
+#         trimmed_df.to_csv(f'{root_path}{os.sep}MASTER_TM{trim_n}_thresholds.csv', index=False)
+#
+#         get_means_df = trimmed_df
+#     else:
+#         get_means_df = all_data_psignifit_df
+#
+#     print(f'\nget_means_df:\n{get_means_df}')
+#
+#     # # get means and errors
+#     get_means_df = get_means_df.drop('stack', axis=1)
+#
+#     # loop through stair_list and add corresponding stair_name and flow_name to list
+#     stair_list = get_means_df['stair'].unique().tolist()
+#     stair_names_list = []
+#     # prelim_list = []
+#     bg_motion_ms_list = []
+#     flow_dir_list = []
+#     flow_names_list = []
+#     for stair in stair_list:
+#         stair_names_list.append(get_means_df.loc[get_means_df['stair'] == stair, 'stair_name'].unique().tolist()[0])
+#         # prelim_list.append(get_means_df.loc[get_means_df['stair'] == stair, 'prelim_ms'].unique().tolist()[0])
+#         bg_motion_ms_list.append(get_means_df.loc[get_means_df['stair'] == stair, 'bg_motion_ms'].unique().tolist()[0])
+#         flow_dir_list.append(get_means_df.loc[get_means_df['stair'] == stair, 'flow_dir'].unique().tolist()[0])
+#         flow_names_list.append(get_means_df.loc[get_means_df['stair'] == stair, 'flow_name'].unique().tolist()[0])
+#
+#     # get_means_df = get_means_df.drop('prelim_ms', axis=1)
+#     get_means_df = get_means_df.drop('bg_motion_ms', axis=1)
+#
+#     get_means_df = get_means_df.drop('flow_dir', axis=1)
+#
+#     get_means_df = get_means_df.drop('stair_name', axis=1)
+#     get_means_df = get_means_df.drop('flow_name', axis=1)
+#
+#
+#
+#     # get average values (from numeric columns)
+#     ave_psignifit_thr_df = get_means_df.groupby(['stair'], sort=False).mean()
+#     # add stair_names and flow_name back in
+#     ave_psignifit_thr_df.insert(0, 'stair_name', stair_names_list)
+#     # ave_psignifit_thr_df.insert(1, 'prelim_ms', prelim_list)
+#     ave_psignifit_thr_df.insert(1, 'bg_motion_ms', bg_motion_ms_list)
+#     ave_psignifit_thr_df.insert(2, 'flow_dir', flow_dir_list)
+#     ave_psignifit_thr_df.insert(3, 'flow_name', flow_names_list)
+#     if verbose:
+#         print(f'\nget_means_df:\n{get_means_df}')
+#         print(f'\nave_psignifit_thr_df:\n{ave_psignifit_thr_df}')
+#
+#     if error_type in [False, None]:
+#         error_bars_df = None
+#     elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
+#         error_bars_df = get_means_df.groupby('stair', sort=False).sem()
+#     elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
+#         error_bars_df = get_means_df.groupby('stair', sort=False).std()
+#     else:
+#         raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
+#                          f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standard_error']\n"
+#                          f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
+#                          f"'deviation', 'standard_deviation']")
+#
+#     # replace NaNs with 0
+#     error_bars_df.fillna(0, inplace=True)
+#
+#     # add stair_names and flow_name back in
+#     error_bars_df.insert(0, 'stair_name', stair_names_list)
+#     # error_bars_df.insert(1, 'prelim_ms', prelim_list)
+#     error_bars_df.insert(1, 'bg_motion_ms', bg_motion_ms_list)
+#     error_bars_df.insert(2, 'flow_dir', flow_dir_list)
+#     error_bars_df.insert(3, 'flow_name', flow_names_list)
+#     print(f'\nerror_bars_df:\n{error_bars_df}')
+#
+#     # save csv with average values
+#     # todo: since I added extra dur conditions, dur conds are not in ascending order.
+#     #  Perhaps re-order columns before saving?
+#     if trim_n is not None:
+#         ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM{trim_n}_thresh.csv')
+#         error_bars_df.to_csv(f'{root_path}{os.sep}MASTER_ave_TM{trim_n}_thr_error_{error_type}.csv')
+#     else:
+#         ave_psignifit_thr_df.to_csv(f'{root_path}{os.sep}MASTER_ave_thresh.csv')
+#         error_bars_df.to_csv(f'{root_path}{os.sep}MASTER_ave_thr_error_{error_type}.csv')
+#
+#     print("\n*** finished d_average_participant_Dec23()***\n")
+#
+#     return ave_psignifit_thr_df, error_bars_df
+
+
+def e_average_exp_data_Dec23(exp_path, p_names_list,
+                             error_type='SE',
+                             verbose=True):
+    """
+    e_average_over_participants: take MASTER_ave_TM_thresh.csv (or MASTER_ave_thresh.csv)
+    in each participant folder and make master list
+    MASTER_exp_all_thr.csv
+
+    Get mean thresholds averaged across all participants saved as
+    MASTER_exp_ave_thr.csv
+
+    Save master lists to exp_path.
+
+    Plots:
+    MASTER_exp_ave_thr saved as exp_ave_thr_all_runs.png
+    MASTER_exp_ave_thr two-probe/one-probe saved as exp_ave_thr_div_1probe.png
+    these both have two versions:
+    a. x-axis is separation, dur as different lines
+    b. x-axis is dur, separation as different lines
+    Heatmap: with average probe lum for dur and separation.
+
+    :param exp_path: dir containing participant folders
+    :param p_names_list: names of participant's folders
+    :param error_type: Default: None. Can pass sd or se for standard deviation or error.
+    :param verbose: Default True, print progress to screen
+
+    :returns: exp_ave_thr_df: experiment mean threshold for each separation and dur.
+    """
+    print("\n***running e_average_exp_data_Dec23()***\n")
+
+    """ part1. Munge data, save master lists and get means etc
+     - loop through participants and get each MASTER_ave_TM_thresh.csv
+    Make master sheets: MASTER_exp_thr and MASTER_exp_ave_thr."""
+
+    all_p_ave_list = []
+    for p_idx, p_name in enumerate(p_names_list):
+
+        # look for trimmed mean df, if it doesn't exist, use untrimmed.
+        ave_df_name = 'MASTER_ave_TM2_thresh'
+        if not os.path.isfile(os.path.join(exp_path, p_name, f'{ave_df_name}.csv')):
+            ave_df_name = 'MASTER_ave_TM1_thresh'
+            if not os.path.isfile(os.path.join(exp_path, p_name, f'{ave_df_name}.csv')):
+                ave_df_name = 'MASTER_ave_thresh'
+                if not os.path.isfile(os.path.join(exp_path, p_name, f'{ave_df_name}.csv')):
+                    raise FileNotFoundError(f"Can't find averages csv for {p_name}")
+
+        this_p_ave_df = pd.read_csv(f'{exp_path}{os.sep}{p_name}{os.sep}{ave_df_name}.csv')
+
+        if verbose:
+            print(f'{p_idx}. {p_name} - {ave_df_name}:\n{this_p_ave_df}')
+
+        if 'Unnamed: 0' in list(this_p_ave_df):
+            this_p_ave_df.drop('Unnamed: 0', axis=1, inplace=True)
+
+        rows, cols = this_p_ave_df.shape
+        this_p_ave_df.insert(0, 'participant', [p_name] * rows)
+
+        all_p_ave_list.append(this_p_ave_df)
+
+    # join all participants' data and save as master csv
+    all_exp_thr_df = pd.concat(all_p_ave_list, ignore_index=True)
+    print(f'\nall_exp_thr_df:{list(all_exp_thr_df.columns)}\n{all_exp_thr_df}')
+
+    if verbose:
+        print(f'\nall_exp_thr_df:{list(all_exp_thr_df.columns)}\n{all_exp_thr_df}')
+    # all_exp_thr_df.to_csv(f'{exp_path}{os.sep}MASTER_exp_all_thr.csv', index=False)
+    all_exp_thr_df.to_csv(os.path.join(exp_path, 'MASTER_exp_all_thr.csv'), index=False)
+
+    # # get means and errors
+    get_means_df = all_exp_thr_df.drop('participant', axis=1)
+
+    groupby_col = 'neg_sep'
+    # exp_ave_thr_df = get_means_df.groupby('stair', sort=True).mean()
+    exp_ave_thr_df = get_means_df.groupby(groupby_col, sort=True).mean()
+    if verbose:
+        print(f'\nexp_ave_thr_df:\n{exp_ave_thr_df}')
+
+    if error_type in [False, None]:
+        error_bars_df = None
+    elif error_type.lower() in ['se', 'error', 'std-error', 'standard error', 'standard_error']:
+        error_bars_df = get_means_df.groupby(groupby_col, sort=True).sem()
+    elif error_type.lower() in ['sd', 'stdev', 'std_dev', 'std.dev', 'deviation', 'standard_deviation']:
+        error_bars_df = get_means_df.groupby(groupby_col, sort=True).std()
+    else:
+        raise ValueError(f"error_type should be in:\nfor none: [False, None]\n"
+                         f"for standard error: ['se', 'error', 'std-error', 'standard error', 'standrad_error']\n"
+                         f"for standard deviation: ['sd', 'stdev', 'std_dev', 'std.dev', "
+                         f"'deviation', 'standard_deviation']")
+    # repace any NaNs with zero in error_bars_df
+    error_bars_df.fillna(0, inplace=True)
+    if verbose:
+        print(f'\nerror_bars_df: ({error_type})\n{error_bars_df}')
+
+    # save csv with average values
+    exp_ave_thr_df.to_csv(f'{exp_path}{os.sep}MASTER_exp_ave_thr.csv')
+    error_bars_df.to_csv(f'{exp_path}{os.sep}MASTER_ave_thr_error_{error_type}.csv')
+
+    print("\n*** finished e_average_exp_data_Dec23()***\n")
+
+    return exp_ave_thr_df, error_bars_df
+
 
 
 def make_average_plots(all_df_path, ave_df_path, error_bars_path,
@@ -5413,3 +5686,233 @@ def make_average_plots(all_df_path, ave_df_path, error_bars_path,
         plt.close()
 
     print("\n*** finished make_average_plots()***\n")
+
+
+def make_plots_Dec23(all_df_path, root_path, participant_name, n_trimmed,
+                     thr_col_name='probeLum',
+                     x_col_name='isi_ms',
+                     hue_col_name='congruent', hue_val_order=[-1, 1],
+                     hue_labels=['Incongruent', 'Congruent'],
+                     motion_col='bg_motion_ms',
+                     x_label='ISI (ms)', y_label='Probe Luminance',
+                     extra_text=None,
+                     exp_ave=False):
+    """
+    Make plots showing ISI or cong difference (incong-cong) for all ISI.
+
+    :param all_df_path: dataframe or path to dataframe with datum column,
+        e.g. if analysing participant data, it should have multiple runs, not means;
+        if analysing experiment data, it should have multiple participants, not just means.
+    :param root_path: path to save to
+    :param participant_name: name of participant (or 'exp_means)
+    :param n_trimmed: none, or number of vals trimmed from each end
+    :return:   plots
+    """
+
+    print("\n\n*** running make_flow_parse_plots() ***")
+
+    if isinstance(all_df_path, pd.DataFrame):
+        all_df = all_df_path
+    else:
+        all_df = pd.read_csv(all_df_path)
+
+    if exp_ave:
+        datum_col = 'participant'
+        n_to_ave_over = len(all_df[datum_col].unique().tolist())
+    else:
+        datum_col = 'stack'
+        n_to_ave_over = len(all_df[datum_col].unique().tolist())
+
+    # rename columns with long float names - if col name contains '.', only have two characters after it
+    all_df.columns = [i[:i.find('.') + 3] if '.' in i else i for i in all_df.columns.tolist()]
+    print(f"all_df columns: {list(all_df.columns)}")
+
+    # # # make long df # # #
+    # make long df with all probe_durs in one column (threshold) with probe_dur_ms as another column
+    print(f"all_df: {all_df.columns.tolist()}\n: {all_df}\n")
+
+    strip_this = f'{x_col_name}_'
+
+    n_cols_to_change = 0
+    for col in all_df.columns.tolist():
+        if strip_this in col:
+            n_cols_to_change += 1
+
+    cols_to_keep = all_df.columns.tolist()[:-n_cols_to_change]
+    cols_to_change = all_df.columns.tolist()[-n_cols_to_change:]
+
+
+    print(f"strip _this: {strip_this}")
+    print(f"cols_to_keep: {cols_to_keep}")
+    print(f"cols_to_change: {cols_to_change}")
+    all_long_df = make_long_df(wide_df=all_df,
+                               cols_to_keep=cols_to_keep,
+                               cols_to_change=cols_to_change,
+                               cols_to_change_show=thr_col_name,
+                               new_col_name=x_col_name,
+                               strip_from_cols=strip_this, verbose=True)
+
+    print(f"all_long_df: {all_long_df.columns.tolist()}\n: {all_long_df}\n")
+
+    # simple_all_long_df is the same as all_long_df but without the columns 'stair' and 'flow_dir'
+    # make a copy as I'll use all_long_df later
+    simple_all_long_df = all_long_df.copy()
+    # simple_all_long_df = simple_all_long_df.drop(columns=['stair', 'flow_dir'])
+    if 'stair' in list(simple_all_long_df.columns):
+        simple_all_long_df.drop(columns=['stair'], inplace=True)
+    if 'flow_dir' in list(simple_all_long_df.columns):
+        simple_all_long_df.drop(columns=['flow_dir'], inplace=True)
+
+    # sort simple_all_long_df by probe_dur_ms and prelim
+    simple_all_long_df.sort_values(by=[x_col_name, motion_col], inplace=True)
+
+
+    print(f"simple_all_long_df: {simple_all_long_df.columns.tolist()}:\n{simple_all_long_df}\n")
+
+    # # MAKE PLOTS # # #
+
+    # lineplot with err bars and scatter, same as joined plot, but not joined
+    fig, ax = plt.subplots()
+
+    # lineplot with errorbars
+    sns.pointplot(data=simple_all_long_df,
+                  x=x_col_name, y=thr_col_name,
+                  hue=hue_col_name, hue_order=hue_val_order,
+                  palette=sns.color_palette("tab10", n_colors=2),
+                  dodge=.1,  # float allowed for dodge here
+                  errorbar='se', capsize=.1, errwidth=2,
+                  ax=ax)
+
+    # # add scatter showing each data point
+    sns.stripplot(data=simple_all_long_df,
+                  x=x_col_name, y=thr_col_name,
+                  hue=hue_col_name, hue_order=hue_val_order,
+                  palette=sns.color_palette("tab10", n_colors=2),
+                  size=3, dodge=True, ax=ax)
+
+    # if y-axis crosses zero, add horizonal line at zero
+    if min(simple_all_long_df[thr_col_name]) < 0 < max(simple_all_long_df[thr_col_name]):
+        ax.axhline(y=0.0, color='grey', linestyle='--', linewidth=.7)
+        # title should describe what positive and negative means
+        if extra_text is not None:
+            plt.title(f"{extra_text}\n-ive = outward, +ive = inward")
+        else:
+            plt.title("-ive = outward, +ive = inward")
+    else:
+        if extra_text is not None:
+            plt.title(extra_text)
+
+    # decorate plots: main title, axis labels and legend
+    plt.suptitle(f"{participant_name} mean thresholds with SE, n={n_to_ave_over}, TM={n_trimmed}")
+
+
+    # update axis labels
+    plt.ylabel(y_label)
+    plt.xlabel(x_label)
+    print(f"idiot check, x_label: {x_label}")
+    if 'ISI' in x_label.upper():
+        # get x tick labels, if '-1.0' or '-1' is first label, change to 'Conc'
+        x_tick_labels = ax.get_xticklabels()
+        if x_tick_labels[0].get_text() in ['-1', '-1.0']:
+            x_tick_labels[0].set_text('Concurrent')
+        ax.set_xticklabels(x_tick_labels)
+
+    # plot legend but only with two handles/labels - e.g., Expanding (for exp) and Contracting (cont)
+    handles, labels = ax.get_legend_handles_labels()
+    labels = [hue_labels[0] if i == str(hue_val_order[0]) else hue_labels[1] for i in labels]
+    ax.legend(handles[0:2], labels[0:2], loc='best', title='flow direction')
+
+    # save figure
+    if n_trimmed:
+        plt.savefig(os.path.join(root_path, f"{participant_name}_TM{n_trimmed}_not_joined.png"))
+    else:
+        plt.savefig(os.path.join(root_path, f"{participant_name}_not_joined.png"))
+
+    plt.show()
+
+    # make diff_df: for each datum, bg_motion and probe_dur_ms, get the difference between exp and cont
+    diff_list = []
+    for x_val in all_long_df[x_col_name].unique().tolist():
+        x_val_df = all_long_df[all_long_df[x_col_name] == x_val]
+        for bg_motion in x_val_df[motion_col].unique().tolist():
+            bg_motion_df = x_val_df[x_val_df[motion_col] == bg_motion]
+            for datum in bg_motion_df[datum_col].unique().tolist():
+                datum_df = bg_motion_df[bg_motion_df[datum_col] == datum]
+
+                print(f"\ndatum: {datum}, x_val: {x_val}, bg_motion: {bg_motion}\n"
+                      f"datum_df: {datum_df.columns.tolist()}:\n"
+                      # f"{datum_df}\n"
+                      f"")
+                hue0_val = datum_df[datum_df[hue_col_name] == hue_val_order[0]][thr_col_name].values[0]
+                hue1_val = datum_df[datum_df[hue_col_name] == hue_val_order[1]][thr_col_name].values[0]
+
+                '''hue0_val and hue1_val can be positive or negative, so always subtracting could be wrong.
+                If either are negative, I will add a constant to both, such that neither are negative.'''
+                if min(hue0_val, hue1_val) < 0:
+                    min_value = min(hue0_val, hue1_val)
+                    hue0_val += abs(min_value)
+                    hue1_val += abs(min_value)
+                diff = hue1_val - hue0_val
+                print(f"hue0_val: {hue0_val}\nhue1_val: {hue1_val}\ndiff: {diff}")
+
+                # diff_list.append([probe_dur_ms, bg_motion, datum, exp_speed, cont_speed, diff])
+                diff_list.append([x_val, bg_motion, datum, hue0_val, hue1_val, diff])
+
+    print(f"diff_list: {diff_list}\n")
+
+    # make diff_df from diff_list
+    diff_df = pd.DataFrame(diff_list,
+                           columns=[x_col_name, motion_col, datum_col, hue0_val, hue1_val, 'diff'])
+    print(f"diff_df: {diff_df.columns.tolist()}\n{diff_df}\n")
+
+    # drop exp_speed and cont_speed columns
+    diff_df = diff_df.drop(columns=[hue0_val, hue1_val])
+
+    # if there are multiple probe_dur_ms, make a lineplot with probe_dur_ms on x-axis, diff on y-axis, bg_motion as hue
+    if len(diff_df[x_col_name].unique().tolist()) > 1:
+        fig, ax = plt.subplots()
+
+        # lineplot with errorbars
+        sns.pointplot(data=diff_df, x=x_col_name, y='diff',
+                      errorbar='se', capsize=.1, errwidth=2,
+                      ax=ax)
+        # individual datapoints
+        sns.stripplot(data=diff_df, x=x_col_name, y='diff',
+                      dodge=True, color='lightgrey',
+                      ax=ax)
+
+        plt.axhline(y=0.0, color='grey', linestyle='--')
+
+        # plt.suptitle(f"probe_speed difference (flow exp - cont)")
+        plt.suptitle(f"{y_label} difference ({hue_labels[1]} - {hue_labels[0]})")
+
+        # update axis labels
+        plt.ylabel(f"Difference ({hue_labels[1]} - {hue_labels[0]})")
+        plt.xlabel(x_label)
+        if 'ISI' in x_label.upper():
+            # get x tick labels, if '-1.0' or '-1' is first label, change to 'Conc'
+            x_tick_labels = ax.get_xticklabels()
+            if x_tick_labels[0].get_text() in ['-1', '-1.0', -1, -1.0]:
+                x_tick_labels[0].set_text('Concurrent')
+            else:
+                print(f"-1 not in x_tick_labels: {x_tick_labels}")
+            ax.set_xticklabels(x_tick_labels)
+
+        else:
+            print(f"'ISI not in x-axis label: {x_label}")
+
+        if extra_text is not None:
+            plt.title(f"{participant_name}, {extra_text}, n={n_to_ave_over},  TM={n_trimmed}\n"
+                      f"-ive = {hue_labels[0]} greater, +ive = {hue_labels[1]} greater")
+        else:
+            plt.title(f"{participant_name}, n={n_to_ave_over},  TM={n_trimmed}\n"
+                      f"-ive = {hue_labels[0]} greater, +ive = {hue_labels[1]} greater")
+        plt.subplots_adjust(top=0.85)  # add space below suptitle
+
+        if n_trimmed:
+            plt.savefig(os.path.join(root_path, f"{participant_name}_TM{n_trimmed}_diff_line.png"))
+        else:
+            plt.savefig(os.path.join(root_path, f"{participant_name}_diff_line.png"))
+        plt.show()
+
+    print("\n*** finished make_flow_parse_plots()***\n")

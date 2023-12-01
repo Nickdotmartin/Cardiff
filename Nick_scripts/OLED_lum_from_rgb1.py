@@ -55,7 +55,25 @@ def get_OLED_luminance(rgb1):
     return new_lum
 
 
-#
+#load data
+import pandas as pd
+csv_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Target_detection_Dec23\OLED\pt1\pt1_1\sep_4\pt1_1_output.csv"
+output_df = pd.read_csv(csv_path)
+print(f"output_df: {output_df.columns}\n{output_df}")
+
+probe_rgb1 = output_df['probeColor1']
+rgb1_set = sorted(list(set(probe_rgb1)))
+print(f"rgb1_set: {rgb1_set}")
+
+# get luminance values
+luminance_values = get_OLED_luminance(rgb1_set)
+
+# make a dictionary of rgb1 and luminance values
+rgb1_lum_dict = dict(zip(rgb1_set, luminance_values))
+print(f"rgb1_lum_dict: {rgb1_lum_dict}")
+
+
+
 # '''Run this code to plot the incorrect and correct values.'''
 # just_low_vals = True
 # '''data to use for fitting'''

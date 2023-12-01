@@ -362,7 +362,7 @@ expName = path.basename(__file__)[:-3]
 
 # # # DIALOGUE BOX # # #
 expInfo = {'01. Participant ID': '',
-           '02. Probe Start distance (pixels)': 14,
+           '02. Probe Start distance (pixels)': 10,
            '03. monitor_name': ['OLED', 'Nick_work_laptop', 'asus_cal', 'ASUS_2_13_240Hz',
                               'Samsung', 'Asus_VG24', 'HP_24uh', 'NickMac', 'Iiyama_2_18'],
            '04. debug': [False, True]
@@ -852,7 +852,7 @@ if start_dist_pix_in_dur > min_max_dist:
 
 # # # CONSTRUCT STAIRCASES # # #
 # proportion of stairStart to use to get intial step size, but this is NOT the actual step size
-c_multiplier = 1.2  # previously was 0.6 until 01/11/2023
+c_multiplier = 2.4  # previously was 1.2 until 01/12/2023
 
 k_type = 'simple'  # step size changes after each reversal only
 if c_multiplier > 1.1:

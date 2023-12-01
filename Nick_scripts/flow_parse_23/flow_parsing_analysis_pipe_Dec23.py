@@ -1,13 +1,10 @@
 import os
 import pandas as pd
-from flow_parsing_psignifit_analysis import a_data_extraction, b3_plot_staircase
-from flow_parsing_psignifit_analysis import d_average_participant, make_flow_parse_plots
+from flow_parsing_psignifit_analysis import (a_data_extraction, d_average_participant,
+                                             e_average_exp_data)
 from flow_parsing_psignifit_tools import psignifit_thr_df_Oct23
-from rad_flow_psignifit_analysis import mean_staircase_plots, joined_plot
+from rad_flow_psignifit_analysis import mean_staircase_plots, joined_plot, make_plots_Dec23
 
-from flow_parsing_psignifit_analysis import e_average_exp_data
-import seaborn as sns
-import matplotlib.pyplot as plt
 
 '''This script is for analysis and plots.
 It loops through each run for each participant and gets the threshold for each condition.
@@ -21,10 +18,8 @@ Other variables should be fine to stay as they are.
 
 # path to dir containing experiment data
 exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Direction_detection_Dec23"
+exp_path = os.path.normpath(exp_path)
 print(f"exp_path: {exp_path}")
-convert_path1 = os.path.normpath(exp_path)
-print(f"convert_path1: {convert_path1}")
-exp_path = convert_path1
 
 # experiment dir contains a folder for each monitor used
 monitor = 'OLED'  # 'asus_cal' OLED, 'Nick_work_laptop'
@@ -36,8 +31,7 @@ if not os.path.isdir(exp_path):
 participant_list = ['pt1', 'pt2', 'pt3', 'pt4'] # , 'pt4']  # ' Nicktest_06102023' Nick_extra_prelims
 # participant_list = ['pt1']  # ' Nicktest_06102023' Nick_extra_prelims
 
-# if the first folder to analyse is 1, p_idx_plus = 1.  If the first folder is 5, use 5 etc.
-# can use this if you just want to analyse run n.  e.g., if you want to analyse run 5, set p_idx_plus = 5
+# p_idx_plus will analyse all runs starting from this number.
 # leave it at one to include all runs in the analysis (or to just analyse new data, see 'analyse_what' below)
 p_idx_plus = 1
 
@@ -48,14 +42,16 @@ stair_names_col_name = 'stair_name'
 bg_dur_name = 'bg_motion_ms'  # prelim_ms
 flow_dir_col_name = 'flow_dir'
 flow_name_col_name = 'flow_name'
+hue_labels = ['Expanding flow', 'Contracting flow']
 probe_dur_col_name = 'probe_dur_ms'  # durations
 probe_dir_col_name = 'probe_dir'  # directions
 resp_col_name = 'response'  # NOT resp_corr
 
-# variables to loop through at various points of the analysis
+# psignifit will loop through these variables (columns) to get thresholds for each condition
 var_cols_list = [flow_dir_col_name, flow_name_col_name, probe_dur_col_name, bg_dur_name]
 
-
+verbose = True  # if True, prints los of data and progress to console
+show_plots = True  # if True, shows plots as they are made
 
 '''Update participant data to analyse or analyse_what variablesd'''
 '''select data to analyse: 
@@ -65,16 +61,9 @@ var_cols_list = [flow_dir_col_name, flow_name_col_name, probe_dur_col_name, bg_d
         It will update any downstream means and plots if new data is added.'''
 analyse_what = 'update_plots'  # 'update_plots', 'just_new_data', 'all'
 
-verbose = True  # if True, prints los of data and progress to console
-show_plots = True  # if True, shows plots as they are made
 
-
-
+# list of whether participants' data has been trimmed
 trim_list = []
-
-# append each run's data to these lists for mean staircases
-MASTER_p_trial_data_list = []
-
 
 for p_idx, participant_name in enumerate(participant_list):
 
@@ -88,6 +77,8 @@ for p_idx, participant_name in enumerate(participant_list):
         print(f"\n\n\np_name_path: {p_name_path} not found\n\n\n")
         continue
 
+    # append each run's data to these lists for mean staircases
+    MASTER_p_trial_data_list = []
 
     # # search to automatically get run_folder_names
     dir_list = os.listdir(p_name_path)
@@ -96,11 +87,9 @@ for p_idx, participant_name in enumerate(participant_list):
         check_dir = f'{participant_name}_{i+p_idx_plus}'   # numbers 1 to 12
         if check_dir in dir_list:
             run_folder_names.append(check_dir)
-
     print(f'run_folder_names: {run_folder_names}')
 
-    # append each run's data to these lists for mean staircases
-    MASTER_p_trial_data_list = []
+
 
     for run_idx, run_dir in enumerate(run_folder_names):
 
@@ -128,8 +117,10 @@ for p_idx, participant_name in enumerate(participant_list):
 
         '''a - data extraction'''
         p_name = f'{participant_name}_{r_idx_plus}'
-        run_data_path = os.path.join(run_path, 'ALL_durations_sorted.csv')
+        run_data_path = os.path.join(run_path, 'RUNDATA_sorted.csv')
+        print(f"run_data_path: {run_data_path}\n")
 
+        # should I analyse this run?
         analyse_this_run = True
         if analyse_what == 'update_plots':
             analyse_this_run = False
@@ -138,7 +129,6 @@ for p_idx, participant_name in enumerate(participant_list):
                 analyse_this_run = False
         print(f"\nanalyse_this_run: {analyse_this_run}\n")
 
-        # todo: change output from 'ALL_durations_sorted.csv' to 'RUNDATA-sorted.xlsx'???
         if analyse_this_run:
             run_data_df = a_data_extraction(p_name=p_name, run_dir=run_path,
                                             dur_list=probe_durs_dir_list, verbose=verbose)
@@ -146,16 +136,9 @@ for p_idx, participant_name in enumerate(participant_list):
 
         run_data_df = pd.read_csv(run_data_path)
         print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
-        # append to master list for mean staircase
-        print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}\n")
-
-        run_data_path = os.path.join(run_path, 'ALL_durations_sorted.csv')
-        print(f"run_data_path: {run_data_path}\n")
-
-        run_data_df = pd.read_csv(run_data_path)
 
 
-        # append to master list for mean staircase
+        # get column showing run number (has changed since start of exp)
         # search for 'Run_number' substring in column names
         run_num_col = [col for col in run_data_df.columns if 'run_number' in col]
         if len(run_num_col) == 1:
@@ -167,7 +150,6 @@ for p_idx, participant_name in enumerate(participant_list):
                 run_data_df.insert(0, 'run_number', run_idx + 1)
         print(f"run_col_name: {run_col_name}")
         MASTER_p_trial_data_list.append(run_data_df)
-
 
 
         '''Get thresholds for each condition'''
@@ -183,7 +165,6 @@ for p_idx, participant_name in enumerate(participant_list):
                                             save_name=None,
                                             show_plots=False, save_plots=True,
                                             verbose=True)
-
             print(f'thr_df:\n{thr_df}')
 
 
@@ -193,13 +174,14 @@ for p_idx, participant_name in enumerate(participant_list):
         print(f"\n***making master per-trial df***")
         # join all output data from each run and save as master per-trial csv
         MASTER_p_trial_data_df = pd.concat(MASTER_p_trial_data_list, ignore_index=True)
+        # just select columns I need for master df
+        MASTER_p_trial_data_df = MASTER_p_trial_data_df[[run_col_name, 'stair', stair_names_col_name, 'step',
+                                                         flow_dir_col_name, flow_name_col_name,
+                                                         probe_dur_col_name, bg_dur_name,
+                                                         probe_dir_col_name, thr_col_name, resp_col_name]]
+
         MASTER_p_trial_data_name = f'MASTER_p_trial_data.csv'
         MASTER_p_trial_data_df.to_csv(os.path.join(p_name_path, MASTER_p_trial_data_name), index=False)
-
-
-        # just select columns I need for master df
-        MASTER_p_trial_data_df = MASTER_p_trial_data_df[[run_col_name, 'step', flow_dir_col_name, flow_name_col_name,
-                                                         probe_dur_col_name, bg_dur_name, thr_col_name]]
         if verbose:
             print(f'\nMASTER_p_trial_data_df:\n{MASTER_p_trial_data_df}')
 
@@ -209,7 +191,7 @@ for p_idx, participant_name in enumerate(participant_list):
                              participant_name=participant_name, run_col_name=run_col_name,
                              thr_col_name=thr_col_name,
                              isi_col_name=probe_dur_col_name, sep_col_name=None,
-                             hue_col_name=flow_dir_col_name, hue_names=['Expanding', 'Contracting'],
+                             hue_col_name=flow_dir_col_name, hue_names=hue_labels,
                              ave_type='mean',
                              show_plots=True, save_plots=True, verbose=True)
 
@@ -217,6 +199,7 @@ for p_idx, participant_name in enumerate(participant_list):
     trim_n = None
     if len(run_folder_names) == 12:
         trim_n = 2
+    print(f'\ntrim_n: {trim_n}')
 
     if analyse_this_run:  # e.g., it was True for last run/latest data
         d_average_participant(root_path=p_name_path, run_dir_names_list=run_folder_names,
@@ -247,9 +230,9 @@ for p_idx, participant_name in enumerate(participant_list):
             raise ValueError(f"more than one bg_motion_dur value: {all_untrimmed_df[bg_motion_dur].unique()}")
 
         joined_plot(untrimmed_df=all_untrimmed_df, x_cols_str=probe_dur_col_name,
-                    hue_col_name=flow_dir_col_name, hue_labels=['expanding flow', 'contracting flow'],
+                    hue_col_name=flow_dir_col_name, hue_labels=hue_labels,
                     participant_name=participant_name,
-                    xlabel='Probe Duration (ms)', ylabel='Probe Speed (deg per sec)',
+                    x_label='Probe Duration (ms)', y_label='Probe Speed (deg per sec)',
                     extra_text=f'All data (untrimmed)',
                     save_path=p_name_path, save_name=None,
                     verbose=True)
@@ -258,13 +241,16 @@ for p_idx, participant_name in enumerate(participant_list):
 
     if analyse_what == 'update_plots' or analyse_this_run:  # e.g., it was True for last run/latest data
 
-        # make plots
-        make_flow_parse_plots(all_df_path, p_name_path, participant_name, n_trimmed=trim_n,
-                              motion_col=bg_dur_name)
-
-
-
-
+        make_plots_Dec23(all_df_path, root_path=p_name_path,
+                         participant_name=participant_name, n_trimmed=trim_n,
+                         thr_col_name=thr_col_name,
+                         x_col_name=probe_dur_col_name,
+                         hue_col_name=flow_name_col_name, hue_val_order=['exp', 'cont'],
+                         hue_labels=hue_labels,
+                         motion_col=bg_dur_name,
+                         x_label='Probe duration (ms)', y_label='Probe velocity (deg per sec)',
+                         extra_text=None,
+                         exp_ave=False)
 
 
 
@@ -278,8 +264,8 @@ if analyse_this_run:  # e.g., it was True for last run/latest data
 
 if analyse_what == 'update_plots' or analyse_this_run:  # e.g., it was True for last run/latest data
     all_df_path = f'{exp_path}/MASTER_exp_all_thr.csv'
-    # exp_ave_path = f'{exp_path}/MASTER_exp_ave_thr.csv'
-    # err_path = f'{exp_path}/MASTER_ave_thr_error_SE.csv'
+    all_df_path = os.path.join(exp_path, 'MASTER_exp_all_thr.csv')
+
     exp_ave = True
     n_trimmed = trim_list
     # if all values in trim_list are the same, just use that value
@@ -287,8 +273,24 @@ if analyse_what == 'update_plots' or analyse_this_run:  # e.g., it was True for 
         n_trimmed = n_trimmed[0]
 
 
+    make_plots_Dec23(all_df_path, root_path=exp_path,
+                     participant_name='exp_ave', n_trimmed=trim_n,
+                     thr_col_name=thr_col_name,
+                     x_col_name=probe_dur_col_name,
+                     hue_col_name=flow_name_col_name, hue_val_order=['exp', 'cont'],
+                     hue_labels=hue_labels,
+                     motion_col=bg_dur_name,
+                     x_label='Probe duration (ms)', y_label='Probe velocity (deg per sec)',
+                     extra_text=None,
+                     exp_ave=True)
 
-    make_flow_parse_plots(all_df_path, exp_path, 'exp_ave', n_trimmed=None, exp_ave=True)
+    joined_plot(untrimmed_df=all_df_path, x_cols_str=probe_dur_col_name,
+                hue_col_name=flow_dir_col_name, hue_labels=hue_labels,
+                participant_name='exp_ave',
+                x_label='Probe Duration (ms)', y_label='Probe Speed (deg per sec)',
+                extra_text=None,
+                save_path=exp_path, save_name=None,
+                verbose=True)
 
 
 print('\nflow_parsing_analysis_pipe finished')
