@@ -934,7 +934,7 @@ if debug:
 # # # ACCURACY # # #
 '''If accuracy is bad after first n trials, suggest updating starting distance'''
 resp_corr_list = []  # accuracy feedback during breaks
-check_start_acc_after = 10  # check accuracy after 10 trials.
+check_start_acc_after = n_stairs  # check accuracy after 10 trials.
 initial_acc_thresh = .7  # initial accuracy threshold from first n trials to continue experiment
 
 

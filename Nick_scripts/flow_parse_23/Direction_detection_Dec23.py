@@ -759,7 +759,7 @@ if debug:
 # # # ACCURACY # # #
 '''If accuracy is bad after first n trials, suggest updating starting distance'''
 resp_corr_list = []  # accuracy feedback during breaks
-check_start_acc_after = 10  # check accuracy after 10 trials.
+check_start_acc_after = n_stairs  # check accuracy after 12 trials.
 initial_acc_thresh = .7  # initial accuracy threshold from first n trials to continue experiment
 
 
@@ -852,7 +852,7 @@ if start_dist_pix_in_dur > min_max_dist:
 
 # # # CONSTRUCT STAIRCASES # # #
 # proportion of stairStart to use to get intial step size, but this is NOT the actual step size
-c_multiplier = 2.4  # previously was 1.2 until 01/12/2023
+c_multiplier = 2.0  # previously was 1.2 until 01/12/2023
 
 k_type = 'simple'  # step size changes after each reversal only
 if c_multiplier > 1.1:

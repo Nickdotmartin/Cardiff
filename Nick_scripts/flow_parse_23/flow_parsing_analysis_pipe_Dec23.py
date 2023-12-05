@@ -28,7 +28,7 @@ if not os.path.isdir(exp_path):
     raise FileNotFoundError(f'exp_path: {exp_path} not found')
 
 # monitor dir contains a folder for each participant
-participant_list = ['pt1', 'pt2', 'pt3', 'pt4'] # , 'pt4']  # ' Nicktest_06102023' Nick_extra_prelims
+participant_list = ['test', 'pt1', 'pt3', 'pt4'] # , 'pt2', ]  # ' Nicktest_06102023' Nick_extra_prelims
 # participant_list = ['pt1']  # ' Nicktest_06102023' Nick_extra_prelims
 
 # p_idx_plus will analyse all runs starting from this number.
@@ -59,8 +59,9 @@ show_plots = True  # if True, shows plots as they are made
     'update_plots' only updates plots, 
     'just_new_data' only analyses new runs that haven't been analysed yet.
         It will update any downstream means and plots if new data is added.'''
-analyse_what = 'update_plots'  # 'update_plots', 'just_new_data', 'all'
+analyse_what = 'just_new_data'  # 'update_plots', 'just_new_data', 'all'
 
+new_exp_data = False  # if True, will update exp level results and plots
 
 # list of whether participants' data has been trimmed
 trim_list = []
@@ -71,11 +72,13 @@ for p_idx, participant_name in enumerate(participant_list):
 
     # path to this participant's data
     p_name_path = os.path.join(exp_path, participant_name)
+    print(f"p_name_path: {p_name_path}")
 
     # if this participant doesn't exist, skip to next participant
     if not os.path.isdir(p_name_path):
         print(f"\n\n\np_name_path: {p_name_path} not found\n\n\n")
         continue
+
 
     # append each run's data to these lists for mean staircases
     MASTER_p_trial_data_list = []
@@ -84,22 +87,23 @@ for p_idx, participant_name in enumerate(participant_list):
     dir_list = os.listdir(p_name_path)
     run_folder_names = []
     for i in range(12):  # numbers 0 to 11
-        check_dir = f'{participant_name}_{i+p_idx_plus}'   # numbers 1 to 12
+        check_dir = f'{participant_name}_{i+p_idx_plus}'  # numbers 1 to 12
         if check_dir in dir_list:
             run_folder_names.append(check_dir)
     print(f'run_folder_names: {run_folder_names}')
 
+    new_p_data = False  # if True, will update this participant level results and plots
 
-
+    '''loop through each run for this participant'''
     for run_idx, run_dir in enumerate(run_folder_names):
 
         r_idx_plus = run_idx + p_idx_plus
 
         print(f'\nrun_idx {run_idx}: running analysis for '
               f'{participant_name}, {run_dir}, {participant_name}_{r_idx_plus}\n')
+        run_path = os.path.join(p_name_path, run_dir)
+        print(f"run_path: {run_path}")
 
-
-        run_path = f'{p_name_path}{os.sep}{run_dir}'
 
         # # search automatically for probeDur folders to add to probe_dur_int_list
         probe_durs_dir_list = []
@@ -111,12 +115,12 @@ for p_idx, participant_name in enumerate(participant_list):
 
         print(f'probe_durs_dir_list: {probe_durs_dir_list}')
 
-        # don't delete this (p_name = participant_name),
+        # don't delete this (p_run_name = participant_name),
         # needed to ensure names go name1, name2, name3 not name1, name12, name123
-        p_name = participant_name
+        p_run_name = participant_name
 
         '''a - data extraction'''
-        p_name = f'{participant_name}_{r_idx_plus}'
+        p_run_name = f'{participant_name}_{r_idx_plus}'
         run_data_path = os.path.join(run_path, 'RUNDATA_sorted.csv')
         print(f"run_data_path: {run_data_path}\n")
 
@@ -129,8 +133,13 @@ for p_idx, participant_name in enumerate(participant_list):
                 analyse_this_run = False
         print(f"\nanalyse_this_run: {analyse_this_run}\n")
 
+
         if analyse_this_run:
-            run_data_df = a_data_extraction(p_name=p_name, run_dir=run_path,
+            new_p_data = True  # signal to update participant ave data and plots
+            new_exp_data = True  # signal to update exp ave data and plots
+
+            # do data extraction for this run
+            run_data_df = a_data_extraction(p_name=p_run_name, run_dir=run_path,
                                             dur_list=probe_durs_dir_list, verbose=verbose)
 
 
@@ -139,7 +148,7 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
         # get column showing run number (has changed since start of exp)
-        # search for 'Run_number' substring in column names
+        # search for 'run_number' substring in column names
         run_num_col = [col for col in run_data_df.columns if 'run_number' in col]
         if len(run_num_col) == 1:
             run_col_name = run_num_col[0]
@@ -154,8 +163,10 @@ for p_idx, participant_name in enumerate(participant_list):
 
         '''Get thresholds for each condition'''
         if analyse_this_run:
-            thr_df = psignifit_thr_df_Oct23(save_path=run_path, p_run_name=p_name,
-                                            run_df=run_data_df, cond_cols_list=var_cols_list,
+            thr_df = psignifit_thr_df_Oct23(save_path=run_path,
+                                            p_run_name=p_run_name,
+                                            run_df=run_data_df,
+                                            cond_cols_list=var_cols_list,
                                             thr_col=thr_col_name,
                                             resp_col=resp_col_name,
                                             wide_df_cols=probe_dur_col_name,
@@ -169,7 +180,7 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
     '''make mean staircase plot for each participant'''
-    if analyse_what == 'update_plots' or analyse_this_run:  # e.g., it was True for last run/latest data
+    if analyse_what == 'update_plots' or new_p_data:
 
         print(f"\n***making master per-trial df***")
         # join all output data from each run and save as master per-trial csv
@@ -201,7 +212,7 @@ for p_idx, participant_name in enumerate(participant_list):
         trim_n = 2
     print(f'\ntrim_n: {trim_n}')
 
-    if analyse_this_run:  # e.g., it was True for last run/latest data
+    if new_p_data:  # e.g., it was True for last run/latest data
         d_average_participant(root_path=p_name_path, run_dir_names_list=run_folder_names,
                               trim_n=trim_n, error_type='SE', verbose=verbose)
 
@@ -217,7 +228,7 @@ for p_idx, participant_name in enumerate(participant_list):
         err_path = os.path.join(p_name_path, 'MASTER_ave_thr_error_SE.csv')
     exp_ave = False
 
-    if analyse_what == 'update_plots' or analyse_this_run:  # e.g., it was True for last run/latest data
+    if analyse_what == 'update_plots' or new_p_data:  # e.g., it was True for last run/latest data
         # ONLY use untrimmed data for this plot.
         all_untrimmed_df = pd.read_csv(os.path.join(p_name_path, f'MASTER_psignifit_thresholds.csv'))
         print(f"\nall_untrimmed_df:\n{all_untrimmed_df}")
@@ -232,15 +243,13 @@ for p_idx, participant_name in enumerate(participant_list):
         joined_plot(untrimmed_df=all_untrimmed_df, x_cols_str=probe_dur_col_name,
                     hue_col_name=flow_dir_col_name, hue_labels=hue_labels,
                     participant_name=participant_name,
-                    x_label='Probe Duration (ms)', y_label='Probe Speed (deg per sec)',
+                    x_label='Probe Duration (ms)', y_label='Probe Velocity (deg per sec)',
                     extra_text=f'All data (untrimmed)',
                     save_path=p_name_path, save_name=None,
                     verbose=True)
 
 
-
-    if analyse_what == 'update_plots' or analyse_this_run:  # e.g., it was True for last run/latest data
-
+        '''run make average plots (with trimmed data if available)'''
         make_plots_Dec23(all_df_path, root_path=p_name_path,
                          participant_name=participant_name, n_trimmed=trim_n,
                          thr_col_name=thr_col_name,
@@ -248,21 +257,26 @@ for p_idx, participant_name in enumerate(participant_list):
                          hue_col_name=flow_name_col_name, hue_val_order=['exp', 'cont'],
                          hue_labels=hue_labels,
                          motion_col=bg_dur_name,
-                         x_label='Probe duration (ms)', y_label='Probe velocity (deg per sec)',
+                         x_label='Probe duration (ms)', y_label='Probe velocity (deg/sec)',
                          extra_text=None,
                          exp_ave=False)
 
 
 
 
+# remove 'test' data from any participant name so it is not in experiment level analysis and means
+# if any name containg 'test', remove it
+participant_list = [p_name for p_name in participant_list if 'test' not in p_name]
+
+
 print(f'exp_path: {exp_path}')
 print('\nget exp_average_data')
-if analyse_this_run:  # e.g., it was True for last run/latest data
+if new_exp_data:  # e.g., it was True for last run/latest data
     e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
                        error_type='SE',
                        verbose=True)
 
-if analyse_what == 'update_plots' or analyse_this_run:  # e.g., it was True for last run/latest data
+if analyse_what == 'update_plots' or new_exp_data:  # e.g., it was True for last run/latest data
     all_df_path = f'{exp_path}/MASTER_exp_all_thr.csv'
     all_df_path = os.path.join(exp_path, 'MASTER_exp_all_thr.csv')
 
@@ -272,22 +286,23 @@ if analyse_what == 'update_plots' or analyse_this_run:  # e.g., it was True for 
     if len(set(n_trimmed)) == 1:
         n_trimmed = n_trimmed[0]
 
-
+    '''make plots for experiment data'''
     make_plots_Dec23(all_df_path, root_path=exp_path,
-                     participant_name='exp_ave', n_trimmed=trim_n,
+                     participant_name='exp_ave', n_trimmed=n_trimmed,
                      thr_col_name=thr_col_name,
                      x_col_name=probe_dur_col_name,
                      hue_col_name=flow_name_col_name, hue_val_order=['exp', 'cont'],
                      hue_labels=hue_labels,
                      motion_col=bg_dur_name,
-                     x_label='Probe duration (ms)', y_label='Probe velocity (deg per sec)',
+                     x_label='Probe duration (ms)', y_label='Probe velocity (deg/sec)',
                      extra_text=None,
                      exp_ave=True)
 
+    '''do joined plot for experiment data linking participant means'''
     joined_plot(untrimmed_df=all_df_path, x_cols_str=probe_dur_col_name,
                 hue_col_name=flow_dir_col_name, hue_labels=hue_labels,
                 participant_name='exp_ave',
-                x_label='Probe Duration (ms)', y_label='Probe Speed (deg per sec)',
+                x_label='Probe Duration (ms)', y_label='Probe Velocity (deg per sec)',
                 extra_text=None,
                 save_path=exp_path, save_name=None,
                 verbose=True)

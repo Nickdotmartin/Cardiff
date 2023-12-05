@@ -63,6 +63,8 @@ show_plots = True  # if True, shows plots as they are made
 analyse_what = 'just_new_data'  # 'update_plots', 'just_new_data', 'all'
 # todo: just_new_data will need tweaking when I have more than one separation.
 
+new_exp_data = False  # if True, will update exp level results and plots
+
 # list of whether participants' data has been trimmed
 trim_list = []
 
@@ -92,13 +94,15 @@ for p_idx, participant_name in enumerate(participant_list):
             run_folder_names.append(check_dir)
     print(f'run_folder_names: {run_folder_names}')
 
+    new_p_data = False  # if True, will update this participant level results and plots
 
+    '''loop through each run for this participant'''
     for run_idx, run_dir in enumerate(run_folder_names):
 
         r_idx_plus = run_idx + p_idx_plus
 
         print(f'\nrun_idx {run_idx + 1}: running analysis for '
-              f'{participant_name}, {run_dir}, {participant_name}_{r_idx_plus}')
+              f'{participant_name}, {run_dir}, {participant_name}_{r_idx_plus}\n')
         run_path = os.path.join(p_name_path, run_dir)
         print(f"run_path: {run_path}")
 
@@ -124,6 +128,10 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
         if analyse_this_run:
+            new_p_data = True  # signal to update participant ave data and plots
+            new_exp_data = True  # signal to update exp ave data and plots
+
+            # do data extraction for this run
             run_data_df = a_data_extraction_Oct23(p_name=p_run_name, run_dir=run_path,
                                                   verbose=verbose)
 
@@ -178,40 +186,42 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
 
-    '''mean staircase for each bg type'''
-    print(f"\n***making master per-trial df ***")
-    # join all output data from each run and save as master per-trial csv
-    MASTER_p_trial_data_df = pd.concat(MASTER_p_trial_data_list, ignore_index=True)
-    # just select columns I need for master df
-    MASTER_p_trial_data_df = MASTER_p_trial_data_df[[run_col_name, 'stair', stair_names_col_name, 'step',
-                                                     isi_col_name, sep_col_name, neg_sep_col_name,
-                                                     cong_col_name, bg_dur_name, bg_dur_name, thr_col_name,
-                                                     resp_col_name]]
-    MASTER_p_trial_data_name = f'MASTER_p_trial_data.csv'
-    MASTER_p_trial_data_df.to_csv(os.path.join(p_name_path, MASTER_p_trial_data_name), index=False)
-    if verbose:
-        print(f'\nMASTER_p_trial_data_df:\n{MASTER_p_trial_data_df}')
+    '''make mean staircase plot for each participant'''
+    if analyse_what == 'update_plots' or new_p_data:
 
-    mean_staircase_plots(per_trial_df=MASTER_p_trial_data_df, save_path=p_name_path,
-                         participant_name=participant_name, run_col_name=run_col_name,
-                         thr_col_name=thr_col_name,
-                         isi_col_name=isi_col_name, sep_col_name=sep_col_name,
-                         hue_col_name=cong_col_name, hue_names=cong_labels,
-                         ave_type='mean',
-                         show_plots=True, save_plots=True, verbose=True)
+        print(f"\n***making master per-trial df ***")
+        # join all output data from each run and save as master per-trial csv
+        MASTER_p_trial_data_df = pd.concat(MASTER_p_trial_data_list, ignore_index=True)
+        # just select columns I need for master df
+        MASTER_p_trial_data_df = MASTER_p_trial_data_df[[run_col_name, 'stair', stair_names_col_name, 'step',
+                                                         isi_col_name, sep_col_name, neg_sep_col_name,
+                                                         cong_col_name, bg_dur_name, bg_dur_name, thr_col_name,
+                                                         resp_col_name]]
+        MASTER_p_trial_data_name = f'MASTER_p_trial_data.csv'
+        MASTER_p_trial_data_df.to_csv(os.path.join(p_name_path, MASTER_p_trial_data_name), index=False)
+        if verbose:
+            print(f'\nMASTER_p_trial_data_df:\n{MASTER_p_trial_data_df}')
 
-    # if there are multiple separations, do mean staircase plots for each separation
-    if len(MASTER_p_trial_data_df[sep_col_name].unique()) > 1:
-        for sep in MASTER_p_trial_data_df[sep_col_name].unique():
-            sep_df = MASTER_p_trial_data_df[MASTER_p_trial_data_df[sep_col_name] == sep]
-            print(f"\nsep_df:\n{sep_df}")
-            mean_staircase_plots(per_trial_df=sep_df, save_path=p_name_path,
-                                 participant_name=participant_name, run_col_name=run_col_name,
-                                 thr_col_name=thr_col_name,
-                                 isi_col_name=isi_col_name, sep_col_name=sep_col_name,
-                                 hue_col_name=cong_col_name, hue_names=cong_labels,
-                                 ave_type='mean',
-                                 show_plots=True, save_plots=True, verbose=True)
+        mean_staircase_plots(per_trial_df=MASTER_p_trial_data_df, save_path=p_name_path,
+                             participant_name=participant_name, run_col_name=run_col_name,
+                             thr_col_name=thr_col_name,
+                             isi_col_name=isi_col_name, sep_col_name=sep_col_name,
+                             hue_col_name=cong_col_name, hue_names=cong_labels,
+                             ave_type='mean',
+                             show_plots=True, save_plots=True, verbose=True)
+
+        # if there are multiple separations, do mean staircase plots for each separation
+        if len(MASTER_p_trial_data_df[sep_col_name].unique()) > 1:
+            for sep in MASTER_p_trial_data_df[sep_col_name].unique():
+                sep_df = MASTER_p_trial_data_df[MASTER_p_trial_data_df[sep_col_name] == sep]
+                print(f"\nsep_df:\n{sep_df}")
+                mean_staircase_plots(per_trial_df=sep_df, save_path=p_name_path,
+                                     participant_name=participant_name, run_col_name=run_col_name,
+                                     thr_col_name=thr_col_name,
+                                     isi_col_name=isi_col_name, sep_col_name=sep_col_name,
+                                     hue_col_name=cong_col_name, hue_names=cong_labels,
+                                     ave_type='mean',
+                                     show_plots=True, save_plots=True, verbose=True)
 
 
 
@@ -227,7 +237,7 @@ for p_idx, participant_name in enumerate(participant_list):
     cols_to_replace = [cong_col_name, sep_col_name, bg_dur_name]
     groupby_cols = ['neg_sep']
 
-    if analyse_this_run:  # e.g., it was True for last run/latest data
+    if new_p_data:  # e.g., it was True for last run/latest data
         d_average_participant(root_path=p_name_path, run_dir_names_list=run_folder_names,
                               trim_n=trim_n,
                               groupby_col=groupby_cols,
@@ -243,7 +253,7 @@ for p_idx, participant_name in enumerate(participant_list):
         all_df_path = os.path.join(p_name_path, f'MASTER_psignifit_thresholds.csv')
 
     '''make joined plot with untrimmed data'''
-    if analyse_what == 'update_plots' or analyse_this_run:  # e.g., it was True for last run/latest data
+    if analyse_what == 'update_plots' or new_p_data:  # e.g., it was True for last run/latest data
         # ONLY use untrimmed data for this plot.
         all_untrimmed_df = pd.read_csv(os.path.join(p_name_path, f'MASTER_psignifit_thresholds.csv'))
         print(f"\nall_untrimmed_df:\n{all_untrimmed_df}")
@@ -255,44 +265,50 @@ for p_idx, participant_name in enumerate(participant_list):
             joined_plot(untrimmed_df=sep_df, x_cols_str=isi_col_name,
                         hue_col_name=cong_col_name, hue_labels=cong_labels,
                         participant_name=participant_name,
-                        x_label='ISI (ms)', y_label='Probe Luminance',
+                        x_label='ISI (ms)', y_label='Probe Luminance (cd/m\u00b2)',
                         extra_text=f'sep{separation}',
                         save_path=p_name_path, save_name=None,
                         verbose=True)
 
 
+            '''run make average plots (with trimmed data if available)'''
+            all_df = pd.read_csv(all_df_path)
 
-        '''run make average plots (with trimmed data if available)'''
-        all_df = pd.read_csv(all_df_path)
+            for sep in all_df[sep_col_name].unique():
+                print(f"\nsep: {sep}")
+                sep_df = all_df[all_df[sep_col_name] == sep]
+                print(f"sep_df:\n{sep_df}")
 
-        for sep in all_df[sep_col_name].unique():
-            print(f"\nsep: {sep}")
-            sep_df = all_df[all_df[sep_col_name] == sep]
-            print(f"sep_df:\n{sep_df}")
-
-            make_plots_Dec23(sep_df, root_path=p_name_path,
-                             participant_name=participant_name, n_trimmed=trim_n,
-                             thr_col_name=thr_col_name,
-                             x_col_name=isi_col_name,
-                             hue_col_name=cong_col_name, hue_val_order=[-1, 1],
-                             hue_labels=cong_labels,
-                             motion_col=bg_dur_name,
-                             x_label='ISI (ms)', y_label='Probe Luminance',
-                             extra_text=f'sep{sep}',
-                             exp_ave=False)
+                make_plots_Dec23(sep_df, root_path=p_name_path,
+                                 participant_name=participant_name, n_trimmed=trim_n,
+                                 thr_col_name=thr_col_name,
+                                 x_col_name=isi_col_name,
+                                 hue_col_name=cong_col_name, hue_val_order=[-1, 1],
+                                 hue_labels=cong_labels,
+                                 motion_col=bg_dur_name,
+                                 x_label='ISI (ms)', y_label='Probe Luminance (cd/m\u00b2)',
+                                 extra_text=f'sep{sep}',
+                                 exp_ave=False)
 
 
-print('\nget exp_average_data')
+
+
+# remove 'test' data from any participant name so it is not in experiment level analysis and means
+# if any name containg 'test', remove it
+participant_list = [p_name for p_name in participant_list if 'test' not in p_name]
+
+
+print(f'\nget exp_average_data for: {participant_list}')
 # todo: trim list needs to relate to separation values too
 
 
-if analyse_this_run:  # e.g., it was True for last run/latest data
+if new_exp_data:  # e.g., it was True for last run/latest data
     e_average_exp_data_Dec23(exp_path=exp_path, p_names_list=participant_list,
                              error_type='SE',
                              verbose=True)
 
 '''run make average plots'''
-if analyse_what == 'update_plots' or analyse_this_run:  # e.g., it was True for last run/latest data
+if analyse_what == 'update_plots' or new_exp_data:  # e.g., it was True for last run/latest data
 
     all_df_path = os.path.join(exp_path, "MASTER_exp_all_thr.csv")
     all_df = pd.read_csv(all_df_path)
@@ -315,14 +331,14 @@ if analyse_what == 'update_plots' or analyse_this_run:  # e.g., it was True for 
                          hue_col_name=cong_col_name, hue_val_order=[-1, 1],
                          hue_labels=cong_labels,
                          motion_col=bg_dur_name,
-                         x_label='ISI (ms)', y_label='Probe Luminance',
+                         x_label='ISI (ms)', y_label='Probe Luminance (cd/m\u00b2)',
                          extra_text=f'sep{sep}',
                          exp_ave=True)
 
         '''do joined plot for experiment data linking participant means'''
         joined_plot(untrimmed_df=sep_df, x_cols_str=isi_col_name,
                     hue_col_name=cong_col_name, hue_labels=cong_labels,
-                    participant_name='exp_ave', x_label='ISI (ms)', y_label='Probe Luminance',
+                    participant_name='exp_ave', x_label='ISI (ms)', y_label='Probe Luminance (cd/m\u00b2)',
                     extra_text=f'sep{sep}',
                     save_path=exp_path, save_name=None,
                     verbose=True)

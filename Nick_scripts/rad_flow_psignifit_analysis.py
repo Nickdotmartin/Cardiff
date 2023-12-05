@@ -3173,17 +3173,34 @@ def joined_plot(untrimmed_df, x_cols_str='isi_ms',
     ax.set_xticks(labels_go_here,
                   labels=x_vals_list)
 
+    # decorate plot, x axis label, legend, suptitle and title
+    suptitle_text = f"{participant_name} thresholds, means and SE of {n_runs} runs"
+    if 'exp' in participant_name:
+        suptitle_text = f"{participant_name} thresholds, means and SE of {n_runs} participants"
+
     # if y_axis crosses zero, add grey dashed line at zero
     # (e.g., min value is less than zero and max is more than zero)
     if long_df['y_values'].min() < 0 and long_df['y_values'].max() > 0:
         ax.axhline(y=0, linestyle="--", color='grey')
+        suptitle_text = suptitle_text + '\n-ive = outwards, +ive = inwards'
 
-    # decorate plot, x axis label, legend, suptitle and title
+    plt.suptitle(suptitle_text)  # big title
+    ax.set_title(extra_text)  # smaller title underneath
+
+    # get x tick labels, if '-1.0' or '-1' is first label, change to 'Conc'
+    if 'ISI' in x_label.upper():
+        # get x tick labels, if '-1.0' or '-1' is first label, change to 'Conc'
+        x_tick_labels = ax.get_xticklabels()
+        if x_tick_labels[0].get_text() in ['-1', '-1.0', -1, -1.0]:
+            x_tick_labels[0].set_text('Concurrent')
+        else:
+            print(f"-1 not in x_tick_labels: {x_tick_labels}")
+        ax.set_xticklabels(x_tick_labels)
+
     ax.set_xlabel(x_label)
     ax.set_ylabel(y_label)
     ax.legend(labels=hue_labels, loc='best', framealpha=.3)
-    plt.suptitle(f"{participant_name} thresholds, means and SE of {n_runs} runs")  # big title
-    ax.set_title(extra_text)  # smaller title underneath
+
 
     if save_name is None:
         if extra_text is not None:
@@ -5823,10 +5840,16 @@ def make_plots_Dec23(all_df_path, root_path, participant_name, n_trimmed,
     ax.legend(handles[0:2], labels[0:2], loc='best', title='flow direction')
 
     # save figure
-    if n_trimmed:
-        plt.savefig(os.path.join(root_path, f"{participant_name}_TM{n_trimmed}_not_joined.png"))
+    if extra_text is not None:
+        if n_trimmed:
+            plt.savefig(os.path.join(root_path, f"{participant_name}_TM{n_trimmed}_{extra_text}_not_joined.png"))
+        else:
+            plt.savefig(os.path.join(root_path, f"{participant_name}_{extra_text}_not_joined.png"))
     else:
-        plt.savefig(os.path.join(root_path, f"{participant_name}_not_joined.png"))
+        if n_trimmed:
+            plt.savefig(os.path.join(root_path, f"{participant_name}_TM{n_trimmed}_not_joined.png"))
+        else:
+            plt.savefig(os.path.join(root_path, f"{participant_name}_not_joined.png"))
 
     plt.show()
 
@@ -5909,10 +5932,16 @@ def make_plots_Dec23(all_df_path, root_path, participant_name, n_trimmed,
                       f"-ive = {hue_labels[0]} greater, +ive = {hue_labels[1]} greater")
         plt.subplots_adjust(top=0.85)  # add space below suptitle
 
-        if n_trimmed:
-            plt.savefig(os.path.join(root_path, f"{participant_name}_TM{n_trimmed}_diff_line.png"))
+        if extra_text is not None:
+            if n_trimmed:
+                plt.savefig(os.path.join(root_path, f"{participant_name}_TM{n_trimmed}_{extra_text}_diff_line.png"))
+            else:
+                plt.savefig(os.path.join(root_path, f"{participant_name}_{extra_text}_diff_line.png"))
         else:
-            plt.savefig(os.path.join(root_path, f"{participant_name}_diff_line.png"))
+            if n_trimmed:
+                plt.savefig(os.path.join(root_path, f"{participant_name}_TM{n_trimmed}_diff_line.png"))
+            else:
+                plt.savefig(os.path.join(root_path, f"{participant_name}_diff_line.png"))
         plt.show()
 
     print("\n*** finished make_flow_parse_plots()***\n")
