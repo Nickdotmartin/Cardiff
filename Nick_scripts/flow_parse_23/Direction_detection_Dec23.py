@@ -852,7 +852,7 @@ if start_dist_pix_in_dur > min_max_dist:
 
 # # # CONSTRUCT STAIRCASES # # #
 # proportion of stairStart to use to get intial step size, but this is NOT the actual step size
-c_multiplier = 2.0  # previously was 1.2 until 01/12/2023
+c_multiplier = 1.8  # previously was 1.2 until 01/12/2023
 
 k_type = 'simple'  # step size changes after each reversal only
 if c_multiplier > 1.1:
