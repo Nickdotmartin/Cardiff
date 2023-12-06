@@ -28,7 +28,7 @@ if not os.path.isdir(exp_path):
     raise FileNotFoundError(f'exp_path: {exp_path} not found')
 
 # monitor dir contains a folder for each participant
-participant_list = ['test', 'pt1', 'pt3', 'pt4'] # , 'pt2', ]  # ' Nicktest_06102023' Nick_extra_prelims
+participant_list = ['pt1', 'pt3', 'pt4'] # , 'pt2', 'test']  # ' Nicktest_06102023' Nick_extra_prelims
 # participant_list = ['pt1']  # ' Nicktest_06102023' Nick_extra_prelims
 
 # p_idx_plus will analyse all runs starting from this number.
@@ -59,7 +59,7 @@ show_plots = True  # if True, shows plots as they are made
     'update_plots' only updates plots, 
     'just_new_data' only analyses new runs that haven't been analysed yet.
         It will update any downstream means and plots if new data is added.'''
-analyse_what = 'just_new_data'  # 'update_plots', 'just_new_data', 'all'
+analyse_what = 'update_plots'  # 'update_plots', 'just_new_data', 'all'
 
 new_exp_data = False  # if True, will update exp level results and plots
 
@@ -180,7 +180,7 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
     '''make mean staircase plot for each participant'''
-    if analyse_what == 'update_plots' or new_p_data:
+    if new_p_data or analyse_what:
 
         print(f"\n***making master per-trial df***")
         # join all output data from each run and save as master per-trial csv
@@ -243,7 +243,7 @@ for p_idx, participant_name in enumerate(participant_list):
         joined_plot(untrimmed_df=all_untrimmed_df, x_cols_str=probe_dur_col_name,
                     hue_col_name=flow_dir_col_name, hue_labels=hue_labels,
                     participant_name=participant_name,
-                    x_label='Probe Duration (ms)', y_label='Probe Velocity (deg per sec)',
+                    x_label='Probe Duration (ms)', y_label='Probe Speed (deg / sec)',
                     extra_text=f'All data (untrimmed)',
                     save_path=p_name_path, save_name=None,
                     verbose=True)
@@ -257,7 +257,7 @@ for p_idx, participant_name in enumerate(participant_list):
                          hue_col_name=flow_name_col_name, hue_val_order=['exp', 'cont'],
                          hue_labels=hue_labels,
                          motion_col=bg_dur_name,
-                         x_label='Probe duration (ms)', y_label='Probe velocity (deg/sec)',
+                         x_label='Probe duration (ms)', y_label='Probe Speed (deg/sec)',
                          extra_text=None,
                          exp_ave=False)
 
@@ -294,7 +294,7 @@ if analyse_what == 'update_plots' or new_exp_data:  # e.g., it was True for last
                      hue_col_name=flow_name_col_name, hue_val_order=['exp', 'cont'],
                      hue_labels=hue_labels,
                      motion_col=bg_dur_name,
-                     x_label='Probe duration (ms)', y_label='Probe velocity (deg/sec)',
+                     x_label='Probe duration (ms)', y_label='Probe Speed (deg/sec)',
                      extra_text=None,
                      exp_ave=True)
 
@@ -302,7 +302,7 @@ if analyse_what == 'update_plots' or new_exp_data:  # e.g., it was True for last
     joined_plot(untrimmed_df=all_df_path, x_cols_str=probe_dur_col_name,
                 hue_col_name=flow_dir_col_name, hue_labels=hue_labels,
                 participant_name='exp_ave',
-                x_label='Probe Duration (ms)', y_label='Probe Velocity (deg per sec)',
+                x_label='Probe Duration (ms)', y_label='Probe Speed (deg / sec)',
                 extra_text=None,
                 save_path=exp_path, save_name=None,
                 verbose=True)

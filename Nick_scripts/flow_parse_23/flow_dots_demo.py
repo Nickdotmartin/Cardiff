@@ -7,6 +7,7 @@ from os import path, chdir
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 import numpy as np
+from numpy import array, random, where, sum, linspace, pi, rad2deg, arctan, arctan2, cos, sin, hypot
 
 import copy
 
@@ -26,11 +27,11 @@ def find_angle(adjacent, opposite):
     the adjacent side is the distance from the screen,
     and the opposite side is the size of the square onscreen.
 
-    :param adjacent: A numpy array of the lengths of the adjacent sides (e.g., distance z_array).
-    :param opposite: The (scalar) length of the side opposite the angle you want to find.
+    :param adjacent: A numpy array of the lengths (in cm) of the adjacent sides (e.g., distance z_array).
+    :param opposite: The (scalar) length (in cm) of the side opposite the angle you want to find.
     :return: A numpy array of the angles in degrees.
     """
-    return np.rad2deg(np.arctan(opposite / adjacent))
+    return rad2deg(arctan(opposite / adjacent))
 
 
 
@@ -96,6 +97,67 @@ def update_dotlife(dotlife_array, dot_max_fr,
     dotlife_array[replace_mask] = 0
 
     return dotlife_array, x_array, y_array, z_array
+
+
+def make_xy_spokes(x_array, y_array):
+    """
+    Function to take dots evenly spaced across screen, and make it so that they appear in
+    4 'spokes' (top, bottom, left and right).  That is, wedge shaped regions, with the point of the
+    wedge at the centre of the screen, and the wide end at the edge of the screen.
+    There are four blank regions with no dots between each spoke, extending to the four corners of the screen.
+    Probes are presented in the four corners, so using make_xy_spokes means that the probes are never presented
+    on top of dots.
+
+    1. get constants to use:
+        rad_eighth_slice is the wedge width in radians (e.g., 45 degrees)
+        rad_octants is list of 8 equally spaced values between -pi and pi, ofset by rad_sixteenth_slice (e.g., -22.5 degrees)
+
+
+    rad_octants (like quadrants, but eight of them, e.g., 45 degrees)
+        ofset them by adding rad_eighth_slice / 2 to them  (e.g., equivillent to 22.5 degrees).
+        I've hard coded these, so they don't need to be calculated each frame.
+    2. convert cartesian (x, y) co-ordinates to polar co-ordinates (e.g., distance and angle (radians) from centre).
+    3. rotate values between pairs of rad_octants by rad_sixteenth_slice (e.g., -45 degrees).
+    4. add 2*pi to any values less than -pi, to make them positive, but similarly rotated (360 degrees is 2*pi radians).
+    5. convert back to cartesian co-ordinates.
+
+    :param x_array: numpy array of x values with shape (n_dots, 1), 0 as middle of screen.
+    :param y_array: numpy array of y values with shape (n_dots, 1), 0 as middle of screen.
+    :return: new x_array and y_array
+    """
+
+
+    # # # CONSTANT VALUES TO USE # # #
+    # # spokes/wedges width is: degrees = 360 / 8 = 45; radians = 2*pi / 8 = pi / 4 = 0.7853981633974483
+    rad_eighth_slice = 0.7853981633974483
+
+    # # rad_octants is list of 8 equally spaced values between -pi and pi, ofset by rad_sixteenth_slice (e.g., -22.5 degrees)
+    # # in degrees this would be [22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5]
+    # rad_octants = [i + rad_eighth_slice / 2 for i in linspace(-pi, pi, 8, endpoint=False)]
+    rad_octants = [-2.748893571891069, -1.9634954084936207, -1.1780972450961724, -0.39269908169872414,
+                   0.39269908169872414, 1.1780972450961724, 1.9634954084936207, 2.748893571891069]
+
+
+    # # # RUN FUNCTION USING CONSTANTS # # #
+    # Convert Cartesian coordinates to polar coordinates.
+    # r is distance, theta is angle in radians (from -pi to pi)
+    r_array, theta_array = hypot(x_array, y_array), arctan2(y_array, x_array)
+
+    # # make a mask for values between pairs of rad_octants in theta_array
+    mask = ((theta_array >= rad_octants[0]) & (theta_array < rad_octants[1])) | \
+                ((theta_array >= rad_octants[2]) & (theta_array < rad_octants[3])) | \
+                    ((theta_array >= rad_octants[4]) & (theta_array < rad_octants[5])) | \
+                        ((theta_array >= rad_octants[6]) & (theta_array < rad_octants[7]))
+
+    # rotate values specified by mask by rad_eighth_slice (e.g., -45 degrees)
+    theta_array[mask] -= rad_eighth_slice
+
+    # if any values are less than -pi, add 2*pi to make them positive, but similarly rotated (360 degrees is 2*pi radians)
+    theta_array = where(theta_array < -pi, theta_array + 2*pi, theta_array)
+
+    # convert r and theta arrays back to x and y arrays (e.g., radians to cartesian)
+    return r_array * cos(theta_array), r_array * sin(theta_array)  # x_array, y_array
+
 
 
 def scaled_dots_pos_array(x_array, y_array, z_array, frame_size_cm, reference_angle):

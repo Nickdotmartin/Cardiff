@@ -5895,14 +5895,16 @@ def make_plots_Dec23(all_df_path, root_path, participant_name, n_trimmed,
     if len(diff_df[x_col_name].unique().tolist()) > 1:
         fig, ax = plt.subplots()
 
+        # individual datapoints
+        sns.stripplot(data=diff_df, x=x_col_name, y='diff',
+                      dodge=True, color='grey', alpha=.7,
+                      ax=ax)
+
         # lineplot with errorbars
         sns.pointplot(data=diff_df, x=x_col_name, y='diff',
                       errorbar='se', capsize=.1, errwidth=2,
                       ax=ax)
-        # individual datapoints
-        sns.stripplot(data=diff_df, x=x_col_name, y='diff',
-                      dodge=True, color='lightgrey',
-                      ax=ax)
+
 
         plt.axhline(y=0.0, color='grey', linestyle='--')
 

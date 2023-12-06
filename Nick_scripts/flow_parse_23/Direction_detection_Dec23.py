@@ -555,7 +555,7 @@ else:
 
 # now using same bg lum settings for all monitors
 bgLumProp = 0   # use .2 to match exp1 or .45 to match radial_flow_NM_v2.py
-bgLum =  0.0 / 1000  # hard coded to zero rather than maxLum * bgLumProp
+bgLum = 0.0 / 1000  # hard coded to zero rather than maxLum * bgLumProp
 
 # colour space
 this_colourSpace = 'rgb1'  # values between 0 and 1
