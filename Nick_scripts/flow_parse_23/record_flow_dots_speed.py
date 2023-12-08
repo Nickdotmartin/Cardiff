@@ -338,9 +338,9 @@ print(f"dva_per_pix: {dva_per_pix}")
 
 dist_from_fix = int((np.tan(np.deg2rad(probe_ecc)) * view_dist_pix) / np.sqrt(2))
 print(f"dist_from_fix: {dist_from_fix}")
-dff_2 = int((np.tan(np.deg2rad(dva_3)) * view_dist_pix) / np.sqrt(2))
-print(f"dff_2: {dff_2}")
-dff_6 = int((np.tan(np.deg2rad(dva_5)) * view_dist_pix) / np.sqrt(2))
+dff_3 = int((np.tan(np.deg2rad(dva_3)) * view_dist_pix) / np.sqrt(2))
+dff_5 = int((np.tan(np.deg2rad(dva_5)) * view_dist_pix) / np.sqrt(2))
+print(f"dff_3: {dff_3}, dff_5: {dff_5}")
 
 
 '''FLOW DOT SETTINGS'''
@@ -559,7 +559,7 @@ dff_pix = np.sqrt(dot_df['x_pix']**2 + dot_df['y_pix']**2)
 dot_df['dff_pix'] = dff_pix
 
 # add dva4_region column to dataframe for dots that are between 3 and 5 dva from the centre of the screen.
-dot_df['dva4_region'] = np.where((dot_df['dff_pix'] >= dff_2) & (dot_df['dff_pix'] <= dff_6), 1, 0)
+dot_df['dva4_region'] = np.where((dot_df['dff_pix'] >= dff_3) & (dot_df['dff_pix'] <= dff_5), 1, 0)
 
 # get the distance travelled by each dot in pixels using the x and y positions and dot_idx.
 # compare position on frame_num, but if NaN if dot_life is 0.
