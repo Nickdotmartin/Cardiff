@@ -28,7 +28,7 @@ if not os.path.isdir(exp_path):
     raise FileNotFoundError(f'exp_path: {exp_path} not found')
 
 # monitor dir contains a folder for each participant
-participant_list = ['pt1', 'pt3', 'pt4'] # , 'pt2', 'test']  # ' Nicktest_06102023' Nick_extra_prelims
+participant_list = ['pt1', 'pt3', 'pt4', 'pt5', 'pt6'] # , 'pt2', 'test']  # ' Nicktest_06102023' Nick_extra_prelims
 # participant_list = ['pt1']  # ' Nicktest_06102023' Nick_extra_prelims
 
 # p_idx_plus will analyse all runs starting from this number.
@@ -46,7 +46,7 @@ hue_labels = ['Expanding flow', 'Contracting flow']
 probe_dur_col_name = 'probe_dur_ms'  # durations
 probe_dir_col_name = 'probe_dir'  # directions
 resp_col_name = 'response'  # NOT resp_corr
-
+run_col_name = 'run_number'
 # psignifit will loop through these variables (columns) to get thresholds for each condition
 var_cols_list = [flow_dir_col_name, flow_name_col_name, probe_dur_col_name, bg_dur_name]
 
@@ -59,7 +59,7 @@ show_plots = True  # if True, shows plots as they are made
     'update_plots' only updates plots, 
     'just_new_data' only analyses new runs that haven't been analysed yet.
         It will update any downstream means and plots if new data is added.'''
-analyse_what = 'update_plots'  # 'update_plots', 'just_new_data', 'all'
+analyse_what = 'just_new_data'  # 'update_plots', 'just_new_data', 'all'
 
 new_exp_data = False  # if True, will update exp level results and plots
 
@@ -77,6 +77,8 @@ for p_idx, participant_name in enumerate(participant_list):
     # if this participant doesn't exist, skip to next participant
     if not os.path.isdir(p_name_path):
         print(f"\n\n\np_name_path: {p_name_path} not found\n\n\n")
+        # remove from participant list
+        participant_list.remove(participant_name)
         continue
 
 
@@ -87,7 +89,7 @@ for p_idx, participant_name in enumerate(participant_list):
     dir_list = os.listdir(p_name_path)
     run_folder_names = []
     for i in range(12):  # numbers 0 to 11
-        check_dir = f'{participant_name}_{i+p_idx_plus}'  # numbers 1 to 12
+        check_dir = f'{participant_name}_{i + p_idx_plus}'  # numbers 1 to 12
         if check_dir in dir_list:
             run_folder_names.append(check_dir)
     print(f'run_folder_names: {run_folder_names}')
@@ -140,7 +142,8 @@ for p_idx, participant_name in enumerate(participant_list):
 
             # do data extraction for this run
             run_data_df = a_data_extraction(p_name=p_run_name, run_dir=run_path,
-                                            dur_list=probe_durs_dir_list, verbose=verbose)
+                                            dur_list=probe_durs_dir_list,
+                                            verbose=verbose)
 
 
         run_data_df = pd.read_csv(run_data_path)
@@ -149,14 +152,19 @@ for p_idx, participant_name in enumerate(participant_list):
 
         # get column showing run number (has changed since start of exp)
         # search for 'run_number' substring in column names
-        run_num_col = [col for col in run_data_df.columns if 'run_number' in col]
-        if len(run_num_col) == 1:
-            run_col_name = run_num_col[0]
-        elif len(run_num_col) == 0:
-            run_col_name = 'run_number'
-            # add 'run' to run_data_df if not already there
-            if 'run_number' not in run_data_df.columns.tolist():
-                run_data_df.insert(0, 'run_number', run_idx + 1)
+        # run_num_col = [col for col in run_data_df.columns if 'run_number' in col]
+        # if len(run_num_col) == 1:
+        #     run_col_name = run_num_col[0]
+        # elif len(run_num_col) == 0:
+        #     run_col_name = 'run_number'
+        #     # add 'run' to run_data_df if not already there
+        #     if 'run_number' not in run_data_df.columns.tolist():
+        #         run_data_df.insert(0, 'run_number', run_idx + 1)
+        if 'run_number' not in run_data_df.columns.tolist():
+            run_data_df.insert(0, 'run_number', run_idx + 1)
+        # check if run number column is empty
+        elif run_data_df['run_number'].isnull().values.any():
+            run_data_df['run_number'] = run_idx + 1
         print(f"run_col_name: {run_col_name}")
         MASTER_p_trial_data_list.append(run_data_df)
 
@@ -180,17 +188,18 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
     '''make mean staircase plot for each participant'''
-    if new_p_data or analyse_what:
+    if new_p_data or analyse_what == 'update_plots':
 
         print(f"\n***making master per-trial df***")
         # join all output data from each run and save as master per-trial csv
         MASTER_p_trial_data_df = pd.concat(MASTER_p_trial_data_list, ignore_index=True)
         # just select columns I need for master df
-        MASTER_p_trial_data_df = MASTER_p_trial_data_df[[run_col_name, 'stair', stair_names_col_name, 'step',
+        MASTER_p_trial_data_df = MASTER_p_trial_data_df[[run_col_name,
+                                                         'stair', stair_names_col_name, 'step',
                                                          flow_dir_col_name, flow_name_col_name,
                                                          probe_dur_col_name, bg_dur_name,
-                                                         probe_dir_col_name, thr_col_name, resp_col_name]]
-
+                                                         probe_dir_col_name,
+                                                         thr_col_name, resp_col_name]]
         MASTER_p_trial_data_name = f'MASTER_p_trial_data.csv'
         MASTER_p_trial_data_df.to_csv(os.path.join(p_name_path, MASTER_p_trial_data_name), index=False)
         if verbose:
@@ -211,6 +220,7 @@ for p_idx, participant_name in enumerate(participant_list):
     if len(run_folder_names) == 12:
         trim_n = 2
     print(f'\ntrim_n: {trim_n}')
+    trim_list.append(trim_n)
 
     if new_p_data:  # e.g., it was True for last run/latest data
         d_average_participant(root_path=p_name_path, run_dir_names_list=run_folder_names,
@@ -220,20 +230,15 @@ for p_idx, participant_name in enumerate(participant_list):
 
     # get paths to average data for plots
     all_df_path = os.path.join(p_name_path, f'MASTER_TM{trim_n}_thresholds.csv')
-    p_ave_path = os.path.join(p_name_path, f'MASTER_ave_TM{trim_n}_thresh.csv')
-    err_path = os.path.join(p_name_path, f'MASTER_ave_TM{trim_n}_thr_error_SE.csv')
     if trim_n is None:
         all_df_path = os.path.join(p_name_path, f'MASTER_psignifit_thresholds.csv')
-        p_ave_path = os.path.join(p_name_path, 'MASTER_ave_thresh.csv')
-        err_path = os.path.join(p_name_path, 'MASTER_ave_thr_error_SE.csv')
-    exp_ave = False
 
-    if analyse_what == 'update_plots' or new_p_data:  # e.g., it was True for last run/latest data
+    if new_p_data or analyse_what == 'update_plots':
         # ONLY use untrimmed data for this plot.
         all_untrimmed_df = pd.read_csv(os.path.join(p_name_path, f'MASTER_psignifit_thresholds.csv'))
         print(f"\nall_untrimmed_df:\n{all_untrimmed_df}")
 
-
+        '''make joined plot with untrimmed data'''
         if len(all_untrimmed_df[bg_dur_name].unique()) == 1:
             bg_motion_dur = all_untrimmed_df[bg_dur_name].unique()[0]
             print(f"bg_motion_dur: {bg_motion_dur}")
@@ -276,11 +281,10 @@ if new_exp_data:  # e.g., it was True for last run/latest data
                        error_type='SE',
                        verbose=True)
 
-if analyse_what == 'update_plots' or new_exp_data:  # e.g., it was True for last run/latest data
+if new_exp_data or analyse_what == 'update_plots':  # e.g., it was True for last run/latest data
     all_df_path = f'{exp_path}/MASTER_exp_all_thr.csv'
     all_df_path = os.path.join(exp_path, 'MASTER_exp_all_thr.csv')
 
-    exp_ave = True
     n_trimmed = trim_list
     # if all values in trim_list are the same, just use that value
     if len(set(n_trimmed)) == 1:

@@ -17,8 +17,8 @@ Other variables should be fine to stay as they are.
 '''
 
 # path to dir containing experiment data
-# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Target_detection_Dec23"
-exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Missing_target_detection_Dec23"
+exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Target_detection_Dec23"
+# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Missing_target_detection_Dec23"
 exp_path = os.path.normpath(exp_path)
 print(f"exp_path: {exp_path}")
 
@@ -31,7 +31,7 @@ if not os.path.isdir(exp_path):
 
 
 # monitor dir contains a folder for each participant
-participant_list = ['pt1', 'pt2', 'pt3', 'pt4'] # , 'pt5', 'pt6]  #
+participant_list = ['pt1', 'pt2', 'pt3', 'pt4', 'pt5', 'pt6']  #
 
 
 # p_idx_plus will analyse all runs starting from this number.
@@ -79,6 +79,8 @@ for p_idx, participant_name in enumerate(participant_list):
     # if this participant doesn't exist, skip to next participant
     if not os.path.isdir(p_name_path):
         print(f"\n\n\np_name_path: {p_name_path} not found\n\n\n")
+        # remove from participant list
+        participant_list.remove(participant_name)
         continue
 
 
@@ -101,7 +103,7 @@ for p_idx, participant_name in enumerate(participant_list):
 
         r_idx_plus = run_idx + p_idx_plus
 
-        print(f'\nrun_idx {run_idx + 1}: running analysis for '
+        print(f'\nrun_idx {run_idx}: running analysis for '
               f'{participant_name}, {run_dir}, {participant_name}_{r_idx_plus}\n')
         run_path = os.path.join(p_name_path, run_dir)
         print(f"run_path: {run_path}")
@@ -132,7 +134,8 @@ for p_idx, participant_name in enumerate(participant_list):
             new_exp_data = True  # signal to update exp ave data and plots
 
             # do data extraction for this run
-            run_data_df = a_data_extraction_Oct23(p_name=p_run_name, run_dir=run_path,
+            run_data_df = a_data_extraction_Oct23(p_name=p_run_name,
+                                                  run_dir=run_path,
                                                   verbose=verbose)
 
         run_data_df = pd.read_csv(run_data_path)
@@ -187,16 +190,17 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
     '''make mean staircase plot for each participant'''
-    if analyse_what == 'update_plots' or new_p_data:
+    if new_p_data or analyse_what == 'update_plots':
 
         print(f"\n***making master per-trial df ***")
         # join all output data from each run and save as master per-trial csv
         MASTER_p_trial_data_df = pd.concat(MASTER_p_trial_data_list, ignore_index=True)
         # just select columns I need for master df
-        MASTER_p_trial_data_df = MASTER_p_trial_data_df[[run_col_name, 'stair', stair_names_col_name, 'step',
+        MASTER_p_trial_data_df = MASTER_p_trial_data_df[[run_col_name,
+                                                         'stair', stair_names_col_name, 'step',
                                                          isi_col_name, sep_col_name, neg_sep_col_name,
-                                                         cong_col_name, bg_dur_name, bg_dur_name, thr_col_name,
-                                                         resp_col_name]]
+                                                         cong_col_name, bg_dur_name, bg_dur_name,
+                                                         thr_col_name, resp_col_name]]
         MASTER_p_trial_data_name = f'MASTER_p_trial_data.csv'
         MASTER_p_trial_data_df.to_csv(os.path.join(p_name_path, MASTER_p_trial_data_name), index=False)
         if verbose:
@@ -253,7 +257,7 @@ for p_idx, participant_name in enumerate(participant_list):
         all_df_path = os.path.join(p_name_path, f'MASTER_psignifit_thresholds.csv')
 
     '''make joined plot with untrimmed data'''
-    if analyse_what == 'update_plots' or new_p_data:  # e.g., it was True for last run/latest data
+    if new_p_data or analyse_what == 'update_plots':
         # ONLY use untrimmed data for this plot.
         all_untrimmed_df = pd.read_csv(os.path.join(p_name_path, f'MASTER_psignifit_thresholds.csv'))
         print(f"\nall_untrimmed_df:\n{all_untrimmed_df}")
@@ -308,7 +312,7 @@ if new_exp_data:  # e.g., it was True for last run/latest data
                              verbose=True)
 
 '''run make average plots'''
-if analyse_what == 'update_plots' or new_exp_data:  # e.g., it was True for last run/latest data
+if new_exp_data or analyse_what == 'update_plots':  # e.g., it was True for last run/latest data
 
     all_df_path = os.path.join(exp_path, "MASTER_exp_all_thr.csv")
     all_df = pd.read_csv(all_df_path)
