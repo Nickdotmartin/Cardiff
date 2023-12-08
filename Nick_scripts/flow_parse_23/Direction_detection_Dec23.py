@@ -118,11 +118,15 @@ def check_z_start_bounds(z_array, closest_z, furthest_z, max_dot_life_fr, dot_li
     :return: updated dot_life_array
     """
 
-    # if expanding, check if any z values are too close or far, and if so, set their dot life to max
-    if flow_dir == -1:  # expanding
-        dot_life_array = where(z_array > furthest_z, max_dot_life_fr, dot_life_array)
-    elif flow_dir == 1:  # contracting
-        dot_life_array = where(z_array < closest_z, max_dot_life_fr, dot_life_array)
+    # check if any z values are too close or far, and if so, set their dot life to max
+    if flow_dir == -1:  # expanding - z values reduce
+        # dot_life_array = np.where(z_array > furthest_z, max_dot_life_fr, dot_life_array)
+        dot_life_array = np.where(z_array < closest_z, max_dot_life_fr, dot_life_array)
+
+    elif flow_dir == 1:  # contracting - z values increase
+        # dot_life_array = np.where(z_array < closest_z, max_dot_life_fr, dot_life_array)
+        dot_life_array = np.where(z_array > furthest_z, max_dot_life_fr, dot_life_array)
+
 
     return dot_life_array
 
@@ -141,9 +145,9 @@ def update_dotlife(dotlife_array, dot_max_fr,
 
     :param dotlife_array: np.array of dot lifetimes (ints) between 0 and dot_max_fr.
     :param dot_max_fr: maximum lifetime of a dot in frames.
-    :param x_array: np.array of x positions of dots (in meters).
-    :param y_array: np.array of y positions of dots (in meters).
-    :param z_array: np.array of z positions of dots (in meters).
+    :param x_array: np.array of x positions of dots (in cm).
+    :param y_array: np.array of y positions of dots (in cm).
+    :param z_array: np.array of z positions of dots (in cm).
 
     :param x_bounds: value passed for distribution of x_values, from -x_bounds to x_bounds.  Half the width of the array.
     :param y_bounds: value passed for distribution of y_values, from -y_bounds to y_bounds.  Half the height of the array.
@@ -720,7 +724,7 @@ if background == 'flow_dots':
 
     # when dots are redrawn with a new z value, they should be at least this far away the boundary
     # otherwise they might have to be re-drawn after a couple of frames, which could lead to flickering.
-    # this is the max z_distance in meters they can travel in n frames
+    # this is the max z_distance in cm they can travel in n frames
     max_z_cm_in_life = flow_speed_cm_p_fr * dot_life_max_fr
     print(f"max_z_cm_in_life: {max_z_cm_in_life}")
 

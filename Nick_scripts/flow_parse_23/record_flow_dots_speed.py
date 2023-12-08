@@ -1,16 +1,17 @@
 from __future__ import division
 from psychopy import gui, visual, core, data, event, monitors, logging
 from psychopy import __version__ as psychopy_version
-from psychopy.tools.monitorunittools import cm2pix, pix2cm, deg2pix, pix2deg
+from psychopy.tools.monitorunittools import cm2pix, pix2cm, deg2pix, pix2deg, convertToPix
 from os import path, chdir
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 import numpy as np
 from numpy import array, random, where, sum, linspace, pi, rad2deg, arctan, arctan2, cos, sin, hypot
-
+import os
 import copy
-
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 '''
 This script is to work out how to match the optic flow settings from Simons flow parsing studies.
@@ -283,10 +284,10 @@ def plt_fr_ints(time_p_trial_nested_list, n_trials_w_dropped_fr,
 
 
 # initialize window
-monitor_name = 'HP_24uh'  # Nick_work_laptop, HP_24uh
-fps = 60
-# monitor_name = 'OLED'  # Nick_work_laptop, HP_24uh
-# fps = 120  # 60
+# monitor_name = 'HP_24uh'  # Nick_work_laptop, HP_24uh
+# fps = 60
+monitor_name = 'OLED'  # Nick_work_laptop, HP_24uh
+fps = 120  # 60
 
 mon = monitors.Monitor(monitor_name)
 
@@ -321,42 +322,25 @@ display_number = 1  # 0 indexed, 1 for external display, 0 for internal
 if monitor_name in ['asus_cal', 'Nick_work_laptop', 'NickMac', 'OLED', 'ASUS_2_13_240Hz']:
     display_number = 0
 
-# WINDOW SPEC
-win = visual.Window(monitor=mon, size=(widthPix, heightPix), colorSpace=this_colourSpace, color=this_bgColour,
-                    units='pix', screen=display_number, allowGUI=False, fullscr=True, useFBO=False)
+# # WINDOW SPEC
+# win = visual.Window(monitor=mon, size=(widthPix, heightPix), colorSpace=this_colourSpace, color=this_bgColour,
+#                     units='pix', screen=display_number, allowGUI=False, fullscr=True, useFBO=False)
 
 
+view_dist_cm = 43.7
 probe_ecc = 4  # probe eccentricity in dva
-
+dva_3 = 3  # 3 dva in cm
+dva_5 = 5  # 5 dva in cm
 
 # get dva per pixel
-
+dva_per_pix = pix2deg(1, mon)
+print(f"dva_per_pix: {dva_per_pix}")
 
 dist_from_fix = int((np.tan(np.deg2rad(probe_ecc)) * view_dist_pix) / np.sqrt(2))
 print(f"dist_from_fix: {dist_from_fix}")
-
-
-# PROBEs
-# probe_colour, not too bright, use start val from rad_flow_exp
-probe_lum = maxLum * .6  # bgColor_rgb1 + (adj_flow_colour * 2)
-probe_rgb1 = probe_lum / maxLum
-probe_colour = [probe_rgb1, probe_rgb1, probe_rgb1]
-print(f"probe_lum: {probe_lum}, probe_colour: {probe_colour}")
-
-probe_size = 10  # can make them larger for testing new configurations etc
-probeVert = [(0, 0), (1, 0), (1, 1), (2, 1), (2, -1), (1, -1),
-             (1, -2), (-1, -2), (-1, -1), (0, -1)]  # 5 pixels
-
-if monitor_name == 'OLED':  # smaller, 3-pixel probes for OLED
-    probeVert = [(0, 0), (1, 0), (1, 1), (2, 1),
-                 (2, 0), (1, 0), (1, -1), (0, -1),
-                 (0, -2), (-1, -2), (-1, -1), (0, -1)]
-probe = visual.ShapeStim(win, vertices=probeVert, lineWidth=0, opacity=1,
-                         size=probe_size, interpolate=False,
-                         fillColor=probe_colour,
-                         colorSpace=this_colourSpace,
-                         pos=(dist_from_fix, dist_from_fix))
-
+dff_2 = int((np.tan(np.deg2rad(dva_3)) * view_dist_pix) / np.sqrt(2))
+print(f"dff_2: {dff_2}")
+dff_6 = int((np.tan(np.deg2rad(dva_5)) * view_dist_pix) / np.sqrt(2))
 
 
 '''FLOW DOT SETTINGS'''
@@ -386,12 +370,13 @@ flow_speed_cm_p_fr = flow_speed_cm_p_sec / fps  # 1.66 cm per frame = 1m per sec
 # initialise dots - for 1 per sq cm, divide by 2 because make_xy_spokes doubles the density
 dots_per_sq_cm = 1 / 2
 n_dots = int(dots_per_sq_cm * mon_width_cm * mon_height_cm)
+# n_dots = 10
 print(f"n_dots: {n_dots}")
 
-flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
-                                    units='cm', nElements=n_dots, sizes=.2,
-                                    colorSpace=this_colourSpace,
-                                    colors=flow_colour)
+# flow_dots = visual.ElementArrayStim(win, elementTex=None, elementMask='circle',
+#                                     units='cm', nElements=n_dots, sizes=.2,
+#                                     colorSpace=this_colourSpace,
+#                                     colors=flow_colour)
 
 # initialize x and y positions of dots to fit in window (frame_size_cm) at distance 0
 x_array = np.random.uniform(-frame_size_cm/2, frame_size_cm/2, n_dots)  # x values in cm
@@ -436,15 +421,16 @@ if contracting:
 else:  # expanding
     flow_dir = -1
 
-if flow_dir == -1:  # expanding
+if flow_dir == -1:  # expanding - z values reduce
     z_start_bounds = [near_plane_cm + max_z_cm_in_life, far_plane_cm]
-else:  # contracting, flow_dir == 1
+else:  # contracting, flow_dir == 1, z values increase
     z_start_bounds = [near_plane_cm, far_plane_cm - max_z_cm_in_life]
 print(f"z_start_bounds: {z_start_bounds}")
 
 motion_type = 'flow_motion'  # press 1
 motion_ms = 200
 motion_fr = int(motion_ms / 1000 * fps)
+print(f"motion_ms: {motion_ms}, motion_fr: {motion_fr}")
 
 motion_data = []
 
@@ -452,15 +438,21 @@ dot_idx = list(range(n_dots))
 
 frame_num = 0
 # PRESENT STIMULI
-while not event.getKeys(keyList=["escape"]):
+# while not event.getKeys(keyList=["escape"]):
+while frame_num < motion_fr:
 # while frame_num < motion_fr * 2:
-# while frame_num < 100:
+#     if frame_num > motion_fr*2:
+#         flow_dir = -1
+#
+#     if flow_dir == -1:  # expanding - z values reduce
+#         z_start_bounds = [near_plane_cm + max_z_cm_in_life, far_plane_cm]
+#     else:  # contracting, flow_dir == 1, z values increase
+#         z_start_bounds = [near_plane_cm, far_plane_cm - max_z_cm_in_life]
+
     frame_num += 1
 
-    # if frame_num == motion_fr:
-    #     flow_dir = -1
 
-    # present radial flow until another option is selected (1 or 2), can go back to radial flow by pressing 0.
+# present radial flow until another option is selected (1 or 2), can go back to radial flow by pressing 0.
     if event.getKeys(keyList=["0"]):
         motion_type = 'flow_motion'
     elif event.getKeys(keyList=["1"]):
@@ -487,7 +479,7 @@ while not event.getKeys(keyList=["escape"]):
 
 
 
-    # # # all methods use the code below # # # 
+    # # # all methods use the code below # # #
 
     # 2. check if any z values are out of bounds (too close when expanding or too far when contracting),
     # if so, set their dot life to max, so they are given new x, y and z values by update_dotlife() below.
@@ -507,15 +499,197 @@ while not event.getKeys(keyList=["escape"]):
 
     # 5. scale x and y positions by distance
     dots_pos_array = scaled_dots_pos_array(x_array, y_array, z_array, frame_size_cm, ref_angle)
-    flow_dots.xys = dots_pos_array
-    flow_dots.draw()
+    # flow_dots.xys = dots_pos_array
+    # flow_dots.draw()
+    #
+    #
+    #
+    # flow_dots.draw()
+    # win.flip()
 
-    probe.draw()
-    flow_dots.draw()
-    win.flip()
 
-win.close()
 
+
+    # store data for the x, y dotlife. of the dots on each frame in motion_data
+    for dot_idx, (x_cm, y_cm, z_cm, dot_life) in enumerate(zip(dots_pos_array.T[0], dots_pos_array.T[1], z_array, dot_lifetime_array)):
+        motion_data.append([frame_num, dot_idx, x_cm, y_cm, z_cm, dot_life])
+
+# win.close()
+
+'''from the motion data, get the mean probe speed per frame by using the x and y data.
+I want this for:
+    1. all dots
+    2. dots that are between 3 and 5 dva from the centre of the screen.
+I want the speeds in:
+    a. pixels per frame
+    b. degrees per second.
+Return the mean and standard deviation of the speeds.
+Plot histograms of the speeds.
+'''
+save_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\project_stuff\dot_speeds"
+
+dot_df = pd.DataFrame(motion_data, columns=['frame_num', 'dot_idx', 'x_cm', 'y_cm', 'z_cm', 'dot_life'])
+print(dot_df.head())
+
+# plot histograms of x_cm, y_cm and z_cm values
+sns.histplot(data=dot_df, x='x_cm')
+plt.show()
+sns.histplot(data=dot_df, x='y_cm')
+plt.show()
+sns.histplot(data=dot_df, x='z_cm')
+plt.title(f"n_frames: {frame_num}, contracting: {contracting}, z_start_bounds: {z_start_bounds}")
+plt.show()
+
+dot_df['x_pix'] = cm2pix(dot_df['x_cm'], monitor=mon)
+sns.histplot(data=dot_df, x='x_pix')
+# plt.title("x_pix")
+plt.show()
+dot_df['y_pix'] = cm2pix(dot_df['y_cm'], monitor=mon)
+sns.histplot(data=dot_df, x='y_pix')
+# plt.title("y_pix")
+plt.show()
+
+
+
+# from the x and y positions, get the distance from the centre of the screen in pixels
+# dist_from_fix_cm = np.sqrt(dot_df['x_cm']**2 + dot_df['y_cm']**2)
+# dff_pix = dist_from_fix_cm / mon_width_cm * widthPix
+dff_pix = np.sqrt(dot_df['x_pix']**2 + dot_df['y_pix']**2)
+# add this to the dataframe
+dot_df['dff_pix'] = dff_pix
+
+# add dva4_region column to dataframe for dots that are between 3 and 5 dva from the centre of the screen.
+dot_df['dva4_region'] = np.where((dot_df['dff_pix'] >= dff_2) & (dot_df['dff_pix'] <= dff_6), 1, 0)
+
+# get the distance travelled by each dot in pixels using the x and y positions and dot_idx.
+# compare position on frame_num, but if NaN if dot_life is 0.
+# sort by dot_idx and frame_num
+dot_df = dot_df.sort_values(by=['dot_idx', 'frame_num'])
+dot_df['x_pix_prev'] = dot_df['x_pix'].shift(1)
+dot_df['y_pix_prev'] = dot_df['y_pix'].shift(1)
+
+# set x_pix_prev and y_pix_prev to NaN if dot_life is 0 or if frame_num is 1.
+dot_df['x_pix_prev'] = np.where((dot_df['dot_life'] == 0) | (dot_df['frame_num'] == 1), np.nan, dot_df['x_pix_prev'])
+dot_df['y_pix_prev'] = np.where((dot_df['dot_life'] == 0) | (dot_df['frame_num'] == 1), np.nan, dot_df['y_pix_prev'])
+
+# get distance travelled by each dot in pixels
+dot_df['spd_pix_fr'] = np.sqrt((dot_df['x_pix'] - dot_df['x_pix_prev'])**2 + (dot_df['y_pix'] - dot_df['y_pix_prev'])**2)
+
+# 1a. pix per frame for all dots
+# get mean and std dev of spd_pix_fr for all dots
+mean_spd_pix_p_fr = dot_df['spd_pix_fr'].mean()
+std_spd_pix_p_fr = dot_df['spd_pix_fr'].std()
+
+# make a scatter plot of spd_pix_fr against dff_pix with a colour bar for z
+fig, ax = plt.subplots()
+sns.scatterplot(data=dot_df, x='dff_pix', y='spd_pix_fr', hue='z_cm',
+                alpha=.1, palette='rocket', legend=None, ax=ax)
+
+# add colour bar
+norm = plt.Normalize(dot_df['z_cm'].min(), dot_df['z_cm'].max())
+sm = plt.cm.ScalarMappable(cmap="rocket", norm=norm)
+sm.set_array([])
+ax.figure.colorbar(sm, ax=ax, label='z (cm)')
+
+# decorate plot
+plt.title(f'spd_pix_fr - all dots M={round(mean_spd_pix_p_fr, 2)}, SD={round(std_spd_pix_p_fr, 2)}')
+plt.xlabel('dff_pix')
+plt.ylabel('spd_pix_fr')
+plt.savefig(os.path.join(save_path, 'spd_pix_fr_all_dots.png'))
+plt.show()
+
+
+
+# 1b. dva per second for all dots
+# get spd_dva_fr by multiplying spd_pix_fr by dva_per_pix
+# dot_df['spd_dva_fr'] = dot_df['spd_pix_fr'] * dva_per_pix
+dot_df['spd_dva_fr'] = pix2deg(dot_df['spd_pix_fr'], mon)
+# get spd_dva_sec by multiplying spd_dva_fr by fps
+dot_df['spd_dva_sec'] = dot_df['spd_dva_fr'] * fps
+
+# get dff_dva by multiplying dff_pix by dva_per_pix
+dot_df['dff_dva'] = dot_df['dff_pix'] * dva_per_pix
+
+
+# get mean and std dev of spd_dva_sec for all dots
+mean_spd_dva_p_sec = dot_df['spd_dva_sec'].mean()
+std_spd_dva_p_sec = dot_df['spd_dva_sec'].std()
+
+# plot scatter plot of spd_dva_sec against dff_dva
+# plt.scatter(dot_df['dff_dva'], dot_df['spd_dva_sec'], alpha=.2, s=.1)
+fig, ax = plt.subplots()
+sns.scatterplot(data=dot_df, x='dff_dva', y='spd_dva_sec', hue='z_cm',
+                alpha=.1, palette='rocket', legend=None, ax=ax)
+
+# add colour bar
+norm = plt.Normalize(dot_df['z_cm'].min(), dot_df['z_cm'].max())
+sm = plt.cm.ScalarMappable(cmap="rocket", norm=norm)
+sm.set_array([])
+ax.figure.colorbar(sm, ax=ax, label='z (cm)')
+
+# decorate plot
+plt.title(f'spd_dva_sec - all dots M={round(mean_spd_dva_p_sec, 2)}, SD={round(std_spd_dva_p_sec, 2)}')
+plt.xlabel('dff_dva')
+plt.ylabel('spd_dva_sec')
+plt.savefig(os.path.join(save_path, 'spd_dva_sec_all_dots.png'))
+plt.show()
+
+### part 2, dots in dva4_region
+dot_dva4_df = dot_df[dot_df['dva4_region'] == 1]
+
+# 2a. pix per frame for dots in dva4_region
+# get mean and std dev of spd_pix_fr for dots in dva4_region
+mean_spd_pix_p_fr_dva4 = dot_dva4_df['spd_pix_fr'].mean()
+std_spd_pix_p_fr_dva4 = dot_dva4_df['spd_pix_fr'].std()
+
+# plot scatter plot of spd_pix_fr against dff_pix for dots in dva4_region
+# plt.scatter(dot_dva4_df['dff_pix'], dot_dva4_df['spd_pix_fr'], alpha=.1, s=5)
+fig, ax = plt.subplots()
+sns.scatterplot(data=dot_dva4_df, x='dff_pix', y='spd_pix_fr',
+                hue='z_cm', palette='rocket',
+                alpha=.4, legend=None, ax=ax)
+
+# add colour bar
+norm = plt.Normalize(dot_dva4_df['z_cm'].min(), dot_dva4_df['z_cm'].max())
+sm = plt.cm.ScalarMappable(cmap="rocket", norm=norm)
+sm.set_array([])
+ax.figure.colorbar(sm, ax=ax, label='z (cm)')
+
+# decorate plot
+plt.title(f'spd_pix_fr - dva4_region M={round(mean_spd_pix_p_fr_dva4, 2)}, SD={round(std_spd_pix_p_fr_dva4, 2)}')
+plt.xlabel('dff_pix')
+plt.ylabel('spd_pix_fr')
+plt.savefig(os.path.join(save_path, 'spd_pix_fr_dva4.png'))
+plt.show()
+
+# 2b. dva per second for dots in dva4_region
+# get mean and std dev of spd_dva_sec for dots in dva4_region
+mean_spd_dva_p_sec_dva4 = dot_dva4_df['spd_dva_sec'].mean()
+std_spd_dva_p_sec_dva4 = dot_dva4_df['spd_dva_sec'].std()
+
+# # plot scatter plot of spd_dva_sec against dff_dva for dots in dva4_region
+# plt.scatter(dot_dva4_df['dff_dva'], dot_dva4_df['spd_dva_sec'], alpha=.1, s=5)
+fig, ax = plt.subplots()
+sns.scatterplot(data=dot_dva4_df, x='dff_dva', y='spd_dva_sec',
+                hue='z_cm', palette='rocket',
+                alpha=.4, legend=None, ax=ax)
+
+# add colour bar
+norm = plt.Normalize(dot_dva4_df['z_cm'].min(), dot_dva4_df['z_cm'].max())
+sm = plt.cm.ScalarMappable(cmap="rocket", norm=norm)
+sm.set_array([])
+ax.figure.colorbar(sm, ax=ax, label='z (cm)')
+
+# decorate plot
+plt.title(f'spd_dva_sec - dva4_region M={round(mean_spd_dva_p_sec_dva4, 2)}, SD={round(std_spd_dva_p_sec_dva4, 2)}')
+plt.xlabel('dff_dva')
+plt.ylabel('spd_dva_sec')
+plt.savefig(os.path.join(save_path, 'spd_dva_sec_dva4.png'))
+plt.show()
+
+
+
+dot_df.to_csv(os.path.join(save_path, 'dot_speeds.csv'), index=False)
 
 print("Finished successfully")
 
