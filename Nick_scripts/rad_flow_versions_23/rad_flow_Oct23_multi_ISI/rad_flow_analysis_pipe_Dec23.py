@@ -17,8 +17,8 @@ Other variables should be fine to stay as they are.
 '''
 
 # path to dir containing experiment data
-exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Target_detection_Dec23"
-# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Missing_target_detection_Dec23"
+# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Target_detection_Dec23"
+exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Missing_target_detection_Dec23"
 exp_path = os.path.normpath(exp_path)
 print(f"exp_path: {exp_path}")
 
@@ -31,7 +31,7 @@ if not os.path.isdir(exp_path):
 
 
 # monitor dir contains a folder for each participant
-participant_list = ['pt1', 'pt2', 'pt3', 'pt4', 'pt5', 'pt6']  #
+participant_list = ['pt1', 'pt2', 'pt3', 'pt4', 'pt5']  # , 'pt6']  #
 
 
 # p_idx_plus will analyse all runs starting from this number.
@@ -270,7 +270,7 @@ for p_idx, participant_name in enumerate(participant_list):
                         hue_col_name=cong_col_name, hue_labels=cong_labels,
                         participant_name=participant_name,
                         x_label='ISI (ms)', y_label='Probe Luminance (cd/m\u00b2)',
-                        extra_text=f'sep{separation}',
+                        extra_text=f'sep_{int(separation)}',
                         save_path=p_name_path, save_name=None,
                         verbose=True)
 
@@ -291,7 +291,7 @@ for p_idx, participant_name in enumerate(participant_list):
                                  hue_labels=cong_labels,
                                  motion_col=bg_dur_name,
                                  x_label='ISI (ms)', y_label='Probe Luminance (cd/m\u00b2)',
-                                 extra_text=f'sep{sep}',
+                                 extra_text=f'sep_{int(separation)}',
                                  exp_ave=False)
 
 
@@ -306,7 +306,7 @@ print(f'\nget exp_average_data for: {participant_list}')
 # todo: trim list needs to relate to separation values too
 
 
-if new_exp_data:  # e.g., it was True for last run/latest data
+if new_exp_data or analyse_what == 'all':
     e_average_exp_data_Dec23(exp_path=exp_path, p_names_list=participant_list,
                              error_type='SE',
                              verbose=True)
@@ -336,14 +336,14 @@ if new_exp_data or analyse_what == 'update_plots':  # e.g., it was True for last
                          hue_labels=cong_labels,
                          motion_col=bg_dur_name,
                          x_label='ISI (ms)', y_label='Probe Luminance (cd/m\u00b2)',
-                         extra_text=f'sep{sep}',
+                         extra_text=f'sep_{int(separation)}',
                          exp_ave=True)
 
         '''do joined plot for experiment data linking participant means'''
         joined_plot(untrimmed_df=sep_df, x_cols_str=isi_col_name,
                     hue_col_name=cong_col_name, hue_labels=cong_labels,
                     participant_name='exp_ave', x_label='ISI (ms)', y_label='Probe Luminance (cd/m\u00b2)',
-                    extra_text=f'sep{sep}',
+                    extra_text=f'sep_{int(separation)}',
                     save_path=exp_path, save_name=None,
                     verbose=True)
 

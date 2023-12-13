@@ -28,7 +28,7 @@ if not os.path.isdir(exp_path):
     raise FileNotFoundError(f'exp_path: {exp_path} not found')
 
 # monitor dir contains a folder for each participant
-participant_list = ['pt1', 'pt3', 'pt4', 'pt5', 'pt6'] # , 'pt2', 'test']  # ' Nicktest_06102023' Nick_extra_prelims
+participant_list = ['pt1', 'pt2', 'pt3', 'pt4', 'pt5']  #, 'pt6'] # , 'pt2', 'test']  # ' Nicktest_06102023' Nick_extra_prelims
 # participant_list = ['pt1']  # ' Nicktest_06102023' Nick_extra_prelims
 
 # p_idx_plus will analyse all runs starting from this number.
@@ -150,16 +150,7 @@ for p_idx, participant_name in enumerate(participant_list):
         print(f"run_data_df: {run_data_df.columns.to_list()}\n{run_data_df}")
 
 
-        # get column showing run number (has changed since start of exp)
-        # search for 'run_number' substring in column names
-        # run_num_col = [col for col in run_data_df.columns if 'run_number' in col]
-        # if len(run_num_col) == 1:
-        #     run_col_name = run_num_col[0]
-        # elif len(run_num_col) == 0:
-        #     run_col_name = 'run_number'
-        #     # add 'run' to run_data_df if not already there
-        #     if 'run_number' not in run_data_df.columns.tolist():
-        #         run_data_df.insert(0, 'run_number', run_idx + 1)
+        # get column showing run_number (has changed since start of exp)
         if 'run_number' not in run_data_df.columns.tolist():
             run_data_df.insert(0, 'run_number', run_idx + 1)
         # check if run number column is empty
@@ -272,11 +263,10 @@ for p_idx, participant_name in enumerate(participant_list):
 # remove 'test' data from any participant name so it is not in experiment level analysis and means
 # if any name containg 'test', remove it
 participant_list = [p_name for p_name in participant_list if 'test' not in p_name]
+print(f'\nget exp_average_data for: {participant_list}')
 
 
-print(f'exp_path: {exp_path}')
-print('\nget exp_average_data')
-if new_exp_data:  # e.g., it was True for last run/latest data
+if new_exp_data or analyse_what == 'all':
     e_average_exp_data(exp_path=exp_path, p_names_list=participant_list,
                        error_type='SE',
                        verbose=True)
