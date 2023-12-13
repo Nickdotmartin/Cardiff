@@ -31,9 +31,10 @@ if not os.path.isdir(exp_path):
 participant_list = ['pt1', 'pt2', 'pt3', 'pt4', 'pt5']  #, 'pt6'] # , 'pt2', 'test']  # ' Nicktest_06102023' Nick_extra_prelims
 # participant_list = ['pt1']  # ' Nicktest_06102023' Nick_extra_prelims
 
-# p_idx_plus will analyse all runs starting from this number.
+# from_run_number will analyse all runs starting from this number.
+from_run_number = 1
 # leave it at one to include all runs in the analysis (or to just analyse new data, see 'analyse_what' below)
-p_idx_plus = 1
+p_idx_plus = from_run_number
 
 
 # these shouldn't need to change
