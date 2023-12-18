@@ -23,7 +23,7 @@ You should only need to change the 'analyse_what' variable as new data is added.
 Other variables should be fine to stay as they are.
 '''
 
-def trgt_detect_analysis_pipe_Dec23(exp_data_path,
+def target_detect_analysis_pipe_Dec23(exp_data_path,
                                     analyse_what='all',
                                     participant_list=['pt1', 'pt2', 'pt3', 'pt4', 'pt5'],
                                     from_run_number=1,
@@ -34,20 +34,48 @@ def trgt_detect_analysis_pipe_Dec23(exp_data_path,
                                     isi_col_name='isi_ms', sep_col_name='separation',
                                     neg_sep_col_name='neg_sep', bg_dur_name='bg_motion_ms',
                                     resp_col_name='resp_corr', run_col_name='run_number',
-                                    monitor='OLED',
-                                    ):
+                                    monitor='OLED'):
 
+    """ Script for analysing data from target detection or missing target detection experiments.
+    For each participant's experimental session: it extracts results from output files and
+    calculates thresholds at 75% accuracy.
+    For each participant: It gets means (or trimmed means if they have done all 12 runs).
+        It makes a mean staircase plot, mean threshold plots, and
+        difference between congruent and incongruent plot.
+    For whole experiment: It gets experiment means and makes threshold plots, and
+        difference between congruent and incongruent plot.
+
+    :param exp_data_path: Path to dir with data for this experiment (e.g., contains monitor name folder)
+        e.g., end of path should be either Target_detection or Missing_target_detection_Dec23"
+    :param analyse_what: 'all', 'update_plots', 'just_new_data'.
+        Note: this works fine if there is only one separation value, but might need adapting if there are multiple values.
+    :param participant_list: List of participant IDs (folder names)
+    :param from_run_number: Default it 1, but can select a different number to start from.
+    :param verbose: Print progress to screen.
+    :param show_plots: Show plots once made.
+    :param thr_col_name: Name of column containing threshold values. Default is 'OLED_lum' for OLED monitor.
+    :param stair_names_col_name: Name of column with conditions names. Default is 'stair_name'.
+    :param cong_col_name: Name of column with congruency values. Default is 'congruent'.
+    :param cong_labels: Labels to associate with congruency values. Default is ['Incongruent', 'Congruent'].
+    :param isi_col_name: Name of column with ISI values (ms). Default is 'isi_ms'.
+    :param sep_col_name: Name of column with separation values (pixels). Default is 'separation'.
+    :param neg_sep_col_name: Name of column with negative separation values (pixels). Default is 'neg_sep'.
+        This isn't needed anymore, but useful for putting separation and congruence on the same axis
+        (e.g., incongruent have negative values).
+    :param bg_dur_name: Name of column showing duration of background motion (ms). Default is 'bg_motion_ms'.
+    :param resp_col_name: Name of column showing whether participants responded correctly. Default is 'resp_corr'.
+    :param run_col_name: Name of column showing run number. Default is 'run_number'.
+    :param monitor: Name of monitor being used.  Should match PsychoPy Monitor centre and should be
+        included in monitor_pixel_size_dict in PsychoPy_tools.py.  Default is 'OLED'.
+    """
 
 
     # path to dir containing experiment data
-    # exp_data_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Target_detection_Dec23"
-    # exp_data_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Missing_target_detection_Dec23"
     exp_path = os.path.normpath(exp_data_path)
     print(f"exp_path: {exp_path}")
 
 
     # experiment dir contains a folder for each monitor used
-    # monitor = 'OLED'  # 'asus_cal' OLED, 'Nick_work_laptop'
     exp_path = os.path.join(exp_path, monitor)
     if not os.path.isdir(exp_path):
         raise FileNotFoundError(f'exp_path: {exp_path} not found')
@@ -56,40 +84,14 @@ def trgt_detect_analysis_pipe_Dec23(exp_data_path,
     if 'target_detection' not in exp_path.lower():
         raise ValueError(f"exp_path: {exp_path} doesn't contain 'target_detection'")
 
-
-    # monitor dir contains a folder for each participant
-    # participant_list = ['pt1', 'pt2', 'pt3', 'pt4', 'pt5']  # , 'pt6']  #
-
-
-    # from_run_number will analyse all runs starting from this number.
-    # from_run_number = 1
-    # leave it at one to include all runs in the analysis (or to just analyse new data, see 'analyse_what' below)
-    p_idx_plus = from_run_number
-
-    # these shouldn't need to change
-    # thr_col_name = 'OLED_lum'  # use OLED_lum if OLED, else use 'probeLum'
-    # stair_names_col_name = 'stair_name'
-    # cong_col_name = 'congruent'
-    # cong_labels = ['Incongruent', 'Congruent']
-    # isi_col_name = 'isi_ms'
-    # sep_col_name = 'separation'
-    # neg_sep_col_name = 'neg_sep'
-    # bg_dur_name = 'bg_motion_ms'  # 'motion_dur_ms'
-    # resp_col_name = 'resp_corr'
-    # run_col_name = 'run_number'
+    '''Don't change this code, update parameters when calling function'''
     # psignifit will loop through these variables (columns) to get thresholds for each condition
     var_cols_list = [isi_col_name, sep_col_name, neg_sep_col_name, cong_col_name, bg_dur_name]
 
-    # verbose = True  # if True, prints los of data and progress to console
-    # show_plots = True  # if True, shows plots as they are made
-
-    '''select data to analyse: 
-        'all' analyses all data, 
-        'update_plots' only updates plots, 
-        'just_new_data' only analyses new runs that haven't been analysed yet.
-            It will update any downstream means and plots if new data is added.'''
-    # analyse_what = 'just_new_data'  # 'update_plots', 'just_new_data', 'all'
     # todo: just_new_data will need tweaking when I have more than one separation.
+
+    # Changing from_run_number will analyse all runs starting from this number.
+    p_idx_plus = from_run_number
 
     new_exp_data = False  # if True, will update exp level results and plots
 
@@ -376,7 +378,7 @@ def trgt_detect_analysis_pipe_Dec23(exp_data_path,
                         verbose=True)
 
 
-    print('\ntrgt_detect_analysis_pipe_Dec23 finished')
+    print('\ntarget_detect_analysis_pipe_Dec23 finished')
 
 
 
@@ -397,14 +399,48 @@ def direction_detect_analysis_pipe_Dec23(exp_data_path,
                                          run_col_name='run_number',
                                          monitor='OLED'):
 
+    """
+    Script for analysing data from direction detection experiments.
+
+    For each participant's experimental session: it extracts results from output files and
+    calculates thresholds at point-of-subjective-equality (e.g., 50% responses in each direction).
+
+    For each participant: It gets means (or trimmed means if they have done all 12 runs).
+        It makes a mean staircase plot, mean threshold plots, and
+        difference between inward and outward background motion plot.
+
+    For whole experiment: It gets experiment means and makes threshold plots, and
+        difference between inward and outward background motion plot.
+
+
+    :param exp_data_path: Path to dir with data for this experiment (e.g., contains monitor name folder)
+        e.g., end of path should be Direction_detection.py"
+    :param analyse_what: 'all', 'update_plots', 'just_new_data'.
+        Note: this works fine if there is only one separation value, but might need adapting if there are multiple values.
+    :param participant_list: List of participant IDs (folder names)
+    :param from_run_number: Default it 1, but can select a different number to start from.
+    :param verbose: Print progress to screen.
+    :param show_plots: Show plots once made.
+    :param thr_col_name: Name of column containing threshold values. Default is 'probe_deg_p_sec'.
+    :param stair_names_col_name: Name of column with conditions names. Default is 'stair_name'.
+    :param bg_dur_name: Name of column showing duration of background motion (ms). Default is 'bg_motion_ms'.
+    :param flow_dir_col_name: Name of column with flow direction values. Default is 'flow_dir'.
+    :param flow_name_col_name: Name of column with flow name values. Default is 'flow_name'.
+    :param hue_labels: Labels to associate with flow name values. Default is ['Expanding flow', 'Contracting flow'].
+    :param probe_dur_col_name: Name of column showing duration of probe (ms). Default is 'probe_dur_ms'.
+    :param probe_dir_col_name: Name of column showing direction of probe. Default is 'probe_dir'.
+    :param resp_col_name: Name of column showing whether participants responded 'inward' or 'outward'. Default is 'response'.
+    :param run_col_name: Name of column showing run number. Default is 'run_number'.
+    :param monitor: Name of monitor being used.  Should match PsychoPy Monitor centre and should be
+        included in monitor_pixel_size_dict in PsychoPy_tools.py.  Default is 'OLED'.
+    """
+
 
     # path to dir containing experiment data
-    # exp_data_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Direction_detection_Dec23"
     exp_path = os.path.normpath(exp_data_path)
     print(f"exp_path: {exp_path}")
 
     # experiment dir contains a folder for each monitor used
-    # monitor = 'OLED'  # 'asus_cal' OLED, 'Nick_work_laptop'
     exp_path = os.path.join(exp_path, monitor)
     if not os.path.isdir(exp_path):
         raise FileNotFoundError(f'exp_path: {exp_path} not found')
@@ -413,40 +449,14 @@ def direction_detect_analysis_pipe_Dec23(exp_data_path,
     if 'Direction_detection_Dec23' in exp_path.lower():
         raise ValueError(f"exp_path: {exp_path} doesn't contain 'Direction_detection_Dec23'")
 
-    # monitor dir contains a folder for each participant
-    # participant_list = ['pt1', 'pt2', 'pt3', 'pt4', 'pt5']  #, 'pt6'] # , 'pt2', 'test']  # ' Nicktest_06102023' Nick_extra_prelims
-    # participant_list = ['pt1']  # ' Nicktest_06102023' Nick_extra_prelims
-
-    # from_run_number will analyse all runs starting from this number.
-    # from_run_number = 1
-    # leave it at one to include all runs in the analysis (or to just analyse new data, see 'analyse_what' below)
-    p_idx_plus = from_run_number
-
 
     # these shouldn't need to change
-    # thr_col_name = 'probe_deg_p_sec'  # probe_cm_p_sec
-    # stair_names_col_name = 'stair_name'
-    # bg_dur_name = 'bg_motion_ms'  # prelim_ms
-    # flow_dir_col_name = 'flow_dir'
-    # flow_name_col_name = 'flow_name'
-    # hue_labels = ['Expanding flow', 'Contracting flow']
-    # probe_dur_col_name = 'probe_dur_ms'  # durations
-    # probe_dir_col_name = 'probe_dir'  # directions
-    # resp_col_name = 'response'  # NOT resp_corr
-    # run_col_name = 'run_number'
     # psignifit will loop through these variables (columns) to get thresholds for each condition
     var_cols_list = [flow_dir_col_name, flow_name_col_name, probe_dur_col_name, bg_dur_name]
 
-    # verbose = True  # if True, prints los of data and progress to console
-    # show_plots = True  # if True, shows plots as they are made
 
-    '''Update participant data to analyse or analyse_what variablesd'''
-    '''select data to analyse: 
-        'all' analyses all data, 
-        'update_plots' only updates plots, 
-        'just_new_data' only analyses new runs that haven't been analysed yet.
-            It will update any downstream means and plots if new data is added.'''
-    # analyse_what = 'just_new_data'  # 'update_plots', 'just_new_data', 'all'
+    # Changing from_run_number will analyse all runs starting from this number.
+    p_idx_plus = from_run_number
 
     new_exp_data = False  # if True, will update exp level results and plots
 
@@ -544,6 +554,8 @@ def direction_detect_analysis_pipe_Dec23(exp_data_path,
             elif run_data_df['run_number'].isnull().values.any():
                 run_data_df['run_number'] = run_idx + 1
             print(f"run_col_name: {run_col_name}")
+
+            # add trial data to list for master staircase plot
             MASTER_p_trial_data_list.append(run_data_df)
 
 

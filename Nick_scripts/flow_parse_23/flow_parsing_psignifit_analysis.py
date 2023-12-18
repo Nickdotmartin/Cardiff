@@ -2200,13 +2200,18 @@ def e_average_exp_data(exp_path, p_names_list,
 
     # # get means and errors
     get_means_df = all_exp_thr_df.drop('participant', axis=1)
-    # get_means_df = get_means_df.drop('separation', axis=1)
-    # get_means_df = get_means_df.drop('congruent', axis=1)
+    get_means_df = get_means_df.drop('stair_name', axis=1)
+    get_means_df = get_means_df.drop('flow_name', axis=1)
 
     # todo: should I change sort to False for groupby?  Cause probelems in
     #  d_average_participants for error_df if there was only a single run of a
     #  condition so error was NaN and somehow order changed.
-    exp_ave_thr_df = get_means_df.groupby('stair', sort=True).mean()
+
+    print(f"stair col:\n{get_means_df['stair'].to_list()}")
+    # convert stair column to int
+    get_means_df['stair'] = get_means_df['stair'].astype(int)
+
+    exp_ave_thr_df = get_means_df.groupby('stair', sort=True, ).mean()
     if verbose:
         print(f'\nexp_ave_thr_df:\n{exp_ave_thr_df}')
 

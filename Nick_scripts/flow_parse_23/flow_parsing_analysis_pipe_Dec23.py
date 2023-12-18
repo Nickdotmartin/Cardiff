@@ -29,7 +29,7 @@ if not os.path.isdir(exp_path):
 
 # monitor dir contains a folder for each participant
 participant_list = ['pt1', 'pt2', 'pt3', 'pt4', 'pt5']  #, 'pt6'] # , 'pt2', 'test']  # ' Nicktest_06102023' Nick_extra_prelims
-# participant_list = ['pt1']  # ' Nicktest_06102023' Nick_extra_prelims
+# participant_list = ['pt2']  # ' Nicktest_06102023' Nick_extra_prelims
 
 # from_run_number will analyse all runs starting from this number.
 from_run_number = 1

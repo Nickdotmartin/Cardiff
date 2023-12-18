@@ -252,9 +252,9 @@ def run_psignifit(data_np, bin_data_dict, save_path, target_threshold=.75,
             # if k in ['nblocks', 'stimulusRange']:
             print(f"{k}: {v}")
 
-    print(f"idiot check:\nres['data'] {np.shape(res['data'])}:\n{res['data']}")
-    print(f"idiot check:\nres['X1D'] {np.shape(res['X1D'])}:\n{res['X1D']}")
-    print(f"idiot check:\nres['X1D'][0] {np.shape(res['X1D'][0])}:\n{res['X1D'][0]}")
+    # print(f"idiot check:\nres['data'] {np.shape(res['data'])}:\n{res['data']}")
+    # print(f"idiot check:\nres['X1D'] {np.shape(res['X1D'])}:\n{res['X1D']}")
+    # print(f"idiot check:\nres['X1D'][0] {np.shape(res['X1D'][0])}:\n{res['X1D'][0]}")
 
     '''
     get thresholds
