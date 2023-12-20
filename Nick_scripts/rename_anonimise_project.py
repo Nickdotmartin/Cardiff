@@ -15,23 +15,12 @@ exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardi
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\sep45_data_to_zip"
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Ricco_&_Bloch_to_zip"
 
-# walk through all folders and subfolders and rename files and folders
+# walk through all folders and subfolders and rename files ONLY
 for root, dirs, files in os.walk(exp_path):
     print(f'\nroot: {root}')
     print(f'dirs: {dirs}')
     print(f'files: {files}')
 
-    # if any anonimise_dict keys are in the file name, rename the file
-    for file in files:
-        if any(key in file for key in anonimise_dict.keys()):
-            print(f'found file: {file}')
-            for key in anonimise_dict.keys():
-                if key in file:
-                    new_file = file.replace(key, anonimise_dict[key])
-                    print(f'renaming {file} ==> {new_file}')
-                    os.rename(os.path.join(root, file), os.path.join(root, new_file))
-
-    '''comment this out and just run the top bit first to rename files'''
     # check any master csvs for participant names and rename
     for file in files:
         check_p_name = False
@@ -58,9 +47,23 @@ for root, dirs, files in os.walk(exp_path):
                             elif save_as == 'xlsx':
                                 master_df.to_excel(os.path.join(root, file))
                             print(f'renamed {file}')
-    #
-    #
-    '''comment this out and run lit last once all files have been renamed'''
+
+    # if any anonimise_dict keys are in the file name, rename the file
+    for file in files:
+        if any(key in file for key in anonimise_dict.keys()):
+            print(f'found file: {file}')
+            for key in anonimise_dict.keys():
+                if key in file:
+                    new_file = file.replace(key, anonimise_dict[key])
+                    print(f'renaming {file} ==> {new_file}')
+                    os.rename(os.path.join(root, file), os.path.join(root, new_file))
+
+
+# walk through all folders and subfolders and rename folders
+for root, dirs, files in os.walk(exp_path):
+    print(f'\nroot: {root}')
+    print(f'dirs: {dirs}')
+    print(f'files: {files}')
     # if any anonimise_dict keys are in the folder name, rename the folder
     for dir in dirs:
         if any(key in dir for key in anonimise_dict.keys()):
