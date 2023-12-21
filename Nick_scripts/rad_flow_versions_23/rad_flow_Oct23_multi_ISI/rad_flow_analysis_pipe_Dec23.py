@@ -32,6 +32,7 @@ if not os.path.isdir(exp_path):
 
 # monitor dir contains a folder for each participant
 participant_list = ['pt1', 'pt2', 'pt3', 'pt4', 'pt5']  # , 'pt6']  #
+# participant_list = ['pt2']  # , 'pt6']  #
 
 
 # from_run_number will analyse all runs starting from this number.
@@ -298,7 +299,7 @@ for p_idx, participant_name in enumerate(participant_list):
 
 
 
-# remove 'test' data from any participant name so it is not in experiment level analysis and means
+# remove 'test' data from any participant name, so it is not in experiment level analysis and means
 # if any name containg 'test', remove it
 participant_list = [p_name for p_name in participant_list if 'test' not in p_name]
 
