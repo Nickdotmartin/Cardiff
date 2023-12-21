@@ -6,6 +6,7 @@ import pandas as pd
 anonimise_dict = {'Tony': 'aa', 'Simon': 'bb', 'Maria': 'cc',
                   'Kristian': 'dd',
                   # 'Kris': 'dd',  # comment this out and run separately, as it was changing names to ddtian!
+                  # 'ddtian': 'dd',  # comment this out and run separately, as it was changing names to ddtian!
                   'Kim': 'ee',
                   'Nick': 'ff'
                   }
@@ -13,7 +14,8 @@ anonimise_dict = {'Tony': 'aa', 'Simon': 'bb', 'Maria': 'cc',
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\exp1a_data_v2"
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\sep45_data_to_zip"
 # exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Ricco_&_Bloch_to_zip"
-exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\missing_probe_to_zip\Exp4b_missing_probe_23\mixed_dir\incoherent"
+# exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp1_reshare_zip\Exp2_Bloch_duration"
+exp_path = r"C:\Users\sapnm4\OneDrive - Cardiff University\PycharmProjects\Cardiff\Exp1_reshare_zip\Exp3_Ricco_area"
 
 # walk through all folders and subfolders and rename files ONLY
 for root, dirs, files in os.walk(exp_path):
